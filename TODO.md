@@ -1,0 +1,9 @@
+- github issue & pr templates
+- setup sponsoring button on github
+- brew cask
+- rtk
+- specialized skills/commands/agents while developing for QOL/DevEx
+- XCode project dir's CLAUDE.md
+- landing page (static, github pages, domain pointed)
+- docs page (static, github pages, domain pointed)
+- README.md
