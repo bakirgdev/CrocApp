@@ -1,6 +1,6 @@
 # What is croc
 
-Facts current as of 2026-07-21 (croc v10.4.14). Source: https://github.com/schollz/croc
+Facts current as of 2026-07-22 (croc v10.4.14, CLI quirks below verified against v10.5.0). Source: https://github.com/schollz/croc
 
 ## Identity
 
@@ -8,12 +8,12 @@ CLI tool to "easily and securely send things from one computer to another": any 
 
 ## How a transfer works
 
-1. **Code phrase**: sender gets `NNNN-word-word-word` (4-digit PIN + mnemonicode words from 4 random bytes). Custom via `--code` (min 6 chars) or `CROC_SECRET` env var (preferred; keeps secret off process list).
+1. **Code phrase**: sender gets `NNNN-word-word-word` (4-digit PIN + mnemonicode words from 4 random bytes). Custom via `--code` (min 6 chars) or `CROC_SECRET` env var. **v10.5.0 CLI: `send --code X` in the default (non-classic) mode refuses and tells you to use `CROC_SECRET=X croc send ...` instead** — `--code` only works with `--classic`. Always prefer `CROC_SECRET` for scripting.
 2. **Rendezvous**: both sides connect to a relay and join a room named `SHA-256(secret[:4] + "croc")`. Default public relay `croc.schollz.com:9009` (IPv6: `croc6.schollz.com`); transfer ports 9009-9013.
 3. **PAKE**: full secret feeds PAKE2 (`github.com/schollz/pake/v3`, Boneh-Shoup construction). Default curve P-256 (`--curve`; SIEC was original default, dropped after cryptographer criticism). Yields a strong session key from the weak phrase; relay never learns it.
 4. **Encryption**: end-to-end. Session key stretched via Argon2id (legacy path: PBKDF2/100 iter); data encrypted with AES-256-GCM or ChaCha20-Poly1305 (both in `src/crypt`; runtime default unverified). Relay sees ciphertext only — untrusted by design.
 5. **Transport**: files DEFLATE-compressed (HuffmanOnly, `--no-compress` to disable), chunked at 32 KB, striped across parallel TCP connections (one per relay port, chunk index mod port count) — this is croc's speed trick.
-6. **Local path**: sender also starts a local relay and advertises via UDP multicast (`schollz/peerdiscovery`, ~500 ms window). Local vs external relay race concurrently; first successful handshake wins. Same-LAN transfers never touch the internet.
+6. **Local path**: sender also starts a local relay and advertises via UDP multicast (`schollz/peerdiscovery`, ~500 ms window). Local vs external relay race concurrently; first successful handshake wins. Same-LAN transfers never touch the internet. **Discovery is not guaranteed**: reproduced a network (AP/client-isolation-style) where multicast discovery returns zero peers 100% of the time — for both the stock CLI and crocmobile, with a generous discovery window — even though raw UDP multicast between the same two processes works via plain sockets. Root cause not isolated further (likely `schollz/peerdiscovery`'s interface selection interacting badly with a host that has many virtual/VPN interfaces); no code fix available since neither croc nor crocmobile expose interface selection. Workaround: `--ip <senderLAN-IP>:9009` on the receiver connects directly to the sender's local relay control port (always `RelayPorts[0]`, 9009 by default) and skips discovery entirely, without touching the public relay.
 7. **Resume + integrity**: interrupted transfers resume (receiver scans partial file for zeroed chunks). Hash: xxhash default; imohash (sampled, for huge files), md5, highway via `--hash`.
 
 ## Feature surface (GUI must eventually cover)
