@@ -247,6 +247,7 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 	captureDone := make(chan struct{})
 	go func() {
 		defer close(captureDone)
+		defer func() { recover() }() // gobind: a goroutine panic kills the host app
 		buf := make([]byte, 32*1024)
 		for {
 			n, err := cr.Read(buf)
