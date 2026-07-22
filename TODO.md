@@ -4,6 +4,6 @@
 - rtk
 - specialized skills/commands/agents while developing for QOL/DevEx
 - XCode project dir's CLAUDE.md
-- landing page (static, github pages, domain pointed)
-- docs page (static, github pages, domain pointed)
+- landing website (static, github pages, domain pointed - build)
+- docs website (static, github pages, domain pointed - find nice provider)
 - README.md

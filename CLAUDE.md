@@ -1,6 +1,6 @@
 # CrocApp
 
-Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS 26 + macOS 26. See `docs/knowledge/project-overview.md` for goals.
+Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS 26 + macOS 26. See `@docs/knowledge/project-overview.md` for goals.
 
 ## Layout
 
@@ -13,7 +13,7 @@ Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS
 
 ### Look up, don't guess
 
-When unsure about any API, library, tool, or platform behavior: query the context7 MCP (see `.claude/rules/context7.md`), web search, or tool search before writing code. A small lookup beats a hallucination. Applies doubly to Swift/SwiftUI/Xcode 26 APIs — training data lags Apple releases.
+When unsure about any API, library, tool, or platform behavior: query the context7 MCP (see `@.claude/rules/context7.md`), web search, or tool search before writing code. A small lookup beats a hallucination. Applies doubly to Swift/SwiftUI/Xcode 26 APIs — training data lags Apple releases.
 
 ### Docs self-heal (end of every session)
 
