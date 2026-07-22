@@ -40,6 +40,15 @@ xcrun simctl boot "$SIM" 2>/dev/null || true
 APP=$(find /tmp/dd-sim/Build/Products -name "CrocApp.app" -maxdepth 3 | head -1)
 xcrun simctl install "$SIM" "$APP"
 
+# Clear stale artifacts from a previous run so a crashed/no-op app can't
+# leave behind a result file or a leftover received file that would make
+# this run look like it passed. get_app_container can fail here (app not
+# yet installed on a fresh simulator) -- tolerate.
+STALE_CONTAINER=$(xcrun simctl get_app_container "$SIM" "$BUNDLE" data 2>/dev/null || true)
+if [ -n "$STALE_CONTAINER" ]; then
+  rm -f "$STALE_CONTAINER/Documents/verify-result.txt" "$STALE_CONTAINER/Documents/simfile.txt"
+fi
+
 TMP=$(mktemp -d); echo "sim transfer $$" > "$TMP/simfile.txt"
 ( cd "$TMP" && CROC_SECRET="$CODE" timeout 120 "$CROC" --ignore-stdin send simfile.txt ) > /tmp/sim-send.log 2>&1 &
 sleep 3
@@ -54,5 +63,7 @@ for _ in $(seq 1 60); do
 done
 RESULT=$(cat "$CONTAINER/Documents/verify-result.txt" 2>/dev/null || echo "missing")
 echo "result: $RESULT"
-diff "$TMP/simfile.txt" "$CONTAINER/Documents/simfile.txt" && echo SIM-INTEROP-OK
-[ "${RESULT#ok}" != "$RESULT" ]
+
+diff "$TMP/simfile.txt" "$CONTAINER/Documents/simfile.txt" > /dev/null 2>&1; DIFF_OK=$?
+[ "$DIFF_OK" -eq 0 ] && echo SIM-INTEROP-OK
+[ "$RESULT" = "ok success=true" ] && [ "$DIFF_OK" -eq 0 ]
