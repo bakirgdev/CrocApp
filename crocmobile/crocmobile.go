@@ -2,6 +2,7 @@ package crocmobile
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -66,7 +67,16 @@ func (t *Transfer) Respond(accept bool) { t.s.respond(accept) }
 
 // StartSend begins sending. paths is newline-joined absolute paths.
 // If text is non-empty a text snippet is sent instead and paths is ignored.
-func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (*Transfer, error) {
+//
+// The synchronous body (which invokes croc's file-stat and context setup on
+// the caller's goroutine) is wrapped in a recover: a panic here must become
+// an error, never crash the host app across the gobind boundary.
+func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *Transfer, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			t, err = nil, fmt.Errorf("croc panic: %v", r)
+		}
+	}()
 	if opts == nil {
 		opts = NewOptions()
 	}
@@ -90,7 +100,14 @@ func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (*Tra
 }
 
 // StartReceive begins receiving with the given code phrase.
-func StartReceive(code string, opts *Options, d Delegate) (*Transfer, error) {
+//
+// See StartSend for why the synchronous body is wrapped in a recover.
+func StartReceive(code string, opts *Options, d Delegate) (t *Transfer, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			t, err = nil, fmt.Errorf("croc panic: %v", r)
+		}
+	}()
 	if opts == nil {
 		opts = NewOptions()
 	}

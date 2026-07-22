@@ -23,9 +23,10 @@ type session struct {
 	ctxCancel context.CancelFunc
 	delegate  Delegate
 
-	sender  bool
-	promptW *os.File // write end of the stdin pipe; nil once closed
-	promptM sync.Mutex
+	sender   bool
+	tempPath string   // absolute path of the text-send temp file, if any; removed in run()
+	promptW  *os.File // write end of the stdin pipe; nil once closed
+	promptM  sync.Mutex
 
 	stdoutBuf []byte // captured os.Stdout (text receive)
 	stdoutM   sync.Mutex
@@ -70,13 +71,28 @@ func splitNonEmpty(s, sep string) []string {
 	return out
 }
 
+// startSession acquires the process-global lock, does the synchronous setup
+// for a transfer, and (on success) hands the lock off to the async s.run
+// goroutine which releases it when the transfer finishes.
+//
+// The deferred cleanup below fires whenever startSession returns or panics
+// without having committed to an async run (i.e. every error path, and any
+// panic from croc.GetFilesInfoWithExactExclusions/croc.NewCtx) — this is what
+// guarantees the lock and cwd are never leaked, even across a panic. The
+// panic itself is left to propagate to StartSend/StartReceive's own recover,
+// which converts it into a returned error.
 func startSession(sender bool, code string, paths []string, text string, o *Options, d Delegate) (*session, error) {
 	if !activeMu.TryLock() {
 		return nil, errors.New("another transfer is active")
 	}
-	release := func() { activeMu.Unlock() }
-
 	origWD, _ := os.Getwd()
+	committed := false
+	defer func() {
+		if !committed {
+			os.Chdir(origWD)
+			activeMu.Unlock()
+		}
+	}()
 
 	if sender {
 		secret := o.Code
@@ -84,34 +100,40 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			secret = utils.GetRandomName()
 		}
 		if len(secret) < 6 {
-			release()
 			return nil, errors.New("code is too short (must be at least 6 characters)")
 		}
 		if o.WorkDir != "" {
 			if err := os.Chdir(o.WorkDir); err != nil {
-				release()
 				return nil, fmt.Errorf("workdir: %w", err)
 			}
 		}
+		var tempPath string
 		if text != "" {
 			f, err := os.CreateTemp(".", "croc-stdin-*")
 			if err != nil {
-				release()
 				return nil, err
 			}
 			if _, err := f.WriteString(text); err != nil {
 				f.Close()
-				release()
+				os.Remove(f.Name())
 				return nil, err
 			}
 			f.Close()
+			// Resolve to an absolute path now: run() may remove this file
+			// after cwd has already been restored to origWD.
+			if abs, err := filepath.Abs(f.Name()); err == nil {
+				tempPath = abs
+			} else {
+				tempPath = f.Name()
+			}
 			paths = []string{f.Name()}
 		}
 		filesInfo, emptyFolders, totalFolders, err := croc.GetFilesInfoWithExactExclusions(
 			paths, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"), nil)
 		if err != nil {
-			os.Chdir(origWD)
-			release()
+			if tempPath != "" {
+				os.Remove(tempPath)
+			}
 			return nil, err
 		}
 		co := buildCrocOptions(true, secret, o)
@@ -120,13 +142,15 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		c, err := croc.NewCtx(ctx, co)
 		if err != nil {
 			cancel()
-			os.Chdir(origWD)
-			release()
+			if tempPath != "" {
+				os.Remove(tempPath)
+			}
 			return nil, err
 		}
-		s := &session{client: c, ctxCancel: cancel, delegate: d, sender: true, done: make(chan struct{})}
+		s := &session{client: c, ctxCancel: cancel, delegate: d, sender: true, tempPath: tempPath, done: make(chan struct{})}
+		committed = true
 		d.OnCodeReady(secret)
-		go s.run(func() error { return c.Send(filesInfo, emptyFolders, totalFolders) }, origWD, release)
+		go s.run(func() error { return c.Send(filesInfo, emptyFolders, totalFolders) }, origWD, func() { activeMu.Unlock() })
 		go s.poll()
 		return s, nil
 	}
@@ -147,6 +171,9 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 	close(s.done)
 	s.closePrompt()
 	text := s.finishStdoutCapture()
+	if s.tempPath != "" {
+		os.Remove(s.tempPath)
+	}
 	os.Chdir(origWD)
 	release()
 	if err != nil {
@@ -168,9 +195,9 @@ func (s *session) respond(accept bool) {
 		return
 	}
 	if accept {
-		s.promptW.WriteString("y\n")
+		_, _ = s.promptW.WriteString("y\n")
 	} else {
-		s.promptW.WriteString("n\n")
+		_, _ = s.promptW.WriteString("n\n")
 	}
 	// Close so any later un-gated prompt (empty-folder, unzip overwrite)
 	// hits EOF and takes its safe default instead of hanging.
@@ -190,6 +217,9 @@ func (s *session) closePrompt() {
 func (s *session) finishStdoutCapture() string { return "" } // Task 3
 
 // poll translates Client fields into delegate events at 10 Hz.
+// Transfers that complete within a single tick (e.g. a few bytes over a fast
+// local connection) can race s.done and skip an intermediate OnConnected or
+// OnProgress call entirely — OnDone still fires reliably.
 func (s *session) poll() {
 	defer func() { recover() }() // racy field reads must never crash the app
 	t := time.NewTicker(100 * time.Millisecond)
