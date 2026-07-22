@@ -145,7 +145,7 @@ F20-F29, F31-F35 per `docs/knowledge/features.md`; F37 (Wi-Fi Aware) later. Sugg
 ## Phase session protocol (copy into each phase kickoff prompt)
 
 ```
-Read PLAN.md, CLAUDE.md, docs/knowledge/features.md, docs/knowledge/apple-platform-constraints.md, and phase-specific Required reading. Execute Phase N: write detailed plan with superpowers:writing-plans, then implement with superpowers:subagent-driven-development. Verify per exit criteria. End with docs self-heal + tick PLAN.md checkbox + note deviations.
+Read PLAN.md, CLAUDE.md, docs/knowledge/features.md, docs/knowledge/apple-platform-constraints.md, and phase-specific Required reading. Execute Phase N: write detailed plan with superpowers:writing-plans, then implement with superpowers:subagent-driven-development. Dont commit that phase's plan. Verify per exit criteria. End with docs self-heal + tick PLAN.md checkbox + note deviations. Give simple summary of things done.
 ```
 
 Required reading per phase: 1 → ADR 0006, `what-is-croc.md`; 2 → `prior-art.md`; 3-4 → `apple-platform-constraints.md` (again); 5 → `what-is-croc.md`; 6 → `prior-art.md`; 7 → ADR 0007.
