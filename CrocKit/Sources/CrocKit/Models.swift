@@ -18,7 +18,7 @@ public enum TransferEvent: Sendable {
     case codeReady(String)
     case connected
     case fileList(FileList)
-    case progress(Progress)
+    case progress(TransferProgress)
     case text(String)
     case done(Summary)
     case failed(String)
@@ -34,7 +34,7 @@ public struct FileList: Codable, Sendable {
     public let totalSize: Int64
 }
 
-public struct Progress: Codable, Sendable {
+public struct TransferProgress: Codable, Sendable {
     public let currentFile: Int
     public let totalFiles: Int
     public let fileName: String

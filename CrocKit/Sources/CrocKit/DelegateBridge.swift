@@ -40,7 +40,7 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
     func onProgress(_ progressJSON: String?) {
         // Drop-on-decode-failure is fine here: progress is advisory and the
         // next tick retries, unlike fileList which gates respond(accept:).
-        guard let json = progressJSON, let p = decode(json, as: Progress.self) else { return }
+        guard let json = progressJSON, let p = decode(json, as: TransferProgress.self) else { return }
         continuation.yield(.progress(p))
     }
     func onText(_ text: String?) {
