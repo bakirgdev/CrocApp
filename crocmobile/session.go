@@ -309,7 +309,19 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 	s.delegate.OnDone(s.summaryJSON())
 }
 
-func (s *session) cancel() { s.ctxCancel() }
+// cancel must unblock a pending accept prompt, not just cancel the context:
+// croc's transfer goroutine blocks in GetInput reading our prompt pipe when
+// waiting on the receiver to accept/decline, and ctx cancellation alone does
+// not interrupt that read. Without closePrompt here, that goroutine stays
+// blocked forever, Receive() never returns, run() never releases activeMu,
+// and the whole engine is bricked. closePrompt is idempotent and nil-guarded
+// (already a no-op for senders, or once respond() has run), so it's always
+// safe to call: closing the pipe here makes GetInput hit EOF, croc refuses
+// the files, and Receive() returns normally through run()'s existing cleanup.
+func (s *session) cancel() {
+	s.ctxCancel()
+	s.closePrompt()
+}
 
 func (s *session) respond(accept bool) {
 	s.promptM.Lock()
