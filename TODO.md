@@ -7,3 +7,4 @@
 - landing website (static, github pages, domain pointed - build)
 - docs website (static, github pages, domain pointed - find nice provider)
 - README.md
+- ask AI how to manage croc CLI updates?
