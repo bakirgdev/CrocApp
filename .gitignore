@@ -1,4 +1,6 @@
 # Claude
 .claude/settings.local.json
+
+# Obra/superpowers
 .superpowers/
 docs/superpowers/plans/
