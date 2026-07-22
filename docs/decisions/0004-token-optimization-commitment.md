@@ -14,7 +14,7 @@ Optimize the whole workflow for token economy:
 - `rtk` proxies dev CLI output (60-90% savings), enforced via hook.
 - caveman plugin compresses assistant output; caveman-shrink wraps the context7 MCP server.
 - Docs written dense and minimal; noisy command output redirected to files, not context.
-- Prefer subagents for exploration/research to keep main context clean.
+- Prefer `cavecrew` and subagents in general for exploration/research to keep main context clean.
 
 ## Consequences
 
