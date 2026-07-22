@@ -4,3 +4,6 @@
 # Obra/superpowers
 .superpowers/
 docs/superpowers/plans/
+
+# gomobile build output
+CrocKit/Croc.xcframework/
