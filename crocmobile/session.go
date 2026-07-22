@@ -407,12 +407,16 @@ func (s *session) progressJSON(connected bool) string {
 	if connected {
 		step = "connected"
 	}
-	cur := c.FilesToTransferCurrentNum
+	cur := c.FilesToTransferCurrentNum // racy int read is benign on arm64
 	var fileName string
 	var fileSize, totalSize, bytesFinished int64
+	// Sum sizes of files strictly before the current one instead of indexing
+	// c.FilesHasFinished: that map is written unguarded by croc's own
+	// goroutines, and a concurrent read here races it -- a fatal, unrecoverable
+	// runtime throw, not a panic recover() can catch.
 	for i, f := range c.FilesToTransfer {
 		totalSize += f.Size
-		if _, ok := c.FilesHasFinished[i]; ok {
+		if i < cur {
 			bytesFinished += f.Size
 		}
 	}
