@@ -1,8 +1,11 @@
 // macOS-only interop harness for CrocKit <-> croc CLI.
 // Usage:
 //   crockit-verify send <code> <path>
-//   crockit-verify receive <code> <outdir> [y|n]
+//   crockit-verify receive <code> <outdir> [y|n] [cancel-after-ms]
 // Prints EVENT lines like croctest; exits 0 on done, 1 on error.
+// cancel-after-ms: fires engine.cancel() from a detached timer after the
+// given delay, to prove the Swift-side cancel path actually tears down a
+// transfer mid-wire (as opposed to only being exercised pre/post-transfer).
 import Foundation
 import CrocKit
 
@@ -26,6 +29,13 @@ func run() async {
         case "receive":
             options.outDir = args[3]
             answer = args.count < 5 || args[4] == "y"
+            if args.count >= 6, let ms = UInt64(args[5]) {
+                Task {
+                    try? await Task.sleep(nanoseconds: ms * 1_000_000)
+                    print("EVENT cancelling")
+                    await engine.cancel()
+                }
+            }
             stream = try await engine.startReceive(code: args[2], options: options)
         default:
             exit(2)
