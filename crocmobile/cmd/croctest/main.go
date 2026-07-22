@@ -1,7 +1,11 @@
 // croctest exercises crocmobile from the command line for interop verification.
 //
-//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [PATH...]
+//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-throttle RATE] [PATH...]
 //	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-cancel-after MS] CODE
+//
+// -throttle caps the sender's upload rate (e.g. "200k", "1m") so cancel
+// timing in a slow/fast test environment can be made deterministic instead
+// of racing a transfer that may already be finished.
 //
 // Events print as lines: EVENT <kind> <payload>
 package main
@@ -62,6 +66,7 @@ func main() {
 	answer := fs.String("answer", "y", "accept answer y|n (receive)")
 	yes := fs.Bool("yes", false, "auto-accept (receive)")
 	cancelAfter := fs.Int("cancel-after", 0, "cancel after N ms")
+	throttle := fs.String("throttle", "", "cap sender upload rate, e.g. 200k, 1m (send)")
 	fs.Parse(os.Args[2:])
 
 	opts := crocmobile.NewOptions()
@@ -74,6 +79,7 @@ func main() {
 	opts.Code = *code
 	opts.OutDir = *out
 	opts.AutoAccept = *yes
+	opts.ThrottleUpload = *throttle
 
 	var tr *crocmobile.Transfer
 	d := &printDelegate{answer: *answer, transfer: &tr}

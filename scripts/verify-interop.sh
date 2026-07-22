@@ -125,21 +125,41 @@ rtk grep -Eqi "refus|context canceled" "$TMP/5s.log" || fail "decline sender not
 pass "decline notifies sender"
 
 # 6. receiver cancels mid-transfer -> sender errors out
+# Throttle the sender to 200 KB/s so the 5 MB file takes ~25s: at unthrottled
+# loopback speed (~250 MB/s) the whole file sends before any cancel-after
+# value fires, so "cancel" only ever interrupted the receiver's *post*-transfer
+# hash-verification step, not the wire transfer itself, and a fully-received
+# (if not-yet-hash-confirmed) file could satisfy a loose assertion. With the
+# throttle, cancel-after 6000 lands at ~20% sent (confirmed repeatedly via
+# sender-side progress) -- genuinely mid-wire. Dedicated dst dir: scenario 7
+# reuses "big.bin" and must not see this scenario's (mismatched) leftover.
 C=$(code c1)
-( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" --ignore-stdin send big.bin > "$TMP/6s.log" 2>&1; echo "rc=$?" >> "$TMP/6s.log" ) &
+rm -rf "$TMP/dst6"; mkdir -p "$TMP/dst6"
+( cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" --ignore-stdin --throttleUpload 200k send big.bin > "$TMP/6s.log" 2>&1; echo "rc=$?" >> "$TMP/6s.log" ) &
 sleep 3
-timeout 30 "$CT" receive -out "$TMP/dst" -answer y -cancel-after 1500 "$C" > "$TMP/6r.log" 2>&1 || true
+timeout 30 "$CT" receive -out "$TMP/dst6" -answer y -cancel-after 6000 "$C" > "$TMP/6r.log" 2>&1 || true
 wait
-rtk grep -q "cancelled\|error" "$TMP/6r.log" || fail "receiver cancel"
+! diff -q "$TMP/src/big.bin" "$TMP/dst6/big.bin" > /dev/null 2>&1 || fail "receiver cancel: transfer completed anyway"
+rtk grep -q "cancelled\|error" "$TMP/6r.log" || fail "receiver cancel: receiver side"
+rtk grep -q "rc=0" "$TMP/6s.log" && fail "receiver cancel: sender exited 0 (transfer completed anyway)" || true
+rtk grep -Eqi "context canceled|peer error|refus" "$TMP/6s.log" || fail "receiver cancel: sender did not report a real error"
 pass "receiver cancel"
 
 # 7. sender cancels mid-transfer -> receiver errors out
+# Same throttle reasoning as scenario 6, mirrored: cancel-after 6000 on the
+# (throttled) sender lands at ~20% sent. Assert the destination file does NOT
+# byte-match the source (or is absent) -- at full loopback speed the transfer
+# completed before cancel fired, and a benign reconnect-warning log line
+# ("error setting read deadline") could satisfy a bare err/refus grep even on
+# a fully successful transfer; the file-content check can't be fooled that way.
 C=$(code c2)
-"$CT" send -code "$C" -cancel-after 4500 "$TMP/src/big.bin" > "$TMP/7s.log" 2>&1 &
+rm -rf "$TMP/dst7"; mkdir -p "$TMP/dst7"
+"$CT" send -code "$C" -throttle 200k -cancel-after 6000 "$TMP/src/big.bin" > "$TMP/7s.log" 2>&1 &
 sleep 3
-rc=0; ( cd "$TMP/dst" && CROC_SECRET="$C" timeout 30 "$CROC" --yes --overwrite ) > "$TMP/7r.log" 2>&1 || rc=$?
+rc=0; ( cd "$TMP/dst7" && CROC_SECRET="$C" timeout 30 "$CROC" --yes --overwrite ) > "$TMP/7r.log" 2>&1 || rc=$?
 wait
-[ "$rc" -ne 0 ] || rtk grep -qi "err\|refus" "$TMP/7r.log" || fail "sender cancel: receiver did not error"
+! diff -q "$TMP/src/big.bin" "$TMP/dst7/big.bin" > /dev/null 2>&1 || fail "sender cancel: transfer completed anyway"
+[ "$rc" -ne 0 ] || rtk grep -Eqi "interruption|context canceled|refus" "$TMP/7r.log" || fail "sender cancel: receiver did not error"
 pass "sender cancel"
 
 # 8. forced relay (LAN disabled both sides)
@@ -158,10 +178,11 @@ wait; pass "forced relay"
 # isolation) never deliver -- while still never touching the public relay.
 C=$(code l1)
 LOCAL_IP=$(local_ip)
-ip_args=()
-if [ -n "$LOCAL_IP" ]; then
-  ip_args=(--ip "$LOCAL_IP:9009")
-fi
+# Don't silently fall back to discovery-only: on this class of network it
+# reliably finds zero peers and the receiver would just hang until timeout,
+# masking a real "no usable local IP" environment problem as a slow pass/fail.
+[ -n "$LOCAL_IP" ] || fail "LAN only: could not determine local IP (no ipconfig/hostname -I) -- cannot use --ip fallback for broken multicast discovery"
+ip_args=(--ip "$LOCAL_IP:9009")
 "$CT" send -code "$C" -only-local "$TMP/src/a.txt" > /dev/null 2>&1 &
 sleep 3
 rm -rf "$TMP/dst4"; mkdir -p "$TMP/dst4"
