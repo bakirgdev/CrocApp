@@ -29,14 +29,18 @@ func run() async {
         case "receive":
             options.outDir = args[3]
             answer = args.count < 5 || args[4] == "y"
+            stream = try await engine.startReceive(code: args[2], options: options)
             if args.count >= 6, let ms = UInt64(args[5]) {
+                // Spawned only after startReceive has returned, so
+                // activeTransfer is guaranteed set before the timer can fire
+                // -- otherwise a short delay could race engine.cancel() into
+                // a silent no-op (activeTransfer still nil).
                 Task {
                     try? await Task.sleep(nanoseconds: ms * 1_000_000)
                     print("EVENT cancelling")
                     await engine.cancel()
                 }
             }
-            stream = try await engine.startReceive(code: args[2], options: options)
         default:
             exit(2)
         }
