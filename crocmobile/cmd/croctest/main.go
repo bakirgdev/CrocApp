@@ -21,23 +21,28 @@ type printDelegate struct {
 	transfer **crocmobile.Transfer
 }
 
-func (p *printDelegate) OnCodeReady(code string) { fmt.Printf("EVENT code %s\n", code) }
-func (p *printDelegate) OnConnected()            { fmt.Println("EVENT connected") }
+// Events print to stderr, not stdout: crocmobile's receive session swaps the
+// process-global os.Stdout for the whole transfer to capture croc's own
+// fmt.Print of a received text payload (see session.go). Printing events to
+// stdout here would race that swap and vanish into the capture buffer instead
+// of reaching this process's actual output.
+func (p *printDelegate) OnCodeReady(code string) { fmt.Fprintf(os.Stderr, "EVENT code %s\n", code) }
+func (p *printDelegate) OnConnected()            { fmt.Fprintln(os.Stderr, "EVENT connected") }
 func (p *printDelegate) OnFileList(j string) {
-	fmt.Printf("EVENT filelist %s\n", j)
+	fmt.Fprintf(os.Stderr, "EVENT filelist %s\n", j)
 	if *p.transfer != nil {
 		(*p.transfer).Respond(p.answer == "y")
-		fmt.Printf("EVENT responded %s\n", p.answer)
+		fmt.Fprintf(os.Stderr, "EVENT responded %s\n", p.answer)
 	}
 }
-func (p *printDelegate) OnProgress(j string) { fmt.Printf("EVENT progress %s\n", j) }
-func (p *printDelegate) OnText(t string)     { fmt.Printf("EVENT text %s\n", t) }
+func (p *printDelegate) OnProgress(j string) { fmt.Fprintf(os.Stderr, "EVENT progress %s\n", j) }
+func (p *printDelegate) OnText(t string)     { fmt.Fprintf(os.Stderr, "EVENT text %s\n", t) }
 func (p *printDelegate) OnDone(j string) {
-	fmt.Printf("EVENT done %s\n", j)
+	fmt.Fprintf(os.Stderr, "EVENT done %s\n", j)
 	os.Exit(0)
 }
 func (p *printDelegate) OnError(m string) {
-	fmt.Printf("EVENT error %s\n", m)
+	fmt.Fprintf(os.Stderr, "EVENT error %s\n", m)
 	os.Exit(1)
 }
 
@@ -87,14 +92,14 @@ func main() {
 		os.Exit(2)
 	}
 	if err != nil {
-		fmt.Printf("EVENT error %s\n", err)
+		fmt.Fprintf(os.Stderr, "EVENT error %s\n", err)
 		os.Exit(1)
 	}
 	if *cancelAfter > 0 {
 		go func() {
 			time.Sleep(time.Duration(*cancelAfter) * time.Millisecond)
 			tr.Cancel()
-			fmt.Println("EVENT cancelled")
+			fmt.Fprintln(os.Stderr, "EVENT cancelled")
 		}()
 	}
 	select {} // delegate callbacks exit the process
