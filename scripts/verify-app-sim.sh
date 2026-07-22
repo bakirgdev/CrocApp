@@ -64,6 +64,6 @@ done
 RESULT=$(cat "$CONTAINER/Documents/verify-result.txt" 2>/dev/null || echo "missing")
 echo "result: $RESULT"
 
-diff "$TMP/simfile.txt" "$CONTAINER/Documents/simfile.txt" > /dev/null 2>&1; DIFF_OK=$?
+DIFF_OK=0; diff "$TMP/simfile.txt" "$CONTAINER/Documents/simfile.txt" >/dev/null 2>&1 || DIFF_OK=$?
 [ "$DIFF_OK" -eq 0 ] && echo SIM-INTEROP-OK
 [ "$RESULT" = "ok success=true" ] && [ "$DIFF_OK" -eq 0 ]
