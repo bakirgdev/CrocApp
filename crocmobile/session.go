@@ -76,11 +76,14 @@ func splitNonEmpty(s, sep string) []string {
 // goroutine which releases it when the transfer finishes.
 //
 // The deferred cleanup below fires whenever startSession returns or panics
-// without having committed to an async run (i.e. every error path, and any
-// panic from croc.GetFilesInfoWithExactExclusions/croc.NewCtx) — this is what
-// guarantees the lock and cwd are never leaked, even across a panic. The
-// panic itself is left to propagate to StartSend/StartReceive's own recover,
-// which converts it into a returned error.
+// without having committed to an async run — every error path, any panic
+// from croc.GetFilesInfoWithExactExclusions/croc.NewCtx, and (because
+// `committed` is only set true right before the `go s.run(...)` call, after
+// d.OnCodeReady returns) any panic raised by the delegate's OnCodeReady
+// itself. This is what guarantees the lock, cwd, and temp file are never
+// leaked, even across a panic. The panic itself is left to propagate to
+// StartSend/StartReceive's own recover, which converts it into a returned
+// error.
 func startSession(sender bool, code string, paths []string, text string, o *Options, d Delegate) (*session, error) {
 	if !activeMu.TryLock() {
 		return nil, errors.New("another transfer is active")
@@ -148,8 +151,12 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			return nil, err
 		}
 		s := &session{client: c, ctxCancel: cancel, delegate: d, sender: true, tempPath: tempPath, done: make(chan struct{})}
-		committed = true
+		// OnCodeReady runs before we commit: if the delegate panics here, the
+		// cleanup defer above must still be armed to release the lock, cwd,
+		// and temp file, rather than leaking them because we'd already
+		// (wrongly) considered the async run started.
 		d.OnCodeReady(secret)
+		committed = true
 		go s.run(func() error { return c.Send(filesInfo, emptyFolders, totalFolders) }, origWD, func() { activeMu.Unlock() })
 		go s.poll()
 		return s, nil
