@@ -52,12 +52,24 @@ public actor CrocEngine {
         }
         activeTransfer = transfer
         continuation.onTermination = { _ in
-            Task { await self.clearActive() }
+            // Stream termination (consumer task cancelled, or the
+            // malformed-fileList path in DelegateBridge finishing early)
+            // must not merely forget the transfer -- the Go session would
+            // keep running forever with activeMu held, bricking the engine
+            // for any future transfer. cancel() is a Go context cancel:
+            // thread-safe and idempotent even if the transfer already
+            // finished on its own. CrocmobileTransfer isn't Sendable, so
+            // rather than capture `transfer` across this @Sendable closure,
+            // cancel via the actor's own isolated state -- `start()` never
+            // lets a second transfer start while this one is still set, so
+            // `self.activeTransfer` here is still this same transfer.
+            Task { await self.cancelAndClear() }
         }
         return stream
     }
 
-    private func clearActive() {
+    private func cancelAndClear() {
+        activeTransfer?.cancel()
         activeTransfer = nil
         bridge = nil
     }
