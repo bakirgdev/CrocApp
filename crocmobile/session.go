@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/schollz/croc/v10/src/croc"
@@ -27,6 +28,8 @@ type session struct {
 	tempPath string   // absolute path of the text-send temp file, if any; removed in run()
 	promptW  *os.File // write end of the stdin pipe; nil once closed
 	promptM  sync.Mutex
+
+	restoreIO func() // receive only: restore os.Stdin/os.Stdout, drain capture
 
 	stdoutBuf []byte // captured os.Stdout (text receive)
 	stdoutM   sync.Mutex
@@ -161,7 +164,119 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		go s.poll()
 		return s, nil
 	}
-	return nil, errors.New("receive not implemented") // Task 3 replaces this line with startReceiveSession
+	return startReceiveSession(code, o, d, origWD, &committed)
+}
+
+// startReceiveSession is startSession's receive-side counterpart, called as a
+// tail call from within startSession's own frame: the `committed` guard defer
+// declared there is still armed for every error path below, so on failure we
+// only need to unwind whatever this function itself set up (pipes, os.Stdin/
+// os.Stdout swaps, the croc ctx) — cwd restore and the activeMu unlock are
+// handled by that defer once we return. Only right before the async run
+// actually starts do we flip *committed to true, handing ownership of cwd
+// and the lock to s.run/release.
+func startReceiveSession(code string, o *Options, d Delegate, origWD string, committed *bool) (*session, error) {
+	outDir := o.OutDir
+	if outDir == "" {
+		return nil, errors.New("OutDir required for receive")
+	}
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return nil, err
+	}
+	if err := os.Chdir(outDir); err != nil {
+		return nil, err
+	}
+
+	co := buildCrocOptions(false, code, o)
+	ctx, cancel := context.WithCancel(context.Background())
+	c, err := croc.NewCtx(ctx, co)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+	s := &session{client: c, ctxCancel: cancel, delegate: d, sender: false, done: make(chan struct{})}
+
+	// Accept/decline prompt bridge: croc reads the answer via
+	// utils.GetInput, which reads a bufio.Reader created once, at package
+	// init, wrapping the real fd 0 -- reassigning the os.Stdin *variable*
+	// later has no effect on that already-built reader. So beyond swapping
+	// the variable (for anything that does read it fresh), dup2 the pipe's
+	// read end onto fd 0 itself so the cached reader also pulls from our
+	// pipe. With AutoAccept the accept prompt is skipped, so close
+	// immediately: any un-gated prompt (empty folder, unzip overwrite) then
+	// hits EOF -> safe default, no hang.
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+	savedStdinFd, err := syscall.Dup(syscall.Stdin)
+	if err != nil {
+		pr.Close()
+		pw.Close()
+		cancel()
+		return nil, err
+	}
+	if err := syscall.Dup2(int(pr.Fd()), syscall.Stdin); err != nil {
+		syscall.Close(savedStdinFd)
+		pr.Close()
+		pw.Close()
+		cancel()
+		return nil, err
+	}
+	origStdin := os.Stdin
+	os.Stdin = pr
+	s.promptW = pw
+	if o.AutoAccept {
+		s.closePrompt()
+	}
+
+	// Text transfers stream to os.Stdout; capture it.
+	cr, cw, err := os.Pipe()
+	if err != nil {
+		os.Stdin = origStdin
+		syscall.Dup2(savedStdinFd, syscall.Stdin)
+		syscall.Close(savedStdinFd)
+		s.closePrompt() // closes pw unless AutoAccept already did
+		pr.Close()
+		cancel()
+		return nil, err
+	}
+	origStdout := os.Stdout
+	os.Stdout = cw
+	captureDone := make(chan struct{})
+	go func() {
+		defer close(captureDone)
+		buf := make([]byte, 32*1024)
+		for {
+			n, err := cr.Read(buf)
+			if n > 0 {
+				s.stdoutM.Lock()
+				if len(s.stdoutBuf) < 10*1024*1024 { // cap: text snippets only
+					s.stdoutBuf = append(s.stdoutBuf, buf[:n]...)
+				}
+				s.stdoutM.Unlock()
+			}
+			if err != nil {
+				return
+			}
+		}
+	}()
+	s.restoreIO = func() {
+		os.Stdin = origStdin
+		os.Stdout = origStdout
+		cw.Close()
+		<-captureDone
+		cr.Close()
+		syscall.Dup2(savedStdinFd, syscall.Stdin)
+		syscall.Close(savedStdinFd)
+		pr.Close()
+	}
+
+	*committed = true
+	go s.run(func() error { return c.Receive() }, origWD, func() { activeMu.Unlock() })
+	go s.poll()
+	return s, nil
 }
 
 // run executes the transfer, then restores globals and reports the outcome.
@@ -221,7 +336,21 @@ func (s *session) closePrompt() {
 	}
 }
 
-func (s *session) finishStdoutCapture() string { return "" } // Task 3
+// finishStdoutCapture restores IO globals and returns captured text if this
+// was a text transfer (croc sets Options.Stdout on the receiver for those).
+func (s *session) finishStdoutCapture() string {
+	if s.restoreIO == nil {
+		return ""
+	}
+	s.restoreIO()
+	s.restoreIO = nil
+	if !s.client.Options.Stdout || s.sender {
+		return ""
+	}
+	s.stdoutM.Lock()
+	defer s.stdoutM.Unlock()
+	return strings.TrimRight(string(s.stdoutBuf), "\n")
+}
 
 // poll translates Client fields into delegate events at 10 Hz.
 // Transfers that complete within a single tick (e.g. a few bytes over a fast
