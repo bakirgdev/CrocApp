@@ -37,6 +37,6 @@ Sept 2023: Matthias Gerstner (SUSE) review of v9.6.5 → 8 issues, CVE-2023-4361
 ## Facts relevant to CrocApp
 
 - Importable as Go library: `github.com/schollz/croc/v10/src/croc` (`croc.New(croc.Options{...})`). Pure Go + x/crypto → gomobile binding plausible (untested; see ADR 0006).
-- v10.4.14 (2026-07-20) added a **native Kotlin Android client in-repo**. No official or community iOS build exists — CrocApp fills a real gap, and the Android client is a reference for mobile integration questions.
+- The "native Kotlin Android client" linked from croc's README (added 2026-07-20) is community-built [Dking08/croc-app](https://github.com/Dking08/croc-app), not in-repo; it wraps the CLI as a subprocess with stdout regex parsing — architecture unusable on iOS (see ADR 0006, `docs/knowledge/prior-art.md`). No free/OSS iOS client exists — CrocApp fills a real gap.
 - Likely iOS friction points: UDP multicast discovery (needs `com.apple.developer.networking.multicast` entitlement) and listening sockets for the local relay.
 - Default relay password constant `"pass123"`; `TCP_BUFFER_SIZE` 64 KB; chunk size 32 KB.
