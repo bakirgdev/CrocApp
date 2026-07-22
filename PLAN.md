@@ -41,7 +41,8 @@
 
 **Risks/notes:** gomobile/Xcode 26 friction budget; `src/models/constants.go` does DNS + os.Args parsing at import — wrapper must tolerate; progress = polling, pick ~10 Hz; delegate calls arrive on Go threads.
 
-- [ ] Phase 1 complete
+- [x] Phase 1 complete (2026-07-23)
+  - Deviations: `Cancel(id)` became handle method `Transfer.Cancel()`; accept/decline bridged by `syscall.Dup2` pipe on fd 0 (plain `os.Stdin` swap insufficient — croc caches the reader at init; ADR 0008); transfers serialized one-at-a-time (process-global cwd/fd mutations; ADR 0008); framework module is `Croc` not `Crocmobile` (`import Croc`); macOS slice arm64-only (golang/go#73119); verification via harness scripts + `croctest`/`crockit-verify` executables, no test targets. gomobile/Xcode 26: zero friction. Engine facts + croc gotchas: `docs/knowledge/crocmobile-bridge.md`. Phase 2 carry-overs: UI keys off done/failed only (fast transfers skip events); map cancel-during-prompt error string "refused files" → "cancelled" in UI copy; keep `Ask` unexposed until sender stdin bridge exists; apply for iOS multicast entitlement early (device LAN discovery).
 
 ## Phase 2 — Core transfer UI
 

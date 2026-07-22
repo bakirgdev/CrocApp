@@ -16,7 +16,7 @@ Research digest 2026-07-22. Shapes architecture; verify APIs against current doc
 - Local network privacy prompt (`NSLocalNetworkUsageDescription` + `NSBonjourServices` required in Info.plist): triggers on first LAN op; relay traffic (WAN) doesn't trigger it. Denial fails silently; known flakiness (no re-prompt after reinstall, granted-but-broken until toggle/reboot) → ship pre-flight/diagnostics UX. TN3179 is the authority.
 - Security-scoped URLs from `fileImporter`: `startAccessingSecurityScopedResource`, keep bookmarks for resume-across-launch.
 - Received files visible in Files app: `UIFileSharingEnabled` + `LSSupportsOpeningDocumentsInPlace`.
-- gomobile breaks occasionally on new Xcode majors (history: golang issues #53316, #55028, #66500) — budget fiddling time.
+- gomobile breaks occasionally on new Xcode majors (history: golang issues #53316, #55028, #66500) — budget fiddling time. Status 2026-07: Xcode 26.6 + Go 1.26.5 + x/mobile@latest bind clean; macOS slice must be arm64-only (#73119); #66500 (device framework layout vs App Store validation) still open — revisit at release engineering.
 - BGContinuedProcessingTask lowers QoS in background → slower transfers, fine.
 - Liquid Glass: standard SwiftUI controls restyle free on Xcode 26; custom chrome needs `.glassEffect()`; compatibility opt-out flag dies next major OS.
 - New in 26, prefer: Network framework Swift API (`NetworkConnection`/`NetworkListener`/`NetworkBrowser`, structured concurrency) over NWConnection callbacks.
