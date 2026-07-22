@@ -75,7 +75,7 @@ C=$(code f2)
 sleep 3
 rm -rf "$TMP/dst2"; timeout 60 "$CT" receive -out "$TMP/dst2" -answer y "$C" > "$TMP/2.log" 2>&1
 diff "$TMP/src/a.txt" "$TMP/dst2/a.txt" > /dev/null || fail "receive file"
-rtk grep -q "EVENT filelist" "$TMP/2.log" || fail "filelist event"
+grep -q "EVENT filelist" "$TMP/2.log" || fail "filelist event"
 pass "receive file + filelist event"
 
 # 3. folder both directions
@@ -106,7 +106,7 @@ C=$(code t2)
 CROC_SECRET="$C" timeout 60 "$CROC" --ignore-stdin send --text "cli text" > /dev/null 2>&1 &
 sleep 3
 timeout 60 "$CT" receive -out "$TMP/dst" -answer y "$C" > "$TMP/4.log" 2>&1
-rtk grep -q "EVENT text cli text" "$TMP/4.log" || fail "receive text"
+grep -q "EVENT text cli text" "$TMP/4.log" || fail "receive text"
 pass "receive text"
 
 # 5. decline notifies sender
@@ -120,8 +120,8 @@ C=$(code n1)
 sleep 3
 timeout 30 "$CT" receive -out "$TMP/dst" -answer n "$C" > "$TMP/5r.log" 2>&1 || true
 wait
-rtk grep -q "refused files" "$TMP/5r.log" || fail "decline receiver side"
-rtk grep -Eqi "refus|context canceled" "$TMP/5s.log" || fail "decline sender not notified"
+grep -q "refused files" "$TMP/5r.log" || fail "decline receiver side"
+grep -Eqi "refus|context canceled" "$TMP/5s.log" || fail "decline sender not notified"
 pass "decline notifies sender"
 
 # 6. receiver cancels mid-transfer -> sender errors out
@@ -140,9 +140,9 @@ sleep 3
 timeout 30 "$CT" receive -out "$TMP/dst6" -answer y -cancel-after 6000 "$C" > "$TMP/6r.log" 2>&1 || true
 wait
 ! diff -q "$TMP/src/big.bin" "$TMP/dst6/big.bin" > /dev/null 2>&1 || fail "receiver cancel: transfer completed anyway"
-rtk grep -q "cancelled\|error" "$TMP/6r.log" || fail "receiver cancel: receiver side"
-rtk grep -q "rc=0" "$TMP/6s.log" && fail "receiver cancel: sender exited 0 (transfer completed anyway)" || true
-rtk grep -Eqi "context canceled|peer error|refus" "$TMP/6s.log" || fail "receiver cancel: sender did not report a real error"
+grep -q "cancelled\|error" "$TMP/6r.log" || fail "receiver cancel: receiver side"
+grep -q "rc=0" "$TMP/6s.log" && fail "receiver cancel: sender exited 0 (transfer completed anyway)" || true
+grep -Eqi "context canceled|peer error|refus" "$TMP/6s.log" || fail "receiver cancel: sender did not report a real error"
 pass "receiver cancel"
 
 # 7. sender cancels mid-transfer -> receiver errors out
@@ -159,7 +159,7 @@ sleep 3
 rc=0; ( cd "$TMP/dst7" && CROC_SECRET="$C" timeout 30 "$CROC" --yes --overwrite ) > "$TMP/7r.log" 2>&1 || rc=$?
 wait
 ! diff -q "$TMP/src/big.bin" "$TMP/dst7/big.bin" > /dev/null 2>&1 || fail "sender cancel: transfer completed anyway"
-[ "$rc" -ne 0 ] || rtk grep -Eqi "interruption|context canceled|refus" "$TMP/7r.log" || fail "sender cancel: receiver did not error"
+[ "$rc" -ne 0 ] || grep -Eqi "interruption|context canceled|refus" "$TMP/7r.log" || fail "sender cancel: receiver did not error"
 pass "sender cancel"
 
 # 8. forced relay (LAN disabled both sides)
