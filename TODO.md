@@ -12,3 +12,4 @@
 - Xcode needed for: provisioning/signing tangles (first device + store builds)
 - Xcode needed for: App Store screenshots/metadata checks (Phase 7)
 - for sharing this OSS, make blog on bakir.dev as entrypoint to everything about the project, then share blog link with curated msg to each recipient
+- research mainstream xcode/swift(ui) tools, cli, practices when working (i.e. swiftformat etc) and do/verify/implement - research + ask claude on web and cli
