@@ -4,9 +4,14 @@ import CrocKit
 /// Renders every non-idle controller phase. Shared by Send and Receive flows.
 struct TransferStatusView: View {
     @Environment(TransferController.self) private var controller
+    @Environment(LocalNetworkChecker.self) private var localNetwork
 
     var body: some View {
         VStack(spacing: 24) {
+            if localNetwork.status == .denied {
+                localNetworkDeniedBanner
+            }
+
             switch controller.phase {
             case .idle:
                 EmptyView()
@@ -40,6 +45,28 @@ struct TransferStatusView: View {
         switch controller.phase {
         case .starting, .waiting, .connecting, .transferring: return true
         default: return false
+        }
+    }
+
+    // MARK: - Local network denied
+
+    private var localNetworkDeniedBanner: some View {
+        VStack(spacing: 6) {
+            Label {
+                Text("Local network access is off — transfers use the relay only. Enable it in Settings › Privacy › Local Network for faster direct transfers.")
+                    .font(.footnote)
+            } icon: {
+                Image(systemName: "wifi.exclamationmark")
+            }
+            .foregroundStyle(.orange)
+#if os(iOS)
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            .font(.footnote)
+#endif
         }
     }
 
