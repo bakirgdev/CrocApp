@@ -57,6 +57,22 @@ final class TransferController {
     private var autoAcceptActive = false
     private var blockedAutoAccept = false
 
+    /// History sink; set once at app startup. nil in previews.
+    @ObservationIgnored var history: HistoryStore?
+    private var pendingRecord: PendingRecord?
+
+    /// Snapshot of what we know about the in-flight transfer, finalized into
+    /// a TransferRecord at the terminal event.
+    private struct PendingRecord {
+        var isSend: Bool
+        var isText: Bool
+        var names: [String]
+        var fileCount: Int
+        var totalBytes: Int64
+        var codeHint: String
+        var bookmarks: [Data]
+    }
+
     init(settings: AppSettings) {
         self.settings = settings
     }
@@ -85,6 +101,12 @@ final class TransferController {
         // startAccessing returns false for non-scoped URLs (e.g. some drops);
         // keep every path regardless, only track the ones needing release.
         scopedURLs = urls.filter { $0.startAccessingSecurityScopedResource() }
+        pendingRecord = PendingRecord(
+            isSend: true, isText: false,
+            names: urls.prefix(TransferRecord.maxNames).map(\.lastPathComponent),
+            fileCount: urls.count, totalBytes: 0,
+            codeHint: Self.codeHint(customCode),
+            bookmarks: urls.compactMap { Self.bookmark(for: $0) })
         let paths = urls.map(\.path)
         var options = baseOptions()
         options.customCode = customCode
@@ -101,6 +123,9 @@ final class TransferController {
         activeRelay = settings.relayKind
         sendConfirmArmed = settings.bothSidesConfirm
         autoAcceptActive = false
+        pendingRecord = PendingRecord(
+            isSend: true, isText: true, names: [], fileCount: 0, totalBytes: 0,
+            codeHint: Self.codeHint(customCode), bookmarks: [])
         var options = baseOptions()
         options.customCode = customCode
         options.workDir = FileManager.default.temporaryDirectory.path
@@ -116,6 +141,9 @@ final class TransferController {
         if folderIsScoped, folder.startAccessingSecurityScopedResource() {
             scopedURLs.append(folder)
         }
+        pendingRecord = PendingRecord(
+            isSend: false, isText: false, names: [], fileCount: 0, totalBytes: 0,
+            codeHint: Self.codeHint(code), bookmarks: [])
         var options = baseOptions()
         options.outDir = folder.path
         // Conflicts are surfaced in the incoming sheet before accept; from
@@ -192,6 +220,7 @@ final class TransferController {
                 // the idle-timer lock / BG task requested at the top of run().
                 background.transferEnded(success: false)
                 phase = .failed(Self.friendlyMessage(for: "\(error)", cancelRequested: cancelRequested, declineRequested: declineRequested))
+                finishRecord(cancelRequested ? .cancelled : .failed, summary: nil)
             }
             releaseScopedURLs()
         }
@@ -200,6 +229,9 @@ final class TransferController {
     private func handle(_ event: TransferEvent) {
         switch event {
         case .codeReady(let code):
+            if pendingRecord?.codeHint.isEmpty == true {
+                pendingRecord?.codeHint = Self.codeHint(code)
+            }
             phase = .waiting(code: code)
         case .connected:
             // F19: gate the send behind an explicit confirm. The pipe write
@@ -212,6 +244,11 @@ final class TransferController {
             }
         case .fileList(let list):
             let names = list.files.map(\.name)
+            if pendingRecord?.isSend == false {
+                pendingRecord?.names = Array(names.prefix(TransferRecord.maxNames))
+                pendingRecord?.fileCount = list.files.count
+                pendingRecord?.totalBytes = list.totalSize
+            }
             let blocked = names.filter { ReceivedName.isUnsafe($0) }
             if autoAcceptActive {
                 // croc is already proceeding (NoPrompt); the only brake left
@@ -250,6 +287,7 @@ final class TransferController {
         case .done(let summary):
             background.transferEnded(success: true)
             phase = .done(summary, receivedText: receivedText)
+            finishRecord(summary.success ? .completed : .failed, summary: summary)
         case .failed(let message):
             background.transferEnded(success: false)
             if blockedAutoAccept {
@@ -259,6 +297,8 @@ final class TransferController {
             } else {
                 phase = .failed(Self.friendlyMessage(for: message, cancelRequested: cancelRequested, declineRequested: declineRequested))
             }
+            finishRecord(cancelRequested ? .cancelled : declineRequested ? .declined : .failed,
+                         summary: nil)
             // Phase 1 contract: consumer must cancel the engine on .failed so
             // the Go session releases and the next transfer can start.
             Task { await engine.cancel() }
@@ -284,6 +324,40 @@ final class TransferController {
     private func releaseScopedURLs() {
         scopedURLs.forEach { $0.stopAccessingSecurityScopedResource() }
         scopedURLs = []
+    }
+
+    /// First code segment only ("7291-…") — enough to recognise a transfer,
+    /// useless to an attacker, and codes are single-use anyway.
+    private static func codeHint(_ code: String) -> String {
+        let t = code.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty else { return "" }
+        guard let first = t.split(separator: "-").first, first.count < t.count else {
+            return String(t.prefix(4)) + "…"
+        }
+        return first + "-…"
+    }
+
+    private static func bookmark(for url: URL) -> Data? {
+        #if os(macOS)
+        try? url.bookmarkData(options: .withSecurityScope,
+                              includingResourceValuesForKeys: nil, relativeTo: nil)
+        #else
+        try? url.bookmarkData()
+        #endif
+    }
+
+    private func finishRecord(_ status: TransferRecord.Status, summary: Summary?) {
+        guard var p = pendingRecord else { return }
+        pendingRecord = nil
+        if let summary {
+            p.totalBytes = summary.totalSize
+            if summary.files > 0 { p.fileCount = summary.files }
+        }
+        if receivedText != nil { p.isText = true }
+        history?.add(TransferRecord(
+            isSend: p.isSend, status: status, isText: p.isText,
+            fileCount: p.fileCount, totalBytes: p.totalBytes,
+            names: p.names, codeHint: p.codeHint, bookmarks: p.bookmarks))
     }
 
     // MARK: - Error copy

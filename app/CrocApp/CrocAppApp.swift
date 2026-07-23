@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct CrocAppApp: App {
     @State private var settings: AppSettings
     @State private var controller: TransferController
+    @State private var history: HistoryStore
     @State private var outputFolder = OutputFolderStore()
     @State private var localNetwork = LocalNetworkChecker()
     @State private var router = AppRouter.shared
@@ -22,7 +24,16 @@ struct CrocAppApp: App {
     init() {
         let settings = AppSettings()
         _settings = State(initialValue: settings)
-        _controller = State(initialValue: TransferController(settings: settings))
+        // Harness transfers must not pollute real history (mirrors the
+        // settings persist=false channel) -- point the store at memory.
+        let harness = ProcessInfo.processInfo.arguments.contains {
+            ["--auto-receive", "--auto-send", "--auto-share-send"].contains($0)
+        }
+        let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: harness))
+        _history = State(initialValue: history)
+        let controller = TransferController(settings: settings)
+        controller.history = history
+        _controller = State(initialValue: controller)
     }
 
     var body: some Scene {
@@ -33,6 +44,8 @@ struct CrocAppApp: App {
                 .environment(outputFolder)
                 .environment(localNetwork)
                 .environment(router)
+                .environment(history)
+                .modelContainer(history.container)
                 #if os(macOS)
                 .frame(minWidth: 480, minHeight: 560)
                 #endif

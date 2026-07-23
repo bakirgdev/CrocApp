@@ -34,7 +34,7 @@ APP=$(find /tmp/dd-mac/Build/Products -name "CrocApp.app" -maxdepth 3 | head -1)
 BIN="$APP/Contents/MacOS/CrocApp"
 
 mkdir -p "$DOCS"
-rm -f "$DOCS/verify-result.txt" "$DOCS/macfile.txt"
+rm -f "$DOCS/verify-result.txt" "$DOCS/verify-history.txt" "$DOCS/macfile.txt"
 
 # --- Direction 1: CLI -> app ------------------------------------------------
 TMP=$(mktemp -d); echo "mac transfer $$" > "$TMP/macfile.txt"
@@ -52,10 +52,14 @@ RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
 echo "receive result: $RESULT"
 diff "$TMP/macfile.txt" "$DOCS/macfile.txt"
 [ "$RESULT" = "ok success=true" ]
+HISTORY=$(cat "$DOCS/verify-history.txt" 2>/dev/null || echo missing)
+echo "history result: $HISTORY"
+[ "$HISTORY" = "records=1" ] && echo "MAC-HISTORY-OK"
+[ "$HISTORY" = "records=1" ]
 echo MAC-RECEIVE-OK
 
 # --- Direction 2: app -> CLI (custom code) -----------------------------------
-rm -f "$DOCS/verify-result.txt"
+rm -f "$DOCS/verify-result.txt" "$DOCS/verify-history.txt"
 echo "mac app send $$" > "$DOCS/sendme.txt"
 "$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/sendme.txt" --code "$CODE_SEND" > /tmp/mac-app-send.log 2>&1 &
 APP_PID=$!

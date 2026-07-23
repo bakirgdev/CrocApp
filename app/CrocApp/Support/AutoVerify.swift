@@ -17,12 +17,17 @@ import CrocKit
 /// event loop, no window ever attached). Splitting them with a flag avoids it.
 /// Writes verify-result.txt ("ok success=<bool>" | "error <msg>") to Documents.
 enum AutoVerify {
+    /// True when any --auto-* harness mode is active this launch.
+    static var isHarnessRun: Bool {
+        let args = ProcessInfo.processInfo.arguments
+        return args.contains("--auto-receive") || args.contains("--auto-send")
+            || args.contains("--auto-share-send")
+    }
+
     @MainActor
     static func runIfRequested(controller: TransferController) async {
         let args = ProcessInfo.processInfo.arguments
-        let harnessActive = args.contains("--auto-receive") || args.contains("--auto-send")
-            || args.contains("--auto-share-send")
-        guard harnessActive else { return }
+        guard isHarnessRun else { return }
         // Harness overrides go through the real settings store, unpersisted.
         // Reset first so a manual run's UserDefaults can't bleed into this run.
         controller.settings.persist = false
@@ -73,9 +78,13 @@ enum AutoVerify {
                 controller.respond(accept: true)
             case .done(let summary, _):
                 try? "ok success=\(summary.success)".write(to: resultURL, atomically: true, encoding: .utf8)
+                let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent("verify-history.txt")
+                try? "records=\(controller.history?.recordCount() ?? -1)".write(to: historyURL, atomically: true, encoding: .utf8)
                 return
             case .failed(let message):
                 try? "error \(message)".write(to: resultURL, atomically: true, encoding: .utf8)
+                let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent("verify-history.txt")
+                try? "records=\(controller.history?.recordCount() ?? -1)".write(to: historyURL, atomically: true, encoding: .utf8)
                 return
             default:
                 break
