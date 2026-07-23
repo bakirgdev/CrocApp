@@ -32,6 +32,9 @@ struct CrocAppApp: App {
         #if os(macOS)
         .defaultSize(width: 560, height: 700)
         #endif
+        .commands {
+            AppCommands(router: router, outputFolder: outputFolder, controller: controller)
+        }
 
         #if os(macOS)
         Settings {
