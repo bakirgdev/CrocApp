@@ -7,4 +7,7 @@
 - landing website (static, github pages, domain pointed - build)
 - docs website (static, github pages, domain pointed - find nice provider)
 - README.md
-- ask AI how to manage croc CLI updates?
+- Xcode needed for: physical-device debugging (Phase 3)
+- Xcode needed for: Instruments profiling (Phase 6)
+- Xcode needed for: provisioning/signing tangles (first device + store builds)
+- Xcode needed for: App Store screenshots/metadata checks (Phase 7)
