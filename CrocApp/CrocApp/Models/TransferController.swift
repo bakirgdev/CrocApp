@@ -33,6 +33,7 @@ final class TransferController {
     private var streamTask: Task<Void, Never>?
     private var scopedURLs: [URL] = []
     private var cancelRequested = false
+    private var declineRequested = false
     private var receivedText: String?
     private var outDir: URL?
     private var lastProgressBytes: Int64 = 0
@@ -82,6 +83,8 @@ final class TransferController {
         Task { await engine.respond(accept: accept) }
         if accept {
             phase = .connecting
+        } else {
+            declineRequested = true
         }
         // Decline: croc notifies the sender (SendError path) and the session
         // ends with a failed/done event; phase advances from the stream.
@@ -109,6 +112,7 @@ final class TransferController {
     private func run(_ start: @escaping () async throws -> AsyncStream<TransferEvent>) {
         phase = .starting
         cancelRequested = false
+        declineRequested = false
         receivedText = nil
         speedBytesPerSec = 0
         lastProgressDate = nil
@@ -126,7 +130,7 @@ final class TransferController {
                 }
                 for await event in stream { handle(event) }
             } catch {
-                phase = .failed(Self.friendlyMessage(for: "\(error)", cancelRequested: cancelRequested))
+                phase = .failed(Self.friendlyMessage(for: "\(error)", cancelRequested: cancelRequested, declineRequested: declineRequested))
             }
             releaseScopedURLs()
         }
@@ -164,7 +168,7 @@ final class TransferController {
         case .done(let summary):
             phase = .done(summary, receivedText: receivedText)
         case .failed(let message):
-            phase = .failed(Self.friendlyMessage(for: message, cancelRequested: cancelRequested))
+            phase = .failed(Self.friendlyMessage(for: message, cancelRequested: cancelRequested, declineRequested: declineRequested))
             // Phase 1 contract: consumer must cancel the engine on .failed so
             // the Go session releases and the next transfer can start.
             Task { await engine.cancel() }
@@ -194,8 +198,9 @@ final class TransferController {
 
     // MARK: - Error copy
 
-    static func friendlyMessage(for raw: String, cancelRequested: Bool) -> String {
+    static func friendlyMessage(for raw: String, cancelRequested: Bool, declineRequested: Bool) -> String {
         if cancelRequested { return "Transfer cancelled." }
+        if declineRequested { return "You declined the transfer." }
         let m = raw.lowercased()
         // Local cancel during the accept prompt also surfaces "refused files";
         // that case is caught by cancelRequested above.
