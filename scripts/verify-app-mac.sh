@@ -41,7 +41,7 @@ TMP=$(mktemp -d); echo "mac transfer $$" > "$TMP/macfile.txt"
 ( cd "$TMP" && CROC_SECRET="$CODE_RECV" timeout 120 "$CROC" --ignore-stdin send macfile.txt ) \
     > /tmp/mac-cli-send.log 2>&1 &
 sleep 3
-"$BIN" --auto-receive "$CODE_RECV" > /tmp/mac-app-recv.log 2>&1 &
+"$BIN" -ApplePersistenceIgnoreState YES --auto-receive "$CODE_RECV" > /tmp/mac-app-recv.log 2>&1 &
 APP_PID=$!
 for _ in $(seq 1 60); do
   sleep 2
@@ -57,7 +57,7 @@ echo MAC-RECEIVE-OK
 # --- Direction 2: app -> CLI (custom code) -----------------------------------
 rm -f "$DOCS/verify-result.txt"
 echo "mac app send $$" > "$DOCS/sendme.txt"
-"$BIN" --auto-send "$DOCS/sendme.txt" "$CODE_SEND" > /tmp/mac-app-send.log 2>&1 &
+"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/sendme.txt" --code "$CODE_SEND" > /tmp/mac-app-send.log 2>&1 &
 APP_PID=$!
 sleep 3
 DST=$(mktemp -d)
@@ -75,3 +75,35 @@ echo "send result: $RESULT"
 diff "$DOCS/sendme.txt" "$DST/sendme.txt"
 [ "$RESULT" = "ok success=true" ]
 echo MAC-SEND-OK
+
+# --- Direction 3: app -> CLI, local-only (sandbox LAN listener) --------------
+# App sends with croc onlyLocal: opens the local relay listener (port 9009)
+# inside the sandbox -- the com.apple.security.network.server proof. CLI
+# receiver connects via --ip (multicast discovery unreliable on this machine;
+# same bypass as verify-interop.sh scenario 9).
+local_ip() {
+  ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true
+}
+LOCAL_IP=$(local_ip)
+if [ -z "$LOCAL_IP" ]; then
+  echo "MAC-LOCAL-SEND-SKIPPED (no local IP)"
+else
+  CODE_LOCAL="l2m$$-mac-local"
+  rm -f "$DOCS/verify-result.txt"
+  echo "mac local send $$" > "$DOCS/localme.txt"
+  "$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/localme.txt" --code "$CODE_LOCAL" --local > /tmp/mac-app-local.log 2>&1 &
+  APP_PID=$!
+  sleep 3
+  DST=$(mktemp -d)
+  ( cd "$DST" && CROC_SECRET="$CODE_LOCAL" timeout 120 "$CROC" --ignore-stdin --yes --ip "$LOCAL_IP:9009" ) > /tmp/mac-cli-local.log 2>&1
+  for _ in $(seq 1 30); do
+    sleep 1
+    [ -f "$DOCS/verify-result.txt" ] && break
+  done
+  kill "$APP_PID" 2>/dev/null || true
+  RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
+  echo "local send result: $RESULT"
+  diff "$DOCS/localme.txt" "$DST/localme.txt"
+  [ "$RESULT" = "ok success=true" ]
+  echo MAC-LOCAL-SEND-OK
+fi

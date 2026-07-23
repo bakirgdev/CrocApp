@@ -3,13 +3,21 @@ import CrocKit
 
 /// Launch-argument harness for scripted verification.
 ///   --auto-receive CODE            receive into Documents, auto-accept
-///   --auto-send PATH CODE          send PATH with custom code CODE
+///   --auto-send PATH --code CODE   send PATH with custom code CODE
 ///   --auto-share-send CODE         send whatever's staged in the ShareInbox with custom code CODE
+///   --local                        force croc local-only mode (LAN/sandbox listener check)
+/// --auto-send takes its two values non-adjacently (separated by the --code
+/// flag, not `--auto-send PATH CODE`): two bare positional arguments in a row
+/// makes AppKit treat the launch as a file-open request and it never creates
+/// the default window, so ContentView's .task (and this whole harness) never
+/// runs -- confirmed via `sample` on the hung process (idle in NSApplication's
+/// event loop, no window ever attached). Splitting them with a flag avoids it.
 /// Writes verify-result.txt ("ok success=<bool>" | "error <msg>") to Documents.
 enum AutoVerify {
     @MainActor
     static func runIfRequested(controller: TransferController) async {
         let args = ProcessInfo.processInfo.arguments
+        controller.forceLocalOnly = args.contains("--local")
         // Harness contract: verify-result.txt + received files live in the
         // container Documents folder (verify-app-mac.sh reads it there),
         // independent of the app's user-facing default output folder.
@@ -19,8 +27,9 @@ enum AutoVerify {
         if let i = args.firstIndex(of: "--auto-receive"), i + 1 < args.count {
             controller.startReceive(code: args[i + 1], into: docs, folderIsScoped: false)
             await watch(controller, resultURL: resultURL, autoAccept: true)
-        } else if let i = args.firstIndex(of: "--auto-send"), i + 2 < args.count {
-            controller.startSend(urls: [URL(fileURLWithPath: args[i + 1])], customCode: args[i + 2])
+        } else if let i = args.firstIndex(of: "--auto-send"), i + 1 < args.count,
+                  let ci = args.firstIndex(of: "--code"), ci + 1 < args.count {
+            controller.startSend(urls: [URL(fileURLWithPath: args[i + 1])], customCode: args[ci + 1])
             await watch(controller, resultURL: resultURL, autoAccept: false)
         } else if let i = args.firstIndex(of: "--auto-share-send"), i + 1 < args.count {
             let inbox = ShareInbox()

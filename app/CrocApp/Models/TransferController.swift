@@ -24,6 +24,11 @@ final class TransferController {
     private(set) var direction: Direction = .send
     private(set) var speedBytesPerSec: Double = 0
 
+    /// Harness-only (AutoVerify --local): forces croc local-only mode so the
+    /// sandboxed local relay listener path gets exercised. Phase 5 replaces
+    /// this with the real F14 setting.
+    var forceLocalOnly = false
+
     var isActive: Bool {
         if case .idle = phase { return false }
         return true
@@ -55,6 +60,7 @@ final class TransferController {
         var options = EngineOptions()
         options.customCode = customCode
         options.workDir = FileManager.default.temporaryDirectory.path
+        options.onlyLocal = forceLocalOnly
         run { try await self.engine.startSend(paths: paths, text: nil, options: options) }
     }
 
@@ -64,6 +70,7 @@ final class TransferController {
         var options = EngineOptions()
         options.customCode = customCode
         options.workDir = FileManager.default.temporaryDirectory.path
+        options.onlyLocal = forceLocalOnly
         run { try await self.engine.startSend(paths: [], text: text, options: options) }
     }
 
@@ -79,6 +86,7 @@ final class TransferController {
         // Conflicts are surfaced in the incoming sheet before accept; from
         // there "Accept" means replace (croc resumes partial files itself).
         options.overwrite = true
+        options.onlyLocal = forceLocalOnly
         run { try await self.engine.startReceive(code: code, options: options) }
     }
 
