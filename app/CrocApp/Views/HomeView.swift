@@ -27,7 +27,11 @@ struct HomeView: View {
             .navigationTitle("CrocApp")
             .toolbar {
 #if os(iOS)
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    NavigationLink(value: AppRouter.Route.history) {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .accessibilityLabel("Transfer history")
                     NavigationLink(value: AppRouter.Route.settings) {
                         Image(systemName: "gearshape")
                     }
@@ -46,6 +50,12 @@ struct HomeView: View {
                     }
                     .accessibilityLabel("How croc keeps transfers private")
                 }
+                ToolbarItem {
+                    NavigationLink(value: AppRouter.Route.history) {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .accessibilityLabel("Transfer history")
+                }
 #endif
             }
             .navigationDestination(for: AppRouter.Route.self) { route in
@@ -54,6 +64,7 @@ struct HomeView: View {
                 case .receive: ReceiveView()
                 case .settings: SettingsScreen()
                 case .howItWorks: HowItWorksView()
+                case .history: HistoryView()
                 }
             }
         }
