@@ -1,18 +1,15 @@
-//
-//  ContentView.swift
-//  CrocApp
-//
-//  Created by admin on 21.07.2026.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @State private var controller = TransferController()
+    @State private var outputFolder = OutputFolderStore()
+
     var body: some View {
-        EngineSmokeView()
+        HomeView()
+            .environment(controller)
+            .environment(outputFolder)
+            .task { await AutoVerify.runIfRequested(controller: controller) }
     }
 }
 
-#Preview {
-    ContentView()
-}
+#Preview { ContentView() }
