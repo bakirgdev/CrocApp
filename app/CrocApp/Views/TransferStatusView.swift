@@ -1,6 +1,10 @@
 import SwiftUI
 import CrocKit
 
+#if os(macOS)
+import AppKit
+#endif
+
 /// Renders every non-idle controller phase. Shared by Send and Receive flows.
 struct TransferStatusView: View {
     @Environment(TransferController.self) private var controller
@@ -169,6 +173,14 @@ struct TransferStatusView: View {
                     }
                 } label: {
                     Label("Open in Files", systemImage: "folder")
+                }
+            }
+#else
+            if controller.direction == .receive, let folder = controller.lastOutputFolder {
+                Button {
+                    NSWorkspace.shared.activateFileViewerSelecting([folder])
+                } label: {
+                    Label("Show in Finder", systemImage: "folder")
                 }
             }
 #endif
