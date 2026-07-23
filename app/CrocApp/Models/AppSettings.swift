@@ -3,10 +3,13 @@ import Observation
 
 /// Persisted power options (F13-F19). String relay fields store "" for
 /// "use croc default" so the UI can show defaults as placeholders; the
-/// `effective*` accessors always return explicit values (the engine must
-/// never receive an empty relay, bridge doc). `persist` gates UserDefaults
-/// writes so AutoVerify can override per-run without contaminating real
-/// settings. didSet does not fire for the assignments in init.
+/// `effective*` accessors always return explicit values for UI/display use.
+/// `engineRelayAddresses` is what actually goes to the engine: it deliberately
+/// blanks the non-customized side (CLI parity, see its own doc comment) so a
+/// custom relay can't lose the public relay's dial race; never both empty.
+/// `persist` gates UserDefaults writes so AutoVerify can override per-run
+/// without contaminating real settings. didSet does not fire for the
+/// assignments in init.
 @MainActor
 @Observable
 final class AppSettings {
@@ -64,13 +67,29 @@ final class AppSettings {
     var relayKind: RelayKind {
         if onlyLocal { return .localOnly }
         let addr = effectiveRelayAddress
-        return addr == Self.defaultRelayAddress ? .publicDefault : .custom(addr)
+        if addr != Self.defaultRelayAddress { return .custom(addr) }
+        let addr6 = effectiveRelayAddress6
+        if addr6 != Self.defaultRelayAddress6 { return .custom(addr6) }
+        return .publicDefault
     }
 
     var excludeList: [String] {
         excludePatterns.split(separator: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
+    }
+
+    /// Relay pair as the croc CLI would pass it: customizing one address
+    /// blanks the other so the custom relay can't lose the dial race to a
+    /// public default (croc skips empty addresses).
+    var engineRelayAddresses: (v4: String, v6: String) {
+        let c4 = relayAddress.trimmingCharacters(in: .whitespaces)
+        let c6 = relayAddress6.trimmingCharacters(in: .whitespaces)
+        let custom4 = !c4.isEmpty && c4 != Self.defaultRelayAddress
+        let custom6 = !c6.isEmpty && c6 != Self.defaultRelayAddress6
+        if custom4 && !custom6 { return (c4, "") }
+        if custom6 && !custom4 { return ("", c6) }
+        return (effectiveRelayAddress, effectiveRelayAddress6)
     }
 
     /// Harness-only: force every field back to its blank/default state so a

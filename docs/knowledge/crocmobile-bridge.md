@@ -32,7 +32,7 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 - Abandoning the event stream cancels the Go session (`onTermination`); `Cancel()` also unblocks a pending accept prompt (closes prompt pipe → croc declines).
 - `Options.Ask` is plumbed but MUST stay unexposed until the send path gets a stdin bridge (sender Ask prompt would read real stdin and hang).
 - `Quiet` stays false (true redirects process stderr to /dev/null globally); croc progress bar noise on stderr is accepted.
-- Always pass explicit relay values; croc's `models/constants.go` does blocking DNS at import and may blank `DEFAULT_RELAY`.
+- Relay values: `effective*` (AppSettings) always resolve to explicit values for display, since croc's `models/constants.go` does blocking DNS at import and may blank `DEFAULT_RELAY`. What actually reaches the engine is `engineRelayAddresses`, which deliberately blanks the *non*-customized side when only one of v4/v6 is customized (CLI parity, cli.go: customizing one address blanks the other) — croc skips empty relay addresses when dialing, so this stops a custom relay from losing the dial race to the public default. Never leave both empty.
 
 ## croc v10.5.0 gotchas (verified against source/live)
 
