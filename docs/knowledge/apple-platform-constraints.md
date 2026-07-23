@@ -20,6 +20,7 @@ Research digest 2026-07-22. Shapes architecture; verify APIs against current doc
 - BGContinuedProcessingTask lowers QoS in background → slower transfers, fine.
 - Liquid Glass: standard SwiftUI controls restyle free on Xcode 26; custom chrome needs `.glassEffect()`; compatibility opt-out flag dies next major OS.
 - New in 26, prefer: Network framework Swift API (`NetworkConnection`/`NetworkListener`/`NetworkBrowser`, structured concurrency) over NWConnection callbacks.
+- Verified Phase 4 (macOS): declaring `CFBundleDocumentTypes` makes AppKit treat bare launch argv tokens as document-open candidates (two adjacent bare args ⇒ no default window; harness must use flag-style args) and makes Xcode auto-inject `LSSupportsOpeningDocumentsInPlace = NO` (build-invalid — override with `INFOPLIST_KEY_...[sdk=macosx*] = YES`). Headless/scripted app launches hang in window restoration without `-ApplePersistenceIgnoreState YES`. `xcodebuild archive` for generic macOS ignores `ONLY_ACTIVE_ARCH` — pass `ARCHS=arm64` while the xcframework macOS slice is arm64-only (#73119). Sandbox `network.server` verified: croc's local relay listener binds TCP 9009 in-sandbox (lsof-proven, `MAC-LOCAL-SEND-OK`). `syspolicy_check distribution` = notarization pre-check without submitting.
 
 ## App Store review
 

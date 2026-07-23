@@ -47,7 +47,7 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 
 - `scripts/verify-interop.sh` — 9 scenarios crocmobile↔CLI (file/folder/text both ways, decline, cancel both ways mid-wire via `--throttleUpload 200k`, forced relay, LAN via `--ip`). Cancel scenarios assert received-file mismatch (unfakeable by log noise).
 - `scripts/verify-app-sim.sh` — boots sim, installs app, CLI→app via `--auto-receive CODE` launch arg, gates on exact `ok success=true` + byte diff. Since Phase 2 the launch args drive the real UI state machine (`AutoVerify` → `TransferController`, accept via `respond(true)`), not engine-level autoAccept.
-- `scripts/verify-app-mac.sh` — macOS app both directions: CLI→app (`--auto-receive`) and app→CLI (`--auto-send PATH CODE`, custom-code path; source file must live in the app container — sandbox).
+- `scripts/verify-app-mac.sh` — macOS app both directions plus local-only: CLI→app (`--auto-receive`), app→CLI (`--auto-send PATH --code CODE`, custom-code path; source file must live in the app container — sandbox), and app→CLI with `--local` (sandboxed relay-listener proof, CLI receives via `--ip`). Since Phase 4 the app declares document types, so bare adjacent argv tokens are document-open candidates — flags only (`--code CODE`), and every launch needs `-ApplePersistenceIgnoreState YES` (headless window-restoration hang).
 - `crockit-verify` (CrocKit executable) — Swift-layer send/receive/cancel-after-ms/`twice` (two transfers one process — proves fd0/stdout/cwd/mutex restoration composes).
 - macOS app verified via same `--auto-receive` route; container Documents at `~/Library/Containers/com.bakirgdev.CrocApp/Data/Documents/`.
 

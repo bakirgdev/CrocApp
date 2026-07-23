@@ -1,12 +1,13 @@
-# App UI architecture (Phases 2-3)
+# App UI architecture (Phases 2-4)
 
-Facts from Phases 2-3 (2026-07-23). Conflict/paste/QR decisions: ADR 0009; platform-integration decisions: ADR 0010. Engine contract: `crocmobile-bridge.md`.
+Facts from Phases 2-4 (2026-07-23). Conflict/paste/QR decisions: ADR 0009; iOS platform integration: ADR 0010; macOS platform integration: ADR 0011. Engine contract: `crocmobile-bridge.md`.
 
 ## Structure
 
 ```
-ContentView owns @State TransferController + OutputFolderStore → .environment
-HomeView (sole NavigationStack) → SendView | ReceiveView
+CrocAppApp owns @State TransferController + OutputFolderStore + LocalNetworkChecker
+  + AppRouter.shared → .environment on WindowGroup content AND macOS Settings scene
+HomeView (sole NavigationStack, path: $router.path, value-based links) → SendView | ReceiveView
   each: controller.isActive ? TransferStatusView() : input form
 TransferStatusView renders every non-idle phase; IncomingRequestView = accept gate
 QRCodeView (cross-platform gen) / QRScannerView.swift (whole file #if os(iOS), VisionKit)
@@ -34,7 +35,7 @@ QRCodeView (cross-platform gen) / QRScannerView.swift (whole file #if os(iOS), V
 
 ## AutoVerify harness (launch args, drives the real controller)
 
-- `--auto-receive CODE`: receive into Documents, auto-accept via `respond(true)` on `.incoming` (real prompt path). `--auto-send PATH CODE`: send with custom code (source must be container-resident on macOS — sandbox).
+- `--auto-receive CODE`: receive into Documents, auto-accept via `respond(true)` on `.incoming` (real prompt path). `--auto-send PATH --code CODE`: send with custom code (source must be container-resident on macOS — sandbox). `--local`: sets `controller.forceLocalOnly` (croc onlyLocal). Phase 4 gotchas: bare adjacent argv tokens are document-open candidates once CFBundleDocumentTypes exists (AppKit skips creating the default window) — flags only; macOS launches need `-ApplePersistenceIgnoreState YES` or headless runs hang in window restoration. AutoVerify's Documents path is hardcoded (decoupled from `OutputFolderStore.defaultFolder`).
 - Writes `verify-result.txt` (`ok success=<bool>` | `error <msg>`) to Documents. Contract shared by `scripts/verify-app-sim.sh` (receive) and `scripts/verify-app-mac.sh` (both directions; CLI receive needs `CROC_SECRET=` env, not positional code — croc refuses custom positional codes in non-classic mode for recv too).
 
 ## Phase 3 platform layer
@@ -47,6 +48,15 @@ QRCodeView (cross-platform gen) / QRScannerView.swift (whole file #if os(iOS), V
 - App icon: `app/CrocApp/AppIcon.icon` (Icon Composer bundle, synced-folder auto-include, name matches `ASSETCATALOG_COMPILER_APPICON_NAME`) — compiles for both platforms, no pbxproj edit needed.
 - Harness additions: AutoVerify `--auto-share-send CODE` (reads inbox, custom-code send) + `scripts/verify-share-sim.sh` (stages via simctl app-group container, marker `SHARE-SIM-OK`). App-group path: `simctl get_app_container <udid> <bundle> groups | awk` (the documented single-group form errors on current simctl).
 - Backlog (final-review triage, non-blocking): cancel queued BG request when transfer ends pre-adoption; `backgroundExpired` ignored in `run()` catch copy; manifest-name validation parity with `ReceivedName`; Open-in-Files provider-folder no-op; dup `UIFileSharingEnabled` key; ShareStagingView cancel closure unused; staged sheet only offered on next foregrounding.
+
+## Phase 4 macOS layer
+
+- `Models/AppRouter.swift` — @Observable singleton (`shared`): `path: [Route]` drives HomeView's NavigationStack; `pendingSendURLs` consumed by SendView (`onAppear` + `onChange`, dedup vs pickedURLs, then cleared); `isBusy` mirrors `controller.isActive` (set in ContentView's onChange) so dock drops mid-transfer queue without navigating. Singleton because AppDelegate + Commands sit outside the environment graph.
+- Drop entry points, one guard policy: window drop (ContentView, macOS-only) refuses while active + filters `\.isFileURL`; SendView list drop filters too; dock drop (`Platform/AppDelegate.swift` `application(_:open:)`) always queues, navigates only when idle. Dock drop works because `Config/CrocApp-macOS-Info.plist` declares `public.item`/Viewer/rank-None doc types (side effect: app listed in Finder "Open With" for everything; `INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]=YES` required or Xcode auto-injects invalid NO).
+- `Views/SettingsView.swift` (macOS Settings scene, ⌘,): output-folder change/reset + Show in Finder. `Views/AppCommands.swift`: Send ⌘1 / Receive ⌘2 (disabled while active), Show Receive Folder ⇧⌘R (macOS). Window: `.defaultSize(560×700)`, content `minWidth 480 / minHeight 560`.
+- F7 macOS default = `~/Downloads/CrocApp` (`files.downloads.read-write` entitlement; folder auto-created in `defaultFolder`); `defaultDisplayName` supplies the UI label. Receive-done shows "Show in Finder" (`NSWorkspace.activateFileViewerSelecting`).
+- Distribution: `scripts/build-devid.sh` (archive `ARCHS=arm64` → Developer ID export → `codesign --verify` → `syspolicy_check distribution`; `DEVID-PENDING-CERT` until cert installed) + `Config/ExportOptions-{MAS,DevID}.plist`. No extra pbxproj configs (ADR 0011).
+- Backlog (final-review triage, non-blocking): queued dock-drop URLs surface invisibly on next Send visit (no badge/route-after-completion); `isBusy` one-cycle mirror lag; SendView drop returns true when all files already staged; createDirectory failure swallowed in `defaultFolder`; duplicated receive-folder guard iOS/macOS doneView branches; in-batch dup gap in pendingSendURLs; AppRouter no reset hook + multi-window path lockstep; ShareInbox staged-sheet send starts transfer without routing to a status view; gate AutoVerify + `forceLocalOnly` behind build flag before Phase 7 store submission; `ExportOptions-MAS.plist` unvalidated until Phase 7.
 
 ## Known V1 papercuts (triaged, accepted)
 

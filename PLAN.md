@@ -93,7 +93,8 @@
 
 **Exit criteria:** sandboxed build transfers both directions incl. LAN path; Developer ID build runs notarization dry-run clean; drag-drop send works.
 
-- [ ] Phase 4 complete
+- [x] Phase 4 complete (2026-07-23)
+  - Deviations: "two build configs" = one Release archive + per-channel ExportOptions plists (`app-store-connect`/`developer-id`) — entitlements/hardened-runtime already channel-correct, separate pbxproj configs add risk without value (ADR 0011); notarization dry-run = `syspolicy_check distribution`, blocked at `DEVID-PENDING-CERT` until Developer ID cert installed (standing human action added); LAN verification is app-send-side only (`MAC-LOCAL-SEND-OK`, lsof-proven sandboxed TCP 9009 listener + CLI `--ip` receive) — receiver-side forced-LAN needs `--ip` in EngineOptions, deferred; dock drop required universal doc types (`public.item`, side effect: "Open With" listing for all types) + `LSSupportsOpeningDocumentsInPlace[sdk=macosx*]=YES` override; navigation/external payloads via `AppRouter.shared` singleton with `isBusy` queue-without-navigating guard for mid-transfer dock drops; harness argv reshaped (`--auto-send PATH --code CODE`, `-ApplePersistenceIgnoreState YES`) because doc types made bare argv document-open candidates; archive needs `ARCHS=arm64` (xcframework macOS slice, #73119). Verification: MAC-RECEIVE-OK, MAC-SEND-OK, MAC-LOCAL-SEND-OK, SIM-INTEROP-OK, Release smoke build, archive OK; gesture-level flows (window/dock drop, ⌘1/⌘2/⇧⌘R/⌘,, Settings persistence, ~/Downloads/CrocApp receive) manual-pending. Facts: ADR 0011, `app-ui-architecture.md` Phase 4 section, `apple-platform-constraints.md` papercuts. Phase 5 carry-overs: replace `forceLocalOnly` with real F14 setting; gate AutoVerify behind build flag before Phase 7; dock-drop queue surfacing polish.
 
 ## Phase 5 — Settings, power options, trust UI
 
