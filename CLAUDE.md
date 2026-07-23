@@ -4,7 +4,7 @@ Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS
 
 ## Layout
 
-- `CrocApp/` — Xcode project (SwiftUI, iOS + macOS)
+- `app/` — Xcode project (SwiftUI, iOS + macOS): `app/CrocApp.xcodeproj`, sources `app/CrocApp/`
 - `docs/knowledge/` — evergreen project knowledge
 - `docs/decisions/` — ADRs, `NNNN-slug.md`
 - `web/landing/`, `web/docs/` — static sites (GitHub Pages)

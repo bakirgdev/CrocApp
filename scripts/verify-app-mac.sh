@@ -28,7 +28,7 @@ CODE_SEND="s2m$$-mac-send"
 CONTAINER="$HOME/Library/Containers/com.bakirgdev.CrocApp/Data"
 DOCS="$CONTAINER/Documents"
 
-( cd CrocApp && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
+( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
     -derivedDataPath /tmp/dd-mac build ) > /tmp/mac-build.log 2>&1
 APP=$(find /tmp/dd-mac/Build/Products -name "CrocApp.app" -maxdepth 3 | head -1)
 BIN="$APP/Contents/MacOS/CrocApp"

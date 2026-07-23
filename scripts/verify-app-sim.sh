@@ -34,7 +34,7 @@ SIM="${SIM:-iPhone 17 Pro}"   # adjust to an available runtime: xcrun simctl lis
 BUNDLE=com.bakirgdev.CrocApp
 
 xcrun simctl boot "$SIM" 2>/dev/null || true
-( cd CrocApp && xcodebuild -scheme CrocApp \
+( cd app && xcodebuild -scheme CrocApp \
     -destination "platform=iOS Simulator,name=$SIM" \
     -derivedDataPath /tmp/dd-sim build ) > /tmp/sim-build.log 2>&1
 APP=$(find /tmp/dd-sim/Build/Products -name "CrocApp.app" -maxdepth 3 | head -1)
