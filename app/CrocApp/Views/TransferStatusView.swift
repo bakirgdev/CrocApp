@@ -26,8 +26,7 @@ struct TransferStatusView: View {
                 ProgressView()
                 Text("Connecting…").foregroundStyle(.secondary)
             case .confirmSend:
-                ProgressView()
-                Text("Waiting for confirmation…").foregroundStyle(.secondary)
+                confirmSendView
             case .waiting(let code):
                 waitingView(code: code)
             case .incoming(let list, let conflicts, let blocked):
@@ -95,8 +94,29 @@ struct TransferStatusView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+            TrustBadge(relay: controller.activeRelay)
             ProgressView()
             Text("Waiting for the receiver…").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Confirm send (F19 both-sides confirm)
+
+    private var confirmSendView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "person.crop.circle.badge.checkmark")
+                .font(.system(size: 40))
+                .foregroundStyle(.blue)
+            Text("Receiver connected").font(.headline)
+            Text("Send the selected items to the connected device?")
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            TrustBadge(relay: controller.activeRelay)
+            HStack(spacing: 16) {
+                Button("Cancel", role: .destructive) { controller.cancel() }
+                Button("Send") { controller.respond(accept: true) }
+                    .buttonStyle(.borderedProminent)
+            }
         }
     }
 
@@ -132,6 +152,7 @@ struct TransferStatusView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
+            TrustBadge(relay: controller.activeRelay)
         }
     }
 
