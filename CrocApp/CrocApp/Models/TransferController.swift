@@ -153,6 +153,10 @@ final class TransferController {
         case .progress(let p):
             // step "waiting" ticks arrive while the code screen should stay up.
             guard p.step != "waiting" else { return }
+            // Progress ticks keep flowing while the accept prompt is
+            // unanswered -- never clobber .incoming; respond() moves the
+            // phase forward.
+            if case .incoming = phase { return }
             updateSpeed(p)
             phase = .transferring(p)
         case .text(let t):
