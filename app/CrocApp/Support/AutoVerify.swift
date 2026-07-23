@@ -10,7 +10,10 @@ enum AutoVerify {
     @MainActor
     static func runIfRequested(controller: TransferController) async {
         let args = ProcessInfo.processInfo.arguments
-        let docs = OutputFolderStore.defaultFolder
+        // Harness contract: verify-result.txt + received files live in the
+        // container Documents folder (verify-app-mac.sh reads it there),
+        // independent of the app's user-facing default output folder.
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let resultURL = docs.appendingPathComponent("verify-result.txt")
 
         if let i = args.firstIndex(of: "--auto-receive"), i + 1 < args.count {

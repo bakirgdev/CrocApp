@@ -1,9 +1,8 @@
 import Foundation
 import Observation
 
-/// Receive destination folder (F7). Default: app Documents (Files-visible on
-/// iOS once Phase 3 adds the plist keys; sandbox container on macOS until
-/// Phase 4 moves the default to Downloads/CrocApp). User override persists
+/// Receive destination folder (F7). Default: app Documents on iOS,
+/// Downloads/CrocApp on macOS (Phase 4). User override persists
 /// via bookmark: security-scoped on macOS, plain on iOS (fileImporter URLs
 /// are implicitly provider-scoped there; .withSecurityScope is macOS-only).
 @MainActor
@@ -15,7 +14,24 @@ final class OutputFolderStore {
     private(set) var isUserSelected: Bool
 
     static var defaultFolder: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        #if os(macOS)
+        // Real ~/Downloads via the downloads.read-write entitlement; a
+        // CrocApp subfolder keeps received batches from littering Downloads.
+        let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
+        let folder = downloads.appendingPathComponent("CrocApp", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder
+        #else
+        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        #endif
+    }
+
+    var defaultDisplayName: String {
+        #if os(macOS)
+        "Downloads/CrocApp"
+        #else
+        "Documents"
+        #endif
     }
 
     init() {

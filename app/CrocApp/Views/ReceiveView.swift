@@ -58,7 +58,7 @@ struct ReceiveView: View {
 
             HStack {
                 Label {
-                    Text(outputFolder.isUserSelected ? outputFolder.url.lastPathComponent : "Documents")
+                    Text(outputFolder.isUserSelected ? outputFolder.url.lastPathComponent : outputFolder.defaultDisplayName)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 } icon: {
