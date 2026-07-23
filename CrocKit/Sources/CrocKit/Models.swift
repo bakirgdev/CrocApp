@@ -11,6 +11,14 @@ public struct EngineOptions: Sendable {
     public var onlyLocal = false
     public var autoAccept = false
     public var overwrite = false
+    public var noCompress = false
+    public var zipFolder = false
+    public var gitIgnore = false
+    /// Substring patterns excluded from sends (croc --exclude semantics).
+    public var exclude: [String] = []
+    /// Both-sides confirm (croc --ask). Sender prompt is bridged via the
+    /// stdin pipe; respond(accept:) answers it.
+    public var ask = false
     public init() {}
 }
 

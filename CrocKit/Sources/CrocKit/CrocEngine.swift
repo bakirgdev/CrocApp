@@ -86,6 +86,11 @@ public actor CrocEngine {
         opts.onlyLocal = o.onlyLocal
         opts.autoAccept = o.autoAccept
         opts.overwrite = o.overwrite
+        opts.noCompress = o.noCompress
+        opts.zipFolder = o.zipFolder
+        opts.gitIgnore = o.gitIgnore
+        opts.exclude = o.exclude.joined(separator: "\n")
+        opts.ask = o.ask
         return opts
     }
 }
