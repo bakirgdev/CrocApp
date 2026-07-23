@@ -270,15 +270,15 @@ final class TransferController {
                 }
                 return
             }
-            let conflicts: [String]
-            if let outDir {
-                conflicts = names.filter {
-                    FileManager.default.fileExists(atPath: outDir.appendingPathComponent($0).path)
-                }
-            } else {
-                conflicts = []
+            // Show the sheet immediately; a 10k-file stat scan on the main
+            // actor would freeze the accept UI, so conflicts fill in async.
+            phase = .incoming(list, conflicts: [], blocked: blocked)
+            guard let dir = outDir else { return }
+            Task { [weak self] in
+                let conflicts = await Self.scanConflicts(names: names, in: dir)
+                guard let self, !conflicts.isEmpty, case .incoming = self.phase else { return }
+                self.phase = .incoming(list, conflicts: conflicts, blocked: blocked)
             }
-            phase = .incoming(list, conflicts: conflicts, blocked: blocked)
         case .progress(let p):
             // step "waiting" ticks arrive while the code screen should stay up.
             guard p.step != "waiting" else { return }
@@ -340,6 +340,14 @@ final class TransferController {
     private func releaseScopedURLs() {
         scopedURLs.forEach { $0.stopAccessingSecurityScopedResource() }
         scopedURLs = []
+    }
+
+    private static func scanConflicts(names: [String], in dir: URL) async -> [String] {
+        await Task.detached(priority: .userInitiated) {
+            names.filter {
+                FileManager.default.fileExists(atPath: dir.appendingPathComponent($0).path)
+            }
+        }.value
     }
 
     /// First code segment only ("7291-…") — enough to recognise a transfer,
