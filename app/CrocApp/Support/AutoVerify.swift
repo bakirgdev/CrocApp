@@ -17,7 +17,9 @@ enum AutoVerify {
     @MainActor
     static func runIfRequested(controller: TransferController) async {
         let args = ProcessInfo.processInfo.arguments
-        controller.forceLocalOnly = args.contains("--local")
+        // Harness overrides go through the real settings store, unpersisted.
+        controller.settings.persist = false
+        if args.contains("--local") { controller.settings.onlyLocal = true }
         // Harness contract: verify-result.txt + received files live in the
         // container Documents folder (verify-app-mac.sh reads it there),
         // independent of the app's user-facing default output folder.

@@ -25,6 +25,9 @@ struct TransferStatusView: View {
             case .connecting:
                 ProgressView()
                 Text("Connecting…").foregroundStyle(.secondary)
+            case .confirmSend:
+                ProgressView()
+                Text("Waiting for confirmation…").foregroundStyle(.secondary)
             case .waiting(let code):
                 waitingView(code: code)
             case .incoming(let list, let conflicts, let blocked):

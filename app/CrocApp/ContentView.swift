@@ -66,7 +66,7 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environment(TransferController())
+        .environment(TransferController(settings: AppSettings()))
         .environment(OutputFolderStore())
         .environment(LocalNetworkChecker())
         .environment(AppRouter.shared)

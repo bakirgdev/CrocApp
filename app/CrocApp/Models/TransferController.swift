@@ -14,6 +14,7 @@ final class TransferController {
         case starting
         case waiting(code: String)
         case connecting
+        case confirmSend
         case incoming(FileList, conflicts: [String], blocked: [String])
         case transferring(TransferProgress)
         case done(Summary, receivedText: String?)
@@ -24,10 +25,15 @@ final class TransferController {
     private(set) var direction: Direction = .send
     private(set) var speedBytesPerSec: Double = 0
 
-    /// Harness-only (AutoVerify --local): forces croc local-only mode so the
-    /// sandboxed local relay listener path gets exercised. Phase 5 replaces
-    /// this with the real F14 setting.
-    var forceLocalOnly = false
+    let settings: AppSettings
+
+    /// Relay path of the transfer in flight, captured at start so mid-transfer
+    /// settings edits don't lie in the trust UI.
+    private(set) var activeRelay: AppSettings.RelayKind = .publicDefault
+
+    /// Harness-only (AutoVerify --relay): kills the LAN race so the custom
+    /// relay path is provably exercised. Not a user setting.
+    var harnessDisableLocal = false
 
     var isActive: Bool {
         if case .idle = phase { return false }
@@ -47,46 +53,78 @@ final class TransferController {
     private var outDir: URL?
     private var lastProgressBytes: Int64 = 0
     private var lastProgressDate: Date?
+    private var sendConfirmArmed = false
+    private var autoAcceptActive = false
+    private var blockedAutoAccept = false
+
+    init(settings: AppSettings) {
+        self.settings = settings
+    }
 
     // MARK: - Intents
+
+    private func baseOptions() -> EngineOptions {
+        var o = EngineOptions()
+        o.relayAddress = settings.effectiveRelayAddress
+        o.relayAddress6 = settings.effectiveRelayAddress6
+        o.relayPassword = settings.effectiveRelayPassword
+        o.onlyLocal = settings.onlyLocal
+        o.disableLocal = harnessDisableLocal
+        o.noCompress = settings.noCompress
+        o.ask = settings.bothSidesConfirm
+        return o
+    }
 
     func startSend(urls: [URL], customCode: String) {
         guard !isActive else { return }
         direction = .send
+        activeRelay = settings.relayKind
+        sendConfirmArmed = settings.bothSidesConfirm
+        autoAcceptActive = false
         // startAccessing returns false for non-scoped URLs (e.g. some drops);
         // keep every path regardless, only track the ones needing release.
         scopedURLs = urls.filter { $0.startAccessingSecurityScopedResource() }
         let paths = urls.map(\.path)
-        var options = EngineOptions()
+        var options = baseOptions()
         options.customCode = customCode
         options.workDir = FileManager.default.temporaryDirectory.path
-        options.onlyLocal = forceLocalOnly
+        options.zipFolder = settings.zipFolder
+        options.gitIgnore = settings.useGitIgnore
+        options.exclude = settings.excludeList
         run { try await self.engine.startSend(paths: paths, text: nil, options: options) }
     }
 
     func startSendText(_ text: String, customCode: String) {
         guard !isActive else { return }
         direction = .send
-        var options = EngineOptions()
+        activeRelay = settings.relayKind
+        sendConfirmArmed = settings.bothSidesConfirm
+        autoAcceptActive = false
+        var options = baseOptions()
         options.customCode = customCode
         options.workDir = FileManager.default.temporaryDirectory.path
-        options.onlyLocal = forceLocalOnly
         run { try await self.engine.startSend(paths: [], text: text, options: options) }
     }
 
     func startReceive(code: String, into folder: URL, folderIsScoped: Bool) {
         guard !isActive else { return }
         direction = .receive
+        activeRelay = settings.relayKind
+        sendConfirmArmed = false
         outDir = folder
         if folderIsScoped, folder.startAccessingSecurityScopedResource() {
             scopedURLs.append(folder)
         }
-        var options = EngineOptions()
+        var options = baseOptions()
         options.outDir = folder.path
         // Conflicts are surfaced in the incoming sheet before accept; from
         // there "Accept" means replace (croc resumes partial files itself).
         options.overwrite = true
-        options.onlyLocal = forceLocalOnly
+        // Ask forces croc's receiver prompt even under NoPrompt, and the
+        // engine's AutoAccept path closes the prompt pipe (EOF = decline),
+        // so Ask wins when both are on.
+        options.autoAccept = settings.autoAccept && !settings.bothSidesConfirm
+        autoAcceptActive = options.autoAccept
         run { try await self.engine.startReceive(code: code, options: options) }
     }
 
@@ -131,6 +169,7 @@ final class TransferController {
         }
         cancelRequested = false
         declineRequested = false
+        blockedAutoAccept = false
         receivedText = nil
         speedBytesPerSec = 0
         lastProgressDate = nil
@@ -162,10 +201,26 @@ final class TransferController {
         case .codeReady(let code):
             phase = .waiting(code: code)
         case .connected:
-            phase = .connecting
+            // F19: gate the send behind an explicit confirm. The pipe write
+            // buffers, so confirming before croc reaches its prompt is safe.
+            if direction == .send, sendConfirmArmed {
+                sendConfirmArmed = false
+                phase = .confirmSend
+            } else {
+                phase = .connecting
+            }
         case .fileList(let list):
             let names = list.files.map(\.name)
             let blocked = names.filter { ReceivedName.isUnsafe($0) }
+            if autoAcceptActive {
+                // croc is already proceeding (NoPrompt); the only brake left
+                // for unsafe names is killing the transfer.
+                if !blocked.isEmpty {
+                    blockedAutoAccept = true
+                    cancel()
+                }
+                return
+            }
             let conflicts: [String]
             if let outDir {
                 conflicts = names.filter {
@@ -178,10 +233,11 @@ final class TransferController {
         case .progress(let p):
             // step "waiting" ticks arrive while the code screen should stay up.
             guard p.step != "waiting" else { return }
-            // Progress ticks keep flowing while the accept prompt is
-            // unanswered -- never clobber .incoming; respond() moves the
+            // Progress ticks keep flowing while a prompt is unanswered --
+            // never clobber .incoming/.confirmSend; respond() moves the
             // phase forward.
             if case .incoming = phase { return }
+            if case .confirmSend = phase { return }
             updateSpeed(p)
             background.progressChanged(
                 bytesDone: p.bytesFinished + p.fileSent,
@@ -195,7 +251,9 @@ final class TransferController {
             phase = .done(summary, receivedText: receivedText)
         case .failed(let message):
             background.transferEnded(success: false)
-            if backgroundExpired {
+            if blockedAutoAccept {
+                phase = .failed("Blocked: this transfer contained unsafe file names, so auto-accept cancelled it.")
+            } else if backgroundExpired {
                 phase = .failed("iOS paused the transfer in the background. Start the same transfer again — croc resumes partially transferred files.")
             } else {
                 phase = .failed(Self.friendlyMessage(for: message, cancelRequested: cancelRequested, declineRequested: declineRequested))
