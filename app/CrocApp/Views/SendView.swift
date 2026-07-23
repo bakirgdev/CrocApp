@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 /// Send flow (F1 files, F2 folders, F3 text/clipboard, F5 custom code).
 struct SendView: View {
     @Environment(TransferController.self) private var controller
+    @Environment(AppRouter.self) private var router
 
     enum Mode: String, CaseIterable { case files = "Files", text = "Text" }
 
@@ -24,6 +25,8 @@ struct SendView: View {
             }
         }
         .navigationTitle("Send")
+        .onAppear { consumePendingURLs() }
+        .onChange(of: router.pendingSendURLs) { _, _ in consumePendingURLs() }
     }
 
     private var form: some View {
@@ -69,6 +72,13 @@ struct SendView: View {
         let codeOK = customCode.isEmpty || customCode.trimmingCharacters(in: .whitespaces).count >= 6
         let payloadOK = mode == .files ? !pickedURLs.isEmpty : !text.isEmpty
         return codeOK && payloadOK
+    }
+
+    private func consumePendingURLs() {
+        guard !router.pendingSendURLs.isEmpty else { return }
+        mode = .files
+        pickedURLs.append(contentsOf: router.pendingSendURLs.filter { !pickedURLs.contains($0) })
+        router.pendingSendURLs = []
     }
 
     // MARK: - Files

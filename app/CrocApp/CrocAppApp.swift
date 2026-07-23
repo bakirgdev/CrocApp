@@ -12,6 +12,7 @@ struct CrocAppApp: App {
     @State private var controller = TransferController()
     @State private var outputFolder = OutputFolderStore()
     @State private var localNetwork = LocalNetworkChecker()
+    @State private var router = AppRouter.shared
 
     var body: some Scene {
         WindowGroup {
@@ -19,6 +20,7 @@ struct CrocAppApp: App {
                 .environment(controller)
                 .environment(outputFolder)
                 .environment(localNetwork)
+                .environment(router)
                 #if os(macOS)
                 .frame(minWidth: 480, minHeight: 560)
                 #endif

@@ -3,12 +3,23 @@ import SwiftUI
 struct ContentView: View {
     @Environment(TransferController.self) private var controller
     @Environment(LocalNetworkChecker.self) private var localNetwork
+    @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
     @State private var shareInbox = ShareInbox()
     @State private var showStagedSheet = false
 
     var body: some View {
         HomeView()
+            #if os(macOS)
+            .dropDestination(for: URL.self) { urls, _ in
+                // Anywhere-on-window drop routes to the Send screen; the
+                // SendView list's own dropDestination takes precedence when
+                // hovering the list itself.
+                guard !controller.isActive else { return false }
+                router.openSend(with: urls)
+                return true
+            }
+            #endif
             .task { await AutoVerify.runIfRequested(controller: controller) }
             .onChange(of: controller.isActive) { _, active in
                 if active { localNetwork.checkIfNeeded() }
@@ -55,4 +66,5 @@ struct ContentView: View {
         .environment(TransferController())
         .environment(OutputFolderStore())
         .environment(LocalNetworkChecker())
+        .environment(AppRouter.shared)
 }
