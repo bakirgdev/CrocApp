@@ -27,6 +27,8 @@ struct SettingsView: View {
                     NSWorkspace.shared.activateFileViewerSelecting([outputFolder.url])
                 }
             }
+
+            PowerSettingsSections()
         }
         .formStyle(.grouped)
         .frame(width: 480)
@@ -39,5 +41,5 @@ struct SettingsView: View {
     }
 }
 
-#Preview { SettingsView().environment(OutputFolderStore()) }
+#Preview { SettingsView().environment(OutputFolderStore()).environment(AppSettings()) }
 #endif

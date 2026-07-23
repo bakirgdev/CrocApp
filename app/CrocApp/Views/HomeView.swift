@@ -25,13 +25,48 @@ struct HomeView: View {
             .padding()
             .frame(maxWidth: 480)
             .navigationTitle("CrocApp")
+            .toolbar {
+#if os(iOS)
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink(value: AppRouter.Route.settings) {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("Settings")
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink(value: AppRouter.Route.howItWorks) {
+                        Image(systemName: "lock.shield")
+                    }
+                    .accessibilityLabel("How croc keeps transfers private")
+                }
+#else
+                ToolbarItem {
+                    NavigationLink(value: AppRouter.Route.howItWorks) {
+                        Image(systemName: "lock.shield")
+                    }
+                    .accessibilityLabel("How croc keeps transfers private")
+                }
+#endif
+            }
             .navigationDestination(for: AppRouter.Route.self) { route in
                 switch route {
                 case .send: SendView()
                 case .receive: ReceiveView()
+                case .settings: SettingsScreen()
+                case .howItWorks: HowItWorksView()
                 }
             }
         }
+    }
+}
+
+/// iOS settings screen; macOS uses the Settings scene instead.
+struct SettingsScreen: View {
+    var body: some View {
+        Form {
+            PowerSettingsSections()
+        }
+        .navigationTitle("Settings")
     }
 }
 
