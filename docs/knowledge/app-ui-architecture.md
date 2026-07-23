@@ -1,6 +1,6 @@
-# App UI architecture (Phase 2)
+# App UI architecture (Phases 2-3)
 
-Facts from Phase 2 (2026-07-23). Conflict/paste/QR decisions: ADR 0009. Engine contract: `crocmobile-bridge.md`.
+Facts from Phases 2-3 (2026-07-23). Conflict/paste/QR decisions: ADR 0009; platform-integration decisions: ADR 0010. Engine contract: `crocmobile-bridge.md`.
 
 ## Structure
 
@@ -36,6 +36,17 @@ QRCodeView (cross-platform gen) / QRScannerView.swift (whole file #if os(iOS), V
 
 - `--auto-receive CODE`: receive into Documents, auto-accept via `respond(true)` on `.incoming` (real prompt path). `--auto-send PATH CODE`: send with custom code (source must be container-resident on macOS — sandbox).
 - Writes `verify-result.txt` (`ok success=<bool>` | `error <msg>`) to Documents. Contract shared by `scripts/verify-app-sim.sh` (receive) and `scripts/verify-app-mac.sh` (both directions; CLI receive needs `CROC_SECRET=` env, not positional code — croc refuses custom positional codes in non-classic mode for recv too).
+
+## Phase 3 platform layer
+
+- `Platform/BackgroundCoordinator.swift` — cross-platform class, `#if os(iOS)` bodies (macOS no-op): wraps transfer in BGContinuedProcessingTask + holds `isIdleTimerDisabled`. Controller hooks: `transferStarted` (in `run()`), `progressChanged` (inside accepted `.progress` path only — `.incoming` guard untouched), `transferEnded` (`.done`/`.failed`/startup-catch, idempotent). Expiration → `backgroundExpired` + `cancel()` → dedicated "iOS paused the transfer…" copy, precedence over cancel/decline mapping. Generation token rejects stale late task launches.
+- `Platform/LocalNetworkChecker.swift` — Bonjour self-probe (`_crocapp._tcp`), once per process, triggered by `ContentView.onChange(controller.isActive)`; denied ⇒ banner + Open Settings in `TransferStatusView`. Denied resolves only at 8 s timeout (first `.waiting` may just be the pending prompt).
+- `Models/ShareInbox.swift` + `Views/StagedFilesSheet.swift` — App Group pickup of CrocShare-staged batches (`ShareInbox/batch-<UUID>/` + `manifest.json`). Whole scenePhase refresh gated on `!controller.isActive` (ungated refresh once purged a live batch mid-send — caught by harness). Manifest consumed on user decision; batch files outlive the send; idle-time `purgeStaleBatches`.
+- `app/CrocShare/` — iOS-only appex target (pbxproj hand-built, `platformFilters=(ios,)` on dependency + embed keep macOS clean). File-copy staging inside `loadFileRepresentation` handler (~120 MB ext memory cap), never wipes existing batches. Both Info.plists live in `app/Config/` (outside synced folders — avoids generated-plist collision); app's INFOPLIST_FILE is sdk-scoped to iOS.
+- Files-app visibility via `INFOPLIST_KEY_UIFileSharingEnabled`/`LSSupportsOpeningDocumentsInPlace` (iOS sdk-scoped); "Open in Files" on receive-done uses `shareddocuments://` (community-standard scheme, no public API; silently no-ops for provider-picked folders).
+- App icon: `app/CrocApp/AppIcon.icon` (Icon Composer bundle, synced-folder auto-include, name matches `ASSETCATALOG_COMPILER_APPICON_NAME`) — compiles for both platforms, no pbxproj edit needed.
+- Harness additions: AutoVerify `--auto-share-send CODE` (reads inbox, custom-code send) + `scripts/verify-share-sim.sh` (stages via simctl app-group container, marker `SHARE-SIM-OK`). App-group path: `simctl get_app_container <udid> <bundle> groups | awk` (the documented single-group form errors on current simctl).
+- Backlog (final-review triage, non-blocking): cancel queued BG request when transfer ends pre-adoption; `backgroundExpired` ignored in `run()` catch copy; manifest-name validation parity with `ReceivedName`; Open-in-Files provider-folder no-op; dup `UIFileSharingEnabled` key; ShareStagingView cancel closure unused; staged sheet only offered on next foregrounding.
 
 ## Known V1 papercuts (triaged, accepted)
 

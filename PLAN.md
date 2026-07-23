@@ -77,7 +77,8 @@
 
 **Risks:** BGContinuedProcessingTask field flakiness — resume is the real safety net; device testing mandatory (simulator lies about background + multicast).
 
-- [ ] Phase 3 complete
+- [x] Phase 3 complete (2026-07-23)
+  - Deviations: no custom ActivityKit widget — BGContinuedProcessingTask's system Live Activity covers F10 (ADR 0010); share handoff = App Group staging + user opens app (`NSExtensionContext.open` unsupported for share extensions, no openURL hacks); expiry checkpoint = croc native resume, not bespoke; share-ext activation limited to file/image/movie (no text/URL); local-network probe uses NW* callback API (deliberate exception to prefer-new-Network-API rule — probe heuristic needs callback state granularity). Real bug found by new harness and fixed: ungated inbox refresh purged a live staged batch mid-send (`!controller.isActive` gate). BG plist facts: wildcard + static identifiers, no UIBackgroundModes, INFOPLIST_FILE sdk-scoped to iOS (BG ids/NSBonjourServices intentionally absent from macOS plist). Icon interjection: `AppIcon.icon` (Icon Composer) added, both platforms. Verification: interop 11/11, SIM-INTEROP-OK, MAC-RECEIVE-OK+MAC-SEND-OK, new SHARE-SIM-OK (`scripts/verify-share-sim.sh`), Release smoke build; background/share-sheet/Files/local-network behavior is simulator-unverifiable → `docs/knowledge/device-test-checklist.md` gates hardware validation (device testing still pending, incl. multicast entitlement still unapplied-for — standing human action). Backlog minors triaged in `app-ui-architecture.md` Phase 3 section.
 
 ## Phase 4 — macOS platform integration
 

@@ -55,3 +55,4 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 
 - Go ≥1.25 (brew), gomobile+gobind auto-installed by build script (currently `@latest`, unpinned — pin when CI lands). Xcode 26.6 binds clean (no #53316-class friction). macOS slice arm64-only (golang/go#73119); iOS device App Store layout issue golang/go#66500 is a Phase 7 concern.
 - CI notes: verify scripts need outbound network (public relay) + `CROC`/`SIM` env; fresh clone must run `scripts/build-xcframework.sh` before any Swift build (binaryTarget points at gitignored artifact).
+- rtk gotcha: plain `rtk xcodebuild` truncates long output before shell redirection sees it (final `BUILD SUCCEEDED` line lost) — use `rtk proxy xcodebuild` for build logs.

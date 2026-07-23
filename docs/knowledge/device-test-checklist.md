@@ -18,6 +18,7 @@ Simulator cannot verify these; run on an iOS 26 device before Phase 7 submission
 ## Files app visibility
 - [ ] "On My iPhone → CrocApp" appears after first receive; received files visible
 - [ ] "Open in Files" button lands in the right folder
+- [ ] "Open in Files" with a user-picked provider folder (iCloud Drive etc.): known silent no-op (shareddocuments:// resolves local paths only) — confirm no crash, consider hiding button there later
 
 ## Local network
 - [ ] First transfer triggers local-network permission prompt
