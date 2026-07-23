@@ -30,6 +30,8 @@ final class TransferController {
     }
 
     private let engine = CrocEngine()
+    private let background = BackgroundCoordinator()
+    private var backgroundExpired = false
     private var streamTask: Task<Void, Never>?
     private var scopedURLs: [URL] = []
     private var cancelRequested = false
@@ -104,6 +106,7 @@ final class TransferController {
         receivedText = nil
         outDir = nil
         speedBytesPerSec = 0
+        backgroundExpired = false
         phase = .idle
     }
 
@@ -111,6 +114,11 @@ final class TransferController {
 
     private func run(_ start: @escaping () async throws -> AsyncStream<TransferEvent>) {
         phase = .starting
+        background.transferStarted(title: direction == .send ? "Sending with CrocApp" : "Receiving with CrocApp") { [weak self] in
+            guard let self else { return }
+            self.backgroundExpired = true
+            self.cancel()
+        }
         cancelRequested = false
         declineRequested = false
         receivedText = nil
@@ -162,13 +170,23 @@ final class TransferController {
             // phase forward.
             if case .incoming = phase { return }
             updateSpeed(p)
+            background.progressChanged(
+                bytesDone: p.bytesFinished + p.fileSent,
+                totalBytes: p.totalSize,
+                fileName: p.fileName)
             phase = .transferring(p)
         case .text(let t):
             receivedText = t
         case .done(let summary):
+            background.transferEnded(success: true)
             phase = .done(summary, receivedText: receivedText)
         case .failed(let message):
-            phase = .failed(Self.friendlyMessage(for: message, cancelRequested: cancelRequested, declineRequested: declineRequested))
+            background.transferEnded(success: false)
+            if backgroundExpired {
+                phase = .failed("iOS paused the transfer in the background. Start the same transfer again — croc resumes partially transferred files.")
+            } else {
+                phase = .failed(Self.friendlyMessage(for: message, cancelRequested: cancelRequested, declineRequested: declineRequested))
+            }
             // Phase 1 contract: consumer must cancel the engine on .failed so
             // the Go session releases and the next transfer can start.
             Task { await engine.cancel() }
