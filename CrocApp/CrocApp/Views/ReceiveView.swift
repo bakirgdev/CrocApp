@@ -97,13 +97,11 @@ struct ReceiveView: View {
     /// Accepts a bare code, a "croc://<code>" deeplink (our QR payload), or
     /// clipboard noise around either. Returns nil when nothing code-like.
     static func extractCode(from raw: String) -> String? {
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let range = trimmed.range(of: "croc://") {
-            let candidate = String(trimmed[range.upperBound...])
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            return candidate.count >= 6 ? candidate : nil
+        var candidate = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if candidate.hasPrefix("croc://") {
+            candidate = String(candidate.dropFirst("croc://".count))
         }
-        guard trimmed.count >= 6, !trimmed.contains(where: \.isWhitespace) else { return nil }
-        return trimmed
+        guard candidate.count >= 6, !candidate.contains(where: \.isWhitespace) else { return nil }
+        return candidate
     }
 }
