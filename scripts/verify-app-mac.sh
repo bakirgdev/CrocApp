@@ -107,3 +107,87 @@ else
   [ "$RESULT" = "ok success=true" ]
   echo MAC-LOCAL-SEND-OK
 fi
+
+# --- Direction 4: app -> CLI, custom relay (F13) -----------------------------
+# App sends via a local croc relay, with harnessDisableLocal set by --relay
+# (killing the LAN race), so success proves traffic went through this relay.
+CODE_RELAY="rly4$$-mac-relay"
+RELAY_LOG="/tmp/mac-relay.log"
+"$CROC" relay --ports 9021,9022,9023 > "$RELAY_LOG" 2>&1 &
+RELAY_PID=$!
+sleep 1
+rm -f "$DOCS/verify-result.txt"
+echo "mac relay send $$" > "$DOCS/relayme.txt"
+"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/relayme.txt" --code "$CODE_RELAY" --relay "localhost:9021" > /tmp/mac-app-relay.log 2>&1 &
+APP_PID=$!
+sleep 3
+DST=$(mktemp -d)
+( cd "$DST" && CROC_SECRET="$CODE_RELAY" timeout 120 "$CROC" --ignore-stdin --yes --relay "localhost:9021" ) > /tmp/mac-cli-relay.log 2>&1
+for _ in $(seq 1 30); do
+  sleep 1
+  [ -f "$DOCS/verify-result.txt" ] && break
+done
+kill "$APP_PID" 2>/dev/null || true
+kill "$RELAY_PID" 2>/dev/null || true
+RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
+echo "relay send result: $RESULT"
+diff "$DOCS/relayme.txt" "$DST/relayme.txt"
+[ "$RESULT" = "ok success=true" ]
+[ -s "$RELAY_LOG" ]
+echo MAC-RELAY-OK
+
+# --- Direction 5: app -> CLI, no compress (F15) ------------------------------
+# Interop success proves the flag flows through croc without breaking the
+# wire format; compression-off itself is asserted at the Go layer.
+CODE_NOCOMP="ncp5$$-mac-nocomp"
+rm -f "$DOCS/verify-result.txt"
+echo "mac nocomp send $$" > "$DOCS/nocompme.txt"
+"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/nocompme.txt" --code "$CODE_NOCOMP" --no-compress > /tmp/mac-app-nocomp.log 2>&1 &
+APP_PID=$!
+sleep 3
+DST=$(mktemp -d)
+( cd "$DST" && CROC_SECRET="$CODE_NOCOMP" timeout 120 "$CROC" --ignore-stdin --yes ) > /tmp/mac-cli-nocomp.log 2>&1
+for _ in $(seq 1 30); do
+  sleep 1
+  [ -f "$DOCS/verify-result.txt" ] && break
+done
+kill "$APP_PID" 2>/dev/null || true
+RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
+echo "nocomp send result: $RESULT"
+diff "$DOCS/nocompme.txt" "$DST/nocompme.txt"
+[ "$RESULT" = "ok success=true" ]
+echo MAC-NOCOMP-OK
+
+# --- Direction 6: app -> CLI, both-sides confirm (F19) -----------------------
+# Sender confirm is auto-answered by AutoVerify's .confirmSend case; the CLI
+# receiver gets the forced prompt (senderInfo.Ask) and must answer on piped
+# stdin, so --ignore-stdin is dropped here (it would refuse the prompt).
+CODE_ASK="ask6$$-mac-ask"
+rm -f "$DOCS/verify-result.txt"
+echo "mac ask send $$" > "$DOCS/askme.txt"
+"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/askme.txt" --code "$CODE_ASK" --ask > /tmp/mac-app-ask.log 2>&1 &
+APP_PID=$!
+sleep 3
+DST=$(mktemp -d)
+# `timeout`'s fallback backgrounds the CLI process ("$@" &); bash auto-redirects
+# a backgrounded command's stdin to /dev/null unless it's explicitly redirected,
+# which silently eats a piped `y`. Use an explicit `<` file redirect instead so
+# the answer survives, and bound it by hand the same way the fallback does.
+printf 'y\n' > "$DST/.ask-answer"
+( cd "$DST" && CROC_SECRET="$CODE_ASK" "$CROC" --yes < "$DST/.ask-answer" ) > /tmp/mac-cli-ask.log 2>&1 &
+CLI_PID=$!
+( sleep 60; kill -TERM "$CLI_PID" 2>/dev/null ) &
+CLI_WATCHER=$!
+wait "$CLI_PID" 2>/dev/null || true
+kill "$CLI_WATCHER" 2>/dev/null || true
+wait "$CLI_WATCHER" 2>/dev/null || true
+for _ in $(seq 1 30); do
+  sleep 1
+  [ -f "$DOCS/verify-result.txt" ] && break
+done
+kill "$APP_PID" 2>/dev/null || true
+RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
+echo "ask send result: $RESULT"
+diff "$DOCS/askme.txt" "$DST/askme.txt"
+[ "$RESULT" = "ok success=true" ]
+echo MAC-ASK-OK

@@ -6,6 +6,9 @@ import CrocKit
 ///   --auto-send PATH --code CODE   send PATH with custom code CODE
 ///   --auto-share-send CODE         send whatever's staged in the ShareInbox with custom code CODE
 ///   --local                        force croc local-only mode (LAN/sandbox listener check)
+///   --no-compress                  disable croc compression (F15)
+///   --ask                          require sender-side confirm before send (F19)
+///   --relay ADDR                   use a custom relay address (F13); also disables local-only race
 /// --auto-send takes its two values non-adjacently (separated by the --code
 /// flag, not `--auto-send PATH CODE`): two bare positional arguments in a row
 /// makes AppKit treat the launch as a file-open request and it never creates
@@ -20,6 +23,13 @@ enum AutoVerify {
         // Harness overrides go through the real settings store, unpersisted.
         controller.settings.persist = false
         if args.contains("--local") { controller.settings.onlyLocal = true }
+        if args.contains("--no-compress") { controller.settings.noCompress = true }
+        if args.contains("--ask") { controller.settings.bothSidesConfirm = true }
+        if let i = args.firstIndex(of: "--relay"), i + 1 < args.count {
+            controller.settings.relayAddress = args[i + 1]
+            // Kill the LAN race so success provably went through the relay.
+            controller.harnessDisableLocal = true
+        }
         // Harness contract: verify-result.txt + received files live in the
         // container Documents folder (verify-app-mac.sh reads it there),
         // independent of the app's user-facing default output folder.
@@ -53,6 +63,8 @@ enum AutoVerify {
             try? await Task.sleep(for: .milliseconds(200))
             switch controller.phase {
             case .incoming where autoAccept:
+                controller.respond(accept: true)
+            case .confirmSend:
                 controller.respond(accept: true)
             case .done(let summary, _):
                 try? "ok success=\(summary.success)".write(to: resultURL, atomically: true, encoding: .utf8)
