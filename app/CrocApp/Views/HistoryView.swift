@@ -65,13 +65,19 @@ struct HistoryView: View {
         let urls = record.bookmarks.compactMap { data -> URL? in
             var stale = false
             #if os(macOS)
-            let url = try? URL(resolvingBookmarkData: data, options: .withSecurityScope,
-                               relativeTo: nil, bookmarkDataIsStale: &stale)
-            #else
-            let url = try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale)
-            #endif
-            guard let url, FileManager.default.fileExists(atPath: url.path) else { return nil }
+            guard let url = try? URL(resolvingBookmarkData: data, options: .withSecurityScope,
+                                     relativeTo: nil, bookmarkDataIsStale: &stale) else { return nil }
+            // Sandbox denies even stat until the scope is started; open it just
+            // for the existence probe -- startSend opens its own at send time.
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            guard FileManager.default.fileExists(atPath: url.path) else { return nil }
             return url
+            #else
+            guard let url = try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale),
+                  FileManager.default.fileExists(atPath: url.path) else { return nil }
+            return url
+            #endif
         }
         guard !urls.isEmpty else {
             resendUnavailable = true
