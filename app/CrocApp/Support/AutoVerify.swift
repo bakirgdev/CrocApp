@@ -20,8 +20,13 @@ enum AutoVerify {
     @MainActor
     static func runIfRequested(controller: TransferController) async {
         let args = ProcessInfo.processInfo.arguments
+        let harnessActive = args.contains("--auto-receive") || args.contains("--auto-send")
+            || args.contains("--auto-share-send")
+        guard harnessActive else { return }
         // Harness overrides go through the real settings store, unpersisted.
+        // Reset first so a manual run's UserDefaults can't bleed into this run.
         controller.settings.persist = false
+        controller.settings.resetToDefaults()
         if args.contains("--local") { controller.settings.onlyLocal = true }
         if args.contains("--no-compress") { controller.settings.noCompress = true }
         if args.contains("--ask") { controller.settings.bothSidesConfirm = true }

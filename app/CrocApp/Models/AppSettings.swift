@@ -73,6 +73,22 @@ final class AppSettings {
             .filter { !$0.isEmpty }
     }
 
+    /// Harness-only: force every field back to its blank/default state so a
+    /// manual run's UserDefaults can't bleed into a harness run (call only
+    /// after `persist = false`, so this itself never writes UserDefaults).
+    func resetToDefaults() {
+        relayAddress = ""
+        relayAddress6 = ""
+        relayPassword = ""
+        onlyLocal = false
+        noCompress = false
+        zipFolder = false
+        excludePatterns = ""
+        useGitIgnore = false
+        autoAccept = false
+        bothSidesConfirm = false
+    }
+
     private func save(_ value: Any, _ key: String) {
         guard persist else { return }
         UserDefaults.standard.set(value, forKey: key)
