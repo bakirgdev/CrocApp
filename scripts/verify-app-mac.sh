@@ -162,10 +162,15 @@ echo MAC-NOCOMP-OK
 # Sender confirm is auto-answered by AutoVerify's .confirmSend case; the CLI
 # receiver gets the forced prompt (senderInfo.Ask) and must answer on piped
 # stdin, so --ignore-stdin is dropped here (it would refuse the prompt).
+# Two files (not one): croc's sender Ask prompt fires once PER FILE, so this
+# pins the multi-file regression (a single "y" answer used to starve every
+# prompt after the first and abort the send with "refusing files").
 CODE_ASK="ask6$$-mac-ask"
 rm -f "$DOCS/verify-result.txt"
-echo "mac ask send $$" > "$DOCS/askme.txt"
-"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/askme.txt" --code "$CODE_ASK" --ask > /tmp/mac-app-ask.log 2>&1 &
+rm -rf "$DOCS/askdir" && mkdir -p "$DOCS/askdir"
+echo "mac ask send 1 $$" > "$DOCS/askdir/askme1.txt"
+echo "mac ask send 2 $$" > "$DOCS/askdir/askme2.txt"
+"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/askdir" --code "$CODE_ASK" --ask > /tmp/mac-app-ask.log 2>&1 &
 APP_PID=$!
 sleep 3
 DST=$(mktemp -d)
@@ -188,6 +193,6 @@ done
 kill "$APP_PID" 2>/dev/null || true
 RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
 echo "ask send result: $RESULT"
-diff "$DOCS/askme.txt" "$DST/askme.txt"
+diff -r "$DOCS/askdir" "$DST/askdir"
 [ "$RESULT" = "ok success=true" ]
 echo MAC-ASK-OK
