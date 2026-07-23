@@ -28,8 +28,16 @@ type session struct {
 	tempPath string   // absolute path of the text-send temp file, if any; removed in run()
 	promptW  *os.File // write end of the stdin pipe; nil once closed
 	promptM  sync.Mutex
+	// promptAnswers: how many "y\n" lines an accept writes to promptW. croc's
+	// sender-side Ask prompt (TypeRecipientReady handler, croc.go) fires once
+	// PER FILE, so a single answer starves every prompt after the first and
+	// croc aborts with "refusing files". Set to len(filesInfo) (floor 1) in
+	// the sender Ask branch of startSession; left at the zero value (treated
+	// as 1 by respond) everywhere else, since the receiver's accept/decline
+	// prompt only fires once per transfer.
+	promptAnswers int
 
-	restoreIO func() // receive only: restore os.Stdin/os.Stdout, drain capture
+	restoreIO func() // restore os.Stdin (sender Ask) or os.Stdin/os.Stdout+capture (receive)
 
 	stdoutBuf []byte // captured os.Stdout (text receive)
 	stdoutM   sync.Mutex
@@ -169,6 +177,10 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 				return nil, rerr
 			}
 			s.restoreIO = restore
+			s.promptAnswers = len(filesInfo)
+			if s.promptAnswers < 1 {
+				s.promptAnswers = 1
+			}
 		}
 		committed = true
 		go s.run(func() error { return c.Send(filesInfo, emptyFolders, totalFolders) }, origWD, func() { activeMu.Unlock() })
@@ -341,7 +353,17 @@ func (s *session) respond(accept bool) {
 		return
 	}
 	if accept {
-		_, _ = s.promptW.WriteString("y\n")
+		// One "y\n" per file for the sender's Ask path (croc prompts once per
+		// file, see promptAnswers doc); receiver accept/decline only ever
+		// needs the one. Unread buffered lines beyond what croc consumes are
+		// harmless (pipe buffer is 64KB, each answer is 2 bytes).
+		n := s.promptAnswers
+		if n < 1 {
+			n = 1
+		}
+		for i := 0; i < n; i++ {
+			_, _ = s.promptW.WriteString("y\n")
+		}
 	} else {
 		_, _ = s.promptW.WriteString("n\n")
 	}
