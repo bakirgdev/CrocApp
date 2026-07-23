@@ -14,10 +14,14 @@ final class AppRouter {
     var path: [Route] = []
     /// URLs waiting for SendView to pick up into its staged list.
     var pendingSendURLs: [URL] = []
+    /// Mirrors TransferController.isActive (set from ContentView's onChange);
+    /// lets delegate-originated opens queue URLs without yanking navigation
+    /// away from an active transfer.
+    var isBusy = false
 
     func openSend(with urls: [URL]) {
         pendingSendURLs.append(contentsOf: urls)
-        if path != [.send] { path = [.send] }
+        if !isBusy, path != [.send] { path = [.send] }
     }
 
     func openReceive() {

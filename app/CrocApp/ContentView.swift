@@ -16,12 +16,15 @@ struct ContentView: View {
                 // SendView list's own dropDestination takes precedence when
                 // hovering the list itself.
                 guard !controller.isActive else { return false }
-                router.openSend(with: urls)
+                let files = urls.filter(\.isFileURL)
+                guard !files.isEmpty else { return false }
+                router.openSend(with: files)
                 return true
             }
             #endif
             .task { await AutoVerify.runIfRequested(controller: controller) }
             .onChange(of: controller.isActive) { _, active in
+                router.isBusy = active
                 if active { localNetwork.checkIfNeeded() }
             }
             .onChange(of: scenePhase) { _, phase in
