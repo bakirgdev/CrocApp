@@ -159,6 +159,17 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		// and temp file, rather than leaking them because we'd already
 		// (wrongly) considered the async run started.
 		d.OnCodeReady(secret)
+		if o.Ask {
+			restore, rerr := s.installPromptPipe()
+			if rerr != nil {
+				cancel()
+				if tempPath != "" {
+					os.Remove(tempPath)
+				}
+				return nil, rerr
+			}
+			s.restoreIO = restore
+		}
 		committed = true
 		go s.run(func() error { return c.Send(filesInfo, emptyFolders, totalFolders) }, origWD, func() { activeMu.Unlock() })
 		go s.poll()
@@ -347,6 +358,41 @@ func (s *session) closePrompt() {
 		s.promptW.Close()
 		s.promptW = nil
 	}
+}
+
+// installPromptPipe dup2s a pipe's read end onto fd 0 so croc's cached
+// stdin reader (built once at package init) pulls from us instead of the
+// real stdin. Same trick as the receive path (see the long comment in
+// startReceiveSession); used on the send path only when Ask is set, since
+// croc's sender-side "Send to machine X? (Y/n)" prompt (croc.go, gated
+// only on Options.Ask, not NoPrompt) otherwise blocks forever.
+// Returns the restore func; caller stores it in s.restoreIO.
+func (s *session) installPromptPipe() (func(), error) {
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+	savedStdinFd, err := syscall.Dup(syscall.Stdin)
+	if err != nil {
+		pr.Close()
+		pw.Close()
+		return nil, err
+	}
+	if err := syscall.Dup2(int(pr.Fd()), syscall.Stdin); err != nil {
+		syscall.Close(savedStdinFd)
+		pr.Close()
+		pw.Close()
+		return nil, err
+	}
+	origStdin := os.Stdin
+	os.Stdin = pr
+	s.promptW = pw
+	return func() {
+		os.Stdin = origStdin
+		syscall.Dup2(savedStdinFd, syscall.Stdin)
+		syscall.Close(savedStdinFd)
+		pr.Close()
+	}, nil
 }
 
 // finishStdoutCapture restores IO globals and returns captured text if this
