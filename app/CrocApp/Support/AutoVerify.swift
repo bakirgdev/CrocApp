@@ -4,6 +4,7 @@ import CrocKit
 /// Launch-argument harness for scripted verification.
 ///   --auto-receive CODE            receive into Documents, auto-accept
 ///   --auto-send PATH CODE          send PATH with custom code CODE
+///   --auto-share-send CODE         send whatever's staged in the ShareInbox with custom code CODE
 /// Writes verify-result.txt ("ok success=<bool>" | "error <msg>") to Documents.
 enum AutoVerify {
     @MainActor
@@ -17,6 +18,17 @@ enum AutoVerify {
             await watch(controller, resultURL: resultURL, autoAccept: true)
         } else if let i = args.firstIndex(of: "--auto-send"), i + 2 < args.count {
             controller.startSend(urls: [URL(fileURLWithPath: args[i + 1])], customCode: args[i + 2])
+            await watch(controller, resultURL: resultURL, autoAccept: false)
+        } else if let i = args.firstIndex(of: "--auto-share-send"), i + 1 < args.count {
+            let inbox = ShareInbox()
+            inbox.refresh()
+            guard !inbox.staged.isEmpty else {
+                try? "error no staged files in share inbox".write(to: resultURL, atomically: true, encoding: .utf8)
+                return
+            }
+            let urls = inbox.staged
+            inbox.consumeManifest()
+            controller.startSend(urls: urls, customCode: args[i + 1])
             await watch(controller, resultURL: resultURL, autoAccept: false)
         }
     }
