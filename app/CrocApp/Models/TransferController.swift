@@ -101,12 +101,19 @@ final class TransferController {
         // startAccessing returns false for non-scoped URLs (e.g. some drops);
         // keep every path regardless, only track the ones needing release.
         scopedURLs = urls.filter { $0.startAccessingSecurityScopedResource() }
+        let bookmarks: [Data]
+        if urls.count <= TransferRecord.maxBookmarks {
+            let all = urls.compactMap { Self.bookmark(for: $0) }
+            bookmarks = all.count == urls.count ? all : []
+        } else {
+            bookmarks = []
+        }
         pendingRecord = PendingRecord(
             isSend: true, isText: false,
             names: urls.prefix(TransferRecord.maxNames).map(\.lastPathComponent),
             fileCount: urls.count, totalBytes: 0,
             codeHint: Self.codeHint(customCode),
-            bookmarks: urls.compactMap { Self.bookmark(for: $0) })
+            bookmarks: bookmarks)
         let paths = urls.map(\.path)
         var options = baseOptions()
         options.customCode = customCode
