@@ -261,7 +261,8 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Config/CrocApp-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "Config/CrocApp-Info.plist";
+				"INFOPLIST_FILE[sdk=iphonesimulator*]" = "Config/CrocApp-Info.plist";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphoneos*]" = YES;
@@ -315,7 +316,8 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Config/CrocApp-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "Config/CrocApp-Info.plist";
+				"INFOPLIST_FILE[sdk=iphonesimulator*]" = "Config/CrocApp-Info.plist";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphoneos*]" = YES;
