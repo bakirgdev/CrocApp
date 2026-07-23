@@ -24,6 +24,7 @@
 - [ ] Paid Apple Developer account active under intended team.
 - [ ] Apply for `com.apple.developer.networking.multicast` entitlement (form, ~days-2 weeks). Needed for croc-CLI LAN discovery parity (F11 best case). App works via relay without it.
 - [ ] Contact schollz: blessing for name/branding + eventual README link (before store submission).
+- [ ] Create a "Developer ID Application" certificate (developer.apple.com > Certificates) and install in login keychain — needed for `scripts/build-devid.sh` to produce `DEVID-EXPORT-OK`/`DEVID-CHECK-OK` instead of `DEVID-PENDING-CERT` (checked 2026-07-23: only "Apple Development" identity present).
 
 ---
 
