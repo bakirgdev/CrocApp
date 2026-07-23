@@ -1,18 +1,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var controller = TransferController()
-    @State private var outputFolder = OutputFolderStore()
-    @State private var localNetwork = LocalNetworkChecker()
+    @Environment(TransferController.self) private var controller
+    @Environment(LocalNetworkChecker.self) private var localNetwork
     @Environment(\.scenePhase) private var scenePhase
     @State private var shareInbox = ShareInbox()
     @State private var showStagedSheet = false
 
     var body: some View {
         HomeView()
-            .environment(controller)
-            .environment(outputFolder)
-            .environment(localNetwork)
             .task { await AutoVerify.runIfRequested(controller: controller) }
             .onChange(of: controller.isActive) { _, active in
                 if active { localNetwork.checkIfNeeded() }
@@ -54,4 +50,9 @@ struct ContentView: View {
     }
 }
 
-#Preview { ContentView() }
+#Preview {
+    ContentView()
+        .environment(TransferController())
+        .environment(OutputFolderStore())
+        .environment(LocalNetworkChecker())
+}
