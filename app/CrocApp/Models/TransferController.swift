@@ -29,6 +29,8 @@ final class TransferController {
         return true
     }
 
+    var lastOutputFolder: URL? { outDir }
+
     private let engine = CrocEngine()
     private let background = BackgroundCoordinator()
     private var backgroundExpired = false

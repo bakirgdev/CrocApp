@@ -159,6 +159,18 @@ struct TransferStatusView: View {
                 Text("\(summary.files) file(s) • \(summary.totalSize.formatted(.byteCount(style: .file)))")
                     .foregroundStyle(.secondary)
             }
+#if os(iOS)
+            if controller.direction == .receive, let folder = controller.lastOutputFolder {
+                Button {
+                    let target = "shareddocuments://" + folder.path(percentEncoded: true)
+                    if let url = URL(string: target) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Label("Open in Files", systemImage: "folder")
+                }
+            }
+#endif
             Button("Done") { controller.reset() }
                 .buttonStyle(.borderedProminent)
         }
