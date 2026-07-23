@@ -14,6 +14,10 @@ struct CrocAppApp: App {
     @State private var localNetwork = LocalNetworkChecker()
     @State private var router = AppRouter.shared
 
+    #if os(macOS)
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    #endif
+
     var body: some Scene {
         WindowGroup {
             ContentView()
