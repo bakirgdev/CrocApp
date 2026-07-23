@@ -8,12 +8,19 @@ import VisionKit
 struct QRScannerSheet: View {
     let onScan: (String) -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var startFailed = false
 
     var body: some View {
         NavigationStack {
             Group {
                 if DataScannerViewController.isSupported {
-                    QRScannerView(onScan: onScan)
+                    if startFailed {
+                        ContentUnavailableView("Camera unavailable",
+                                               systemImage: "video.slash",
+                                               description: Text("Check camera permission in Settings."))
+                    } else {
+                        QRScannerView(onScan: onScan) { startFailed = true }
+                    }
                 } else {
                     ContentUnavailableView("Camera scanning isn't available on this device",
                                            systemImage: "qrcode.viewfinder")
@@ -32,6 +39,7 @@ struct QRScannerSheet: View {
 
 private struct QRScannerView: UIViewControllerRepresentable {
     let onScan: (String) -> Void
+    let onStartFailure: () -> Void
 
     func makeUIViewController(context: Context) -> DataScannerViewController {
         let scanner = DataScannerViewController(
@@ -45,7 +53,11 @@ private struct QRScannerView: UIViewControllerRepresentable {
 
     func updateUIViewController(_ controller: DataScannerViewController, context: Context) {
         if !controller.isScanning {
-            try? controller.startScanning()
+            do {
+                try controller.startScanning()
+            } catch {
+                DispatchQueue.main.async { onStartFailure() }
+            }
         }
     }
 
