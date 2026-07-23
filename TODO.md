@@ -13,3 +13,8 @@
 - Xcode needed for: App Store screenshots/metadata checks (Phase 7)
 - for sharing this OSS, make blog on bakir.dev as entrypoint to everything about the project, then share blog link with curated msg to each recipient
 - research mainstream xcode/swift(ui) tools, cli, practices when working (i.e. swiftformat etc) and do/verify/implement - research + ask claude on web and cli
+- when copying claude design design
+  - only use sf icons
+  - only use defaul device font
+  - make design tokens in markdown files in ./design_tokens directory (needs to be used in landing and docs pages)
+  - features for history (make if not present): toggle on/off, delete each row, delete all
