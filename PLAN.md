@@ -106,7 +106,8 @@
 
 **Exit criteria:** every V1 flag reachable + effective (spot-verify against CLI behavior: custom relay, local-only, no-compress); settings survive relaunch; defaults match croc CLI defaults.
 
-- [ ] Phase 5 complete
+- [x] Phase 5 complete (2026-07-23)
+  - Deviations: F19 required engine work after all — croc's sender `--ask` prompt fires once PER FILE and isn't gated by NoPrompt, so Phase 5 added a sender-side fd0 pipe + per-file `y` answers (ADR 0012; single-answer version starved multi-file sends, caught by final review + pinned with a 2-file MAC-ASK harness payload); sender confirm UI appears at `.connected` (pipe writes buffer — answering early is safe), decline = cancel. Custom relay needed CLI-parity blanking of the non-customized relay address or croc's dial race silently preferred the public IPv6 relay (trust badge would lie). Ask wins over autoAccept on receive (engine autoAccept closes the prompt pipe, EOF = decline). Relay defaults stored as "" with `effective*` accessors. Final-review Critical: harness `persist=false` originally leaked into ALL launches, killing real persistence — now gated on `--auto-*` args. Verification: MAC-RECEIVE/SEND/LOCAL-SEND/RELAY/NOCOMP/ASK-OK, SIM-INTEROP-OK, interop 11/11, Release builds both platforms; settings-relaunch persistence + gesture-level settings flows manual-pending (no XCUITest by rule). Facts: ADR 0012, `app-ui-architecture.md` Phase 5 section, `crocmobile-bridge.md` Ask entry.
 
 ## Phase 6 — History + product polish
 
