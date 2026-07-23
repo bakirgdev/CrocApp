@@ -56,6 +56,9 @@ final class TransferController {
     private var sendConfirmArmed = false
     private var autoAcceptActive = false
     private var blockedAutoAccept = false
+    /// True once any payload bytes moved -- gates the "resume" hint so it
+    /// never appears on failures before the transfer started.
+    private var sawTransferBytes = false
 
     /// History sink; set once at app startup. nil in previews.
     @ObservationIgnored var history: HistoryStore?
@@ -206,6 +209,7 @@ final class TransferController {
         cancelRequested = false
         declineRequested = false
         blockedAutoAccept = false
+        sawTransferBytes = false
         receivedText = nil
         speedBytesPerSec = 0
         lastProgressDate = nil
@@ -284,6 +288,7 @@ final class TransferController {
             if case .incoming = phase { return }
             if case .confirmSend = phase { return }
             updateSpeed(p)
+            if p.bytesFinished + p.fileSent > 0 { sawTransferBytes = true }
             background.progressChanged(
                 bytesDone: p.bytesFinished + p.fileSent,
                 totalBytes: p.totalSize,
@@ -302,7 +307,11 @@ final class TransferController {
             } else if backgroundExpired {
                 phase = .failed("iOS paused the transfer in the background. Start the same transfer again — croc resumes partially transferred files.")
             } else {
-                phase = .failed(Self.friendlyMessage(for: message, cancelRequested: cancelRequested, declineRequested: declineRequested))
+                var copy = Self.friendlyMessage(for: message, cancelRequested: cancelRequested, declineRequested: declineRequested)
+                if sawTransferBytes && !cancelRequested && !declineRequested {
+                    copy += " Start the same transfer again — croc resumes partially transferred files."
+                }
+                phase = .failed(copy)
             }
             finishRecord(cancelRequested ? .cancelled : declineRequested ? .declined : .failed,
                          summary: nil)
