@@ -162,6 +162,7 @@ struct TransferStatusView: View {
 #if os(iOS)
             if controller.direction == .receive, let folder = controller.lastOutputFolder {
                 Button {
+                    // shareddocuments:// opens the Files app at the given path (community-standard scheme; no public API equivalent).
                     let target = "shareddocuments://" + folder.path(percentEncoded: true)
                     if let url = URL(string: target) {
                         UIApplication.shared.open(url)

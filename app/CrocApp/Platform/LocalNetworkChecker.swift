@@ -52,6 +52,11 @@ final class LocalNetworkChecker {
 
         return await withCheckedContinuation { (cont: CheckedContinuation<Bool?, Never>) in
             nonisolated(unsafe) var resumed = false
+            // A .waiting browser state can mean the system permission prompt
+            // is still pending user response — not yet a real denial. Track
+            // it and only treat it as denied if we're still unresolved by
+            // the timeout.
+            nonisolated(unsafe) var sawWaiting = false
             let finish: (Bool?) -> Void = { value in
                 guard !resumed else { return }
                 resumed = true
@@ -60,7 +65,7 @@ final class LocalNetworkChecker {
                 cont.resume(returning: value)
             }
             browser.stateUpdateHandler = { state in
-                if case .waiting = state { finish(false) }
+                if case .waiting = state { sawWaiting = true }
                 if case .failed = state { finish(false) }
             }
             browser.browseResultsChangedHandler = { results, _ in
@@ -76,7 +81,7 @@ final class LocalNetworkChecker {
             listener.start(queue: .main)
             browser.start(queue: .main)
             DispatchQueue.main.asyncAfter(deadline: .now() + timeoutSeconds) {
-                finish(nil)
+                finish(sawWaiting ? false : nil)
             }
         }
     }

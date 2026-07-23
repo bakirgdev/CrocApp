@@ -29,8 +29,9 @@ enum ShareStager {
             throw ShareStagerError.noAppGroup
         }
         let inbox = container.appendingPathComponent("ShareInbox", isDirectory: true)
-        // Wipe any stale batch — one staged hand-off at a time.
-        try? FileManager.default.removeItem(at: inbox)
+        // Never wipe the inbox here: a prior batch may be mid-send, with croc
+        // actively reading its files. The main app's purgeStaleBatches()
+        // sweeps orphaned batches once it's idle.
         let batchName = "batch-" + UUID().uuidString
         let batchDir = inbox.appendingPathComponent(batchName, isDirectory: true)
         try FileManager.default.createDirectory(at: batchDir, withIntermediateDirectories: true)

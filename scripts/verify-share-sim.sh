@@ -52,10 +52,9 @@ fi
 # identifier as a flag on this simctl version and prints usage instead --
 # list all group containers and pick the line for ours.
 GROUP_DIR=$(xcrun simctl get_app_container "$SIM" "$BUNDLE" groups 2>/dev/null \
-  | awk -v g="$GROUP" '$1 == g { print $2 }')
-if [ -n "$GROUP_DIR" ]; then
-  rm -rf "$GROUP_DIR/ShareInbox"
-fi
+  | awk -v g="$GROUP" '$1 == g { print $2 }') || true
+[ -n "$GROUP_DIR" ] || { echo "FAIL: could not resolve app group container"; exit 1; }
+rm -rf "$GROUP_DIR/ShareInbox"
 
 # Stage a batch the way CrocShare's ShareStager does: batch dir + payload +
 # manifest.json written last.
@@ -86,5 +85,5 @@ RESULT=$(cat "$CONTAINER/Documents/verify-result.txt" 2>/dev/null || echo "missi
 echo "result: $RESULT"
 
 DIFF_OK=0; diff "$GROUP_DIR/ShareInbox/$BATCH/payload.bin" "$DST/payload.bin" >/dev/null 2>&1 || DIFF_OK=$?
-[ "$DIFF_OK" -eq 0 ] && echo SHARE-SIM-OK
+[ "$RESULT" = "ok success=true" ] && [ "$DIFF_OK" -eq 0 ] && echo SHARE-SIM-OK
 [ "$RESULT" = "ok success=true" ] && [ "$DIFF_OK" -eq 0 ]
