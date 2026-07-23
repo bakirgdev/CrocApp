@@ -16,11 +16,15 @@ final class BackgroundCoordinator {
     private static let staticIdentifier = "com.bakirgdev.CrocApp.transfer"
     private static let wildcardPrefix = "com.bakirgdev.CrocApp.transfer."
 
+    private static var staticRegistered = false
+
     private var task: BGContinuedProcessingTask?
-    private var staticRegistered = false
     private var title = ""
     private var subtitle = ""
     private var onExpiration: (@MainActor () -> Void)?
+    // Bumped per transferStarted() so a late .queue launch handler for a
+    // stale (already-ended) transfer can't bind its expiry to a newer one.
+    private var generation = 0
 #endif
 
     func transferStarted(title: String, onExpiration: @escaping @MainActor () -> Void) {
@@ -29,20 +33,22 @@ final class BackgroundCoordinator {
         self.title = title
         self.subtitle = "Waiting for connection…"
         self.onExpiration = onExpiration
+        generation += 1
+        let expected = generation
         let handler: (BGTask) -> Void = { bgTask in
             guard let continued = bgTask as? BGContinuedProcessingTask else {
                 bgTask.setTaskCompleted(success: false)
                 return
             }
-            Task { @MainActor [weak self] in self?.adopt(continued) }
+            Task { @MainActor [weak self] in self?.adopt(continued, expected: expected) }
         }
         var identifier = Self.wildcardPrefix + UUID().uuidString
         if !BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: .main, launchHandler: handler) {
-            if !staticRegistered {
-                staticRegistered = BGTaskScheduler.shared.register(
+            if !Self.staticRegistered {
+                Self.staticRegistered = BGTaskScheduler.shared.register(
                     forTaskWithIdentifier: Self.staticIdentifier, using: .main, launchHandler: handler)
             }
-            guard staticRegistered else { return }
+            guard Self.staticRegistered else { return }
             identifier = Self.staticIdentifier
         }
         let request = BGContinuedProcessingTaskRequest(identifier: identifier, title: title, subtitle: subtitle)
@@ -77,7 +83,14 @@ final class BackgroundCoordinator {
     }
 
 #if os(iOS)
-    private func adopt(_ continued: BGContinuedProcessingTask) {
+    private func adopt(_ continued: BGContinuedProcessingTask, expected: Int) {
+        guard expected == generation else {
+            // .queue strategy can launch arbitrarily late; this task belongs
+            // to a transfer that already ended (and possibly a new one
+            // started) -- don't bind its expiry to the wrong transfer.
+            continued.setTaskCompleted(success: true)
+            return
+        }
         guard onExpiration != nil else {
             // Transfer already finished before the system launched the task.
             continued.setTaskCompleted(success: true)
@@ -89,6 +102,7 @@ final class BackgroundCoordinator {
         continued.expirationHandler = { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                UIApplication.shared.isIdleTimerDisabled = false
                 self.onExpiration?()
                 self.onExpiration = nil
                 self.task?.setTaskCompleted(success: false)
