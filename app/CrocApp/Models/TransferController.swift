@@ -138,6 +138,9 @@ final class TransferController {
                 }
                 for await event in stream { handle(event) }
             } catch {
+                // Startup failure before any event flowed -- still tear down
+                // the idle-timer lock / BG task requested at the top of run().
+                background.transferEnded(success: false)
                 phase = .failed(Self.friendlyMessage(for: "\(error)", cancelRequested: cancelRequested, declineRequested: declineRequested))
             }
             releaseScopedURLs()
