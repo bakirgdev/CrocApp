@@ -58,7 +58,8 @@
 
 **Exit criteria:** end-to-end transfers driven purely from UI on both platforms; decline actually notifies sender (`SendError` path); state machine handles peer-vanished + relay-unreachable errors with readable messages.
 
-- [ ] Phase 2 complete
+- [x] Phase 2 complete (2026-07-23)
+  - Deviations: F8 = accept-sheet conflict model, `overwrite` always on, Accept means replace (per-file skip needs engine work; ADR 0009); "clipboard auto-detect" → explicit `PasteButton` (iOS paste-privacy banner; ADR 0009); QR payload `croc://<code>`. Real bug found by harness and fixed: progress ticks (~10 Hz) clobbered the unanswered accept prompt — `.incoming` guard in `TransferController.handle` (also documented as engine contract note). CLI custom-code receive needs `CROC_SECRET` env (not positional) — verify-app-mac.sh + bridge doc updated. `fileImporter` without `allowsMultipleSelection` returns single-URL Result (plan's folder-picker snippet didn't compile as written). Verification: MAC-RECEIVE-OK + MAC-SEND-OK (`scripts/verify-app-mac.sh`, new), SIM-INTEROP-OK, interop 11/11 incl. decline; gesture-level flows (drag-drop, camera QR, taps) left to manual device testing (no XCUITest by rule). UI facts: `docs/knowledge/app-ui-architecture.md`. Phase 3+ carry-overs: cross-flow status bleed (active Send renders on Receive screen) acceptable V1; no Cancel during accept prompt; iOS Files-visibility plist keys still pending (Phase 3); consider renaming `CrocApp/` wrapper dir → `app/` (triple-name nesting caused two subagent misplacements).
 
 ## Phase 3 — iOS platform integration
 

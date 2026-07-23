@@ -22,6 +22,7 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 - progress `{"currentFile","totalFiles","fileName","fileSent","fileSize","bytesFinished","totalSize","step"}`, step ∈ waiting|connected|transferring; `fileSent` is per-current-file (croc `TotalSent` resets per file)
 - summary `{"success","files","totalSize"}`
 - Sub-100ms transfers may deliver `done` with no `connected`/`progress`/`fileList` events — UI keys off `done`/`failed` only.
+- `progress` keeps ticking (~10 Hz, step `connected`) while the accept prompt raised by `fileList` is unanswered — consumers must not let it clobber their prompt state (croc blocks in GetInput until `Respond`).
 - `.failed` semantics: local cancel during the accept-prompt window surfaces croc's `"refused files"` string, not "cancelled" — map wording in UI layer.
 
 ## Engine behavior invariants
@@ -36,7 +37,7 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 ## croc v10.5.0 gotchas (verified against source/live)
 
 - Relay room = `SHA-256(secret[:4]+"croc")` → two codes sharing their first 4 chars collide into one room ("room full"). Generated codes are safe (random PIN prefix); custom codes and test scripts must vary the first 4 chars.
-- CLI: custom send code needs `CROC_SECRET=...` env (`--code` refused in non-classic mode); non-tty CLI sends need global `--ignore-stdin` before the subcommand.
+- CLI: custom codes need `CROC_SECRET=...` env on BOTH send and receive (`--code`/positional custom codes refused in non-classic mode); non-tty CLI runs need global `--ignore-stdin` before the subcommand.
 - UDP multicast peer discovery can be dead on a LAN (returns zero peers; reproduced with bare peerdiscovery). Fallbacks: relay (automatic) or `--ip` direct. iOS physical devices additionally need the restricted multicast entitlement (constraints doc §2).
 - v10.5.0 auto-reconnects dropped transfers (≤10 attempts) — peer-death surfaces slowly; scripts must bound with timeouts.
 - Sender-first start ordering matters: receiver connecting before the sender registered the room can corrupt the PAKE handshake (`invalid character` errors). GUI flows are naturally sender-first; scripts must be.
@@ -45,7 +46,8 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 ## Verification harnesses
 
 - `scripts/verify-interop.sh` — 9 scenarios crocmobile↔CLI (file/folder/text both ways, decline, cancel both ways mid-wire via `--throttleUpload 200k`, forced relay, LAN via `--ip`). Cancel scenarios assert received-file mismatch (unfakeable by log noise).
-- `scripts/verify-app-sim.sh` — boots sim, installs app, CLI→app via `--auto-receive CODE` launch arg, gates on exact `ok success=true` + byte diff.
+- `scripts/verify-app-sim.sh` — boots sim, installs app, CLI→app via `--auto-receive CODE` launch arg, gates on exact `ok success=true` + byte diff. Since Phase 2 the launch args drive the real UI state machine (`AutoVerify` → `TransferController`, accept via `respond(true)`), not engine-level autoAccept.
+- `scripts/verify-app-mac.sh` — macOS app both directions: CLI→app (`--auto-receive`) and app→CLI (`--auto-send PATH CODE`, custom-code path; source file must live in the app container — sandbox).
 - `crockit-verify` (CrocKit executable) — Swift-layer send/receive/cancel-after-ms/`twice` (two transfers one process — proves fd0/stdout/cwd/mutex restoration composes).
 - macOS app verified via same `--auto-receive` route; container Documents at `~/Library/Containers/com.bakirgdev.CrocApp/Data/Documents/`.
 
