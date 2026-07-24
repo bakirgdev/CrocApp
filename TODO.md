@@ -1,41 +1,32 @@
-MANAGE THIS, SEGMENT/CATEGORIZE/DO
+CC WORK
+- how to build app via CLI but not install in applications. aslo how to put app on iphone. i want this to test apps on local and separate networks - give simple guide how
+- > napisi neki prompt da claude pogleda app, fully je istestira sa subagentima i vidi je li codewise i to spremana za relase i slicno. ugl reci radi si implementation plan in phases i sad nek on isplanira i uradi review cijele app i fixa sve sto treba i commita redom fino. ovo je posljednja provjera pred spremanje za app store i objavu v1.
 
+TO DO
 - github issue & pr templates
-- setup sponsoring button on github
 - brew cask
-- rtk
-- ask cc if this app is apple silicon only, and any iphone with ios 26+?
-- specialized skills/commands/agents while developing for QOL/DevEx
-- XCode project dir's CLAUDE.md
+- specialized skills/commands/agents while developing for QOL/DevEx (release, format, actions,... ask Claude Code for suggestions)
 - landing website (static, github pages, domain pointed - build)
 - docs website (static, github pages, domain pointed - find nice provider)
 - README.md
-- Xcode needed for: physical-device debugging (Phase 3)
-- Xcode needed for: Instruments profiling (Phase 6)
-- Xcode needed for: provisioning/signing tangles (first device + store builds)
-- Xcode needed for: App Store screenshots/metadata checks (Phase 7)
 - for sharing this OSS, make blog on bakir.dev as entrypoint to everything about the project, then share blog link with curated msg to each recipient
-- research mainstream xcode/swift(ui) tools, cli, practices when working (i.e. swiftformat etc) and do/verify/implement - research + ask claude on web and cli
-- when copying claude design design
-  - only use sf icons
-  - only use defaul device font
-  - make design tokens in markdown files in ./design_tokens directory (needs to be used in landing and docs pages)
-  - features for history (make if not present): toggle on/off, delete each row, delete all
-- do the claude design desing integration later, as v1.1.0, ship current is fine
-- perform device cleanup with cc becase ~/go folder was made, many builds of app in ~/Applications exist etc
 - protect main branch to have it contributed on only via PRs
 - protect main from force pushes of any type
-- to make for repo 1/2 (contributing/oss side-of-things):
-  - CONTRIBUTING.md — how to build, branch/PR conventions, code style, how to run tests, DCO/CLA if any (none needed for MIT solo project)
-  - CODE_OF_CONDUCT.md — Contributor Covenant is the default choice, low effort, signals a welcoming project
-  - CHANGELOG.md — Keep a Changelog format, even if sparse early on
-  - NOTICE or THIRD_PARTY_LICENSES.md — explicit croc MIT attribution + any Go module licenses you vendor (gomobile bindings pull in deps)
-- to make for repo 2/2 (contributing/oss side-of-things):
-  - issue template
-  - pr template
-  - release workflow
-  - docs workflow
-  - funding.yml file (optional, what is this for exactly?)
-  - SECURITY.md — given the CROC_SECRET/argv invariant, worth a short policy on how to report security issues privately (email, not public issue) since transfer secrets are the whole trust model
-  - docs/ARCHITECTURE.md — SwiftUI app structure, how the Go engine is bridged (gobind), where the sandbox boundaries are. This is also your Swift learning trail, worth keeping current
-  - docs/BUILDING.md — exact Xcode version, Go version, gomobile setup steps. Given the "verify gomobile/Xcode compat on every update" invariant, this file should be the living record of what worked
+- CONTRIBUTING.md — how to build, branch/PR conventions, code style, how to run tests, DCO/CLA if any (none needed for MIT solo project)
+- CODE_OF_CONDUCT.md — Contributor Covenant is the default choice, low effort, signals a welcoming project
+- CHANGELOG.md — Keep a Changelog format, even if sparse early on
+- NOTICE or THIRD_PARTY_LICENSES.md — explicit croc MIT attribution + any Go module licenses you vendor (gomobile bindings pull in deps)
+- release workflow
+- docs workflow
+- docs/GLOSSARY.md
+- SECURITY.md — given the CROC_SECRET/argv invariant, worth a short policy on how to report security issues privately (email, not public issue) since transfer secrets are the whole trust model
+- docs/ARCHITECTURE.md — SwiftUI app structure, how the Go engine is bridged (gobind), where the sandbox boundaries are. This is also your Swift learning trail, worth keeping current
+- docs/BUILDING.md — exact Xcode version, Go version, gomobile setup steps. Given the "verify gomobile/Xcode compat on every update" invariant, this file should be the living record of what worked
+
+V1.1 DESIGN COPY (Claude Design)
+- explore the /desing-sync command what it does
+- rules:
+  - only use sf icons
+  - only use defaul device font
+  - make design tokens in markdown files in `design/` directory (needs to be used in landing and docs pages)
+  - features for history (make if not present): toggle on/off, delete each row, delete all
