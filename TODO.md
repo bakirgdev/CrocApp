@@ -20,8 +20,17 @@
   - features for history (make if not present): toggle on/off, delete each row, delete all
 - protect main branch to have it contributed on only via PRs
 - protect main from force pushes of any type
-- to make for repo (contributing/oss side-of-things):
+- to make for repo 1/2 (contributing/oss side-of-things):
   - CONTRIBUTING.md — how to build, branch/PR conventions, code style, how to run tests, DCO/CLA if any (none needed for MIT solo project)
   - CODE_OF_CONDUCT.md — Contributor Covenant is the default choice, low effort, signals a welcoming project
   - CHANGELOG.md — Keep a Changelog format, even if sparse early on
   - NOTICE or THIRD_PARTY_LICENSES.md — explicit croc MIT attribution + any Go module licenses you vendor (gomobile bindings pull in deps)
+- to make for repo 2/2 (contributing/oss side-of-things):
+  - issue template
+  - pr template
+  - release workflow
+  - docs workflow
+  - funding.yml file (optional, what is this for exactly?)
+  - SECURITY.md — given the CROC_SECRET/argv invariant, worth a short policy on how to report security issues privately (email, not public issue) since transfer secrets are the whole trust model
+  - docs/ARCHITECTURE.md — SwiftUI app structure, how the Go engine is bridged (gobind), where the sandbox boundaries are. This is also your Swift learning trail, worth keeping current
+  - docs/BUILDING.md — exact Xcode version, Go version, gomobile setup steps. Given the "verify gomobile/Xcode compat on every update" invariant, this file should be the living record of what worked
