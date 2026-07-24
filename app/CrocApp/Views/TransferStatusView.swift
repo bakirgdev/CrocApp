@@ -84,6 +84,8 @@ struct TransferStatusView: View {
             Text(code)
                 .font(.title2.monospaced().bold())
                 .textSelection(.enabled)
+                .accessibilityLabel("Transfer code")
+                .accessibilityValue(code.replacingOccurrences(of: "-", with: ", "))
             Button {
                 Clipboard.copy(code)
             } label: {
@@ -132,6 +134,7 @@ struct TransferStatusView: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
                 ProgressView(value: fraction(p.fileSent, of: p.fileSize))
+                    .accessibilityLabel("Current file progress")
                 HStack {
                     Text("File \(min(p.currentFile + 1, p.totalFiles)) of \(p.totalFiles)")
                     Spacer()
@@ -140,8 +143,10 @@ struct TransferStatusView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
+            .accessibilityElement(children: .combine)
             VStack(alignment: .leading, spacing: 6) {
                 ProgressView(value: fraction(p.bytesFinished + p.fileSent, of: p.totalSize))
+                    .accessibilityLabel("Overall progress")
                 HStack {
                     Text("Total \((p.bytesFinished + p.fileSent).formatted(.byteCount(style: .file))) / \(p.totalSize.formatted(.byteCount(style: .file)))")
                     Spacer()
@@ -152,6 +157,7 @@ struct TransferStatusView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
+            .accessibilityElement(children: .combine)
             TrustBadge(relay: controller.activeRelay)
         }
     }

@@ -106,6 +106,7 @@ struct SendView: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel("Remove \(url.lastPathComponent)")
                             }
                         }
                     }
