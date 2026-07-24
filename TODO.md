@@ -21,6 +21,7 @@ TO DO
 - SECURITY.md — given the CROC_SECRET/argv invariant, worth a short policy on how to report security issues privately (email, not public issue) since transfer secrets are the whole trust model
 - docs/ARCHITECTURE.md — SwiftUI app structure, how the Go engine is bridged (gobind), where the sandbox boundaries are. This is also your Swift learning trail, worth keeping current
 - docs/BUILDING.md — exact Xcode version, Go version, gomobile setup steps. Given the "verify gomobile/Xcode compat on every update" invariant, this file should be the living record of what worked
+- prompt about camera and local network should be after onboarding closed on first launch!
 
 V1.1 DESIGN COPY (Claude Design)
 - explore the /desing-sync command what it does
