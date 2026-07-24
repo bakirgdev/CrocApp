@@ -1,26 +1,41 @@
 # macOS
 .DS_Store
+._*
 
 # Xcode
 build/
 DerivedData/
 xcuserdata/
-*.xcuserstate
+IDEWorkspaceChecks.plist
+*.xcarchive/
 *.ipa
 *.dSYM
 *.dSYM.zip
-timeline.xctimeline
-playground.xcworkspace
+
+# Signing material
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+.env
 
 # Swift Package Manager
 .build/
 .swiftpm/
-Package.resolved
+# Package.resolved is committed on purpose: CrocApp is an app, its pins must be reproducible
+
+# Go (cmd/croctest builds an in-tree binary)
+crocmobile/cmd/croctest/croctest
+*.test
 
 # gomobile build output (ADR 0006: xcframework not committed)
 CrocKit/Croc.xcframework/
 
-# Obra/superpowers
+# Build + verification logs (harnesses write to /tmp, but redirects land here)
+*.log
+
+# Obra superpowers
 .superpowers/
 docs/superpowers/plans/
 
