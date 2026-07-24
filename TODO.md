@@ -1,5 +1,4 @@
 CC WORK
-- how to build app via CLI but not install in applications. aslo how to put app on iphone. i want this to test apps on local and separate networks - give simple guide how
 - > napisi neki prompt da claude pogleda app, fully je istestira sa subagentima i vidi je li codewise i to spremana za relase i slicno. ugl reci radi si implementation plan in phases i sad nek on isplanira i uradi review cijele app i fixa sve sto treba i commita redom fino. ovo je posljednja provjera pred spremanje za app store i objavu v1.
 
 TO DO
