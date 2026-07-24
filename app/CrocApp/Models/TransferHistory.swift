@@ -7,8 +7,9 @@ import Observation
 /// segment only), and, for sends, bookmarks so history can re-stage the
 /// same files. Never file contents, never the full code phrase.
 /// Bookmarks are stored only for sends of at most `maxBookmarks` items and
-/// only when every bookmark resolves — all-or-nothing, so re-send can never
-/// send a partial set.
+/// only when every bookmark resolves — all-or-nothing at capture time. Re-send
+/// still drops files that have vanished since (the user sees the staged list
+/// before sending).
 @Model
 final class TransferRecord {
     static let maxNames = 20

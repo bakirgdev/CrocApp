@@ -26,9 +26,7 @@ struct CrocAppApp: App {
         _settings = State(initialValue: settings)
         // Harness transfers must not pollute real history (mirrors the
         // settings persist=false channel) -- point the store at memory.
-        let harness = ProcessInfo.processInfo.arguments.contains {
-            ["--auto-receive", "--auto-send", "--auto-share-send"].contains($0)
-        }
+        let harness = AutoVerify.isHarnessRun
         let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: harness))
         _history = State(initialValue: history)
         let controller = TransferController(settings: settings)

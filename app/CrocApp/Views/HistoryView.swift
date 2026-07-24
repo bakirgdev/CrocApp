@@ -74,8 +74,10 @@ struct HistoryView: View {
             guard FileManager.default.fileExists(atPath: url.path) else { return nil }
             return url
             #else
-            guard let url = try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale),
-                  FileManager.default.fileExists(atPath: url.path) else { return nil }
+            guard let url = try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale) else { return nil }
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            guard FileManager.default.fileExists(atPath: url.path) else { return nil }
             return url
             #endif
         }
