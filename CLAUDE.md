@@ -5,7 +5,7 @@ Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS
 ## Layout
 
 - `.claude/` — project Claude config: `rules/`, `skills/`, `settings.json` & `settings.local.json`, etc.
-- `.mcp.json` — project MCP servers: `context7` (docs), `xcode` (`xcrun mcpbridge`), `gopls` (Go semantics), `github` (needs `GITHUB_PAT`)
+- `.mcp.json` — project MCP servers: `context7` (docs), `xcode` (`xcrun mcpbridge`), `gopls` (Go semantics; launched via `$(go env GOPATH)/bin/gopls` since `~/go/bin` is usually off PATH)
 - `.github/` — GitHub config: issue/PR templates, workflows, etc.
 - `app/` — Xcode project (SwiftUI, iOS + macOS): `app/CrocApp.xcodeproj`, app sources `app/CrocApp/`, share extension `app/CrocShare/`, plists + entitlements + export options `app/Config/`
 - `assets/` — brand art: `CrocAppIcon.icon` source, banner, mascot, etc.
@@ -53,7 +53,7 @@ A green build is **not** evidence a transfer works. Any change to `crocmobile/se
 
 When unsure about any API, library, tool, or platform behavior: query the context7 MCP (see `@.claude/rules/context7.md`), perform web search, deploy research subagent(s) or use tool(s) search before writing code. A small lookup beats a hallucination. Applies doubly to Swift/SwiftUI/Xcode 26 APIs (training data lags Apple releases) and croc CLI (new versions often).
 
-Prefer semantic tools over grep where they exist: `gopls` MCP for `crocmobile/` (`go_references`, `go_symbol_references`, `go_package_api`, `go_diagnostics`), `xcode` MCP for build/test/diagnostics/simulator on the Swift side. `xcode` requires the project open in Xcode and Settings > Intelligence > MCP enabled; it is **not** a substitute for `scripts/verify-*.sh`.
+Prefer semantic tools over grep where they exist: `gopls` MCP for `crocmobile/` (`go_search`, `go_symbol_references`, `go_file_context`, `go_package_api`, `go_diagnostics`), `xcode` MCP for build/test/diagnostics/simulator on the Swift side. `xcode` requires the project open in Xcode and Settings > Intelligence > MCP enabled; it is **not** a substitute for `scripts/verify-*.sh`.
 
 ### Commit and push
 

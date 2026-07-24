@@ -20,9 +20,10 @@
     },
     "gopls": {
       "type": "stdio",
-      "command": "gopls",
+      "command": "sh",
       "args": [
-        "mcp"
+        "-c",
+        "exec \"$(go env GOPATH)/bin/gopls\" mcp"
       ]
     }
   }
