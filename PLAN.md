@@ -122,7 +122,8 @@
 
 **Exit criteria:** app passes self-run `apple-appstore-reviewer` skill audit; VoiceOver-navigable core flows; no jank at 10k-file send.
 
-- [ ] Phase 6 complete
+- [x] Phase 6 complete (2026-07-24)
+  - Deviations: history = SwiftData `TransferRecord`+`HistoryStore` with privacy bounds (≤20 names, code hint = first segment, bookmarks all-or-nothing ≤200 — partial re-send impossible by construction; ADR 0013); harness runs get in-memory ModelContainer + new `MAC-HISTORY-OK` marker (`verify-history.txt` records=1); re-send = bookmark resolve → `AppRouter.openSend` — BOTH platforms needed `startAccessingSecurityScopedResource()` before the `fileExists` probe (sandbox denies stat on unopened scope; macOS caught in task review, iOS twin caught in final review); receive conflict scan moved off main actor (10k smokes: recv 427 s, send 358 s, 10000/10000 both ways — a task agent's "app-send broken" claim was disproven: its recv invocation lacked GNU timeout); onboarding sheet wins first-launch race vs staged-files sheet (re-offered on dismissal); `.glassEffect()` used exactly once (code card); audit interjection beyond plan scope: `PrivacyInfo.xcprivacy` both targets + `ITSAppUsesNonExemptEncryption=false` both plists (audit + ASC reviewer-notes draft in `.superpowers/sdd/appstore-audit.md`). Verification: 7 MAC markers, SIM-INTEROP-OK, SHARE-SIM-OK, interop suite, Release builds both platforms. Manual-pending (no XCUITest rule): history gestures + Send Again (both platforms, sandboxed), history Clear live-update, onboarding true-first-launch, VoiceOver walkthrough, Dynamic Type, glass card on device. Phase 7 carry-overs: AutoVerify build-flag gate (pre-existing), ASC metadata + privacy labels + reviewer notes, BIS/ASC encryption answer must match plist, keychain for relay password.
 
 ## Phase 7 — Release engineering + V1 launch
 
