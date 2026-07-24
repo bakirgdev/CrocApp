@@ -1,3 +1,5 @@
+MANAGE THIS, SEGMENT/CATEGORIZE/DO
+
 - github issue & pr templates
 - setup sponsoring button on github
 - brew cask
@@ -18,6 +20,8 @@
   - only use defaul device font
   - make design tokens in markdown files in ./design_tokens directory (needs to be used in landing and docs pages)
   - features for history (make if not present): toggle on/off, delete each row, delete all
+- do the claude design desing integration later, as v1.1.0, ship current is fine
+- perform device cleanup with cc becase ~/go folder was made, many builds of app in ~/Applications exist etc
 - protect main branch to have it contributed on only via PRs
 - protect main from force pushes of any type
 - to make for repo 1/2 (contributing/oss side-of-things):
