@@ -67,7 +67,7 @@ func main() {
 	yes := fs.Bool("yes", false, "auto-accept (receive)")
 	cancelAfter := fs.Int("cancel-after", 0, "cancel after N ms")
 	throttle := fs.String("throttle", "", "cap sender upload rate, e.g. 200k, 1m (send)")
-	fs.Parse(os.Args[2:])
+	_ = fs.Parse(os.Args[2:])
 
 	opts := crocmobile.NewOptions()
 	if *relay != "" {

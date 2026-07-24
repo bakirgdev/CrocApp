@@ -103,7 +103,7 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 	committed := false
 	defer func() {
 		if !committed {
-			os.Chdir(origWD)
+			_ = os.Chdir(origWD)
 			activeMu.Unlock()
 		}
 	}()
@@ -258,7 +258,7 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 	cr, cw, err := os.Pipe()
 	if err != nil {
 		os.Stdin = origStdin
-		syscall.Dup2(savedStdinFd, syscall.Stdin)
+		_ = syscall.Dup2(savedStdinFd, syscall.Stdin)
 		syscall.Close(savedStdinFd)
 		s.closePrompt() // closes pw unless AutoAccept already did
 		pr.Close()
@@ -270,7 +270,7 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 	captureDone := make(chan struct{})
 	go func() {
 		defer close(captureDone)
-		defer func() { recover() }() // gobind: a goroutine panic kills the host app
+		defer func() { recover() }() //nolint:errcheck // gobind: a goroutine panic kills the host app
 		buf := make([]byte, 32*1024)
 		for {
 			n, err := cr.Read(buf)
@@ -292,7 +292,7 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 		cw.Close()
 		<-captureDone
 		cr.Close()
-		syscall.Dup2(savedStdinFd, syscall.Stdin)
+		_ = syscall.Dup2(savedStdinFd, syscall.Stdin)
 		syscall.Close(savedStdinFd)
 		pr.Close()
 	}
@@ -320,7 +320,7 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 	if s.tempPath != "" {
 		os.Remove(s.tempPath)
 	}
-	os.Chdir(origWD)
+	_ = os.Chdir(origWD)
 	release()
 	if err != nil {
 		s.delegate.OnError(err.Error())
@@ -411,7 +411,7 @@ func (s *session) installPromptPipe() (func(), error) {
 	s.promptW = pw
 	return func() {
 		os.Stdin = origStdin
-		syscall.Dup2(savedStdinFd, syscall.Stdin)
+		_ = syscall.Dup2(savedStdinFd, syscall.Stdin)
 		syscall.Close(savedStdinFd)
 		pr.Close()
 	}, nil
@@ -438,7 +438,7 @@ func (s *session) finishStdoutCapture() string {
 // local connection) can race s.done and skip an intermediate OnConnected or
 // OnProgress call entirely — OnDone still fires reliably.
 func (s *session) poll() {
-	defer func() { recover() }() // racy field reads must never crash the app
+	defer func() { recover() }() //nolint:errcheck // racy field reads must never crash the app
 	t := time.NewTicker(100 * time.Millisecond)
 	defer t.Stop()
 	connected, listSent := false, false

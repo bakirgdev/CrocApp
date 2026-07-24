@@ -1,0 +1,23 @@
+# Lint config for the gomobile-bound croc wrapper.
+# Deliberately close to the default set: this module is a thin bridge, and a
+# noisy linter here costs more than it catches.
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - errorlint
+    - misspell
+    - unconvert
+  exclusions:
+    presets:
+      - comments
+      - std-error-handling
+
+formatters:
+  enable:
+    - gofmt
