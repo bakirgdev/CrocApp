@@ -55,6 +55,10 @@ When unsure about any API, library, tool, or platform behavior: query the contex
 
 Prefer semantic tools over grep where they exist: `gopls` MCP for `crocmobile/` (`go_references`, `go_symbol_references`, `go_package_api`, `go_diagnostics`), `xcode` MCP for build/test/diagnostics/simulator on the Swift side. `xcode` requires the project open in Xcode and Settings > Intelligence > MCP enabled; it is **not** a substitute for `scripts/verify-*.sh`.
 
+### Commit and push
+
+Never commit or push unless told to. When asked to, do it with best practices and reason about applicable changes for the commit message. 
+
 ### Docs self-heal (end of every session)
 
 Every session ends by creating, updating, or deleting documentation so `docs/` and `CLAUDE.md` matches reality:
