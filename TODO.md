@@ -4,6 +4,7 @@ MANAGE THIS, SEGMENT/CATEGORIZE/DO
 - setup sponsoring button on github
 - brew cask
 - rtk
+- ask cc if this app is apple silicon only, and any iphone with ios 26+?
 - specialized skills/commands/agents while developing for QOL/DevEx
 - XCode project dir's CLAUDE.md
 - landing website (static, github pages, domain pointed - build)
