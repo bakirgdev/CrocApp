@@ -7,6 +7,8 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var shareInbox = ShareInbox()
     @State private var showStagedSheet = false
+    @AppStorage("onboarding.seen") private var onboardingSeen = false
+    @State private var showOnboarding = false
 
     var body: some View {
         HomeView()
@@ -22,7 +24,10 @@ struct ContentView: View {
                 return true
             }
             #endif
-            .task { await AutoVerify.runIfRequested(controller: controller) }
+            .task {
+                if !onboardingSeen && !AutoVerify.isHarnessRun { showOnboarding = true }
+                await AutoVerify.runIfRequested(controller: controller)
+            }
             .onChange(of: controller.isActive) { _, active in
                 router.isBusy = active
                 if active { localNetwork.checkIfNeeded() }
@@ -60,6 +65,11 @@ struct ContentView: View {
                         shareInbox.refresh()
                         showStagedSheet = false
                     })
+            }
+            .sheet(isPresented: $showOnboarding, onDismiss: { onboardingSeen = true }) {
+                OnboardingView {
+                    showOnboarding = false
+                }
             }
     }
 }
