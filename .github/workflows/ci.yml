@@ -3,7 +3,15 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: &docs-only
+      - "**/*.md"
+      - "docs/**"
+      - "assets/**"
+      - "web/**"
+      - "LICENSE"
+      - ".github/FUNDING.yml"
   pull_request:
+    paths-ignore: *docs-only
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -63,8 +71,12 @@ jobs:
 
       - name: govulncheck
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          "$(go env GOPATH)/bin/govulncheck" ./...
+          # Install the tool for the host so the binary lands in $GOPATH/bin
+          # and can actually run: the job-level GOOS/GOARCH would otherwise
+          # cross-compile a darwin binary into $GOPATH/bin/darwin_arm64/.
+          env -u GOOS -u GOARCH go install golang.org/x/vuln/cmd/govulncheck@latest
+          # Run with the job env intact so the analysis still targets darwin.
+          "$(env -u GOOS -u GOARCH go env GOPATH)/bin/govulncheck" ./...
 
   build:
     name: build (${{ matrix.platform }})
@@ -111,5 +123,6 @@ jobs:
           xcodebuild -scheme CrocApp \
             -destination '${{ matrix.destination }}' \
             -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO \
             build \
             | xcbeautify --renderer github-actions
