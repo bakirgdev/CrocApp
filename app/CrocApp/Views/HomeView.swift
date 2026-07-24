@@ -26,7 +26,7 @@ struct HomeView: View {
             .frame(maxWidth: 480)
             .navigationTitle("CrocApp")
             .toolbar {
-#if os(iOS)
+                #if os(iOS)
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     NavigationLink(value: AppRouter.Route.history) {
                         Image(systemName: "clock.arrow.circlepath")
@@ -43,7 +43,7 @@ struct HomeView: View {
                     }
                     .accessibilityLabel("How croc keeps transfers private")
                 }
-#else
+                #else
                 ToolbarItem {
                     NavigationLink(value: AppRouter.Route.howItWorks) {
                         Image(systemName: "lock.shield")
@@ -56,7 +56,7 @@ struct HomeView: View {
                     }
                     .accessibilityLabel("Transfer history")
                 }
-#endif
+                #endif
             }
             .navigationDestination(for: AppRouter.Route.self) { route in
                 switch route {

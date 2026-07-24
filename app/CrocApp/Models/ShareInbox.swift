@@ -27,7 +27,8 @@ final class ShareInbox {
         purgeStaleBatches()
         let manifestURL = inbox.appendingPathComponent("manifest.json")
         guard let data = try? Data(contentsOf: manifestURL),
-              let manifest = try? JSONDecoder().decode(Manifest.self, from: data) else {
+            let manifest = try? JSONDecoder().decode(Manifest.self, from: data)
+        else {
             staged = []
             return
         }
@@ -50,11 +51,13 @@ final class ShareInbox {
         let manifestURL = inbox.appendingPathComponent("manifest.json")
         var liveBatch: String?
         if let data = try? Data(contentsOf: manifestURL),
-           let manifest = try? JSONDecoder().decode(Manifest.self, from: data) {
+            let manifest = try? JSONDecoder().decode(Manifest.self, from: data)
+        {
             liveBatch = manifest.batch
         }
-        let contents = (try? FileManager.default.contentsOfDirectory(
-            at: inbox, includingPropertiesForKeys: nil)) ?? []
+        let contents =
+            (try? FileManager.default.contentsOfDirectory(
+                at: inbox, includingPropertiesForKeys: nil)) ?? []
         for url in contents where url.hasDirectoryPath && url.lastPathComponent != liveBatch {
             // Never delete the batch backing an active send.
             if !staged.isEmpty, staged[0].deletingLastPathComponent() == url { continue }

@@ -22,7 +22,9 @@ struct ShareStagingView: View {
                     ContentUnavailableView {
                         Label("Ready to send", systemImage: "checkmark.circle")
                     } description: {
-                        Text("^[\(count) file](inflect: true) staged. Open CrocApp to start the transfer.")
+                        Text(
+                            "^[\(count) file](inflect: true) staged. Open CrocApp to start the transfer."
+                        )
                     }
                 case .failed(let message):
                     ContentUnavailableView {

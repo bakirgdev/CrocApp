@@ -6,7 +6,10 @@ struct SendView: View {
     @Environment(TransferController.self) private var controller
     @Environment(AppRouter.self) private var router
 
-    enum Mode: String, CaseIterable { case files = "Files", text = "Text" }
+    enum Mode: String, CaseIterable {
+        case files = "Files"
+        case text = "Text"
+    }
 
     @State private var mode: Mode = .files
     @State private var pickedURLs: [URL] = []
@@ -47,14 +50,17 @@ struct SendView: View {
                 .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
                 #if os(iOS)
-                .textInputAutocapitalization(.never)
+            .textInputAutocapitalization(.never)
                 #endif
 
             Button {
                 if mode == .files {
-                    controller.startSend(urls: pickedURLs, customCode: customCode.trimmingCharacters(in: .whitespaces))
+                    controller.startSend(
+                        urls: pickedURLs,
+                        customCode: customCode.trimmingCharacters(in: .whitespaces))
                 } else {
-                    controller.startSendText(text, customCode: customCode.trimmingCharacters(in: .whitespaces))
+                    controller.startSendText(
+                        text, customCode: customCode.trimmingCharacters(in: .whitespaces))
                 }
             } label: {
                 Label("Send", systemImage: "arrow.up.circle.fill")
@@ -69,7 +75,8 @@ struct SendView: View {
     }
 
     private var canStart: Bool {
-        let codeOK = customCode.isEmpty || customCode.trimmingCharacters(in: .whitespaces).count >= 6
+        let codeOK =
+            customCode.isEmpty || customCode.trimmingCharacters(in: .whitespaces).count >= 6
         let payloadOK = mode == .files ? !pickedURLs.isEmpty : !text.isEmpty
         return codeOK && payloadOK
     }
@@ -87,9 +94,10 @@ struct SendView: View {
         VStack(spacing: 12) {
             Group {
                 if pickedURLs.isEmpty {
-                    ContentUnavailableView("Drop files or folders here",
-                                           systemImage: "square.and.arrow.up.on.square",
-                                           description: Text("or add them with the buttons below"))
+                    ContentUnavailableView(
+                        "Drop files or folders here",
+                        systemImage: "square.and.arrow.up.on.square",
+                        description: Text("or add them with the buttons below"))
                 } else {
                     List {
                         ForEach(pickedURLs, id: \.self) { url in
@@ -124,20 +132,26 @@ struct SendView: View {
                 guard !files.isEmpty else { return false }
                 pickedURLs.append(contentsOf: files.filter { !pickedURLs.contains($0) })
                 return true
-            } isTargeted: { isDropTargeted = $0 }
+            } isTargeted: {
+                isDropTargeted = $0
+            }
 
             HStack {
                 Button("Add Files") { showFileImporter = true }
-                    .fileImporter(isPresented: $showFileImporter,
-                                  allowedContentTypes: [.item],
-                                  allowsMultipleSelection: true) { result in
+                    .fileImporter(
+                        isPresented: $showFileImporter,
+                        allowedContentTypes: [.item],
+                        allowsMultipleSelection: true
+                    ) { result in
                         if case .success(let urls) = result {
                             pickedURLs.append(contentsOf: urls.filter { !pickedURLs.contains($0) })
                         }
                     }
                 Button("Add Folder") { showFolderImporter = true }
-                    .fileImporter(isPresented: $showFolderImporter,
-                                  allowedContentTypes: [.folder]) { result in
+                    .fileImporter(
+                        isPresented: $showFolderImporter,
+                        allowedContentTypes: [.folder]
+                    ) { result in
                         if case .success(let url) = result, !pickedURLs.contains(url) {
                             pickedURLs.append(url)
                         }

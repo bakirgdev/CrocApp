@@ -15,15 +15,17 @@ struct QRScannerSheet: View {
             Group {
                 if DataScannerViewController.isSupported {
                     if startFailed {
-                        ContentUnavailableView("Camera unavailable",
-                                               systemImage: "video.slash",
-                                               description: Text("Check camera permission in Settings."))
+                        ContentUnavailableView(
+                            "Camera unavailable",
+                            systemImage: "video.slash",
+                            description: Text("Check camera permission in Settings."))
                     } else {
                         QRScannerView(onScan: onScan) { startFailed = true }
                     }
                 } else {
-                    ContentUnavailableView("Camera scanning isn't available on this device",
-                                           systemImage: "qrcode.viewfinder")
+                    ContentUnavailableView(
+                        "Camera scanning isn't available on this device",
+                        systemImage: "qrcode.viewfinder")
                 }
             }
             .navigationTitle("Scan Code")
@@ -67,9 +69,11 @@ private struct QRScannerView: UIViewControllerRepresentable {
         let onScan: (String) -> Void
         init(onScan: @escaping (String) -> Void) { self.onScan = onScan }
 
-        func dataScanner(_ dataScanner: DataScannerViewController,
-                         didAdd addedItems: [RecognizedItem],
-                         allItems: [RecognizedItem]) {
+        func dataScanner(
+            _ dataScanner: DataScannerViewController,
+            didAdd addedItems: [RecognizedItem],
+            allItems: [RecognizedItem]
+        ) {
             for item in addedItems {
                 if case .barcode(let barcode) = item, let payload = barcode.payloadStringValue {
                     onScan(payload)

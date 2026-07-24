@@ -1,6 +1,6 @@
 import Foundation
-import SwiftData
 import Observation
+import SwiftData
 
 /// One finished (or failed) transfer (F12). Local only — never synced.
 /// Privacy: stores at most `maxNames` file names, a code *hint* (first
@@ -31,8 +31,10 @@ final class TransferRecord {
 
     var status: Status { Status(rawValue: statusRaw) ?? .failed }
 
-    init(isSend: Bool, status: Status, isText: Bool, fileCount: Int,
-         totalBytes: Int64, names: [String], codeHint: String, bookmarks: [Data]) {
+    init(
+        isSend: Bool, status: Status, isText: Bool, fileCount: Int,
+        totalBytes: Int64, names: [String], codeHint: String, bookmarks: [Data]
+    ) {
         self.date = Date()
         self.isSend = isSend
         self.statusRaw = status.rawValue

@@ -13,16 +13,16 @@ struct ContentView: View {
     var body: some View {
         HomeView()
             #if os(macOS)
-            .dropDestination(for: URL.self) { urls, _ in
-                // Anywhere-on-window drop routes to the Send screen; the
-                // SendView list's own dropDestination takes precedence when
-                // hovering the list itself.
-                guard !controller.isActive else { return false }
-                let files = urls.filter(\.isFileURL)
-                guard !files.isEmpty else { return false }
-                router.openSend(with: files)
-                return true
-            }
+        .dropDestination(for: URL.self) { urls, _ in
+            // Anywhere-on-window drop routes to the Send screen; the
+            // SendView list's own dropDestination takes precedence when
+            // hovering the list itself.
+            guard !controller.isActive else { return false }
+            let files = urls.filter(\.isFileURL)
+            guard !files.isEmpty else { return false }
+            router.openSend(with: files)
+            return true
+        }
             #endif
             .task {
                 if !onboardingSeen && !AutoVerify.isHarnessRun { showOnboarding = true }
@@ -66,12 +66,15 @@ struct ContentView: View {
                         showStagedSheet = false
                     })
             }
-            .sheet(isPresented: $showOnboarding, onDismiss: {
-                onboardingSeen = true
-                // The staged sheet yields to onboarding on first launch;
-                // offer it now instead of waiting for the next foreground.
-                showStagedSheet = !shareInbox.staged.isEmpty
-            }) {
+            .sheet(
+                isPresented: $showOnboarding,
+                onDismiss: {
+                    onboardingSeen = true
+                    // The staged sheet yields to onboarding on first launch;
+                    // offer it now instead of waiting for the next foreground.
+                    showStagedSheet = !shareInbox.staged.isEmpty
+                }
+            ) {
                 OnboardingView {
                     showOnboarding = false
                 }

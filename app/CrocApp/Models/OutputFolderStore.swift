@@ -36,7 +36,8 @@ final class OutputFolderStore {
 
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.bookmarkKey),
-           let resolved = Self.resolve(bookmark: data) {
+            let resolved = Self.resolve(bookmark: data)
+        {
             url = resolved
             isUserSelected = true
         } else {
@@ -49,12 +50,14 @@ final class OutputFolderStore {
         let hadAccess = picked.startAccessingSecurityScopedResource()
         defer { if hadAccess { picked.stopAccessingSecurityScopedResource() } }
         #if os(macOS)
-        let data = try? picked.bookmarkData(options: .withSecurityScope,
-                                            includingResourceValuesForKeys: nil,
-                                            relativeTo: nil)
+        let data = try? picked.bookmarkData(
+            options: .withSecurityScope,
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil)
         #else
-        let data = try? picked.bookmarkData(includingResourceValuesForKeys: nil,
-                                            relativeTo: nil)
+        let data = try? picked.bookmarkData(
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil)
         #endif
         guard let data else { return }
         UserDefaults.standard.set(data, forKey: Self.bookmarkKey)
@@ -71,14 +74,16 @@ final class OutputFolderStore {
     private static func resolve(bookmark: Data) -> URL? {
         var isStale = false
         #if os(macOS)
-        let resolved = try? URL(resolvingBookmarkData: bookmark,
-                                options: .withSecurityScope,
-                                relativeTo: nil,
-                                bookmarkDataIsStale: &isStale)
+        let resolved = try? URL(
+            resolvingBookmarkData: bookmark,
+            options: .withSecurityScope,
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale)
         #else
-        let resolved = try? URL(resolvingBookmarkData: bookmark,
-                                relativeTo: nil,
-                                bookmarkDataIsStale: &isStale)
+        let resolved = try? URL(
+            resolvingBookmarkData: bookmark,
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale)
         #endif
         return isStale ? nil : resolved
     }

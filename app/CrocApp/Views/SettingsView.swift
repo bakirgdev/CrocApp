@@ -14,9 +14,12 @@ struct SettingsView: View {
             Section("Receive") {
                 LabeledContent("Save received files to") {
                     HStack(spacing: 8) {
-                        Text(outputFolder.isUserSelected ? outputFolder.url.path : outputFolder.defaultDisplayName)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
+                        Text(
+                            outputFolder.isUserSelected
+                                ? outputFolder.url.path : outputFolder.defaultDisplayName
+                        )
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                         Button("Change…") { showFolderPicker = true }
                         if outputFolder.isUserSelected {
                             Button("Reset") { outputFolder.resetToDefault() }
@@ -32,8 +35,10 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(width: 480)
-        .fileImporter(isPresented: $showFolderPicker,
-                      allowedContentTypes: [.folder]) { result in
+        .fileImporter(
+            isPresented: $showFolderPicker,
+            allowedContentTypes: [.folder]
+        ) { result in
             if case .success(let url) = result {
                 outputFolder.select(url)
             }

@@ -28,7 +28,7 @@ struct ReceiveView: View {
                     .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
                     #if os(iOS)
-                    .textInputAutocapitalization(.never)
+                .textInputAutocapitalization(.never)
                     #endif
                 PasteButton(payloadType: String.self) { strings in
                     if let pasted = strings.first {
@@ -58,16 +58,21 @@ struct ReceiveView: View {
 
             HStack {
                 Label {
-                    Text(outputFolder.isUserSelected ? outputFolder.url.lastPathComponent : outputFolder.defaultDisplayName)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                    Text(
+                        outputFolder.isUserSelected
+                            ? outputFolder.url.lastPathComponent : outputFolder.defaultDisplayName
+                    )
+                    .lineLimit(1)
+                    .truncationMode(.middle)
                 } icon: {
                     Image(systemName: "folder")
                 }
                 Spacer()
                 Button("Change") { showFolderPicker = true }
-                    .fileImporter(isPresented: $showFolderPicker,
-                                  allowedContentTypes: [.folder]) { result in
+                    .fileImporter(
+                        isPresented: $showFolderPicker,
+                        allowedContentTypes: [.folder]
+                    ) { result in
                         if case .success(let url) = result {
                             outputFolder.select(url)
                         }
@@ -79,9 +84,10 @@ struct ReceiveView: View {
             .font(.callout)
 
             Button {
-                controller.startReceive(code: code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                        into: outputFolder.url,
-                                        folderIsScoped: outputFolder.isUserSelected)
+                controller.startReceive(
+                    code: code.trimmingCharacters(in: .whitespacesAndNewlines),
+                    into: outputFolder.url,
+                    folderIsScoped: outputFolder.isUserSelected)
             } label: {
                 Label("Receive", systemImage: "arrow.down.circle.fill")
                     .frame(maxWidth: .infinity)

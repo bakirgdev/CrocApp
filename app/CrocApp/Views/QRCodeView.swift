@@ -1,5 +1,5 @@
-import SwiftUI
 import CoreImage.CIFilterBuiltins
+import SwiftUI
 
 /// Crisp QR rendering of a transfer code (F6). Content is the deeplink form
 /// "croc://<code>" so future F32 deeplinks and other croc GUIs can read it;

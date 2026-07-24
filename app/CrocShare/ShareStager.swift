@@ -24,8 +24,10 @@ enum ShareStager {
     // File-copy only; never read payload bytes into memory (share extensions
     // die around ~120 MB resident).
     static func stage(items: [NSExtensionItem]) async throws -> Manifest {
-        guard let container = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: groupID) else {
+        guard
+            let container = FileManager.default
+                .containerURL(forSecurityApplicationGroupIdentifier: groupID)
+        else {
             throw ShareStagerError.noAppGroup
         }
         let inbox = container.appendingPathComponent("ShareInbox", isDirectory: true)
@@ -39,8 +41,11 @@ enum ShareStager {
         var names: [String] = []
         for item in items {
             for provider in item.attachments ?? [] {
-                guard provider.hasItemConformingToTypeIdentifier(UTType.data.identifier) else { continue }
-                let name = try await copyFileRepresentation(of: provider, into: batchDir, taken: names)
+                guard provider.hasItemConformingToTypeIdentifier(UTType.data.identifier) else {
+                    continue
+                }
+                let name = try await copyFileRepresentation(
+                    of: provider, into: batchDir, taken: names)
                 names.append(name)
             }
         }
@@ -56,7 +61,8 @@ enum ShareStager {
         of provider: NSItemProvider, into dir: URL, taken: [String]
     ) async throws -> String {
         try await withCheckedThrowingContinuation { cont in
-            provider.loadFileRepresentation(forTypeIdentifier: UTType.data.identifier) { url, error in
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.data.identifier) {
+                url, error in
                 // The temp file at `url` is deleted when this handler returns:
                 // the copy MUST happen synchronously here.
                 guard let url else {
@@ -67,13 +73,16 @@ enum ShareStager {
                 if name.isEmpty || name.hasPrefix(".") { name = "shared-file" }
                 var candidate = name
                 var counter = 2
-                while taken.contains(candidate) ||
-                      FileManager.default.fileExists(atPath: dir.appendingPathComponent(candidate).path) {
+                while taken.contains(candidate)
+                    || FileManager.default.fileExists(
+                        atPath: dir.appendingPathComponent(candidate).path)
+                {
                     candidate = "\(counter)-\(name)"
                     counter += 1
                 }
                 do {
-                    try FileManager.default.copyItem(at: url, to: dir.appendingPathComponent(candidate))
+                    try FileManager.default.copyItem(
+                        at: url, to: dir.appendingPathComponent(candidate))
                     cont.resume(returning: candidate)
                 } catch {
                     cont.resume(throwing: error)

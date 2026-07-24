@@ -1,3 +1,4 @@
+import CrocKit
 // macOS-only interop harness for CrocKit <-> croc CLI.
 // Usage:
 //   crockit-verify send <code> <path>
@@ -11,7 +12,6 @@
 // process -- proves fd0/stdout/cwd/mutex restoration in crocmobile composes
 // across repeated transfers, not just a single one.
 import Foundation
-import CrocKit
 
 let args = CommandLine.arguments
 guard args.count >= 3 else {
@@ -56,7 +56,7 @@ func drive(_ stream: AsyncStream<TransferEvent>, answer: Bool) async -> Bool {
             return false
         }
     }
-    return false // stream ended without done/error
+    return false  // stream ended without done/error
 }
 
 /// Starts a receive for `code`, retrying past CrocEngineError.transferActive:

@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+
 #if os(iOS)
 import Network
 #endif
@@ -15,7 +16,7 @@ final class LocalNetworkChecker {
     enum Status { case unknown, granted, denied }
     private(set) var status: Status = .unknown
 
-#if os(iOS)
+    #if os(iOS)
     private var started = false
 
     func checkIfNeeded() {
@@ -85,7 +86,7 @@ final class LocalNetworkChecker {
             }
         }
     }
-#else
+    #else
     func checkIfNeeded() {}
-#endif
+    #endif
 }

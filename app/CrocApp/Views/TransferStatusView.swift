@@ -1,5 +1,5 @@
-import SwiftUI
 import CrocKit
+import SwiftUI
 
 #if os(macOS)
 import AppKit
@@ -59,20 +59,22 @@ struct TransferStatusView: View {
     private var localNetworkDeniedBanner: some View {
         VStack(spacing: 6) {
             Label {
-                Text("Local network access is off — transfers use the relay only. Enable it in Settings › Privacy › Local Network for faster direct transfers.")
-                    .font(.footnote)
+                Text(
+                    "Local network access is off — transfers use the relay only. Enable it in Settings › Privacy › Local Network for faster direct transfers."
+                )
+                .font(.footnote)
             } icon: {
                 Image(systemName: "wifi.exclamationmark")
             }
             .foregroundStyle(.orange)
-#if os(iOS)
+            #if os(iOS)
             Button("Open Settings") {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
             }
             .font(.footnote)
-#endif
+            #endif
         }
     }
 
@@ -141,7 +143,9 @@ struct TransferStatusView: View {
                 HStack {
                     Text("File \(min(p.currentFile + 1, p.totalFiles)) of \(p.totalFiles)")
                     Spacer()
-                    Text("\(p.fileSent.formatted(.byteCount(style: .file))) / \(p.fileSize.formatted(.byteCount(style: .file)))")
+                    Text(
+                        "\(p.fileSent.formatted(.byteCount(style: .file))) / \(p.fileSize.formatted(.byteCount(style: .file)))"
+                    )
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -151,10 +155,14 @@ struct TransferStatusView: View {
                 ProgressView(value: fraction(p.bytesFinished + p.fileSent, of: p.totalSize))
                     .accessibilityLabel("Overall progress")
                 HStack {
-                    Text("Total \((p.bytesFinished + p.fileSent).formatted(.byteCount(style: .file))) / \(p.totalSize.formatted(.byteCount(style: .file)))")
+                    Text(
+                        "Total \((p.bytesFinished + p.fileSent).formatted(.byteCount(style: .file))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
+                    )
                     Spacer()
                     if controller.speedBytesPerSec > 0 {
-                        Text("\(Int64(controller.speedBytesPerSec).formatted(.byteCount(style: .file)))/s")
+                        Text(
+                            "\(Int64(controller.speedBytesPerSec).formatted(.byteCount(style: .file)))/s"
+                        )
                     }
                 }
                 .font(.caption)
@@ -173,9 +181,12 @@ struct TransferStatusView: View {
 
     private func doneView(_ summary: Summary, receivedText: String?) -> some View {
         VStack(spacing: 16) {
-            Image(systemName: summary.success ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(summary.success ? .green : .orange)
+            Image(
+                systemName: summary.success
+                    ? "checkmark.circle.fill" : "exclamationmark.circle.fill"
+            )
+            .font(.system(size: 48))
+            .foregroundStyle(summary.success ? .green : .orange)
             if let receivedText {
                 Text("Received text").font(.headline)
                 ScrollView {
@@ -193,10 +204,12 @@ struct TransferStatusView: View {
             } else {
                 Text(summary.success ? "Transfer complete" : "Transfer finished with problems")
                     .font(.headline)
-                Text("\(summary.files) file(s) • \(summary.totalSize.formatted(.byteCount(style: .file)))")
-                    .foregroundStyle(.secondary)
+                Text(
+                    "\(summary.files) file(s) • \(summary.totalSize.formatted(.byteCount(style: .file)))"
+                )
+                .foregroundStyle(.secondary)
             }
-#if os(iOS)
+            #if os(iOS)
             if controller.direction == .receive, let folder = controller.lastOutputFolder {
                 Button {
                     // shareddocuments:// opens the Files app at the given path (community-standard scheme; no public API equivalent).
@@ -208,7 +221,7 @@ struct TransferStatusView: View {
                     Label("Open in Files", systemImage: "folder")
                 }
             }
-#else
+            #else
             if controller.direction == .receive, let folder = controller.lastOutputFolder {
                 Button {
                     NSWorkspace.shared.activateFileViewerSelecting([folder])
@@ -216,7 +229,7 @@ struct TransferStatusView: View {
                     Label("Show in Finder", systemImage: "folder")
                 }
             }
-#endif
+            #endif
             Button("Done") { controller.reset() }
                 .buttonStyle(.borderedProminent)
         }
@@ -255,16 +268,23 @@ struct IncomingRequestView: View {
                 }
             }
             .frame(minHeight: 120, maxHeight: 240)
-            Text("\(list.files.count) file(s) • \(list.totalSize.formatted(.byteCount(style: .file)))")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(
+                "\(list.files.count) file(s) • \(list.totalSize.formatted(.byteCount(style: .file)))"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
             if !blocked.isEmpty {
-                Label("Blocked: unsafe file names in this transfer.", systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
+                Label(
+                    "Blocked: unsafe file names in this transfer.",
+                    systemImage: "exclamationmark.triangle.fill"
+                )
+                .foregroundStyle(.red)
             } else if !conflicts.isEmpty {
-                Label("\(conflicts.count) item(s) already exist and will be replaced. Partially received files resume.",
-                      systemImage: "exclamationmark.triangle")
-                    .foregroundStyle(.orange)
+                Label(
+                    "\(conflicts.count) item(s) already exist and will be replaced. Partially received files resume.",
+                    systemImage: "exclamationmark.triangle"
+                )
+                .foregroundStyle(.orange)
             }
             HStack(spacing: 16) {
                 Button("Decline", role: .destructive) { controller.respond(accept: false) }

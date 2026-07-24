@@ -1,6 +1,6 @@
+import CrocKit
 import Foundation
 import Observation
-import CrocKit
 
 /// The app-side state machine over CrocEngine. Views render `phase` and call
 /// the intent methods; nothing else in the app touches CrocKit directly.
@@ -201,7 +201,9 @@ final class TransferController {
 
     private func run(_ start: @escaping () async throws -> AsyncStream<TransferEvent>) {
         phase = .starting
-        background.transferStarted(title: direction == .send ? "Sending with CrocApp" : "Receiving with CrocApp") { [weak self] in
+        background.transferStarted(
+            title: direction == .send ? "Sending with CrocApp" : "Receiving with CrocApp"
+        ) { [weak self] in
             guard let self else { return }
             self.backgroundExpired = true
             self.cancel()
@@ -230,7 +232,10 @@ final class TransferController {
                 // Startup failure before any event flowed -- still tear down
                 // the idle-timer lock / BG task requested at the top of run().
                 background.transferEnded(success: false)
-                phase = .failed(Self.friendlyMessage(for: "\(error)", cancelRequested: cancelRequested, declineRequested: declineRequested))
+                phase = .failed(
+                    Self.friendlyMessage(
+                        for: "\(error)", cancelRequested: cancelRequested,
+                        declineRequested: declineRequested))
                 finishRecord(cancelRequested ? .cancelled : .failed, summary: nil)
             }
             releaseScopedURLs()
@@ -303,18 +308,26 @@ final class TransferController {
         case .failed(let message):
             background.transferEnded(success: false)
             if blockedAutoAccept {
-                phase = .failed("Blocked: this transfer contained unsafe file names, so auto-accept cancelled it.")
+                phase = .failed(
+                    "Blocked: this transfer contained unsafe file names, so auto-accept cancelled it."
+                )
             } else if backgroundExpired {
-                phase = .failed("iOS paused the transfer in the background. Start the same transfer again — croc resumes partially transferred files.")
+                phase = .failed(
+                    "iOS paused the transfer in the background. Start the same transfer again — croc resumes partially transferred files."
+                )
             } else {
-                var copy = Self.friendlyMessage(for: message, cancelRequested: cancelRequested, declineRequested: declineRequested)
+                var copy = Self.friendlyMessage(
+                    for: message, cancelRequested: cancelRequested,
+                    declineRequested: declineRequested)
                 if sawTransferBytes && !cancelRequested && !declineRequested {
-                    copy += " Start the same transfer again — croc resumes partially transferred files."
+                    copy +=
+                        " Start the same transfer again — croc resumes partially transferred files."
                 }
                 phase = .failed(copy)
             }
-            finishRecord(cancelRequested ? .cancelled : declineRequested ? .declined : .failed,
-                         summary: nil)
+            finishRecord(
+                cancelRequested ? .cancelled : declineRequested ? .declined : .failed,
+                summary: nil)
             // Phase 1 contract: consumer must cancel the engine on .failed so
             // the Go session releases and the next transfer can start.
             Task { await engine.cancel() }
@@ -332,7 +345,8 @@ final class TransferController {
         let dt = now.timeIntervalSince(last)
         guard dt > 0.2 else { return }
         let instant = Double(doneBytes - lastProgressBytes) / dt
-        speedBytesPerSec = speedBytesPerSec == 0 ? instant : 0.25 * instant + 0.75 * speedBytesPerSec
+        speedBytesPerSec =
+            speedBytesPerSec == 0 ? instant : 0.25 * instant + 0.75 * speedBytesPerSec
         lastProgressDate = now
         lastProgressBytes = doneBytes
     }
@@ -363,8 +377,9 @@ final class TransferController {
 
     private static func bookmark(for url: URL) -> Data? {
         #if os(macOS)
-        try? url.bookmarkData(options: .withSecurityScope,
-                              includingResourceValuesForKeys: nil, relativeTo: nil)
+        try? url.bookmarkData(
+            options: .withSecurityScope,
+            includingResourceValuesForKeys: nil, relativeTo: nil)
         #else
         try? url.bookmarkData()
         #endif
@@ -378,15 +393,18 @@ final class TransferController {
             if summary.files > 0 { p.fileCount = summary.files }
         }
         if receivedText != nil { p.isText = true }
-        history?.add(TransferRecord(
-            isSend: p.isSend, status: status, isText: p.isText,
-            fileCount: p.fileCount, totalBytes: p.totalBytes,
-            names: p.names, codeHint: p.codeHint, bookmarks: p.bookmarks))
+        history?.add(
+            TransferRecord(
+                isSend: p.isSend, status: status, isText: p.isText,
+                fileCount: p.fileCount, totalBytes: p.totalBytes,
+                names: p.names, codeHint: p.codeHint, bookmarks: p.bookmarks))
     }
 
     // MARK: - Error copy
 
-    static func friendlyMessage(for raw: String, cancelRequested: Bool, declineRequested: Bool) -> String {
+    static func friendlyMessage(
+        for raw: String, cancelRequested: Bool, declineRequested: Bool
+    ) -> String {
         if cancelRequested { return "Transfer cancelled." }
         if declineRequested { return "You declined the transfer." }
         let m = raw.lowercased()
@@ -395,13 +413,16 @@ final class TransferController {
         if m.contains("refused files") { return "The other side declined the transfer." }
         if m.contains("room full") { return "That code is already in use. Try a different code." }
         if m.contains("no such host") || m.contains("connection refused")
-            || m.contains("i/o timeout") || m.contains("dial tcp") {
+            || m.contains("i/o timeout") || m.contains("dial tcp")
+        {
             return "Couldn't reach the relay. Check your internet connection."
         }
         if m.contains("bad password") {
             return "Wrong code phrase, or the sender is no longer available."
         }
-        if m.contains("broken pipe") || m.contains("connection reset") || m.contains("unexpected eof") {
+        if m.contains("broken pipe") || m.contains("connection reset")
+            || m.contains("unexpected eof")
+        {
             return "Lost connection to the other device."
         }
         return "Transfer failed: \(raw)"

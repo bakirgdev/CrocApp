@@ -10,14 +10,19 @@ struct PowerSettingsSections: View {
         @Bindable var settings = settings
 
         Section("Relay") {
-            TextField("Address", text: $settings.relayAddress,
-                      prompt: Text(AppSettings.defaultRelayAddress))
-                .autocorrectionDisabled()
-            TextField("IPv6 address", text: $settings.relayAddress6,
-                      prompt: Text(AppSettings.defaultRelayAddress6))
-                .autocorrectionDisabled()
-            TextField("Password", text: $settings.relayPassword,
-                      prompt: Text("Default"))
+            TextField(
+                "Address", text: $settings.relayAddress,
+                prompt: Text(AppSettings.defaultRelayAddress)
+            )
+            .autocorrectionDisabled()
+            TextField(
+                "IPv6 address", text: $settings.relayAddress6,
+                prompt: Text(AppSettings.defaultRelayAddress6)
+            )
+            .autocorrectionDisabled()
+            TextField(
+                "Password", text: $settings.relayPassword,
+                prompt: Text("Default"))
         }
 
         Section {
@@ -46,10 +51,14 @@ struct PowerSettingsSections: View {
             Text("Confirmation")
         } footer: {
             if settings.autoAccept {
-                Text("Files from anyone who has your code are saved without preview or confirmation. Unsafe file names still cancel the transfer. Both-sides confirm overrides auto-accept.")
-                    .foregroundStyle(.orange)
+                Text(
+                    "Files from anyone who has your code are saved without preview or confirmation. Unsafe file names still cancel the transfer. Both-sides confirm overrides auto-accept."
+                )
+                .foregroundStyle(.orange)
             } else {
-                Text("Auto-accept skips the incoming-files preview. Leave it off unless you fully trust the sender.")
+                Text(
+                    "Auto-accept skips the incoming-files preview. Leave it off unless you fully trust the sender."
+                )
             }
         }
     }

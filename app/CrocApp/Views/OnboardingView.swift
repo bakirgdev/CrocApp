@@ -14,15 +14,21 @@ struct OnboardingView: View {
             Text("Welcome to CrocApp")
                 .font(.title.bold())
             VStack(alignment: .leading, spacing: 16) {
-                bullet("key.fill",
-                       "One code phrase does everything",
-                       "Sending shows a short code. Enter it on the other device — that's the address and the password.")
-                bullet("lock.fill",
-                       "End-to-end encrypted",
-                       "Files are encrypted with the code phrase. The relay only ever sees ciphertext.")
-                bullet("globe",
-                       "Works anywhere",
-                       "Same Wi-Fi or different continents — transfers find the fastest path automatically.")
+                bullet(
+                    "key.fill",
+                    "One code phrase does everything",
+                    "Sending shows a short code. Enter it on the other device — that's the address and the password."
+                )
+                bullet(
+                    "lock.fill",
+                    "End-to-end encrypted",
+                    "Files are encrypted with the code phrase. The relay only ever sees ciphertext."
+                )
+                bullet(
+                    "globe",
+                    "Works anywhere",
+                    "Same Wi-Fi or different continents — transfers find the fastest path automatically."
+                )
             }
             .frame(maxWidth: 420)
             Button {

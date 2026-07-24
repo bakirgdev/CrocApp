@@ -1,5 +1,5 @@
-import Foundation
 import Croc
+import Foundation
 
 public enum CrocEngineError: Error, Sendable {
     case transferActive
@@ -14,11 +14,15 @@ public actor CrocEngine {
     private var activeTransfer: CrocmobileTransfer?
     private var bridge: DelegateBridge?
 
-    public func startSend(paths: [String], text: String?, options: EngineOptions) throws -> AsyncStream<TransferEvent> {
+    public func startSend(
+        paths: [String], text: String?, options: EngineOptions
+    ) throws -> AsyncStream<TransferEvent> {
         try start(send: true, code: "", paths: paths, text: text ?? "", options: options)
     }
 
-    public func startReceive(code: String, options: EngineOptions) throws -> AsyncStream<TransferEvent> {
+    public func startReceive(
+        code: String, options: EngineOptions
+    ) throws -> AsyncStream<TransferEvent> {
         try start(send: false, code: code, paths: [], text: "", options: options)
     }
 
@@ -31,7 +35,9 @@ public actor CrocEngine {
         activeTransfer?.cancel()
     }
 
-    private func start(send: Bool, code: String, paths: [String], text: String, options: EngineOptions) throws -> AsyncStream<TransferEvent> {
+    private func start(
+        send: Bool, code: String, paths: [String], text: String, options: EngineOptions
+    ) throws -> AsyncStream<TransferEvent> {
         guard activeTransfer == nil else { throw CrocEngineError.transferActive }
 
         let opts = crocOptions(from: options)
@@ -42,7 +48,8 @@ public actor CrocEngine {
         var error: NSError?
         let transfer: CrocmobileTransfer?
         if send {
-            transfer = CrocmobileStartSend(paths.joined(separator: "\n"), text, opts, bridge, &error)
+            transfer = CrocmobileStartSend(
+                paths.joined(separator: "\n"), text, opts, bridge, &error)
         } else {
             transfer = CrocmobileStartReceive(code, opts, bridge, &error)
         }

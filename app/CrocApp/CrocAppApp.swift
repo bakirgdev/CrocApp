@@ -5,8 +5,8 @@
 //  Created by admin on 21.07.2026.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct CrocAppApp: App {
@@ -45,7 +45,7 @@ struct CrocAppApp: App {
                 .environment(history)
                 .modelContainer(history.container)
                 #if os(macOS)
-                .frame(minWidth: 480, minHeight: 560)
+            .frame(minWidth: 480, minHeight: 560)
                 #endif
         }
         #if os(macOS)

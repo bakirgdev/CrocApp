@@ -1,4 +1,5 @@
 import Foundation
+
 #if os(iOS)
 import BackgroundTasks
 import UIKit
@@ -10,7 +11,7 @@ import UIKit
 // Every method is a no-op on macOS.
 @MainActor
 final class BackgroundCoordinator {
-#if os(iOS)
+    #if os(iOS)
     // Wildcard id per transfer (repeated register() of one id is not allowed);
     // static id kept as fallback for early-iOS-26 wildcard matching bugs.
     private static let staticIdentifier = "com.bakirgdev.CrocApp.transfer"
@@ -25,10 +26,10 @@ final class BackgroundCoordinator {
     // Bumped per transferStarted() so a late .queue launch handler for a
     // stale (already-ended) transfer can't bind its expiry to a newer one.
     private var generation = 0
-#endif
+    #endif
 
     func transferStarted(title: String, onExpiration: @escaping @MainActor () -> Void) {
-#if os(iOS)
+        #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
         self.title = title
         self.subtitle = "Waiting for connection…"
@@ -43,26 +44,30 @@ final class BackgroundCoordinator {
             Task { @MainActor [weak self] in self?.adopt(continued, expected: expected) }
         }
         var identifier = Self.wildcardPrefix + UUID().uuidString
-        if !BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: .main, launchHandler: handler) {
+        if !BGTaskScheduler.shared.register(
+            forTaskWithIdentifier: identifier, using: .main, launchHandler: handler)
+        {
             if !Self.staticRegistered {
                 Self.staticRegistered = BGTaskScheduler.shared.register(
-                    forTaskWithIdentifier: Self.staticIdentifier, using: .main, launchHandler: handler)
+                    forTaskWithIdentifier: Self.staticIdentifier, using: .main,
+                    launchHandler: handler)
             }
             guard Self.staticRegistered else { return }
             identifier = Self.staticIdentifier
         }
-        let request = BGContinuedProcessingTaskRequest(identifier: identifier, title: title, subtitle: subtitle)
+        let request = BGContinuedProcessingTaskRequest(
+            identifier: identifier, title: title, subtitle: subtitle)
         request.strategy = .queue
         do {
             try BGTaskScheduler.shared.submit(request)
         } catch {
             // Simulator or unsupported device: transfer still runs while foregrounded.
         }
-#endif
+        #endif
     }
 
     func progressChanged(bytesDone: Int64, totalBytes: Int64, fileName: String) {
-#if os(iOS)
+        #if os(iOS)
         guard let task, totalBytes > 0 else { return }
         task.progress.totalUnitCount = totalBytes
         task.progress.completedUnitCount = min(bytesDone, totalBytes)
@@ -70,19 +75,19 @@ final class BackgroundCoordinator {
             subtitle = fileName
             task.updateTitle(title, subtitle: fileName)
         }
-#endif
+        #endif
     }
 
     func transferEnded(success: Bool) {
-#if os(iOS)
+        #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = false
         task?.setTaskCompleted(success: success)
         task = nil
         onExpiration = nil
-#endif
+        #endif
     }
 
-#if os(iOS)
+    #if os(iOS)
     private func adopt(_ continued: BGContinuedProcessingTask, expected: Int) {
         guard expected == generation else {
             // .queue strategy can launch arbitrarily late; this task belongs
@@ -110,5 +115,5 @@ final class BackgroundCoordinator {
             }
         }
     }
-#endif
+    #endif
 }

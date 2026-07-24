@@ -1,5 +1,5 @@
-import Foundation
 import Croc
+import Foundation
 
 /// Bridges CrocmobileDelegateProtocol callbacks (arbitrary Go threads)
 /// into an AsyncStream. Terminates the stream on done/error.
@@ -40,7 +40,9 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
     func onProgress(_ progressJSON: String?) {
         // Drop-on-decode-failure is fine here: progress is advisory and the
         // next tick retries, unlike fileList which gates respond(accept:).
-        guard let json = progressJSON, let p = decode(json, as: TransferProgress.self) else { return }
+        guard let json = progressJSON, let p = decode(json, as: TransferProgress.self) else {
+            return
+        }
         continuation.yield(.progress(p))
     }
     func onText(_ text: String?) {

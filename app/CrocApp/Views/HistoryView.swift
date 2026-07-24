@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// F12: local transfer history. Re-send re-stages a past send's files via
 /// AppRouter (same path as dock drops); records whose files vanished get an
@@ -15,9 +15,10 @@ struct HistoryView: View {
     var body: some View {
         Group {
             if records.isEmpty {
-                ContentUnavailableView("No transfers yet",
-                                       systemImage: "clock.arrow.circlepath",
-                                       description: Text("Finished sends and receives appear here."))
+                ContentUnavailableView(
+                    "No transfers yet",
+                    systemImage: "clock.arrow.circlepath",
+                    description: Text("Finished sends and receives appear here."))
             } else {
                 List {
                     ForEach(records) { record in
@@ -29,14 +30,14 @@ struct HistoryView: View {
                                 Button("Delete", role: .destructive) { history.delete(record) }
                             }
                             #if os(iOS)
-                            .swipeActions(edge: .trailing) {
-                                Button("Delete", role: .destructive) { history.delete(record) }
+                        .swipeActions(edge: .trailing) {
+                            Button("Delete", role: .destructive) { history.delete(record) }
+                        }
+                        .swipeActions(edge: .leading) {
+                            if record.isSend && !record.isText && !record.bookmarks.isEmpty {
+                                Button("Send Again") { resend(record) }.tint(.accentColor)
                             }
-                            .swipeActions(edge: .leading) {
-                                if record.isSend && !record.isText && !record.bookmarks.isEmpty {
-                                    Button("Send Again") { resend(record) }.tint(.accentColor)
-                                }
-                            }
+                        }
                             #endif
                     }
                 }
@@ -65,8 +66,11 @@ struct HistoryView: View {
         let urls = record.bookmarks.compactMap { data -> URL? in
             var stale = false
             #if os(macOS)
-            guard let url = try? URL(resolvingBookmarkData: data, options: .withSecurityScope,
-                                     relativeTo: nil, bookmarkDataIsStale: &stale) else { return nil }
+            guard
+                let url = try? URL(
+                    resolvingBookmarkData: data, options: .withSecurityScope,
+                    relativeTo: nil, bookmarkDataIsStale: &stale)
+            else { return nil }
             // Sandbox denies even stat until the scope is started; open it just
             // for the existence probe -- startSend opens its own at send time.
             let scoped = url.startAccessingSecurityScopedResource()
@@ -74,7 +78,8 @@ struct HistoryView: View {
             guard FileManager.default.fileExists(atPath: url.path) else { return nil }
             return url
             #else
-            guard let url = try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale) else { return nil }
+            guard let url = try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale)
+            else { return nil }
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
             guard FileManager.default.fileExists(atPath: url.path) else { return nil }

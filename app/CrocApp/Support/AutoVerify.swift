@@ -1,5 +1,5 @@
-import Foundation
 import CrocKit
+import Foundation
 
 /// Launch-argument harness for scripted verification.
 ///   --auto-receive CODE            receive into Documents, auto-accept
@@ -50,14 +50,17 @@ enum AutoVerify {
             controller.startReceive(code: args[i + 1], into: docs, folderIsScoped: false)
             await watch(controller, resultURL: resultURL, autoAccept: true)
         } else if let i = args.firstIndex(of: "--auto-send"), i + 1 < args.count,
-                  let ci = args.firstIndex(of: "--code"), ci + 1 < args.count {
-            controller.startSend(urls: [URL(fileURLWithPath: args[i + 1])], customCode: args[ci + 1])
+            let ci = args.firstIndex(of: "--code"), ci + 1 < args.count
+        {
+            controller.startSend(
+                urls: [URL(fileURLWithPath: args[i + 1])], customCode: args[ci + 1])
             await watch(controller, resultURL: resultURL, autoAccept: false)
         } else if let i = args.firstIndex(of: "--auto-share-send"), i + 1 < args.count {
             let inbox = ShareInbox()
             inbox.refresh()
             guard !inbox.staged.isEmpty else {
-                try? "error no staged files in share inbox".write(to: resultURL, atomically: true, encoding: .utf8)
+                try? "error no staged files in share inbox".write(
+                    to: resultURL, atomically: true, encoding: .utf8)
                 return
             }
             let urls = inbox.staged
@@ -68,7 +71,9 @@ enum AutoVerify {
     }
 
     @MainActor
-    private static func watch(_ controller: TransferController, resultURL: URL, autoAccept: Bool) async {
+    private static func watch(
+        _ controller: TransferController, resultURL: URL, autoAccept: Bool
+    ) async {
         while true {
             try? await Task.sleep(for: .milliseconds(200))
             switch controller.phase {
@@ -77,14 +82,19 @@ enum AutoVerify {
             case .confirmSend:
                 controller.respond(accept: true)
             case .done(let summary, _):
-                try? "ok success=\(summary.success)".write(to: resultURL, atomically: true, encoding: .utf8)
-                let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent("verify-history.txt")
-                try? "records=\(controller.history?.recordCount() ?? -1)".write(to: historyURL, atomically: true, encoding: .utf8)
+                try? "ok success=\(summary.success)".write(
+                    to: resultURL, atomically: true, encoding: .utf8)
+                let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent(
+                    "verify-history.txt")
+                try? "records=\(controller.history?.recordCount() ?? -1)".write(
+                    to: historyURL, atomically: true, encoding: .utf8)
                 return
             case .failed(let message):
                 try? "error \(message)".write(to: resultURL, atomically: true, encoding: .utf8)
-                let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent("verify-history.txt")
-                try? "records=\(controller.history?.recordCount() ?? -1)".write(to: historyURL, atomically: true, encoding: .utf8)
+                let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent(
+                    "verify-history.txt")
+                try? "records=\(controller.history?.recordCount() ?? -1)".write(
+                    to: historyURL, atomically: true, encoding: .utf8)
                 return
             default:
                 break
