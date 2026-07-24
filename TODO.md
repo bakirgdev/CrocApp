@@ -20,3 +20,8 @@
   - features for history (make if not present): toggle on/off, delete each row, delete all
 - protect main branch to have it contributed on only via PRs
 - protect main from force pushes of any type
+- to make for repo (contributing/oss side-of-things):
+  - CONTRIBUTING.md — how to build, branch/PR conventions, code style, how to run tests, DCO/CLA if any (none needed for MIT solo project)
+  - CODE_OF_CONDUCT.md — Contributor Covenant is the default choice, low effort, signals a welcoming project
+  - CHANGELOG.md — Keep a Changelog format, even if sparse early on
+  - NOTICE or THIRD_PARTY_LICENSES.md — explicit croc MIT attribution + any Go module licenses you vendor (gomobile bindings pull in deps)
