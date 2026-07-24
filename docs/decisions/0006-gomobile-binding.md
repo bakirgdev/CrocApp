@@ -19,6 +19,7 @@ Upstream croc supports embedders: `croc.NewCtx()` (PR #1038, v10.4.5+) gives con
 ## Consequences
 
 - One engine, both platforms; ~15-40 MB size overhead (Go runtime) accepted.
+- **macOS build is Apple Silicon only.** golang/go#73119 breaks multi-arch macOS bind, so the script emits `macos/arm64` and the xcframework has no `x86_64` macOS slice. Intel Macs that can run macOS 26 (2019 MacBook Pro 16", 2020 iMac, 2019 Mac Pro) cannot run CrocApp. `ARCHS[sdk=macosx*] = arm64` is pinned in the pbxproj so archives do not attempt a link that must fail.
 - Go toolchain becomes a build dependency (CI + release artifacts mitigate for contributors).
 - gomobile lags new Xcode majors occasionally; fallback is same wrapper via `go build -buildmode=c-archive` + C shim (wireguard-apple pattern), no protocol-layer changes.
 - Delegate callbacks arrive on Go threads; Swift layer must marshal to MainActor.

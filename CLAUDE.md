@@ -55,8 +55,9 @@ When unsure about any API, library, tool, or platform behavior: query the contex
 ### Project gotchas
 
 - `rtk xcodebuild` truncates output before shell redirection sees it (loses `BUILD SUCCEEDED`) → use `rtk proxy xcodebuild` for builds. Redirect logs to a file, not into context.
-- Xcode targets: `SWIFT_VERSION = 5.0` but `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` + `SWIFT_APPROACHABLE_CONCURRENCY = YES` — types are MainActor-isolated by default; `nonisolated` is explicit. `CrocKit` is separate (swift-tools 6.0).
-- Deployment targets are `26.5` in pbxproj; ADR 0003 sets the floor at 26.0. Don't "fix" one to match the other without an ADR.
+- Everything is Swift 6 language mode: app + extension `SWIFT_VERSION = 6.0`, `CrocKit` swift-tools 6.0. Plus `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` + `SWIFT_APPROACHABLE_CONCURRENCY = YES` — types are MainActor-isolated by default; `nonisolated` is explicit. Strict concurrency is an error, not a warning.
+- Deployment targets are `26.0` everywhere (pbxproj, `Package.swift`, `gomobile -iosversion/-macosversion`). Never a minor pin — see ADR 0003.
+- macOS is **arm64 only** (`ARCHS[sdk=macosx*] = arm64`): no x86_64 slice in `Croc.xcframework` (golang/go#73119). Intel Macs cannot run the app. Don't remove the pin; the link would fail.
 - One transfer at a time (ADR 0008). Second `start` throws `transferActive`; brief window after `done` still throws — retry once.
 - Custom croc codes sharing their first 4 chars collide into one relay room. Vary the prefix in any concurrent test.
 - croc CLI custom codes need `CROC_SECRET=` on **both** ends; non-tty runs need global `--ignore-stdin` before the subcommand.

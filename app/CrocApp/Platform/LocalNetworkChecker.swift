@@ -57,7 +57,7 @@ final class LocalNetworkChecker {
             // it and only treat it as denied if we're still unresolved by
             // the timeout.
             nonisolated(unsafe) var sawWaiting = false
-            let finish: (Bool?) -> Void = { value in
+            let finish: @Sendable (Bool?) -> Void = { value in
                 guard !resumed else { return }
                 resumed = true
                 listener.cancel()
