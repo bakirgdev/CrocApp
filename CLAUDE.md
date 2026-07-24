@@ -6,7 +6,8 @@ Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS
 
 - `.claude/` — project Claude config: `rules/`, `skills/`, `settings.json` & `settings.local.json`, etc.
 - `.mcp.json` — project MCP servers: `context7` (docs), `xcode` (`xcrun mcpbridge`), `gopls` (Go semantics; launched via `$(go env GOPATH)/bin/gopls` since `~/go/bin` is usually off PATH)
-- `.github/` — GitHub config: issue/PR templates, workflows, etc.
+- `.github/` — GitHub config: `workflows/ci.yml` (format, Go lint/vuln, macOS + iOS builds), issue/PR templates, etc.
+- `.swift-format` — swift-format config. `.xcode-version` — Xcode baseline, read by CI. `crocmobile/.golangci.yml` — Go lint config. See `@docs/knowledge/tooling.md`
 - `app/` — Xcode project (SwiftUI, iOS + macOS): `app/CrocApp.xcodeproj`, app sources `app/CrocApp/`, share extension `app/CrocShare/`, plists + entitlements + export options `app/Config/`
 - `assets/` — brand art: `CrocAppIcon.icon` source, banner, mascot, etc.
 - `CrocKit/` — Swift package wrapping the Go engine: `CrocEngine` actor + `AsyncStream<TransferEvent>`, plus `crockit-verify` executable harness. Depends on `Croc.xcframework` (gitignored build artifact)
@@ -26,6 +27,12 @@ scripts/build-xcframework.sh    # go + gomobile → CrocKit/Croc.xcframework. Ne
 # builds (run from app/)
 rtk proxy xcodebuild -scheme CrocApp -destination 'platform=macOS' -derivedDataPath /tmp/dd-mac build
 rtk proxy xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,name=$SIM" -derivedDataPath /tmp/dd-sim build
+
+# format + lint (same commands CI runs)
+xcrun swift-format format --in-place --recursive --parallel app/CrocApp app/CrocShare CrocKit/Sources
+xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
+rtk proxy golangci-lint run ./...     # from crocmobile/; plain `golangci-lint` gets mangled by rtk
+govulncheck ./...                     # from crocmobile/
 
 # verification — all need outbound network (public relay) and a croc CLI
 scripts/verify-interop.sh     # 9 scenarios, crocmobile ↔ croc CLI (both directions, decline, cancel, relay, LAN)
