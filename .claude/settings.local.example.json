@@ -5,7 +5,10 @@
     "defaultMode": "auto",
     "allow": [
       "Bash(git *)",
-      "mcp__context7"
+      "Bash(rtk *)",
+      "mcp__context7",
+      "mcp__xcode",
+      "mcp__gopls"
     ]
   },
   "hooks": {

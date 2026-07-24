@@ -10,6 +10,20 @@
         "-y",
         "@upstash/context7-mcp"
       ]
+    },
+    "xcode": {
+      "type": "stdio",
+      "command": "xcrun",
+      "args": [
+        "mcpbridge"
+      ]
+    },
+    "gopls": {
+      "type": "stdio",
+      "command": "gopls",
+      "args": [
+        "mcp"
+      ]
     }
   }
 }
