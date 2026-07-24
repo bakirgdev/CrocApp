@@ -73,12 +73,13 @@ struct ContentView: View {
                     // The staged sheet yields to onboarding on first launch;
                     // offer it now instead of waiting for the next foreground.
                     showStagedSheet = !shareInbox.staged.isEmpty
+                },
+                content: {
+                    OnboardingView {
+                        showOnboarding = false
+                    }
                 }
-            ) {
-                OnboardingView {
-                    showOnboarding = false
-                }
-            }
+            )
     }
 }
 

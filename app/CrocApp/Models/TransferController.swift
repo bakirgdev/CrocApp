@@ -352,7 +352,7 @@ final class TransferController {
     }
 
     private func releaseScopedURLs() {
-        scopedURLs.forEach { $0.stopAccessingSecurityScopedResource() }
+        for url in scopedURLs { url.stopAccessingSecurityScopedResource() }
         scopedURLs = []
     }
 
