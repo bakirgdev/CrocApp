@@ -49,7 +49,7 @@ struct ContentView: View {
                 // window.
                 guard phase == .active, !controller.isActive else { return }
                 shareInbox.refresh()
-                showStagedSheet = !shareInbox.staged.isEmpty
+                showStagedSheet = !shareInbox.staged.isEmpty && !showOnboarding
             }
             .sheet(isPresented: $showStagedSheet) {
                 StagedFilesSheet(
@@ -66,7 +66,12 @@ struct ContentView: View {
                         showStagedSheet = false
                     })
             }
-            .sheet(isPresented: $showOnboarding, onDismiss: { onboardingSeen = true }) {
+            .sheet(isPresented: $showOnboarding, onDismiss: {
+                onboardingSeen = true
+                // The staged sheet yields to onboarding on first launch;
+                // offer it now instead of waiting for the next foreground.
+                showStagedSheet = !shareInbox.staged.isEmpty
+            }) {
                 OnboardingView {
                     showOnboarding = false
                 }
