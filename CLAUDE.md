@@ -5,6 +5,7 @@ Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS
 ## Layout
 
 - `.claude/` — project Claude config: `rules/`, `skills/`, `settings.json` & `settings.local.json`, etc.
+- `.mcp.json` — project MCP servers: `context7` (docs), `xcode` (`xcrun mcpbridge`), `gopls` (Go semantics), `github` (needs `GITHUB_PAT`)
 - `.github/` — GitHub config: issue/PR templates, workflows, etc.
 - `app/` — Xcode project (SwiftUI, iOS + macOS): `app/CrocApp.xcodeproj`, app sources `app/CrocApp/`, share extension `app/CrocShare/`, plists + entitlements + export options `app/Config/`
 - `assets/` — brand art: `CrocAppIcon.icon` source, banner, mascot, etc.
@@ -52,16 +53,7 @@ A green build is **not** evidence a transfer works. Any change to `crocmobile/se
 
 When unsure about any API, library, tool, or platform behavior: query the context7 MCP (see `@.claude/rules/context7.md`), perform web search, deploy research subagent(s) or use tool(s) search before writing code. A small lookup beats a hallucination. Applies doubly to Swift/SwiftUI/Xcode 26 APIs (training data lags Apple releases) and croc CLI (new versions often).
 
-### Project gotchas
-
-- `rtk xcodebuild` truncates output before shell redirection sees it (loses `BUILD SUCCEEDED`) → use `rtk proxy xcodebuild` for builds. Redirect logs to a file, not into context.
-- Everything is Swift 6 language mode: app + extension `SWIFT_VERSION = 6.0`, `CrocKit` swift-tools 6.0. Plus `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` + `SWIFT_APPROACHABLE_CONCURRENCY = YES` — types are MainActor-isolated by default; `nonisolated` is explicit. Strict concurrency is an error, not a warning.
-- Deployment targets are `26.0` everywhere (pbxproj, `Package.swift`, `gomobile -iosversion/-macosversion`). Never a minor pin — see ADR 0003.
-- macOS is **arm64 only** (`ARCHS[sdk=macosx*] = arm64`): no x86_64 slice in `Croc.xcframework` (golang/go#73119). Intel Macs cannot run the app. Don't remove the pin; the link would fail.
-- One transfer at a time (ADR 0008). Second `start` throws `transferActive`; brief window after `done` still throws — retry once.
-- Custom croc codes sharing their first 4 chars collide into one relay room. Vary the prefix in any concurrent test.
-- croc CLI custom codes need `CROC_SECRET=` on **both** ends; non-tty runs need global `--ignore-stdin` before the subcommand.
-- Scripted macOS app launches need `-ApplePersistenceIgnoreState YES` or they hang on window restoration.
+Prefer semantic tools over grep where they exist: `gopls` MCP for `crocmobile/` (`go_references`, `go_symbol_references`, `go_package_api`, `go_diagnostics`), `xcode` MCP for build/test/diagnostics/simulator on the Swift side. `xcode` requires the project open in Xcode and Settings > Intelligence > MCP enabled; it is **not** a substitute for `scripts/verify-*.sh`.
 
 ### Docs self-heal (end of every session)
 
