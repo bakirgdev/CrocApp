@@ -6,7 +6,8 @@ Facts from Phases 2-6 (2026-07-23/24). Conflict/paste/QR decisions: ADR 0009; iO
 
 ```
 CrocAppApp owns @State TransferController + OutputFolderStore + LocalNetworkChecker
-  + AppRouter.shared → .environment on WindowGroup content AND macOS Settings scene
+  + AppRouter.shared → .environment on WindowGroup content
+  (macOS Settings scene gets only outputFolder + settings — no router/controller/localNetwork)
 HomeView (sole NavigationStack, path: $router.path, value-based links) → SendView | ReceiveView
   each: controller.isActive ? TransferStatusView() : input form
 TransferStatusView renders every non-idle phase; IncomingRequestView = accept gate
@@ -15,7 +16,7 @@ QRCodeView (cross-platform gen) / QRScannerView.swift (whole file #if os(iOS), V
 
 ## TransferController (@MainActor @Observable, sole CrocKit consumer)
 
-- `Phase`: idle → starting → waiting(code)/connecting → incoming(FileList, conflicts, blocked) → transferring(TransferProgress) → done(Summary, receivedText?) | failed(String). Views switch on it; `reset()` only exits terminal phases.
+- `Phase`: idle → starting → waiting(code)/connecting → confirmSend | incoming(FileList, conflicts, blocked) → transferring(TransferProgress) → done(Summary, receivedText?) | failed(String). Views switch on it; `reset()` is unconditional (no guard) but only meant to be called from terminal phases — UI only surfaces it there.
 - Event-handling gotchas learned the hard way:
   - `.progress` ticks (~10 Hz) keep arriving while the accept prompt is unanswered — **must not clobber `.incoming`** (croc otherwise blocks in GetInput forever; found by harness, fixed d278c2e). Also ignore `step == "waiting"` ticks.
   - Local decline surfaces croc's `"refused files"` — same string the sender sees. Track `cancelRequested`/`declineRequested` flags to pick correct copy ("Transfer cancelled." / "You declined the transfer." / "The other side declined the transfer.").

@@ -7,8 +7,9 @@ What is wired up, what was deliberately skipped, and the traps in each. Decision
 | Tool | Config | Where it runs |
 |---|---|---|
 | swift-format 6.3 (toolchain) | `.swift-format` | local + CI |
-| golangci-lint 2.x | `crocmobile/.golangci.yml` | local + CI |
+| golangci-lint 2.x (CI pins v2.12.2) | `crocmobile/.golangci.yml` | local + CI |
 | govulncheck | none | CI (`go install` on demand) |
+| `go build ./...` + `go vet ./...` | none | CI (go job, alongside lint/vuln) |
 | xcbeautify | none | CI only |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, PRs |
 

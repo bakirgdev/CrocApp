@@ -8,7 +8,7 @@ Research digest 2026-07-22. Shapes architecture; verify APIs against current doc
 2. **croc LAN discovery = UDP multicast** (schollz/peerdiscovery) → needs restricted entitlement `com.apple.developer.networking.multicast` on iOS. Apply via Apple form (~days-2 weeks, per-team, must be enabled per profile type incl. TestFlight). Alternative: Bonjour (`NWBrowser`/`NWListener`) needs no entitlement but stock croc CLI peers stay undiscoverable (protocol mismatch). Without entitlement croc's relay path still works — LAN race just loses.
 3. **Share extension:** ~120 MB memory cap, no long-running work, no BGContinuedProcessingTask. Pattern: `NSItemProvider.loadFileRepresentation` → stream-copy to App Group container → main app runs transfer.
 4. **iOS cannot spawn processes** → croc linked as library only (ADR 0006).
-5. **Mac App Store = sandbox mandatory:** `com.apple.security.network.client` + `.server` (server needed for local relay listener). Direct DMG: notarization + hardened runtime, sandbox optional.
+5. **Mac App Store = sandbox mandatory:** `com.apple.security.network.client` + `.server` (server needed for local relay listener), plus `files.user-selected.read-write` and `files.downloads.read-write` (default output folder `~/Downloads/CrocApp`). Direct DMG: notarization + hardened runtime, sandbox optional.
 6. **Wi-Fi Aware** (iOS/iPadOS 26): AirDrop-class direct Wi-Fi, absent on macOS 26 → optional iOS↔iOS fast path only, never primary transport.
 
 ## Papercuts

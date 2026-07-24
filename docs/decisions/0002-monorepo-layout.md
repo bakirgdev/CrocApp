@@ -11,7 +11,11 @@ Project spans a native app, a landing page, a docs site, and project documentati
 
 Single public repo holds everything:
 
-- `CrocApp/` — Xcode project
+- `app/` — Xcode project (originally `CrocApp/`; renamed 2026-07, amended here 2026-07-24)
+- `CrocKit/` — Swift package wrapping the Go engine (added by ADR 0006 work)
+- `crocmobile/` — Go wrapper, gomobile-bound (added by ADR 0006 work)
+- `scripts/` — build + verification harnesses
+- `assets/` — brand art
 - `web/landing/`, `web/docs/` — static sites (GitHub Pages)
 - `docs/` — knowledge + ADRs
 - `.claude/` — AI tooling config, rules, skills

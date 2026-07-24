@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds CrocKit/Croc.xcframework from crocmobile via gomobile.
 #
-# Requires: Go >= 1.25 (brew install go), Xcode 26+.
+# Requires: Go >= 1.26.5 (go.mod pin; brew install go), Xcode 26+.
 # gomobile/gobind are auto-installed to $(go env GOPATH)/bin if missing.
 #
 # macOS slice is arm64-only: golang/go#73119 (multi-arch macos bind broken).

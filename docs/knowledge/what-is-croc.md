@@ -1,6 +1,6 @@
 # What is croc
 
-Facts current as of 2026-07-22 (croc v10.4.14, CLI quirks below verified against v10.5.0). Source: https://github.com/schollz/croc
+Facts current as of 2026-07-22 (croc v10.5.0, the pinned version; CLI quirks below verified against it). Source: https://github.com/schollz/croc
 
 ## Identity
 

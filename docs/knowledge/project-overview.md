@@ -18,7 +18,7 @@ CrocApp: free, open-source, native SwiftUI GUI wrapper for [croc](https://github
 
 ## Constraints & context
 
-- Sole developer: Bakir Gracic, under the sanjacklee-digital GitHub org. Public repo.
+- Sole developer: Bakir Gracic. Public repo at `github.com/bakirgdev/CrocApp`.
 - AI-first development: built almost entirely with Claude Code (Claude Max plan), minimal manual coding. Tooling and docs are token-optimized (see ADR 0004).
 - Toolchain: macOS 26, Xcode 26, iOS 26. Minimum OS = iOS 26 / macOS 26 (see ADR 0003).
 - License: MIT (see ADR 0001).

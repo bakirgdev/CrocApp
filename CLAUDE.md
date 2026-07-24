@@ -6,7 +6,7 @@ Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS
 
 - `.claude/` — project Claude config: `rules/`, `skills/`, `settings.json` & `settings.local.json`, etc.
 - `.mcp.json` — project MCP servers: `context7` (docs), `xcode` (`xcrun mcpbridge`), `gopls` (Go semantics; launched via `$(go env GOPATH)/bin/gopls` since `~/go/bin` is usually off PATH)
-- `.github/` — GitHub config: `workflows/ci.yml` (format, Go lint/vuln, macOS + iOS builds), issue/PR templates, etc.
+- `.github/` — GitHub config: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `FUNDING.yml`. Issue/PR templates not yet added (TODO.md)
 - `.swift-format` — swift-format config. `.xcode-version` — Xcode baseline, read by CI. `crocmobile/.golangci.yml` — Go lint config. See `@docs/knowledge/tooling.md`
 - `app/` — Xcode project (SwiftUI, iOS + macOS): `app/CrocApp.xcodeproj`, app sources `app/CrocApp/`, share extension `app/CrocShare/`, plists + entitlements + export options `app/Config/`
 - `assets/` — brand art: `CrocAppIcon.icon` source, banner, mascot, etc.
@@ -15,14 +15,14 @@ Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS
 - `docs/knowledge/` — evergreen project knowledge
 - `docs/decisions/` — ADRs, `NNNN-slug.md`
 - `scripts/` — build + machine-verification harnesses (see Commands)
-- `web/landing/`, `web/docs/` — static sites (GitHub Pages)
+- `web/landing/`, `web/docs/` — static sites (GitHub Pages); planned, currently empty dirs (TODO.md)
 
 ## Commands
 
 **Fresh clone builds nothing until the xcframework exists** — `CrocKit`'s binaryTarget points at a gitignored artifact (ADR 0006).
 
 ```bash
-scripts/build-xcframework.sh    # go + gomobile → CrocKit/Croc.xcframework. Needs Go ≥1.25, Xcode 26+
+scripts/build-xcframework.sh    # go + gomobile → CrocKit/Croc.xcframework. Needs Go ≥1.26.5 (go.mod pin), Xcode 26+
 
 # builds (run from app/)
 rtk proxy xcodebuild -scheme CrocApp -destination 'platform=macOS' -derivedDataPath /tmp/dd-mac build
