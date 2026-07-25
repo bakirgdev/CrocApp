@@ -305,16 +305,18 @@ body {
 }
 
 .btn--secondary {
-  color: var(--color-accent);
+  /* On its own tint even --green-700 is 4.32:1, so this variant needs the
+     darker step. Measured; see design/colors.md. */
+  color: var(--color-accent-text-on-tint);
   background: var(--color-accent-tint);
 }
 
 .btn--secondary:hover {
-  color: var(--color-accent);
+  color: var(--color-accent-text-on-tint);
 }
 
 .btn--glass {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: var(--color-surface-glass);
   border: var(--border-hairline) solid var(--color-glass-border);
   box-shadow: var(--shadow-sm);
@@ -323,17 +325,17 @@ body {
 }
 
 .btn--glass:hover {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: var(--color-surface-glass-thick);
 }
 
 .btn--plain {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: transparent;
 }
 
 .btn--plain:hover {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: var(--color-fill-tertiary);
 }
 
@@ -493,7 +495,9 @@ body {
   width: var(--icon-size-sm);
   height: var(--icon-size-sm);
   margin-inline-start: auto;
-  color: var(--color-text-tertiary);
+  /* Secondary, not tertiary: --color-text-tertiary is 1.73:1 on white, which
+     is not a visible affordance. See design/colors.md. */
+  color: var(--color-text-secondary);
   transition: transform var(--dur-base) var(--ease-out);
 }
 
@@ -511,7 +515,294 @@ body {
 }
 
 /* ============================================================
-   9. Reduced motion
+   9. Nav extras — GitHub link, theme toggle
+   ============================================================ */
+
+.nav__github {
+  flex: none;
+}
+
+.nav__stars {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+/* The glyph shows the theme you would switch *to*, so light shows a moon.
+   Mirrored under prefers-color-scheme for visitors who never touch it —
+   same two-block pattern tokens.css uses. */
+.theme-toggle__sun {
+  display: none;
+}
+
+[data-theme="dark"] .theme-toggle__moon {
+  display: none;
+}
+
+[data-theme="dark"] .theme-toggle__sun {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle__moon {
+    display: none;
+  }
+
+  :root:not([data-theme="light"]) .theme-toggle__sun {
+    display: block;
+  }
+}
+
+/* On a phone the GitHub label is the first thing worth dropping: the star
+   glyph and count still say what it is, and the row has to fit a wordmark,
+   a link and a toggle inside --nav-height-web. */
+@media (width < 30rem) {
+  .nav__github {
+    padding-inline: var(--space-2);
+    font-size: 0;
+  }
+
+  .nav__stars {
+    font-size: var(--type-footnote-size);
+  }
+}
+
+/* ============================================================
+   10. Hero
+   ============================================================ */
+
+.hero__inner {
+  display: grid;
+  gap: var(--stack-web);
+  align-items: center;
+}
+
+/* Two columns only when the mockup can hold its 480 cap beside a readable
+   measure of copy. Below that they stack, copy first. */
+@media (width >= 64rem) {
+  .hero__inner {
+    grid-template-columns: 1fr auto;
+    gap: var(--space-11);
+  }
+}
+
+.hero__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  max-width: var(--content-max-width-prose);
+}
+
+.hero__deck {
+  color: var(--color-text-secondary);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.hero__pills {
+  margin-block-start: var(--space-2);
+}
+
+/* ============================================================
+   11. CSS app mockup — measurements from components.md
+
+   Not a screenshot and not decoration: it is the app's Send screen drawn
+   from the same tokens the app uses, so a token change moves both. The
+   solid material is deliberate — materials-motion.md says glass over a
+   flat page is just a tinted rectangle.
+   ============================================================ */
+
+.hero__mockup {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+
+.mockup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: var(--content-max-width);
+  padding: var(--space-6);
+  background: var(--color-surface-card);
+  border: var(--border-hairline) solid var(--color-separator);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.mockup__bar {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mockup__title {
+  font-size: var(--type-headline-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-headline);
+}
+
+.mockup__badge {
+  flex: none;
+}
+
+/* --- FileRow --- */
+
+.mockup__rows {
+  border-radius: var(--radius-md);
+  background: var(--color-surface-grouped);
+  overflow: hidden;
+}
+
+.filerow {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: var(--row-min-file);
+  padding: var(--space-3) var(--space-4);
+}
+
+/* Half-pixel inset shadow rather than a border, so the row corners stay
+   clean inside the rounded group. Last row omits it. */
+.filerow:not(:last-child) {
+  box-shadow: inset 0 calc(var(--border-hairline-half) * -1) 0 var(--color-separator);
+}
+
+.filerow__icon {
+  flex: none;
+  width: var(--btn-icon-lg);
+  height: var(--btn-icon-lg);
+  color: var(--color-accent);
+}
+
+/* Name and extension are one visual string, so they get their own flex box:
+   the row's gap must not open a space in the middle of a filename. */
+.filerow__label {
+  display: flex;
+  min-width: 0;
+}
+
+/* Middle truncation: the head ellipsises while the extension stays pinned,
+   so a long filename never hides what kind of file it is. */
+.filerow__name {
+  overflow: hidden;
+  font-size: var(--type-callout-size);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filerow__tail {
+  flex: none;
+  font-size: var(--type-callout-size);
+}
+
+.filerow__size {
+  flex: none;
+  margin-inline-start: auto;
+  font-size: var(--type-footnote-size);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- CodePhraseDisplay --- */
+
+.mockup__code {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  align-items: center;
+  text-align: center;
+}
+
+.mockup__eyebrow {
+  font-size: var(--type-footnote-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.mockup__phrase {
+  font-family: var(--font-mono);
+  font-size: var(--type-code-hero-size);
+  line-height: var(--type-code-hero-lh);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-code);
+  /* The phrase is the one string that must never be clipped: it wraps at the
+     hyphens rather than shrinking or overflowing on a narrow phone. */
+  overflow-wrap: anywhere;
+}
+
+.mockup__copy {
+  pointer-events: none;
+}
+
+/* --- TransferProgress --- */
+
+.mockup__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.mockup__progress-head {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Direction is never colour alone: the arrow and the word both change, and
+   neither is optional. components.md → TransferProgress. */
+.mockup__arrow {
+  flex: none;
+  width: var(--btn-icon-md);
+  height: var(--btn-icon-md);
+  color: var(--color-accent);
+}
+
+.mockup__direction {
+  font-size: var(--type-headline-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-headline);
+}
+
+.mockup__speed {
+  margin-inline-start: auto;
+  font-size: var(--type-caption1-size);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.progressbar {
+  height: var(--progress-height);
+  background: var(--color-fill-tertiary);
+  border-radius: var(--radius-capsule);
+  overflow: hidden;
+}
+
+.progressbar__fill {
+  display: block;
+  width: 62%;
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: var(--radius-capsule);
+}
+
+.mockup__caption {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--type-caption1-size);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   12. Reduced motion
 
    tokens.css already zeroes the duration and press-scale tokens under
    this query, so anything built from them stops on its own. This is the
