@@ -232,15 +232,32 @@ Phase 1 exists to prove the deploy pipeline end-to-end before any design work is
 | **2. Primitives** ✅ | `styles.css`: reset on top of tokens, container/section/grid, buttons, cards, glass nav, pills, `<details>`, focus rings, dark theme, reduced motion. Harness is `web/landing/primitives.html`, kept in git and stripped from `_site` by the workflow. | done 2026-07-25 — verified both themes at 375 / 768 / 1024 / 1440, no horizontal overflow at any width |
 | **3. Hero** ✅ | nav + hero + CSS-built app mockup (Send screen: file rows, code phrase in `--type-code-hero` mono, trust badge, progress bar) + trust pills. `app.js`: theme toggle, star count, nav active state. | done 2026-07-25 — verified both themes at 375 / 1440; mockup is tokens only |
 | **4. Content** ✅ | sections 3–13, all copy, Lucide inline SVGs, FAQ, footer | done 2026-07-25 — 11 sections plus footer, zero lorem, every external link verified 200. Icons ship as one inline `<symbol>` sprite rather than ~30 repeated paths |
-| **5. Meta** | **rebuild `og.jpg` at 1200×630 (§4)**, wire the supplied favicon set into `<head>`, copy mascot + banner into `assets/img/`, OG + Twitter meta, canonical, `theme-color` ×2, JSON-LD `SoftwareApplication`, `robots.txt`, `sitemap.xml` | social card previews correctly in a real debugger; no console errors; no 404 on any icon |
-| **6. A11y & perf** | keyboard pass, contrast audit, `prefers-reduced-motion`, skip link, landmarks, Lighthouse | see §7 |
+| **5. Meta** ✅ | **rebuilt `og.jpg` at 1200×630** — generated from tokens by `scripts/build-og.sh` off `og-card.html`, not drawn by hand. Favicon set wired, mascot copied, OG + Twitter meta, canonical, `theme-color` ×2, JSON-LD, `robots.txt`, `sitemap.xml` | done 2026-07-25. `banner.webp` deliberately **not** copied: nothing references it, so it would ship as dead weight. Card not yet checked in a real social debugger |
+| **6. A11y & perf** ✅ | keyboard pass, contrast audit, `prefers-reduced-motion`, skip link, landmarks, Lighthouse | done 2026-07-25 — all four Lighthouse categories 100 on mobile, both themes. Manual VoiceOver pass still outstanding |
 | **7. Launch** | fill real URLs from `TODO.md`, final proofread, croc README PR, HN / r/opensource / r/selfhosted | page links to nothing dead |
 
 Phases 2–4 can be committed incrementally; the site is live from phase 1 so every push is visible.
 
 ## 7. Acceptance criteria
 
-Must all hold before phase 7.
+Measured against the live site 2026-07-25, after phase 6. Everything below holds except the two lines marked outstanding.
+
+| Criterion | Measured |
+|---|---|
+| Lighthouse mobile ≥ 95 / 100 / 100 / 100 | **100 / 100 / 100 / 100** (Performance, Accessibility, Best Practices, SEO), zero failing audits |
+| Dark theme accessibility | 100, `color-contrast` and `target-size` both pass |
+| Total transfer < 250 KB | **166 KB** counting every image including `og.jpg`, which only crawlers fetch |
+| < 120 KB excluding images | **24.2 KB** transferred (gzip); 90.6 KB raw |
+| Zero third-party except the star fetch | 6 requests, one third-party: `api.github.com`. No web fonts |
+| Renders with JavaScript disabled | 11 sections and 9 disclosures present and operable; copy button and star slot correctly absent |
+| `prefers-reduced-motion` | all transition durations resolve to `0s`, `--press-scale` to `1` |
+| Keyboard traversal | 26 stops, skip link first, **zero** elements without a focus ring |
+| No raw hex/px/ms in `styles.css` outside the reset | grep-checked; only the 1px clip box in `.u-visually-hidden` |
+| Core Web Vitals (mobile, throttled) | FCP 0.9 s · LCP 0.9 s · TBT 0 ms · CLS 0 · SI 0.9 s |
+
+Outstanding: manual VoiceOver pass on macOS, and previewing the social card in a real debugger.
+
+Original list, kept for reference.
 
 - Lighthouse mobile: Performance ≥ 95, Accessibility 100, Best Practices 100, SEO 100.
 - Total transfer < 250 KB, and < 120 KB excluding images.
