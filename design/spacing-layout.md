@@ -73,6 +73,23 @@ Never used by the app. `--content-max-width` is a phone-width column; a marketin
 
 Row heights that are not tokenized (they are component constants, see `components.md`): settings row min 52, file row min 48, sheet header min 52, switch 51×31, settings row icon tile 29×29 at radius 7, StatusBlock glyph circle 64, TrustBadge full glyph circle 34, QR frame default 168.
 
+## Component metrics tokenized for web (landing + docs only)
+
+Same numbers `components.md` already specifies, promoted to tokens because the landing page forbids raw px in `styles.css` (PLAN.md §4) and a component constant has to be *nameable* to be usable there. SwiftUI keeps them as constants inside the component — **do not use these tokens in the app.**
+
+| Token | Value | From |
+|---|---|---|
+| `--btn-pad-x-lg` / `-md` / `-sm` | 22px / 16px / 12px | Button size table |
+| `--btn-gap-lg` / `-md` / `-sm` | 8px / 6px / 5px | Button size table |
+| `--btn-icon-lg` / `-md` / `-sm` | 20px / 18px / 15px | Button size table, `iconography.md` |
+| `--pill-pad-block` | 5px | TrustBadge pill |
+| `--pill-pad-inline-start` / `-end` | 9px / 11px | TrustBadge pill — asymmetric, the glyph sits tighter to the leading edge |
+| `--pill-icon-size` | 14px | TrustBadge pill |
+| `--nav-height-web` | 56px | landing sticky nav; clears `--hit-target-min` 44 with `--space-2` breathing room either side |
+| `--grid-min-card` | 232px | `auto-fit` column floor: 4-up at 1080, 2-up at 768, 1-up at 375. Largest 4pt-grid value that still fits four columns in `--content-max-width-web` (984 usable − 3×16 gap = 936; 936 ÷ 4 = 234) |
+
+`--btn-pad-x-md`, `--btn-pad-x-sm` and `--btn-gap-lg` are aliases of `--space-5`, `--space-4` and `--space-3`. They exist so a call site reads as button geometry rather than as an arbitrary grid step.
+
 ## Borders
 
 | Token | Value |

@@ -203,6 +203,33 @@
   --border-hairline: 1px;
   --border-focus: 2px;
 
+  /* --- Component metrics, tokenized for web ---
+     components.md calls these component constants and keeps them inside the
+     component. SwiftUI can do that; styles.css cannot, because the landing
+     page forbids raw px (PLAN.md §4). Same numbers, promoted to tokens so
+     the web side has something to name. Do not use these in the app. */
+  --btn-pad-x-lg: 22px;
+  --btn-pad-x-md: var(--space-5);
+  --btn-pad-x-sm: var(--space-4);
+  --btn-gap-lg:   var(--space-3);
+  --btn-gap-md:   6px;
+  --btn-gap-sm:   5px;
+  --btn-icon-lg:  20px;
+  --btn-icon-md:  18px;
+  --btn-icon-sm:  15px;
+
+  --pill-pad-block:        5px;
+  --pill-pad-inline-start: 9px;
+  --pill-pad-inline-end:   11px;
+  --pill-icon-size:        14px;
+
+  /* --- Web layout metrics (landing + docs only) --- */
+  --nav-height-web: 56px;
+  /* auto-fit column floor. 232 is the largest 4pt-grid value that still fits
+     4 columns inside --content-max-width-web: 984 usable - 3 gaps of 16 = 936,
+     936 / 4 = 234. Gives 4-up at 1080, 2-up at 768, 1-up at 375. */
+  --grid-min-card:  232px;
+
   /* --- Glass blur --- */
   --blur-thin: 12px;
   --blur-regular: 24px;
