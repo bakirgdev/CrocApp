@@ -1,0 +1,532 @@
+/* ============================================================
+   CrocApp landing page — primitives.
+
+   Loaded after tokens.css, which supplies every value here and
+   already sets box-sizing, body type, link color, focus ring,
+   selection and scrollbars. This file adds layout, components
+   and page-level surfaces only.
+
+   No raw hex, px or ms below the reset block. A missing value is
+   a missing token: add it to design/*.md AND design/tokens.css
+   first (ADR 0015), then consume it here.
+
+   Page fill is --color-surface-base, not the app's grouped fill.
+   Reason is contrast, not taste: --color-text-link (--green-700)
+   measures 4.94:1 on base and only 4.42:1 on grouped, and this
+   page runs links through its prose. Cards carry the tonal step
+   instead. See design/colors.md.
+   ============================================================ */
+
+/* ============================================================
+   1. Reset + a11y utilities
+
+   The one block allowed literals, and only these: 0, 100%, and
+   the 1px clip box that .u-visually-hidden needs to stay in the
+   accessibility tree. Everything else in this file is a token.
+   ============================================================ */
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* Screen-reader-only: still focusable, still announced, zero visual box. */
+.u-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   2. Page + layout
+   ============================================================ */
+
+body {
+  background: var(--color-surface-base);
+}
+
+.container {
+  width: 100%;
+  max-width: var(--content-max-width-web);
+  margin-inline: auto;
+  padding-inline: var(--gutter-web);
+}
+
+.container--wide {
+  max-width: var(--content-max-width-wide);
+}
+
+.container--prose {
+  max-width: var(--content-max-width-prose);
+}
+
+.section {
+  padding-block: var(--section-pad-web);
+}
+
+/* Successive sections would otherwise stack two full pads against one
+   hairline. The rule reads as one section boundary, not two. */
+.section + .section {
+  padding-block-start: 0;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-web);
+}
+
+.stack--tight {
+  gap: var(--space-5);
+}
+
+/* min() keeps the floor from overflowing a 375px viewport, where
+   --grid-min-card alone would exceed the available column. */
+.grid {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min-card), 100%), 1fr));
+}
+
+.section__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: var(--content-max-width-prose);
+  margin-block-end: var(--stack-web);
+}
+
+.section__head p {
+  color: var(--color-text-secondary);
+}
+
+/* ============================================================
+   3. Skip link — first in tab order, invisible until focused
+   ============================================================ */
+
+.skip-link {
+  position: fixed;
+  z-index: 3;
+  inset-block-start: var(--space-3);
+  inset-inline-start: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  color: var(--color-text-on-accent);
+  background: var(--color-accent);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-200%);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+/* Sliding into view is the focus indicator, but the ring is restated because
+   .skip-link's own box-shadow would otherwise beat tokens.css's :focus-visible
+   on source order at equal specificity. */
+.skip-link:focus-visible {
+  transform: translateY(0);
+  box-shadow: var(--shadow-md), var(--shadow-focus-ring);
+}
+
+/* ============================================================
+   4. Sticky glass nav
+
+   materials-motion.md: glass needs something to blur. Over a flat
+   page it reads as a tinted bar, which is the expected landing-page
+   look — the fallback below is what non-backdrop-filter browsers get.
+   ============================================================ */
+
+.nav {
+  position: sticky;
+  z-index: 2;
+  inset-block-start: 0;
+  background: var(--color-surface-card);
+  border-block-end: var(--border-hairline) solid var(--color-separator);
+}
+
+@supports (backdrop-filter: none) or (-webkit-backdrop-filter: none) {
+  .nav {
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(var(--blur-regular)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--blur-regular)) saturate(var(--glass-saturate));
+    border-block-end-color: var(--color-glass-border);
+  }
+}
+
+.nav__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: var(--nav-height-web);
+}
+
+.nav__brand {
+  margin-inline-end: auto;
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.nav__link {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.nav__link:hover,
+.nav__link[aria-current="true"] {
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+/* The anchor row is the first thing to go: four links do not fit beside a
+   wordmark, a toggle and a star count on a phone. Everything they point at
+   is still reachable by scrolling, so this hides rather than collapses
+   into a menu — a hamburger for four in-page anchors is more JS and more
+   a11y surface than the problem deserves. */
+/* Breakpoint is a literal by necessity: custom properties do not resolve
+   inside a media condition, so this is the one number that cannot be a
+   token. rem, so it tracks the user's browser font size. */
+@media (width < 48rem) {
+  .nav__links {
+    display: none;
+  }
+}
+
+/* ============================================================
+   5. Buttons — components.md measurements
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--btn-gap-lg);
+  height: var(--control-height-lg);
+  padding-inline: var(--btn-pad-x-lg);
+  font-size: var(--type-headline-size);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-headline);
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: var(--radius-capsule);
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+.btn:active {
+  opacity: 1;
+  transform: scale(var(--press-scale));
+}
+
+.btn__icon {
+  flex: none;
+  width: var(--btn-icon-lg);
+  height: var(--btn-icon-lg);
+}
+
+.btn--md {
+  gap: var(--btn-gap-md);
+  height: var(--control-height-md);
+  padding-inline: var(--btn-pad-x-md);
+  font-size: var(--type-callout-size);
+}
+
+.btn--md .btn__icon {
+  width: var(--btn-icon-md);
+  height: var(--btn-icon-md);
+}
+
+.btn--sm {
+  gap: var(--btn-gap-sm);
+  height: var(--control-height-sm);
+  padding-inline: var(--btn-pad-x-sm);
+  font-size: var(--type-footnote-size);
+}
+
+.btn--sm .btn__icon {
+  width: var(--btn-icon-sm);
+  height: var(--btn-icon-sm);
+}
+
+.btn--prominent {
+  color: var(--color-text-on-accent);
+  background: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--prominent:hover {
+  color: var(--color-text-on-accent);
+  background: var(--color-accent-pressed);
+}
+
+.btn--secondary {
+  color: var(--color-accent);
+  background: var(--color-accent-tint);
+}
+
+.btn--secondary:hover {
+  color: var(--color-accent);
+}
+
+.btn--glass {
+  color: var(--color-accent);
+  background: var(--color-surface-glass);
+  border: var(--border-hairline) solid var(--color-glass-border);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(var(--blur-regular)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--blur-regular)) saturate(var(--glass-saturate));
+}
+
+.btn--glass:hover {
+  color: var(--color-accent);
+  background: var(--color-surface-glass-thick);
+}
+
+.btn--plain {
+  color: var(--color-accent);
+  background: transparent;
+}
+
+.btn--plain:hover {
+  color: var(--color-accent);
+  background: var(--color-fill-tertiary);
+}
+
+/* Focus swaps the variant shadow for the ring rather than stacking both. */
+.btn:focus-visible {
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.btn[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* Square icon-only control: the hit target, not the glyph, is what has to
+   clear --hit-target-min. */
+.icon-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--hit-target-min);
+  height: var(--hit-target-min);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-capsule);
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+.icon-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-fill-tertiary);
+}
+
+.icon-btn svg {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+}
+
+/* ============================================================
+   6. Cards
+   ============================================================ */
+
+.card {
+  padding: var(--space-6);
+  background: var(--color-surface-card);
+  border: var(--border-hairline) solid var(--color-separator);
+  border-radius: var(--radius-lg);
+}
+
+.card--elevated {
+  border-color: transparent;
+  box-shadow: var(--shadow-md);
+}
+
+/* The one card that reads as "this is the answer", per components.md.
+   Decoration is not a reason to use it. */
+.card--tinted {
+  background: var(--color-accent-tint);
+  border-color: transparent;
+}
+
+.card__title {
+  margin-block-end: var(--space-3);
+}
+
+.card__body {
+  color: var(--color-text-secondary);
+}
+
+.card__icon {
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
+  margin-block-end: var(--space-4);
+  color: var(--color-accent);
+}
+
+/* ============================================================
+   7. Pills — TrustBadge pill geometry
+   ============================================================ */
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--pill-pad-block);
+  padding-inline: var(--pill-pad-inline-start) var(--pill-pad-inline-end);
+  font-size: var(--type-footnote-size);
+  font-weight: var(--weight-semibold);
+  line-height: var(--type-footnote-lh);
+  /* Primary, not secondary. --color-text-secondary on --color-fill-tertiary
+     measures 3.24:1 in light — a fail for 13px text. Measured, not guessed;
+     see design/colors.md. */
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  background: var(--color-fill-tertiary);
+  border-radius: var(--radius-capsule);
+}
+
+/* The E2E badge. components.md draws this as success-on-success-tint, which
+   measures 1.98:1 in light and is unreadable — the tint carries the signal
+   here and the label stays primary. The accent is never an option: repainting
+   status green to match the brand is banned in brand.md. */
+.pill--trust {
+  background: var(--color-status-success-tint);
+}
+
+.pill__icon {
+  flex: none;
+  width: var(--pill-icon-size);
+  height: var(--pill-icon-size);
+}
+
+/* ============================================================
+   8. Disclosure — <details>, works with JS off
+   ============================================================ */
+
+.disclosure {
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-surface-card);
+  border: var(--border-hairline) solid var(--color-separator);
+  border-radius: var(--radius-md);
+}
+
+.disclosure + .disclosure {
+  margin-block-start: var(--space-3);
+}
+
+.disclosure__summary {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  font-size: var(--type-headline-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-headline);
+  cursor: pointer;
+  list-style: none;
+}
+
+.disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure__summary:focus-visible {
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.disclosure__chevron {
+  flex: none;
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+  margin-inline-start: auto;
+  color: var(--color-text-tertiary);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.disclosure[open] .disclosure__chevron {
+  transform: rotate(90deg);
+}
+
+.disclosure__body {
+  margin-block-start: var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.disclosure__body > * + * {
+  margin-block-start: var(--space-3);
+}
+
+/* ============================================================
+   9. Reduced motion
+
+   tokens.css already zeroes the duration and press-scale tokens under
+   this query, so anything built from them stops on its own. This is the
+   backstop for transforms and animations that are not token-driven.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* --dur-fast is already 0ms inside this query, so this stays token-driven
+       rather than hardcoding the usual 0.01ms. */
+    transition-duration: var(--dur-fast) !important;
+    animation-duration: var(--dur-fast) !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

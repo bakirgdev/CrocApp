@@ -229,7 +229,7 @@ Phase 1 exists to prove the deploy pipeline end-to-end before any design work is
 | **0b. Assets** ✅ | favicon set supplied, manifest corrected, `favicon.svg` dropped. `og.jpg` supplied but scheduled for rebuild in phase 5. | 2026-07-25 |
 | **1. Pipeline** | `pages.yml`, `CNAME`, placeholder `index.html`, `serve-landing.sh`, `.gitignore` entry for `web/landing/tokens.css`. *Owner-side DNS + Pages settings already done.* | `https://crocapp.dev` serves "CrocApp — coming soon" over valid HTTPS; `www` redirects; favicon appears in the tab |
 | **1 status** | built and verified locally 2026-07-25 — placeholder, tokens copy, favicon set and both themes serve clean off `scripts/serve-landing.sh`. **Not deployed yet**; the done-when needs a push. | pending push |
-| **2. Primitives** | `styles.css`: reset on top of tokens, container/section/grid, buttons, cards, glass nav, pills, `<details>`, focus rings, dark theme, reduced motion | a primitives smoke page renders correctly in both themes at 375 / 768 / 1440 |
+| **2. Primitives** ✅ | `styles.css`: reset on top of tokens, container/section/grid, buttons, cards, glass nav, pills, `<details>`, focus rings, dark theme, reduced motion. Harness is `web/landing/primitives.html`, kept in git and stripped from `_site` by the workflow. | done 2026-07-25 — verified both themes at 375 / 768 / 1024 / 1440, no horizontal overflow at any width |
 | **3. Hero** | nav + hero + CSS-built app mockup (Send screen: file rows, code phrase in `--type-code-hero` mono, trust badge, progress bar) + trust pills | hero is convincing at 375px and 1440px; mockup uses only tokens |
 | **4. Content** | sections 3–13, all copy, Lucide inline SVGs, FAQ, footer | every section present, all copy final, zero lorem |
 | **5. Meta** | **rebuild `og.jpg` at 1200×630 (§4)**, wire the supplied favicon set into `<head>`, copy mascot + banner into `assets/img/`, OG + Twitter meta, canonical, `theme-color` ×2, JSON-LD `SoftwareApplication`, `robots.txt`, `sitemap.xml` | social card previews correctly in a real debugger; no console errors; no 404 on any icon |
@@ -278,12 +278,18 @@ Verification: Chrome DevTools MCP `lighthouse_audit` for scores, Playwright MCP 
 
 ## 10. For your review
 
-Open items, roughly by cost of getting wrong. All were raised 2026-07-25 and are still unanswered.
+### Resolved 2026-07-25
 
-1. **Hero H1.** "Send files anywhere. Encrypted end to end." Alternates: *"The file transfer that doesn't care where you are."* / *"Anything, to anyone, anywhere. Encrypted."* / *"Works when AirDrop doesn't."* The last is the sharpest positioning but names a competitor in the H1.
-2. **"How it was made" — how loud about AI?** Currently one honest line. It is a real differentiator and also a lightning rod on HN. Options: keep as-is, expand into a real story section, or drop it.
-3. **Nav anchor set.** Four fits the glass bar: Features / How it works / Download / GitHub. Thirteen sections, four anchors — confirm which four.
-4. **`www` behaviour.** Plan redirects `www` → apex. Confirm you don't want the reverse.
+1. **Hero H1** — ships as planned: *"Send files anywhere. Encrypted end to end."* The AirDrop framing moves down into the first "Why this exists" card, where it is a comparison rather than a headline claim.
+2. **AI-first build** — **dropped from the page.** Owner decision. "How it was made" keeps the gomobile/XCFramework, SwiftUI and ADR points only. Recorded dissent: the repo's ADRs and commit history make it discoverable in a minute, so silence can read as concealment on a product whose pitch is trust. Owner reaffirmed; not revisited.
+3. **Nav anchors** — Why · How it works · Features · Download. In page order, ending on the conversion. The GitHub link keeps its own slot with the star count, so it is not one of the four.
+4. **`www` behaviour** — apex is canonical, `www` redirects to it. Already true at the DNS layer.
+
+**Open defect from item 4:** `www.crocapp.dev` currently serves GitHub's `*.github.io` certificate, so browsers hard-fail before they ever see the redirect (`.dev` is HSTS-preloaded, no click-through). The `www` record is a CNAME to the apex; it needs to point at `bakirgdev.github.io` so GitHub covers it in the certificate. Owner action.
+
+### Still open
+
+Roughly by cost of getting wrong.
 5. **Mascot placement.** `brand.md` allows it on the landing page. Currently footer only. Say if you want it in the hero — it changes the tone from "calm utility" toward "friendly".
 6. **Screenshot section.** Ruled out for v1. Confirm you're fine launching with no photographic proof of the app.
 7. **Do you want `web/docs` reserved now?** Costs three lines in the workflow, saves a rewrite later. Plan says yes.
