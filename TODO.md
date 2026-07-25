@@ -9,6 +9,8 @@ TO DO
 - README.md
 - protect main branch to have it contributed on only via PRs
 - protect main from force pushes of any type
+- before enabling CI as a required status check: swap the `paths` allowlist in ci.yml for a change-detection job that reports success. A filtered-out PR currently runs zero jobs, which leaves a required check pending forever (see docs/knowledge/tooling.md)
+- pin third-party actions to commit SHAs (maxim-lobanov/setup-xcode, golangci/golangci-lint-action); mutable major tags are a supply-chain hole
 - CONTRIBUTING.md — how to build, branch/PR conventions, code style, how to run tests, DCO/CLA if any (none needed for MIT solo project)
 - CODE_OF_CONDUCT.md — Contributor Covenant is the default choice, low effort, signals a welcoming project
 - CHANGELOG.md — Keep a Changelog format, even if sparse early on

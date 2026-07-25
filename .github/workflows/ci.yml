@@ -3,15 +3,24 @@ name: CI
 on:
   push:
     branches: [main]
-    paths-ignore: &docs-only
-      - "**/*.md"
-      - "docs/**"
-      - "assets/**"
-      - "web/**"
-      - "LICENSE"
-      - ".github/FUNDING.yml"
+    # Allowlist, not paths-ignore: an ignore list silently rots as new
+    # non-code directories land (design/, .claude/ both slipped through and
+    # paid for a full macOS matrix). Everything CI actually compiles or
+    # lints is enumerated here; anything else is free.
+    #
+    # If CI ever becomes a required check, a docs-only PR runs zero jobs and
+    # the check stays pending forever. Fix then is a change-detection job
+    # that reports success, not a wider filter here.
+    paths: &code-paths
+      - "app/**"
+      - "CrocKit/**"
+      - "crocmobile/**"
+      - "scripts/build-xcframework.sh"
+      - ".swift-format"
+      - ".xcode-version"
+      - ".github/workflows/ci.yml"
   pull_request:
-    paths-ignore: *docs-only
+    paths: *code-paths
 
 concurrency:
   group: ci-${{ github.ref }}
