@@ -17,8 +17,8 @@ URLs needed
 - docs/BUILDING.md (already listed below — landing links "how to build")
 - "good first issue" label URL — needs the label to exist and have issues in it
 
-Assets — decision needed
-- og.jpg is 1200×797, but the OG spec is 1200×630 (1.91:1). Platforms centre-crop it, losing ~21% top and bottom. It also carries no wordmark/headline/URL, uses sky blue + kelly green rather than croc green #1E9E6A, and shows a different crocodile than assets/mascot.png. See PLAN.md §10.1 for the three options.
+Assets — to do
+- replace og.jpg with a 1200×630 card built from design tokens: mascot, CrocApp wordmark, the hero H1, crocapp.dev. Reasons: current file is 1200×797 so every platform centre-crops ~21% off top and bottom; it carries no wordmark/headline/URL so a share renders as an untitled drawing; it uses sky blue + kelly green instead of croc green #1E9E6A, against the one-accent rule in design/brand.md; and its crocodile is not the one in assets/mascot.png, so two mascots read as two brands. This is the asset every HN/Reddit/X/Slack share renders before anyone reads a word.
 
 Assets — done
 - favicon set generated from assets/mascot.png, in web/landing/assets/img/favicon/

@@ -122,7 +122,7 @@ web/landing/
   robots.txt
   sitemap.xml
   assets/img/
-    og.jpg                             social card                      [supplied]
+    og.jpg                             social card                      [rebuild, §4]
     mascot.png                         copied from assets/mascot.png
     banner.webp                        copied from assets/banner.webp
     favicon/
@@ -138,6 +138,19 @@ scripts/serve-landing.sh          copies design/tokens.css in, serves on :8000
 ```
 
 `favicon.svg` was deleted from the supplied set: realfavicongenerator emits a 69 KB `<svg>` wrapper around a base64 PNG. It is not a vector, and browsers that support SVG favicons prefer it over the 3.6 KB PNG — so shipping it costs 65 KB to render a 16px glyph. If a true vector mascot ever exists, add it back.
+
+### `og.jpg` must be rebuilt — phase 5
+
+The social card is the single most-viewed brand asset: every share on HN, Reddit, X, Slack, iMessage and Discord renders it, usually before anyone reads a word. The supplied file does not do that job.
+
+| Problem | Consequence |
+|---|---|
+| 1200×797 (1.5:1); the spec is 1200×630 (1.91:1) | every platform centre-crops it, losing ~21% off top and bottom |
+| no wordmark, no headline, no URL | a share renders as an untitled drawing and explains nothing |
+| sky blue + kelly green, not croc green `#1E9E6A` | breaks the one-accent rule in `design/brand.md` |
+| a different crocodile from `assets/mascot.png` | two mascots read as two brands |
+
+**Replace with a 1200×630 card built from tokens** — flat `--color-surface` background, `assets/mascot.png`, the "CrocApp" wordmark, the hero H1, and `crocapp.dev`. Same type scale and same accent as the page, so the card and the site are visibly one thing. Keep the filename `og.jpg` so nothing downstream moves.
 
 `site.webmanifest` needed three corrections after generation, worth knowing if it is ever regenerated:
 
@@ -214,12 +227,12 @@ Phase 1 exists to prove the deploy pipeline end-to-end before any design work is
 | Phase | Work | Done when |
 |---|---|---|
 | **0. Tokens** ✅ | web layout + display tokens into `design/` | pushed `29964a5` |
-| **0b. Assets** ✅ | favicon set, og image, manifest corrections | supplied + fixed 2026-07-25 |
+| **0b. Assets** ✅ | favicon set supplied, manifest corrected, `favicon.svg` dropped. `og.jpg` supplied but scheduled for rebuild in phase 5. | 2026-07-25 |
 | **1. Pipeline** | `pages.yml`, `CNAME`, placeholder `index.html`, `serve-landing.sh`, `.gitignore` entry for `web/landing/tokens.css`. *Owner-side DNS + Pages settings already done.* | `https://crocapp.dev` serves "CrocApp — coming soon" over valid HTTPS; `www` redirects; favicon appears in the tab |
 | **2. Primitives** | `styles.css`: reset on top of tokens, container/section/grid, buttons, cards, glass nav, pills, `<details>`, focus rings, dark theme, reduced motion | a primitives smoke page renders correctly in both themes at 375 / 768 / 1440 |
 | **3. Hero** | nav + hero + CSS-built app mockup (Send screen: file rows, code phrase in `--type-code-hero` mono, trust badge, progress bar) + trust pills | hero is convincing at 375px and 1440px; mockup uses only tokens |
 | **4. Content** | sections 3–13, all copy, Lucide inline SVGs, FAQ, footer | every section present, all copy final, zero lorem |
-| **5. Meta** | wire the supplied favicon set into `<head>`, copy mascot + banner into `assets/img/`, OG + Twitter meta pointing at `og.jpg`, canonical, `theme-color` ×2, JSON-LD `SoftwareApplication`, `robots.txt`, `sitemap.xml` | social card previews correctly in a real debugger; no console errors; no 404 on any icon |
+| **5. Meta** | **rebuild `og.jpg` at 1200×630 (§4)**, wire the supplied favicon set into `<head>`, copy mascot + banner into `assets/img/`, OG + Twitter meta, canonical, `theme-color` ×2, JSON-LD `SoftwareApplication`, `robots.txt`, `sitemap.xml` | social card previews correctly in a real debugger; no console errors; no 404 on any icon |
 | **6. A11y & perf** | keyboard pass, contrast audit, `prefers-reduced-motion`, skip link, landmarks, Lighthouse | see §7 |
 | **7. Launch** | fill real URLs from `TODO.md`, final proofread, croc README PR, HN / r/opensource / r/selfhosted | page links to nothing dead |
 
@@ -254,7 +267,6 @@ Verification: Chrome DevTools MCP `lighthouse_audit` for scores, Playwright MCP 
 
 | Risk | Mitigation |
 |---|---|
-| **`og.jpg` is the most-seen asset and currently does not carry the brand.** See §10.1. | Owner decision pending. Nothing downstream is blocked; the meta tag points at whatever file sits at that path. |
 | **CSS mockup drifts from the real app.** A visitor downloads and gets something else. | Rebuild the mockup from `design/components.md` measurements, not from imagination. Re-check it when the app restyle lands; swap for real screenshots once they exist. |
 | `api.github.com` is the one external request. Unauthenticated limit is 60/hr per IP. | Fetch after paint, no layout shift, reserve the slot with the label only, hide the number silently on any failure. Never block render. |
 | Store links promised but not live at launch. | `#` placeholders render as disabled cards with an honest label, not as working buttons that 404. |
@@ -264,20 +276,12 @@ Verification: Chrome DevTools MCP `lighthouse_audit` for scores, Playwright MCP 
 
 ## 10. For your review
 
-Open items, roughly by cost of getting wrong. Items 2–4 and 6–8 were raised 2026-07-25 and are still unanswered.
+Open items, roughly by cost of getting wrong. All were raised 2026-07-25 and are still unanswered.
 
-1. **`og.jpg` — needs a decision before launch.** This is the single most-viewed brand asset: every share on HN, Reddit, X, Slack, iMessage and Discord renders it, usually before anyone reads a word. Four issues with the supplied file:
-   - **Aspect is 1200×797 (1.5:1). The spec is 1200×630 (1.91:1).** Every platform centre-crops it, so roughly 21% off the top and bottom is lost — including part of the illustration.
-   - **No wordmark, no headline, no URL.** A share renders as an untitled drawing. The card is doing zero explaining.
-   - **Off-palette.** Sky blue and kelly green; croc green is `#1E9E6A`. `design/brand.md`: one accent, no secondary brand hue.
-   - **Different crocodile from the mascot.** `assets/mascot.png` is a flat olive-green illustration; this is a blue-background sketch with a bird. Two mascots read as two brands.
-
-   Options: (a) I generate a 1200×630 card from tokens — flat `--color-surface`, mascot, "CrocApp" wordmark, the H1, `crocapp.dev` — matching the page exactly; (b) you re-crop and re-style the existing art to 1.91:1 and add type; (c) ship it as-is and iterate after launch. **(a) is my recommendation.**
-2. **Hero H1.** "Send files anywhere. Encrypted end to end." Alternates: *"The file transfer that doesn't care where you are."* / *"Anything, to anyone, anywhere. Encrypted."* / *"Works when AirDrop doesn't."* The last is the sharpest positioning but names a competitor in the H1.
+1. **Hero H1.** "Send files anywhere. Encrypted end to end." Alternates: *"The file transfer that doesn't care where you are."* / *"Anything, to anyone, anywhere. Encrypted."* / *"Works when AirDrop doesn't."* The last is the sharpest positioning but names a competitor in the H1.
 2. **"How it was made" — how loud about AI?** Currently one honest line. It is a real differentiator and also a lightning rod on HN. Options: keep as-is, expand into a real story section, or drop it.
 3. **Nav anchor set.** Four fits the glass bar: Features / How it works / Download / GitHub. Thirteen sections, four anchors — confirm which four.
 4. **`www` behaviour.** Plan redirects `www` → apex. Confirm you don't want the reverse.
 5. **Mascot placement.** `brand.md` allows it on the landing page. Currently footer only. Say if you want it in the hero — it changes the tone from "calm utility" toward "friendly".
 6. **Screenshot section.** Ruled out for v1. Confirm you're fine launching with no photographic proof of the app.
-7. **Phase 1 needs you.** DNS records and Pages settings are on your registrar and your GitHub account; I can't do those. Everything else I can.
-8. **Do you want `web/docs` reserved now?** Costs three lines in the workflow, saves a rewrite later. Plan says yes.
+7. **Do you want `web/docs` reserved now?** Costs three lines in the workflow, saves a rewrite later. Plan says yes.
