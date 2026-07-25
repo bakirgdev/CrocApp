@@ -1,24 +1,14 @@
-/*
- * CrocApp landing page. No dependencies, no build step, no analytics.
- *
- * Everything here is an enhancement. With JavaScript off the page still
- * reads, the nav still jumps, the FAQ still opens and the theme still
- * follows the OS — only the toggle, the star count and the copy buttons
- * are lost. Nothing below may become load-bearing.
- */
+/* Everything here is an enhancement. With JavaScript off the page still reads,
+   the nav still jumps, the FAQ still opens and the theme still follows the OS.
+   Nothing below may become load-bearing. */
 (() => {
   "use strict";
 
   const root = document.documentElement;
 
-  /* --- Theme -------------------------------------------------------------
-   * The inline script in <head> has already applied any stored preference
-   * before first paint; this only handles the toggle itself. No stored value
-   * means "follow the OS", which is why the initial read falls back to the
-   * media query rather than assuming light.
-   */
   const toggle = document.getElementById("theme-toggle");
 
+  /* No stored value means "follow the OS", hence the media-query fallback. */
   const currentTheme = () =>
     root.dataset.theme ||
     (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -36,18 +26,13 @@
       try {
         localStorage.setItem("theme", next);
       } catch (e) {
-        /* Private mode or storage disabled: the toggle still works for this
-           page view, it just will not be remembered. Not worth surfacing. */
+        /* Storage disabled: the toggle still works, it just is not remembered. */
       }
     });
   }
 
-  /* --- Star count --------------------------------------------------------
-   * The page's only third-party request. Unauthenticated api.github.com is
-   * 60/hr per IP, so this must never be required for anything: the slot is
-   * empty until a number arrives, and any failure leaves it empty rather
-   * than showing a zero, a dash or an error.
-   */
+  /* The page's only third-party request. Unauthenticated api.github.com is
+     60/hr per IP, so a failure must leave the slot empty rather than break. */
   const stars = document.getElementById("stars");
 
   if (stars) {
@@ -57,22 +42,15 @@
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((data) => {
         const n = data.stargazers_count;
-        // A zero is truthful and useless: "GitHub 0" reads as a broken widget,
-        // and the slot exists to show traction. No number is the better state.
+        /* "GitHub 0" reads as a broken widget. No number is the better state. */
         if (typeof n !== "number" || n < 1) return;
         stars.textContent = n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n);
         stars.hidden = false;
       })
-      .catch(() => {
-        /* Rate limited, offline, or blocked. Silence is the correct outcome. */
-      });
+      .catch(() => {});
   }
 
-  /* --- Copy buttons ------------------------------------------------------
-   * Markup ships them hidden; they only appear once the clipboard API is
-   * known to exist, so a button never promises something it cannot do. The
-   * command itself is visible as text either way.
-   */
+  /* Markup ships these hidden so a button never promises what it cannot do. */
   const copyButtons = document.querySelectorAll("[data-copy]");
 
   if (copyButtons.length && navigator.clipboard) {
@@ -97,20 +75,12 @@
               glyph.setAttribute("href", "#i-copy");
             }, 2000);
           },
-          () => {
-            /* Denied by permissions policy or a hostile clipboard. The command
-               is still on screen to select by hand. */
-          }
+          () => {}
         );
       });
     }
   }
 
-  /* --- Nav active state --------------------------------------------------
-   * Marks the anchor whose section is currently on screen. Guarded because
-   * a browser without IntersectionObserver should lose the highlight, not
-   * the nav.
-   */
   const links = Array.from(document.querySelectorAll(".nav__link"));
 
   if (links.length && "IntersectionObserver" in window) {
@@ -134,7 +104,7 @@
           else visible.delete(entry.target);
         }
 
-        // Topmost visible section wins, so scrolling up and down agree.
+        /* Topmost visible section wins, so scrolling up and down agree. */
         let active = null;
         for (const section of sections) {
           if (visible.has(section)) {
@@ -148,8 +118,7 @@
           else link.removeAttribute("aria-current");
         }
       },
-      // Top band only: a section counts as "current" once its heading is
-      // near the nav, not when its last pixel scrolls into view.
+      /* Top band only: current once the heading nears the nav. */
       { rootMargin: "-20% 0px -70% 0px" }
     );
 

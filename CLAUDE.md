@@ -6,17 +6,18 @@ Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS
 
 - `.claude/` — project Claude config: `rules/`, `skills/`, `settings.json` & `settings.local.json`, etc.
 - `.mcp.json` — project MCP servers: `context7` (docs), `xcode` (`xcrun mcpbridge`), `gopls` (Go semantics; launched via `$(go env GOPATH)/bin/gopls` since `~/go/bin` is usually off PATH)
-- `.github/` — GitHub config: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `FUNDING.yml`. Issue/PR templates not yet added (TODO.md)
+- `.github/` — GitHub config: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` (Pages deploy, ADR 0019), `FUNDING.yml`. Issue/PR templates not yet added
 - `.swift-format` — swift-format config. `.xcode-version` — Xcode baseline, read by CI. `crocmobile/.golangci.yml` — Go lint config. See `@docs/knowledge/tooling.md`
 - `app/` — Xcode project (SwiftUI, iOS + macOS): `app/CrocApp.xcodeproj`, app sources `app/CrocApp/`, share extension `app/CrocShare/`, plists + entitlements + export options `app/Config/`
 - `assets/` — brand art: `CrocAppIcon.icon` source, banner, mascot, etc.
 - `CrocKit/` — Swift package wrapping the Go engine: `CrocEngine` actor + `AsyncStream<TransferEvent>`, plus `crockit-verify` executable harness. Depends on `Croc.xcframework` (gitignored build artifact)
 - `crocmobile/` — Go wrapper around croc v10.5.0, gomobile-bound into `Croc.xcframework`. `session.go` is the engine; `cmd/croctest` is its CLI harness
 - `design/` — design system: color/type/spacing/material/motion tokens, component specs, SF Symbols mapping, SwiftUI translation, `tokens.css` for web. Canonical for the app restyle **and** the landing/docs sites (ADR 0015)
-- `docs/knowledge/` — evergreen project knowledge
+- `docs/knowledge/` — evergreen project knowledge (see its README for which file answers what)
 - `docs/decisions/` — ADRs, `NNNN-slug.md`
-- `scripts/` — build + machine-verification harnesses (see Commands)
-- `web/landing/`, `web/docs/` — static sites (GitHub Pages); planned, currently empty dirs (TODO.md)
+- `docs/known-issues.md` — triaged defects, accepted papercuts, release blockers. Check it before reporting a bug as new
+- `scripts/` — build + machine-verification harnesses (see Commands); `lib.sh` holds their shared helpers (`timeout` shim, `fail`/`pass`, `require_croc`, `kill_jobs`, `local_ip`)
+- `web/landing/` — landing page, live at crocapp.dev; `tokens.css` is gitignored and copied in from `design/` at deploy time, by hand for local preview (ADR 0015, 0019). `web/docs/` — docs site, still an empty dir
 
 ## Commands
 
@@ -37,10 +38,13 @@ govulncheck ./...                     # from crocmobile/
 
 # verification — all need outbound network (public relay) and a croc CLI
 scripts/verify-interop.sh     # 9 scenarios, crocmobile ↔ croc CLI (both directions, decline, cancel, relay, LAN)
-scripts/verify-app-mac.sh     # macOS app both directions + --local sandboxed relay listener
+scripts/verify-app-mac.sh     # macOS app, 6 directions: both ways + --local, custom relay, --no-compress, --ask
 scripts/verify-app-sim.sh     # iOS simulator, CLI → app via --auto-receive
 scripts/verify-share-sim.sh   # share-extension handoff (App Group staging) → CLI receive
 scripts/build-devid.sh        # Developer ID archive → export → notarization pre-check
+
+# landing page, local preview
+cp design/tokens.css web/landing/ && python3 -m http.server --directory web/landing
 ```
 
 Env: `CROC` (default `~/go/bin/croc`), `SIM` (default `iPhone 17 Pro`; list with `xcrun simctl list devices`).
@@ -73,12 +77,13 @@ Never commit or push unless told to. When asked to, do it with best practices an
 
 Every session ends by creating, updating, or deleting documentation so `docs/` and `CLAUDE.md` matches reality:
 
-- Decision made or changed → new ADR in `docs/decisions/` (next number; supersede, don't rewrite old ones)
+- Decision made → new ADR in `docs/decisions/` (next number). Decision reversed or replaced → new ADR superseding the old one, old one marked `Status: superseded by NNNN`. A fact inside an existing ADR that stopped being true → overwrite it in place, no `Amended` marker, and re-verify what it claims (`docs/decisions/README.md`)
 - Durable knowledge gained → add/update file in `docs/knowledge/` and/or `CLAUDE.md`
+- Defect found and consciously not fixed → line in `docs/known-issues.md`. Defect fixed → delete its line
 - Stale or wrong doc noticed during the session → fix or delete it now
 - Genuinely nothing doc-worthy → say so explicitly before ending
 
-Keep docs small, dense, direct. Each `docs/` subdirectory has a README.md explaining what belongs there.
+Keep docs small, dense, direct. Each `docs/` subdirectory has a README.md explaining what belongs there. Never cite `TODO.md` or a `PLAN.md` from inside `docs/` — those are scratch files that get deleted, and a doc that points at one rots on the spot. For the same reason, do not use "Phase N" as a fact in any doc; say what the thing is, not when it was built.
 
 ### Session end report
 
@@ -87,7 +92,7 @@ Close every session with this, in order, no praise and no prompt recap:
 1. **Done** — what changed, one line per file or area
 2. **Verified** — commands actually run and their result. Anything not run is listed as "not verified"
 3. **Docs** — ADRs and knowledge files added / changed / deleted, or an explicit "nothing doc-worthy"
-4. **Open** — known gaps, deferred work, follow-ups worth a `TODO.md` line
+4. **Open** — known gaps, deferred work, follow-ups. Anything durable goes in `docs/known-issues.md`, not only in the report
 5. **Simple** - simplified version of changes and learning opportunities
 
 Mark speculation as speculation.

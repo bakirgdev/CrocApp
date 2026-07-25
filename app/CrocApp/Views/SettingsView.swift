@@ -3,8 +3,7 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-/// macOS Settings scene (⌘,). Phase 4: receive folder only; Phase 5 adds
-/// power options (F13-F19) here.
+/// macOS Settings scene (⌘,): receive folder plus the power options (F13-F19).
 struct SettingsView: View {
     @Environment(OutputFolderStore.self) private var outputFolder
     @State private var showFolderPicker = false

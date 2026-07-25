@@ -11,16 +11,17 @@ Project spans a native app, a landing page, a docs site, and project documentati
 
 Single public repo holds everything:
 
-- `app/` — Xcode project (originally `CrocApp/`; renamed 2026-07, amended here 2026-07-24)
-- `CrocKit/` — Swift package wrapping the Go engine (added by ADR 0006 work)
-- `crocmobile/` — Go wrapper, gomobile-bound (added by ADR 0006 work)
+- `app/` — Xcode project
+- `CrocKit/` — Swift package wrapping the Go engine (ADR 0006)
+- `crocmobile/` — Go wrapper, gomobile-bound (ADR 0006)
 - `scripts/` — build + verification harnesses
 - `assets/` — brand art
-- `web/landing/`, `web/docs/` — static sites (GitHub Pages)
+- `design/` — design system, canonical for app and web (ADR 0015)
+- `web/landing/`, `web/docs/` — static sites (GitHub Pages, ADR 0019)
 - `docs/` — knowledge + ADRs
 - `.claude/` — AI tooling config, rules, skills
 
 ## Consequences
 
 - One clone gives any session (human or AI) full context; cross-cutting changes are atomic.
-- Mixed toolchains in one repo; CI must path-filter to avoid running everything on every push.
+- Mixed toolchains in one repo; every workflow path-filters so a commit only pays for what it touched (ADR 0014, ADR 0018).

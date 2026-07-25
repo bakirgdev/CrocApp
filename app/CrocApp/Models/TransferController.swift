@@ -328,8 +328,8 @@ final class TransferController {
             finishRecord(
                 cancelRequested ? .cancelled : declineRequested ? .declined : .failed,
                 summary: nil)
-            // Phase 1 contract: consumer must cancel the engine on .failed so
-            // the Go session releases and the next transfer can start.
+            // Engine contract: the consumer must cancel on .failed so the Go
+            // session releases and the next transfer can start.
             Task { await engine.cancel() }
         }
     }

@@ -1,9 +1,17 @@
+MISC:
+- GITHUB RULES TO ENFORCE WHEN v0.9.9: main cannot be directly pushed on, disallow force pushes or anything with force, main can be contributed only via PR, CI from PR MUST pass, pages preview MUST pass on PR for landing and/or docs page development (+ maybe more)
+- make docs.yml GH workflow nicely like landing.yml when docs are made!
+- add note somewhere to track what things need review after something:
+  - gh workflows mac version update 26 to 27 and onwards only when new apple software versions across platforms release (in this case bump mac image to mac27)
+- fix proj's claude md to prefer simpler responses with simpler words but retaining details
+
 CC NEXT PROMPT
 - > make some nice prompt for CC to review the whole app, fully test it, check if codewise and otherwise is ready, performant, optimized, code optimized for human contributors and AI, well commented but healthy doses (short is better), users ready, all features work. review, then make planned phases, then plan each phase and do it via multiple prompts using subagents for phase's plan. commit where fit and push on each phase done. deep but simple recap of what's done/verified/fixes. these are last checks of the app itself before app store publish. one known fix needed: prompt user for camera and local network permission after onboarding screen is closed on first launch and check state before using each feature
+- > is the landing page optimized by marketing and psychology standards? Use available global skills for that. Also verify SEO, AIO, JSON-LD schema, robots.txt, ai crawling, a11y, accessibility and those kinds of all things besides the looks of the page! Fix them if present. Report simple recap
 
 LANDING PAGE — PENDING LINKS & ASSETS
 Every item here is an `href="#"` placeholder in web/landing/index.html until it exists.
-Plan: PLAN.md. Grep for `href="#"` to find them all.
+Grep for `href="#"` to find them all.
 
 URLs needed
 The four download cards render as non-interactive cards labelled "Coming shortly" rather
@@ -38,7 +46,7 @@ Assets — done
 
 Owner actions — done 2026-07-25
 - DNS for crocapp.dev on Cloudflare nameservers, apex + www proxied, SSL/TLS mode Full (strict).
-  Not the raw GitHub A/AAAA records — see PLAN.md §5 before debugging anything DNS or cert related.
+  Not the raw GitHub A/AAAA records — check this before debugging anything DNS or cert related.
 - Settings → Pages → Source = GitHub Actions, custom domain, Enforce HTTPS
 - domain verified at github.com/settings/pages
 

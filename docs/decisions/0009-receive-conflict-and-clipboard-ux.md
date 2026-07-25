@@ -5,7 +5,7 @@ Date: 2026-07-23
 
 ## Context
 
-Phase 2 UI needed concrete semantics for three underspecified areas: F8 (overwrite/resume confirm), the prior-art "clipboard auto-detect" pattern, and the QR payload format. Engine constraint: `overwrite` is set at `startReceive` time, before the file list (and thus any conflict) is known; croc cannot re-prompt per file through the bridge.
+The receive UI needed concrete semantics for three underspecified areas: F8 (overwrite/resume confirm), the prior-art "clipboard auto-detect" pattern, and the QR payload format. Engine constraint: `overwrite` is set at `startReceive` time, before the file list (and thus any conflict) is known; croc cannot re-prompt per file through the bridge.
 
 ## Decision
 

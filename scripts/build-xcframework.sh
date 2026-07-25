@@ -6,7 +6,7 @@
 #
 # macOS slice is arm64-only: golang/go#73119 (multi-arch macos bind broken).
 # iOS device slice layout issue golang/go#66500 affects App Store archives,
-# not simulator/dev builds — revisit at release engineering (Phase 7).
+# not simulator/dev builds — revisit before the first store submission.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

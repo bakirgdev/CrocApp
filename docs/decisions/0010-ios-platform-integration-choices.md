@@ -5,7 +5,7 @@ Date: 2026-07-23
 
 ## Context
 
-Phase 3 had to make transfers survive iOS backgrounding, complete F10 (Live Activity), ship F30 (share extension), and handle local-network denial. Verified during planning: BGContinuedProcessingTask (iOS 26+) renders its own system Live Activity (title/subtitle/progress/cancel); `NSExtensionContext.open` is unsupported for share extensions; iOS has no official local-network authorization API.
+The iOS platform layer had to make transfers survive backgrounding, complete F10 (Live Activity), ship F30 (share extension), and handle local-network denial. Verified during planning: BGContinuedProcessingTask (iOS 26+) renders its own system Live Activity (title/subtitle/progress/cancel); `NSExtensionContext.open` is unsupported for share extensions; iOS has no official local-network authorization API.
 
 ## Decision
 

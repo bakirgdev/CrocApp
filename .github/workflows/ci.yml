@@ -1,16 +1,8 @@
-name: CI
+name: CI pass
 
 on:
   push:
     branches: [main]
-    # Allowlist, not paths-ignore: an ignore list silently rots as new
-    # non-code directories land (design/, .claude/ both slipped through and
-    # paid for a full macOS matrix). Everything CI actually compiles or
-    # lints is enumerated here; anything else is free.
-    #
-    # If CI ever becomes a required check, a docs-only PR runs zero jobs and
-    # the check stays pending forever. Fix then is a change-detection job
-    # that reports success, not a wider filter here.
     paths: &code-paths
       - "app/**"
       - "CrocKit/**"
@@ -32,7 +24,9 @@ permissions:
 jobs:
   swift-format:
     name: swift-format
+
     runs-on: macos-26
+
     steps:
       - uses: actions/checkout@v7
 
@@ -43,24 +37,23 @@ jobs:
         with:
           xcode-version: ${{ steps.xcode.outputs.version }}
 
-      # swift-format ships inside the toolchain, so there is nothing to install.
       - name: Lint formatting
         run: |
-          xcrun swift-format lint --recursive --parallel --strict \
-            app/CrocApp app/CrocShare CrocKit/Sources
+          xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
 
   go:
     name: go
+
     runs-on: ubuntu-latest
-    # crocmobile only ever ships as an Apple target, so analyse the darwin build
-    # even though the host is Linux. Keeps the cheap runner without linting a
-    # platform the app never runs on.
+
     env:
       GOOS: darwin
       GOARCH: arm64
+
     defaults:
       run:
         working-directory: crocmobile
+
     steps:
       - uses: actions/checkout@v7
 
@@ -80,24 +73,24 @@ jobs:
 
       - name: govulncheck
         run: |
-          # Install the tool for the host so the binary lands in $GOPATH/bin
-          # and can actually run: the job-level GOOS/GOARCH would otherwise
-          # cross-compile a darwin binary into $GOPATH/bin/darwin_arm64/.
           env -u GOOS -u GOARCH go install golang.org/x/vuln/cmd/govulncheck@latest
-          # Run with the job env intact so the analysis still targets darwin.
           "$(env -u GOOS -u GOARCH go env GOPATH)/bin/govulncheck" ./...
 
   build:
     name: build (${{ matrix.platform }})
+
     runs-on: macos-26
+
     strategy:
       fail-fast: false
+
       matrix:
         include:
           - platform: macOS
             destination: platform=macOS
           - platform: iOS Simulator
             destination: generic/platform=iOS Simulator
+
     steps:
       - uses: actions/checkout@v7
 
@@ -115,8 +108,6 @@ jobs:
 
       - run: brew install xcbeautify
 
-      # ADR 0006: the xcframework is a build artifact, not committed. Nothing
-      # in CrocKit or the app compiles until this has run.
       - name: Build Croc.xcframework
         run: scripts/build-xcframework.sh
 

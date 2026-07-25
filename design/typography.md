@@ -11,7 +11,7 @@ SF Pro for everything; SF Mono for code phrases and text payloads. Names mirror 
              "Cascadia Mono", "Roboto Mono", monospace;
 ```
 
-**Do not ship font files.** SF Pro and SF Mono are Apple system fonts and are not redistributable. On Apple hardware the stacks above resolve to real San Francisco; elsewhere they fall through to the platform UI / mono font. The Claude Design project self-hosts SF Pro Text OTFs so its canvas renders correctly — that is a preview artifact, not something to copy into `web/`.
+**Do not ship font files.** SF Pro and SF Mono are Apple system fonts and are not redistributable. On Apple hardware the stacks above resolve to real San Francisco; elsewhere they fall through to the platform UI / mono font.
 
 Cascadia Mono sits in the mono fallback as a nice non-Apple monospace (SIL OFL 1.1, redistributable) but is not bundled here either; it only matches if the visitor already has it.
 
@@ -31,7 +31,7 @@ Size / line-height / default weight, in px (= pt on Apple platforms at 1×).
 | Token prefix | Size | Line-height | Weight | Used for |
 |---|---|---|---|---|
 | `--type-large-title` | 34 | 41 | 700 | screen hero titles |
-| `--type-title1` | 28 | 34 | 700 | |
+| `--type-title1` | 28 | 34 | 700 | macOS window titles, where a phone would use large-title |
 | `--type-title2` | 22 | 28 | 700 | sheet / section heroes |
 | `--type-title3` | 20 | 25 | 600 | StatusBlock result title |
 | `--type-headline` | 17 | 22 | 600 | button labels, sheet title, row emphasis |
@@ -92,9 +92,11 @@ Tokens are the source of truth; these are shorthands defined in `tokens.css`:
 
 `.t-large-title` `.t-title2` `.t-title3` `.t-headline` `.t-body` `.t-callout` `.t-footnote` `.t-caption` `.t-code`
 
+`--type-title1` and `--type-caption2` have no helper: neither has a web call site. The tokens exist because the app scale is `Font.TextStyle` and must stay complete.
+
 ## Rules
 
 - Uppercase only for the small eyebrow label above the code phrase (`--type-footnote`, weight 600, `letter-spacing: 0.6px`). Nowhere else.
-- No serif, anywhere. If a Claude Design render drifts into a serif or a teal gradient, it has left the system.
+- No serif, anywhere. A serif headline is the usual first sign that a generated mockup has left this system.
 - Line length capped by `--content-max-width` (480px) in the app, `--content-max-width-prose` (680px) on web — not by a character count.
 - In the app, respect Dynamic Type — use text styles, never a hardcoded point size, and verify at the largest accessibility size.

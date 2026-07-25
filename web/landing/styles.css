@@ -1,29 +1,13 @@
-/* ============================================================
-   CrocApp landing page — primitives.
+/* CrocApp landing page. Loaded after tokens.css, which supplies every value
+   here. No raw hex, px or ms below the reset block: a missing value is a
+   missing token — add it to design/*.md and design/tokens.css first (ADR 0015).
 
-   Loaded after tokens.css, which supplies every value here and
-   already sets box-sizing, body type, link color, focus ring,
-   selection and scrollbars. This file adds layout, components
-   and page-level surfaces only.
+   Page fill is --color-surface-base, not the app's grouped fill, because
+   --color-text-link is 4.94:1 on base and only 4.42:1 on grouped and this page
+   runs links through its prose. Cards carry the tonal step instead. */
 
-   No raw hex, px or ms below the reset block. A missing value is
-   a missing token: add it to design/*.md AND design/tokens.css
-   first (ADR 0015), then consume it here.
-
-   Page fill is --color-surface-base, not the app's grouped fill.
-   Reason is contrast, not taste: --color-text-link (--green-700)
-   measures 4.94:1 on base and only 4.42:1 on grouped, and this
-   page runs links through its prose. Cards carry the tonal step
-   instead. See design/colors.md.
-   ============================================================ */
-
-/* ============================================================
-   1. Reset + a11y utilities
-
-   The one block allowed literals, and only these: 0, 100%, and
-   the 1px clip box that .u-visually-hidden needs to stay in the
-   accessibility tree. Everything else in this file is a token.
-   ============================================================ */
+/* 1. Reset + a11y utilities.
+   The one block allowed literals: 0, 100%, and .u-visually-hidden's 1px clip. */
 
 h1,
 h2,
@@ -51,12 +35,9 @@ svg {
 }
 
 /* ---- Icons ----
-   Every SVG on this page is a Lucide glyph drawn from the inline sprite.
-   iconography.md's render rules live here rather than on each element,
-   because a <use> instance cannot inherit them from the symbol. The size
-   default matters: an <svg> with a viewBox and no dimensions falls back
-   to 300x150, so a missed class would be a full-width glyph, not a small
-   one. */
+   iconography.md's render rules live here, not on each element: a <use>
+   instance cannot inherit them from the symbol. The size default matters —
+   an <svg> with a viewBox and no dimensions falls back to 300x150. */
 svg {
   width: var(--icon-size-md);
   height: var(--icon-size-md);
@@ -82,9 +63,8 @@ button {
   cursor: pointer;
 }
 
-/* Author styles beat the UA sheet, so any class that sets `display` silently
-   defeats the hidden attribute. Without this the JS-gated copy button renders
-   as a normal button with JavaScript disabled — visible and inert. */
+/* Author styles beat the UA sheet, so any class setting `display` defeats the
+   hidden attribute — the JS-gated copy button would render visible and inert. */
 [hidden] {
   display: none !important;
 }
@@ -100,9 +80,7 @@ button {
   white-space: nowrap;
 }
 
-/* ============================================================
-   2. Page + layout
-   ============================================================ */
+/* 2. Page + layout */
 
 body {
   background: var(--color-surface-base);
@@ -119,10 +97,8 @@ body {
   max-width: var(--content-max-width-wide);
 }
 
-/* Keeps the section container's own box, then caps the *content* at the prose
-   measure. Setting max-width on the container itself would re-centre it and
-   give the page a third left edge — prose sections would visibly indent
-   against every other section on a wide screen. */
+/* Caps the *content*, not the container: max-width on the container itself
+   re-centres it and gives the page a third left edge. */
 .container--prose > * {
   max-width: var(--content-max-width-prose);
 }
@@ -167,11 +143,9 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* A link sitting inside a paragraph must not be identified by colour alone
-   (WCAG 1.4.1). tokens.css strips underlines globally, which is right for nav
-   items and buttons and wrong for prose, so they come back here. Links that
-   are the entire content of a heading or a control are not "within a block of
-   text" and stay clean. */
+/* WCAG 1.4.1: a link inside a paragraph cannot be colour alone. tokens.css
+   strips underlines globally — right for nav and buttons, wrong for prose. A
+   link that is a whole heading or control is not "within a block of text". */
 .prose a,
 .card__body a,
 .disclosure__body a,
@@ -181,9 +155,7 @@ body {
   text-underline-offset: 2px;
 }
 
-/* ============================================================
-   3. Skip link — first in tab order, invisible until focused
-   ============================================================ */
+/* 3. Skip link — first in tab order, invisible until focused */
 
 .skip-link {
   position: fixed;
@@ -191,7 +163,7 @@ body {
   inset-block-start: var(--space-3);
   inset-inline-start: var(--space-3);
   padding: var(--space-3) var(--space-5);
-  color: var(--color-text-on-accent);
+  color: var(--color-on-accent);
   background: var(--color-accent);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
@@ -199,21 +171,16 @@ body {
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
-/* Sliding into view is the focus indicator, but the ring is restated because
-   .skip-link's own box-shadow would otherwise beat tokens.css's :focus-visible
-   on source order at equal specificity. */
+/* Ring restated: .skip-link's own box-shadow would beat tokens.css's
+   :focus-visible on source order at equal specificity. */
 .skip-link:focus-visible {
   transform: translateY(0);
   box-shadow: var(--shadow-md), var(--shadow-focus-ring);
 }
 
-/* ============================================================
-   4. Sticky glass nav
-
-   materials-motion.md: glass needs something to blur. Over a flat
-   page it reads as a tinted bar, which is the expected landing-page
-   look — the fallback below is what non-backdrop-filter browsers get.
-   ============================================================ */
+/* 4. Sticky glass nav.
+   Glass needs something to blur; over a flat page it reads as a tinted bar,
+   which is the expected look here. Fallback below for no backdrop-filter. */
 
 .nav {
   position: sticky;
@@ -266,23 +233,18 @@ body {
   text-decoration: none;
 }
 
-/* The anchor row is the first thing to go: four links do not fit beside a
-   wordmark, a toggle and a star count on a phone. Everything they point at
-   is still reachable by scrolling, so this hides rather than collapses
-   into a menu — a hamburger for four in-page anchors is more JS and more
-   a11y surface than the problem deserves. */
-/* Breakpoint is a literal by necessity: custom properties do not resolve
-   inside a media condition, so this is the one number that cannot be a
-   token. rem, so it tracks the user's browser font size. */
+/* Four links do not fit beside a wordmark, toggle and star count on a phone.
+   Hidden rather than collapsed: everything is still reachable by scrolling,
+   and a hamburger for four in-page anchors is more JS and more a11y surface
+   than the problem deserves. The breakpoint is a literal by necessity —
+   custom properties do not resolve inside a media condition. */
 @media (width < 48rem) {
   .nav__links {
     display: none;
   }
 }
 
-/* ============================================================
-   5. Buttons — components.md measurements
-   ============================================================ */
+/* 5. Buttons — components.md measurements */
 
 .btn {
   display: inline-flex;
@@ -343,19 +305,18 @@ body {
 }
 
 .btn--prominent {
-  color: var(--color-text-on-accent);
+  color: var(--color-on-accent);
   background: var(--color-accent);
   box-shadow: var(--shadow-sm);
 }
 
 .btn--prominent:hover {
-  color: var(--color-text-on-accent);
+  color: var(--color-on-accent);
   background: var(--color-accent-pressed);
 }
 
 .btn--secondary {
-  /* On its own tint even --green-700 is 4.32:1, so this variant needs the
-     darker step. Measured; see design/colors.md. */
+  /* On its own tint --green-700 is 4.31:1, so this needs the darker step. */
   color: var(--color-accent-text-on-tint);
   background: var(--color-accent-tint);
 }
@@ -424,9 +385,7 @@ body {
   height: var(--icon-size-md);
 }
 
-/* ============================================================
-   6. Cards
-   ============================================================ */
+/* 6. Cards */
 
 .card {
   padding: var(--space-6);
@@ -462,9 +421,7 @@ body {
   color: var(--color-accent);
 }
 
-/* ============================================================
-   7. Pills — TrustBadge pill geometry
-   ============================================================ */
+/* 7. Pills — TrustBadge pill geometry */
 
 .pills {
   display: flex;
@@ -481,19 +438,15 @@ body {
   font-size: var(--type-footnote-size);
   font-weight: var(--weight-semibold);
   line-height: var(--type-footnote-lh);
-  /* Primary, not secondary. --color-text-secondary on --color-fill-tertiary
-     measures 3.24:1 in light — a fail for 13px text. Measured, not guessed;
-     see design/colors.md. */
+  /* Primary: secondary on --color-fill-tertiary is 3.24:1, a fail at 13px. */
   color: var(--color-text-primary);
   white-space: nowrap;
   background: var(--color-fill-tertiary);
   border-radius: var(--radius-capsule);
 }
 
-/* The E2E badge. components.md draws this as success-on-success-tint, which
-   measures 1.98:1 in light and is unreadable — the tint carries the signal
-   here and the label stays primary. The accent is never an option: repainting
-   status green to match the brand is banned in brand.md. */
+/* The E2E badge. Success-on-success-tint is 1.98:1, so the tint carries the
+   signal and the label stays primary — colors.md rule 2. */
 .pill--trust {
   background: var(--color-status-success-tint);
 }
@@ -504,9 +457,7 @@ body {
   height: var(--pill-icon-size);
 }
 
-/* ============================================================
-   8. Disclosure — <details>, works with JS off
-   ============================================================ */
+/* 8. Disclosure — <details>, works with JS off */
 
 .disclosure {
   padding: var(--space-5) var(--space-6);
@@ -544,8 +495,7 @@ body {
   width: var(--icon-size-sm);
   height: var(--icon-size-sm);
   margin-inline-start: auto;
-  /* Secondary, not tertiary: --color-text-tertiary is 1.73:1 on white, which
-     is not a visible affordance. See design/colors.md. */
+  /* Secondary: tertiary is 1.74:1 on white, not a visible affordance. */
   color: var(--color-text-secondary);
   transition: transform var(--dur-base) var(--ease-out);
 }
@@ -563,9 +513,7 @@ body {
   margin-block-start: var(--space-3);
 }
 
-/* ============================================================
-   9. Nav extras — GitHub link, theme toggle
-   ============================================================ */
+/* 9. Nav extras — GitHub link, theme toggle */
 
 .nav__github {
   flex: none;
@@ -577,8 +525,8 @@ body {
 }
 
 /* The glyph shows the theme you would switch *to*, so light shows a moon.
-   Mirrored under prefers-color-scheme for visitors who never touch it —
-   same two-block pattern tokens.css uses. */
+   This is a display swap, not a colour, so light-dark() cannot carry it and
+   the prefers-color-scheme mirror below is still required. */
 .theme-toggle__sun {
   display: none;
 }
@@ -601,9 +549,8 @@ body {
   }
 }
 
-/* On a phone the GitHub label is the first thing worth dropping: the star
-   glyph and count still say what it is, and the row has to fit a wordmark,
-   a link and a toggle inside --nav-height-web. */
+/* The star glyph and count still say "GitHub", and the row has to fit a
+   wordmark, a link and a toggle inside --nav-height-web. */
 @media (width < 30rem) {
   .nav__github {
     padding-inline: var(--space-2);
@@ -615,9 +562,7 @@ body {
   }
 }
 
-/* ============================================================
-   10. Hero
-   ============================================================ */
+/* 10. Hero */
 
 .hero__inner {
   display: grid;
@@ -655,14 +600,9 @@ body {
   margin-block-start: var(--space-2);
 }
 
-/* ============================================================
-   11. CSS app mockup — measurements from components.md
-
-   Not a screenshot and not decoration: it is the app's Send screen drawn
-   from the same tokens the app uses, so a token change moves both. The
-   solid material is deliberate — materials-motion.md says glass over a
-   flat page is just a tinted rectangle.
-   ============================================================ */
+/* 11. CSS app mockup — measurements from components.md.
+   The app's Send screen drawn from the same tokens, so a token change moves
+   both. Solid material is deliberate: glass over a flat page is a rectangle. */
 
 .hero__mockup {
   display: flex;
@@ -850,12 +790,9 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ============================================================
-   12. Content sections
-
+/* 12. Content sections.
    iconography.md: glyphs under 20px carry a heavier stroke so they hold
-   weight against the text beside them.
-   ============================================================ */
+   weight against the text beside them. */
 
 .pill__icon,
 .btn--sm .btn__icon,
@@ -1010,9 +947,7 @@ body {
   margin-block-start: var(--space-6);
 }
 
-/* ============================================================
-   13. Footer
-   ============================================================ */
+/* 13. Footer */
 
 .footer {
   padding-block: var(--section-pad-web);
@@ -1048,13 +983,9 @@ body {
   margin-inline-start: auto;
 }
 
-/* ============================================================
-   14. Reduced motion
-
-   tokens.css already zeroes the duration and press-scale tokens under
-   this query, so anything built from them stops on its own. This is the
-   backstop for transforms and animations that are not token-driven.
-   ============================================================ */
+/* 14. Reduced motion.
+   tokens.css already zeroes the duration tokens; this is the backstop for
+   anything not token-driven. */
 
 @media (prefers-reduced-motion: reduce) {
   *,

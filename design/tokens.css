@@ -1,99 +1,93 @@
-/* ============================================================
-   CrocApp design tokens — web mirror.
+/* CrocApp design tokens — web mirror. Canonical values live in design/*.md;
+   change one, change both. Nothing generates this file.
 
-   Canonical values live in design/*.md. If you change one, change
-   both. Nothing generates this file.
+   Every themed value is a light-dark() pair resolved by color-scheme, so the
+   dark theme is not a second block. :root declares `light dark` (follows the
+   OS); [data-theme] pins it and wins in both directions.
 
-   Dark theme appears TWICE on purpose: once for the explicit
-   [data-theme="dark"] toggle, once under prefers-color-scheme for
-   visitors who never touch the toggle. Keep the two blocks identical.
-
-   No @font-face here by design: SF Pro / SF Mono are Apple system
-   fonts and are not redistributable. See design/typography.md.
-   ============================================================ */
+   No @font-face: SF Pro / SF Mono are Apple system fonts and are not
+   redistributable. See design/typography.md. */
 
 :root {
-  /* --- Brand: croc green scale --- */
+  color-scheme: light dark;
+
+  /* Brand: croc green. Theme-independent literals — the aliases pick a step. */
   --green-50:  #E8F7F0;
   --green-100: #C9ECDC;
   --green-200: #97DBBD;
   --green-300: #57C598;
-  --green-400: #2DC585;   /* dark-mode accent */
+  --green-400: #2DC585;
   --green-500: #22B074;
-  --green-600: #1E9E6A;   /* brand accent — light default */
-  --green-700: #178055;   /* pressed / small accent text on light */
+  --green-600: #1E9E6A;
+  --green-700: #178055;
   --green-800: #116243;
   --green-900: #0C4A33;
 
-  /* --- Apple system semantics (light) --- */
-  --sys-green:  #34C759;
-  --sys-orange: #FF9500;
-  --sys-red:    #FF3B30;
-  --sys-blue:   #007AFF;
-  --sys-yellow: #FFCC00;
+  /* Apple system semantics */
+  --sys-green:  light-dark(#34C759, #30D158);
+  --sys-orange: light-dark(#FF9500, #FF9F0A);
+  --sys-red:    light-dark(#FF3B30, #FF453A);
+  --sys-blue:   light-dark(#007AFF, #0A84FF);
 
-  /* --- Labels / fills / separators (light) --- */
-  --ink:             #000000;
-  --paper:           #FFFFFF;
-  --label-1:         rgba(0,0,0,1);
-  --label-2:         rgba(60,60,67,0.60);
-  --label-3:         rgba(60,60,67,0.30);
-  --label-4:         rgba(60,60,67,0.18);
-  /* Apple's secondaryLabel is 3.44:1 on white — below AA for anything under
-     large text, and this page is mostly under large text. --label-2 keeps the
-     true system value so app parity is not lost; the web alias below is what
-     --color-text-secondary actually resolves to. 0.75 measures 5.16 on base,
-     4.85 on grouped, 4.77 on a tertiary fill. Dark needs no correction. */
-  --label-2-web:     rgba(60,60,67,0.75);
-  --separator:       rgba(60,60,67,0.29);
-  --separator-opaque:#C6C6C8;
-  --fill-1:          rgba(120,120,128,0.20);
-  --fill-2:          rgba(120,120,128,0.16);
-  --fill-3:          rgba(118,118,128,0.12);
-  --fill-4:          rgba(116,116,128,0.08);
+  /* Labels, fills, separators */
+  --ink:              light-dark(#000000, #FFFFFF);
+  --paper:            light-dark(#FFFFFF, #000000);
+  --label-1:          light-dark(rgba(0,0,0,1),         rgba(255,255,255,1));
+  --label-2:          light-dark(rgba(60,60,67,0.60),   rgba(235,235,245,0.60));
+  /* Apple's secondaryLabel is 3.44:1 on white — under AA for anything smaller
+     than large text, which is most of a web page. --label-2 keeps the true
+     system value for app parity; --color-text-secondary resolves to this. */
+  --label-2-web:      light-dark(rgba(60,60,67,0.75),   rgba(235,235,245,0.60));
+  --label-3:          light-dark(rgba(60,60,67,0.30),   rgba(235,235,245,0.30));
+  --label-4:          light-dark(rgba(60,60,67,0.18),   rgba(235,235,245,0.16));
+  --separator:        light-dark(rgba(60,60,67,0.29),   rgba(84,84,88,0.65));
+  --separator-opaque: light-dark(#C6C6C8, #38383A);
+  --fill-1:           light-dark(rgba(120,120,128,0.20), rgba(120,120,128,0.36));
+  --fill-2:           light-dark(rgba(120,120,128,0.16), rgba(120,120,128,0.32));
+  --fill-3:           light-dark(rgba(118,118,128,0.12), rgba(118,118,128,0.24));
+  --fill-4:           light-dark(rgba(116,116,128,0.08), rgba(118,118,128,0.18));
 
-  /* --- Backgrounds (light) --- */
-  --bg-base:             #FFFFFF;
-  --bg-secondary:        #F2F2F7;
-  --bg-tertiary:         #FFFFFF;
-  --bg-grouped:          #F2F2F7;
-  --bg-grouped-elevated: #FFFFFF;
+  /* Backgrounds */
+  --bg-base:             light-dark(#FFFFFF, #000000);
+  --bg-secondary:        light-dark(#F2F2F7, #1C1C1E);
+  --bg-tertiary:         light-dark(#FFFFFF, #2C2C2E);
+  --bg-grouped:          light-dark(#F2F2F7, #000000);
+  --bg-grouped-elevated: light-dark(#FFFFFF, #1C1C1E);
 
-  /* --- Liquid Glass fills (light) --- */
-  --glass-thin:        rgba(255,255,255,0.55);
-  --glass-regular:     rgba(255,255,255,0.72);
-  --glass-thick:       rgba(255,255,255,0.86);
-  --glass-tint-accent: rgba(30,158,106,0.12);
-  --glass-border:      rgba(255,255,255,0.60);
-  --glass-highlight:   rgba(255,255,255,0.75);
+  /* Liquid Glass fills */
+  --glass-thin:        light-dark(rgba(255,255,255,0.55), rgba(30,30,32,0.55));
+  --glass-regular:     light-dark(rgba(255,255,255,0.72), rgba(28,28,30,0.68));
+  --glass-thick:       light-dark(rgba(255,255,255,0.86), rgba(28,28,30,0.86));
+  --glass-tint-accent: light-dark(rgba(30,158,106,0.12), rgba(45,197,133,0.16));
+  --glass-border:      light-dark(rgba(255,255,255,0.60), rgba(255,255,255,0.14));
+  --glass-highlight:   light-dark(rgba(255,255,255,0.75), rgba(255,255,255,0.10));
 
-  /* --- Semantic aliases — consume these --- */
-  --color-accent:         var(--green-600);
-  --color-accent-pressed: var(--green-700);
+  /* Semantic aliases — consume these */
+  --color-accent:         light-dark(var(--green-600), var(--green-400));
+  --color-accent-pressed: light-dark(var(--green-700), var(--green-500));
   --color-accent-tint:    var(--glass-tint-accent);
-  --color-on-accent:      #FFFFFF;
-  /* Accent as *text* is a different problem from accent as a fill. The brand
-     green is 3.41:1 on white and 2.99:1 on its own tint — fine for a shape,
-     a fail for a word. Icons and fills keep --color-accent; anything with a
-     letter in it uses one of these two. See colors.md. */
-  --color-accent-text:         var(--green-700);
-  --color-accent-text-on-tint: var(--green-800);
+  --color-on-accent:      light-dark(#FFFFFF, #05271A);
+  /* Accent as *text* is a different problem from accent as a fill: the brand
+     green is 3.41:1 on white and 2.98:1 on its own tint. Icons and fills keep
+     --color-accent; anything with a letter in it takes one of these two.
+     -on-tint (--green-800) is also required on --color-surface-grouped. */
+  --color-accent-text:         light-dark(var(--green-700), var(--green-400));
+  --color-accent-text-on-tint: light-dark(var(--green-800), var(--green-400));
 
   --color-text-primary:    var(--label-1);
   --color-text-secondary:  var(--label-2-web);
   --color-text-tertiary:   var(--label-3);
   --color-text-quaternary: var(--label-4);
-  --color-text-on-accent:  #FFFFFF;
-  --color-text-link:       var(--green-700);
+  --color-text-link:       light-dark(var(--green-700), var(--green-400));
 
-  --color-status-success:      var(--sys-green);
-  --color-status-warning:      var(--sys-orange);
-  --color-status-error:        var(--sys-red);
-  --color-status-info:         var(--sys-blue);
-  --color-status-success-tint: rgba(52,199,89,0.14);
-  --color-status-warning-tint: rgba(255,149,0,0.14);
-  --color-status-error-tint:   rgba(255,59,48,0.14);
-  --color-status-info-tint:    rgba(0,122,255,0.14);
+  --color-status-success: var(--sys-green);
+  --color-status-warning: var(--sys-orange);
+  --color-status-error:   var(--sys-red);
+  --color-status-info:    var(--sys-blue);
+  --color-status-success-tint: light-dark(rgba(52,199,89,0.14),  rgba(48,209,88,0.18));
+  --color-status-warning-tint: light-dark(rgba(255,149,0,0.14),  rgba(255,159,10,0.18));
+  --color-status-error-tint:   light-dark(rgba(255,59,48,0.14),  rgba(255,69,58,0.18));
+  --color-status-info-tint:    light-dark(rgba(0,122,255,0.14),  rgba(10,132,255,0.18));
 
   --color-surface-base:        var(--bg-base);
   --color-surface-grouped:     var(--bg-grouped);
@@ -107,11 +101,9 @@
   --color-fill-secondary: var(--fill-2);
   --color-fill-tertiary:  var(--fill-3);
   --color-glass-border:   var(--glass-border);
+  --color-scrim:          light-dark(rgba(0,0,0,0.25), rgba(0,0,0,0.5));
 
-  --color-scrim: rgba(0,0,0,0.25);
-  color-scheme: light;
-
-  /* --- Typography --- */
+  /* Typography */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
                "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Monaco,
@@ -137,10 +129,8 @@
   --type-code-hero-size: 30px;    --type-code-hero-lh: 38px;
   --type-code-body-size: 15px;    --type-code-body-lh: 22px;
 
-  /* --- Web display scale (landing + docs) — never used by the app ---
-     The app scale tops out at 34px because it is a phone screen title.
-     A landing hero on a 27" display needs more; these are fluid so the
-     page reads the same at 375px and 1440px. Unitless line-heights. */
+  /* Web display scale (landing + docs) — never used by the app. The app scale
+     tops out at 34px because it is a phone screen title. Unitless line-heights. */
   --type-web-hero-size:      clamp(40px, 6.2vw, 68px);
   --type-web-hero-lh:        1.06;
   --type-web-hero-weight:    700;
@@ -160,13 +150,12 @@
   --tracking-body:       -0.41px;
   --tracking-caption:     0px;
   --tracking-code:        0.5px;
-  --tracking-eyebrow:      0.6px;
-  --tracking-web-hero:    -1.5px;
+  --tracking-eyebrow:     0.6px;
+  --tracking-web-hero:   -1.5px;
   --tracking-web-section: -0.6px;
-  --tracking-web-lead:    -0.2px;
+  --tracking-web-lead:   -0.2px;
 
-  /* --- 4pt spacing grid --- */
-  --space-0: 0px;
+  /* 4pt spacing grid */
   --space-1: 2px;
   --space-2: 4px;
   --space-3: 8px;
@@ -179,7 +168,7 @@
   --space-10: 48px;
   --space-11: 64px;
 
-  /* --- Concentric radii --- */
+  /* Concentric radii */
   --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-md: 14px;
@@ -188,23 +177,19 @@
   --radius-2xl: 36px;
   --radius-capsule: 999px;
 
-  /* --- Layout --- */
+  /* Layout — app */
   --content-max-width: 480px;
   --sheet-max-width: 540px;
 
-  /* --- Web surfaces only (landing + docs) — never used by the app ---
-     The app column cap is a phone-width column. A marketing page needs a
-     page-width container, a readable prose measure and a viewport-scaled
-     rhythm. Both clamp() ends stay on the 4pt grid. */
-  --content-max-width-wide:  1280px;  /* hero, full-bleed rows, screenshots */
-  --content-max-width-web:   1080px;  /* default section container */
-  --content-max-width-prose:  680px;  /* paragraph measure, ~75ch */
+  /* Layout — web only (landing + docs). Both clamp() ends sit on the 4pt grid. */
+  --content-max-width-wide:  1280px;
+  --content-max-width-web:   1080px;
+  --content-max-width-prose:  680px;
+  --gutter-web:      clamp(20px, 5vw, 48px);
+  --section-pad-web: clamp(64px, 9vw, 112px);
+  --stack-web:       clamp(32px, 4vw, 48px);
 
-  --gutter-web:      clamp(20px, 5vw, 48px);   /* page horizontal padding */
-  --section-pad-web: clamp(64px, 9vw, 112px);  /* vertical gap between sections */
-  --stack-web:       clamp(32px, 4vw, 48px);   /* gap between blocks in a section */
-
-  /* --- Control sizing --- */
+  /* Control sizing */
   --control-height-lg: 50px;
   --control-height-md: 38px;
   --control-height-sm: 30px;
@@ -214,14 +199,10 @@
   --icon-size-lg: 28px;
 
   --border-hairline: 1px;
-  --border-hairline-half: 0.5px;   /* grouped-row inset separator */
-  --border-focus: 2px;
+  --border-hairline-half: 0.5px;
 
-  /* --- Component metrics, tokenized for web ---
-     components.md calls these component constants and keeps them inside the
-     component. SwiftUI can do that; styles.css cannot, because the landing
-     page forbids raw px (PLAN.md §4). Same numbers, promoted to tokens so
-     the web side has something to name. Do not use these in the app. */
+  /* Component metrics, tokenized for web only. components.md keeps these as
+     component constants; SwiftUI can, styles.css cannot. Do not use in the app. */
   --btn-pad-x-lg: 22px;
   --btn-pad-x-md: var(--space-5);
   --btn-pad-x-sm: var(--space-4);
@@ -232,35 +213,39 @@
   --btn-icon-md:  18px;
   --btn-icon-sm:  15px;
 
-  --row-min-file:    48px;   /* FileRow min height */
-  --progress-height:  6px;   /* ProgressBar track + fill */
+  --row-min-file:    48px;
+  --progress-height:  6px;
 
   --pill-pad-block:        5px;
   --pill-pad-inline-start: 9px;
   --pill-pad-inline-end:   11px;
   --pill-icon-size:        14px;
 
-  /* --- Web layout metrics (landing + docs only) --- */
   --nav-height-web: 56px;
-  /* auto-fit column floor. 232 is the largest 4pt-grid value that still fits
-     4 columns inside --content-max-width-web: 984 usable - 3 gaps of 16 = 936,
-     936 / 4 = 234. Gives 4-up at 1080, 2-up at 768, 1-up at 375. */
+  /* auto-fit column floor: 984 usable − 3 gaps of 16 = 936, 936 / 4 = 234, so
+     232 is the largest 4pt step that still fits 4-up at 1080. 2-up at 768. */
   --grid-min-card:  232px;
 
-  /* --- Glass blur --- */
+  /* Glass blur */
   --blur-thin: 12px;
   --blur-regular: 24px;
   --blur-thick: 40px;
   --glass-saturate: 180%;
 
-  /* --- Elevation (light) --- */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06), 0 1px 1px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-glass: 0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 var(--glass-highlight);
+  /* Elevation. Geometry is theme-independent so only the colours flip. */
+  --shadow-sm: 0 1px 2px light-dark(rgba(0,0,0,0.06), rgba(0,0,0,0.40)),
+               0 1px 1px light-dark(rgba(0,0,0,0.04), rgba(0,0,0,0.30));
+  --shadow-md: 0 4px 16px light-dark(rgba(0,0,0,0.08), rgba(0,0,0,0.50)),
+               0 1px 3px  light-dark(rgba(0,0,0,0.05), rgba(0,0,0,0.40));
+  --shadow-lg: 0 12px 40px light-dark(rgba(0,0,0,0.14), rgba(0,0,0,0.60)),
+               0 4px 12px  light-dark(rgba(0,0,0,0.08), rgba(0,0,0,0.50));
+  /* The inset highlight is the top edge-light that sells the material. Keep it. */
+  --shadow-glass: 0 8px 32px light-dark(rgba(0,0,0,0.12), rgba(0,0,0,0.55)),
+                  inset 0 1px 0 var(--glass-highlight);
+  --shadow-knob: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16);
   --shadow-focus-ring: 0 0 0 4px var(--glass-tint-accent);
 
-  /* --- Motion --- */
+  /* Motion */
   --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -270,127 +255,10 @@
   --press-scale: 0.97;
 }
 
-/* ---- DARK: explicit toggle ---- */
-[data-theme="dark"] {
-  --sys-green:  #30D158;
-  --sys-orange: #FF9F0A;
-  --sys-red:    #FF453A;
-  --sys-blue:   #0A84FF;
-  --sys-yellow: #FFD60A;
+[data-theme="light"] { color-scheme: light; }
+[data-theme="dark"]  { color-scheme: dark; }
 
-  --ink:             #FFFFFF;
-  --paper:           #000000;
-  --label-1:         rgba(255,255,255,1);
-  --label-2:         rgba(235,235,245,0.60);
-  --label-2-web:     rgba(235,235,245,0.60);   /* dark needs no AA correction: 6.36 on base */
-  --label-3:         rgba(235,235,245,0.30);
-  --label-4:         rgba(235,235,245,0.16);
-  --separator:       rgba(84,84,88,0.65);
-  --separator-opaque:#38383A;
-  --fill-1:          rgba(120,120,128,0.36);
-  --fill-2:          rgba(120,120,128,0.32);
-  --fill-3:          rgba(118,118,128,0.24);
-  --fill-4:          rgba(118,118,128,0.18);
-
-  --bg-base:             #000000;
-  --bg-secondary:        #1C1C1E;
-  --bg-tertiary:         #2C2C2E;
-  --bg-grouped:          #000000;
-  --bg-grouped-elevated: #1C1C1E;
-
-  --glass-thin:        rgba(30,30,32,0.55);
-  --glass-regular:     rgba(28,28,30,0.68);
-  --glass-thick:       rgba(28,28,30,0.86);
-  --glass-tint-accent: rgba(45,197,133,0.16);
-  --glass-border:      rgba(255,255,255,0.14);
-  --glass-highlight:   rgba(255,255,255,0.10);
-
-  --color-accent:         var(--green-400);
-  --color-accent-pressed: var(--green-500);
-  --color-accent-text:         var(--green-400);   /* 9.44 on base, 7.72 on tint */
-  --color-accent-text-on-tint: var(--green-400);
-  --color-on-accent:      #05271A;
-  --color-text-link:      var(--green-400);
-  --color-text-on-accent: #05271A;
-
-  --color-status-success-tint: rgba(48,209,88,0.18);
-  --color-status-warning-tint: rgba(255,159,10,0.18);
-  --color-status-error-tint:   rgba(255,69,58,0.18);
-  --color-status-info-tint:    rgba(10,132,255,0.18);
-
-  --color-scrim: rgba(0,0,0,0.5);
-
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.5);
-  --shadow-glass: 0 8px 32px rgba(0,0,0,0.55), inset 0 1px 0 var(--glass-highlight);
-
-  color-scheme: dark;
-}
-
-/* ---- DARK: OS preference, unless the visitor forced light ---- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --sys-green:  #30D158;
-    --sys-orange: #FF9F0A;
-    --sys-red:    #FF453A;
-    --sys-blue:   #0A84FF;
-    --sys-yellow: #FFD60A;
-
-    --ink:             #FFFFFF;
-    --paper:           #000000;
-    --label-1:         rgba(255,255,255,1);
-    --label-2:         rgba(235,235,245,0.60);
-    --label-2-web:     rgba(235,235,245,0.60);   /* dark needs no AA correction: 6.36 on base */
-    --label-3:         rgba(235,235,245,0.30);
-    --label-4:         rgba(235,235,245,0.16);
-    --separator:       rgba(84,84,88,0.65);
-    --separator-opaque:#38383A;
-    --fill-1:          rgba(120,120,128,0.36);
-    --fill-2:          rgba(120,120,128,0.32);
-    --fill-3:          rgba(118,118,128,0.24);
-    --fill-4:          rgba(118,118,128,0.18);
-
-    --bg-base:             #000000;
-    --bg-secondary:        #1C1C1E;
-    --bg-tertiary:         #2C2C2E;
-    --bg-grouped:          #000000;
-    --bg-grouped-elevated: #1C1C1E;
-
-    --glass-thin:        rgba(30,30,32,0.55);
-    --glass-regular:     rgba(28,28,30,0.68);
-    --glass-thick:       rgba(28,28,30,0.86);
-    --glass-tint-accent: rgba(45,197,133,0.16);
-    --glass-border:      rgba(255,255,255,0.14);
-    --glass-highlight:   rgba(255,255,255,0.10);
-
-    --color-accent:         var(--green-400);
-    --color-accent-pressed: var(--green-500);
-    --color-accent-text:         var(--green-400);   /* 9.44 on base, 7.72 on tint */
-    --color-accent-text-on-tint: var(--green-400);
-    --color-on-accent:      #05271A;
-    --color-text-link:      var(--green-400);
-    --color-text-on-accent: #05271A;
-
-    --color-status-success-tint: rgba(48,209,88,0.18);
-    --color-status-warning-tint: rgba(255,159,10,0.18);
-    --color-status-error-tint:   rgba(255,69,58,0.18);
-    --color-status-info-tint:    rgba(10,132,255,0.18);
-
-    --color-scrim: rgba(0,0,0,0.5);
-
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
-    --shadow-lg: 0 12px 40px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.5);
-    --shadow-glass: 0 8px 32px rgba(0,0,0,0.55), inset 0 1px 0 var(--glass-highlight);
-
-    color-scheme: dark;
-  }
-}
-
-/* ============================================================
-   Base element defaults
-   ============================================================ */
+/* Base element defaults */
 
 * { box-sizing: border-box; }
 
@@ -422,9 +290,7 @@ a:active { opacity: 0.7; }
 ::-webkit-scrollbar-thumb { background: var(--color-fill); border-radius: var(--radius-capsule); }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* ============================================================
-   Type helpers — tokens above stay the source of truth
-   ============================================================ */
+/* Type helpers — the tokens above stay the source of truth */
 
 .t-large-title { font: var(--type-large-title-weight) var(--type-large-title-size)/var(--type-large-title-lh) var(--font-sans); letter-spacing: var(--tracking-large-title); }
 .t-title2      { font: var(--type-title2-weight) var(--type-title2-size)/var(--type-title2-lh) var(--font-sans); letter-spacing: var(--tracking-title2); }
@@ -436,9 +302,8 @@ a:active { opacity: 0.7; }
 .t-caption     { font: var(--type-caption1-weight) var(--type-caption1-size)/var(--type-caption1-lh) var(--font-sans); }
 .t-code        { font: var(--weight-medium) var(--type-code-body-size)/var(--type-code-body-lh) var(--font-mono); letter-spacing: var(--tracking-code); }
 
-/* Web display helpers. Written longhand, not with the `font:` shorthand:
-   the shorthand's `size/line-height` slot does not reliably survive a
-   clamp() substituted through var(). */
+/* Longhand, not the `font:` shorthand: its size/line-height slot does not
+   reliably survive a clamp() substituted through var(). */
 .t-web-hero    { font-family: var(--font-sans); font-size: var(--type-web-hero-size);    line-height: var(--type-web-hero-lh);    font-weight: var(--type-web-hero-weight);    letter-spacing: var(--tracking-web-hero); }
 .t-web-section { font-family: var(--font-sans); font-size: var(--type-web-section-size); line-height: var(--type-web-section-lh); font-weight: var(--type-web-section-weight); letter-spacing: var(--tracking-web-section); }
 .t-web-sub     { font-family: var(--font-sans); font-size: var(--type-web-sub-size);     line-height: var(--type-web-sub-lh);     font-weight: var(--type-web-sub-weight);     letter-spacing: var(--tracking-web-section); }
@@ -446,4 +311,19 @@ a:active { opacity: 0.7; }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --press-scale: 1; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
+}
+
+/* Glass is decoration; legibility never depends on it. Drop the blur when the
+   OS asks and fall back to the opaque card fill. See design/materials-motion.md. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --blur-thin: 0px;
+    --blur-regular: 0px;
+    --blur-thick: 0px;
+    --glass-saturate: 100%;
+    --color-surface-glass:       var(--color-surface-card);
+    --color-surface-glass-thin:  var(--color-surface-card);
+    --color-surface-glass-thick: var(--color-surface-card);
+    --color-glass-border:        var(--color-separator);
+  }
 }

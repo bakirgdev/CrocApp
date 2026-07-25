@@ -20,7 +20,7 @@ Deep croc green, `#1E9E6A` (light) / `#2DC585` (dark). One accent, no secondary 
 
 Accent is for: primary action fills, active/selected state, links, file-type glyphs, progress fills. Accent is not for: large background washes, gradients, decorative shapes.
 
-**No gradients.** If a generated design shows a teal-to-green gradient or a serif headline, it has drifted off-system — regenerate with "use only design system tokens, SF Pro, croc green accent".
+**No gradients.** A teal-to-green gradient or a serif headline means a generated mockup has drifted off-system; re-do it against the tokens rather than editing the drift.
 
 ## Assets
 
@@ -38,6 +38,10 @@ The mascot is a personality accent, not a UI element — it never appears inside
 
 ## Web surfaces
 
-The landing page and docs site use these same tokens (`tokens.css`) so the marketing surface and the product look like one thing. They are web pages, not an app shell: keep the Apple type scale and colors, drop the device chrome, use the `solid` material where there is nothing behind glass to blur, and cap content at `--content-max-width` (wider only for full-bleed hero and screenshots).
+The landing page and docs site use these same tokens (`tokens.css`) so the marketing surface and the product look like one thing. They are web pages, not an app shell: keep the Apple type scale and colors, drop the device chrome, and use the `solid` material where there is nothing behind glass to blur.
+
+Width comes from the web caps, never `--content-max-width` — that is the app's 480px phone column. Sections cap at `--content-max-width-web`, prose at `--content-max-width-prose`, hero and screenshot rows at `--content-max-width-wide`. See `spacing-layout.md` → Web layout.
 
 Both themes are required on both sites, and both must honour the OS preference by default.
+
+Page fill on the web is `--color-surface-base`, not the app's `--color-surface-grouped`: link text is 4.94:1 on base and 4.42:1 on grouped, and a web page runs links through its prose. Cards carry the tonal step instead.

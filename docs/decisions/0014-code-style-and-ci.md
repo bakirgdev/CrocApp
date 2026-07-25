@@ -14,7 +14,7 @@ Survey of current Apple/Go tooling (2026) ruled out the heavier options: Tuist/X
 - **swift-format** (toolchain-bundled, no install) as the only Swift formatter. Config in `.swift-format`.
 - **golangci-lint** + **govulncheck** for `crocmobile/`. Config in `crocmobile/.golangci.yml`.
 - **`.xcode-version`** pins the Xcode baseline; CI reads it rather than hardcoding a version.
-- **GitHub Actions** `.github/workflows/ci.yml`: format check, Go lint/vuln, and macOS + iOS-simulator builds.
+- **GitHub Actions** `.github/workflows/ci.yml`: format check, Go lint/vuln, and macOS + iOS-simulator builds. Vulnerability scanning also runs on a schedule of its own (ADR 0018); the static-site deploy is a separate workflow (ADR 0019).
 - **xcbeautify** formats xcodebuild output in CI only. Local builds keep `rtk proxy xcodebuild` + redirect to file.
 
 Deferred, not rejected: SwiftLint, Periphery, Danger, real notarization (see `docs/knowledge/tooling.md`).
@@ -24,5 +24,5 @@ Deferred, not rejected: SwiftLint, Periphery, Danger, real notarization (see `do
 - `.swift-format` sets 4-space indent and `indentConditionalCompilationBlocks: false` to match existing code and Xcode's editor. The swift-format defaults (2 spaces, indented `#if` bodies) would have rewritten every file and fought Xcode on every Return keypress.
 - CI cannot skip `scripts/build-xcframework.sh`; the binaryTarget is gitignored (ADR 0006), so every build job pays the gomobile bind cost.
 - The Go job runs on `ubuntu-latest` with `GOOS=darwin GOARCH=arm64`. Cheap runner, but it analyses the platform the code actually ships on.
-- CI triggers on a `paths` **allowlist** of what it actually compiles or lints, not an ignore-list of docs. The ignore-list shipped first and rotted within a day: `design/` and `.claude/` were never on it, so token-only and config-only commits each bought a full macOS build matrix. An allowlist fails closed. Cost is the inverse failure mode — a new CI-relevant file that nobody adds to the list runs no CI at all.
+- `ci.yml` triggers on a `paths` **allowlist** of what it actually compiles or lints, not an ignore-list of docs. The ignore-list shipped first and rotted within a day: `design/` and `.claude/` were never on it, so token-only and config-only commits each bought a full macOS build matrix. An allowlist fails closed. Cost is the inverse failure mode — a new CI-relevant file that nobody adds to the list runs no CI at all.
 - CI does **not** run `scripts/verify-*.sh`. Those need a public relay and are flaky on shared runners. Green CI still is not evidence a transfer works (see CLAUDE.md).

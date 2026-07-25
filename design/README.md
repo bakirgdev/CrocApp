@@ -4,6 +4,8 @@ Single source of truth for CrocApp's visual language: the SwiftUI app (iOS 26 / 
 
 These files are the **canonical, human-readable token set**. `tokens.css` is a convenience mirror for web consumers — if you change a value in a markdown file, change it in `tokens.css` too (and vice versa). Nothing generates one from the other.
 
+`design/tokens.css` is the only copy. `web/landing/tokens.css` is gitignored and copied in: by `.github/workflows/landing.yml` at deploy, and by hand for local preview (`cp design/tokens.css web/landing/ && python3 -m http.server --directory web/landing`).
+
 ## Files
 
 | File | Contents |
@@ -14,15 +16,13 @@ These files are the **canonical, human-readable token set**. `tokens.css` is a c
 | `materials-motion.md` | Liquid Glass materials, elevation/shadows, easing, durations, focus ring |
 | `components.md` | Every component's measurements, variants and states |
 | `iconography.md` | SF Symbols (app) ↔ Lucide (web) mapping, sizes, stroke weights |
-| `brand.md` | Voice, accent usage, mascot/banner/icon assets, do-not list |
+| `brand.md` | Voice, accent usage, mascot/banner/icon assets, web surfaces, do-not list |
 | `swiftui-mapping.md` | Token → SwiftUI/Apple API translation for the app restyle |
 | `tokens.css` | All CSS custom properties in one file, for web |
 
 ## Provenance
 
-Generated in [Claude Design](https://claude.ai/design) project **CrocApp** (`1134b33b-a4d8-41df-b68c-9fe634f5eccb`), design system `crocapp-design-system-da946140-1515-4920-b169-b09b2be383d4`. Extracted to this repo 2026-07-25. Workflow and prompts: `docs/knowledge/claude-design-workflow.md`. Decision to adopt: ADR 0015.
-
-The design project also holds 26 screen files (iPhone + macOS, all transfer phases). Those are visual spec, not code to port — read them for layout intent, implement natively.
+Generated in Claude Design and extracted here on 2026-07-25 (ADR 0015). That project is gone — this directory is the whole design system now, and nothing outside the repo needs consulting.
 
 ## Binding rules
 
@@ -35,7 +35,11 @@ The design project also holds 26 screen files (iPhone + macOS, all transfer phas
 ## Accessibility floor
 
 - Body text ≥ 4.5:1, large text and UI component boundaries ≥ 3:1 (WCAG 2.2 AA).
-- The brand accent `#1E9E6A` hits only **3.41:1** on white. It is safe for fills, icons, borders and large text — **not** for small body copy on light backgrounds. Use `--green-700` (`#178055`, 4.94:1) for links and small accent text in the light theme. Full table in `colors.md`.
+- The brand accent `#1E9E6A` is **3.41:1** on white: safe for fills, icons, borders and large text, never for a word. Accent text is `--color-accent-text`, or `--color-accent-text-on-tint` on grouped and tinted surfaces.
+- A status color is a fill, never a foreground. Status text is `--color-text-primary`.
 - Minimum hit target 44×44pt (`--hit-target-min`).
 - Never encode transfer direction (sending vs receiving) in color alone — the arrow glyph and the word carry it. See `components.md` → TransferProgress.
 - Respect `prefers-reduced-motion` / `.accessibilityReduceMotion`: drop the press-scale and the indeterminate shimmer, keep the state change.
+- Respect `prefers-reduced-transparency` / `.accessibilityReduceTransparency`: glass collapses to the solid card fill.
+
+The six numbered rules in `colors.md` → Contrast are binding on all three surfaces. `components.md` is written to them.

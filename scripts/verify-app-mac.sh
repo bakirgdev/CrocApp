@@ -1,202 +1,169 @@
 #!/usr/bin/env bash
-# Verifies the macOS app's UI state machine end-to-end via launch arguments:
-#   1. CLI send -> app --auto-receive (accept prompt exercised via respond())
-#   2. app --auto-send (custom code, F5) -> CLI receive
-# Both directions gate on byte-identical diff + the app's verify-result.txt.
+# Verifies the macOS app's UI state machine end-to-end via launch arguments.
+# Six directions: CLI -> app receive (+ history), app -> CLI send, local-only
+# send, custom-relay send, no-compress send, both-sides-confirm send. Every
+# one gates on a byte-identical diff AND the app's verify-result.txt.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-
-if ! command -v timeout >/dev/null 2>&1; then
-  timeout() {
-    local dur="$1"; shift
-    "$@" &
-    local pid=$!
-    ( sleep "$dur" 2>/dev/null; kill -TERM "$pid" 2>/dev/null ) &
-    local watcher=$!
-    local rc=0
-    wait "$pid" 2>/dev/null || rc=$?
-    kill "$watcher" 2>/dev/null || true
-    wait "$watcher" 2>/dev/null || true
-    return "$rc"
-  }
-fi
+. scripts/lib.sh
 
 CROC="${CROC:-$HOME/go/bin/croc}"
-# First 4 chars differ between the two codes (relay room hashing rule).
-CODE_RECV="r2m$$-mac-recv"
-CODE_SEND="s2m$$-mac-send"
-CONTAINER="$HOME/Library/Containers/com.bakirgdev.CrocApp/Data"
-DOCS="$CONTAINER/Documents"
+require_croc
+
+DOCS="$HOME/Library/Containers/com.bakirgdev.CrocApp/Data/Documents"
+RESULT="$DOCS/verify-result.txt"
+HISTORY="$DOCS/verify-history.txt"
+
+TMP=$(mktemp -d)
+trap 'kill_jobs; rm -rf "$TMP"' EXIT
 
 ( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
     -derivedDataPath /tmp/dd-mac build ) > /tmp/mac-build.log 2>&1
-APP=$(find /tmp/dd-mac/Build/Products -name "CrocApp.app" -maxdepth 3 | head -1)
+APP=$(find /tmp/dd-mac/Build/Products -maxdepth 3 -name CrocApp.app | head -1)
+[ -n "$APP" ] || fail "no CrocApp.app in /tmp/dd-mac (see /tmp/mac-build.log)"
 BIN="$APP/Contents/MacOS/CrocApp"
 
 mkdir -p "$DOCS"
-rm -f "$DOCS/verify-result.txt" "$DOCS/verify-history.txt" "$DOCS/macfile.txt"
+rm -f "$RESULT" "$HISTORY" "$DOCS/macfile.txt"
 
-# --- Direction 1: CLI -> app ------------------------------------------------
-TMP=$(mktemp -d); echo "mac transfer $$" > "$TMP/macfile.txt"
-( cd "$TMP" && CROC_SECRET="$CODE_RECV" timeout 120 "$CROC" --ignore-stdin send macfile.txt ) \
+# The app declares document types, so a bare argv token next to a path is
+# treated as a document to open -- pass everything as a flag. Window-state
+# restoration hangs a headless launch, hence -ApplePersistenceIgnoreState.
+run_app() {
+  "$BIN" -ApplePersistenceIgnoreState YES "$@" &
+  APP_PID=$!
+}
+
+await_app() {                                       # await_app SECONDS
+  local i
+  for (( i = 0; i < $1; i++ )); do
+    [ -f "$RESULT" ] && break
+    sleep 1
+  done
+  kill "$APP_PID" 2>/dev/null || true
+  wait "$APP_PID" 2>/dev/null || true   # reap quietly; unreaped kills print "Terminated: 15"
+}
+
+check_result() {                                    # check_result LABEL
+  local got
+  got=$(cat "$RESULT" 2>/dev/null || echo missing)
+  echo "$1 result: $got"
+  [ "$got" = "ok success=true" ] || fail "$1: expected 'ok success=true', got '$got'"
+}
+
+# Every code's first 4 characters must be unique: the relay hashes that prefix
+# into a room name.
+code() { echo "$1$$-mac"; }
+
+# --- 1: CLI -> app, plus SwiftData history isolation -------------------------
+C=$(code recv)
+echo "mac transfer $$" > "$TMP/macfile.txt"
+( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin send macfile.txt ) \
     > /tmp/mac-cli-send.log 2>&1 &
 sleep 3
-"$BIN" -ApplePersistenceIgnoreState YES --auto-receive "$CODE_RECV" > /tmp/mac-app-recv.log 2>&1 &
-APP_PID=$!
-for _ in $(seq 1 60); do
-  sleep 2
-  [ -f "$DOCS/verify-result.txt" ] && break
-done
-kill "$APP_PID" 2>/dev/null || true
-RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
-echo "receive result: $RESULT"
+run_app --auto-receive "$C" > /tmp/mac-app-recv.log 2>&1
+await_app 120
+check_result receive
 diff "$TMP/macfile.txt" "$DOCS/macfile.txt"
-[ "$RESULT" = "ok success=true" ]
-HISTORY=$(cat "$DOCS/verify-history.txt" 2>/dev/null || echo missing)
-echo "history result: $HISTORY"
-[ "$HISTORY" = "records=1" ] && echo "MAC-HISTORY-OK"
-[ "$HISTORY" = "records=1" ]
+# --auto-* launches get an in-memory ModelContainer, so records=1 proves the
+# transfer was recorded and that the harness isolation still holds.
+got=$(cat "$HISTORY" 2>/dev/null || echo missing)
+echo "history result: $got"
+[ "$got" = "records=1" ] || fail "history: expected 'records=1', got '$got'"
 echo MAC-RECEIVE-OK
 
-# --- Direction 2: app -> CLI (custom code) -----------------------------------
-rm -f "$DOCS/verify-result.txt" "$DOCS/verify-history.txt"
+# --- 2: app -> CLI, custom code ----------------------------------------------
+# The source file must live inside the app container (sandbox). CROC_SECRET
+# rather than a positional code: v10.5.0's non-classic receive mode refuses a
+# positional one and points at CROC_SECRET.
+C=$(code send)
+rm -f "$RESULT" "$HISTORY"
 echo "mac app send $$" > "$DOCS/sendme.txt"
-"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/sendme.txt" --code "$CODE_SEND" > /tmp/mac-app-send.log 2>&1 &
-APP_PID=$!
+run_app --auto-send "$DOCS/sendme.txt" --code "$C" > /tmp/mac-app-send.log 2>&1
 sleep 3
-DST=$(mktemp -d)
-# CROC_SECRET (not a positional code arg): v10.5.0's non-classic receive mode
-# refuses a code passed positionally and tells you to use CROC_SECRET instead
-# -- same fix already applied throughout verify-interop.sh.
-( cd "$DST" && CROC_SECRET="$CODE_SEND" timeout 120 "$CROC" --ignore-stdin --yes ) > /tmp/mac-cli-recv.log 2>&1
-for _ in $(seq 1 30); do
-  sleep 1
-  [ -f "$DOCS/verify-result.txt" ] && break
-done
-kill "$APP_PID" 2>/dev/null || true
-RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
-echo "send result: $RESULT"
+DST="$TMP/d2"; mkdir -p "$DST"
+( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes ) > /tmp/mac-cli-recv.log 2>&1
+await_app 30
+check_result send
 diff "$DOCS/sendme.txt" "$DST/sendme.txt"
-[ "$RESULT" = "ok success=true" ]
 echo MAC-SEND-OK
 
-# --- Direction 3: app -> CLI, local-only (sandbox LAN listener) --------------
-# App sends with croc onlyLocal: opens the local relay listener (port 9009)
-# inside the sandbox -- the com.apple.security.network.server proof. CLI
-# receiver connects via --ip (multicast discovery unreliable on this machine;
-# same bypass as verify-interop.sh scenario 9).
-local_ip() {
-  ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true
-}
+# --- 3: app -> CLI, local-only (sandbox LAN listener) ------------------------
+# croc onlyLocal opens the local relay listener (port 9009) inside the sandbox,
+# which is the com.apple.security.network.server proof. The CLI connects via
+# --ip because multicast discovery is unreliable here.
 LOCAL_IP=$(local_ip)
 if [ -z "$LOCAL_IP" ]; then
   echo "MAC-LOCAL-SEND-SKIPPED (no local IP)"
 else
-  CODE_LOCAL="l2m$$-mac-local"
-  rm -f "$DOCS/verify-result.txt"
+  C=$(code locl)
+  rm -f "$RESULT"
   echo "mac local send $$" > "$DOCS/localme.txt"
-  "$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/localme.txt" --code "$CODE_LOCAL" --local > /tmp/mac-app-local.log 2>&1 &
-  APP_PID=$!
+  run_app --auto-send "$DOCS/localme.txt" --code "$C" --local > /tmp/mac-app-local.log 2>&1
   sleep 3
-  DST=$(mktemp -d)
-  ( cd "$DST" && CROC_SECRET="$CODE_LOCAL" timeout 120 "$CROC" --ignore-stdin --yes --ip "$LOCAL_IP:9009" ) > /tmp/mac-cli-local.log 2>&1
-  for _ in $(seq 1 30); do
-    sleep 1
-    [ -f "$DOCS/verify-result.txt" ] && break
-  done
-  kill "$APP_PID" 2>/dev/null || true
-  RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
-  echo "local send result: $RESULT"
+  DST="$TMP/d3"; mkdir -p "$DST"
+  ( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes --ip "$LOCAL_IP:9009" ) \
+      > /tmp/mac-cli-local.log 2>&1
+  await_app 30
+  check_result "local send"
   diff "$DOCS/localme.txt" "$DST/localme.txt"
-  [ "$RESULT" = "ok success=true" ]
   echo MAC-LOCAL-SEND-OK
 fi
 
-# --- Direction 4: app -> CLI, custom relay (F13) -----------------------------
-# App sends via a local croc relay, with harnessDisableLocal set by --relay
-# (killing the LAN race), so success proves traffic went through this relay.
-CODE_RELAY="rly4$$-mac-relay"
-RELAY_LOG="/tmp/mac-relay.log"
+# --- 4: app -> CLI, custom relay ---------------------------------------------
+# --relay also sets harnessDisableLocal, killing the LAN race, so success here
+# proves traffic really went through this relay.
+C=$(code rlay)
+RELAY_LOG=/tmp/mac-relay.log
 "$CROC" relay --ports 9021,9022,9023 > "$RELAY_LOG" 2>&1 &
 RELAY_PID=$!
 sleep 1
-rm -f "$DOCS/verify-result.txt"
+rm -f "$RESULT"
 echo "mac relay send $$" > "$DOCS/relayme.txt"
-"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/relayme.txt" --code "$CODE_RELAY" --relay "localhost:9021" > /tmp/mac-app-relay.log 2>&1 &
-APP_PID=$!
+run_app --auto-send "$DOCS/relayme.txt" --code "$C" --relay localhost:9021 > /tmp/mac-app-relay.log 2>&1
 sleep 3
-DST=$(mktemp -d)
-( cd "$DST" && CROC_SECRET="$CODE_RELAY" timeout 120 "$CROC" --ignore-stdin --yes --relay "localhost:9021" ) > /tmp/mac-cli-relay.log 2>&1
-for _ in $(seq 1 30); do
-  sleep 1
-  [ -f "$DOCS/verify-result.txt" ] && break
-done
-kill "$APP_PID" 2>/dev/null || true
+DST="$TMP/d4"; mkdir -p "$DST"
+( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes --relay localhost:9021 ) \
+    > /tmp/mac-cli-relay.log 2>&1
+await_app 30
 kill "$RELAY_PID" 2>/dev/null || true
-RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
-echo "relay send result: $RESULT"
+check_result "relay send"
 diff "$DOCS/relayme.txt" "$DST/relayme.txt"
-[ "$RESULT" = "ok success=true" ]
-[ -s "$RELAY_LOG" ]
+[ -s "$RELAY_LOG" ] || fail "relay send: relay logged nothing"
 echo MAC-RELAY-OK
 
-# --- Direction 5: app -> CLI, no compress (F15) ------------------------------
-# Interop success proves the flag flows through croc without breaking the
-# wire format; compression-off itself is asserted at the Go layer.
-CODE_NOCOMP="ncp5$$-mac-nocomp"
-rm -f "$DOCS/verify-result.txt"
+# --- 5: app -> CLI, no compress ----------------------------------------------
+# Interop success proves the flag flows through croc without breaking the wire
+# format; compression-off itself is asserted at the Go layer.
+C=$(code ncmp)
+rm -f "$RESULT"
 echo "mac nocomp send $$" > "$DOCS/nocompme.txt"
-"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/nocompme.txt" --code "$CODE_NOCOMP" --no-compress > /tmp/mac-app-nocomp.log 2>&1 &
-APP_PID=$!
+run_app --auto-send "$DOCS/nocompme.txt" --code "$C" --no-compress > /tmp/mac-app-nocomp.log 2>&1
 sleep 3
-DST=$(mktemp -d)
-( cd "$DST" && CROC_SECRET="$CODE_NOCOMP" timeout 120 "$CROC" --ignore-stdin --yes ) > /tmp/mac-cli-nocomp.log 2>&1
-for _ in $(seq 1 30); do
-  sleep 1
-  [ -f "$DOCS/verify-result.txt" ] && break
-done
-kill "$APP_PID" 2>/dev/null || true
-RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
-echo "nocomp send result: $RESULT"
+DST="$TMP/d5"; mkdir -p "$DST"
+( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes ) > /tmp/mac-cli-nocomp.log 2>&1
+await_app 30
+check_result "nocomp send"
 diff "$DOCS/nocompme.txt" "$DST/nocompme.txt"
-[ "$RESULT" = "ok success=true" ]
 echo MAC-NOCOMP-OK
 
-# --- Direction 6: app -> CLI, both-sides confirm (F19) -----------------------
-# Sender confirm is auto-answered by AutoVerify's .confirmSend case; the CLI
-# receiver gets the forced prompt (senderInfo.Ask) and must answer on piped
-# stdin, so --ignore-stdin is dropped here (it would refuse the prompt).
-# Two files (not one): croc's sender Ask prompt fires once PER FILE, so this
-# pins the multi-file regression (a single "y" answer used to starve every
-# prompt after the first and abort the send with "refusing files").
-CODE_ASK="ask6$$-mac-ask"
-rm -f "$DOCS/verify-result.txt"
-rm -rf "$DOCS/askdir" && mkdir -p "$DOCS/askdir"
+# --- 6: app -> CLI, both-sides confirm ---------------------------------------
+# AutoVerify's .confirmSend answers the sender prompt. The CLI receiver gets
+# the forced senderInfo.Ask prompt and must answer on stdin, so --ignore-stdin
+# is dropped here. Two files, not one: croc's Ask prompt fires once per file,
+# which pins the regression where one answer starved every later prompt and
+# aborted the send with "refusing files".
+C=$(code ask7)
+rm -f "$RESULT"
+rm -rf "$DOCS/askdir"; mkdir -p "$DOCS/askdir"
 echo "mac ask send 1 $$" > "$DOCS/askdir/askme1.txt"
 echo "mac ask send 2 $$" > "$DOCS/askdir/askme2.txt"
-"$BIN" -ApplePersistenceIgnoreState YES --auto-send "$DOCS/askdir" --code "$CODE_ASK" --ask > /tmp/mac-app-ask.log 2>&1 &
-APP_PID=$!
+run_app --auto-send "$DOCS/askdir" --code "$C" --ask > /tmp/mac-app-ask.log 2>&1
 sleep 3
-DST=$(mktemp -d)
-# `timeout`'s fallback backgrounds the CLI process ("$@" &); bash auto-redirects
-# a backgrounded command's stdin to /dev/null unless it's explicitly redirected,
-# which silently eats a piped `y`. Use an explicit `<` file redirect instead so
-# the answer survives, and bound it by hand the same way the fallback does.
-printf 'y\n' > "$DST/.ask-answer"
-( cd "$DST" && CROC_SECRET="$CODE_ASK" "$CROC" --yes < "$DST/.ask-answer" ) > /tmp/mac-cli-ask.log 2>&1 &
-CLI_PID=$!
-( sleep 60; kill -TERM "$CLI_PID" 2>/dev/null ) &
-CLI_WATCHER=$!
-wait "$CLI_PID" 2>/dev/null || true
-kill "$CLI_WATCHER" 2>/dev/null || true
-wait "$CLI_WATCHER" 2>/dev/null || true
-for _ in $(seq 1 30); do
-  sleep 1
-  [ -f "$DOCS/verify-result.txt" ] && break
-done
-kill "$APP_PID" 2>/dev/null || true
-RESULT=$(cat "$DOCS/verify-result.txt" 2>/dev/null || echo missing)
-echo "ask send result: $RESULT"
+DST="$TMP/d6"; mkdir -p "$DST"
+printf 'y\ny\n' > "$TMP/ask-answers"
+( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" --yes < "$TMP/ask-answers" ) > /tmp/mac-cli-ask.log 2>&1
+await_app 30
+check_result "ask send"
 diff -r "$DOCS/askdir" "$DST/askdir"
-[ "$RESULT" = "ok success=true" ]
 echo MAC-ASK-OK

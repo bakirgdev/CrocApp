@@ -1,6 +1,6 @@
 # Token → SwiftUI mapping
 
-How the web tokens translate to the app. Nothing here is implemented yet — this is the plan for the restyle session. **Verify every iOS 26 / macOS 26 API against current Apple docs (or the `xcode` MCP) before writing code**; the ones flagged *(verify)* are the newest and the most likely to have moved.
+How the web tokens translate to the app. Nothing here is implemented yet — this is the plan for the restyle session. The iOS 26 APIs below were checked against Apple's documentation on 2026-07-26; re-check anything that fails to compile rather than working around it, since these are new enough to still move.
 
 ## Colors
 
@@ -10,6 +10,8 @@ Define one asset-catalog **Color Set per semantic alias**, with Any/Dark appeara
 |---|---|
 | `--color-accent` | `AccentColor` color set (`#1E9E6A` / `#2DC585`); reach it via `.tint()` and `Color.accentColor` |
 | `--color-accent-pressed` | color set; only needed for custom button styles |
+| `--color-accent-text` | color set (`#178055` / `#2DC585`) |
+| `--color-accent-text-on-tint` | color set (`#116243` / `#2DC585`) |
 | `--color-on-accent` | color set (`#FFFFFF` / `#05271A`) |
 | `--color-text-primary/secondary/tertiary` | `.primary` / `.secondary` / `Color(.tertiaryLabel)` — prefer the system semantics over custom sets |
 | `--color-status-success/warning/error/info` | `.green` / `.orange` / `.red` / `.blue` (system semantics already match the token values) |
@@ -20,6 +22,10 @@ Define one asset-catalog **Color Set per semantic alias**, with Any/Dark appeara
 | `--color-scrim` | `.black.opacity(0.25 / 0.5)` |
 
 `Color(.systemGroupedBackground)` and friends are UIKit-backed and iOS-only — cross-platform views need a color set or an `#if os()` split. That split already exists in the app; keep it in one place.
+
+**`Color.accentColor` is a fill, not a label color.** `colors.md` rule 1 binds the app exactly as it binds the web: `.foregroundStyle(.tint)` on a word is 3.41:1 in the light theme and fails. Text that has to read as accent — a `.bordered` button's label, a plain-style action, a link — takes the `--color-accent-text` set, or `--color-accent-text-on-tint` on a grouped background or an accent tint. Both collapse to `#2DC585` in dark, so this only ever costs anything in light.
+
+`.secondary` is `--label-2` (0.60), not the web alias — that is deliberate. The app stays visually native; only the web needs the 0.75 correction. See `colors.md` rule 4.
 
 ## Typography
 
@@ -46,7 +52,7 @@ Never set `.font(.system(size:))` for anything in the scale. Never bundle a font
 | Token | App |
 |---|---|
 | `--space-*` | a `Spacing` enum of `CGFloat` constants mirroring the 4pt scale |
-| `--radius-md/lg/xl` | `RoundedRectangle(cornerRadius:, style: .continuous)`, or `ConcentricRectangle` for nested corners *(verify — iOS 26 shape API)* |
+| `--radius-md/lg/xl` | `RoundedRectangle(cornerRadius:, style: .continuous)`, or `ConcentricRectangle` for nested corners |
 | `--radius-capsule` | `Capsule()` / `.buttonBorderShape(.capsule)` |
 | `--control-height-lg` | `.controlSize(.large)` |
 | `--hit-target-min` | `.frame(minWidth: 44, minHeight: 44)` on bare icon buttons |
@@ -54,9 +60,25 @@ Never set `.font(.system(size:))` for anything in the scale. Never bundle a font
 
 Always `.continuous` corners. The default circular style visibly mismatches system chrome.
 
+`ConcentricRectangle` enforces the concentric rule from `spacing-layout.md` for free — corners resolve against the container instead of being computed by hand:
+
+```swift
+ConcentricRectangle(uniformTopCorners: .fixed(24.0), uniformBottomCorners: .concentric)
+```
+
+Corner styles are `.concentric`, `.concentric(minimum:)` and `.fixed(_:)`. A custom container has to declare `.containerShape(_:)` with a `RoundedRectangularShape` for the resolution to have anything to work from; without one the computed radius can collapse to zero, which is what `.concentric(minimum:)` guards against.
+
 ## Materials
 
-`--color-surface-glass*` + `--blur-*` collapse to **`.glassEffect()`** *(verify signature and the `Glass` configuration type)*. Do not reproduce the CSS `backdrop-filter` recipe with `.ultraThinMaterial` plus a shadow — the CSS is the approximation, the native effect is the target.
+`--color-surface-glass*` + `--blur-*` collapse to **`.glassEffect()`**:
+
+```swift
+func glassEffect(_ glass: Glass = .regular, in shape: some Shape = DefaultGlassEffectShape()) -> some View
+```
+
+`Glass` carries the variants (`.regular`, `.clear`). Multiple glass surfaces belong inside a **`GlassEffectContainer`** — it renders them as one shape set, which is both faster and what lets them morph into each other. Do not reproduce the CSS `backdrop-filter` recipe with `.ultraThinMaterial` plus a shadow: the CSS is the approximation, the native effect is the target.
+
+`.accessibilityReduceTransparency` is the native side of the `prefers-reduced-transparency` rule in `materials-motion.md` — fall back to `--color-surface-card`, not to a weaker blur.
 
 Shadows: `--shadow-sm/md/lg` map to `.shadow(radius:y:)` with the same geometry, but prefer the material's own depth where one exists.
 
@@ -64,10 +86,11 @@ Shadows: `--shadow-sm/md/lg` map to `.shadow(radius:y:)` with the same geometry,
 
 | Design system | SwiftUI |
 |---|---|
-| Button `prominent` | `.buttonStyle(.borderedProminent)` `.controlSize(.large)` `.buttonBorderShape(.capsule)`; iOS 26 `.glassProminent` where appropriate *(verify)* |
-| Button `secondary` | `.buttonStyle(.bordered)` + `.tint(.accentColor)` |
+| Button `prominent` | `.buttonStyle(.borderedProminent)` `.controlSize(.large)` `.buttonBorderShape(.capsule)`; `.glassProminent` where appropriate |
+| Button `secondary` | `.buttonStyle(.bordered)` + `.tint(.accentColor)`; label takes `--color-accent-text-on-tint` |
 | Button `destructive` | `.buttonStyle(.borderedProminent)` + `.tint(.red)`, or `Button(role: .destructive)` |
-| Button `glass` | `.buttonStyle(.glass)` *(verify)* |
+| Button `glass` | `.buttonStyle(.glass)` |
+| DropZone | `.dropDestination(for:)` + a visible file-picker button beside it |
 | Button `plain` | `.buttonStyle(.plain)` / `.borderless` |
 | GlassCard | container + `.glassEffect()` + `.padding(20)` |
 | SegmentedControl | `Picker` + `.pickerStyle(.segmented)` |

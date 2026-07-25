@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// Receive destination folder (F7). Default: app Documents on iOS,
-/// Downloads/CrocApp on macOS (Phase 4). User override persists
+/// Downloads/CrocApp on macOS. User override persists
 /// via bookmark: security-scoped on macOS, plain on iOS (fileImporter URLs
 /// are implicitly provider-scoped there; .withSecurityScope is macOS-only).
 @MainActor

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Developer ID distribution groundwork (Phase 4):
-#   archive -> Developer ID export -> syspolicy_check notarization pre-check.
-# Degrades to DEVID-PENDING-CERT when no "Developer ID Application" identity
-# is installed (creating one is a human action in PLAN.md).
+# Developer ID distribution: archive -> Developer ID export -> syspolicy_check
+# notarization pre-check. Degrades to DEVID-PENDING-CERT when no "Developer ID
+# Application" identity is installed; creating one is an owner action.
+#
+# This stops short of a real notarization (no `notarytool submit --wait`, no
+# `stapler staple`) -- see docs/known-issues.md.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -25,11 +27,13 @@ fi
 ( cd app && xcodebuild -exportArchive -archivePath "$ARCHIVE" \
     -exportOptionsPlist Config/ExportOptions-DevID.plist \
     -exportPath "$EXPORT" ) > /tmp/devid-export.log 2>&1
-APP=$(find "$EXPORT" -name "CrocApp.app" -maxdepth 2 | head -1)
+APP=$(find "$EXPORT" -maxdepth 2 -name CrocApp.app | head -1)
+[ -n "$APP" ] || { echo "error: no CrocApp.app in $EXPORT (see /tmp/devid-export.log)"; exit 1; }
 codesign --verify --strict --deep "$APP"
 echo DEVID-EXPORT-OK
 
-# Notarization dry-run: Apple's pre-submission checker catches signing /
-# entitlement / hardened-runtime problems that notarization or Gatekeeper
-# would reject. (Real notarytool submission is release engineering, Phase 7.)
-syspolicy_check distribution "$APP" && echo DEVID-CHECK-OK
+# Notarization dry-run: Apple's pre-submission checker catches signing,
+# entitlement and hardened-runtime problems that notarization or Gatekeeper
+# would reject.
+syspolicy_check distribution "$APP"
+echo DEVID-CHECK-OK

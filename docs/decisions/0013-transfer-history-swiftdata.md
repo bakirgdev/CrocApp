@@ -1,6 +1,11 @@
-# 0013 — Transfer history on SwiftData, privacy-bounded, harness-isolated
+# 0013. Transfer history on SwiftData, privacy-bounded, harness-isolated
 
-Date: 2026-07-24. Status: accepted. Context: Phase 6 (F12).
+Status: accepted
+Date: 2026-07-24
+
+## Context
+
+F12 needed a persisted transfer log with a "Send Again" affordance. Two constraints shaped it: a file-transfer history is a privacy artefact by default (names, code phrases, paths), and the `verify-app-*.sh` harnesses drive the real app on the dev machine, so anything they write lands in real user data.
 
 ## Decision
 
@@ -9,6 +14,13 @@ Date: 2026-07-24. Status: accepted. Context: Phase 6 (F12).
 - **Harness isolation at container level:** `--auto-*` launches get an in-memory `ModelContainer` (`HistoryStore.makeContainer(inMemory:)`, gated on `AutoVerify.isHarnessRun`) — the SwiftData parallel of `settings.persist = false`. AutoVerify writes `verify-history.txt` (`records=<n>`) and `verify-app-mac.sh` gates `MAC-HISTORY-OK` on `records=1`, which doubles as a regression alarm for the isolation itself.
 - **Re-send routes through `AppRouter.openSend(with:)`** — same path as dock drops, inheriting busy-queueing. Bookmark existence probes must `startAccessingSecurityScopedResource()` before `fileExists` on BOTH platforms (sandbox denies even stat on an unopened scope; found on macOS in task review, the iOS twin found by final review).
 - **Corrupt store fallback = memory-only container**, not a launch crash.
+
+## Consequences
+
+- SwiftData is now a schema surface: any change to `TransferRecord` fields is a migration, on users' devices, for a feature that is only a convenience list. Keep the model boring.
+- The caps are permanent privacy ceilings, not tuning knobs. Raising `maxNames` or storing the full code phrase makes the store leak more than the UI ever shows.
+- `MAC-HISTORY-OK` gating on `records=1` means a broken in-memory container fails the harness loudly instead of quietly polluting dev-machine history.
+- History is macOS/iOS-local. No sync, no export; the record is worthless off-device because bookmarks are machine-scoped.
 
 ## Rejected
 

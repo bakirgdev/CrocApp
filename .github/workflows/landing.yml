@@ -1,0 +1,57 @@
+name: Deploy landing on GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "design/tokens.css"
+      - ".github/workflows/landing.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: landing-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & deploy (landing)
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Assemble _site
+        run: |
+          mkdir -p _site
+          cp -R web/landing/. _site/
+          cp design/tokens.css _site/tokens.css
+
+      - name: Verify CNAME survived assembly
+        run: test -s _site/CNAME && cat _site/CNAME
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Release the Pages deployment if this run is cancelled
+        if: cancelled()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api --method POST "repos/$REPO/pages/deployments/$SHA/cancel" || true

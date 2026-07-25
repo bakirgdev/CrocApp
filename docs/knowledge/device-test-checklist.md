@@ -1,6 +1,6 @@
-# Physical-device test checklist (Phase 3 exit criteria)
+# Physical-device test checklist
 
-Simulator cannot verify these; run on an iOS 26 device before Phase 7 submission.
+The simulator cannot verify any of these. Run them on a real iOS 26 device before store submission — this is the hardware gate (ADR 0010). Nothing here has been run yet.
 
 ## Background continuation (BGContinuedProcessingTask)
 - [ ] Start multi-GB receive, background the app → system Live Activity shows title + progress + cancel
@@ -9,7 +9,7 @@ Simulator cannot verify these; run on an iOS 26 device before Phase 7 submission
 - [ ] Cancel from the system Live Activity → app shows cancelled state
 - [ ] Wildcard identifier registers OK on-device (fallback static id is the backstop; check console for register() failures)
 
-## Share extension (F30)
+## Share extension
 - [ ] Photos → share sheet → CrocApp: stages, "Open CrocApp" instruction shown
 - [ ] Files app → share multiple files → CrocApp: all staged
 - [ ] Open app afterwards → staged sheet appears → Send completes to another device

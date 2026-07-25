@@ -29,14 +29,16 @@ Theme-independent literals. The accent alias swaps which step it points at.
 | `--sys-orange` | `#FF9500` | `#FF9F0A` |
 | `--sys-red` | `#FF3B30` | `#FF453A` |
 | `--sys-blue` | `#007AFF` | `#0A84FF` |
-| `--sys-yellow` | `#FFCC00` | `#FFD60A` |
 
 ## Labels, fills, separators
 
 | Token | Light | Dark |
 |---|---|---|
+| `--ink` | `#000000` | `#FFFFFF` |
+| `--paper` | `#FFFFFF` | `#000000` |
 | `--label-1` | `rgba(0,0,0,1)` | `rgba(255,255,255,1)` |
 | `--label-2` | `rgba(60,60,67,0.60)` | `rgba(235,235,245,0.60)` |
+| `--label-2-web` | `rgba(60,60,67,0.75)` | `rgba(235,235,245,0.60)` |
 | `--label-3` | `rgba(60,60,67,0.30)` | `rgba(235,235,245,0.30)` |
 | `--label-4` | `rgba(60,60,67,0.18)` | `rgba(235,235,245,0.16)` |
 | `--separator` | `rgba(60,60,67,0.29)` | `rgba(84,84,88,0.65)` |
@@ -106,53 +108,38 @@ Status → meaning in CrocApp: **success** = transfer complete, E2E trust badge.
 
 ## Theming on web
 
-Dark is opt-in via `data-theme="dark"` on `<html>`, so every value stays a single registered light/dark pair. To follow the OS, mirror it once in the consuming page:
-
-```css
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { color-scheme: dark; }
-}
-```
-
-…and either duplicate the `[data-theme="dark"]` block under that query, or set `data-theme` from a small inline script before first paint (avoids a flash). The theme toggle must win in both directions.
+Every token is a `light-dark()` pair resolved by `color-scheme`. `:root` declares `light dark`, so an untouched page follows the OS; `[data-theme="dark"]` / `[data-theme="light"]` pin `color-scheme` and win in both directions. `tokens.css` ships this — a consuming page sets `data-theme` from a small inline script before first paint (avoids a flash) and needs nothing else.
 
 ## Contrast (verified, WCAG 2.2)
 
-Computed 2026-07-25 from the hex values above.
+Recomputed from the hex values above on 2026-07-26. **Light is the constrained theme — check it first.**
 
 | Pair | Ratio | Verdict |
 |---|---|---|
-| `#1E9E6A` on `#FFFFFF` | 3.41 | ✅ large text / UI ❌ body text |
-| `#1E9E6A` on `#F2F2F7` | 3.06 | ✅ large text / UI ❌ body text |
-| `#FFFFFF` on `#1E9E6A` | 3.41 | ❌ AA for a 17px semibold button label |
-| `--label-2` 0.60 on `#FFFFFF` | 3.44 | ❌ AA body text — Apple's own secondaryLabel |
-| `--label-2-web` 0.75 on `#FFFFFF` | 5.16 | ✅ AA body text |
-| `--label-2-web` 0.75 on `#F2F2F7` | 4.85 | ✅ AA body text |
-| `--label-3` 0.30 on `#FFFFFF` | 1.73 | ❌ anything — decorative fills only |
-| `#178055` on `#FFFFFF` | 4.94 | ✅ AA body text |
-| `#1E9E6A` on accent tint `(228,243,237)` | 2.99 | ❌ text — the accent cannot label its own tint |
-| `#178055` on accent tint | 4.32 | ❌ AA body text, just short |
-| `#116243` on accent tint | 6.45 | ✅ AA body text |
-| `#178055` on `#F2F2F7` | 4.42 | ❌ AA body text — see below |
-| `#116243` on `#F2F2F7` | 6.60 | ✅ AA body text |
-| `#2DC585` on `#000000` | 9.44 | ✅ AAA |
-| `#2DC585` on `#1C1C1E` | 7.65 | ✅ AAA |
-| `#05271A` on `#2DC585` | 7.19 | ✅ AAA |
-| `#FF3B30` on `#FFFFFF` | 3.55 | ✅ large only |
-| `#FF9500` on `#FFFFFF` | 2.20 | ❌ text — icon/fill only |
-| `#34C759` on `#FFFFFF` | 2.22 | ❌ text — icon/fill only |
-| `#007AFF` on `#FFFFFF` | 4.02 | borderline; large text only |
-| `#FF453A` on `#000000` | 6.16 | ✅ |
-| `#FF9F0A` on `#000000` | 10.22 | ✅ |
-| `#30D158` on `#000000` | 10.39 | ✅ |
-| `#0A84FF` on `#000000` | 5.76 | ✅ |
+| `--color-accent` on base / grouped / its own tint | 3.41 / 3.06 / 2.98 | UI + large text only; never a letter |
+| `--color-accent-text` `#178055` on base | 4.94 | AA body |
+| `--color-accent-text` on grouped / accent tint | 4.42 / 4.31 | fails body — use the step below |
+| `--color-accent-text-on-tint` `#116243` on base / grouped / accent tint | 7.36 / 6.60 / 6.43 | AA body everywhere |
+| `--label-2` 0.60 on base | 3.44 | fails body — Apple's own secondaryLabel |
+| `--label-2-web` 0.75 on base / grouped | 5.15 / 4.82 | AA body |
+| `--label-3` on base | 1.74 | decorative fill only |
+| `#FFFFFF` on `--color-accent` | 3.41 | filled-button deviation, rule 3 |
+| `#FFFFFF` on `--color-status-error` | 3.55 | filled-button deviation, rule 3 |
+| `--color-status-success` / `-warning` / `-error` on its own tint | 1.98 / 1.96 / 2.95 | nothing |
+| `--color-status-success` / `-warning` / `-error` / `-info` on base | 2.22 / 2.20 / 3.55 / 4.02 | fill and glyph only |
 
-Consequences to respect:
+Dark, for the record: accent 9.44 on base, 7.65 on card, 7.69 on its own tint; `--color-on-accent` 7.19 on the accent; `--label-2` 6.36 on base; every status color ≥ 4.91 on its own tint. Nothing in dark needs a substitute, which is why all three accent-text aliases collapse to `--green-400` there.
 
-- **Accent as text is not the same token as accent as a fill.** `--color-accent` labelling anything is 3.41:1 on white and 2.99:1 on its own tint — a fail at every text size. Use `--color-accent-text` (`--green-700`) for accent words on a base or card surface, and `--color-accent-text-on-tint` (`--green-800`) for accent words on `--color-accent-tint`, where even `--green-700` lands at 4.32. Icons, fills, borders and progress bars keep `--color-accent`: they only owe 3:1, and they clear it. Dark theme collapses all three to `--green-400`.
-- Light-theme prominent buttons carry white on `--color-accent` at 3.41:1. Keep the label ≥ 17px semibold (large-text threshold at bold weight) and never shrink it; for a small prominent button use `--green-700` as the fill.
-- Status **titles** inside a `StatusBanner` are drawn in the status color on its own tint. **In light this is not AA and the earlier claim that it was is wrong**: `#34C759` on its own 14% tint over white measures **1.98:1**, orange is no better. Dark is fine (`#30D158` on its tint over black is 8.01:1). Treat the light-theme status-on-tint title as a large-text-only pattern, or draw the label in `--color-text-primary` and let the tint carry the status — that is what the landing page's trust pill does. Body copy in a banner uses `--color-text-secondary`, not the status color. Do not "improve" it by tinting the body text.
-- **`--color-text-secondary` no longer resolves to `--label-2` in light.** Apple's secondaryLabel is `rgba(60,60,67,0.60)`, which measures **3.44:1 on white** — below AA for anything smaller than large text, which is most of a landing page. `--label-2` keeps the true system value so the app stays visually native; `--label-2-web` at `0.75` is what the alias resolves to, and it clears AA on every light surface the web uses (5.16 base, 4.85 grouped, 4.77 tertiary fill). Dark was already fine at 6.36 and is unchanged. If the app ever consumes these tokens directly, it wants `--label-2`, not the web value.
-- `--color-text-tertiary` (`--label-3`) is **1.73:1** on white. It is a decorative fill, not a text color, and not a UI-boundary color either — anything a sighted user has to *see* needs secondary or better. The disclosure chevron uses secondary for this reason.
-- `--color-text-link` is `--green-700`, not the accent: `--green-600` is 3.41:1 on white and fails body text. Even `--green-700` only clears AA on `--color-surface-base` (4.94); on the grouped background it is 4.42 and fails. **Small accent text and links on `--color-surface-grouped` need `--green-800`** — or put the link on a card. This bites the landing page, whose default page fill is grouped.
-- Dark theme has margin everywhere; light theme is the constrained one. Check light first.
+### Rules
+
+1. **Accent as text is not accent as a fill.** Icons, fills, borders and progress bars keep `--color-accent` — they owe 3:1 and clear it. Anything with a letter in it takes `--color-accent-text` on `--color-surface-base` / `--color-surface-card`, and `--color-accent-text-on-tint` on every other light surface: `--color-accent-tint`, and `--color-surface-grouped`, which is the landing page's default fill. `--green-800` is the only accent step that clears AA everywhere in light.
+
+2. **A status color is a fill, never a foreground.** In light it fails on its own tint (1.96 – 2.95) and three of four fail on base. Status *text* — banner titles, tinted-destructive labels, trust-badge labels — is `--color-text-primary`; the tint and border carry the semantic. Status *glyphs* may stay in the kind color: they are `aria-hidden` and always redundant with an adjacent label (`iconography.md`), which makes them decorative, so 1.4.11 does not bind them. They do read faint in light — that is why the label, not the glyph, has to carry the meaning. Never "improve" a banner by tinting its body copy.
+
+3. **Filled prominent and destructive buttons ship at 3.41:1 and 3.55:1.** Both clear 3:1, neither clears 4.5:1. Accepted, because it is what Apple's own filled controls measure, on two conditions: the label stays ≥ 17px semibold and never shrinks, and small sizes use a tinted variant instead of a filled one.
+
+4. **`--color-text-secondary` is not `--label-2` in light.** Apple's secondaryLabel (0.60) is 3.44:1 on white, below AA for anything under large text — which is most of a web page. `--label-2` keeps the true system value so the app stays visually native; the alias resolves to `--label-2-web` (0.75). An app view consuming these tokens directly wants `--label-2`.
+
+5. **`--color-text-tertiary` is not a text color and not a UI-boundary color.** 1.74:1. Decorative fills only. Anything a sighted user has to *see* — disclosure chevrons, remove controls, empty-state glyphs — takes secondary or better.
+
+6. **`--color-text-link` is `--green-700`, not the accent**, and follows rule 1: on `--color-surface-grouped` a link needs `--green-800`, or it needs to sit on a card.

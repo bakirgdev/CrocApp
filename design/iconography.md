@@ -6,16 +6,17 @@
 
 | Meaning | Lucide key (web / design system) | SF Symbol (app) |
 |---|---|---|
-| Send / outbound | `arrow-up-circle` | `arrow.up.circle` |
-| Receive / inbound | `arrow-down-circle` | `arrow.down.circle` |
+| Send / outbound | `circle-arrow-up` | `arrow.up.circle` |
+| Receive / inbound | `circle-arrow-down` | `arrow.down.circle` |
 | Sending (progress header) | `arrow-up` | `arrow.up` |
 | Receiving (progress header) | `arrow-down` | `arrow.down` |
 | Folder | `folder` | `folder` |
 | Generic file | `file` | `doc` |
 | Text payload | `file-text` | `doc.text` |
 | Image | `image` | `photo` |
-| Remove item | `x-circle` | `xmark.circle.fill` |
+| Remove item | `circle-x` | `xmark.circle.fill` |
 | Success | `circle-check` | `checkmark.circle` |
+| Download / install (web only) | `download` | — |
 | Confirm / copied | `check` | `checkmark` |
 | Close / decline | `x` | `xmark` |
 | Add files | `plus` | `plus` |
@@ -26,7 +27,7 @@
 | Verified / trust (full badge) | `shield-check` | `checkmark.shield.fill` |
 | Local network | `wifi` | `wifi` |
 | Warning | `triangle-alert` | `exclamationmark.triangle.fill` |
-| Error | `alert-circle` | `exclamationmark.circle.fill` |
+| Error | `circle-alert` | `exclamationmark.circle.fill` |
 | Info | `info` | `info.circle` |
 | Disclosure | `chevron-right` | `chevron.right` |
 | Share sheet | `share` | `square.and.arrow.up` |
@@ -39,11 +40,11 @@
 | Sponsor / support (web only) | `heart` | — |
 | Command line / Homebrew (web only) | `terminal` | — |
 
-**Lucide 1.x has no brand icons** — `github.svg` was removed and 404s on the CDN. The landing page's GitHub link therefore uses `star` plus the word "GitHub" rather than the Octocat mark, which also sidesteps the trademark question. Do not reintroduce a brand glyph from an older Lucide version.
+**Lucide 1.x has no brand icons** — `github.svg` was removed. The landing page's GitHub link uses `star` plus the word "GitHub" rather than the Octocat mark, which also sidesteps the trademark question. Do not reintroduce a brand glyph from an older Lucide version.
 
-Two names in this table are Lucide 1.x *aliases*: `arrow-up-circle` and `x-circle` now resolve to `circle-arrow-up` and `circle-x`. Geometry is identical and both names still fetch, so the rows stand — but use the canonical names if these ever stop redirecting.
+**Use the canonical `circle-*` names above, not the legacy `*-circle` spellings.** `alert-circle`, `x-circle`, `arrow-up-circle` and `arrow-down-circle` still ship as byte-identical aliases, so either name renders correctly today — but `check-circle` is **not** an alias. It is a distinct glyph: an open arc (`M21.801 10A10 10 0 1 1 17 3.335`) with an oversized check breaking out of it. Reaching for it when you want the closed circle-with-tick silently draws the wrong mark. `circle-check` is the true match for `checkmark.circle`.
 
-**`check-circle` is not an alias and was wrong here.** In Lucide 1.x it is a distinct glyph — an open arc with an oversized check breaking out of it — not the closed circle-with-tick this table meant. The row now says `circle-check`, which is the classic mark and the true match for `checkmark.circle`. Verified against lucide-static 1.26.0, 2026-07-25.
+Verified against lucide-static 1.27.0 (2007 icons), 2026-07-26.
 
 On the web the page inlines one `<symbol>` sprite and references it with `<use>`, rather than repeating path data at every call site. Same glyphs, same rules; it just stops ~30 copies of the same `<path>` from shipping.
 

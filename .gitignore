@@ -36,7 +36,7 @@ CrocKit/Croc.xcframework/
 *.log
 
 # Landing page tokens (ADR 0015: design/tokens.css is the only copy; the Pages
-# workflow and scripts/serve-landing.sh copy it in)
+# workflow copies it in at deploy, you copy it in by hand for local preview)
 web/landing/tokens.css
 
 # Obra superpowers
@@ -45,3 +45,6 @@ docs/superpowers/plans/
 
 # Claude
 .claude/settings.local.json
+
+# Playwrigth
+.playwrigth--mcp/

@@ -28,17 +28,26 @@ In SwiftUI this is `.glassEffect()` — do **not** hand-roll `.ultraThinMaterial
 
 Glass needs something to blur. On a flat single-color background it reads as a slightly tinted rectangle — that is the expected look on the landing page, so prefer the `solid` material there unless there is real imagery behind.
 
+## Reduced transparency
+
+`prefers-reduced-transparency: reduce` / `.accessibilityReduceTransparency` collapses all three glass materials to `solid`: blur to 0, saturation to 100%, fill to `--color-surface-card`, border to `--color-separator`. `tokens.css` does this at the token level, so a component that consumes `--color-surface-glass` needs no branch of its own.
+
+This is safe precisely because glass is decoration — nothing in the system relies on it for legibility or for state. If a surface stops being readable when it turns solid, the surface was wrong, not the media query.
+
 ## Elevation
 
-| Token | Light | Dark |
-|---|---|---|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,.06), 0 1px 1px rgba(0,0,0,.04)` | `0 1px 2px rgba(0,0,0,.4)` |
-| `--shadow-md` | `0 4px 16px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05)` | `0 4px 16px rgba(0,0,0,.5), 0 1px 3px rgba(0,0,0,.4)` |
-| `--shadow-lg` | `0 12px 40px rgba(0,0,0,.14), 0 4px 12px rgba(0,0,0,.08)` | `0 12px 40px rgba(0,0,0,.6), 0 4px 12px rgba(0,0,0,.5)` |
-| `--shadow-glass` | `0 8px 32px rgba(0,0,0,.12), inset 0 1px 0 var(--glass-highlight)` | `0 8px 32px rgba(0,0,0,.55), inset 0 1px 0 var(--glass-highlight)` |
-| `--shadow-focus-ring` | `0 0 0 4px var(--glass-tint-accent)` | same |
+Geometry is theme-independent; only the shadow colors flip, which is why each token is one declaration with `light-dark()` alphas rather than a pair.
 
-The inset highlight in `--shadow-glass` is the top edge-light that sells the material. Keep it.
+| Token | Geometry | Light α | Dark α |
+|---|---|---|---|
+| `--shadow-sm` | `0 1px 2px`, `0 1px 1px` | .06, .04 | .40, .30 |
+| `--shadow-md` | `0 4px 16px`, `0 1px 3px` | .08, .05 | .50, .40 |
+| `--shadow-lg` | `0 12px 40px`, `0 4px 12px` | .14, .08 | .60, .50 |
+| `--shadow-glass` | `0 8px 32px` + `inset 0 1px 0 var(--glass-highlight)` | .12 | .55 |
+| `--shadow-knob` | `0 3px 8px`, `0 1px 1px` | .15, .16 | same |
+| `--shadow-focus-ring` | `0 0 0 4px var(--glass-tint-accent)` | — | same |
+
+The inset highlight in `--shadow-glass` is the top edge-light that sells the material. Keep it. `--shadow-knob` is the switch knob's, and does not flip: the knob is `--paper` in both themes.
 
 Depth ladder: page → card (`sm`/`glass`) → sheet (`lg`). Three levels, no more.
 

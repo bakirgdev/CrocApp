@@ -1,3 +1,3 @@
 # CrocApp
 
-Unofficial croc CLI GUI app for Apple devices
+Unofficial "croc CLI" tool's GUI app for Apple platform (iOS/iPadOS & macOS)

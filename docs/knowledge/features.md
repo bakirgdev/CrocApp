@@ -1,46 +1,52 @@
 # Feature roadmap
 
-Approved 2026-07-22 by Bakir. Tier = target release. Numbers stable — reference as F1..F40 in plans/issues.
+Approved 2026-07-22 by Bakir. Tier = target release. Numbers are stable — reference them as F1..F40 in plans, issues, and code comments (several views already carry them).
+
+Status is verified against the code, not against intent. **Shipped** means the feature exists and works in the app; it does not mean it has been tested on physical hardware (`device-test-checklist.md`) or that it has no open defects (`../known-issues.md`).
 
 ## V1 (approved, must ship)
 
 ### Core
 
-| # | Feature | croc flag / origin |
-|---|---|---|
-| F1 | Send files (multi) | positional; drag-drop + fileImporter |
-| F2 | Send folders | positional |
-| F3 | Send text/clipboard | `--text` |
-| F4 | Receive via code | positional |
-| F5 | Custom code phrase (min 6 chars) | `--code` |
-| F6 | QR show on send + QR scan on receive | `--qrcode` + GUI-native |
-| F7 | Choose output folder; iOS default = Files-visible app folder | `--out` |
-| F8 | Overwrite/resume handling via confirm sheets | `--overwrite` + resume |
-| F9 | Incoming file list preview + accept/decline | interactive prompt equivalent |
-| F10 | Progress, speed, cancel; Live Activity on iOS | polled from engine |
-| F11 | LAN + relay auto race | croc default |
-| F12 | Transfer history (local only) | GUI-native |
+| # | Feature | croc flag / origin | Status |
+|---|---|---|---|
+| F1 | Send files (multi) | positional; drag-drop + fileImporter | shipped |
+| F2 | Send folders | positional | shipped |
+| F3 | Send text/clipboard | `--text` | shipped |
+| F4 | Receive via code | positional | shipped |
+| F5 | Custom code phrase (min 6 chars) | `--code` | shipped |
+| F6 | QR show on send + QR scan on receive | `--qrcode` + GUI-native | shipped |
+| F7 | Choose output folder; iOS default = Files-visible app folder | `--out` | shipped |
+| F8 | Overwrite/resume handling via confirm sheets | `--overwrite` + resume | shipped |
+| F9 | Incoming file list preview + accept/decline | interactive prompt equivalent | shipped |
+| F10 | Progress, speed, cancel; Live Activity on iOS | polled from engine | shipped |
+| F11 | LAN + relay auto race | croc default | shipped |
+| F12 | Transfer history (local only) | GUI-native | shipped |
 
 ### Power options (settings screen, sane defaults)
 
-| # | Feature | croc flag |
-|---|---|---|
-| F13 | Custom relay + password + IPv6 | `--relay --relay6 --pass` |
-| F14 | Force local-only | `--local` |
-| F15 | Disable compression | `--no-compress` |
-| F16 | Zip folder before send | `--zip` |
-| F17 | Exclude patterns / respect .gitignore | `--exclude --git` |
-| F18 | Auto-accept toggle (off by default, warning shown) | `--yes` |
-| F19 | Both-sides confirm | `--ask` |
+| # | Feature | croc flag | Status |
+|---|---|---|---|
+| F13 | Custom relay + password + IPv6 | `--relay --relay6 --pass` | shipped |
+| F14 | Force local-only | `--local` | shipped |
+| F15 | Disable compression | `--no-compress` | shipped |
+| F16 | Zip folder before send | `--zip` | shipped |
+| F17 | Exclude patterns / respect .gitignore | `--exclude --git` | shipped |
+| F18 | Auto-accept toggle (off by default, warning shown) | `--yes` | shipped |
+| F19 | Both-sides confirm | `--ask` | shipped |
 
 ### GUI-native
 
-| # | Feature |
-|---|---|
-| F30 | Share extension (send from any app) |
-| F36 | Trust UI: E2E badge, "how it works", active-relay indicator |
+| # | Feature | Status |
+|---|---|---|
+| F30 | Share extension (send from any app) | shipped, iOS only |
+| F36 | Trust UI: E2E badge, "how it works", active-relay indicator | shipped |
+
+The whole V1 set is implemented. What stands between it and release is in `../known-issues.md` under "Blocking release", not in this table.
 
 ## V1.x (approved, post-V1 fast follow)
+
+None started. The engine already exposes several of these from Go (`RelayPorts`, `Curve`, `HashAlgorithm`, `ThrottleUpload`, `NoMultiplexing`); wiring them means plumbing `EngineOptions` in CrocKit first (`crocmobile-bridge.md`).
 
 | # | Feature | croc flag / origin |
 |---|---|---|

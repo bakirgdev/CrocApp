@@ -16,4 +16,5 @@ All of: iOS App Store, Mac App Store, macOS direct download (notarized DMG, Deve
 - Mac App Store build must be fully sandboxed (`network.client` + `network.server` entitlements); DMG build notarized + hardened runtime. Two mac build configs.
 - Requires paid Apple Developer account; multicast entitlement (if pursued) must be enabled per profile type incl. TestFlight.
 - App Store review notes must explain code-phrase transfers + default public relay.
+- **The cask channel is blocked until notarization is real.** Homebrew made codesigning + notarization mandatory for official casks on 2026-09-01 and removes non-compliant ones. `scripts/build-devid.sh` stops at `syspolicy_check distribution`, a dry run — there is no `notarytool submit --wait` and no `stapler staple` yet (`docs/knowledge/tooling.md`).
 - Post-launch: PR adding CrocApp to croc README GUI section = highest-leverage discovery channel.

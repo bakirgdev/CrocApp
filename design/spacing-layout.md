@@ -6,7 +6,6 @@
 
 | Token | Value |
 |---|---|
-| `--space-0` | 0 |
 | `--space-1` | 2px |
 | `--space-2` | 4px |
 | `--space-3` | 8px |
@@ -75,7 +74,7 @@ Row heights that are not tokenized (they are component constants, see `component
 
 ## Component metrics tokenized for web (landing + docs only)
 
-Same numbers `components.md` already specifies, promoted to tokens because the landing page forbids raw px in `styles.css` (PLAN.md §4) and a component constant has to be *nameable* to be usable there. SwiftUI keeps them as constants inside the component — **do not use these tokens in the app.**
+Same numbers `components.md` already specifies, promoted to tokens because the web side forbids raw px and a component constant has to be *nameable* to be usable there. SwiftUI keeps them as constants inside the component — **do not use these tokens in the app.**
 
 | Token | Value | From |
 |---|---|---|
@@ -98,6 +97,11 @@ Same numbers `components.md` already specifies, promoted to tokens because the l
 |---|---|
 | `--border-hairline` | 1px |
 | `--border-hairline-half` | 0.5px |
-| `--border-focus` | 2px |
 
 Grouped lists separate rows with `inset 0 -0.5px 0 var(--color-separator)` (a half-pixel inset shadow, not a border) so the row corners stay clean; the last row omits it.
+
+Focus is a 4px halo (`--shadow-focus-ring`), not a border — see `materials-motion.md`.
+
+## Writing direction
+
+Use logical properties everywhere: `padding-inline`, `margin-block`, `inset-inline-start`, `border-start-start-radius`. The specs in `components.md` name a leading and a trailing edge, never a left and a right. Nothing in this system is laid out in physical directions, so an RTL locale is a `dir="rtl"` away rather than a rewrite.
