@@ -15,7 +15,7 @@
 | Text payload | `file-text` | `doc.text` |
 | Image | `image` | `photo` |
 | Remove item | `x-circle` | `xmark.circle.fill` |
-| Success | `check-circle` | `checkmark.circle` |
+| Success | `circle-check` | `checkmark.circle` |
 | Confirm / copied | `check` | `checkmark` |
 | Close / decline | `x` | `xmark` |
 | Add files | `plus` | `plus` |
@@ -36,10 +36,16 @@
 | Star / GitHub count (web only) | `star` | — |
 | Theme: to dark (web only) | `moon` | — |
 | Theme: to light (web only) | `sun` | — |
+| Sponsor / support (web only) | `heart` | — |
+| Command line / Homebrew (web only) | `terminal` | — |
 
 **Lucide 1.x has no brand icons** — `github.svg` was removed and 404s on the CDN. The landing page's GitHub link therefore uses `star` plus the word "GitHub" rather than the Octocat mark, which also sidesteps the trademark question. Do not reintroduce a brand glyph from an older Lucide version.
 
 Two names in this table are Lucide 1.x *aliases*: `arrow-up-circle` and `x-circle` now resolve to `circle-arrow-up` and `circle-x`. Geometry is identical and both names still fetch, so the rows stand — but use the canonical names if these ever stop redirecting.
+
+**`check-circle` is not an alias and was wrong here.** In Lucide 1.x it is a distinct glyph — an open arc with an oversized check breaking out of it — not the closed circle-with-tick this table meant. The row now says `circle-check`, which is the classic mark and the true match for `checkmark.circle`. Verified against lucide-static 1.26.0, 2026-07-25.
+
+On the web the page inlines one `<symbol>` sprite and references it with `<use>`, rather than repeating path data at every call site. Same glyphs, same rules; it just stops ~30 copies of the same `<path>` from shipping.
 
 Check each name in the SF Symbols app before first use, and prefer `.fill` variants inside colored tiles / circles, outline variants standalone. If a screen needs a glyph that is not here, add the row before adding the code.
 

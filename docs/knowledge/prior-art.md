@@ -4,7 +4,7 @@ Research digest 2026-07-22.
 
 ## Landscape
 
-Apple-native croc niche effectively empty: only iCroc (paid, closed-source, stale since 2024, embeds croc v10.0.8). Android: crocgui (Go+Fyne, 311★), croc-app (Kotlin/Compose, 85★, best mobile UX reference — but subprocess architecture, not portable to iOS). Desktop: crock (Electron, 32★, best desktop UX reference). Adjacent: LocalSend (85k★, LAN-only — breaks on guest/mDNS-hostile networks and iOS backgrounding; croc's relay model is the differentiator), PairDrop, Rymdport, Destiny (wormhole Flutter, stale), Winden, Blip.
+Apple-native croc niche effectively empty: only iCroc (paid, closed-source, stale since 2024, embeds croc v10.0.8). Android: crocgui ([howeyc/crocgui](https://github.com/howeyc/crocgui), Go+Fyne, 314★), croc-app ([Dking08/croc-app](https://github.com/Dking08/croc-app), Kotlin/Compose, 87★, best mobile UX reference — but subprocess architecture, not portable to iOS). Desktop: crock ([KD-MM2/crock](https://github.com/KD-MM2/crock), 35★, best desktop UX reference). Adjacent: LocalSend (85k★, LAN-only — breaks on guest/mDNS-hostile networks and iOS backgrounding; croc's relay model is the differentiator), PairDrop, Rymdport, Destiny (wormhole Flutter, stale), Winden, Blip.
 
 ## UX patterns to adopt
 
