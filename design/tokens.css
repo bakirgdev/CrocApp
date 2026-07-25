@@ -125,12 +125,32 @@
   --type-code-hero-size: 30px;    --type-code-hero-lh: 38px;
   --type-code-body-size: 15px;    --type-code-body-lh: 22px;
 
+  /* --- Web display scale (landing + docs) — never used by the app ---
+     The app scale tops out at 34px because it is a phone screen title.
+     A landing hero on a 27" display needs more; these are fluid so the
+     page reads the same at 375px and 1440px. Unitless line-heights. */
+  --type-web-hero-size:      clamp(40px, 6.2vw, 68px);
+  --type-web-hero-lh:        1.06;
+  --type-web-hero-weight:    700;
+  --type-web-section-size:   clamp(28px, 3.6vw, 40px);
+  --type-web-section-lh:     1.15;
+  --type-web-section-weight: 700;
+  --type-web-sub-size:       clamp(20px, 2.4vw, 26px);
+  --type-web-sub-lh:         1.3;
+  --type-web-sub-weight:     600;
+  --type-web-lead-size:      clamp(17px, 1.6vw, 21px);
+  --type-web-lead-lh:        1.5;
+  --type-web-lead-weight:    400;
+
   --tracking-large-title: 0.37px;
   --tracking-title2:      0.35px;
   --tracking-headline:   -0.43px;
   --tracking-body:       -0.41px;
   --tracking-caption:     0px;
   --tracking-code:        0.5px;
+  --tracking-web-hero:    -1.5px;
+  --tracking-web-section: -0.6px;
+  --tracking-web-lead:    -0.2px;
 
   /* --- 4pt spacing grid --- */
   --space-0: 0px;
@@ -158,6 +178,18 @@
   /* --- Layout --- */
   --content-max-width: 480px;
   --sheet-max-width: 540px;
+
+  /* --- Web surfaces only (landing + docs) — never used by the app ---
+     The app column cap is a phone-width column. A marketing page needs a
+     page-width container, a readable prose measure and a viewport-scaled
+     rhythm. Both clamp() ends stay on the 4pt grid. */
+  --content-max-width-wide:  1280px;  /* hero, full-bleed rows, screenshots */
+  --content-max-width-web:   1080px;  /* default section container */
+  --content-max-width-prose:  680px;  /* paragraph measure, ~75ch */
+
+  --gutter-web:      clamp(20px, 5vw, 48px);   /* page horizontal padding */
+  --section-pad-web: clamp(64px, 9vw, 112px);  /* vertical gap between sections */
+  --stack-web:       clamp(32px, 4vw, 48px);   /* gap between blocks in a section */
 
   /* --- Control sizing --- */
   --control-height-lg: 50px;
@@ -353,6 +385,14 @@ a:active { opacity: 0.7; }
 .t-footnote    { font: var(--type-footnote-weight) var(--type-footnote-size)/var(--type-footnote-lh) var(--font-sans); }
 .t-caption     { font: var(--type-caption1-weight) var(--type-caption1-size)/var(--type-caption1-lh) var(--font-sans); }
 .t-code        { font: var(--weight-medium) var(--type-code-body-size)/var(--type-code-body-lh) var(--font-mono); letter-spacing: var(--tracking-code); }
+
+/* Web display helpers. Written longhand, not with the `font:` shorthand:
+   the shorthand's `size/line-height` slot does not reliably survive a
+   clamp() substituted through var(). */
+.t-web-hero    { font-family: var(--font-sans); font-size: var(--type-web-hero-size);    line-height: var(--type-web-hero-lh);    font-weight: var(--type-web-hero-weight);    letter-spacing: var(--tracking-web-hero); }
+.t-web-section { font-family: var(--font-sans); font-size: var(--type-web-section-size); line-height: var(--type-web-section-lh); font-weight: var(--type-web-section-weight); letter-spacing: var(--tracking-web-section); }
+.t-web-sub     { font-family: var(--font-sans); font-size: var(--type-web-sub-size);     line-height: var(--type-web-sub-lh);     font-weight: var(--type-web-sub-weight);     letter-spacing: var(--tracking-web-section); }
+.t-web-lead    { font-family: var(--font-sans); font-size: var(--type-web-lead-size);    line-height: var(--type-web-lead-lh);    font-weight: var(--type-web-lead-weight);    letter-spacing: var(--tracking-web-lead); }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --press-scale: 1; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }

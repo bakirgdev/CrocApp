@@ -46,6 +46,19 @@ On Apple platforms use `.rect(cornerRadius:style: .continuous)` — never the de
 
 macOS keeps the same column cap; only density, chrome and input affordances change (no sidebar, drop hint in the window, full-window "Drop to send" glass overlay).
 
+## Web layout (landing + docs only)
+
+Never used by the app. `--content-max-width` is a phone-width column; a marketing or docs page needs a page-width container, a readable prose measure, and rhythm that scales with the viewport. Both ends of every `clamp()` sit on the 4pt grid.
+
+| Token | Value | Meaning |
+|---|---|---|
+| `--content-max-width-wide` | 1280px | hero, full-bleed rows, screenshot galleries |
+| `--content-max-width-web` | 1080px | default section container |
+| `--content-max-width-prose` | 680px | paragraph measure (~75ch) |
+| `--gutter-web` | `clamp(20px, 5vw, 48px)` | page horizontal padding |
+| `--section-pad-web` | `clamp(64px, 9vw, 112px)` | vertical gap between sections |
+| `--stack-web` | `clamp(32px, 4vw, 48px)` | gap between blocks inside a section |
+
 ## Control sizing
 
 | Token | Value | Meaning |
