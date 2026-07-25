@@ -48,9 +48,11 @@ jobs:
           # Reserves crocapp.dev/docs now so the docs site later is a
           # directory drop, not a workflow rewrite.
           [ -d web/docs ] && cp -R web/docs _site/docs || true
-          # primitives.html is the phase-2 component harness. It lives in git
-          # so tokens can be re-checked against it, but it is not the site.
-          rm -f _site/primitives.html
+          # Development harnesses. Both live in git so the components and the
+          # social card can be rebuilt when a token moves, but neither is part
+          # of the site: primitives.html is the phase-2 smoke page, and
+          # og-card.html is the source scripts/build-og.sh screenshots.
+          rm -f _site/primitives.html _site/og-card.html
 
       # CNAME must live inside the artifact. GitHub only generates one for
       # branch-published sites; an Actions deploy that omits it can clear the

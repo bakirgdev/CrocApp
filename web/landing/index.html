@@ -10,6 +10,27 @@
     />
     <link rel="canonical" href="https://crocapp.dev/" />
 
+    <!-- Social card. Rebuild with scripts/build-og.sh after any token change;
+         og-card.html is the source and is built from the same tokens as the
+         page, so the card and the site stay visibly one thing. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CrocApp" />
+    <meta property="og:url" content="https://crocapp.dev/" />
+    <meta property="og:title" content="CrocApp — send files anywhere, encrypted end to end" />
+    <meta
+      property="og:description"
+      content="A free, open-source native app for iPhone, iPad and Mac. Pick a file, read out a code phrase, done. No account, no cloud upload, no same-network requirement."
+    />
+    <meta property="og:image" content="https://crocapp.dev/assets/img/og.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="CrocApp — send files anywhere, encrypted end to end. crocapp.dev"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
     <!-- Favicon set generated from assets/mascot.png. favicon.svg was dropped
          on purpose: it was a 69 KB base64 PNG in an <svg> wrapper, and
          browsers prefer it over the 3.6 KB PNG. See PLAN.md §4. -->
@@ -729,6 +750,27 @@
         </nav>
       </div>
     </footer>
+
+    <!-- Deliberately minimal, and deliberately without an aggregateRating or a
+         downloadUrl: there are no ratings, and the store links do not exist yet.
+         Structured data that describes something untrue is worse than none. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "CrocApp",
+        "url": "https://crocapp.dev/",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "iOS 26, iPadOS 26, macOS 26",
+        "description": "A free, open-source native app for iPhone, iPad and Mac that sends files anywhere, encrypted end to end, using a spoken code phrase.",
+        "image": "https://crocapp.dev/assets/img/og.jpg",
+        "license": "https://opensource.org/licenses/MIT",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Person", "name": "Bakir Gracic" },
+        "codeRepository": "https://github.com/bakirgdev/CrocApp"
+      }
+    </script>
 
     <script src="app.js" defer></script>
   </body>
