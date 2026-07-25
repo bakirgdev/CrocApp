@@ -12,6 +12,7 @@ Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS
 - `assets/` — brand art: `CrocAppIcon.icon` source, banner, mascot, etc.
 - `CrocKit/` — Swift package wrapping the Go engine: `CrocEngine` actor + `AsyncStream<TransferEvent>`, plus `crockit-verify` executable harness. Depends on `Croc.xcframework` (gitignored build artifact)
 - `crocmobile/` — Go wrapper around croc v10.5.0, gomobile-bound into `Croc.xcframework`. `session.go` is the engine; `cmd/croctest` is its CLI harness
+- `design/` — design system: color/type/spacing/material/motion tokens, component specs, SF Symbols mapping, SwiftUI translation, `tokens.css` for web. Canonical for the app restyle **and** the landing/docs sites (ADR 0015)
 - `docs/knowledge/` — evergreen project knowledge
 - `docs/decisions/` — ADRs, `NNNN-slug.md`
 - `scripts/` — build + machine-verification harnesses (see Commands)
@@ -55,6 +56,8 @@ A green build is **not** evidence a transfer works. Any change to `crocmobile/se
 ### Read before writing
 
 `docs/knowledge/crocmobile-bridge.md` and `docs/knowledge/app-ui-architecture.md` hold the hard-won invariants: event ordering, fd0 prompt-pipe semantics, per-file sender answers, relay-address blanking, room collisions on 4-char code prefixes. Most "obvious" fixes here re-break one of them. Read the relevant file before editing the engine, the bridge, or the UI state machine.
+
+Anything visual — app views, landing page, docs site — reads `design/README.md` first. Tokens only, no raw hex/px; SF Symbols only in the app; system font only, never a bundled font file.
 
 ### Look up, don't guess
 
