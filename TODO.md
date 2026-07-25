@@ -27,7 +27,8 @@ Assets — done
 - mascot stays PNG, no webp re-encode (owner decision)
 
 Owner actions — done 2026-07-25
-- DNS records for crocapp.dev at the registrar
+- DNS for crocapp.dev on Cloudflare nameservers, apex + www proxied, SSL/TLS mode Full (strict).
+  Not the raw GitHub A/AAAA records — see PLAN.md §5 before debugging anything DNS or cert related.
 - Settings → Pages → Source = GitHub Actions, custom domain, Enforce HTTPS
 - domain verified at github.com/settings/pages
 

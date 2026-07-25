@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CrocApp — coming soon</title>
+    <meta
+      name="description"
+      content="CrocApp is a free, open-source native app for iPhone, iPad and Mac that sends files anywhere, encrypted end to end. Coming soon."
+    />
+    <link rel="canonical" href="https://crocapp.dev/" />
+
+    <!-- Favicon set generated from assets/mascot.png. favicon.svg was dropped
+         on purpose: it was a 69 KB base64 PNG in an <svg> wrapper, and
+         browsers prefer it over the 3.6 KB PNG. See PLAN.md §4. -->
+    <link rel="icon" href="assets/img/favicon/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" sizes="96x96" href="assets/img/favicon/favicon-96x96.png" />
+    <link rel="apple-touch-icon" href="assets/img/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/img/favicon/site.webmanifest" />
+
+    <!-- Literal hex is unavoidable here and in site.webmanifest: neither a
+         <meta> attribute nor JSON can read a CSS custom property. These two
+         are --paper and --ink; keep them in sync with design/colors.md. -->
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+
+    <!-- Copied in at deploy time from design/tokens.css. Never committed
+         under web/ — one source of truth, no drift (ADR 0015). -->
+    <link rel="stylesheet" href="tokens.css" />
+
+    <!-- Phase 1 is the pipeline, not the design. styles.css arrives in
+         phase 2 and this block goes away with it. Tokens only, no literals. -->
+    <style>
+      body {
+        display: grid;
+        place-items: center;
+        min-height: 100svh;
+        padding: var(--gutter-web);
+        text-align: center;
+        /* Base, not the usual grouped page fill: --color-text-link is
+           --green-700, which clears AA on base (4.94) but not on grouped
+           (4.42). Nothing here is a card, so base is the honest surface. */
+        background: var(--color-surface-base);
+      }
+      main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-5);
+        max-width: var(--content-max-width-prose);
+      }
+      h1 {
+        margin: 0;
+        color: var(--color-accent);
+      }
+      p {
+        margin: 0;
+        color: var(--color-text-secondary);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="t-web-hero">CrocApp</h1>
+      <p class="t-web-lead">
+        A free, open-source native app for iPhone, iPad and Mac. Send files anywhere, encrypted end
+        to end. Coming soon.
+      </p>
+      <p class="t-footnote">
+        CrocApp is the interface.
+        <a href="https://github.com/schollz/croc">croc</a> is the engine — by Zack Scholl, MIT
+        licensed. Unofficial and unaffiliated.
+      </p>
+    </main>
+  </body>
+</html>

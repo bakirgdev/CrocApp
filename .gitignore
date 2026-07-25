@@ -35,6 +35,10 @@ CrocKit/Croc.xcframework/
 # Build + verification logs (harnesses write to /tmp, but redirects land here)
 *.log
 
+# Landing page tokens (ADR 0015: design/tokens.css is the only copy; the Pages
+# workflow and scripts/serve-landing.sh copy it in)
+web/landing/tokens.css
+
 # Obra superpowers
 .superpowers/
 docs/superpowers/plans/

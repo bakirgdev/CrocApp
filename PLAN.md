@@ -194,23 +194,22 @@ That reserves `crocapp.dev/docs` now, so the docs site later is a directory drop
 
 **The `CNAME` file must be inside the artifact.** Verified: GitHub does not generate one for custom Actions workflows, only for branch-published sites.
 
-### DNS at the registrar for `crocapp.dev` — ✅ done by owner 2026-07-25
+### DNS for `crocapp.dev` — ✅ done by owner 2026-07-25
 
-Recorded for reference and for whoever has to debug this later. Verified against GitHub Pages docs, 2026-07-25.
+The domain is on **Cloudflare** nameservers (`adele`/`memphis.ns.cloudflare.com`) with the apex and `www` **proxied**, not on the eight raw GitHub A/AAAA records an unproxied setup would use. Measured 2026-07-25:
 
-| Type | Name | Value |
-|---|---|---|
-| A | `@` | `185.199.108.153` |
-| A | `@` | `185.199.109.153` |
-| A | `@` | `185.199.110.153` |
-| A | `@` | `185.199.111.153` |
-| AAAA | `@` | `2606:50c0:8000::153` |
-| AAAA | `@` | `2606:50c0:8001::153` |
-| AAAA | `@` | `2606:50c0:8002::153` |
-| AAAA | `@` | `2606:50c0:8003::153` |
-| CNAME | `www` | `bakirgdev.github.io` |
+```
+dig +short crocapp.dev A   → 188.114.97.10, 188.114.96.10     (Cloudflare edge)
+curl -I https://crocapp.dev/ → server: cloudflare, x-github-request-id: …, via: 1.1 varnish
+https://www.crocapp.dev/   → 301 → https://crocapp.dev/
+```
 
-If the registrar supports `ALIAS`/`ANAME` at the apex, that may replace the eight A/AAAA records.
+So Cloudflare terminates TLS at its edge and forwards to GitHub Pages as origin. Consequences that matter when debugging:
+
+- **Cloudflare SSL/TLS mode must be Full (strict).** On Flexible, Cloudflare talks HTTP to Pages while Pages' "Enforce HTTPS" redirects to HTTPS — an infinite redirect loop on the apex. Set to Full (strict) by the owner 2026-07-25.
+- The cert visitors see is Cloudflare's, not the GitHub-provisioned one. GitHub's own cert status is irrelevant to uptime while the proxy is on, so do not debug from that panel.
+- Cloudflare caches. A deploy can look like it did not land; check `cf-cache-status` and purge before assuming the workflow is broken.
+- `www` → apex already redirects at the Cloudflare layer, so §10 item 4 is settled in the planned direction.
 
 ### Repo settings — ✅ done by owner 2026-07-25
 
@@ -229,6 +228,7 @@ Phase 1 exists to prove the deploy pipeline end-to-end before any design work is
 | **0. Tokens** ✅ | web layout + display tokens into `design/` | pushed `29964a5` |
 | **0b. Assets** ✅ | favicon set supplied, manifest corrected, `favicon.svg` dropped. `og.jpg` supplied but scheduled for rebuild in phase 5. | 2026-07-25 |
 | **1. Pipeline** | `pages.yml`, `CNAME`, placeholder `index.html`, `serve-landing.sh`, `.gitignore` entry for `web/landing/tokens.css`. *Owner-side DNS + Pages settings already done.* | `https://crocapp.dev` serves "CrocApp — coming soon" over valid HTTPS; `www` redirects; favicon appears in the tab |
+| **1 status** | built and verified locally 2026-07-25 — placeholder, tokens copy, favicon set and both themes serve clean off `scripts/serve-landing.sh`. **Not deployed yet**; the done-when needs a push. | pending push |
 | **2. Primitives** | `styles.css`: reset on top of tokens, container/section/grid, buttons, cards, glass nav, pills, `<details>`, focus rings, dark theme, reduced motion | a primitives smoke page renders correctly in both themes at 375 / 768 / 1440 |
 | **3. Hero** | nav + hero + CSS-built app mockup (Send screen: file rows, code phrase in `--type-code-hero` mono, trust badge, progress bar) + trust pills | hero is convincing at 375px and 1440px; mockup uses only tokens |
 | **4. Content** | sections 3–13, all copy, Lucide inline SVGs, FAQ, footer | every section present, all copy final, zero lorem |
@@ -271,6 +271,8 @@ Verification: Chrome DevTools MCP `lighthouse_audit` for scores, Playwright MCP 
 | `api.github.com` is the one external request. Unauthenticated limit is 60/hr per IP. | Fetch after paint, no layout shift, reserve the slot with the label only, hide the number silently on any failure. Never block render. |
 | Store links promised but not live at launch. | `#` placeholders render as disabled cards with an honest label, not as working buttons that 404. |
 | `.dev` HSTS means a cert failure = a fully unreachable site, not a plaintext fallback. | Phase 1 exists precisely to hit this before content work. Verify HTTPS end-to-end before phase 2. |
+| Cloudflare sits in front of Pages (§5). A wrong SSL mode is an apex redirect loop; edge caching can mask a deploy. | SSL/TLS = Full (strict), confirmed 2026-07-25. When a deploy looks missing, check `cf-cache-status` and purge before touching the workflow. |
+| Small accent text on light. `--color-text-link` was `--green-600` (3.41:1 on white) — a straight AA fail that the tokens shipped with. | Fixed 2026-07-25: light link is now `--green-700`. It clears AA on `--color-surface-base` (4.94) but **not** on `--color-surface-grouped` (4.42) — links on the grouped page fill need `--green-800` or a card. See `design/colors.md` contrast table. |
 | Token drift between `design/*.md` and `tokens.css`. | Accepted per ADR 0015. The copy-at-deploy approach at least removes a *third* copy under `web/`. |
 | Security copy overclaims. | §3 fixes the exact four allowed statements. Anything beyond needs a source in `docs/knowledge/what-is-croc.md`. |
 
