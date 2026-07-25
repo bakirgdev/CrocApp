@@ -83,7 +83,7 @@ Pair each with the matching `--blur-*` and `--glass-saturate` (see `materials-mo
 | `--color-text-secondary` | `--label-2` | `--label-2` |
 | `--color-text-tertiary` | `--label-3` | `--label-3` |
 | `--color-text-quaternary` | `--label-4` | `--label-4` |
-| `--color-text-link` | `--green-600` | `--green-400` |
+| `--color-text-link` | `--green-700` | `--green-400` |
 | `--color-status-success` | `--sys-green` | `--sys-green` |
 | `--color-status-warning` | `--sys-orange` | `--sys-orange` |
 | `--color-status-error` | `--sys-red` | `--sys-red` |
@@ -124,6 +124,8 @@ Computed 2026-07-25 from the hex values above.
 | `#1E9E6A` on `#F2F2F7` | 3.06 | ✅ large text / UI ❌ body text |
 | `#FFFFFF` on `#1E9E6A` | 3.41 | ❌ AA for a 17px semibold button label |
 | `#178055` on `#FFFFFF` | 4.94 | ✅ AA body text |
+| `#178055` on `#F2F2F7` | 4.42 | ❌ AA body text — see below |
+| `#116243` on `#F2F2F7` | 6.60 | ✅ AA body text |
 | `#2DC585` on `#000000` | 9.44 | ✅ AAA |
 | `#2DC585` on `#1C1C1E` | 7.65 | ✅ AAA |
 | `#05271A` on `#2DC585` | 7.19 | ✅ AAA |
@@ -140,4 +142,5 @@ Consequences to respect:
 
 - Light-theme prominent buttons carry white on `--color-accent` at 3.41:1. Keep the label ≥ 17px semibold (large-text threshold at bold weight) and never shrink it; for a small prominent button use `--green-700` as the fill.
 - Status **titles** inside a `StatusBanner` are drawn in the status color on its own tint — legible for orange/green only because tint backgrounds are near-white/near-black. Body copy in a banner uses `--color-text-secondary`, not the status color. Do not "improve" it by tinting the body text.
+- `--color-text-link` is `--green-700`, not the accent: `--green-600` is 3.41:1 on white and fails body text. Even `--green-700` only clears AA on `--color-surface-base` (4.94); on the grouped background it is 4.42 and fails. **Small accent text and links on `--color-surface-grouped` need `--green-800`** — or put the link on a card. This bites the landing page, whose default page fill is grouped.
 - Dark theme has margin everywhere; light theme is the constrained one. Check light first.

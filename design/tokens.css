@@ -72,7 +72,7 @@
   --color-text-tertiary:   var(--label-3);
   --color-text-quaternary: var(--label-4);
   --color-text-on-accent:  #FFFFFF;
-  --color-text-link:       var(--green-600);
+  --color-text-link:       var(--green-700);
 
   --color-status-success:      var(--sys-green);
   --color-status-warning:      var(--sys-orange);
