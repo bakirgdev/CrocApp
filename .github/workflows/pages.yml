@@ -66,3 +66,17 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v5
+
+      # Cancelling a workflow run does NOT cancel the Pages deployment it
+      # already created. The deployment stays "in progress" server-side and
+      # blocks every later deploy with "Please cancel <sha> first" — which is
+      # exactly what happened on 2026-07-25, and it could not be cleared
+      # through the REST API afterwards. This releases the lock on the way out.
+      - name: Release the Pages deployment if this run is cancelled
+        if: cancelled()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api --method POST "repos/$REPO/pages/deployments/$SHA/cancel" || true
