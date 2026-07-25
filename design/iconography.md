@@ -33,6 +33,13 @@
 | Drop zone / upload | `upload` | `square.and.arrow.up` |
 | Speed / relay | `zap` | `bolt.fill` |
 | Settings | `settings` | `gearshape` |
+| Star / GitHub count (web only) | `star` | — |
+| Theme: to dark (web only) | `moon` | — |
+| Theme: to light (web only) | `sun` | — |
+
+**Lucide 1.x has no brand icons** — `github.svg` was removed and 404s on the CDN. The landing page's GitHub link therefore uses `star` plus the word "GitHub" rather than the Octocat mark, which also sidesteps the trademark question. Do not reintroduce a brand glyph from an older Lucide version.
+
+Two names in this table are Lucide 1.x *aliases*: `arrow-up-circle` and `x-circle` now resolve to `circle-arrow-up` and `circle-x`. Geometry is identical and both names still fetch, so the rows stand — but use the canonical names if these ever stop redirecting.
 
 Check each name in the SF Symbols app before first use, and prefer `.fill` variants inside colored tiles / circles, outline variants standalone. If a screen needs a glyph that is not here, add the row before adding the code.
 

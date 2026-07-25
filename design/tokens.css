@@ -39,6 +39,12 @@
   --label-2:         rgba(60,60,67,0.60);
   --label-3:         rgba(60,60,67,0.30);
   --label-4:         rgba(60,60,67,0.18);
+  /* Apple's secondaryLabel is 3.44:1 on white — below AA for anything under
+     large text, and this page is mostly under large text. --label-2 keeps the
+     true system value so app parity is not lost; the web alias below is what
+     --color-text-secondary actually resolves to. 0.75 measures 5.16 on base,
+     4.85 on grouped, 4.77 on a tertiary fill. Dark needs no correction. */
+  --label-2-web:     rgba(60,60,67,0.75);
   --separator:       rgba(60,60,67,0.29);
   --separator-opaque:#C6C6C8;
   --fill-1:          rgba(120,120,128,0.20);
@@ -66,9 +72,15 @@
   --color-accent-pressed: var(--green-700);
   --color-accent-tint:    var(--glass-tint-accent);
   --color-on-accent:      #FFFFFF;
+  /* Accent as *text* is a different problem from accent as a fill. The brand
+     green is 3.41:1 on white and 2.99:1 on its own tint — fine for a shape,
+     a fail for a word. Icons and fills keep --color-accent; anything with a
+     letter in it uses one of these two. See colors.md. */
+  --color-accent-text:         var(--green-700);
+  --color-accent-text-on-tint: var(--green-800);
 
   --color-text-primary:    var(--label-1);
-  --color-text-secondary:  var(--label-2);
+  --color-text-secondary:  var(--label-2-web);
   --color-text-tertiary:   var(--label-3);
   --color-text-quaternary: var(--label-4);
   --color-text-on-accent:  #FFFFFF;
@@ -148,6 +160,7 @@
   --tracking-body:       -0.41px;
   --tracking-caption:     0px;
   --tracking-code:        0.5px;
+  --tracking-eyebrow:      0.6px;
   --tracking-web-hero:    -1.5px;
   --tracking-web-section: -0.6px;
   --tracking-web-lead:    -0.2px;
@@ -201,6 +214,7 @@
   --icon-size-lg: 28px;
 
   --border-hairline: 1px;
+  --border-hairline-half: 0.5px;   /* grouped-row inset separator */
   --border-focus: 2px;
 
   /* --- Component metrics, tokenized for web ---
@@ -217,6 +231,9 @@
   --btn-icon-lg:  20px;
   --btn-icon-md:  18px;
   --btn-icon-sm:  15px;
+
+  --row-min-file:    48px;   /* FileRow min height */
+  --progress-height:  6px;   /* ProgressBar track + fill */
 
   --pill-pad-block:        5px;
   --pill-pad-inline-start: 9px;
@@ -265,6 +282,7 @@
   --paper:           #000000;
   --label-1:         rgba(255,255,255,1);
   --label-2:         rgba(235,235,245,0.60);
+  --label-2-web:     rgba(235,235,245,0.60);   /* dark needs no AA correction: 6.36 on base */
   --label-3:         rgba(235,235,245,0.30);
   --label-4:         rgba(235,235,245,0.16);
   --separator:       rgba(84,84,88,0.65);
@@ -289,6 +307,8 @@
 
   --color-accent:         var(--green-400);
   --color-accent-pressed: var(--green-500);
+  --color-accent-text:         var(--green-400);   /* 9.44 on base, 7.72 on tint */
+  --color-accent-text-on-tint: var(--green-400);
   --color-on-accent:      #05271A;
   --color-text-link:      var(--green-400);
   --color-text-on-accent: #05271A;
@@ -321,6 +341,7 @@
     --paper:           #000000;
     --label-1:         rgba(255,255,255,1);
     --label-2:         rgba(235,235,245,0.60);
+    --label-2-web:     rgba(235,235,245,0.60);   /* dark needs no AA correction: 6.36 on base */
     --label-3:         rgba(235,235,245,0.30);
     --label-4:         rgba(235,235,245,0.16);
     --separator:       rgba(84,84,88,0.65);
@@ -345,6 +366,8 @@
 
     --color-accent:         var(--green-400);
     --color-accent-pressed: var(--green-500);
+    --color-accent-text:         var(--green-400);   /* 9.44 on base, 7.72 on tint */
+    --color-accent-text-on-tint: var(--green-400);
     --color-on-accent:      #05271A;
     --color-text-link:      var(--green-400);
     --color-text-on-accent: #05271A;

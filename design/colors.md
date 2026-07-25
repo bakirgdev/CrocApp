@@ -77,10 +77,12 @@ Pair each with the matching `--blur-*` and `--glass-saturate` (see `materials-mo
 |---|---|---|
 | `--color-accent` | `--green-600` | `--green-400` |
 | `--color-accent-pressed` | `--green-700` | `--green-500` |
+| `--color-accent-text` | `--green-700` | `--green-400` |
+| `--color-accent-text-on-tint` | `--green-800` | `--green-400` |
 | `--color-accent-tint` | `--glass-tint-accent` | `--glass-tint-accent` |
 | `--color-on-accent` | `#FFFFFF` | `#05271A` |
 | `--color-text-primary` | `--label-1` | `--label-1` |
-| `--color-text-secondary` | `--label-2` | `--label-2` |
+| `--color-text-secondary` | `--label-2-web` | `--label-2-web` |
 | `--color-text-tertiary` | `--label-3` | `--label-3` |
 | `--color-text-quaternary` | `--label-4` | `--label-4` |
 | `--color-text-link` | `--green-700` | `--green-400` |
@@ -123,7 +125,14 @@ Computed 2026-07-25 from the hex values above.
 | `#1E9E6A` on `#FFFFFF` | 3.41 | ✅ large text / UI ❌ body text |
 | `#1E9E6A` on `#F2F2F7` | 3.06 | ✅ large text / UI ❌ body text |
 | `#FFFFFF` on `#1E9E6A` | 3.41 | ❌ AA for a 17px semibold button label |
+| `--label-2` 0.60 on `#FFFFFF` | 3.44 | ❌ AA body text — Apple's own secondaryLabel |
+| `--label-2-web` 0.75 on `#FFFFFF` | 5.16 | ✅ AA body text |
+| `--label-2-web` 0.75 on `#F2F2F7` | 4.85 | ✅ AA body text |
+| `--label-3` 0.30 on `#FFFFFF` | 1.73 | ❌ anything — decorative fills only |
 | `#178055` on `#FFFFFF` | 4.94 | ✅ AA body text |
+| `#1E9E6A` on accent tint `(228,243,237)` | 2.99 | ❌ text — the accent cannot label its own tint |
+| `#178055` on accent tint | 4.32 | ❌ AA body text, just short |
+| `#116243` on accent tint | 6.45 | ✅ AA body text |
 | `#178055` on `#F2F2F7` | 4.42 | ❌ AA body text — see below |
 | `#116243` on `#F2F2F7` | 6.60 | ✅ AA body text |
 | `#2DC585` on `#000000` | 9.44 | ✅ AAA |
@@ -140,8 +149,10 @@ Computed 2026-07-25 from the hex values above.
 
 Consequences to respect:
 
+- **Accent as text is not the same token as accent as a fill.** `--color-accent` labelling anything is 3.41:1 on white and 2.99:1 on its own tint — a fail at every text size. Use `--color-accent-text` (`--green-700`) for accent words on a base or card surface, and `--color-accent-text-on-tint` (`--green-800`) for accent words on `--color-accent-tint`, where even `--green-700` lands at 4.32. Icons, fills, borders and progress bars keep `--color-accent`: they only owe 3:1, and they clear it. Dark theme collapses all three to `--green-400`.
 - Light-theme prominent buttons carry white on `--color-accent` at 3.41:1. Keep the label ≥ 17px semibold (large-text threshold at bold weight) and never shrink it; for a small prominent button use `--green-700` as the fill.
 - Status **titles** inside a `StatusBanner` are drawn in the status color on its own tint. **In light this is not AA and the earlier claim that it was is wrong**: `#34C759` on its own 14% tint over white measures **1.98:1**, orange is no better. Dark is fine (`#30D158` on its tint over black is 8.01:1). Treat the light-theme status-on-tint title as a large-text-only pattern, or draw the label in `--color-text-primary` and let the tint carry the status — that is what the landing page's trust pill does. Body copy in a banner uses `--color-text-secondary`, not the status color. Do not "improve" it by tinting the body text.
-- `--color-text-secondary` on `--color-fill-tertiary` is **3.24:1** in light (5.93:1 dark). Fine for large text, a fail for anything at footnote size. Small text on a tertiary fill needs `--color-text-primary`.
+- **`--color-text-secondary` no longer resolves to `--label-2` in light.** Apple's secondaryLabel is `rgba(60,60,67,0.60)`, which measures **3.44:1 on white** — below AA for anything smaller than large text, which is most of a landing page. `--label-2` keeps the true system value so the app stays visually native; `--label-2-web` at `0.75` is what the alias resolves to, and it clears AA on every light surface the web uses (5.16 base, 4.85 grouped, 4.77 tertiary fill). Dark was already fine at 6.36 and is unchanged. If the app ever consumes these tokens directly, it wants `--label-2`, not the web value.
+- `--color-text-tertiary` (`--label-3`) is **1.73:1** on white. It is a decorative fill, not a text color, and not a UI-boundary color either — anything a sighted user has to *see* needs secondary or better. The disclosure chevron uses secondary for this reason.
 - `--color-text-link` is `--green-700`, not the accent: `--green-600` is 3.41:1 on white and fails body text. Even `--green-700` only clears AA on `--color-surface-base` (4.94); on the grouped background it is 4.42 and fails. **Small accent text and links on `--color-surface-grouped` need `--green-800`** — or put the link on a card. This bites the landing page, whose default page fill is grouped.
 - Dark theme has margin everywhere; light theme is the constrained one. Check light first.

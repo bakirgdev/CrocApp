@@ -82,6 +82,8 @@ Same numbers `components.md` already specifies, promoted to tokens because the l
 | `--btn-pad-x-lg` / `-md` / `-sm` | 22px / 16px / 12px | Button size table |
 | `--btn-gap-lg` / `-md` / `-sm` | 8px / 6px / 5px | Button size table |
 | `--btn-icon-lg` / `-md` / `-sm` | 20px / 18px / 15px | Button size table, `iconography.md` |
+| `--row-min-file` | 48px | FileRow min height |
+| `--progress-height` | 6px | ProgressBar track and fill |
 | `--pill-pad-block` | 5px | TrustBadge pill |
 | `--pill-pad-inline-start` / `-end` | 9px / 11px | TrustBadge pill — asymmetric, the glyph sits tighter to the leading edge |
 | `--pill-icon-size` | 14px | TrustBadge pill |
@@ -95,6 +97,7 @@ Same numbers `components.md` already specifies, promoted to tokens because the l
 | Token | Value |
 |---|---|
 | `--border-hairline` | 1px |
+| `--border-hairline-half` | 0.5px |
 | `--border-focus` | 2px |
 
 Grouped lists separate rows with `inset 0 -0.5px 0 var(--color-separator)` (a half-pixel inset shadow, not a border) so the row corners stay clean; the last row omits it.

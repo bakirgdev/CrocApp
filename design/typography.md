@@ -80,6 +80,9 @@ SF tightens optically at large sizes; these mirror Apple's metrics.
 | `--tracking-body` | `-0.41px` |
 | `--tracking-caption` | `0px` |
 | `--tracking-code` | `0.5px` |
+| `--tracking-eyebrow` | `0.6px` |
+
+`--tracking-eyebrow` is the uppercase footnote label above a code phrase ("READY TO SEND", `components.md` → CodePhraseDisplay). Uppercase needs the extra letter-spacing that lowercase does not.
 
 Positive tracking on the code phrase is deliberate: it separates the `NNNN-word-word-word` groups so a phrase can be read aloud or transcribed without ambiguity.
 
