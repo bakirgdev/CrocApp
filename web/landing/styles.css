@@ -50,6 +50,30 @@ svg {
   max-width: 100%;
 }
 
+/* ---- Icons ----
+   Every SVG on this page is a Lucide glyph drawn from the inline sprite.
+   iconography.md's render rules live here rather than on each element,
+   because a <use> instance cannot inherit them from the symbol. The size
+   default matters: an <svg> with a viewBox and no dimensions falls back
+   to 300x150, so a missed class would be a full-width glyph, not a small
+   one. */
+svg {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Sprite itself renders nothing. */
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
 button {
   font: inherit;
   color: inherit;
@@ -88,7 +112,11 @@ body {
   max-width: var(--content-max-width-wide);
 }
 
-.container--prose {
+/* Keeps the section container's own box, then caps the *content* at the prose
+   measure. Setting max-width on the container itself would re-centre it and
+   give the page a third left edge — prose sections would visibly indent
+   against every other section on a wide screen. */
+.container--prose > * {
   max-width: var(--content-max-width-prose);
 }
 
@@ -802,7 +830,205 @@ body {
 }
 
 /* ============================================================
-   12. Reduced motion
+   12. Content sections
+
+   iconography.md: glyphs under 20px carry a heavier stroke so they hold
+   weight against the text beside them.
+   ============================================================ */
+
+.pill__icon,
+.btn--sm .btn__icon,
+.featlist svg {
+  stroke-width: 2.2;
+}
+
+.mockup__arrow,
+.disclosure__chevron {
+  stroke-width: 2.4;
+}
+
+/* --- Steps --- */
+
+.steps {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min-card), 100%), 1fr));
+}
+
+.step {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+/* The number is decoration for a sighted reader; the ordered list already
+   carries the sequence for everyone else, which is why it is aria-hidden. */
+.step__num {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  font-size: var(--type-footnote-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-accent-text-on-tint);
+  background: var(--color-accent-tint);
+  border-radius: var(--radius-capsule);
+  font-variant-numeric: tabular-nums;
+}
+
+.step__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.step__body p {
+  color: var(--color-text-secondary);
+}
+
+.how__more {
+  margin-block-start: var(--stack-web);
+  max-width: var(--content-max-width-prose);
+}
+
+/* --- Feature groups --- */
+
+.featgroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.featlist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+.featlist li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.featlist svg {
+  flex: none;
+  width: var(--btn-icon-sm);
+  height: var(--btn-icon-sm);
+  /* Optical alignment: a 15px glyph centred on a 21px line sits high
+     otherwise. Half the difference between line box and glyph. */
+  margin-block-start: var(--space-1);
+  color: var(--color-accent);
+}
+
+/* --- Download --- */
+
+.dlcard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dlcard .card__title {
+  margin-block-end: 0;
+}
+
+.dlcard code {
+  font-size: var(--type-footnote-size);
+  overflow-wrap: anywhere;
+}
+
+/* Deliberately not dimmed. A pending channel still has to be readable —
+   opacity here would fail contrast to say something a label already says. */
+.dlcard__state {
+  align-self: flex-start;
+  margin-block-start: auto;
+}
+
+.download__req {
+  margin-block-start: var(--stack-web);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* --- Prose blocks --- */
+
+.prose > * + * {
+  margin-block-start: var(--space-5);
+}
+
+.prose p {
+  color: var(--color-text-secondary);
+}
+
+/* --- croc attribution --- */
+
+.croc .card__body,
+.support .card__body {
+  color: var(--color-text-primary);
+}
+
+/* --- Inspirations --- */
+
+.inspo {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min-card), 100%), 1fr));
+}
+
+/* --- Contribute / Support --- */
+
+.contribute__actions,
+.support__actions {
+  margin-block-start: var(--stack-web);
+}
+
+.support__actions {
+  margin-block-start: var(--space-6);
+}
+
+/* ============================================================
+   13. Footer
+   ============================================================ */
+
+.footer {
+  padding-block: var(--section-pad-web);
+  border-block-start: var(--border-hairline) solid var(--color-separator);
+}
+
+.footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: center;
+}
+
+.footer__mascot {
+  flex: none;
+  width: var(--space-11);
+  height: auto;
+}
+
+.footer__text {
+  flex: 1 1 var(--content-max-width-prose);
+  color: var(--color-text-secondary);
+}
+
+.footer__text p + p {
+  margin-block-start: var(--space-3);
+}
+
+.footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin-inline-start: auto;
+}
+
+/* ============================================================
+   14. Reduced motion
 
    tokens.css already zeroes the duration and press-scale tokens under
    this query, so anything built from them stops on its own. This is the

@@ -68,6 +68,44 @@
       });
   }
 
+  /* --- Copy buttons ------------------------------------------------------
+   * Markup ships them hidden; they only appear once the clipboard API is
+   * known to exist, so a button never promises something it cannot do. The
+   * command itself is visible as text either way.
+   */
+  const copyButtons = document.querySelectorAll("[data-copy]");
+
+  if (copyButtons.length && navigator.clipboard) {
+    for (const button of copyButtons) {
+      const source = document.querySelector(button.dataset.copy);
+      if (!source) continue;
+
+      button.hidden = false;
+
+      button.addEventListener("click", () => {
+        navigator.clipboard.writeText(source.textContent.trim()).then(
+          () => {
+            const label = button.querySelector("[data-copy-label]");
+            const glyph = button.querySelector("use");
+            if (!label || !glyph) return;
+
+            label.textContent = "Copied";
+            glyph.setAttribute("href", "#i-check");
+
+            setTimeout(() => {
+              label.textContent = "Copy";
+              glyph.setAttribute("href", "#i-copy");
+            }, 2000);
+          },
+          () => {
+            /* Denied by permissions policy or a hostile clipboard. The command
+               is still on screen to select by hand. */
+          }
+        );
+      });
+    }
+  }
+
   /* --- Nav active state --------------------------------------------------
    * Marks the anchor whose section is currently on screen. Guarded because
    * a browser without IntersectionObserver should lose the highlight, not
