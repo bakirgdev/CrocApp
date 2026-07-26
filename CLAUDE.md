@@ -1,23 +1,24 @@
 # CrocApp
 
-Free, open-source native SwiftUI GUI for the croc file-transfer CLI. Targets iOS 26 + macOS 26. See `@docs/knowledge/project-overview.md` for goals.
+Free, open-source native SwiftUI GUI for the "croc" file-transfer CLI. Currently targets iOS 26 + macOS 26. See `@docs/knowledge/project-overview.md` for goals.
 
 ## Layout
 
 - `.claude/` — project Claude config: `rules/`, `skills/`, `settings.json` & `settings.local.json`, etc.
-- `.mcp.json` — project MCP servers: `context7` (docs), `xcode` (`xcrun mcpbridge`), `gopls` (Go semantics; launched via `$(go env GOPATH)/bin/gopls` since `~/go/bin` is usually off PATH)
-- `.github/` — GitHub config: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` (Pages deploy, ADR 0019), `FUNDING.yml`. Issue/PR templates not yet added
-- `.swift-format` — swift-format config. `.xcode-version` — Xcode baseline, read by CI. `crocmobile/.golangci.yml` — Go lint config. See `@docs/knowledge/tooling.md`
-- `app/` — Xcode project (SwiftUI, iOS + macOS): `app/CrocApp.xcodeproj`, app sources `app/CrocApp/`, share extension `app/CrocShare/`, plists + entitlements + export options `app/Config/`
-- `assets/` — brand art: `CrocAppIcon.icon` source, banner, mascot, etc.
-- `CrocKit/` — Swift package wrapping the Go engine: `CrocEngine` actor + `AsyncStream<TransferEvent>`, plus `crockit-verify` executable harness. Depends on `Croc.xcframework` (gitignored build artifact)
-- `crocmobile/` — Go wrapper around croc v10.5.0, gomobile-bound into `Croc.xcframework`. `session.go` is the engine; `cmd/croctest` is its CLI harness
-- `design/` — design system: color/type/spacing/material/motion tokens, component specs, SF Symbols mapping, SwiftUI translation, `tokens.css` for web. Canonical for the app restyle **and** the landing/docs sites (ADR 0015)
-- `docs/knowledge/` — evergreen project knowledge (see its README for which file answers what)
-- `docs/decisions/` — ADRs, `NNNN-slug.md`
-- `docs/known-issues.md` — triaged defects, accepted papercuts, release blockers. Check it before reporting a bug as new
-- `scripts/` — build + machine-verification harnesses (see Commands); `lib.sh` holds their shared helpers (`timeout` shim, `fail`/`pass`, `require_croc`, `kill_jobs`, `local_ip`)
-- `web/landing/` — landing page, live at crocapp.dev; `tokens.css` is gitignored and copied in from `design/` at deploy time, by hand for local preview (ADR 0015, 0019). `web/docs/` — docs site, still an empty dir
+- `.mcp.json` — project MCP servers: `context7` (docs), `xcode`, `gopls` (Go semantics).
+- `.github/` — `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` (Pages deploy, ADR 0019), `FUNDING.yml` (donations config for GitHub repo page, ignore this).
+- `.swift-format` — swift-format config. `.xcode-version` — Xcode baseline. `crocmobile/.golangci.yml` — Go lint config. See `@docs/knowledge/tooling.md`.
+- `app/` — Xcode project (SwiftUI, iOS + macOS): `app/CrocApp.xcodeproj`, app sources `app/CrocApp/`, share extension `app/CrocShare/`, plists + entitlements + export options `app/Config/`.
+- `assets/` — brand art: `CrocAppIcon.icon` source, banner, mascot, and other brand files.
+- `CrocKit/` — Swift package wrapping the Go engine: `CrocEngine` actor + `AsyncStream<TransferEvent>`, plus `crockit-verify` executable harness. Depends on `Croc.xcframework` (gitignored build artifact).
+- `crocmobile/` — Go wrapper around croc v10.5.0, gomobile-bound into `Croc.xcframework`. `session.go` is the engine; `cmd/croctest` is its CLI harness.
+- `design/` — design system: color/type/spacing/material/motion tokens, component specs, SF Symbols mapping, SwiftUI translation, `tokens.css` for web. Canonical for the app itself and the landing/docs sites (ADR 0015)
+- `docs/knowledge/` — evergreen project knowledge (see its README for which file answers what).
+- `docs/decisions/` — ADRs, `NNNN-slug.md`.
+- `docs/known-issues.md` — triaged defects, accepted papercuts, release blockers. Check it before reporting a bug as new.
+- `scripts/` — build + machine-verification harnesses (see Commands); `lib.sh` holds their shared helpers.
+- `web/landing/` — landing page, live at crocapp.dev.
+- `web/docs/` — docs site (not built yet).
 
 ## Commands
 
@@ -87,13 +88,12 @@ Keep docs small, dense, direct. Each `docs/` subdirectory has a README.md explai
 
 ### Session end report
 
-Close every session with this, in order, no praise and no prompt recap:
+Close every session with this, in order, no praise and no prompt recap, always in simple words, guide template is below (can omit or add other):
 
 1. **Done** — what changed, one line per file or area
 2. **Verified** — commands actually run and their result. Anything not run is listed as "not verified"
 3. **Docs** — ADRs and knowledge files added / changed / deleted, or an explicit "nothing doc-worthy"
 4. **Open** — known gaps, deferred work, follow-ups. Anything durable goes in `docs/known-issues.md`, not only in the report
-5. **Simple** - simplified version of changes and learning opportunities
 
 Mark speculation as speculation.
 
