@@ -8,6 +8,8 @@ MISC:
 - ask AI to check if xcode and go mcp servers can be wrapped in caveman-shrink for compression
 - ask AI to check if .swift-format has industry standard rules appropriate/fitting for OSS project and contributions
 - ask AI to use claude.md file skill/plugin, then verify each claim in @CLAUDE.md, fix, imrpove, add missed things, delete unnecessary ones, fix if needed and greatly simplify and/or shorten the file - all while following best practices
+- add playwright mcp in .mcp.json and wrap with caveman-shrink
+- add domain of the project to private main gmail acc
 
 CC NEXT PROMPT
 - > make some nice prompt for CC to review the whole app, fully test it, check if codewise and otherwise is ready, performant, optimized, code optimized for human contributors and AI, well commented but healthy doses (short is better), users ready, all features work. review, then make planned phases, then plan each phase and do it via multiple prompts using subagents for phase's plan. commit where fit and push on each phase done. deep but simple recap of what's done/verified/fixes. these are last checks of the app itself before app store publish. one known fix needed: prompt user for camera and local network permission after onboarding screen is closed on first launch and check state before using each feature
