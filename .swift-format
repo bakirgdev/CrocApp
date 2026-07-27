@@ -3,21 +3,34 @@
   "indentation": {
     "spaces": 4
   },
+  "tabWidth": 8,
   "lineLength": 100,
   "maximumBlankLines": 1,
+  "indentBlankLines": false,
   "respectsExistingLineBreaks": true,
   "spacesBeforeEndOfLineComments": 2,
+  "spacesAroundRangeFormationOperators": false,
   "indentConditionalCompilationBlocks": false,
   "indentSwitchCaseLabels": false,
   "lineBreakBeforeControlFlowKeywords": false,
   "lineBreakBeforeEachArgument": false,
+  "lineBreakBeforeEachGenericRequirement": false,
+  "lineBreakBetweenDeclarationAttributes": false,
+  "lineBreakAroundMultilineExpressionChainComponents": false,
   "multiElementCollectionTrailingCommas": true,
   "prioritizeKeepingFunctionOutputTogether": true,
   "reflowMultilineStringLiterals": "never",
   "fileScopedDeclarationPrivacy": {
     "accessLevel": "private"
   },
+  "orderedImports": {
+    "includeConditionalImports": false
+  },
+  "noAssignmentInExpressions": {
+    "allowedFunctions": ["XCTAssertNoThrow"]
+  },
   "rules": {
+    "AlwaysUseLiteralForEmptyCollectionInit": true,
     "AlwaysUseLowerCamelCase": true,
     "AmbiguousTrailingClosureOverload": true,
     "AvoidRetroactiveConformances": true,
@@ -27,10 +40,12 @@
     "FullyIndirectEnum": true,
     "GroupNumericLiterals": true,
     "IdentifiersMustBeASCII": true,
+    "NeverUseImplicitlyUnwrappedOptionals": true,
     "NoAccessLevelOnExtensionDeclaration": true,
     "NoAssignmentInExpressions": true,
     "NoBlockComments": true,
     "NoCasesWithOnlyFallthrough": true,
+    "NoEmptyLinesOpeningClosingBraces": true,
     "NoEmptyTrailingClosureParentheses": true,
     "NoLabelsInCasePatterns": true,
     "NoParensAroundConditions": true,
@@ -51,14 +66,11 @@
     "UseSynthesizedInitializer": false,
     "UseTripleSlashForDocumentationComments": true,
     "UseWhereClausesInForLoops": false,
-    "ValidateDocumentationComments": false,
+    "ValidateDocumentationComments": true,
     "AllPublicDeclarationsHaveDocumentation": false,
-    "AlwaysUseLiteralForEmptyCollectionInit": false,
     "BeginDocumentationCommentWithOneLineSummary": false,
     "NeverForceUnwrap": false,
     "NeverUseForceTry": false,
-    "NeverUseImplicitlyUnwrappedOptionals": false,
-    "NoEmptyLinesOpeningClosingBraces": false,
     "NoLeadingUnderscores": false,
     "OmitExplicitReturns": false
   }

@@ -4,14 +4,12 @@ MISC:
 - add note somewhere to track what things need review after something:
   - gh workflows mac version update 26 to 27 and onwards only when new apple software versions across platforms release (in this case bump mac image to mac27)
 - fix proj's claude md to prefer simpler responses with simpler words but retaining details
-- ask AI to check if xcode and go mcp servers can be wrapped in caveman-shrink for compression
-- ask AI to check if .swift-format has industry standard rules appropriate/fitting for OSS project and contributions
 - ask AI to use claude.md file skill/plugin, then verify each claim in @CLAUDE.md, fix, imrpove, add missed things, delete unnecessary ones, fix if needed and greatly simplify and/or shorten the file - all while following best practices
-- add playwright mcp in .mcp.json and wrap with caveman-shrink
 - add domain of the project to private main gmail acc
 - "list known issues from the markdown file, understand each, research how to fix, and suggest a plan what and how to fix, i approve the plan, you write a optimized prompt to fix in one go in next clean session"
 
 TODO LANDING
+- add docs page URL somewhere in app, in nav, or separate section or whatever is best
 - App Store URL for the iPhone & iPad card: the badge at `web/landing/index.html` (`assets/img/app-store.svg`) is an unlinked `<img>` until the listing exists. Wrap it in an `<a>` when it does.
 - Mac App Store URL for the Mac card: same, `assets/img/mac-app-store.svg`.
 - Verify the Homebrew cask line actually works before the brew card claims it: `brew install --cask crocapp` is printed with a copy button and nothing has published that cask yet. Blocked on notarization (see docs/known-issues.md).
@@ -29,7 +27,7 @@ CC NEXT PROMPT
 - > make some nice prompt for CC to review the whole app, fully test it, check if codewise and otherwise is ready, performant, optimized, code optimized for human contributors and AI, well commented but healthy doses (short is better), users ready, all features work. review, then make planned phases, then plan each phase and do it via multiple prompts using subagents for phase's plan. commit where fit and push on each phase done. deep but simple recap of what's done/verified/fixes. these are last checks of the app itself before app store publish. one known fix needed: prompt user for camera and local network permission after onboarding screen is closed on first launch and check state before using each feature
 
 TO DO TASK LIST
-- copy design from claude design in app
+- copy design from claude design in app for v1.1.0
 - github issue & pr templates
 - brew cask
 - specialized skills/commands/agents while developing for QOL/DevEx (release, format, actions,... ask Claude Code for suggestions)
