@@ -12,6 +12,7 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 - **`AutoVerify` compiles into Release.** The launch-argument harness and its settings overrides ship in the store binary. Gate behind a build flag before submission.
 - **`ExportOptions-MAS.plist` is committed but never exercised.** First real MAS export is its first test.
 - **Encryption declaration must match.** `ITSAppUsesNonExemptEncryption=false` is in both Config plists; the BIS/ASC answer at submission has to agree.
+- **README screenshots do not exist.** The root `README.md` has three `<picture>` blocks pointing at `assets/screenshots/*.png`; the files are unshot, so the public repo page renders three broken images today. Manifest of what to capture is in `assets/screenshots/README.md`.
 - **App accent is `#2BA35A`, the design system says `#1E9E6A`.** `app/CrocApp/Assets.xcassets/AccentColor.colorset` predates `design/`, carries a single universal colour, and has no dark variant (`design/brand.md` specifies `#1E9E6A` light / `#2DC585` dark). The design system is canonical; the app has not been restyled yet.
 
 ## Transfer controller

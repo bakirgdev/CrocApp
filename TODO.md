@@ -3,9 +3,8 @@ MISC:
 - make docs.yml GH workflow nicely like landing.yml when docs are made!
 - add note somewhere to track what things need review after something:
   - gh workflows mac version update 26 to 27 and onwards only when new apple software versions across platforms release (in this case bump mac image to mac27)
-- fix proj's claude md to prefer simpler responses with simpler words but retaining details
 - ask AI to use claude.md file skill/plugin, then verify each claim in @CLAUDE.md, fix, imrpove, add missed things, delete unnecessary ones, fix if needed and greatly simplify and/or shorten the file - all while following best practices
-- add domain of the project to private main gmail acc
+- add domain of the project to private main gmail acc GSC
 - "list known issues from the markdown file, understand each, research how to fix, and suggest a plan what and how to fix, i approve the plan, you write a optimized prompt to fix in one go in next clean session"
 
 TODO LANDING
@@ -28,10 +27,8 @@ CC NEXT PROMPT
 
 TO DO TASK LIST
 - copy design from claude design in app for v1.1.0
-- github issue & pr templates
 - brew cask
 - specialized skills/commands/agents while developing for QOL/DevEx (release, format, actions,... ask Claude Code for suggestions)
-- README.md
 - protect main branch to have it contributed on only via PRs
 - protect main from force pushes of any type
 - before enabling CI as a required status check: swap the `paths` allowlist in ci.yml for a change-detection job that reports success. A filtered-out PR currently runs zero jobs, which leaves a required check pending forever (see docs/knowledge/tooling.md)

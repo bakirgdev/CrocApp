@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/bakirgdev/CrocApp/discussions
+    about: Usage questions, setup help, and open-ended ideas belong in Discussions.
+  - name: Security vulnerability
+    url: https://github.com/bakirgdev/CrocApp/security/advisories/new
+    about: Report privately. Do not open a public issue.
+  - name: Bug in the croc CLI or protocol
+    url: https://github.com/schollz/croc/issues
+    about: Transfer, relay, and encryption bugs that also reproduce with the croc CLI go upstream.

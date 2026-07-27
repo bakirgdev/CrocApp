@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest a capability or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before filing
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: This is a GUI feature, not a change to croc itself (CrocApp wraps croc, it does not fork it).
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that the app makes hard or impossible?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should the app do instead? Sketches and screenshots welcome.
+    validations:
+      required: true
+
+  - type: input
+    id: croc-equivalent
+    attributes:
+      label: croc CLI equivalent
+      description: If croc already does this, name the flag or command.
+      placeholder: "croc send --no-compress"
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Both
+        - macOS
+        - iOS / iPadOS
+    validations:
+      required: true

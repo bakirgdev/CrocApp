@@ -1,0 +1,85 @@
+name: Bug report
+description: Something in the app is broken or behaves wrong
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before filing
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I checked [docs/known-issues.md](https://github.com/bakirgdev/CrocApp/blob/main/docs/known-issues.md) and it is not listed there.
+          required: true
+        - label: The bug is in CrocApp, not in the [croc CLI](https://github.com/schollz/croc) itself.
+          required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Send
+        2. Pick a 2 GB file
+        3. …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS
+        - iOS
+        - iPadOS
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: App and OS version
+      description: App version or commit SHA, plus the OS build.
+      placeholder: "1.0 (a1b2c3d), macOS 26.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: peer
+    attributes:
+      label: Other side of the transfer
+      options:
+        - croc CLI
+        - CrocApp
+        - Other croc client
+        - Not applicable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: relay
+    attributes:
+      label: Relay
+      options:
+        - Default public relay
+        - Custom relay
+        - Local / LAN only
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Logs, screenshots, transfer code output
+      description: Paste console output or attach screenshots. Never paste a live transfer code you still intend to use.
