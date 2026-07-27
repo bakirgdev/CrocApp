@@ -7,7 +7,10 @@
    runs links through its prose. Cards carry the tonal step instead. */
 
 /* 1. Reset + a11y utilities.
-   The one block allowed literals: 0, 100%, and .u-visually-hidden's 1px clip. */
+   The allowed literals: 0, 100%, and the 1px clip box, which appears twice —
+   here as .u-visually-hidden, and again in the < 30rem nav rule that collapses
+   the GitHub label. Same four declarations, same exemption; a media query
+   cannot borrow a class, and a token for a clip box would be a fiction. */
 
 h1,
 h2,
@@ -43,7 +46,7 @@ svg {
   height: var(--icon-size-md);
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  stroke-width: var(--icon-stroke);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -113,22 +116,19 @@ body {
   padding-block-start: 0;
 }
 
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--stack-web);
-}
-
-.stack--tight {
-  gap: var(--space-5);
-}
-
-/* min() keeps the floor from overflowing a 375px viewport, where
-   --grid-min-card alone would exceed the available column. */
-.grid {
+/* One card track for the three grids that use it. min() keeps the floor from
+   overflowing a 375px viewport, where --grid-min-card alone would exceed the
+   available column. Only the gaps differ, so only the gaps are restated. */
+.grid,
+.steps,
+.inspo {
   display: grid;
-  gap: var(--space-5);
   grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min-card), 100%), 1fr));
+}
+
+.grid,
+.inspo {
+  gap: var(--space-5);
 }
 
 .section__head {
@@ -152,14 +152,14 @@ body {
 .footer__text a,
 .section__head a {
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: var(--space-1);
 }
 
 /* 3. Skip link — first in tab order, invisible until focused */
 
 .skip-link {
   position: fixed;
-  z-index: 3;
+  z-index: var(--z-skip-link);
   inset-block-start: var(--space-3);
   inset-inline-start: var(--space-3);
   padding: var(--space-3) var(--space-5);
@@ -184,7 +184,7 @@ body {
 
 .nav {
   position: sticky;
-  z-index: 2;
+  z-index: var(--z-nav);
   inset-block-start: 0;
   background: var(--color-surface-card);
   border-block-end: var(--border-hairline) solid var(--color-separator);
@@ -227,19 +227,30 @@ body {
   transition: color var(--dur-fast) var(--ease-standard);
 }
 
-.nav__link:hover,
-.nav__link[aria-current="true"] {
+.nav__link:hover {
   color: var(--color-text-primary);
   text-decoration: none;
 }
 
-/* Four links do not fit beside a wordmark, toggle and star count on a phone.
-   Hidden rather than collapsed: everything is still reachable by scrolling,
-   and a hamburger for four in-page anchors is more JS and more a11y surface
-   than the problem deserves. The breakpoint is a literal by necessity —
-   custom properties do not resolve inside a media condition. */
+/* WCAG 1.4.1: the current section cannot be a colour change alone, so it is
+   also the only underlined link in the bar. Underline rather than weight —
+   a weight change reflows the row every time the active section changes. */
+.nav__link[aria-current] {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-underline-offset: var(--space-2);
+}
+
+/* Breakpoints are defined in design/spacing-layout.md → Breakpoints. They are
+   literals here by necessity: a custom property does not resolve inside a
+   media condition, so the stylesheet is where the numbers have to live. */
+
+/* Four links do not fit beside a wordmark, repo link and toggle on a phone,
+   but dropping all four takes Download with them — the one anchor the page
+   exists to reach. The other three survive as scrolling. A hamburger for three
+   in-page anchors is more JS and more a11y surface than the problem deserves. */
 @media (width < 48rem) {
-  .nav__links {
+  .nav__link:not(.nav__link--primary) {
     display: none;
   }
 }
@@ -269,8 +280,10 @@ body {
   text-decoration: none;
 }
 
+/* revert, not 1: this exists only to undo tokens.css's a:active dim, and
+   naming a value would imply a design decision that is not being made here. */
 .btn:active {
-  opacity: 1;
+  opacity: revert;
   transform: scale(var(--press-scale));
 }
 
@@ -325,20 +338,6 @@ body {
   color: var(--color-accent-text-on-tint);
 }
 
-.btn--glass {
-  color: var(--color-accent-text);
-  background: var(--color-surface-glass);
-  border: var(--border-hairline) solid var(--color-glass-border);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(var(--blur-regular)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--blur-regular)) saturate(var(--glass-saturate));
-}
-
-.btn--glass:hover {
-  color: var(--color-accent-text);
-  background: var(--color-surface-glass-thick);
-}
-
 .btn--plain {
   color: var(--color-accent-text);
   background: transparent;
@@ -352,11 +351,6 @@ body {
 /* Focus swaps the variant shadow for the ring rather than stacking both. */
 .btn:focus-visible {
   box-shadow: var(--shadow-focus-ring);
-}
-
-.btn[aria-disabled="true"] {
-  pointer-events: none;
-  opacity: 0.4;
 }
 
 /* Square icon-only control: the hit target, not the glyph, is what has to
@@ -519,9 +513,18 @@ body {
   flex: none;
 }
 
+/* Space is reserved whether or not there is a number, so the bar cannot resize
+   after first paint on the one load that has to go to the network for it.
+   visibility, not [hidden]: the slot has to keep its width while empty, and
+   visibility: hidden also takes it out of the accessibility tree. */
 .nav__stars {
+  min-width: var(--stars-slot-min);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
+}
+
+.nav__stars.is-empty {
+  visibility: hidden;
 }
 
 /* The glyph shows the theme you would switch *to*, so light shows a moon.
@@ -550,15 +553,28 @@ body {
 }
 
 /* The star glyph and count still say "GitHub", and the row has to fit a
-   wordmark, a link and a toggle inside --nav-height-web. */
+   wordmark, two links and a toggle inside --nav-height-web. The label is
+   clipped rather than set to font-size: 0 — the accessible name has to
+   survive, and a 0px word is a hiding technique that only happens to work.
+   Literals per the exemption noted in section 1. */
 @media (width < 30rem) {
-  .nav__github {
-    padding-inline: var(--space-2);
-    font-size: 0;
+  /* Four items on one row at 320px: --space-5 between them overruns the
+     container by ~10px once Download survives the 48rem rule. */
+  .nav__inner {
+    gap: var(--space-3);
   }
 
-  .nav__stars {
-    font-size: var(--type-footnote-size);
+  .nav__github {
+    padding-inline: var(--space-3);
+  }
+
+  .nav__github-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
@@ -568,6 +584,14 @@ body {
   display: grid;
   gap: var(--stack-web);
   align-items: center;
+}
+
+/* A grid item's automatic minimum size is its min-content, not zero, so one
+   nowrap string inside the column widens the track past the container and the
+   whole page scrolls sideways. At 320px that was 11px of horizontal scroll on
+   every element in the hero — WCAG 2.2 SC 1.4.10. */
+.hero__inner > * {
+  min-width: 0;
 }
 
 /* Two columns only when the mockup can hold its 480 cap beside a readable
@@ -590,7 +614,9 @@ body {
   color: var(--color-text-secondary);
 }
 
-.hero__actions {
+/* Shared by the hero, Contribute and Support: named for the job, not for the
+   first section that needed it. */
+.actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
@@ -797,20 +823,77 @@ body {
 .pill__icon,
 .btn--sm .btn__icon,
 .featlist svg {
-  stroke-width: 2.2;
+  stroke-width: var(--icon-stroke-heavy);
 }
 
 .mockup__arrow,
 .disclosure__chevron {
-  stroke-width: 2.4;
+  stroke-width: var(--icon-stroke-heaviest);
+}
+
+/* --- Comparison table ---
+   The cards above argue in prose; this says the same thing in the one shape a
+   reader (or a crawler) can check at a glance. Yes/No are words, never marks
+   or colour alone — the tinted row is redundant with its own contents. */
+
+.compare {
+  margin-block-start: var(--stack-web);
+  /* Four nowrap columns will not fit a phone. Scrolling the table beats
+     wrapping a header into three lines or scrolling the whole page sideways. */
+  overflow-x: auto;
+  background: var(--color-surface-card);
+  border: var(--border-hairline) solid var(--color-separator);
+  border-radius: var(--radius-lg);
+}
+
+.compare table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.compare th,
+.compare td {
+  padding: var(--space-4) var(--space-6);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.compare thead th {
+  font-size: var(--type-footnote-size);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.compare tbody th {
+  font-size: var(--type-callout-size);
+  font-weight: var(--weight-semibold);
+}
+
+.compare tbody td {
+  font-size: var(--type-callout-size);
+  color: var(--color-text-secondary);
+}
+
+.compare tbody tr:not(:last-child) th,
+.compare tbody tr:not(:last-child) td,
+.compare thead th {
+  border-block-end: var(--border-hairline) solid var(--color-separator);
+}
+
+/* The row the section is arguing for. The tint marks it; the cells still say
+   Yes three times, so the mark adds nothing a reader needs — colors.md rule 2. */
+.compare tbody tr:last-child {
+  background: var(--color-accent-tint);
+}
+
+.compare tbody tr:last-child td {
+  color: var(--color-text-primary);
 }
 
 /* --- Steps --- */
 
 .steps {
-  display: grid;
   gap: var(--space-6);
-  grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min-card), 100%), 1fr));
 }
 
 .step {
@@ -826,8 +909,8 @@ body {
   flex: none;
   align-items: center;
   justify-content: center;
-  width: var(--space-8);
-  height: var(--space-8);
+  width: var(--step-marker-size);
+  height: var(--step-marker-size);
   font-size: var(--type-footnote-size);
   font-weight: var(--weight-semibold);
   color: var(--color-accent-text-on-tint);
@@ -898,11 +981,30 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* Deliberately not dimmed. A pending channel still has to be readable —
-   opacity here would fail contrast to say something a label already says. */
-.dlcard__state {
+/* Whatever each channel offers sits on the card's bottom edge, so four cards
+   of different content still line their actions up. */
+.dlcard__action {
   align-self: flex-start;
   margin-block-start: auto;
+}
+
+/* Apple's badge, at Apple's minimum height, aspect ratio from the file. */
+.dlcard__badge {
+  width: auto;
+  height: var(--store-badge-height);
+}
+
+/* Apple ships this badge in black and in white; the repo carries the black
+   one. Inverting a pure black-on-transparent badge produces the white variant
+   rather than a recolour, which is why this is a filter and not a tint. */
+[data-theme="dark"] .dlcard__badge {
+  filter: invert(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .dlcard__badge {
+    filter: invert(1);
+  }
 }
 
 .download__req {
@@ -926,14 +1028,6 @@ body {
 .croc .card__body,
 .support .card__body {
   color: var(--color-text-primary);
-}
-
-/* --- Inspirations --- */
-
-.inspo {
-  display: grid;
-  gap: var(--space-5);
-  grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min-card), 100%), 1fr));
 }
 
 /* --- Contribute / Support --- */
@@ -963,7 +1057,7 @@ body {
 
 .footer__mascot {
   flex: none;
-  width: var(--space-11);
+  width: var(--mascot-size-web);
   height: auto;
 }
 

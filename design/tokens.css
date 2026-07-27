@@ -198,6 +198,20 @@
   --icon-size-md: 22px;
   --icon-size-lg: 28px;
 
+  /* Lucide stroke weights. Unitless on purpose — stroke-width scales with the
+     viewBox, so a unit here would break every glyph. See iconography.md for
+     which context takes which. */
+  --icon-stroke-light:    1.5;
+  --icon-stroke:          1.8;
+  --icon-stroke-medium:   2;
+  --icon-stroke-heavy:    2.2;
+  --icon-stroke-heaviest: 2.4;
+
+  /* Stacking order. Two layers is the whole scale: a bar that outranks the
+     page, and a skip link that outranks the bar it exists to jump past. */
+  --z-nav: 2;
+  --z-skip-link: 3;
+
   --border-hairline: 1px;
   --border-hairline-half: 0.5px;
 
@@ -221,6 +235,16 @@
   --pill-pad-inline-end:   11px;
   --pill-icon-size:        14px;
 
+  /* Apple's stated minimum for the App Store badge. Not a control height —
+     the badge is a supplied asset and this is the floor it may be drawn at. */
+  --store-badge-height: 40px;
+
+  --step-marker-size: 32px;
+  --mascot-size-web:  64px;
+  /* Reserved before the star count arrives, so the nav cannot resize after
+     first paint. Three digits plus the "k" suffix at --type-footnote-size. */
+  --stars-slot-min:   28px;
+
   --nav-height-web: 56px;
   /* auto-fit column floor: 984 usable − 3 gaps of 16 = 936, 936 / 4 = 234, so
      232 is the largest 4pt step that still fits 4-up at 1080. 2-up at 768. */
@@ -242,8 +266,15 @@
   /* The inset highlight is the top edge-light that sells the material. Keep it. */
   --shadow-glass: 0 8px 32px light-dark(rgba(0,0,0,0.12), rgba(0,0,0,0.55)),
                   inset 0 1px 0 var(--glass-highlight);
-  --shadow-knob: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16);
-  --shadow-focus-ring: 0 0 0 4px var(--glass-tint-accent);
+  --shadow-knob: 0 3px 8px light-dark(rgba(0,0,0,0.15), rgba(0,0,0,0.50)),
+                 0 1px 1px light-dark(rgba(0,0,0,0.16), rgba(0,0,0,0.40));
+  /* Two rings, not one tint. The old 4px --glass-tint-accent halo measured
+     1.14:1 on --color-surface-base: a focus indicator nobody could see, and a
+     WCAG 2.2 SC 1.4.11 failure. The inner ring is the page fill, so the outer
+     accent ring has a guaranteed 3.41:1 edge whatever it lands on — including
+     the accent-filled button, where the roles simply swap. */
+  --shadow-focus-ring: 0 0 0 2px var(--color-surface-base),
+                       0 0 0 4px var(--color-accent);
 
   /* Motion */
   --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -279,7 +310,7 @@ body {
 code, kbd, pre, samp { font-family: var(--font-mono); }
 
 a { color: var(--color-text-link); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: 2px; }
+a:hover { text-decoration: underline; text-underline-offset: var(--space-1); }
 a:active { opacity: 0.7; }
 
 :focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }

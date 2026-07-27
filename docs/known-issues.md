@@ -60,7 +60,12 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Landing page
 
-- **`web/landing/assets/img/og.jpg` is hand-maintained.** The Chrome-headless renderer that built it from an HTML source is gone, so a colour or type token change no longer propagates to the social card. Redraw it by hand, or rebuild the renderer, before the token set moves again.
+- **The primary CTA still resolves to nothing installable.** "Download" in the hero scrolls to four channels: two unlinked store badges, a GitHub releases link that 404s until there is a release, and a Homebrew line for a cask that does not exist. Honest, but the page's strongest call to action cannot yet be completed. Tracked per-channel under TODO LANDING in `TODO.md`.
+- **Four links point at repository files that do not exist.** `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, and a build section in `README.md`. The URLs are the ones those files will have; they 404 until the files land.
+- **`--content-max-width` on the hero mockup.** `design/brand.md` now carves an explicit exception for elements that depict the app, so this is documented rather than fixed — but the exception is narrow and easy to over-apply.
+- **Store badges are inverted in dark mode with a CSS filter.** Apple ships black and white variants; the repo has black only. Inverting a black-on-transparent badge produces the white variant, but it is a filter over supplied artwork, not the supplied artwork.
+- **`assets/banner.webp` is orphaned.** `design/brand.md` assigns it to the README header, the landing hero and the social card. It appears in none of them.
+- **Three landing dependencies are hand-maintained and nothing checks them:** `llms.txt`'s release status, the footer's "last updated" date, and `og.jpg`. The first two are in TODO LANDING; `og.jpg` is deliberately a fixed hand-made asset and is not derived from the tokens.
 
 ## Accepted
 

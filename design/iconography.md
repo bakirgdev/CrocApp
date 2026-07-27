@@ -54,6 +54,16 @@ Check each name in the SF Symbols app before first use, and prefer `.fill` varia
 
 **Web (Lucide):** 24×24 viewBox, `fill: none`, `stroke: currentColor`, `stroke-linecap`/`linejoin: round`. Default size 22, default stroke width 1.8; use 2 – 2.4 for glyphs under 20px so they keep weight. Always `aria-hidden="true"` — the adjacent label carries the meaning.
 
+Stroke weights are tokens, and unitless: `stroke-width` scales with the viewBox, so a unit on any of these breaks every glyph that uses it.
+
+| Token | Value |
+|---|---|
+| `--icon-stroke-light` | 1.5 |
+| `--icon-stroke` | 1.8 (default) |
+| `--icon-stroke-medium` | 2 |
+| `--icon-stroke-heavy` | 2.2 |
+| `--icon-stroke-heaviest` | 2.4 |
+
 **App (SF Symbols):** size by text style so glyphs track Dynamic Type (`.imageScale`, or `Image(systemName:).font(.headline)`), `.symbolRenderingMode(.hierarchical)` for tinted tiles, `.monochrome` inline. Tint with `--color-accent`'s Swift equivalent, never a hardcoded green.
 
 ## Sizes in use

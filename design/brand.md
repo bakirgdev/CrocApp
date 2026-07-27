@@ -28,9 +28,12 @@ Accent is for: primary action fills, active/selected state, links, file-type gly
 |---|---|---|
 | App icon source | `assets/CrocAppIcon.icon` | Xcode icon composer source; export for App Store, docs favicon, README |
 | Banner | `assets/banner.webp` | README header, landing hero, social card |
-| Mascot | `assets/mascot.png` | landing page, empty states on web, docs 404 |
+| Mascot | `assets/mascot.png` | source, 512px. Never served |
+| Mascot, web | `web/landing/assets/img/mascot-web.webp` | 128px derivative — landing page, empty states on web, docs 404 |
 
 The mascot is a personality accent, not a UI element — it never appears inside the app's transfer flows.
+
+The web derivative exists because the 512px source is 51 KB to draw a 64px mark. Re-cut it from the source rather than editing it: `sips -Z 128` then `cwebp -q 88 -alpha_q 100 -m 6`.
 
 ## Naming
 
@@ -41,6 +44,8 @@ The mascot is a personality accent, not a UI element — it never appears inside
 The landing page and docs site use these same tokens (`tokens.css`) so the marketing surface and the product look like one thing. They are web pages, not an app shell: keep the Apple type scale and colors, drop the device chrome, and use the `solid` material where there is nothing behind glass to blur.
 
 Width comes from the web caps, never `--content-max-width` — that is the app's 480px phone column. Sections cap at `--content-max-width-web`, prose at `--content-max-width-prose`, hero and screenshot rows at `--content-max-width-wide`. See `spacing-layout.md` → Web layout.
+
+**One exception, and it is narrow:** an element that *depicts* the app — the landing page's CSS-built Send screen, a docs screenshot frame — takes `--content-max-width`, because it is drawing the phone column rather than laying out a page. The row it sits in still takes a web cap. If the element is not a picture of the app, this does not apply.
 
 Both themes are required on both sites, and both must honour the OS preference by default.
 

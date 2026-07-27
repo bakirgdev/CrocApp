@@ -1,6 +1,10 @@
 {
+  "id": "/",
   "name": "CrocApp",
   "short_name": "CrocApp",
+  "description": "Send files anywhere, encrypted end to end, with a spoken code phrase.",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "web-app-manifest-192x192.png",
@@ -15,7 +19,7 @@
       "purpose": "any"
     }
   ],
-  "theme_color": "#1E9E6A",
+  "theme_color": "#FFFFFF",
   "background_color": "#FFFFFF",
   "display": "standalone"
 }

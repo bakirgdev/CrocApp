@@ -4,12 +4,26 @@ MISC:
 - add note somewhere to track what things need review after something:
   - gh workflows mac version update 26 to 27 and onwards only when new apple software versions across platforms release (in this case bump mac image to mac27)
 - fix proj's claude md to prefer simpler responses with simpler words but retaining details
-- add 2 badges from app store and mac app store to website from here: https://developer.apple.com/app-store/marketing/guidelines/
 - ask AI to check if xcode and go mcp servers can be wrapped in caveman-shrink for compression
 - ask AI to check if .swift-format has industry standard rules appropriate/fitting for OSS project and contributions
 - ask AI to use claude.md file skill/plugin, then verify each claim in @CLAUDE.md, fix, imrpove, add missed things, delete unnecessary ones, fix if needed and greatly simplify and/or shorten the file - all while following best practices
 - add playwright mcp in .mcp.json and wrap with caveman-shrink
 - add domain of the project to private main gmail acc
+- "list known issues from the markdown file, understand each, research how to fix, and suggest a plan what and how to fix, i approve the plan, you write a optimized prompt to fix in one go in next clean session"
+
+TODO LANDING
+- App Store URL for the iPhone & iPad card: the badge at `web/landing/index.html` (`assets/img/app-store.svg`) is an unlinked `<img>` until the listing exists. Wrap it in an `<a>` when it does.
+- Mac App Store URL for the Mac card: same, `assets/img/mac-app-store.svg`.
+- Verify the Homebrew cask line actually works before the brew card claims it: `brew install --cask crocapp` is printed with a copy button and nothing has published that cask yet. Blocked on notarization (see docs/known-issues.md).
+- Verify `https://github.com/bakirgdev/CrocApp/releases/latest` resolves once a release exists — the "Mac, direct" card links to it and GitHub 404s that path on a repo with zero releases.
+- CONTRIBUTING.md — the Contribute section links to `blob/main/CONTRIBUTING.md` and the file does not exist yet. 404 until it does.
+- SECURITY.md — footer links to `blob/main/SECURITY.md`, same.
+- CODE_OF_CONDUCT.md — footer links to `blob/main/CODE_OF_CONDUCT.md`, same.
+- "How to build" links to `blob/main/README.md` with no anchor. Add a build section to the README and point the link at its exact `#anchor`.
+- `web/landing/llms.txt` states "Not yet released" and lists the channels as pending. Update it on the first release, in the same change that updates the page copy — the two must agree.
+- Footer carries a hand-typed "Page last updated" date. Bump it when the page copy changes (the sitemap's lastmod is stamped automatically by landing.yml; this one is not).
+- `assets/banner.webp` is unused. `design/brand.md` assigns it to the README header, the landing hero and the social card; it appears in none of them. Use it or drop the claim.
+- Apple ships the store badges in black and white; the repo has black only, and dark mode inverts it in CSS. Drop in Apple's white asset if the inversion ever looks wrong.
 
 CC NEXT PROMPT
 - > make some nice prompt for CC to review the whole app, fully test it, check if codewise and otherwise is ready, performant, optimized, code optimized for human contributors and AI, well commented but healthy doses (short is better), users ready, all features work. review, then make planned phases, then plan each phase and do it via multiple prompts using subagents for phase's plan. commit where fit and push on each phase done. deep but simple recap of what's done/verified/fixes. these are last checks of the app itself before app store publish. one known fix needed: prompt user for camera and local network permission after onboarding screen is closed on first launch and check state before using each feature

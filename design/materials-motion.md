@@ -44,16 +44,18 @@ Geometry is theme-independent; only the shadow colors flip, which is why each to
 | `--shadow-md` | `0 4px 16px`, `0 1px 3px` | .08, .05 | .50, .40 |
 | `--shadow-lg` | `0 12px 40px`, `0 4px 12px` | .14, .08 | .60, .50 |
 | `--shadow-glass` | `0 8px 32px` + `inset 0 1px 0 var(--glass-highlight)` | .12 | .55 |
-| `--shadow-knob` | `0 3px 8px`, `0 1px 1px` | .15, .16 | same |
-| `--shadow-focus-ring` | `0 0 0 4px var(--glass-tint-accent)` | — | same |
+| `--shadow-knob` | `0 3px 8px`, `0 1px 1px` | .15, .16 | .50, .40 |
+| `--shadow-focus-ring` | `0 0 0 2px var(--color-surface-base)`, `0 0 0 4px var(--color-accent)` | — | same |
 
-The inset highlight in `--shadow-glass` is the top edge-light that sells the material. Keep it. `--shadow-knob` is the switch knob's, and does not flip: the knob is `--paper` in both themes.
+The inset highlight in `--shadow-glass` is the top edge-light that sells the material. Keep it. `--shadow-knob` is the switch knob's, and flips like every other shadow here: the knob is `--paper`, which is black in dark, and a 15%-black shadow under a black knob on a dark track is nothing at all.
 
 Depth ladder: page → card (`sm`/`glass`) → sheet (`lg`). Three levels, no more.
 
 ## Focus
 
-`:focus-visible` clears the native outline and applies `--shadow-focus-ring` — a 4px accent-tint halo. Never remove focus styling without replacing it. Interactive glass and prominent buttons swap their own shadow for the ring while focused.
+`:focus-visible` clears the native outline and applies `--shadow-focus-ring` — a 4px ring in two 2px bands: `--color-surface-base` inside, `--color-accent` outside. Never remove focus styling without replacing it. Interactive glass and prominent buttons swap their own shadow for the ring while focused.
+
+**Two bands, not one halo.** The ring this replaced was `0 0 0 4px var(--glass-tint-accent)`, a 12%-alpha accent wash that composites to `#E4F3ED` and measures **1.14:1** against `--color-surface-base` — a focus indicator that is not visible, and a WCAG 2.2 SC 1.4.11 failure at AA. A single solid accent ring would have fixed the page but failed on the accent-filled button, where ring and fill are the same colour. Banding it solves both: whatever the ring sits on, one of the two bands has a 3.41:1 edge against it, and on the prominent button the two simply trade roles. Do not collapse it back to one band, and do not reintroduce a tint here — a focus ring owes 3:1 and a tint at any alpha low enough to look calm cannot pay it.
 
 ## Motion
 

@@ -123,6 +123,7 @@ Recomputed from the hex values above on 2026-07-26. **Light is the constrained t
 | `--label-2` 0.60 on base | 3.44 | fails body — Apple's own secondaryLabel |
 | `--label-2-web` 0.75 on base / grouped | 5.15 / 4.82 | AA body |
 | `--label-3` on base | 1.74 | decorative fill only |
+| `--color-accent` band of `--shadow-focus-ring` on base / on the accent fill | 3.41 / 3.41 | AA non-text, rule 7 |
 | `#FFFFFF` on `--color-accent` | 3.41 | filled-button deviation, rule 3 |
 | `#FFFFFF` on `--color-status-error` | 3.55 | filled-button deviation, rule 3 |
 | `--color-status-success` / `-warning` / `-error` on its own tint | 1.98 / 1.96 / 2.95 | nothing |
@@ -143,3 +144,5 @@ Dark, for the record: accent 9.44 on base, 7.65 on card, 7.69 on its own tint; `
 5. **`--color-text-tertiary` is not a text color and not a UI-boundary color.** 1.74:1. Decorative fills only. Anything a sighted user has to *see* — disclosure chevrons, remove controls, empty-state glyphs — takes secondary or better.
 
 6. **`--color-text-link` is `--green-700`, not the accent**, and follows rule 1: on `--color-surface-grouped` a link needs `--green-800`, or it needs to sit on a card.
+
+7. **The focus ring owes 3:1 and is not decoration.** It is two 2px bands — `--color-surface-base` inside, `--color-accent` outside — precisely so one of them always has a 3.41:1 edge against whatever it surrounds, including the accent-filled button. A tint cannot do this job: `--glass-tint-accent` at 12% composites to 1.14:1 on base, which is how the ring shipped invisible before 2026-07-27. Non-text contrast (1.4.11) binds focus indicators; a calm-looking ring that nobody can see is a failure, not a style.

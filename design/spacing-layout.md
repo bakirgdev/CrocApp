@@ -57,6 +57,29 @@ Never used by the app. `--content-max-width` is a phone-width column; a marketin
 | `--gutter-web` | `clamp(20px, 5vw, 48px)` | page horizontal padding |
 | `--section-pad-web` | `clamp(64px, 9vw, 112px)` | vertical gap between sections |
 | `--stack-web` | `clamp(32px, 4vw, 48px)` | gap between blocks inside a section |
+| `--store-badge-height` | 40px | Apple's stated minimum for a supplied App Store badge |
+| `--step-marker-size` | 32px | numbered step marker in a How-it-works list |
+| `--mascot-size-web` | 64px | mascot in a footer or empty state |
+| `--stars-slot-min` | 28px | reserved width for the repo star count in a nav |
+
+### Breakpoints
+
+Three, and no more without a reason written down. **These are literals by necessity** — a custom property does not resolve inside a media condition, so the numbers appear in the stylesheet and this table is the only place they are defined. `rem`, not `px`, so they respond to the user's font size.
+
+| Width | What changes |
+|---|---|
+| `30rem` | Nav collapses the GitHub label to its glyph and count |
+| `48rem` | Nav keeps only its primary anchor; the rest drop |
+| `64rem` | Hero splits into copy + mockup columns |
+
+### Stacking order
+
+Two layers, both tokenized. Anything that wants a third needs a reason first.
+
+| Token | Value | Layer |
+|---|---|---|
+| `--z-nav` | 2 | sticky bar, above page content |
+| `--z-skip-link` | 3 | above the bar it exists to jump past |
 
 ## Control sizing
 
