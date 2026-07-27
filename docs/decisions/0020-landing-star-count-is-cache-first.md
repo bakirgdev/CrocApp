@@ -13,14 +13,16 @@ Unauthenticated `api.github.com` allows 60 requests per hour **per IP**, not per
 `localStorage`, keyed `stars:bakirgdev/CrocApp`, holding `{ count, at }`.
 
 - **The cache paints before the request goes out.** A repeat visit never waits on the network.
-- **The slot reserves its width whether or not it has a number.** `--stars-slot-min` plus `visibility: hidden` rather than the `hidden` attribute: `hidden` collapses the box, which is what let the nav resize when a number arrived late. `visibility: hidden` keeps the width and still keeps the empty slot out of the accessibility tree, so no load can shift the bar — not even the first one, which is the only one that has to go to the network.
+- **The slot is exactly as wide as its number, and absent when it has none.** A reserved floor was tried first and removed: at 28px it was wider than "0" and wider than any two-digit count, so on the counts the repository actually has it read as a gap inside the button rather than as space held for something. What it bought was a bar that could not shift when a number arrived late, and the formatter below caps that shift at four characters on the one load that has to go to the network. The empty slot is `display: none`, which also keeps it out of the accessibility tree.
 - **Under 6 hours old, no request is made at all.** A star count is not information that decays in minutes.
 - **A failed, aborted or rate-limited fetch leaves whatever the cache painted standing, however old.** A count that is days stale is not wrong in a way any visitor can act on; an empty slot is.
-- **A first visit with no cache and no network shows nothing.** The slot stays empty rather than showing a bracket with nothing in it — the same end state the page has always had, now reached only in the one case that cannot do better.
+- **A first visit with no cache and no network shows nothing.** The slot stays empty rather than showing a bracket with nothing in it — the one case that cannot do better, and now the only case that leaves the slot empty.
 - **The stored value is validated on read.** Anything under that key that is not two numbers is treated as no cache at all, and a `localStorage` that throws is caught, because storage is an enhancement here and never load-bearing.
 - **The request is bounded by an `AbortController` at 6 s**, so a hung connection cannot hold a first-time visitor's slot empty for the life of the tab.
 
-`0` is still never rendered: "GitHub 0" reads as a broken widget rather than as a fact.
+**`0` is rendered.** Hiding it was the earlier rule, on the reasoning that "GitHub 0" reads as a broken widget. It made the empty slot mean two unrelated things — no stars yet, and the request failed — and while the repository sat at zero the live page was indistinguishable from one whose fetch was broken, which is how the count came to be missing on crocapp.dev. Only a value that is not a count at all now leaves the slot empty.
+
+**The count is abbreviated the way GitHub's own counters abbreviate it**, which also bounds the string at four characters and so bounds the slot: exact below 1000, one decimal to 9999 (`1.2k`), whole thousands to 999999 (`12k`, `104k`), one decimal above that (`1.2M`). Truncated rather than rounded, so 1999 reads `1.9k` — a count that reads higher than the repository has is the one error worth ruling out. A trailing `.0` is dropped, so a round thousand is `1k`.
 
 ## Rejected
 
@@ -33,4 +35,5 @@ Unauthenticated `api.github.com` allows 60 requests per hour **per IP**, not per
 - A visitor sees a number up to 6 hours behind, and after an outage possibly much further behind, with nothing on the page saying so. Accepted: the alternative is showing nothing.
 - The privacy story improves as a side effect. A returning visitor hits GitHub at most once per 6 hours instead of once per page load. It does not go to zero: an uncached visitor's IP still reaches GitHub on a page whose own FAQ says "no advertising, and no analytics". Baking the count in at deploy is the only option that closes that gap entirely.
 - One `localStorage` key is now written by the page beyond `theme`. Neither is personal data and neither is read by anything else.
-- The nav is permanently `--stars-slot-min` wider than its contents on a page that never gets a star. Cheap, and the alternative is a bar that changes width after it has been read.
+- A first, uncached load can widen the nav's right cluster by up to four characters when the number lands. Bounded and one-time; every later load paints from cache before the request goes out.
+- `--stars-slot-min` is gone from `design/tokens.css` and `design/spacing-layout.md`. Nothing else referenced it.

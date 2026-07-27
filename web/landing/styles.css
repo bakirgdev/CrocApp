@@ -85,6 +85,23 @@ button {
 
 /* 2. Page + layout */
 
+/* Fragment navigation, both declarations on the scroll container:
+
+   scroll-padding stops the sticky nav from eating whatever the target starts
+   with. It belongs here rather than as scroll-margin on each section, because
+   it also covers the skip link and any id linked from outside the page — one
+   rule that cannot be forgotten when a section is added. The extra space is
+   the gap between the bar and the heading, so the target does not land flush
+   against the hairline.
+
+   scroll-behavior is scoped to the element that actually scrolls, so a nested
+   scroller (the mockup's file list) keeps its own instant behaviour. Section
+   14 restores `auto` under prefers-reduced-motion. */
+html {
+  scroll-padding-block-start: calc(var(--nav-height-web) + var(--space-5));
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--color-surface-base);
 }
@@ -513,18 +530,21 @@ body {
   flex: none;
 }
 
-/* Space is reserved whether or not there is a number, so the bar cannot resize
-   after first paint on the one load that has to go to the network for it.
-   visibility, not [hidden]: the slot has to keep its width while empty, and
-   visibility: hidden also takes it out of the accessibility tree. */
+/* The slot is exactly as wide as its number. A reserved floor was wider than
+   "0" and than any two-digit count, which read as a gap in the button rather
+   than as space held for something. The formatter caps the string at four
+   characters, so what a late-arriving number can move is bounded and small,
+   and after the first load it comes from cache before paint.
+
+   display: none while empty, so the button closes up rather than carrying a
+   blank; that also keeps it out of the accessibility tree. */
 .nav__stars {
-  min-width: var(--stars-slot-min);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
 }
 
 .nav__stars.is-empty {
-  visibility: hidden;
+  display: none;
 }
 
 /* The glyph shows the theme you would switch *to*, so light shows a moon.

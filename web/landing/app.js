@@ -69,10 +69,11 @@
          standing, however old, because a star count that is a few days stale
          is never wrong in a way that matters;
        - a first visit with no cache and no network shows nothing, which is
-         what an empty slot has always meant here.
+         now the only thing an empty slot means.
 
-     The slot's width is reserved in CSS either way, so none of these paths can
-     resize the nav after first paint. */
+     The slot sizes itself to its number rather than to a reserved floor, so
+     the only load that can move the nav is the one that had no cache to paint
+     from, and the formatter below bounds that move at four characters. */
 
   feature(() => {
     const slot = document.getElementById("stars-count");
@@ -83,10 +84,34 @@
     const MAX_AGE = 6 * 60 * 60 * 1000;
     const TIMEOUT = 6000;
 
-    /* "GitHub 0" reads as a broken widget. No number is the better state. */
+    /* The abbreviation GitHub's own counters use. Never wider than four
+       characters, which is what lets the slot size itself to its contents:
+
+         0 .. 999        exact           0, 7, 942
+         1e3 .. 9999     one decimal     1.2k, 9.9k
+         1e4 .. 999999   whole           12k, 104k
+         1e6 and up      one decimal     1.2M
+
+       Truncated, not rounded: 1999 is not 2k yet, and a count that reads
+       higher than the repository has is the one error worth ruling out.
+       A trailing ".0" is dropped, so a round thousand reads "1k". */
+    const abbreviate = (n) => {
+      if (n < 1000) return String(n);
+
+      const [value, digits, suffix] =
+        n < 1e4 ? [n / 1e3, 1, "k"] : n < 1e6 ? [n / 1e3, 0, "k"] : [n / 1e6, 1, "M"];
+
+      const truncated = Math.floor(value * 10 ** digits) / 10 ** digits;
+      return (Number.isInteger(truncated) ? String(truncated) : truncated.toFixed(digits)) + suffix;
+    };
+
+    /* Zero is shown. Hiding it made an empty slot mean two different things —
+       "no stars yet" and "the request failed" — and the repo sitting at zero
+       was indistinguishable from a broken widget for as long as that lasted.
+       Only a value that is not a count at all keeps the slot empty. */
     const show = (n) => {
-      if (n < 1) return;
-      slot.textContent = n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n);
+      if (!Number.isFinite(n) || n < 0) return;
+      slot.textContent = abbreviate(Math.floor(n));
       wrap.classList.remove("is-empty");
     };
 

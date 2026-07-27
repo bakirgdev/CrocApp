@@ -116,17 +116,18 @@
         <!-- Tinted, not plain: starring the repo is the only thing a visitor
              can actually do until there is a build, so it does not get to be
              the faintest control in the bar. -->
-        <a class="btn btn--sm btn--secondary nav__github" href="https://github.com/bakirgdev/CrocApp">
+        <a class="btn btn--sm btn--secondary nav__github" href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener">
           <svg class="btn__icon" aria-hidden="true"><use href="#i-star" /></svg>
           <span class="nav__github-label">GitHub</span>
-          <!-- Filled by app.js from cache or the API. The slot keeps its width
-               while empty so the bar cannot resize after paint, and stays out
-               of the accessibility tree until it holds a number. The unit is
-               spoken because "GitHub, 12" is not a sentence. -->
+          <!-- Filled by app.js from cache or the API, and absent entirely
+               until it holds a number, which also keeps it out of the
+               accessibility tree. The unit is spoken because "GitHub, 12" is
+               not a sentence. -->
           <span class="nav__stars is-empty" id="stars">
             <span id="stars-count"></span>
             <span class="u-visually-hidden"> stars</span>
           </span>
+          <span class="u-visually-hidden">(opens in a new tab)</span>
         </a>
 
         <!-- Ships hidden: with JavaScript off this button can neither switch
@@ -160,7 +161,10 @@
                 <svg class="btn__icon" aria-hidden="true"><use href="#i-download" /></svg>
                 Download
               </a>
-              <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp">View source</a>
+              <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener">
+                View source
+                <span class="u-visually-hidden">(opens in a new tab)</span>
+              </a>
             </div>
 
             <!-- role="list" throughout: the reset strips the marker, and
@@ -515,10 +519,11 @@
               <p class="t-callout card__body">Notarized DMG, signed with a Developer ID</p>
               <a
                 class="btn btn--md btn--secondary dlcard__action"
-                href="https://github.com/bakirgdev/CrocApp/releases/latest"
+                href="https://github.com/bakirgdev/CrocApp/releases/latest" target="_blank" rel="noopener"
               >
                 <svg class="btn__icon" aria-hidden="true"><use href="#i-download" /></svg>
                 Latest release
+                <span class="u-visually-hidden">(opens in a new tab)</span>
               </a>
             </div>
 
@@ -549,7 +554,7 @@
             <h2 class="t-web-sub card__title" id="croc-title">Powered by croc</h2>
             <p class="t-body card__body">
               CrocApp is the interface.
-              <a href="https://github.com/schollz/croc">croc</a> is the engine — by Zack Scholl, MIT
+              <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a> is the engine — by Zack Scholl, MIT
               licensed. CrocApp embeds croc's Go library. It is unofficial and unaffiliated; nothing
               here implies endorsement by croc's author.
             </p>
@@ -576,7 +581,7 @@
               the reasoning is auditable rather than remembered.
             </p>
             <p>
-              <a href="https://github.com/bakirgdev/CrocApp/tree/main/docs/decisions">
+              <a href="https://github.com/bakirgdev/CrocApp/tree/main/docs/decisions" target="_blank" rel="noopener">
                 Read the decision records
               </a>
             </p>
@@ -598,7 +603,7 @@
           <ul class="inspo" role="list">
             <li class="card">
               <h3 class="t-headline card__title">
-                <a href="https://github.com/schollz/croc">croc</a>
+                <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a>
               </h3>
               <p class="t-callout card__body">
                 The engine, and the protocol. Everything CrocApp does, croc does underneath.
@@ -606,7 +611,7 @@
             </li>
             <li class="card">
               <h3 class="t-headline card__title">
-                <a href="https://github.com/magic-wormhole/magic-wormhole">magic-wormhole</a>
+                <a href="https://github.com/magic-wormhole/magic-wormhole" target="_blank" rel="noopener">magic-wormhole</a>
               </h3>
               <p class="t-callout card__body">
                 The original code-phrase transfer, and croc's own inspiration.
@@ -614,7 +619,7 @@
             </li>
             <li class="card">
               <h3 class="t-headline card__title">
-                <a href="https://github.com/localsend/localsend">LocalSend</a>
+                <a href="https://github.com/localsend/localsend" target="_blank" rel="noopener">LocalSend</a>
               </h3>
               <p class="t-callout card__body">
                 Proof that a cross-platform transfer app can be genuinely pleasant to use.
@@ -622,7 +627,7 @@
             </li>
             <li class="card">
               <h3 class="t-headline card__title">
-                <a href="https://github.com/Dking08/croc-app">croc-app</a>
+                <a href="https://github.com/Dking08/croc-app" target="_blank" rel="noopener">croc-app</a>
               </h3>
               <p class="t-callout card__body">
                 The Android client. The best mobile reference for what a croc GUI should feel like.
@@ -630,13 +635,13 @@
             </li>
             <li class="card">
               <h3 class="t-headline card__title">
-                <a href="https://github.com/KD-MM2/crock">crock</a>
+                <a href="https://github.com/KD-MM2/crock" target="_blank" rel="noopener">crock</a>
               </h3>
               <p class="t-callout card__body">A desktop croc GUI, and where the QR deeplink idea comes from.</p>
             </li>
             <li class="card">
               <h3 class="t-headline card__title">
-                <a href="https://github.com/howeyc/crocgui">crocgui</a>
+                <a href="https://github.com/howeyc/crocgui" target="_blank" rel="noopener">crocgui</a>
               </h3>
               <p class="t-callout card__body">The long-running cross-platform croc GUI.</p>
             </li>
@@ -789,14 +794,17 @@
                3.41:1 only while its label stays at 17px semibold; --md drops it
                to 16px and voids the condition. The row matches the hero's. -->
           <div class="actions contribute__actions">
-            <a class="btn btn--prominent" href="https://github.com/bakirgdev/CrocApp/issues">
+            <a class="btn btn--prominent" href="https://github.com/bakirgdev/CrocApp/issues" target="_blank" rel="noopener">
               Open an issue
+              <span class="u-visually-hidden">(opens in a new tab)</span>
             </a>
-            <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp/blob/main/CONTRIBUTING.md">
+            <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">
               Contributing guide
+              <span class="u-visually-hidden">(opens in a new tab)</span>
             </a>
-            <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp/blob/main/README.md">
+            <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp/blob/main/README.md" target="_blank" rel="noopener">
               How to build
+              <span class="u-visually-hidden">(opens in a new tab)</span>
             </a>
           </div>
         </div>
@@ -860,7 +868,7 @@
         <div class="footer__text t-footnote">
           <p>
             CrocApp is MIT licensed and built on
-            <a href="https://github.com/schollz/croc">croc</a> by Zack Scholl, also MIT licensed.
+            <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a> by Zack Scholl, also MIT licensed.
           </p>
           <p>
             Unofficial and unaffiliated. Nothing here implies endorsement by croc's author. Apple,
@@ -872,10 +880,17 @@
           <p>Page last updated <time datetime="2026-07-27">27 July 2026</time>. Not yet released.</p>
         </div>
         <nav class="footer__links t-footnote" aria-label="Footer">
-          <a href="https://github.com/bakirgdev/CrocApp">Source</a>
-          <a href="https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md">Security policy</a>
-          <a href="https://github.com/bakirgdev/CrocApp/blob/main/CODE_OF_CONDUCT.md">
+          <a href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener">
+            Source
+            <span class="u-visually-hidden">(opens in a new tab)</span>
+          </a>
+          <a href="https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md" target="_blank" rel="noopener">
+            Security policy
+            <span class="u-visually-hidden">(opens in a new tab)</span>
+          </a>
+          <a href="https://github.com/bakirgdev/CrocApp/blob/main/CODE_OF_CONDUCT.md" target="_blank" rel="noopener">
             Code of conduct
+            <span class="u-visually-hidden">(opens in a new tab)</span>
           </a>
         </nav>
       </div>

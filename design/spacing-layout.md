@@ -60,7 +60,6 @@ Never used by the app. `--content-max-width` is a phone-width column; a marketin
 | `--store-badge-height` | 40px | Apple's stated minimum for a supplied App Store badge |
 | `--step-marker-size` | 32px | numbered step marker in a How-it-works list |
 | `--mascot-size-web` | 64px | mascot in a footer or empty state |
-| `--stars-slot-min` | 28px | reserved width for the repo star count in a nav |
 
 ### Breakpoints
 

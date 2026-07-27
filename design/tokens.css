@@ -241,10 +241,6 @@
 
   --step-marker-size: 32px;
   --mascot-size-web:  64px;
-  /* Reserved before the star count arrives, so the nav cannot resize after
-     first paint. Three digits plus the "k" suffix at --type-footnote-size. */
-  --stars-slot-min:   28px;
-
   --nav-height-web: 56px;
   /* auto-fit column floor: 984 usable − 3 gaps of 16 = 936, 936 / 4 = 234, so
      232 is the largest 4pt step that still fits 4-up at 1080. 2-up at 768. */
