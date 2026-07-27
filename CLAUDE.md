@@ -5,7 +5,7 @@ Free, open-source native SwiftUI GUI for the "croc" file-transfer CLI. Currently
 ## Layout
 
 - `.claude/` — project Claude config: `rules/`, `skills/`, `settings.json` & `settings.local.json`, etc.
-- `.mcp.json` — project MCP servers: `context7` (docs), `xcode`, `gopls` (Go semantics).
+- `.mcp.json` — project MCP servers: `context7` (docs), `xcode`, `gopls` (Go semantics), `playwright` (browser, for landing/docs sites). All four run behind the `caveman-shrink` stdio proxy, which compresses tool descriptions (small win, ~1-2%). `.mcp.json` is canonical for playwright — the official playwright plugin was uninstalled to avoid a duplicate tool catalog.
 - `.github/` — `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` (Pages deploy, ADR 0019), `FUNDING.yml` (donations config for GitHub repo page, ignore this).
 - `.swift-format` — swift-format config. `.xcode-version` — Xcode baseline. `crocmobile/.golangci.yml` — Go lint config. See `@docs/knowledge/tooling.md`.
 - `app/` — Xcode project (SwiftUI, iOS + macOS): `app/CrocApp.xcodeproj`, app sources `app/CrocApp/`, share extension `app/CrocShare/`, plists + entitlements + export options `app/Config/`.

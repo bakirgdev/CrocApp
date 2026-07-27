@@ -13,17 +13,34 @@
     },
     "xcode": {
       "type": "stdio",
-      "command": "xcrun",
+      "command": "npx",
       "args": [
+        "-y",
+        "caveman-shrink",
+        "xcrun",
         "mcpbridge"
       ]
     },
     "gopls": {
       "type": "stdio",
-      "command": "sh",
+      "command": "npx",
       "args": [
+        "-y",
+        "caveman-shrink",
+        "sh",
         "-c",
         "exec \"$(go env GOPATH)/bin/gopls\" mcp"
+      ]
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "caveman-shrink",
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
       ]
     }
   }
