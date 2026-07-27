@@ -248,6 +248,16 @@ No. CrocApp is Apple-platform only by design. Use the [croc CLI](https://github.
 | [`docs/known-issues.md`](docs/known-issues.md) | Triaged defects and accepted papercuts. **Check here before filing a bug** |
 | [`design/`](design/README.md) | Canonical design system for the app, landing page, and docs site |
 
+## Contributing
+
+Pull requests are welcome: bugs, features, docs, design, landing page. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). It covers setup, commit conventions, the design rules, and how changes to the transfer path have to be verified.
+
+| | |
+|---|---|
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Setup, branches, commits, style, verification, PR flow |
+| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Contributor Covenant 3.0 |
+| [`SECURITY.md`](SECURITY.md) | Scope and private reporting for vulnerabilities |
+
 ## Credits
 
 - [croc](https://github.com/schollz/croc) by [Zack Scholl](https://github.com/schollz) — the transfer engine that makes this possible. MIT.

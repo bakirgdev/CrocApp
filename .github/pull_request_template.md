@@ -1,8 +1,12 @@
-<!-- Keep it short. Delete sections that do not apply. -->
+<!-- Keep it short. Delete sections that do not apply. First time here? See CONTRIBUTING.md. -->
 
 ## What and why
 
 Fixes #
+
+<!-- Title follows Conventional Commits: type(scope): subject. It becomes the squashed commit subject. -->
+<!-- If a model wrote a substantial part of this change, say so in one line. You still own it: read it, understand it, verify it. -->
+
 
 ## Verification
 
