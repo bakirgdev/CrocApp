@@ -34,7 +34,6 @@ Blocked on the first release / store listings:
 - [ ] iPhone & iPad card: App Store badge (`assets/img/app-store.svg`) is an unlinked `<img>` in `index.html`. Wrap in `<a>` when the listing exists
 - [ ] Mac card: same for the Mac App Store badge (`assets/img/mac-app-store.svg`)
 - [ ] Brew card prints `brew install --cask crocapp` with a copy button, but no cask is published. Verify the command actually works before the card claims it. Blocked on notarization (`docs/known-issues.md`)
-- [ ] "Mac, direct" card links to `https://github.com/bakirgdev/CrocApp/releases/latest` — GitHub 404s that path on a repo with zero releases. Verify once a release exists
 - [ ] `llms.txt` says "Not yet released" and lists channels as pending. Update it in the *same* change that updates the page copy — the two must agree
 
 Not blocked:
