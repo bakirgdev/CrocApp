@@ -41,22 +41,6 @@ Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pair
 - Build specialized skills/commands/agents for QOL/DevEx while developing (release, format, actions, etc.) — ask Claude Code for suggestions
 
 ## Prompts to run in a clean session
-
-Pre-App-Store full review:
-
-"
-Audit CrocApp end to end for App Store readiness. This is the last check of the app itself before making unnotarized release and planning submission to App Store, so treat gaps as blockers, not nits. Start from `docs/ARCHITECTURE.md` and `docs/known-issues.md`.
-
-**Review first, no edits.** Judge: every feature actually works, runtime performance, code quality for both human contributors and AI agents, comment density (short, why-not-what, healthy doses), and first-run UX polish. Run the builds, swift-format lint, golangci-lint, govulncheck, and the `scripts/verify-*.sh` harnesses; quote real output. Report every finding with severity, including low-severity ones.
-
-One defect is already known and must land: on first launch, request camera and local network permission after the onboarding screen closes, and check permission state before each feature that uses them.
-
-**Then execute.** Group findings into phases ordered by risk. For each phase in turn: write the plan, hand the work to subagents, review what comes back, verify with the matching harness, commit, push. One phase per pass, not all at once.
-
-Close with a plain-words recap: what was done, what was verified with which command, what was fixed.
-
-Think before answering (maximum reasoning)
-"
   
 Known-issues sweep:
 
