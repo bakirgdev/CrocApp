@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CA000000000000000000000C /* CrocShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000001 /* CrocShare.appex */; platformFilters = (ios, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		84F97A57301906920055C4C7 /* CrocKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3F021D37A76468BD7E9B164B /* CrocKit */; };
+		CA000000000000000000000C /* CrocShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000001 /* CrocShare.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84F97A57301906920055C4C7 /* CrocKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -216,9 +218,7 @@
 /* Begin PBXTargetDependency section */
 		CA000000000000000000000B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			platformFilters = (
-				ios,
-			);
+			platformFilter = ios;
 			target = CA0000000000000000000006 /* CrocShare */;
 			targetProxy = CA000000000000000000000A /* PBXContainerItemProxy */;
 		};
@@ -361,11 +361,11 @@
 				"INFOPLIST_FILE[sdk=iphoneos*]" = "Config/CrocApp-Info.plist";
 				"INFOPLIST_FILE[sdk=iphonesimulator*]" = "Config/CrocApp-Info.plist";
 				"INFOPLIST_FILE[sdk=macosx*]" = "Config/CrocApp-macOS-Info.plist";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]" = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -418,11 +418,11 @@
 				"INFOPLIST_FILE[sdk=iphoneos*]" = "Config/CrocApp-Info.plist";
 				"INFOPLIST_FILE[sdk=iphonesimulator*]" = "Config/CrocApp-Info.plist";
 				"INFOPLIST_FILE[sdk=macosx*]" = "Config/CrocApp-macOS-Info.plist";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]" = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -466,7 +466,10 @@
 				INFOPLIST_FILE = "Config/CrocShare-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MARKETING_VERSION = 0.9.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.CrocShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -492,7 +495,10 @@
 				INFOPLIST_FILE = "Config/CrocShare-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MARKETING_VERSION = 0.9.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.CrocShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
