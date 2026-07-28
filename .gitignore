@@ -7,7 +7,8 @@
 *.test
 
 # Environment
-.env
+.env*
+!.env.example
 
 # Xcode
 build/
@@ -39,6 +40,13 @@ CrocKit/Croc.xcframework/
 
 # Landing page tokens (ADR 0015: design/tokens.css preview copy)
 web/landing/tokens.css
+
+# Docusaurus
+node_modules/
+/build
+.docusaurus
+.cache-loader
+npm-debug.log*
 
 # Obra superpowers
 .superpowers/
