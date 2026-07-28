@@ -16,16 +16,25 @@ import Foundation
 /// runs -- confirmed via `sample` on the hung process (idle in NSApplication's
 /// event loop, no window ever attached). Splitting them with a flag avoids it.
 /// Writes verify-result.txt ("ok success=<bool>" | "error <msg>") to Documents.
+// The type itself must exist in Release too (CrocAppApp.swift and ContentView.swift
+// call it unconditionally), but the harness it drives -- real transfers, settings
+// overrides, writes into Documents -- must not ship. Only the bodies are #if DEBUG;
+// in Release isHarnessRun is a hardcoded false and runIfRequested is a no-op.
 enum AutoVerify {
     /// True when any --auto-* harness mode is active this launch.
     static var isHarnessRun: Bool {
+        #if DEBUG
         let args = ProcessInfo.processInfo.arguments
         return args.contains("--auto-receive") || args.contains("--auto-send")
             || args.contains("--auto-share-send")
+        #else
+        return false
+        #endif
     }
 
     @MainActor
     static func runIfRequested(controller: TransferController) async {
+        #if DEBUG
         let args = ProcessInfo.processInfo.arguments
         guard isHarnessRun else { return }
         // Harness overrides go through the real settings store, unpersisted.
@@ -68,8 +77,10 @@ enum AutoVerify {
             controller.startSend(urls: urls, customCode: args[i + 1])
             await watch(controller, resultURL: resultURL, autoAccept: false)
         }
+        #endif
     }
 
+    #if DEBUG
     @MainActor
     private static func watch(
         _ controller: TransferController, resultURL: URL, autoAccept: Bool
@@ -101,4 +112,5 @@ enum AutoVerify {
             }
         }
     }
+    #endif
 }

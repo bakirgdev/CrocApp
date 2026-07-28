@@ -22,7 +22,10 @@
 			</array>
 		</dict>
 	</array>
+	<!-- croc bundles its own AES-256-GCM / ChaCha20-Poly1305 encryption
+	     (crypto/aes + cipher.NewGCM in Go), not Apple-OS-provided crypto,
+	     and not limited to authentication -- no export exemption applies. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
+	<true/>
 </dict>
 </plist>
