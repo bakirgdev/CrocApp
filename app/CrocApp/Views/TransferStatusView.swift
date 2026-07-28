@@ -11,7 +11,7 @@ struct TransferStatusView: View {
     @Environment(LocalNetworkChecker.self) private var localNetwork
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Spacing.space7) {
             if localNetwork.status == .denied {
                 localNetworkDeniedBanner
             }
@@ -44,7 +44,7 @@ struct TransferStatusView: View {
             }
         }
         .padding()
-        .frame(maxWidth: 480)
+        .frame(maxWidth: LayoutCap.contentMaxWidth)
     }
 
     private var showsCancel: Bool {
@@ -56,17 +56,17 @@ struct TransferStatusView: View {
 
     // MARK: - Local network denied
 
+    // design/colors.md line 107: local-network-denied is `info` (blue), not
+    // a warning — the relay path still works, this is a "could be faster"
+    // notice, not a problem.
     private var localNetworkDeniedBanner: some View {
-        VStack(spacing: 6) {
-            Label {
-                Text(
-                    "Local network access is off — transfers use the relay only. Enable it in Settings › Privacy › Local Network for faster direct transfers."
-                )
-                .font(.footnote)
-            } icon: {
-                Image(systemName: "wifi.exclamationmark")
-            }
-            .foregroundStyle(.orange)
+        VStack(spacing: Spacing.space3) {
+            StatusBanner(
+                kind: .info,
+                title: "Local network access is off",
+                detail:
+                    "Transfers use the relay only. Enable it in Settings › Privacy › Local Network for faster direct transfers."
+            )
             #if os(iOS)
             Button("Open Settings") {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
@@ -81,15 +81,15 @@ struct TransferStatusView: View {
     // MARK: - Waiting (sender: code ready)
 
     private func waitingView(code: String) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Spacing.space5) {
             Text("Ready to send").font(.headline)
             Text(code)
-                .font(.title2.monospaced().bold())
+                .codeHeroTextStyle()
                 .textSelection(.enabled)
                 .accessibilityLabel("Transfer code")
                 .accessibilityValue(code.replacingOccurrences(of: "-", with: ", "))
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
+                .padding(.horizontal, Spacing.space6)
+                .padding(.vertical, Spacing.space4)
                 .glassEffect()
             Button {
                 Clipboard.copy(code)
@@ -110,7 +110,10 @@ struct TransferStatusView: View {
     // MARK: - Confirm send (F19 both-sides confirm)
 
     private var confirmSendView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Spacing.space5) {
+            // Decorative icon, size and status-tint both from the component's
+            // own judgment (not a speced component) — colors.md rule 2 allows
+            // a status color as an icon fill, just never as a label.
             Image(systemName: "person.crop.circle.badge.checkmark")
                 .font(.system(size: 40))
                 .foregroundStyle(.blue)
@@ -119,7 +122,7 @@ struct TransferStatusView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             TrustBadge(relay: controller.activeRelay)
-            HStack(spacing: 16) {
+            HStack(spacing: Spacing.space5) {
                 Button("Cancel", role: .destructive) { controller.cancel() }
                 Button("Send") { controller.respond(accept: true) }
                     .buttonStyle(.borderedProminent)
@@ -130,10 +133,18 @@ struct TransferStatusView: View {
     // MARK: - Transferring
 
     private func transferringView(_ p: TransferProgress) -> some View {
-        VStack(spacing: 16) {
-            Text(controller.direction == .send ? "Sending" : "Receiving")
-                .font(.headline)
-            VStack(alignment: .leading, spacing: 6) {
+        VStack(spacing: Spacing.space5) {
+            // components.md → TransferProgress: direction header carries the
+            // arrow glyph AND the word — neither is optional.
+            HStack(spacing: Spacing.space3) {
+                Image(systemName: controller.direction == .send ? "arrow.up" : "arrow.down")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Color.accentFill)
+                    .accessibilityHidden(true)
+                Text(controller.direction == .send ? "Sending" : "Receiving")
+                    .font(.headline)
+            }
+            VStack(alignment: .leading, spacing: Spacing.space3) {
                 Text(p.fileName)
                     .font(.callout)
                     .lineLimit(1)
@@ -151,7 +162,7 @@ struct TransferStatusView: View {
                 .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: Spacing.space3) {
                 ProgressView(value: fraction(p.bytesFinished + p.fileSent, of: p.totalSize))
                     .accessibilityLabel("Overall progress")
                 HStack {
@@ -180,15 +191,17 @@ struct TransferStatusView: View {
     // MARK: - Done / Failed
 
     private func doneView(_ summary: Summary, receivedText: String?) -> some View {
-        VStack(spacing: 16) {
-            Image(
-                systemName: summary.success
-                    ? "checkmark.circle.fill" : "exclamationmark.circle.fill"
+        VStack(spacing: Spacing.space5) {
+            StatusBlock(
+                kind: summary.success ? .success : .error,
+                title: receivedText != nil
+                    ? "Received text"
+                    : (summary.success ? "Transfer complete" : "Transfer finished with problems"),
+                detail: receivedText == nil
+                    ? "\(summary.files) file(s) • \(summary.totalSize.formatted(.byteCount(style: .file)))"
+                    : nil
             )
-            .font(.system(size: 48))
-            .foregroundStyle(summary.success ? .green : .orange)
             if let receivedText {
-                Text("Received text").font(.headline)
                 ScrollView {
                     Text(receivedText)
                         .font(.body.monospaced())
@@ -201,13 +214,6 @@ struct TransferStatusView: View {
                 } label: {
                     Label("Copy Text", systemImage: "doc.on.doc")
                 }
-            } else {
-                Text(summary.success ? "Transfer complete" : "Transfer finished with problems")
-                    .font(.headline)
-                Text(
-                    "\(summary.files) file(s) • \(summary.totalSize.formatted(.byteCount(style: .file)))"
-                )
-                .foregroundStyle(.secondary)
             }
             #if os(iOS)
             if controller.direction == .receive, let folder = controller.lastOutputFolder {
@@ -236,12 +242,8 @@ struct TransferStatusView: View {
     }
 
     private func failedView(_ message: String) -> some View {
-        VStack(spacing: 16) {
-            Image(systemName: "xmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.red)
-            Text(message)
-                .multilineTextAlignment(.center)
+        VStack(spacing: Spacing.space5) {
+            StatusBlock(kind: .error, title: message)
             Button("OK") { controller.reset() }
                 .buttonStyle(.borderedProminent)
         }
@@ -257,7 +259,7 @@ struct IncomingRequestView: View {
     let blocked: [String]
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Spacing.space5) {
             Text("Incoming transfer").font(.headline)
             List(list.files, id: \.name) { entry in
                 HStack {
@@ -274,19 +276,15 @@ struct IncomingRequestView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             if !blocked.isEmpty {
-                Label(
-                    "Blocked: unsafe file names in this transfer.",
-                    systemImage: "exclamationmark.triangle.fill"
-                )
-                .foregroundStyle(.red)
+                StatusBanner(kind: .error, title: "Blocked: unsafe file names in this transfer.")
             } else if !conflicts.isEmpty {
-                Label(
-                    "\(conflicts.count) item(s) already exist and will be replaced. Partially received files resume.",
-                    systemImage: "exclamationmark.triangle"
+                StatusBanner(
+                    kind: .warning,
+                    title:
+                        "\(conflicts.count) item(s) already exist and will be replaced. Partially received files resume."
                 )
-                .foregroundStyle(.orange)
             }
-            HStack(spacing: 16) {
+            HStack(spacing: Spacing.space5) {
                 Button("Decline", role: .destructive) { controller.respond(accept: false) }
                 Button("Accept") { controller.respond(accept: true) }
                     .buttonStyle(.borderedProminent)

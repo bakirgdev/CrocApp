@@ -51,10 +51,12 @@ struct PowerSettingsSections: View {
             Text("Confirmation")
         } footer: {
             if settings.autoAccept {
+                // A Section footer is not a StatusBanner surface; Section
+                // already styles footers as secondary, so a status color
+                // here would tint body text (colors.md rule 2 violation).
                 Text(
                     "Files from anyone who has your code are saved without preview or confirmation. Unsafe file names still cancel the transfer. Both-sides confirm overrides auto-accept."
                 )
-                .foregroundStyle(.orange)
             } else {
                 Text(
                     "Auto-accept skips the incoming-files preview. Leave it off unless you fully trust the sender."

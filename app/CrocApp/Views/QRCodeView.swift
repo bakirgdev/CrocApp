@@ -15,7 +15,23 @@ struct QRCodeView: View {
                     .interpolation(.none)
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 220)
+                    .frame(
+                        width: ComponentMetrics.qrFrameDefault,
+                        height: ComponentMetrics.qrFrameDefault
+                    )
+                    .padding(Spacing.space4)
+                    // design/components.md → CodePhraseDisplay + QRFrame:
+                    // white background in BOTH themes — scanners need
+                    // contrast regardless of appearance. Deliberate hardcode,
+                    // not a token violation.
+                    .background(
+                        Color.white,
+                        in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                            .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
+                    )
                     .accessibilityLabel("QR code for the transfer code")
             }
         }

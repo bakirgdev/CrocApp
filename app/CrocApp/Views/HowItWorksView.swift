@@ -5,7 +5,7 @@ import SwiftUI
 struct HowItWorksView: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: Spacing.space6) {
                 item(
                     "key.fill", "One code, one transfer",
                     "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner — share it over a channel you trust, then it expires with the transfer."
@@ -32,21 +32,23 @@ struct HowItWorksView: View {
                 )
             }
             .padding()
-            .frame(maxWidth: 480)
+            .frame(maxWidth: LayoutCap.contentMaxWidth)
         }
         .navigationTitle("How it works")
     }
 
     private func item(_ icon: String, _ title: String, _ text: String) -> some View {
         Label {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Spacing.space2) {
                 Text(title).font(.headline)
                 Text(text).font(.callout).foregroundStyle(.secondary)
             }
         } icon: {
             Image(systemName: icon)
                 .font(.title3)
-                .frame(width: 28)
+                // minWidth, not a fixed width: a fixed frame clips the glyph
+                // at accessibility text sizes.
+                .frame(minWidth: IconSize.large)
         }
     }
 }

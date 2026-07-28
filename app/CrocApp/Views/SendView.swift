@@ -33,7 +33,7 @@ struct SendView: View {
     }
 
     private var form: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Spacing.space5) {
             Picker("What to send", selection: $mode) {
                 ForEach(Mode.allCases, id: \.self) { Text($0.rawValue) }
             }
@@ -46,12 +46,15 @@ struct SendView: View {
                 textSection
             }
 
-            TextField("Custom code (optional, at least 6 characters)", text: $customCode)
-                .textFieldStyle(.roundedBorder)
-                .autocorrectionDisabled()
-                #if os(iOS)
+            TextField(
+                "Custom code (optional, at least \(EngineConstraints.minCodeLength) characters)",
+                text: $customCode
+            )
+            .textFieldStyle(.roundedBorder)
+            .autocorrectionDisabled()
+            #if os(iOS)
             .textInputAutocapitalization(.never)
-                #endif
+            #endif
 
             Button {
                 if mode == .files {
@@ -71,12 +74,14 @@ struct SendView: View {
             .disabled(!canStart)
         }
         .padding()
-        .frame(maxWidth: 480)
+        .frame(maxWidth: LayoutCap.contentMaxWidth)
     }
 
     private var canStart: Bool {
         let codeOK =
-            customCode.isEmpty || customCode.trimmingCharacters(in: .whitespaces).count >= 6
+            customCode.isEmpty
+            || customCode.trimmingCharacters(in: .whitespaces).count
+                >= EngineConstraints.minCodeLength
         let payloadOK = mode == .files ? !pickedURLs.isEmpty : !text.isEmpty
         return codeOK && payloadOK
     }
@@ -91,7 +96,7 @@ struct SendView: View {
     // MARK: - Files
 
     private var filesSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.space4) {
             Group {
                 if pickedURLs.isEmpty {
                     ContentUnavailableView(
@@ -123,7 +128,9 @@ struct SendView: View {
             .frame(minHeight: 160, maxHeight: 280)
             .overlay {
                 if isDropTargeted {
-                    RoundedRectangle(cornerRadius: 12)
+                    // design/components.md → DropZone: drag-over border is
+                    // 2px solid accent at the same radius as idle (--radius-lg).
+                    RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
                         .strokeBorder(Color.accentColor, lineWidth: 2)
                 }
             }
@@ -163,12 +170,14 @@ struct SendView: View {
     // MARK: - Text
 
     private var textSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.space4) {
             TextEditor(text: $text)
                 .font(.body.monospaced())
                 .frame(minHeight: 160, maxHeight: 280)
                 .overlay {
-                    RoundedRectangle(cornerRadius: 8)
+                    // Not a design/components.md named component; nearest
+                    // token to the prior 8px radius.
+                    RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
                         .strokeBorder(Color.secondary.opacity(0.3))
                 }
             PasteButton(payloadType: String.self) { strings in

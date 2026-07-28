@@ -15,10 +15,18 @@ struct HistoryView: View {
     var body: some View {
         Group {
             if records.isEmpty {
-                ContentUnavailableView(
-                    "No transfers yet",
-                    systemImage: "clock.arrow.circlepath",
-                    description: Text("Finished sends and receives appear here."))
+                ContentUnavailableView {
+                    Label("No transfers yet", systemImage: "clock.arrow.circlepath")
+                } description: {
+                    Text("Finished sends and receives appear here.")
+                } actions: {
+                    HStack(spacing: Spacing.space4) {
+                        Button("Send") { router.openSend(with: []) }
+                            .buttonStyle(.borderedProminent)
+                        Button("Receive") { router.openReceive() }
+                            .buttonStyle(.bordered)
+                    }
+                }
             } else {
                 List {
                     ForEach(records) { record in
@@ -63,28 +71,11 @@ struct HistoryView: View {
     }
 
     private func resend(_ record: TransferRecord) {
-        let urls = record.bookmarks.compactMap { data -> URL? in
-            var stale = false
-            #if os(macOS)
-            guard
-                let url = try? URL(
-                    resolvingBookmarkData: data, options: .withSecurityScope,
-                    relativeTo: nil, bookmarkDataIsStale: &stale)
-            else { return nil }
-            // Sandbox denies even stat until the scope is started; open it just
-            // for the existence probe -- startSend opens its own at send time.
-            let scoped = url.startAccessingSecurityScopedResource()
-            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-            guard FileManager.default.fileExists(atPath: url.path) else { return nil }
-            return url
-            #else
-            guard let url = try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale)
-            else { return nil }
-            let scoped = url.startAccessingSecurityScopedResource()
-            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-            guard FileManager.default.fileExists(atPath: url.path) else { return nil }
-            return url
-            #endif
+        // See SecurityScopedBookmark.resolveIfReachable for why the scope
+        // must be started before the existence probe -- startSend opens its
+        // own scope at send time.
+        let urls = record.bookmarks.compactMap { data in
+            SecurityScopedBookmark.resolveIfReachable(data)
         }
         guard !urls.isEmpty else {
             resendUnavailable = true

@@ -94,7 +94,9 @@ struct ReceiveView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(code.trimmingCharacters(in: .whitespacesAndNewlines).count < 6)
+            .disabled(
+                code.trimmingCharacters(in: .whitespacesAndNewlines).count
+                    < EngineConstraints.minCodeLength)
         }
         .padding()
         .frame(maxWidth: 480)
@@ -107,7 +109,9 @@ struct ReceiveView: View {
         if candidate.hasPrefix("croc://") {
             candidate = String(candidate.dropFirst("croc://".count))
         }
-        guard candidate.count >= 6, !candidate.contains(where: \.isWhitespace) else { return nil }
+        guard candidate.count >= EngineConstraints.minCodeLength,
+            !candidate.contains(where: \.isWhitespace)
+        else { return nil }
         return candidate
     }
 }

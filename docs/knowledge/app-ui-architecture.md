@@ -101,7 +101,7 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 - `OnboardingView` is a sheet from `ContentView.task`, gated on `!onboardingSeen && !AutoVerify.isHarnessRun`; `onboarding.seen` is written in `onDismiss`. The staged-files sheet yields to it (`&& !showOnboarding`) and is re-offered when onboarding dismisses.
 - `PrivacyInfo.xcprivacy` sits in both synced target folders — app declares UserDefaults CA92.1 and FileTimestamp C617.1, extension declares an empty accessed-API list, both declare no tracking and no collection. Bundle inclusion was verified in the build products.
 - `ITSAppUsesNonExemptEncryption=false` in both Config plists.
-- Exactly one `.glassEffect()` is used, on the code card in `waitingView`.
+- Two `.glassEffect()` call sites: the code card in `waitingView`, and the macOS-only "Drop to send" full-window overlay in `ContentView` (design/components.md → DropZone macOS overlay).
 
 ## SwiftUI and Xcode API facts
 
