@@ -9,6 +9,9 @@ struct ContentView: View {
     @State private var showStagedSheet = false
     @AppStorage("onboarding.seen") private var onboardingSeen = false
     @State private var showOnboarding = false
+    #if os(macOS)
+    @State private var isDropTargeted = false
+    #endif
 
     var body: some View {
         HomeView()
@@ -22,6 +25,13 @@ struct ContentView: View {
             guard !files.isEmpty else { return false }
             router.openSend(with: files)
             return true
+        } isTargeted: { targeted in
+            isDropTargeted = targeted
+        }
+        .overlay {
+            if isDropTargeted {
+                dropOverlay
+            }
         }
             #endif
             .task {
@@ -33,6 +43,7 @@ struct ContentView: View {
                 if active { localNetwork.checkIfNeeded() }
             }
             .onChange(of: scenePhase) { _, phase in
+                if phase == .active { localNetwork.recheckIfDenied() }
                 // Gate on !controller.isActive before touching the inbox at
                 // all, not just before presenting: refresh() purges batches
                 // no manifest points to, and purgeStaleBatches()'s "don't
@@ -73,6 +84,17 @@ struct ContentView: View {
                     // The staged sheet yields to onboarding on first launch;
                     // offer it now instead of waiting for the next foreground.
                     showStagedSheet = !shareInbox.staged.isEmpty
+                    // This onDismiss only ever fires for the genuine first-run
+                    // sheet (showOnboarding is gated on !onboardingSeen &&
+                    // !AutoVerify.isHarnessRun in .task above), so no extra
+                    // guard is needed here. Sequenced, not simultaneous: two
+                    // stacked system prompts on first launch is bad UX.
+                    #if os(iOS)
+                    Task {
+                        await CameraPermission.requestIfNeeded()
+                        localNetwork.checkIfNeeded()
+                    }
+                    #endif
                 },
                 content: {
                     OnboardingView {
@@ -81,6 +103,35 @@ struct ContentView: View {
                 }
             )
     }
+
+    #if os(macOS)
+    // design/components.md → DropZone: macOS full-window "Drop to send"
+    // overlay, scrim background, --radius-2xl (the one place that radius is
+    // used) and a glass surface. Not itself a drop target — the window-level
+    // dropDestination above owns hover tracking and the actual file filter.
+    private var dropOverlay: some View {
+        ZStack {
+            Color.scrim
+            VStack(spacing: Spacing.space4) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 44))
+                    .foregroundStyle(Color.accentTextOnTint)
+                    .accessibilityHidden(true)
+                Text("Drop to send")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(Color.accentTextOnTint)
+            }
+            .padding(Spacing.space9)
+            .glassEffect(
+                .regular, in: RoundedRectangle(cornerRadius: Radius.xxl, style: .continuous)
+            )
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .transition(.opacity)
+        .accessibilityHidden(true)
+    }
+    #endif
 }
 
 #Preview {

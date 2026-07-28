@@ -7,13 +7,13 @@ struct OnboardingView: View {
     let done: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Spacing.space7) {
             Image(systemName: "arrow.left.arrow.right.circle.fill")
                 .font(.system(size: 56))
                 .foregroundStyle(Color.accentColor)
             Text("Welcome to CrocApp")
                 .font(.title.bold())
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Spacing.space5) {
                 bullet(
                     "key.fill",
                     "One code phrase does everything",
@@ -30,7 +30,20 @@ struct OnboardingView: View {
                     "Same Wi-Fi or different continents — transfers find the fastest path automatically."
                 )
             }
-            .frame(maxWidth: 420)
+            .frame(maxWidth: LayoutCap.contentMaxWidth)
+            #if os(iOS)
+            // Primes the camera (QR scan) and local-network (faster nearby
+            // transfers) system prompts iOS raises later, so neither is a
+            // surprise. macOS has no camera feature and no local-network
+            // prompt in this app's flow, so this line is iOS-only.
+            Text(
+                "CrocApp will ask to use your camera (to scan QR codes) and your local network (for faster nearby transfers)."
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: LayoutCap.contentMaxWidth)
+            #endif
             Button {
                 done()
             } label: {
@@ -39,21 +52,23 @@ struct OnboardingView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .frame(maxWidth: 420)
+            .frame(maxWidth: LayoutCap.contentMaxWidth)
         }
-        .padding(32)
+        .padding(Spacing.space8)
         #if os(macOS)
-        .frame(width: 480)
+        .frame(width: LayoutCap.contentMaxWidth)
         #endif
     }
 
     private func bullet(_ icon: String, _ title: String, _ text: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: Spacing.space4) {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(Color.accentColor)
-                .frame(width: 28)
-            VStack(alignment: .leading, spacing: 2) {
+                // minWidth, not a fixed width: a fixed frame clips the glyph
+                // at accessibility text sizes.
+                .frame(minWidth: IconSize.large)
+            VStack(alignment: .leading, spacing: Spacing.space1) {
                 Text(title).font(.headline)
                 Text(text).font(.callout).foregroundStyle(.secondary)
             }

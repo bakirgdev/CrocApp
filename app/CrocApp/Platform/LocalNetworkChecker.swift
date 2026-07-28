@@ -18,6 +18,7 @@ final class LocalNetworkChecker {
 
     #if os(iOS)
     private var started = false
+    private var isRechecking = false
 
     func checkIfNeeded() {
         guard !started else { return }
@@ -25,6 +26,25 @@ final class LocalNetworkChecker {
         Task { [weak self] in
             let granted = await Self.probe(timeoutSeconds: 8)
             guard let self else { return }
+            if let granted {
+                self.status = granted ? .granted : .denied
+            }
+        }
+    }
+
+    /// Re-probes after a denial once the app returns to the foreground --
+    /// e.g. the user granted access in Settings and came back. Gated on the
+    /// current status (never re-probes `.granted` or an unresolved state)
+    /// and on `isRechecking` so repeated foregroundings inside one probe's
+    /// 8 s window don't stack duplicate Bonjour advertise+browse pairs; the
+    /// probe isn't free.
+    func recheckIfDenied() {
+        guard status == .denied, !isRechecking else { return }
+        isRechecking = true
+        Task { [weak self] in
+            let granted = await Self.probe(timeoutSeconds: 8)
+            guard let self else { return }
+            self.isRechecking = false
             if let granted {
                 self.status = granted ? .granted : .denied
             }
@@ -88,5 +108,6 @@ final class LocalNetworkChecker {
     }
     #else
     func checkIfNeeded() {}
+    func recheckIfDenied() {}
     #endif
 }
