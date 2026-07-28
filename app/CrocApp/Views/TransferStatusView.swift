@@ -9,6 +9,18 @@ import AppKit
 struct TransferStatusView: View {
     @Environment(TransferController.self) private var controller
     @Environment(LocalNetworkChecker.self) private var localNetwork
+    @State private var showsSlowPhaseHint = false
+
+    // Long enough that ordinary relay/handshake latency doesn't false-positive,
+    // short enough to reassure before the user assumes the app is hung.
+    private static let slowPhaseThreshold: Duration = .seconds(25)
+
+    private var isInEarlyPhase: Bool {
+        switch controller.phase {
+        case .starting, .connecting: true
+        default: false
+        }
+    }
 
     var body: some View {
         VStack(spacing: Spacing.space7) {
@@ -22,9 +34,15 @@ struct TransferStatusView: View {
             case .starting:
                 ProgressView()
                 Text("Starting…").foregroundStyle(.secondary)
+                if showsSlowPhaseHint {
+                    slowPhaseHintText
+                }
             case .connecting:
                 ProgressView()
                 Text("Connecting…").foregroundStyle(.secondary)
+                if showsSlowPhaseHint {
+                    slowPhaseHintText
+                }
             case .confirmSend:
                 confirmSendView
             case .waiting(let code):
@@ -45,6 +63,25 @@ struct TransferStatusView: View {
         }
         .padding()
         .frame(maxWidth: LayoutCap.contentMaxWidth)
+        // Resets and restarts whenever isInEarlyPhase flips, so the hint
+        // never keeps counting into transferring/done/failed, but survives
+        // the starting → connecting handoff (still the same stall to the user).
+        .task(id: isInEarlyPhase) {
+            showsSlowPhaseHint = false
+            guard isInEarlyPhase else { return }
+            try? await Task.sleep(for: Self.slowPhaseThreshold)
+            guard !Task.isCancelled else { return }
+            showsSlowPhaseHint = true
+        }
+    }
+
+    private var slowPhaseHintText: some View {
+        Text(
+            "This is taking longer than usual. Double-check the code, or the other device may not be ready."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
     }
 
     private var showsCancel: Bool {

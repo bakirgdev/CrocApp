@@ -20,9 +20,14 @@ struct PowerSettingsSections: View {
                 prompt: Text(AppSettings.defaultRelayAddress6)
             )
             .autocorrectionDisabled()
-            TextField(
+            SecureField(
                 "Password", text: $settings.relayPassword,
-                prompt: Text("Default"))
+                prompt: Text("Default")
+            )
+            #if os(iOS)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            #endif
         }
 
         Section {

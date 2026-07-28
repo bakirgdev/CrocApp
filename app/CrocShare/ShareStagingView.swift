@@ -8,7 +8,7 @@ struct ShareStagingView: View {
     private enum StageState {
         case staging
         case done(count: Int)
-        case failed(String)
+        case failed(Error)
     }
     @State private var state: StageState = .staging
 
@@ -26,11 +26,11 @@ struct ShareStagingView: View {
                             "^[\(count) file](inflect: true) staged. Open CrocApp to start the transfer."
                         )
                     }
-                case .failed(let message):
+                case .failed(let error):
                     ContentUnavailableView {
                         Label("Couldn't prepare files", systemImage: "exclamationmark.triangle")
                     } description: {
-                        Text(message)
+                        Text(error.localizedDescription)
                     }
                 }
             }
@@ -40,8 +40,14 @@ struct ShareStagingView: View {
             #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { complete() }
-                        .disabled({ if case .staging = state { true } else { false } }())
+                    Button("Done") {
+                        if case .failed(let error) = state {
+                            cancel(error)
+                        } else {
+                            complete()
+                        }
+                    }
+                    .disabled({ if case .staging = state { true } else { false } }())
                 }
             }
         }
@@ -50,7 +56,7 @@ struct ShareStagingView: View {
                 let manifest = try await ShareStager.stage(items: items)
                 state = .done(count: manifest.files.count)
             } catch {
-                state = .failed(error.localizedDescription)
+                state = .failed(error)
             }
         }
     }
