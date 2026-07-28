@@ -30,6 +30,17 @@ Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pair
 - Mac card: same for the Mac App Store badge (`assets/img/mac-app-store.svg`)
 - Brew card prints `brew install --cask crocapp` with a copy button, but no cask is published. Verify the command actually works before the card claims it. Blocked on notarization (`docs/known-issues.md`)
 
+## Signing cert (blocks every macOS release channel)
+
+`scripts/build-devid.sh` archives fine, then stops at `DEVID-PENDING-CERT`. `security find-identity -v -p codesigning` shows one identity, `Apple Development: gracicbakir@icloud.com (5J25995FS2)`. No **Developer ID Application** cert exists, so nothing signable ships — not the unnotarized build, not notarization, not the Homebrew cask.
+
+- Create a Developer ID Application cert at developer.apple.com (Certificates > Developer ID Application), install it in the login keychain, re-run `scripts/build-devid.sh`. Expect `DEVID-EXPORT-OK` then `DEVID-CHECK-OK`
+- Only owner-account action; the script degrades on purpose rather than failing, so it will keep quietly saying PENDING until this is done
+- After the cert: real notarization is still unwritten (`notarytool submit --wait` + `stapler staple`), see `docs/known-issues.md`
+- Mac App Store is a separate cert (Apple Distribution / 3rd Party Mac Developer), and `Config/ExportOptions-MAS.plist` has still never been exercised
+
+Also owner-only, at submission: answer the App Store Connect encryption questionnaire. `ITSAppUsesNonExemptEncryption` is now `true` in both plists (croc bundles its own AES-256-GCM/ChaCha20-Poly1305, so no exemption applies — `docs/decisions/0030-export-compliance-declaration.md`). The plist value and the answer you give must agree.
+
 ## App
 
 - Brew cask (research)
