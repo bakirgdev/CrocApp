@@ -1,0 +1,8 @@
+{
+  "label": "Referencia",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Interoperabilidad con la CLI de croc, la matriz completa de funciones y un glosario para el usuario."
+  }
+}

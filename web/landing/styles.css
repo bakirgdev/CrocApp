@@ -262,9 +262,10 @@ body {
    literals here by necessity: a custom property does not resolve inside a
    media condition, so the stylesheet is where the numbers have to live. */
 
-/* Four links do not fit beside a wordmark, repo link and toggle on a phone,
-   but dropping all four takes Download with them — the one anchor the page
-   exists to reach. The other three survive as scrolling. A hamburger for three
+/* Five links do not fit beside a wordmark, repo link and toggle on a phone,
+   but dropping all five takes Download with them — the one anchor the page
+   exists to reach. The other four survive as scrolling, except Docs, which is
+   a real page: the footer carries it at every width. A hamburger for three
    in-page anchors is more JS and more a11y surface than the problem deserves. */
 @media (width < 48rem) {
   .nav__link:not(.nav__link--primary) {

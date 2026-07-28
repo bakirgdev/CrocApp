@@ -1,0 +1,70 @@
+name: Deploy docs on GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/docs/**"
+      - "design/tokens.css"
+      - "scripts/assemble-site.sh"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & deploy (docs)
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # showLastUpdateTime reads the file's git history
+
+      - name: Enable pnpm
+        run: corepack enable pnpm
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/docs/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - name: Assemble _site
+        run: scripts/assemble-site.sh
+
+      - name: Verify CNAME survived assembly
+        run: test -s _site/CNAME && cat _site/CNAME
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Release the Pages deployment if this run is cancelled
+        if: cancelled()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api --method POST "repos/$REPO/pages/deployments/$SHA/cancel" || true

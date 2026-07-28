@@ -1,6 +1,6 @@
 # 0019. The landing site deploys from `web/` with tokens assembled in, one workflow per site
 
-Status: accepted
+Status: superseded by 0025
 Date: 2026-07-26
 
 ## Context

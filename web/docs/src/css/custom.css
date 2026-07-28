@@ -1,30 +1,113 @@
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
- */
+/* CrocApp docs theme: Infima re-pointed at the design tokens.
+ *
+ * tokens.css is copied in from design/ by the `tokens` package script (it is
+ * gitignored here, exactly like web/landing/tokens.css, ADR 0015). It already
+ * pins color-scheme on [data-theme="light"|"dark"], which is the same attribute
+ * Docusaurus toggles, so every light-dark() pair resolves correctly and the
+ * dark theme needs no second block below.
+ *
+ * Rule: map Infima variables to tokens here. No raw hex or px in this file. */
 
-/* You can override the default Infima variables here. */
+@import './tokens.css';
+
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* Accent as a fill. --color-accent is 3.41:1 on white, fine for fills,
+     icons and borders, never for a word: link color takes --color-text-link
+     and inline code takes --color-accent-text. See design/colors.md. */
+  --ifm-color-primary: var(--color-accent);
+  --ifm-color-primary-dark: var(--green-700);
+  --ifm-color-primary-darker: var(--green-800);
+  --ifm-color-primary-darkest: var(--green-900);
+  --ifm-color-primary-light: var(--green-400);
+  --ifm-color-primary-lighter: var(--green-300);
+  --ifm-color-primary-lightest: var(--green-200);
+
+  --ifm-font-family-base: var(--font-sans);
+  --ifm-font-family-monospace: var(--font-mono);
+  --ifm-font-size-base: var(--type-body-size);
+  --ifm-line-height-base: var(--type-body-lh);
+
+  --ifm-background-color: var(--color-surface-base);
+  --ifm-background-surface-color: var(--color-surface-card);
+  --ifm-font-color-base: var(--color-text-primary);
+  --ifm-heading-color: var(--color-text-primary);
+  --ifm-link-color: var(--color-text-link);
+  --ifm-link-hover-color: var(--color-accent-text);
+
+  --ifm-color-content-secondary: var(--color-text-secondary);
+  --ifm-toc-border-color: var(--color-separator);
+  --ifm-hr-border-color: var(--color-separator);
+  --ifm-table-border-color: var(--color-separator);
+  --ifm-blockquote-border-color: var(--color-separator);
+  --ifm-blockquote-color: var(--color-text-secondary);
+
+  --ifm-global-radius: var(--radius-md);
+  --ifm-container-width-xl: var(--content-max-width-web);
+  --ifm-global-shadow-lw: var(--shadow-sm);
+  --ifm-global-shadow-md: var(--shadow-md);
+  --ifm-global-shadow-tl: var(--shadow-lg);
+  --ifm-transition-fast: var(--dur-fast);
+  --ifm-transition-slow: var(--dur-base);
+  --ifm-transition-timing-default: var(--ease-standard);
+
+  --ifm-navbar-background-color: var(--color-surface-base);
+  --ifm-navbar-height: var(--nav-height-web);
+  --ifm-navbar-shadow: none;
+  --ifm-footer-background-color: var(--color-surface-card);
+  --ifm-footer-color: var(--color-text-secondary);
+  --ifm-footer-link-color: var(--color-text-secondary);
+  --ifm-footer-title-color: var(--color-text-primary);
+
+  --ifm-code-font-size: 92%;
+  --ifm-code-background: var(--color-fill-tertiary);
+  --ifm-code-border-radius: var(--radius-xs);
+  --ifm-pre-background: var(--color-surface-card);
+
+  --docusaurus-highlighted-code-line-bg: var(--color-fill-tertiary);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
-[data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+/* tokens.css sets `body { background: var(--color-surface-grouped) }` for the
+   landing page's grouped-list look. A docs page is a single sheet of prose, so
+   it takes the base surface instead, and the chrome keeps a hairline. */
+body {
+  background: var(--ifm-background-color);
+}
+
+.navbar {
+  border-bottom: var(--border-hairline) solid var(--color-separator);
+}
+
+.footer {
+  border-top: var(--border-hairline) solid var(--color-separator);
+}
+
+/* Measure. Long lines of body text are the one thing a docs theme reliably
+   gets wrong; design/spacing-layout.md caps prose at --content-max-width-prose. */
+.markdown > p,
+.markdown > ul,
+.markdown > ol,
+.markdown > blockquote {
+  max-width: var(--content-max-width-prose);
+}
+
+/* Code phrases and CLI flags carry meaning character by character. */
+.markdown code {
+  letter-spacing: var(--tracking-code);
+}
+
+/* tokens.css strips the default underline from every anchor. Inside prose that
+   removes the only non-color cue that a link is a link (WCAG 1.4.1). */
+.markdown a:not(.card):not(.button) {
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+/* --shadow-focus-ring is defined against --color-surface-base; the theme's own
+   outline is redundant once tokens.css has set :focus-visible. */
+.navbar__link:focus-visible,
+.menu__link:focus-visible,
+.pagination-nav__link:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-ring);
+  border-radius: var(--radius-sm);
 }

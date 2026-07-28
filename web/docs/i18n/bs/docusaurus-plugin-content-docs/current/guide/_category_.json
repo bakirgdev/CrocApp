@@ -1,0 +1,8 @@
+{
+  "label": "Vodič",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Kako funkcionišu slanje, prijem, kodne fraze, napredne opcije, postavke i historija u CrocApp-u."
+  }
+}

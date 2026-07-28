@@ -1,0 +1,8 @@
+{
+  "label": "Referenca",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Interoperabilnost sa croc CLI-jem, potpuna matrica funkcija i rječnik pojmova za korisnike."
+  }
+}

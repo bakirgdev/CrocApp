@@ -1,0 +1,8 @@
+{
+  "label": "Guía",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Cómo funcionan en CrocApp el envío, la recepción, las frases código, las opciones avanzadas, la configuración y el historial."
+  }
+}

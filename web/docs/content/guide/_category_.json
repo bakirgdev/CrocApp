@@ -1,0 +1,8 @@
+{
+  "label": "Guide",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "How sending, receiving, code phrases, power options, settings, and history work in CrocApp."
+  }
+}

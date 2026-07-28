@@ -1,0 +1,30 @@
+{
+  "version.label": {
+    "message": "0.9.9",
+    "description": "The label for version current"
+  },
+  "sidebar.docs.category.Getting started": {
+    "message": "Начало работы",
+    "description": "The label for category 'Getting started' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Getting started.link.generated-index.description": {
+    "message": "Текущий статус релиза и разбор вашей первой отправки и приёма.",
+    "description": "The generated-index page description for category 'Getting started' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Guide": {
+    "message": "Руководство",
+    "description": "The label for category 'Guide' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Guide.link.generated-index.description": {
+    "message": "Как работают отправка, приём, кодовые фразы, расширенные настройки, настройки и история в CrocApp.",
+    "description": "The generated-index page description for category 'Guide' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Reference": {
+    "message": "Справочник",
+    "description": "The label for category 'Reference' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Reference.link.generated-index.description": {
+    "message": "Совместимость с croc CLI, полная таблица возможностей и пользовательский глоссарий.",
+    "description": "The generated-index page description for category 'Reference' in sidebar 'docs'"
+  }
+}

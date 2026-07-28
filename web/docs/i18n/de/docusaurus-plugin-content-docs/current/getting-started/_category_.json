@@ -1,0 +1,8 @@
+{
+  "label": "Erste Schritte",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Aktueller Release-Status und eine Anleitung für Ihre erste Sende- und Empfangsübertragung."
+  }
+}

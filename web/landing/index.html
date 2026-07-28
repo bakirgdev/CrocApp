@@ -109,6 +109,9 @@
           <a class="nav__link" href="#why">Why</a>
           <a class="nav__link" href="#how">How it works</a>
           <a class="nav__link" href="#features">Features</a>
+          <!-- Same origin, a real page rather than a section, so it navigates
+               in this tab and carries no new-tab affordance (ADR 0022). -->
+          <a class="nav__link" href="/docs/">Docs</a>
           <!-- The one link that survives the phone breakpoint. -->
           <a class="nav__link nav__link--primary" href="#download">Download</a>
         </nav>
@@ -876,6 +879,9 @@
           </p>
         </div>
         <nav class="footer__links t-footnote" aria-label="Footer">
+          <!-- Same origin, so no new tab and no announcement. Also the only
+               docs entry point below 48rem, where the nav drops it. -->
+          <a href="/docs/">Documentation</a>
           <a href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener">
             Source
             <span class="u-visually-hidden">(opens in a new tab)</span>

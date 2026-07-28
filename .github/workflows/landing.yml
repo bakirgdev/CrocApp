@@ -4,8 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - "web/**"
+      - "web/landing/**"
       - "design/tokens.css"
+      - "scripts/assemble-site.sh"
       - ".github/workflows/landing.yml"
   workflow_dispatch:
 
@@ -15,7 +16,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: landing-pages
+  group: github-pages
   cancel-in-progress: false
 
 jobs:
@@ -30,12 +31,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # docs showLastUpdateTime reads each file's git history
+
+      - name: Enable pnpm
+        run: corepack enable pnpm
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/docs/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
 
       - name: Assemble _site
-        run: |
-          mkdir -p _site
-          cp -R web/landing/. _site/
-          cp design/tokens.css _site/tokens.css
+        run: scripts/assemble-site.sh
 
       - name: Verify CNAME survived assembly
         run: test -s _site/CNAME && cat _site/CNAME

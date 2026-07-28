@@ -4,35 +4,51 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+// crocapp.dev is the landing page. GitHub Pages serves one site per repo, so
+// the docs live under /docs/ of that same artifact and both surfaces are
+// published together by scripts/assemble-site.sh.
 const config: Config = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
+  title: 'CrocApp',
+  tagline: 'Encrypted file transfer for iOS and macOS',
   favicon: 'img/favicon.ico',
 
-  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    v4: true,
   },
 
-  // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  url: 'https://crocapp.dev',
+  baseUrl: '/docs/',
+  trailingSlash: true,
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'bakirgdev',
+  projectName: 'CrocApp',
 
   onBrokenLinks: 'throw',
+  onBrokenAnchors: 'throw',
 
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
+  markdown: {
+    // `.md` is CommonMark, `.mdx` is MDX. The default ('mdx' for both) makes a
+    // bare `{` open a JavaScript expression, which breaks `## Heading {#id}`
+    // and turns any brace a translator types into a build failure. No page here
+    // uses JSX, so nothing is given up.
+    format: 'detect',
+    hooks: {
+      onBrokenMarkdownLinks: 'throw',
+      onBrokenMarkdownImages: 'throw',
+    },
+  },
+
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'bs', 'de', 'es', 'fr', 'ru'],
+    localeConfigs: {
+      en: {label: 'English', htmlLang: 'en-US'},
+      bs: {label: 'Bosanski', htmlLang: 'bs-BA'},
+      de: {label: 'Deutsch', htmlLang: 'de-DE'},
+      es: {label: 'Español', htmlLang: 'es-ES'},
+      fr: {label: 'Français', htmlLang: 'fr-FR'},
+      ru: {label: 'Русский', htmlLang: 'ru-RU'},
+    },
   },
 
   presets: [
@@ -40,27 +56,25 @@ const config: Config = {
       'classic',
       {
         docs: {
+          // `content/`, not `docs/`: the repo already has a docs/ directory and
+          // it means something else (contributor and architecture material).
+          path: 'content',
+          routeBasePath: '/',
           sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-        },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
+          editUrl: 'https://github.com/bakirgdev/CrocApp/tree/main/web/docs/',
+          editLocalizedFiles: true,
+          showLastUpdateTime: true,
+          // Current *is* 0.9.9, rather than an unlabeled "Next" sitting on top
+          // of a duplicated snapshot. Nothing has shipped yet, so a
+          // versioned_docs/ copy would only be a second place to edit. Cut the
+          // first snapshot when 1.0.0 tags: `pnpm run docusaurus docs:version`.
+          lastVersion: 'current',
+          versions: {
+            current: {label: '0.9.9'},
           },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
         },
+        // No blog. Release notes belong in GitHub Releases and CHANGELOG.md.
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -69,27 +83,33 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/og.jpg',
     colorMode: {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'My Site',
+      title: 'CrocApp',
       logo: {
-        alt: 'My Site Logo',
-        src: 'img/logo.svg',
+        alt: 'CrocApp',
+        src: 'img/mascot.webp',
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          href: 'https://crocapp.dev/',
+          label: 'crocapp.dev',
           position: 'left',
-          label: 'Tutorial',
+          target: '_self',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
+          type: 'docsVersionDropdown',
+          position: 'right',
+        },
+        {
+          type: 'localeDropdown',
+          position: 'right',
+        },
+        {
+          href: 'https://github.com/bakirgdev/CrocApp',
           label: 'GitHub',
           position: 'right',
         },
@@ -101,26 +121,24 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            {
-              label: 'Tutorial',
-              to: '/docs/intro',
-            },
+            {label: 'Install', to: '/getting-started/install'},
+            {label: 'First transfer', to: '/getting-started/first-transfer'},
+            {label: 'Security and privacy', to: '/security-and-privacy'},
+            {label: 'Troubleshooting', to: '/troubleshooting'},
           ],
         },
         {
-          title: 'Community',
+          title: 'Project',
           items: [
+            {label: 'crocapp.dev', href: 'https://crocapp.dev/'},
+            {label: 'GitHub', href: 'https://github.com/bakirgdev/CrocApp'},
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              label: 'Issues',
+              href: 'https://github.com/bakirgdev/CrocApp/issues',
             },
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'X',
-              href: 'https://x.com/docusaurus',
+              label: 'Discussions',
+              href: 'https://github.com/bakirgdev/CrocApp/discussions',
             },
           ],
         },
@@ -128,21 +146,31 @@ const config: Config = {
           title: 'More',
           items: [
             {
-              label: 'Blog',
-              to: '/blog',
+              label: 'Contributing',
+              href: 'https://github.com/bakirgdev/CrocApp/blob/main/CONTRIBUTING.md',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              label: 'Security policy',
+              href: 'https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md',
+            },
+            {
+              label: 'croc',
+              href: 'https://github.com/schollz/croc',
+            },
+            {
+              label: 'License',
+              href: 'https://github.com/bakirgdev/CrocApp/blob/main/LICENSE',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright:
+        'CrocApp is MIT licensed and unaffiliated with croc. Built with Docusaurus.',
     },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
+      additionalLanguages: ['bash', 'json', 'swift', 'go'],
     },
   } satisfies Preset.ThemeConfig,
 };

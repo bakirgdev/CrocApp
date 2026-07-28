@@ -38,8 +38,9 @@ crocmobile/cmd/croctest/croctest
 # gomobile build output (ADR 0006: xcframework not committed)
 CrocKit/Croc.xcframework/
 
-# Landing page tokens (ADR 0015: design/tokens.css preview copy)
+# Web surface tokens (ADR 0015: design/tokens.css is the only copy)
 web/landing/tokens.css
+web/docs/src/css/tokens.css
 
 # Docusaurus
 node_modules/
@@ -47,6 +48,9 @@ node_modules/
 .docusaurus
 .cache-loader
 npm-debug.log*
+
+# Assembled GitHub Pages artifact (scripts/assemble-site.sh)
+/_site
 
 # Obra superpowers
 .superpowers/

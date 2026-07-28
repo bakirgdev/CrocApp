@@ -12,7 +12,6 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 - **`AutoVerify` compiles into Release.** The launch-argument harness and its settings overrides ship in the store binary. Gate behind a build flag before submission.
 - **`ExportOptions-MAS.plist` is committed but never exercised.** First real MAS export is its first test.
 - **Encryption declaration must match.** `ITSAppUsesNonExemptEncryption=false` is in both Config plists; the BIS/ASC answer at submission has to agree.
-- **README screenshots do not exist.** The root `README.md` has three `<picture>` blocks pointing at `assets/screenshots/*.png`; the files are unshot, so the public repo page renders three broken images today. Manifest of what to capture is in `assets/screenshots/README.md`.
 - **App accent is `#2BA35A`, the design system says `#1E9E6A`.** `app/CrocApp/Assets.xcassets/AccentColor.colorset` predates `design/`, carries a single universal colour, and has no dark variant (`design/brand.md` specifies `#1E9E6A` light / `#2DC585` dark). The design system is canonical; the app has not been restyled yet.
 
 ## Transfer controller
@@ -62,11 +61,20 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 ## Landing page
 
 - **The primary CTA still resolves to nothing installable.** "Download" in the hero scrolls to four channels: two unlinked store badges, a GitHub releases link that 404s until there is a release, and a Homebrew line for a cask that does not exist. Honest, but the page's strongest call to action cannot yet be completed. Each channel clears independently: the badges when the apps ship, the release link on the first tag, the cask when it is submitted.
-- **Four links point at repository files that do not exist.** `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, and a build section in `README.md`. The URLs are the ones those files will have; they 404 until the files land.
 - **`--content-max-width` on the hero mockup.** `design/brand.md` now carves an explicit exception for elements that depict the app, so this is documented rather than fixed — but the exception is narrow and easy to over-apply.
 - **Store badges are inverted in dark mode with a CSS filter.** Apple ships black and white variants; the repo has black only. Inverting a black-on-transparent badge produces the white variant, but it is a filter over supplied artwork, not the supplied artwork.
 - **`assets/banner.webp` is orphaned.** `design/brand.md` assigns it to the README header, the landing hero and the social card. It appears in none of them.
 - **Three landing dependencies are hand-maintained and nothing checks them:** `llms.txt`'s release status, the footer's "last updated" date, and `og.jpg`. The first two have to be edited by hand on every release; `og.jpg` is deliberately a fixed hand-made asset and is not derived from the tokens.
+
+## Docs site
+
+- **No site search, on purpose.** A local search plugin is a new dependency and Algolia DocSearch is an external account plus a third-party request from a page that makes a privacy claim. Sixteen pages with a full sidebar and browser find-in-page is enough for now. Revisit if the page count grows.
+- **The version dropdown is invisible.** Docusaurus hides `docsVersionDropdown` while only one version exists (ADR 0027); it stays hidden until the first `docusaurus docs:version` cut.
+- **The five non-English locales are unreviewed machine-assisted drafts.** `bs`, `de`, `es`, `fr`, `ru` carry a warning admonition saying so, but nothing has native-speaker review yet (ADR 0028).
+- **A landing-only change rebuilds the docs site too, and vice versa.** Both Pages workflows call `scripts/assemble-site.sh`, which builds both surfaces regardless of which one changed (ADR 0025).
+- **No app screenshots anywhere.** `assets/screenshots/` is empty, so neither the README nor the guide pages show the app. `assets/screenshots/README.md` holds the manifest of the six light/dark pairs to capture.
+- **No pull-request preview build.** `onBrokenLinks: throw` means a broken docs build is only discovered on push to `main`, when `landing.yml` or `docs.yml` runs and fails.
+- **`web/landing/sitemap.xml` still lists only the landing URL.** `robots.txt` now advertises the Docusaurus-generated `/docs/sitemap.xml` as a second sitemap, so crawlers reach it, but the two sitemaps stay separate and the landing one is hand-maintained.
 
 ## Accepted
 

@@ -1,0 +1,8 @@
+{
+  "label": "Primeros pasos",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "El estado actual del lanzamiento y un recorrido por el primer envío y la primera recepción."
+  }
+}

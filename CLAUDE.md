@@ -6,7 +6,7 @@ Free, open-source native SwiftUI GUI for the "croc" file-transfer CLI. Targets i
 
 - `.claude/`: project Claude config, `rules/`, `skills/`, `settings.json` and `settings.local.json`.
 - `.mcp.json`: project MCP servers `xcode` and `gopls` (Go semantics), both behind the `caveman-shrink` stdio proxy (compresses tool descriptions). context7 (docs) and playwright (browser, for landing/docs sites) come from plugins enabled in `.claude/settings.json` instead, never both ways at once (ADR 0024).
-- `.github/`: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` (Pages deploy, ADR 0019); issue and PR templates route per `ISSUE_TEMPLATE/config.yml`.
+- `.github/`: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` and `workflows/docs.yml` (Pages deploy; both publish the whole site via `scripts/assemble-site.sh`, ADR 0025); issue and PR templates route per `ISSUE_TEMPLATE/config.yml`.
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`: contributor policy at repo root (ADR 0023). `CONTRIBUTING.md` publicly restates the Working Rules below; change both together.
 - `.swift-format`, `.xcode-version`, `crocmobile/.golangci.yml`: tool configs. See `docs/knowledge/tooling.md` for the exact pinned versions and rationale.
 - `app/`: Xcode project (SwiftUI, iOS + macOS), `CrocApp.xcodeproj`, `CrocApp/` sources, `CrocShare/` share extension, `Config/` (plists, entitlements, export options).
@@ -16,7 +16,7 @@ Free, open-source native SwiftUI GUI for the "croc" file-transfer CLI. Targets i
 - `design/`: design system (tokens, component specs, SF Symbols mapping, `tokens.css` for web). Canonical for the app and web surfaces (ADR 0015). Read `design/README.md` before any visual change.
 - `docs/ARCHITECTURE.md`, `docs/BUILDING.md`, `docs/GLOSSARY.md`: system map/event flow, exact toolchain versions and fresh-clone steps, and term glossary respectively. Canonical over any version number or architecture claim restated in this file.
 - `docs/knowledge/`: evergreen project knowledge, see its README for which file answers what. `docs/decisions/`: ADRs, `NNNN-slug.md`. `docs/known-issues.md`: triaged defects, accepted papercuts, release blockers (check it before filing a bug as new).
-- `scripts/`: build and verification harnesses (see Commands), `lib.sh` holds shared helpers. `web/landing/`: landing page, live at crocapp.dev. `web/docs/`: docs site, not built yet.
+- `scripts/`: build and verification harnesses (see Commands), `lib.sh` holds shared helpers, `assemble-site.sh` builds the combined Pages artifact (ADR 0025). `web/landing/`: landing page, live at crocapp.dev. `web/docs/`: user-facing docs site (Docusaurus, six locales), live at crocapp.dev/docs/. See `docs/knowledge/docs-site.md` before touching it.
 
 ## Commands
 
@@ -44,6 +44,12 @@ scripts/build-devid.sh        # Developer ID archive → export → notarization
 
 # landing page, local preview
 cp design/tokens.css web/landing/ && python3 -m http.server --directory web/landing
+
+# docs site, local preview (tokens copy runs automatically)
+pnpm --dir web/docs start
+
+# full Pages artifact (landing + docs), built locally
+scripts/assemble-site.sh
 ```
 
 Env: `CROC` (default `~/go/bin/croc`), `SIM` (default `iPhone 17 Pro`; list with `xcrun simctl list devices`).
@@ -67,6 +73,10 @@ Start at `docs/ARCHITECTURE.md` for the system map. `docs/knowledge/crocmobile-b
 ### Look up, don't guess
 
 When unsure about any API, library, tool, or platform behavior: query the context7 MCP (see `@.claude/rules/context7.md`), perform web search, deploy research subagent(s), or use tool search, before writing code. A small lookup beats a hallucination, doubly so for Swift/SwiftUI/Xcode 26 APIs (training data lags Apple releases) and the croc CLI (frequent new versions). Prefer semantic tools over grep where they exist: `gopls` MCP for `crocmobile/` (`go_search`, `go_symbol_references`, `go_file_context`, `go_package_api`, `go_diagnostics`), `xcode` MCP for build/test/diagnostics/simulator on the Swift side (needs the project open in Xcode, Settings > Intelligence > MCP enabled; not a substitute for `scripts/verify-*.sh`).
+
+### Comments
+
+Don't comment your thoughs or the obvious things. Only leave comments when really needed to explain why something is done a certain way, or to clarify non-obvious behavior. Avoid redundant comments that restate the code. If comment is needed, keep it short, clear, and relevant.
 
 ### Commit and push
 

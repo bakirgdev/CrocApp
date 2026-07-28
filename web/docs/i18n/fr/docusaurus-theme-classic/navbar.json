@@ -1,0 +1,18 @@
+{
+  "title": {
+    "message": "CrocApp",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "CrocApp",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.crocapp.dev": {
+    "message": "crocapp.dev",
+    "description": "Navbar item with label crocapp.dev"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}

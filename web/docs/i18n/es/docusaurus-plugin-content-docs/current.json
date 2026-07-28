@@ -1,0 +1,30 @@
+{
+  "version.label": {
+    "message": "0.9.9",
+    "description": "The label for version current"
+  },
+  "sidebar.docs.category.Getting started": {
+    "message": "Primeros pasos",
+    "description": "The label for category 'Getting started' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Getting started.link.generated-index.description": {
+    "message": "El estado actual del lanzamiento y un recorrido por el primer envío y la primera recepción.",
+    "description": "The generated-index page description for category 'Getting started' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Guide": {
+    "message": "Guía",
+    "description": "The label for category 'Guide' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Guide.link.generated-index.description": {
+    "message": "Cómo funcionan en CrocApp el envío, la recepción, las frases código, las opciones avanzadas, la configuración y el historial.",
+    "description": "The generated-index page description for category 'Guide' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Reference": {
+    "message": "Referencia",
+    "description": "The label for category 'Reference' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Reference.link.generated-index.description": {
+    "message": "Interoperabilidad con la CLI de croc, la matriz completa de funciones y un glosario para el usuario.",
+    "description": "The generated-index page description for category 'Reference' in sidebar 'docs'"
+  }
+}

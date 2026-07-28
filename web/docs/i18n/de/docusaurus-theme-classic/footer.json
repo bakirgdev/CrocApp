@@ -1,0 +1,66 @@
+{
+  "link.title.Docs": {
+    "message": "Dokumentation",
+    "description": "The title of the footer links column with title=Docs in the footer"
+  },
+  "link.title.Project": {
+    "message": "Projekt",
+    "description": "The title of the footer links column with title=Project in the footer"
+  },
+  "link.title.More": {
+    "message": "Weiteres",
+    "description": "The title of the footer links column with title=More in the footer"
+  },
+  "link.item.label.Install": {
+    "message": "Installation",
+    "description": "The label of footer link with label=Install linking to /getting-started/install"
+  },
+  "link.item.label.First transfer": {
+    "message": "Erste Übertragung",
+    "description": "The label of footer link with label=First transfer linking to /getting-started/first-transfer"
+  },
+  "link.item.label.Security and privacy": {
+    "message": "Sicherheit und Datenschutz",
+    "description": "The label of footer link with label=Security and privacy linking to /security-and-privacy"
+  },
+  "link.item.label.Troubleshooting": {
+    "message": "Fehlerbehebung",
+    "description": "The label of footer link with label=Troubleshooting linking to /troubleshooting"
+  },
+  "link.item.label.crocapp.dev": {
+    "message": "crocapp.dev",
+    "description": "The label of footer link with label=crocapp.dev linking to https://crocapp.dev/"
+  },
+  "link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "The label of footer link with label=GitHub linking to https://github.com/bakirgdev/CrocApp"
+  },
+  "link.item.label.Issues": {
+    "message": "Probleme",
+    "description": "The label of footer link with label=Issues linking to https://github.com/bakirgdev/CrocApp/issues"
+  },
+  "link.item.label.Discussions": {
+    "message": "Diskussionen",
+    "description": "The label of footer link with label=Discussions linking to https://github.com/bakirgdev/CrocApp/discussions"
+  },
+  "link.item.label.Contributing": {
+    "message": "Mitwirken",
+    "description": "The label of footer link with label=Contributing linking to https://github.com/bakirgdev/CrocApp/blob/main/CONTRIBUTING.md"
+  },
+  "link.item.label.Security policy": {
+    "message": "Sicherheitsrichtlinie",
+    "description": "The label of footer link with label=Security policy linking to https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md"
+  },
+  "link.item.label.croc": {
+    "message": "croc",
+    "description": "The label of footer link with label=croc linking to https://github.com/schollz/croc"
+  },
+  "link.item.label.License": {
+    "message": "Lizenz",
+    "description": "The label of footer link with label=License linking to https://github.com/bakirgdev/CrocApp/blob/main/LICENSE"
+  },
+  "copyright": {
+    "message": "CrocApp ist MIT-lizenziert und steht in keiner Verbindung zu croc. Erstellt mit Docusaurus.",
+    "description": "The footer copyright"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "version.label": {
+    "message": "0.9.9",
+    "description": "The label for version current"
+  },
+  "sidebar.docs.category.Getting started": {
+    "message": "Prvi koraci",
+    "description": "The label for category 'Getting started' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Getting started.link.generated-index.description": {
+    "message": "Trenutni status izdanja i vodič kroz vaše prvo slanje i prijem.",
+    "description": "The generated-index page description for category 'Getting started' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Guide": {
+    "message": "Vodič",
+    "description": "The label for category 'Guide' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Guide.link.generated-index.description": {
+    "message": "Kako funkcionišu slanje, prijem, kodne fraze, napredne opcije, postavke i historija u CrocApp-u.",
+    "description": "The generated-index page description for category 'Guide' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Reference": {
+    "message": "Referenca",
+    "description": "The label for category 'Reference' in sidebar 'docs'"
+  },
+  "sidebar.docs.category.Reference.link.generated-index.description": {
+    "message": "Interoperabilnost sa croc CLI-jem, potpuna matrica funkcija i rječnik pojmova za korisnike.",
+    "description": "The generated-index page description for category 'Reference' in sidebar 'docs'"
+  }
+}

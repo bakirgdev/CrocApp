@@ -41,29 +41,6 @@ It is a graphical front end for [croc](https://github.com/schollz/croc), the com
 
 Every V1 feature is implemented. What stands between the app and a release is tracked in [`docs/known-issues.md`](docs/known-issues.md) under "Blocking release".
 
-## Screenshots
-
-<!-- TODO: capture these six PNGs into assets/screenshots/ before release.
-     Light and dark are separate files; GitHub swaps them by viewer theme. -->
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/mac-send-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/mac-send-light.png">
-  <img alt="Sending a file on macOS" src="assets/screenshots/mac-send-light.png" width="720">
-</picture>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/ios-receive-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/ios-receive-light.png">
-  <img alt="Receiving a file on iOS" src="assets/screenshots/ios-receive-light.png" width="320">
-</picture>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/mac-settings-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/mac-settings-light.png">
-  <img alt="Settings on macOS" src="assets/screenshots/mac-settings-light.png" width="720">
-</picture>
-
 ## How it works
 
 ```mermaid
@@ -254,6 +231,7 @@ No. CrocApp is Apple-platform only by design. Use the [croc CLI](https://github.
 | [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records, numbered and dated |
 | [`docs/known-issues.md`](docs/known-issues.md) | Triaged defects and accepted papercuts. **Check here before filing a bug** |
 | [`design/`](design/README.md) | Canonical design system for the app, landing page, and docs site |
+| [crocapp.dev/docs](https://crocapp.dev/docs/) | User documentation: install, transfers, settings, security, troubleshooting |
 
 ## Contributing
 

@@ -1,16 +1,18 @@
 {
   "name": "crocapp-docs",
-  "version": "1.0.0",
+  "version": "0.9.9",
   "private": true,
+  "packageManager": "pnpm@11.17.0",
   "scripts": {
     "docusaurus": "docusaurus",
-    "start": "docusaurus start",
-    "build": "docusaurus build",
+    "tokens": "cp ../../design/tokens.css src/css/tokens.css",
+    "start": "pnpm run tokens && docusaurus start",
+    "build": "pnpm run tokens && docusaurus build",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
+    "write-translations:all": "for l in bs de es fr ru; do docusaurus write-translations --locale $l; done",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc"
   },
