@@ -33,7 +33,6 @@ Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pair
 ## App
 
 - Brew cask (research)
-- Copy the Claude design into the app — target v1.1.0
 
 ## Ops / external
 
