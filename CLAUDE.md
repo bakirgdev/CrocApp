@@ -5,7 +5,7 @@ Free, open-source native SwiftUI GUI for the "croc" file-transfer CLI. Targets i
 ## Layout
 
 - `.claude/`: project Claude config, `rules/`, `skills/`, `settings.json` and `settings.local.json`.
-- `.mcp.json`: MCP servers `context7` (docs), `xcode`, `gopls` (Go semantics), `playwright` (browser, for landing/docs sites), all behind the `caveman-shrink` stdio proxy (compresses tool descriptions). Canonical for playwright; the official playwright plugin was uninstalled to avoid a duplicate tool catalog.
+- `.mcp.json`: project MCP servers `xcode` and `gopls` (Go semantics), both behind the `caveman-shrink` stdio proxy (compresses tool descriptions). context7 (docs) and playwright (browser, for landing/docs sites) come from plugins enabled in `.claude/settings.json` instead, never both ways at once (ADR 0024).
 - `.github/`: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` (Pages deploy, ADR 0019); issue and PR templates route per `ISSUE_TEMPLATE/config.yml`.
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`: contributor policy at repo root (ADR 0023). `CONTRIBUTING.md` publicly restates the Working Rules below; change both together.
 - `.swift-format`, `.xcode-version`, `crocmobile/.golangci.yml`: tool configs. See `docs/knowledge/tooling.md` for the exact pinned versions and rationale.
@@ -55,6 +55,10 @@ Targets: `CrocApp` (`com.bakirgdev.CrocApp`), `CrocShare` (`.CrocShare`). No sch
 ### Verify, don't assume
 
 A green build is **not** evidence a transfer works. Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` needs the matching harness above run, output quoted. If a harness was not run, say "not verified" plainly.
+
+### Delegate
+
+Sessions mostly run on a stronger model, so preserve its context and session usage. Delegate any substantial task to cheaper-model subagents with clear, accurate, self-contained instructions. Act as manager and coordinator: split the work, brief each subagent, review what comes back, and correct it before it lands.
 
 ### Read before writing
 

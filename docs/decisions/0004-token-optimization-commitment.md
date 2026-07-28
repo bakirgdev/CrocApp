@@ -12,7 +12,7 @@ Development is AI-first on a fixed-quota Claude Max plan. Token spend is the sca
 Optimize the whole workflow for token economy:
 
 - `rtk` proxies dev CLI output (60-90% savings). Enforcement is advisory, not deterministic: CLAUDE.md instructs it and `.claude/settings.local.example.json` ships a `Bash(rtk *)` allow-entry so it runs unprompted. There is no rtk hook — a session that forgets the prefix is not stopped.
-- caveman plugin compresses assistant output; `caveman-shrink` wraps the context7 MCP server in `.mcp.json`.
+- caveman plugin compresses assistant output; `caveman-shrink` wraps every server in `.mcp.json` (ADR 0024 moved context7 and playwright to plugins, which the proxy cannot wrap).
 - Docs written dense and minimal; noisy command output redirected to files, not context.
 - Prefer `cavecrew` and subagents in general for exploration/research to keep main context clean.
 

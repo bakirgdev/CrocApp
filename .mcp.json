@@ -1,16 +1,5 @@
 {
   "mcpServers": {
-    "context7": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "caveman-shrink",
-        "npx",
-        "-y",
-        "@upstash/context7-mcp"
-      ]
-    },
     "xcode": {
       "type": "stdio",
       "command": "npx",
@@ -30,17 +19,6 @@
         "sh",
         "-c",
         "exec \"$(go env GOPATH)/bin/gopls\" mcp"
-      ]
-    },
-    "playwright": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "caveman-shrink",
-        "npx",
-        "-y",
-        "@playwright/mcp@latest"
       ]
     }
   }

@@ -168,8 +168,8 @@ Full toolchain reference, build settings, and troubleshooting: [`docs/BUILDING.m
 
 ```bash
 # builds (from app/)
-xcodebuild -scheme CrocApp -destination 'platform=macOS' build
-xcodebuild -scheme CrocApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
+xcodebuild -scheme CrocApp -destination 'platform=macOS' -derivedDataPath /tmp/dd-mac build
+xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,name=$SIM" -derivedDataPath /tmp/dd-sim build
 
 # format and lint, same as CI
 xcrun swift-format format --in-place --recursive --parallel app/CrocApp app/CrocShare CrocKit/Sources
@@ -188,6 +188,8 @@ scripts/verify-share-sim.sh   # share-extension handoff
 ```
 
 Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` needs the matching harness run.
+
+Env: `CROC` is the croc CLI path (default `~/go/bin/croc`), `SIM` is the simulator name (default `iPhone 17 Pro`; list them with `xcrun simctl list devices`).
 
 </details>
 
