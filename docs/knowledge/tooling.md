@@ -57,6 +57,7 @@ These cost real debugging time on this machine. All are environment quirks, not 
 - **No GNU `timeout` in a bare zsh here.** `scripts/lib.sh` shims it for the harnesses; ad-hoc zsh one-liners do not, so a hung verify run will hang forever.
 - **bash points a background job's stdin at `/dev/null`** unless the job carries an explicit redirect. Any `timeout` shim that backgrounds its command therefore eats a piped answer — `lib.sh` adds `<&0` so a redirect on the `timeout` call still reaches the command (the `--ask` direction of `verify-app-mac.sh` depends on this).
 - **zsh's `=word` expansion breaks bare `===` arguments** to `echo` and friends. Quote them.
+- **A passing harness used to exit 1.** `lib.sh`'s `kill_jobs` ran `kill $pids` on whatever `jobs -p` listed, but `jobs -p` still lists jobs that have already exited, and `kill` fails on those. Under the caller's `set -e`, that failing `kill` aborted the EXIT trap mid-way, skipping the `rm -rf "$TMP"` beside it — so a successful run leaked its temp dir *and* returned 1, indistinguishable from a real failure. `verify-interop.sh` and `verify-app-sim.sh` both register that trap, so both reported failure on every successful run until `kill $pids 2>/dev/null || true` fixed it. Anyone wiring CI to trust these scripts' exit codes should know their history: a green run and this bug looked identical from the outside.
 
 ## Deferred, with the trigger for revisiting
 

@@ -33,6 +33,7 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 - **`transferActive` on start: retry once after ~300 ms.** There is a release window after `done` where the next start still throws.
 - `engine.cancel()` on `.failed`, belt-and-suspenders with the stream's `onTermination`.
 - Copy precedence when several conditions collide: `backgroundExpired` beats cancel/decline mapping; `blockedAutoAccept` beats `backgroundExpired`.
+- `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) spent in `.starting`/`.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips, so the hint never keeps counting once a transfer moves on, but it does survive the `.starting → .connecting` handoff — same stall to the user, no reason to reset the clock.
 
 ### Options, security scope, progress
 
@@ -73,6 +74,12 @@ That blanking is CLI parity (ADR 0012): croc skips empty relay addresses when di
 
 **Both platform probe branches must call `startAccessingSecurityScopedResource()` before `fileExists`.** The sandbox denies `stat` on an unopened scope. Each platform's omission was a separately caught defect.
 
+## Support/ helpers
+
+- `Support/SecurityScopedBookmark.swift` — bookmark create/resolve/resolveIfReachable, shared by `OutputFolderStore` and `HistoryView`'s resend path (previously written four times over, one per platform per call site). `resolveIfReachable` starts the security scope before the existence probe — the sandbox denies `stat` on an unopened scope.
+- `Support/EngineConstraints.swift` — `minCodeLength = 6`, mirroring the Go engine's `len(secret) < 6` check in `crocmobile/session.go` and `crocmobile.go`. UI-side validation only, for inline feedback before a doomed `startSend`/`startReceive` call; no shared source of truth across the Go/Swift boundary, kept in sync by hand.
+- `Support/DesignTokens.swift` — the app's routing layer onto `design/`: `Spacing`, `Radius`, `BorderWidth`, `ControlHeight`, `IconSize`, `LayoutCap`, `ComponentMetrics`, `Motion`, plus `Color` aliases. The one file that splits `#if os(iOS)`/`#if os(macOS)` for UIKit/AppKit-backed colors. Where a system semantic already matches a token exactly, the alias routes there instead of duplicating an asset-catalog entry (ADR 0029).
+
 ## Conflict scan
 
 Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanConflicts` runs `Task.detached` and stats off the main actor; the write-back happens only `if case .incoming` and only when non-empty. Doing it synchronously froze the accept UI on large file lists.
@@ -82,7 +89,7 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 ## Platform layer, iOS
 
 - `Platform/BackgroundCoordinator.swift` — cross-platform class with `#if os(iOS)` bodies (no-ops on macOS). Wraps a transfer in a `BGContinuedProcessingTask` and holds `isIdleTimerDisabled`. Controller hooks: `transferStarted` in `run()`, `progressChanged` inside the accepted `.progress` path only (the `.incoming` guard stays untouched), `transferEnded` at `.done` / `.failed` / startup catch, idempotent. Expiration sets `backgroundExpired` and cancels, producing dedicated "iOS paused the transfer…" copy. A generation token rejects stale late task launches.
-- `Platform/LocalNetworkChecker.swift` — Bonjour self-probe on `_crocapp._tcp`, once per process, triggered by `ContentView.onChange(controller.isActive)`. Denial shows a banner plus Open Settings in `TransferStatusView`. Denial only resolves at the 8 s timeout, because a first `.waiting` may just be the pending permission prompt.
+- `Platform/LocalNetworkChecker.swift` — Bonjour self-probe on `_crocapp._tcp`, iOS only (the macOS branch is a no-op stub, `../known-issues.md`). `checkIfNeeded()` probes once per process, triggered by `ContentView.onChange(controller.isActive)`; `recheckIfDenied()` re-probes from `.denied` on `ContentView.onChange(scenePhase)` going `.active` (e.g. the user granted access in Settings and returned), gated so it never re-probes `.granted`/unresolved and never stacks a second in-flight probe. Denial shows a banner plus Open Settings in `TransferStatusView`. Denial only resolves at the 8 s timeout, because a first `.waiting` may just be the pending permission prompt.
 - `Models/ShareInbox.swift` + `Views/StagedFilesSheet.swift` — App Group pickup of batches staged by the share extension (`ShareInbox/batch-<UUID>/` plus `manifest.json`). The whole `scenePhase` refresh is gated on `!controller.isActive`; an ungated refresh once purged a live batch mid-send, caught by harness. The manifest is consumed on the user's decision, the batch files outlive the send, and `purgeStaleBatches` runs at idle.
 - `app/CrocShare/` — iOS-only appex. The pbxproj entry is hand-built; `platformFilters=(ios,)` on the dependency and the embed keep macOS clean. File-copy staging happens inside the `loadFileRepresentation` handler because of the ~120 MB extension memory cap, and never wipes existing batches. Both `Info.plist` files live in `app/Config/`, outside the synced folders, to avoid a generated-plist collision; the app's `INFOPLIST_FILE` is sdk-scoped to iOS.
 - Files-app visibility comes from `INFOPLIST_KEY_UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace`, both sdk-scoped to iOS. "Open in Files" on receive-done uses the `shareddocuments://` scheme — community standard, no public API.
@@ -99,8 +106,10 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 ## Onboarding and store compliance
 
 - `OnboardingView` is a sheet from `ContentView.task`, gated on `!onboardingSeen && !AutoVerify.isHarnessRun`; `onboarding.seen` is written in `onDismiss`. The staged-files sheet yields to it (`&& !showOnboarding`) and is re-offered when onboarding dismisses.
+- Onboarding also primes the two system permission prompts it now names in its copy: `onDismiss` (iOS only) awaits `CameraPermission.requestIfNeeded()` then calls `localNetwork.checkIfNeeded()`, sequenced rather than simultaneous so the user never sees two system prompts stack. Camera and local-network are never requested during an `AutoVerify` harness run.
+- `Platform/CameraPermission.swift` (iOS only) wraps `AVCaptureDevice.authorizationStatus/requestAccess(for: .video)`. `QRScannerSheet` resolves its own authorization first, as a separate gate from `DataScannerViewController.isSupported`, and renders distinct copy for all four `AVAuthorizationStatus` cases: `.authorized` shows the scanner, `.notDetermined` requests then re-reads status, `.denied` offers an Open Settings button, `.restricted` does not (Settings cannot fix a restriction).
 - `PrivacyInfo.xcprivacy` sits in both synced target folders — app declares UserDefaults CA92.1 and FileTimestamp C617.1, extension declares an empty accessed-API list, both declare no tracking and no collection. Bundle inclusion was verified in the build products.
-- `ITSAppUsesNonExemptEncryption=false` in both Config plists.
+- `ITSAppUsesNonExemptEncryption=true` in both Config plists — croc bundles its own AES-256-GCM/ChaCha20-Poly1305 rather than calling Apple OS crypto, so no exemption applies (ADR 0030).
 - Two `.glassEffect()` call sites: the code card in `waitingView`, and the macOS-only "Drop to send" full-window overlay in `ContentView` (design/components.md → DropZone macOS overlay).
 
 ## SwiftUI and Xcode API facts
@@ -119,6 +128,8 @@ Verified against Xcode 26, not inferred:
 
 Launch arguments that drive the real controller, not the engine directly — the point is that the verified path is the one users take.
 
+`AutoVerify`'s bodies are `#if DEBUG`; in Release, `isHarnessRun` is a hardcoded `false` and `runIfRequested` is a no-op, so the harness itself cannot run in a store build. The type still exists in Release because `CrocAppApp.swift` and `ContentView.swift` call it unconditionally. The verify scripts build Debug, so they are unaffected.
+
 | Argument | Effect |
 |---|---|
 | `--auto-receive CODE` | receive into Documents, auto-accept via `respond(true)` on `.incoming` |
@@ -129,7 +140,7 @@ Launch arguments that drive the real controller, not the engine directly — the
 | `--no-compress` | disable compression |
 | `--ask` | auto-answers `.confirmSend` |
 
-Settings overrides only apply when an `--auto-*` mode is present (the `harnessActive` guard) and start from `resetToDefaults()`, with `persist = false` set first so real `UserDefaults` are never touched.
+Settings overrides only apply when an `--auto-*` mode is present (the `isHarnessRun` guard) and start from `resetToDefaults()`, with `persist = false` set first so real `UserDefaults` are never touched.
 
 The harness writes `verify-result.txt` (`ok success=<bool>` or `error <msg>`) to Documents. That contract is shared by `scripts/verify-app-sim.sh`, `verify-app-mac.sh`, and `verify-share-sim.sh`. AutoVerify's Documents path is hardcoded, decoupled from `OutputFolderStore.defaultFolder`.
 

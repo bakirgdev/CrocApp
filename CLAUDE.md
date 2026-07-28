@@ -9,7 +9,7 @@ Free, open-source native SwiftUI GUI for the "croc" file-transfer CLI. Targets i
 - `.github/`: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` and `workflows/docs.yml` (Pages deploy; both publish the whole site via `scripts/assemble-site.sh`, ADR 0025); issue and PR templates route per `ISSUE_TEMPLATE/config.yml`.
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`: contributor policy at repo root (ADR 0023). `CONTRIBUTING.md` publicly restates the Working Rules below; change both together.
 - `.swift-format`, `.xcode-version`, `crocmobile/.golangci.yml`: tool configs. See `docs/knowledge/tooling.md` for the exact pinned versions and rationale.
-- `app/`: Xcode project (SwiftUI, iOS + macOS), `CrocApp.xcodeproj`, `CrocApp/` sources, `CrocShare/` share extension, `Config/` (plists, entitlements, export options).
+- `app/`: Xcode project (SwiftUI, iOS + macOS), `CrocApp.xcodeproj`, `CrocApp/` sources (`Support/` holds cross-view helpers: `DesignTokens.swift` routes the app onto `design/`, `SecurityScopedBookmark.swift` and `EngineConstraints.swift` are shared engine-adjacent helpers), `CrocShare/` share extension, `Config/` (plists, entitlements, export options).
 - `assets/`: brand art. `assets/screenshots/README.md` lists the light/dark pairs root `README.md` requires.
 - `CrocKit/`: Swift package wrapping the Go engine (`CrocEngine` actor, `AsyncStream<TransferEvent>`, `crockit-verify` harness). Depends on `Croc.xcframework` (gitignored build artifact).
 - `crocmobile/`: Go wrapper around croc v10.5.0, gomobile-bound into `Croc.xcframework`. `session.go` is the engine, `cmd/croctest` its CLI harness.

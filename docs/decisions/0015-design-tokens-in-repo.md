@@ -5,7 +5,7 @@ Date: 2026-07-25
 
 ## Context
 
-The v1.1 redesign was produced in Claude Design (ADR 0005 keeps the app native SwiftUI; the design project is spec, not shipping code). Its output is a design system — colors, type scale, spacing, materials, motion, thirteen components — plus 26 screen files, all of which live behind a claude.ai login. Three consumers need those values: the SwiftUI app restyle, the landing page, and the docs site. Two of the three are not written yet, and none of them can link to a login-gated project.
+The redesign was produced in Claude Design (ADR 0005 keeps the app native SwiftUI; the design project is spec, not shipping code). Its output is a design system — colors, type scale, spacing, materials, motion, thirteen components — plus 26 screen files, all of which live behind a claude.ai login. Three consumers need those values: the SwiftUI app, the landing page, and the docs site. None of them can link to a login-gated project.
 
 Contributors and future Claude Code sessions also need the values without a Claude Design account.
 
@@ -25,4 +25,4 @@ Extract the design system into `design/` in this repo, as markdown, and treat it
 - Drift risk between `design/*.md` and `design/tokens.css` is real and accepted — the alternative (a build step) is not worth it at this size. A mismatch is a bug in the same directory, not a mystery.
 - Re-generating in Claude Design later does not automatically update the repo. Whoever regenerates re-extracts, in that session.
 - Contrast facts are recorded with the tokens: the brand accent `#1E9E6A` is 3.41:1 on white, so it is a fill/large-text color in the light theme, not a body-text color. Light theme is the constrained one and gets checked first.
-- The restyle stays cosmetic: nothing in `design/` licenses a change to the accept-gate flow, the phase state machine, or the prompt-pipe event handling (ADR 0008, 0009).
+- The restyle stayed cosmetic: adopting the tokens (ADR 0029) changed no accept-gate flow, phase state machine, or prompt-pipe event handling (ADR 0008, 0009).

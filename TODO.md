@@ -16,7 +16,7 @@ Enforce on GitHub, all of these together:
 
 ## Screenshots
 
-Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pairs to capture is in `assets/screenshots/README.md`. Blocked on a build worth photographing, and on the app restyle (v1.1.0) if that lands first, otherwise they get reshot.
+Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pairs to capture is in `assets/screenshots/README.md`. The app restyle has landed, so this is just blocked on a build worth photographing now.
 
 - Capture the six pairs: mac-send, ios-receive, mac-settings, each light and dark, 2x, no device frames, no real codes
 - Put them back in `README.md`. The `## Screenshots` section and its three `<picture>` blocks were removed because they rendered as broken images on the public repo page
