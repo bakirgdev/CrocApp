@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
@@ -42,7 +43,8 @@ type session struct {
 	stdoutBuf []byte // captured os.Stdout (text receive)
 	stdoutM   sync.Mutex
 
-	done chan struct{}
+	done     chan struct{}
+	pollDone chan struct{} // closed when poll() returns; run() waits on it before the terminal delegate calls
 }
 
 func buildCrocOptions(sender bool, secret string, o *Options) croc.Options {
@@ -161,7 +163,7 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			}
 			return nil, err
 		}
-		s := &session{client: c, ctxCancel: cancel, delegate: d, sender: true, tempPath: tempPath, done: make(chan struct{})}
+		s := &session{client: c, ctxCancel: cancel, delegate: d, sender: true, tempPath: tempPath, done: make(chan struct{}), pollDone: make(chan struct{})}
 		// OnCodeReady runs before we commit: if the delegate panics here, the
 		// cleanup defer above must still be armed to release the lock, cwd,
 		// and temp file, rather than leaking them because we'd already
@@ -217,7 +219,7 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 		cancel()
 		return nil, err
 	}
-	s := &session{client: c, ctxCancel: cancel, delegate: d, sender: false, done: make(chan struct{})}
+	s := &session{client: c, ctxCancel: cancel, delegate: d, sender: false, done: make(chan struct{}), pollDone: make(chan struct{})}
 
 	// Accept/decline prompt bridge: croc reads the answer via
 	// utils.GetInput, which reads a bufio.Reader created once, at package
@@ -304,12 +306,18 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 }
 
 // run executes the transfer, then restores globals and reports the outcome.
+//
+// The three terminal delegate calls are recover-protected like xfer() itself:
+// gomobile turns an ObjC exception raised inside a delegate callback into a Go
+// panic, and OnError/OnText/OnDone fire on every transfer, so an unrecovered
+// panic there is a routine App Store crash, not an edge case. The cleanup
+// between xfer() and them is plain stdlib and deliberately left unguarded.
 func (s *session) run(xfer func() error, origWD string, release func()) {
 	var err error
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				err = fmt.Errorf("croc panic: %v", r)
+				err = fmt.Errorf("croc panic: %v\n%s", r, debug.Stack())
 			}
 		}()
 		err = xfer()
@@ -321,7 +329,28 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 		os.Remove(s.tempPath)
 	}
 	_ = os.Chdir(origWD)
-	release()
+
+	// poll() only notices s.done on its next 100ms tick; wait for it to
+	// actually exit so a straggling OnProgress can't interleave with the
+	// terminal event below. Bounded so a wedged poll goroutine can never
+	// hang the transfer's completion.
+	select {
+	case <-s.pollDone:
+	case <-time.After(2 * time.Second):
+	}
+
+	// release must outlive the terminal delegate calls: it unblocks
+	// StartSend/StartReceive for the next transfer, and if it ran before
+	// OnError/OnText/OnDone, transfer N+1 could start while transfer N is
+	// still delivering its final event. Deferred first so it runs last;
+	// the recover below is deferred second so it runs first, guaranteeing
+	// release still fires even if a delegate call panics.
+	defer release()
+	defer func() {
+		if r := recover(); r != nil {
+			reportPanic(s, r)
+		}
+	}()
 	if err != nil {
 		s.delegate.OnError(err.Error())
 		return
@@ -330,6 +359,13 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 		s.delegate.OnText(text)
 	}
 	s.delegate.OnDone(s.summaryJSON())
+}
+
+// reportPanic converts a recovered panic into an OnError delegate call,
+// guarded against the delegate itself panicking again on the way out.
+func reportPanic(s *session, r any) {
+	defer func() { recover() }() //nolint:errcheck // OnError may panic again; never let that escape
+	s.delegate.OnError(fmt.Sprintf("croc panic: %v\n%s", r, debug.Stack()))
 }
 
 // cancel must unblock a pending accept prompt, not just cancel the context:
@@ -438,7 +474,8 @@ func (s *session) finishStdoutCapture() string {
 // local connection) can race s.done and skip an intermediate OnConnected or
 // OnProgress call entirely — OnDone still fires reliably.
 func (s *session) poll() {
-	defer func() { recover() }() //nolint:errcheck // racy field reads must never crash the app
+	defer close(s.pollDone)      // run() waits on this; must close even if the loop below panics
+	defer func() { recover() }() //nolint:errcheck // backstop: anything escaping the per-tick recover must not kill the goroutine
 	t := time.NewTicker(100 * time.Millisecond)
 	defer t.Stop()
 	connected, listSent := false, false
@@ -448,16 +485,21 @@ func (s *session) poll() {
 			return
 		case <-t.C:
 		}
-		c := s.client
-		if !connected && c.Step1ChannelSecured {
-			connected = true
-			s.delegate.OnConnected()
-		}
-		if !s.sender && !listSent && len(c.FilesToTransfer) > 0 {
-			listSent = true
-			s.delegate.OnFileList(s.fileListJSON())
-		}
-		s.delegate.OnProgress(s.progressJSON(connected))
+		func() {
+			// Per-tick recover: one bad delegate call must not silently
+			// freeze progress for the rest of the transfer.
+			defer func() { recover() }() //nolint:errcheck // racy field reads / delegate panics must never crash the app
+			c := s.client
+			if !connected && c.Step1ChannelSecured {
+				connected = true
+				s.delegate.OnConnected()
+			}
+			if !s.sender && !listSent && len(c.FilesToTransfer) > 0 {
+				listSent = true
+				s.delegate.OnFileList(s.fileListJSON())
+			}
+			s.delegate.OnProgress(s.progressJSON(connected))
+		}()
 	}
 }
 

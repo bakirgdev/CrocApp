@@ -3,6 +3,7 @@ package crocmobile
 import (
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"strings"
 )
 
@@ -59,11 +60,29 @@ type Transfer struct {
 }
 
 // Cancel aborts the transfer; the peer is notified via croc's SendError.
-func (t *Transfer) Cancel() { t.s.cancel() }
+//
+// Exported across the gobind boundary like StartSend/StartReceive, so it
+// gets the same recover: a panic here must become a reported error, never
+// crash the host app.
+func (t *Transfer) Cancel() {
+	defer func() {
+		if r := recover(); r != nil {
+			reportPanic(t.s, r)
+		}
+	}()
+	t.s.cancel()
+}
 
 // Respond answers the receive accept/decline request raised by OnFileList.
-// No-op for senders or AutoAccept receivers.
-func (t *Transfer) Respond(accept bool) { t.s.respond(accept) }
+// No-op for senders or AutoAccept receivers. See Cancel for why this recovers.
+func (t *Transfer) Respond(accept bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			reportPanic(t.s, r)
+		}
+	}()
+	t.s.respond(accept)
+}
 
 // StartSend begins sending. paths is newline-joined absolute paths.
 // If text is non-empty a text snippet is sent instead and paths is ignored.
@@ -74,7 +93,7 @@ func (t *Transfer) Respond(accept bool) { t.s.respond(accept) }
 func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *Transfer, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			t, err = nil, fmt.Errorf("croc panic: %v", r)
+			t, err = nil, fmt.Errorf("croc panic: %v\n%s", r, debug.Stack())
 		}
 	}()
 	if opts == nil {
@@ -105,7 +124,7 @@ func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *T
 func StartReceive(code string, opts *Options, d Delegate) (t *Transfer, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			t, err = nil, fmt.Errorf("croc panic: %v", r)
+			t, err = nil, fmt.Errorf("croc panic: %v\n%s", r, debug.Stack())
 		}
 	}()
 	if opts == nil {

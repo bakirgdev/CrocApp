@@ -425,6 +425,8 @@ final class TransferController {
         {
             return "Lost connection to the other device."
         }
-        return "Transfer failed: \(raw)"
+        // Never echo the engine string: croc adds new error text every release,
+        // and a recovered Go panic arrives here with a full stack trace attached.
+        return "Transfer failed. Try again, or check your connection."
     }
 }

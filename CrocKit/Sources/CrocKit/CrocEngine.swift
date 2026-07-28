@@ -40,7 +40,7 @@ public actor CrocEngine {
     ) throws -> AsyncStream<TransferEvent> {
         guard activeTransfer == nil else { throw CrocEngineError.transferActive }
 
-        let opts = crocOptions(from: options)
+        let opts = try crocOptions(from: options)
         let (stream, continuation) = AsyncStream.makeStream(of: TransferEvent.self)
         let bridge = DelegateBridge(continuation: continuation)
         self.bridge = bridge
@@ -81,8 +81,10 @@ public actor CrocEngine {
         bridge = nil
     }
 
-    private func crocOptions(from o: EngineOptions) -> CrocmobileOptions {
-        let opts = CrocmobileNewOptions()!
+    private func crocOptions(from o: EngineOptions) throws -> CrocmobileOptions {
+        guard let opts = CrocmobileNewOptions() else {
+            throw CrocEngineError.startFailed("options init failed")
+        }
         opts.relayAddress = o.relayAddress
         opts.relayAddress6 = o.relayAddress6
         opts.relayPassword = o.relayPassword
