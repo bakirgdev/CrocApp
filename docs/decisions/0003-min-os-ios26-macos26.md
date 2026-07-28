@@ -11,7 +11,7 @@ Greenfield app, no existing users. Dev machine runs macOS 26 + Xcode 26. Support
 
 Minimum deployment target: iOS 26 and macOS 26. Always latest SwiftUI APIs, no back-deployment shims.
 
-Pinned as `26.0` exactly, never a minor version — in the pbxproj, in `Package.swift`, and in `gomobile bind` (`-iosversion 26.0 -macosversion 26.0`) so the xcframework floor matches. The Xcode template default is a minor (`26.5`), which silently locks out everyone on 26.0-26.4; treat any minor pin as drift, not a decision.
+The pinned value is `26.0`, never a minor — in the pbxproj, in `Package.swift`, and in `gomobile bind` (`-iosversion 26.0 -macosversion 26.0`) so the xcframework floor matches. This is a floor, not an equality: `26.0` and every later release runs the app, 26.4 and 27.x included, and a new major needs no change here. The Xcode template default is a minor (`26.5`), which silently locks out everyone on 26.0-26.4; treat any minor pin as drift, not a decision.
 
 Swift 6 language mode (`SWIFT_VERSION = 6.0`) on every target, matching `CrocKit` (swift-tools 6.0). New targets default to Swift 5 mode and have to be flipped.
 

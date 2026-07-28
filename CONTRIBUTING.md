@@ -253,7 +253,7 @@ Not a hard no, but open an issue first and expect a long conversation. These run
 | Change | Why |
 |---|---|
 | Windows, Linux, or Android support | Apple-platform only by design. The croc CLI covers everywhere else and interoperates with the app |
-| Support for iOS or macOS below 26 | Floor is pinned at exactly `26.0`, never a minor ([ADR 0003](docs/decisions/0003-min-os-ios26-macos26.md)) |
+| Support for iOS or macOS below 26 | Floor is `26.0`, never a minor. It is a minimum, so 26.0 and everything above it already runs ([ADR 0003](docs/decisions/0003-min-os-ios26-macos26.md)) |
 | Telemetry, analytics, crash reporting, ads | No data leaves the device. This is a product promise, not a technical gap |
 | A paid tier, license keys, or in-app purchases | MIT and free, permanently. Funding is optional sponsorship only |
 | Shelling out to the `croc` binary instead of the embedded library | The Go library binding is the whole architecture ([ADR 0006](docs/decisions/0006-gomobile-binding.md)) |
