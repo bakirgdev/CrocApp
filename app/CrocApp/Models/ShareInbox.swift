@@ -8,6 +8,13 @@ import Observation
 @Observable
 final class ShareInbox {
     static let groupID = "group.com.bakirgdev.CrocApp"
+    // Mirrored in CrocShare/ShareStager.swift -- these three literals (group
+    // ID, inbox directory name, manifest file name) must match exactly
+    // across the two targets, which can't share a Swift file without a
+    // package. A drift here breaks the share handoff silently: no compiler
+    // error, staged files just never appear.
+    private static let inboxDirName = "ShareInbox"
+    private static let manifestName = "manifest.json"
 
     private(set) var staged: [URL] = []
 
@@ -19,13 +26,13 @@ final class ShareInbox {
     private var inboxDir: URL? {
         FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: Self.groupID)?
-            .appendingPathComponent("ShareInbox", isDirectory: true)
+            .appendingPathComponent(Self.inboxDirName, isDirectory: true)
     }
 
     func refresh() {
         guard let inbox = inboxDir else { return }
         purgeStaleBatches()
-        let manifestURL = inbox.appendingPathComponent("manifest.json")
+        let manifestURL = inbox.appendingPathComponent(Self.manifestName)
         guard let data = try? Data(contentsOf: manifestURL),
             let manifest = try? JSONDecoder().decode(Manifest.self, from: data)
         else {
@@ -42,13 +49,13 @@ final class ShareInbox {
     // re-appear, but batch files stay on disk — croc reads them mid-transfer.
     func consumeManifest() {
         guard let inbox = inboxDir else { return }
-        try? FileManager.default.removeItem(at: inbox.appendingPathComponent("manifest.json"))
+        try? FileManager.default.removeItem(at: inbox.appendingPathComponent(Self.manifestName))
     }
 
     // Sweep batches no manifest points to (previous sends, discards).
     func purgeStaleBatches() {
         guard let inbox = inboxDir else { return }
-        let manifestURL = inbox.appendingPathComponent("manifest.json")
+        let manifestURL = inbox.appendingPathComponent(Self.manifestName)
         var liveBatch: String?
         if let data = try? Data(contentsOf: manifestURL),
             let manifest = try? JSONDecoder().decode(Manifest.self, from: data)

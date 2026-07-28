@@ -12,6 +12,12 @@ final class OutputFolderStore {
 
     private(set) var url: URL
     private(set) var isUserSelected: Bool
+    /// True when a stored bookmark existed but failed to resolve (stale --
+    /// external drive remounted elsewhere, network share, iCloud) and the
+    /// store silently fell back to `defaultFolder`. Not surfaced in UI yet;
+    /// a future settings screen could use this to tell the user their
+    /// chosen folder reverted.
+    private(set) var bookmarkWasReset = false
 
     static var defaultFolder: URL {
         #if os(macOS)
@@ -35,56 +41,41 @@ final class OutputFolderStore {
     }
 
     init() {
-        if let data = UserDefaults.standard.data(forKey: Self.bookmarkKey),
-            let resolved = Self.resolve(bookmark: data)
-        {
+        guard let data = UserDefaults.standard.data(forKey: Self.bookmarkKey) else {
+            url = Self.defaultFolder
+            isUserSelected = false
+            return
+        }
+        if let resolved = SecurityScopedBookmark.resolve(data) {
             url = resolved
             isUserSelected = true
         } else {
+            // Dangling bookmark: clear the key so this fallback doesn't
+            // silently repeat on every launch with stored state (isUserSelected)
+            // disagreeing with what's actually on UserDefaults.
+            UserDefaults.standard.removeObject(forKey: Self.bookmarkKey)
             url = Self.defaultFolder
             isUserSelected = false
+            bookmarkWasReset = true
         }
     }
 
     func select(_ picked: URL) {
         let hadAccess = picked.startAccessingSecurityScopedResource()
         defer { if hadAccess { picked.stopAccessingSecurityScopedResource() } }
-        #if os(macOS)
-        let data = try? picked.bookmarkData(
-            options: .withSecurityScope,
-            includingResourceValuesForKeys: nil,
-            relativeTo: nil)
-        #else
-        let data = try? picked.bookmarkData(
-            includingResourceValuesForKeys: nil,
-            relativeTo: nil)
-        #endif
-        guard let data else { return }
+        // Silently no-ops on failure (accepted papercut, docs/known-issues.md):
+        // rare, and the alternative is an error path the user cannot act on.
+        guard let data = SecurityScopedBookmark.create(for: picked) else { return }
         UserDefaults.standard.set(data, forKey: Self.bookmarkKey)
         url = picked
         isUserSelected = true
+        bookmarkWasReset = false
     }
 
     func resetToDefault() {
         UserDefaults.standard.removeObject(forKey: Self.bookmarkKey)
         url = Self.defaultFolder
         isUserSelected = false
-    }
-
-    private static func resolve(bookmark: Data) -> URL? {
-        var isStale = false
-        #if os(macOS)
-        let resolved = try? URL(
-            resolvingBookmarkData: bookmark,
-            options: .withSecurityScope,
-            relativeTo: nil,
-            bookmarkDataIsStale: &isStale)
-        #else
-        let resolved = try? URL(
-            resolvingBookmarkData: bookmark,
-            relativeTo: nil,
-            bookmarkDataIsStale: &isStale)
-        #endif
-        return isStale ? nil : resolved
+        bookmarkWasReset = false
     }
 }

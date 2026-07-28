@@ -376,13 +376,7 @@ final class TransferController {
     }
 
     private static func bookmark(for url: URL) -> Data? {
-        #if os(macOS)
-        try? url.bookmarkData(
-            options: .withSecurityScope,
-            includingResourceValuesForKeys: nil, relativeTo: nil)
-        #else
-        try? url.bookmarkData()
-        #endif
+        SecurityScopedBookmark.create(for: url)
     }
 
     private func finishRecord(_ status: TransferRecord.Status, summary: Summary?) {

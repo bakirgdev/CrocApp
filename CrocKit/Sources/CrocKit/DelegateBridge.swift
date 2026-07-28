@@ -11,6 +11,13 @@ import Foundation
 /// the abandoned Go-side session.
 final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sendable {
     private let continuation: AsyncStream<TransferEvent>.Continuation
+    // Progress ticks at ~10 Hz, so a one-hour transfer decodes ~36,000 times;
+    // one shared decoder avoids allocating fresh each time. Safe to reuse
+    // across the concurrent Go-thread callbacks below: decode(_:from:) reads
+    // only the decoder's fixed configuration (never mutated after this
+    // init) and keeps its per-call state local, so concurrent decodes don't
+    // share mutable state.
+    private let decoder = JSONDecoder()
 
     init(continuation: AsyncStream<TransferEvent>.Continuation) {
         self.continuation = continuation
@@ -18,7 +25,7 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
 
     private func decode<T: Codable>(_ json: String, as type: T.Type) -> T? {
         guard let data = json.data(using: .utf8) else { return nil }
-        return try? JSONDecoder().decode(type, from: data)
+        return try? decoder.decode(type, from: data)
     }
 
     func onCodeReady(_ code: String?) {

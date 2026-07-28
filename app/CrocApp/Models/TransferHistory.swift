@@ -14,6 +14,11 @@ import SwiftData
 final class TransferRecord {
     static let maxNames = 20
     static let maxBookmarks = 200
+    /// Retention cap enforced by `HistoryStore.add()`: oldest records beyond
+    /// this count are pruned. Send records can each carry up to
+    /// `maxBookmarks` bookmark blobs, so an unbounded history grows without
+    /// limit otherwise.
+    static let maxRecords = 300
 
     enum Status: String {
         case completed, failed, cancelled, declined
@@ -66,12 +71,35 @@ final class HistoryStore {
         } catch {
             // Corrupt store beats a launch crash: fall back to memory-only.
             let config = ModelConfiguration(isStoredInMemoryOnly: true)
+            // try! is deliberate, the only one in the app: this schema is
+            // fixed and ours, and an in-memory store has no failure mode a
+            // disk-backed one has (no corruption, no existing file) -- if
+            // this throws, the environment itself is broken (e.g. out of
+            // memory) and there is no fallback left that would leave the
+            // app in a working state anyway.
             return try! ModelContainer(for: TransferRecord.self, configurations: config)
         }
     }
 
     func add(_ record: TransferRecord) {
         container.mainContext.insert(record)
+        try? container.mainContext.save()
+        pruneToRetentionCap()
+    }
+
+    /// Delete oldest records beyond `TransferRecord.maxRecords`. Runs on the
+    /// main actor at the end of every transfer, so keep it to two cheap
+    /// fetches (a count, then a limited oldest-first fetch) rather than
+    /// loading the whole table.
+    private func pruneToRetentionCap() {
+        let cap = TransferRecord.maxRecords
+        let overflow = recordCount() - cap
+        guard overflow > 0 else { return }
+        var descriptor = FetchDescriptor<TransferRecord>(
+            sortBy: [SortDescriptor(\.date, order: .forward)])
+        descriptor.fetchLimit = overflow
+        guard let stale = try? container.mainContext.fetch(descriptor) else { return }
+        for record in stale { container.mainContext.delete(record) }
         try? container.mainContext.save()
     }
 
