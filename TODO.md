@@ -14,18 +14,6 @@ Enforce on GitHub, all of these together:
 - **Before** making CI a required check: replace the `paths` allowlist in `ci.yml` with a change-detection job that reports success. Today a filtered-out PR runs zero jobs, so a required check stays pending forever (see `docs/knowledge/tooling.md`)
 - Pin third-party actions to commit SHAs (`maxim-lobanov/setup-xcode`, `golangci/golangci-lint-action`) — mutable major tags are a supply-chain hole
 
-## Docs site (`web/docs/`)
-
-Live at crocapp.dev/docs/. Background and traps: `docs/knowledge/docs-site.md`. Decisions: ADRs 0025 to 0028.
-
-- Watch the first deploy. Pages replaces the *whole* site on every deploy, so confirm both crocapp.dev/ and crocapp.dev/docs/ load before pushing anything else
-- Cut the first docs version snapshot **when `1.0.0` is tagged**, not before: `pnpm --dir web/docs run docusaurus docs:version 0.9.9`. The version dropdown stays invisible until that second version exists, which is Docusaurus behaviour, not a bug
-- Rewrite `CHANGELOG.md` before the first GitHub release. Three unpopulated stubs and zero git tags today, which is why it does not drive docs versioning yet
-- Recruit native-speaker review for `bs`, `de`, `es`, `fr`, `ru`. They are machine-assisted drafts and say so on each locale index page
-- Decide whether the landing page should get a language switcher too. Docs speak six languages, crocapp.dev/ speaks one
-- Decide whether the app's own UI should be localized. English-only today, which is why translated docs keep literal UI labels in English
-- Site search: skipped on purpose (`docs/known-issues.md`). Revisit only if the page count grows well past sixteen
-
 ## Screenshots
 
 Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pairs to capture is in `assets/screenshots/README.md`. Blocked on a build worth photographing, and on the app restyle (v1.1.0) if that lands first, otherwise they get reshot.
@@ -44,8 +32,7 @@ Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pair
 
 ## App
 
-- Prompt for camera and local network permission after the onboarding screen closes on first launch, and check permission state before using each feature *(known fix, feeds the pre-publish review below)*
-- Brew cask
+- Brew cask (research)
 - Copy the Claude design into the app — target v1.1.0
 
 ## Ops / external
@@ -58,7 +45,7 @@ Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pair
 Pre-App-Store full review:
 
 "
-Audit CrocApp end to end for App Store readiness. This is the last check of the app itself before publish, so treat gaps as blockers, not nits. Start from `docs/ARCHITECTURE.md` and `docs/known-issues.md`.
+Audit CrocApp end to end for App Store readiness. This is the last check of the app itself before making unnotarized release and planning submission to App Store, so treat gaps as blockers, not nits. Start from `docs/ARCHITECTURE.md` and `docs/known-issues.md`.
 
 **Review first, no edits.** Judge: every feature actually works, runtime performance, code quality for both human contributors and AI agents, comment density (short, why-not-what, healthy doses), and first-run UX polish. Run the builds, swift-format lint, golangci-lint, govulncheck, and the `scripts/verify-*.sh` harnesses; quote real output. Report every finding with severity, including low-severity ones.
 
