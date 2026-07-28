@@ -189,7 +189,7 @@ Yes, in both directions. CrocApp embeds croc v10.5.0 as a library, so it speaks 
 <details>
 <summary><strong>Why iOS 26 and macOS 26 only?</strong></summary>
 
-Greenfield app with no existing users. Supporting older releases means availability checks everywhere and giving up current SwiftUI APIs and the Liquid Glass design language. The floor is pinned at exactly `26.0`, never a minor ([ADR 0003](docs/decisions/0003-min-os-ios26-macos26.md)).
+Greenfield app with no existing users. Supporting older releases means availability checks everywhere and giving up current SwiftUI APIs and the Liquid Glass design language. The minimum is `26.0` and every later version works; the floor is pinned at `26.0` rather than at a minor so nobody on 26.0 through 26.4 is locked out ([ADR 0003](docs/decisions/0003-min-os-ios26-macos26.md)).
 
 </details>
 

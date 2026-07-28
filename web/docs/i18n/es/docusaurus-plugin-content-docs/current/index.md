@@ -27,7 +27,7 @@ El remitente elige archivos, una carpeta o un fragmento de texto. CrocApp genera
 
 ## Requisitos de plataforma
 
-CrocApp requiere **iOS 26**, **iPadOS 26** o **macOS 26** (exactamente `26.0`, no una versión menor posterior). Es exclusivo de plataformas Apple; no hay cliente para Windows, Linux ni Android.
+CrocApp requiere **iOS 26**, **iPadOS 26** o **macOS 26**, es decir, la versión `26.0` o cualquiera posterior. Es exclusivo de plataformas Apple; no hay cliente para Windows, Linux ni Android.
 
 :::warning
 CrocApp aún no se ha publicado. Hoy no hay nada disponible para descargar en ningún canal. Consulte [Instalación](getting-started/install.md) para el estado actual y cómo compilar desde el código fuente.

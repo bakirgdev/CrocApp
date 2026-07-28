@@ -21,7 +21,7 @@ The sender picks files, a folder, or a snippet of text. CrocApp generates a code
 
 ## Platform requirements
 
-CrocApp requires **iOS 26**, **iPadOS 26**, or **macOS 26** (exactly `26.0`, not a later minor version). It is Apple-platform only; there is no Windows, Linux, or Android client.
+CrocApp requires **iOS 26**, **iPadOS 26**, or **macOS 26**, meaning `26.0` or any later version. It is Apple-platform only; there is no Windows, Linux, or Android client.
 
 :::warning
 CrocApp has not been released yet. Nothing is available for download on any channel today. See [Install](getting-started/install.md) for current status and how to build from source.

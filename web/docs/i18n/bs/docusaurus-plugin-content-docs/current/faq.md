@@ -40,7 +40,7 @@ Da. Usmjerite CrocApp na bilo koji croc relej, sa lozinkom i IPv6 ako ih želite
 
 ## Zašto samo iOS 26 i macOS 26?
 
-CrocApp je potpuno nova aplikacija bez postojećih korisnika. Podrška starijim izdanjima značila bi provjere dostupnosti svuda i odricanje od trenutnih SwiftUI API-ja i Liquid Glass dizajn jezika. Donja granica je fiksirana tačno na `26.0`, nikad manja verzija.
+CrocApp je potpuno nova aplikacija bez postojećih korisnika. Podrška starijim izdanjima značila bi provjere dostupnosti svuda i odricanje od trenutnih SwiftUI API-ja i Liquid Glass dizajn jezika. Minimalna verzija je `26.0`, a svaka novija radi. Donja granica je fiksirana na `26.0`, a ne na kasniju manju verziju, upravo zato da niko sa verzijama od 26.0 do 26.4 ne ostane zaključan.
 
 ## Da li je besplatan? Hoće li ikada imati plaćeni nivo?
 

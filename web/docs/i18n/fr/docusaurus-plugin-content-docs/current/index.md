@@ -27,7 +27,7 @@ L'expéditeur choisit des fichiers, un dossier ou un extrait de texte. CrocApp g
 
 ## Prérequis de plateforme
 
-CrocApp nécessite **iOS 26**, **iPadOS 26** ou **macOS 26** (exactement `26.0`, pas une version mineure ultérieure). C'est exclusivement pour les plateformes Apple ; il n'existe pas de client Windows, Linux ou Android.
+CrocApp nécessite **iOS 26**, **iPadOS 26** ou **macOS 26**, c'est-à-dire la version `26.0` ou toute version ultérieure. C'est exclusivement pour les plateformes Apple ; il n'existe pas de client Windows, Linux ou Android.
 
 :::warning
 CrocApp n'a pas encore été publié. Rien n'est disponible au téléchargement sur aucun canal aujourd'hui. Voir [Installation](getting-started/install.md) pour le statut actuel et comment compiler depuis les sources.

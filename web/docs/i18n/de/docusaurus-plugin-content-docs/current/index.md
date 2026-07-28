@@ -28,7 +28,7 @@ Der Sender wählt Dateien, einen Ordner oder einen Textausschnitt. CrocApp erzeu
 
 ## Plattformanforderungen
 
-CrocApp benötigt **iOS 26**, **iPadOS 26** oder **macOS 26** (exakt `26.0`, keine spätere Nebenversion). Es ist ausschließlich für Apple-Plattformen; es gibt keinen Windows-, Linux- oder Android-Client.
+CrocApp benötigt **iOS 26**, **iPadOS 26** oder **macOS 26**, also `26.0` oder jede neuere Version. Es ist ausschließlich für Apple-Plattformen; es gibt keinen Windows-, Linux- oder Android-Client.
 
 :::warning
 CrocApp wurde noch nicht veröffentlicht. Heute steht auf keinem Kanal ein Download zur Verfügung. Siehe [Installation](getting-started/install.md) für den aktuellen Status und wie man aus dem Quellcode baut.

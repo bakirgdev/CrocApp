@@ -27,7 +27,7 @@ Pošiljalac bira fajlove, folder ili odlomak teksta. CrocApp generiše kodnu fra
 
 ## Zahtjevi platforme
 
-CrocApp zahtijeva **iOS 26**, **iPadOS 26** ili **macOS 26** (tačno `26.0`, ne kasniju manju verziju). Namijenjen je isključivo Apple platformama; ne postoji Windows, Linux ili Android klijent.
+CrocApp zahtijeva **iOS 26**, **iPadOS 26** ili **macOS 26**, odnosno verziju `26.0` ili bilo koju noviju. Namijenjen je isključivo Apple platformama; ne postoji Windows, Linux ili Android klijent.
 
 :::warning
 CrocApp još nije objavljen. Trenutno ništa nije dostupno za preuzimanje ni na jednom kanalu. Pogledajte [Instalacija](getting-started/install.md) za trenutni status i kako izgraditi iz izvornog koda.

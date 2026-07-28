@@ -40,7 +40,7 @@ Ja. Weisen Sie CrocApp auf einen beliebigen croc-Relay hin, mit Passwort und IPv
 
 ## Warum nur iOS 26 und macOS 26?
 
-CrocApp ist eine Neuentwicklung ohne bestehende Nutzer. Ältere Versionen zu unterstützen würde überall Verfügbarkeitsprüfungen bedeuten und den Verzicht auf aktuelle SwiftUI-APIs und die Liquid-Glass-Designsprache. Die Untergrenze ist exakt auf `26.0` festgelegt, nie eine Nebenversion.
+CrocApp ist eine Neuentwicklung ohne bestehende Nutzer. Ältere Versionen zu unterstützen würde überall Verfügbarkeitsprüfungen bedeuten und den Verzicht auf aktuelle SwiftUI-APIs und die Liquid-Glass-Designsprache. Die Mindestversion ist `26.0`, und jede neuere Version funktioniert. Die Untergrenze ist bewusst auf `26.0` festgelegt und nicht auf eine spätere Nebenversion, damit niemand mit 26.0 bis 26.4 ausgesperrt wird.
 
 ## Ist es kostenlos? Wird es je eine bezahlte Stufe geben?
 

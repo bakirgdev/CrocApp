@@ -40,7 +40,7 @@ Yes. Point CrocApp at any croc relay, with a password and IPv6 if you want them.
 
 ## Why iOS 26 and macOS 26 only?
 
-CrocApp is a greenfield app with no existing users. Supporting older releases would mean availability checks everywhere and giving up current SwiftUI APIs and the Liquid Glass design language. The floor is pinned at exactly `26.0`, never a minor version.
+CrocApp is a greenfield app with no existing users. Supporting older releases would mean availability checks everywhere and giving up current SwiftUI APIs and the Liquid Glass design language. The minimum is `26.0`, and every later version works. The floor is pinned at `26.0` rather than at a later minor precisely so nobody running 26.0 through 26.4 is locked out.
 
 ## Is it free? Will it ever have a paid tier?
 
