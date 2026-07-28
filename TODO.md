@@ -21,7 +21,6 @@ Live at crocapp.dev/docs/. Background and traps: `docs/knowledge/docs-site.md`. 
 - Watch the first deploy. Pages replaces the *whole* site on every deploy, so confirm both crocapp.dev/ and crocapp.dev/docs/ load before pushing anything else
 - Cut the first docs version snapshot **when `1.0.0` is tagged**, not before: `pnpm --dir web/docs run docusaurus docs:version 0.9.9`. The version dropdown stays invisible until that second version exists, which is Docusaurus behaviour, not a bug
 - Rewrite `CHANGELOG.md` before the first GitHub release. Three unpopulated stubs and zero git tags today, which is why it does not drive docs versioning yet
-- `MARKETING_VERSION` in `app/CrocApp.xcodeproj/project.pbxproj` is `1.0`, contradicting the 0.9.9 release plan. Pick one before tagging
 - Recruit native-speaker review for `bs`, `de`, `es`, `fr`, `ru`. They are machine-assisted drafts and say so on each locale index page
 - Decide whether the landing page should get a language switcher too. Docs speak six languages, crocapp.dev/ speaks one
 - Decide whether the app's own UI should be localized. English-only today, which is why translated docs keep literal UI labels in English
