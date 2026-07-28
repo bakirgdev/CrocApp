@@ -161,6 +161,8 @@ open app/CrocApp.xcodeproj
 > [!IMPORTANT]
 > A fresh clone builds nothing until the xcframework exists. `CrocKit`'s binary target points at a gitignored artifact, so `scripts/build-xcframework.sh` is not optional ([ADR 0006](docs/decisions/0006-gomobile-binding.md)).
 
+Full toolchain reference, build settings, and troubleshooting: [`docs/BUILDING.md`](docs/BUILDING.md).
+
 <details>
 <summary><strong>Command line builds, linting, and verification</strong></summary>
 
@@ -243,6 +245,9 @@ No. CrocApp is Apple-platform only by design. Use the [croc CLI](https://github.
 
 | | |
 |---|---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System map: layers, event flow, state ownership, platform split |
+| [`docs/BUILDING.md`](docs/BUILDING.md) | Exact toolchain, fresh-clone steps, verification harnesses, troubleshooting |
+| [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | croc, bridge, app, and repo vocabulary in one line each |
 | [`docs/knowledge/`](docs/knowledge/README.md) | What croc is, how the bridge works, UI architecture, platform constraints |
 | [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records, numbered and dated |
 | [`docs/known-issues.md`](docs/known-issues.md) | Triaged defects and accepted papercuts. **Check here before filing a bug** |

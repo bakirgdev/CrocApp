@@ -20,13 +20,6 @@ Enforce on GitHub, all of these together:
 - [ ] Docs workflow (`docs.yml`) — build it to the same standard as `landing.yml`, once the docs site exists
 - [ ] Recurring-review note: bump the GH workflow macOS runner image (`macos-26` → `27`, and onward) only when Apple ships the matching OS release across platforms. Track this somewhere durable, not just here
 
-## Docs to write
-
-- [ ] `docs/GLOSSARY.md`
-- [ ] `docs/ARCHITECTURE.md` — SwiftUI app structure, how the Go engine is bridged (gobind), where the sandbox boundaries are. Doubles as the Swift learning trail, worth keeping current
-- [ ] `docs/BUILDING.md` — exact Xcode version, Go version, gomobile setup steps. Given the "verify gomobile/Xcode compat on every update" invariant, this is the living record of what worked
-- [ ] Audit `CLAUDE.md`: use a CLAUDE.md skill/plugin, verify every claim in the file, fix wrong ones, add what's missing, delete what isn't needed, then simplify and shorten hard. Follow CLAUDE.md best practices throughout
-
 ## Landing page (`web/landing/`)
 
 Blocked on the first release / store listings:

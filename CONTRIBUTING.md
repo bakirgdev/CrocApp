@@ -70,6 +70,8 @@ go install github.com/schollz/croc/v10@v10.5.0   # lands at ~/go/bin/croc, the d
 
 Env: `CROC` overrides the CLI path (default `~/go/bin/croc`), `SIM` picks the simulator (default `iPhone 17 Pro`; list them with `xcrun simctl list devices`).
 
+Deeper references: [`docs/BUILDING.md`](docs/BUILDING.md) for the exact toolchain and troubleshooting, [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system map, [`docs/GLOSSARY.md`](docs/GLOSSARY.md) for unfamiliar terms.
+
 ### What lives where
 
 | Path | What it is | Read first |
