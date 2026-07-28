@@ -18,24 +18,13 @@ Enforce on GitHub, all of these together:
 
 - [ ] Release workflow
 - [ ] Docs workflow (`docs.yml`) — build it to the same standard as `landing.yml`, once the docs site exists
-- [ ] Recurring-review note: bump the GH workflow macOS runner image (`macos-26` → `27`, and onward) only when Apple ships the matching OS release across platforms. Track this somewhere durable, not just here
 
 ## Landing page (`web/landing/`)
-
-Blocked on the first release / store listings:
 
 - [ ] iPhone & iPad card: App Store badge (`assets/img/app-store.svg`) is an unlinked `<img>` in `index.html`. Wrap in `<a>` when the listing exists
 - [ ] Mac card: same for the Mac App Store badge (`assets/img/mac-app-store.svg`)
 - [ ] Brew card prints `brew install --cask crocapp` with a copy button, but no cask is published. Verify the command actually works before the card claims it. Blocked on notarization (`docs/known-issues.md`)
-- [ ] `llms.txt` says "Not yet released" and lists channels as pending. Update it in the *same* change that updates the page copy — the two must agree
-
-Not blocked:
-
 - [ ] Link the docs site from the page — nav, own section, wherever fits best
-- [ ] "How to build" links to `blob/main/README.md` with no anchor. Add a build section to the README, point the link at its exact `#anchor`
-- [ ] Footer has a hand-typed "Page last updated" date. Bump on every copy change (the sitemap `lastmod` is stamped automatically by `landing.yml`; this one is not)
-- [ ] `assets/banner.webp` is unused. `design/brand.md` assigns it to the README header, the landing hero and the social card — it's in none of them. Use it or drop the claim
-- [ ] Apple ships store badges in black and white; repo has black only and dark mode inverts it in CSS. Swap in Apple's white asset if the inversion ever looks wrong
 
 ## App
 
@@ -46,14 +35,34 @@ Not blocked:
 ## Ops / external
 
 - [ ] Add the project domain to the private main Gmail account's Google Search Console
-- [ ] Build specialized skills/commands/agents for QOL/DevEx while developing (release, format, actions, ...) — ask Claude Code for suggestions
+- [ ] Build specialized skills/commands/agents for QOL/DevEx while developing (release, format, actions, etc.) — ask Claude Code for suggestions
 
 ## Prompts to run in a clean session
 
 Pre-App-Store full review:
 
-> Make a nice prompt for CC to review the whole app, fully test it, check if it is ready code-wise and otherwise: performant, optimized, code optimized for human contributors and AI, well commented but in healthy doses (short is better), user-ready, all features work. Review, then make planned phases, then plan each phase and do it via multiple prompts using subagents for the phase's plan. Commit where it fits and push on each phase done. Deep but simple recap of what's done / verified / fixed. These are the last checks of the app itself before App Store publish. One known fix needed: prompt user for camera and local network permission after onboarding screen is closed on first launch, and check state before using each feature.
+"
+Audit CrocApp end to end for App Store readiness. This is the last check of the app itself before publish, so treat gaps as blockers, not nits. Start from `docs/ARCHITECTURE.md` and `docs/known-issues.md`.
 
+**Review first, no edits.** Judge: every feature actually works, runtime performance, code quality for both human contributors and AI agents, comment density (short, why-not-what, healthy doses), and first-run UX polish. Run the builds, swift-format lint, golangci-lint, govulncheck, and the `scripts/verify-*.sh` harnesses; quote real output. Report every finding with severity, including low-severity ones.
+
+One defect is already known and must land: on first launch, request camera and local network permission after the onboarding screen closes, and check permission state before each feature that uses them.
+
+**Then execute.** Group findings into phases ordered by risk. For each phase in turn: write the plan, hand the work to subagents, review what comes back, verify with the matching harness, commit, push. One phase per pass, not all at once.
+
+Close with a plain-words recap: what was done, what was verified with which command, what was fixed.
+
+Think before answering (maximum reasoning)
+"
+  
 Known-issues sweep:
 
-> List known issues from the markdown file, understand each, research how to fix, and suggest a plan for what and how to fix. I approve the plan, then you write an optimized prompt to fix it in one go in the next clean session.
+"
+Read `docs/known-issues.md`. For every entry: find the real cause in the code and cite `file:line`, research the correct fix (context7, web, gopls/xcode MCP, or subagents, not guesses), and state its blast radius.
+
+Output one plan: issues ranked by severity, each with root cause, chosen fix, files touched, and the command that verifies it. Change no code this session.
+
+After I approve the plan, write a single self-contained prompt that carries out the whole thing in one clean session.
+
+Think before answering (maximum reasoning)
+"
