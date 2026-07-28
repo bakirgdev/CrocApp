@@ -32,8 +32,14 @@ require_croc() {
 kill_jobs() {
   local pids
   pids=$(jobs -p)
-  # shellcheck disable=SC2086  # deliberate split: one word per pid
-  [ -n "$pids" ] && kill $pids 2>/dev/null
+  if [ -n "$pids" ]; then
+    # `jobs -p` still lists jobs that have already exited, and kill fails on
+    # those. Swallow it: under the caller's `set -e` a failing kill aborts the
+    # EXIT trap, which skips the `rm -rf "$TMP"` beside it and makes a passing
+    # harness exit 1.
+    # shellcheck disable=SC2086  # deliberate split: one word per pid
+    kill $pids 2>/dev/null || true
+  fi
   return 0
 }
 
