@@ -13,6 +13,7 @@ Deep reference for the exact toolchain and the exact steps from a fresh clone to
 | swift-format | ships with the Xcode 26.6 toolchain (`docs/knowledge/tooling.md` records the bundled version as 6.3) | `.swift-format` (formatting rules; the binary itself is not separately versioned in this repo) | none, invoke via `xcrun swift-format` |
 | golangci-lint | `2.x`; CI pins `v2.12.2` exactly | `.github/workflows/ci.yml` (`golangci-lint-action@v9`, `version: v2.12.2`); rule config in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
 | govulncheck | unpinned, `@latest` | `.github/workflows/ci.yml` (go job) and `.github/workflows/govulncheck.yml` | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
+| create-dmg | unpinned | `.github/workflows/release.yml` installs it with `brew` | `brew install create-dmg`. Needed only by `scripts/build-dmg.sh`, not for a plain build |
 | croc CLI | `v10.5.0`, to match the embedded engine | `crocmobile/go.mod` (`github.com/schollz/croc/v10 v10.5.0`, indirect) | `go install github.com/schollz/croc/v10@v10.5.0` (lands at `~/go/bin/croc`, the harnesses' default) or `brew install croc`. Needed only for `scripts/verify-*.sh` and `crockit-verify`, not for a plain build |
 
 ## 2. First build from a fresh clone

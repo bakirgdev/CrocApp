@@ -28,11 +28,10 @@ Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pair
 
 - iPhone & iPad card: App Store badge (`assets/img/app-store.svg`) is an unlinked `<img>` in `index.html`. Wrap in `<a>` when the listing exists
 - Mac card: same for the Mac App Store badge (`assets/img/mac-app-store.svg`)
-- Brew card prints `brew install --cask crocapp` with a copy button, but no cask is published. Verify the command actually works before the card claims it. Blocked on notarization (`docs/known-issues.md`)
 
 ## Signing cert (blocks every macOS release channel)
 
-`scripts/build-devid.sh` archives fine, then stops at `DEVID-PENDING-CERT`. `security find-identity -v -p codesigning` shows one identity, `Apple Development: gracicbakir@icloud.com (5J25995FS2)`. No **Developer ID Application** cert exists, so nothing signable ships — not the unnotarized build, not notarization, not the Homebrew cask.
+`scripts/build-devid.sh` archives fine, then stops at `DEVID-PENDING-CERT`. `security find-identity -v -p codesigning` shows one identity, `Apple Development: gracicbakir@icloud.com (5J25995FS2)`. No **Developer ID Application** cert exists, so nothing signable ships — not the unnotarized build, not notarization.
 
 - Create a Developer ID Application cert at developer.apple.com (Certificates > Developer ID Application), install it in the login keychain, re-run `scripts/build-devid.sh`. Expect `DEVID-EXPORT-OK` then `DEVID-CHECK-OK`
 - Only owner-account action; the script degrades on purpose rather than failing, so it will keep quietly saying PENDING until this is done
@@ -41,14 +40,24 @@ Nothing exists in `assets/screenshots/` yet. Manifest of the six light/dark pair
 
 Also owner-only, at submission: answer the App Store Connect encryption questionnaire. `ITSAppUsesNonExemptEncryption` is now `true` in both plists (croc bundles its own AES-256-GCM/ChaCha20-Poly1305, so no exemption applies — `docs/decisions/0030-export-compliance-declaration.md`). The plist value and the answer you give must agree.
 
-## App
+## Before tagging v0.9.9
 
-- Brew cask (research)
+- **Populate `CHANGELOG.md`'s `# v0.9.9` section.** It is still the "To populate" stub. The release job pulls that block as the release body and only fails on an *empty* section, so the stub would ship as the release notes
+- Write the Gatekeeper instructions into that section: the build is ad-hoc signed, so first launch needs System Settings > Privacy & Security > Open Anyway. Verify the exact wording on a real macOS 26 download before publishing — the old Control-click > Open route no longer applies
+- Rehearse first: Actions > Release > Run workflow, version `0.9.9`. It builds and uploads an artifact without tagging. Download the DMG, open it, check the window against `design/components.md` → DiskImage
+- `scripts/build-dmg.sh` has never been run. `create-dmg` is not installed locally (`brew install create-dmg`)
+
+## Homebrew, some day (not now)
+
+Cask channel is dropped, see `docs/decisions/0031-no-homebrew-cask-channel.md`. Nothing in the repo, the docs or the web surfaces mentions brew any more. Two things to revisit before that changes:
+
+- **Submit to `homebrew/cask` only when both gates are clear.** (1) Real notarization: `notarytool submit --wait` + `stapler staple`, plus a Developer ID cert. Homebrew drops casks failing Gatekeeper from 2026-09-01. (2) Notability: a self-submitted cask (PR author owns the repo) needs **90 forks, 90 watchers, 225 stars**. Below that the audit rejects it automatically. Do not bother with an own tap as a workaround — Homebrew 6.0 made third-party taps untrusted by default, so it costs users a `brew trust` step or a fully qualified token
+- **In-app update checker vs. Homebrew.** If an updater is ever added to the app, it must not fight a cask install: Homebrew owns upgrades for what it installed, so a self-replacing bundle would clobber it. Standard answer is to detect the install location or ship the updater only in the DMG build. Decide this *when* the updater is designed, not after a cask exists
 
 ## Ops / external
 
-- Add the project domain to the private main Gmail account's Google Search Console
 - Build specialized skills/commands/agents for QOL/DevEx while developing (release, format, actions, etc.) — ask Claude Code for suggestions
+- fix ADRs: all have to be accepted, reordered to make sense, optimized content. this is due to preparing repo for public release, so all ADRs must be nice and clean and organized and no traces of 'battlefield'.
 
 ## Prompts to run in a clean session
   

@@ -196,3 +196,17 @@ Title `--type-headline` semibold. Actions `--type-body` in `--color-accent-text`
 ## Icon
 
 24×24 viewBox, `fill: none`, `stroke: currentColor`, round caps and joins, default size 22, default stroke width 1.8. Heavier strokes (2 – 2.4) for small glyphs so they hold weight. Always `aria-hidden` — the label next to it carries the meaning. See `iconography.md`.
+
+---
+
+## DiskImage
+
+The macOS download's Finder window. Not an app surface, but it is the first CrocApp anyone sees, so it is specified here rather than improvised in a build script.
+
+Window 660×400, icons 128, app at (165, 195), Applications alias at (495, 195). `scripts/build-dmg.sh` passes exactly these numbers to `create-dmg`; changing one without changing the other leaves this file lying.
+
+Background `assets/dmg-background.png`, 660×400, `--color-surface-base`. Title "CrocApp" at `--type-title3` semibold, `--color-text-primary`, 44 from the top. Lucide `arrow-right` between the two icon slots at 44×44, stroke 1.5, `--color-separator`. Hint "Drag CrocApp onto Applications" at `--type-footnote`, `--color-text-secondary`, 38 from the bottom.
+
+**Light values only.** Finder shows one fixed image and does not swap it with the system appearance, so the usual both-themes rule cannot apply. It is also 1x: `create-dmg` documents png, gif and jpg backgrounds, so there is no HiDPI representation and the image is soft on a Retina display (`docs/known-issues.md`).
+
+No accent, no gradient, no mascot: `brand.md` keeps the accent off large background surfaces, and a first-run install window is the calmest thing in the product.

@@ -52,6 +52,9 @@ npm-debug.log*
 # Assembled GitHub Pages artifact (scripts/assemble-site.sh)
 /_site
 
+# Release assets (scripts/build-dmg.sh, .github/workflows/release.yml)
+/dist
+
 # Obra superpowers
 .superpowers/
 docs/superpowers/plans/

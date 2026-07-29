@@ -30,6 +30,7 @@ Accent is for: primary action fills, active/selected state, links, file-type gly
 | Banner | `assets/banner.webp` | README header, landing hero, social card |
 | Mascot | `assets/mascot.png` | source, 512px. Never served |
 | Mascot, web | `web/landing/assets/img/mascot-web.webp` | 128px derivative — landing page, empty states on web, docs 404 |
+| Disk image background | `assets/dmg-background.png` | 660×400, the macOS DMG's Finder window. Spec in `components.md` → DiskImage |
 
 The mascot is a personality accent, not a UI element — it never appears inside the app's transfer flows.
 

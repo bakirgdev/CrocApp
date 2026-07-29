@@ -1,0 +1,245 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to rehearse, without the leading v (e.g. 0.9.9)"
+        required: true
+        type: string
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  swift-format:
+    name: swift-format
+
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - id: xcode
+        run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
+
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        with:
+          xcode-version: ${{ steps.xcode.outputs.version }}
+
+      - name: Lint formatting
+        run: |
+          xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
+
+  go:
+    name: go
+
+    runs-on: ubuntu-latest
+
+    env:
+      GOOS: darwin
+      GOARCH: arm64
+
+    defaults:
+      run:
+        working-directory: crocmobile
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: crocmobile/go.mod
+          cache-dependency-path: crocmobile/go.sum
+
+      - run: go build ./...
+
+      - run: go vet ./...
+
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9
+        with:
+          version: v2.12.2
+          working-directory: crocmobile
+
+      - name: govulncheck
+        run: |
+          env -u GOOS -u GOARCH go install golang.org/x/vuln/cmd/govulncheck@latest
+          "$(env -u GOOS -u GOARCH go env GOPATH)/bin/govulncheck" ./...
+
+  build:
+    name: build
+
+    needs: [swift-format, go]
+
+    runs-on: macos-26
+
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve and check the version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            version="$INPUT_VERSION"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+
+          case "$version" in
+            *[!0-9.]* | "" | *..*) echo "error: '$version' is not a plain dotted version"; exit 1 ;;
+          esac
+
+          declared=$(grep -oE 'MARKETING_VERSION = [^;]+;' app/CrocApp.xcodeproj/project.pbxproj \
+            | sed -E 's/MARKETING_VERSION = (.+);/\1/' | sort -u)
+
+          if [ "$(printf '%s\n' "$declared" | wc -l | tr -d ' ')" != "1" ]; then
+            echo "error: project.pbxproj declares more than one MARKETING_VERSION:"
+            printf '%s\n' "$declared"
+            exit 1
+          fi
+
+          if [ "$declared" != "$version" ]; then
+            echo "error: tag says $version, project.pbxproj says $declared."
+            echo "Bump MARKETING_VERSION in a pull request first, then tag the merge commit."
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: crocmobile/go.mod
+          cache-dependency-path: crocmobile/go.sum
+
+      - id: xcode
+        run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
+
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        with:
+          xcode-version: ${{ steps.xcode.outputs.version }}
+
+      - run: brew install create-dmg xcbeautify
+
+      - name: Build Croc.xcframework
+        run: scripts/build-xcframework.sh
+
+      - name: Build CrocApp (Release, ad-hoc signed)
+        shell: bash
+        working-directory: app
+        env:
+          DD: ${{ runner.temp }}/dd
+        run: |
+          set -o pipefail
+          xcodebuild -scheme CrocApp \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath "$DD" \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY=- \
+            DEVELOPMENT_TEAM= \
+            PROVISIONING_PROFILE_SPECIFIER= \
+            build \
+            | xcbeautify --renderer github-actions
+
+      - name: Assemble the release assets
+        shell: bash
+        env:
+          DD: ${{ runner.temp }}/dd
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          app="$DD/Build/Products/Release/CrocApp.app"
+          [ -d "$app" ] || { echo "error: no CrocApp.app at $app"; exit 1; }
+
+          mkdir -p dist
+          scripts/build-dmg.sh "$app" "$VERSION" dist
+
+          # ditto, not zip: it preserves the bundle's symlinks and the code
+          # signature, which a plain zip flattens.
+          ditto -c -k --keepParent --sequesterRsrc "$app" "dist/CrocApp-$VERSION-arm64.app.zip"
+          ditto -c -k --sequesterRsrc CrocKit/Croc.xcframework "dist/Croc.xcframework-$VERSION.zip"
+
+          ( cd dist && shasum -a 256 ./* > SHA256SUMS.txt )
+          cat dist/SHA256SUMS.txt
+
+      - name: Attest build provenance
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            dist/*.dmg
+            dist/*.zip
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: crocapp-${{ steps.version.outputs.version }}
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    name: release
+
+    needs: build
+
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.build.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/download-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: crocapp-${{ needs.build.outputs.version }}
+          path: dist
+
+      - name: Compose the release notes
+        run: |
+          # The release body is the CHANGELOG section, and nothing else. No
+          # generated pull-request list appended: the two have to read as the
+          # same text, so there is one description of a version, not two.
+          awk -v v="# v$VERSION" '$0 == v {found = 1; next} /^# v/ && found {exit} found' \
+            CHANGELOG.md > notes.md
+
+          if [ ! -s notes.md ]; then
+            echo "error: CHANGELOG.md has no populated '# v$VERSION' section."
+            exit 1
+          fi
+
+          cat notes.md
+
+      - name: Publish
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "CrocApp $VERSION" \
+            --notes-file notes.md \
+            --verify-tag \
+            "dist/CrocApp-$VERSION-arm64.dmg#CrocApp $VERSION (Apple silicon, disk image)" \
+            "dist/CrocApp-$VERSION-arm64.app.zip#CrocApp $VERSION (Apple silicon, app bundle)" \
+            "dist/Croc.xcframework-$VERSION.zip#Croc.xcframework $VERSION (prebuilt engine)" \
+            "dist/SHA256SUMS.txt#Checksums"

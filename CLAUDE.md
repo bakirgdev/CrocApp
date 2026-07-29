@@ -6,7 +6,7 @@ Free, open-source native SwiftUI GUI for the "croc" file-transfer CLI. Targets i
 
 - `.claude/`: project Claude config, `rules/`, `skills/`, `settings.json` and `settings.local.json`.
 - `.mcp.json`: project MCP servers `xcode` and `gopls` (Go semantics), both behind the `caveman-shrink` stdio proxy (compresses tool descriptions). context7 (docs) and playwright (browser, for landing/docs sites) come from plugins enabled in `.claude/settings.json` instead, never both ways at once (ADR 0024).
-- `.github/`: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` and `workflows/docs.yml` (Pages deploy; both publish the whole site via `scripts/assemble-site.sh`, ADR 0025); issue and PR templates route per `ISSUE_TEMPLATE/config.yml`.
+- `.github/`: `workflows/ci.yml` (format, Go lint/vuln/build/vet, macOS + iOS builds), `workflows/release.yml` (checks, build, DMG, publish; dispatch rehearses, tag `v*` publishes, ADR 0032), `workflows/govulncheck.yml` (weekly scan, ADR 0018), `workflows/landing.yml` and `workflows/docs.yml` (Pages deploy; both publish the whole site via `scripts/assemble-site.sh`, ADR 0025); issue and PR templates route per `ISSUE_TEMPLATE/config.yml`.
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`: contributor policy at repo root (ADR 0023). `CONTRIBUTING.md` publicly restates the Working Rules below; change both together.
 - `.swift-format`, `.xcode-version`, `crocmobile/.golangci.yml`: tool configs. See `docs/knowledge/tooling.md` for the exact pinned versions and rationale.
 - `app/`: Xcode project (SwiftUI, iOS + macOS), `CrocApp.xcodeproj`, `CrocApp/` sources (`Support/` holds cross-view helpers: `DesignTokens.swift` routes the app onto `design/`, `SecurityScopedBookmark.swift` and `EngineConstraints.swift` are shared engine-adjacent helpers), `CrocShare/` share extension, `Config/` (plists, entitlements, export options).
@@ -41,6 +41,7 @@ scripts/verify-app-mac.sh
 scripts/verify-app-sim.sh
 scripts/verify-share-sim.sh
 scripts/build-devid.sh        # Developer ID archive → export → notarization pre-check
+scripts/build-dmg.sh <app> <version> [out]   # built .app → styled DMG (needs create-dmg)
 
 # landing page, local preview
 cp design/tokens.css web/landing/ && python3 -m http.server --directory web/landing

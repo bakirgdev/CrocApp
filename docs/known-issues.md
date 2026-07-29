@@ -8,7 +8,8 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Blocking release
 
-- **Notarization is not real.** `scripts/build-devid.sh` stops at `syspolicy_check distribution`, a dry run. No `notarytool submit --wait`, no `stapler staple`. Homebrew requires codesigning + notarization for official casks since 2026-09-01, so the cask channel in ADR 0007 is blocked (`knowledge/tooling.md`).
+- **Notarization is not real.** `scripts/build-devid.sh` stops at `syspolicy_check distribution`, a dry run. No `notarytool submit --wait`, no `stapler staple`. Until it lands, a downloaded build shows Gatekeeper's unidentified-developer refusal on first launch (`knowledge/tooling.md`).
+- **The release pipeline ships an ad-hoc signature.** `.github/workflows/release.yml` builds with `CODE_SIGN_IDENTITY=-` because no Developer ID certificate exists. Enough for arm64 to execute, not enough for Gatekeeper on a downloaded copy: the first launch needs System Settings > Privacy & Security > Open Anyway. Accepted for v0.9.9, which is a symbolic release (ADR 0032); a blocker for anything after it.
 - **No Developer ID Application certificate is installed.** Only `Apple Development` is present, so `scripts/build-devid.sh` stops at `DEVID-PENDING-CERT` before it ever reaches the notarization step above. Owner action: create one at developer.apple.com (Certificates > Developer ID Application).
 - **`ExportOptions-MAS.plist` is committed but never exercised.** First real MAS export is its first test.
 
@@ -69,7 +70,8 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Landing page
 
-- **The primary CTA still resolves to nothing installable.** "Download" in the hero scrolls to four channels: two unlinked store badges, a GitHub releases link that 404s until there is a release, and a Homebrew line for a cask that does not exist. Honest, but the page's strongest call to action cannot yet be completed. Each channel clears independently: the badges when the apps ship, the release link on the first tag, the cask when it is submitted.
+- **The primary CTA still resolves to nothing installable.** "Download" in the hero scrolls to three channels: two unlinked store badges and a GitHub releases link that 404s until there is a release. Honest, but the page's strongest call to action cannot yet be completed. The badges clear when the apps ship. The release link starts resolving on the first tag — and because v0.9.9 publishes as a normal release rather than a prerelease, it will point at an ad-hoc signed build that Gatekeeper refuses on first launch. The card's "Notarized DMG, signed with a Developer ID" line is wrong from that moment until notarization is real.
+- **The disk image background is 1x only.** `create-dmg` documents png, gif and jpg backgrounds, so `assets/dmg-background.png` has no HiDPI representation and reads soft on a Retina display. Fixing it means a multi-representation TIFF, which `create-dmg` does not document and which has not been tested here.
 - **`--content-max-width` on the hero mockup.** `design/brand.md` now carves an explicit exception for elements that depict the app, so this is documented rather than fixed — but the exception is narrow and easy to over-apply.
 - **Store badges are inverted in dark mode with a CSS filter.** Apple ships black and white variants; the repo has black only. Inverting a black-on-transparent badge produces the white variant, but it is a filter over supplied artwork, not the supplied artwork.
 - **`assets/banner.webp` is orphaned.** `design/brand.md` assigns it to the README header, the landing hero and the social card. It appears in none of them.
