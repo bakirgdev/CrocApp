@@ -2,9 +2,7 @@
 
 Personal scratch list. Not a doc — never cite from `docs/`.
 
-## Repo hardening (gate: v0.9.9)
-
-Enforce on GitHub, all of these together:
+## Before repo public release
 
 - Main branch: no direct pushes, contributions via PR only
 - Main branch: block force pushes of any kind
