@@ -13,6 +13,8 @@ Enforce on GitHub, all of these together:
 - Review for more rules worth adding at the same time
 - **Before** making CI a required check: replace the `paths` allowlist in `ci.yml` with a change-detection job that reports success. Today a filtered-out PR runs zero jobs, so a required check stays pending forever (see `docs/knowledge/tooling.md`)
 - Pin third-party actions to commit SHAs (`maxim-lobanov/setup-xcode`, `golangci/golangci-lint-action`) — mutable major tags are a supply-chain hole
+- fix all security voulns flagged on github
+- perform complete refactoring before public release
 
 ## Screenshots
 
