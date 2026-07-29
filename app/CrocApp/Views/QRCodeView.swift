@@ -33,9 +33,34 @@ struct QRCodeView: View {
                             .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
                     )
                     .accessibilityLabel("QR code for the transfer code")
+            } else {
+                // Must be a real view, not the implicit EmptyView: SwiftUI
+                // gives EmptyView no identity in the render tree, so the
+                // .task below never fired and the QR never appeared at all.
+                placeholder
             }
         }
         .task(id: content) { image = Self.generate(content) }
+    }
+
+    /// Same footprint and chrome as the rendered QR, so the frame does not
+    /// jump when the image lands.
+    private var placeholder: some View {
+        Color.clear
+            .frame(
+                width: ComponentMetrics.qrFrameDefault,
+                height: ComponentMetrics.qrFrameDefault
+            )
+            .padding(Spacing.space4)
+            .background(
+                Color.white,
+                in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                    .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
+            )
+            .accessibilityHidden(true)
     }
 
     private static let ciContext = CIContext()

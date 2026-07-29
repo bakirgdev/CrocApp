@@ -192,7 +192,9 @@ struct TransferStatusView: View {
                     Text("File \(min(p.currentFile + 1, p.totalFiles)) of \(p.totalFiles)")
                     Spacer()
                     Text(
-                        "\(p.fileSent.formatted(.byteCount(style: .file))) / \(p.fileSize.formatted(.byteCount(style: .file)))"
+                        // spellsOutZero: the default renders the first moments
+                        // of every transfer as "Zero kB / 41 MB".
+                        "\(p.fileSent.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.fileSize.formatted(.byteCount(style: .file)))"
                     )
                 }
                 .font(.caption)
@@ -204,7 +206,7 @@ struct TransferStatusView: View {
                     .accessibilityLabel("Overall progress")
                 HStack {
                     Text(
-                        "Total \((p.bytesFinished + p.fileSent).formatted(.byteCount(style: .file))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
+                        "Total \((p.bytesFinished + p.fileSent).formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
                     )
                     Spacer()
                     if controller.speedBytesPerSec > 0 {
@@ -306,6 +308,10 @@ struct IncomingRequestView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            // Without this the List paints the system grouped background
+            // behind the rows, which reads as a stray grey slab under the
+            // file card whenever the list is shorter than its own frame.
+            .scrollContentBackground(.hidden)
             .frame(minHeight: 120, maxHeight: 240)
             Text(
                 "\(list.files.count) file(s) • \(list.totalSize.formatted(.byteCount(style: .file)))"
