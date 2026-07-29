@@ -1,6 +1,6 @@
 # 0007. Distribution channels
 
-Status: accepted
+Status: superseded by 0031
 Date: 2026-07-22
 
 ## Context

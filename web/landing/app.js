@@ -157,47 +157,6 @@
       .finally(() => clearTimeout(timer));
   });
 
-  /* ---- Copy buttons ---- */
-
-  feature(() => {
-    /* Markup ships these hidden so a button never promises what it cannot do. */
-    if (!navigator.clipboard) return;
-
-    for (const button of document.querySelectorAll("[data-copy]")) {
-      let source;
-      try {
-        source = document.querySelector(button.dataset.copy);
-      } catch (e) {
-        /* A malformed selector is an authoring mistake in one button, not a
-           reason to leave the rest of them hidden. */
-        continue;
-      }
-
-      const label = button.querySelector("[data-copy-label]");
-      const glyph = button.querySelector("use");
-      if (!source || !label || !glyph) continue;
-
-      button.hidden = false;
-
-      let reset;
-
-      button.addEventListener("click", () => {
-        navigator.clipboard.writeText(source.textContent.trim()).then(() => {
-          label.textContent = "Copied";
-          glyph.setAttribute("href", "#i-check");
-
-          /* Without the clear, a second click inherits the first click's
-             timer and the label snaps back almost immediately. */
-          clearTimeout(reset);
-          reset = setTimeout(() => {
-            label.textContent = "Copy";
-            glyph.setAttribute("href", "#i-copy");
-          }, 2000);
-        }, () => {});
-      });
-    }
-  });
-
   /* ---- Current section in the nav ---- */
 
   feature(() => {

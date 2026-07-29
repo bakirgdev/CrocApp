@@ -71,4 +71,4 @@ These cost real debugging time on this machine. All are environment quirks, not 
 
 ## Not done yet: real notarization
 
-`scripts/build-devid.sh` stops at `syspolicy_check`, which is a dry run. There is no `xcrun notarytool submit --wait` and no `xcrun stapler staple`. Consequence: **Homebrew made codesigning + notarization mandatory for official casks on 2026-09-01**, and non-compliant casks are removed from the tap, so the cask channel in ADR 0007 is blocked until this lands. Without stapling, first launch on a fresh Mac also needs network for Gatekeeper.
+`scripts/build-devid.sh` stops at `syspolicy_check`, which is a dry run. There is no `xcrun notarytool submit --wait` and no `xcrun stapler staple`. Without stapling, first launch on a fresh Mac needs network for Gatekeeper; without notarization at all, it needs a right-click Open and a trust prompt. The direct-download channel (ADR 0031) is the one this blocks.

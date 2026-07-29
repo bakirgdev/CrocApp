@@ -997,12 +997,7 @@ body {
   margin-block-end: 0;
 }
 
-.dlcard code {
-  font-size: var(--type-footnote-size);
-  overflow-wrap: anywhere;
-}
-
-/* Whatever each channel offers sits on the card's bottom edge, so four cards
+/* Whatever each channel offers sits on the card's bottom edge, so cards
    of different content still line their actions up. */
 .dlcard__action {
   align-self: flex-start;

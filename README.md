@@ -36,8 +36,9 @@ It is a graphical front end for [croc](https://github.com/schollz/croc), the com
 | iOS / iPadOS App Store | Planned |
 | Mac App Store | Planned |
 | macOS direct download (notarized DMG) | Planned |
-| Homebrew cask | Blocked on notarization ([ADR 0007](docs/decisions/0007-distribution-channels.md)) |
 | TestFlight beta | Planned |
+
+Four channels, no package managers ([ADR 0031](docs/decisions/0031-no-homebrew-cask-channel.md)).
 
 Every V1 feature is implemented. What stands between the app and a release is tracked in [`docs/known-issues.md`](docs/known-issues.md) under "Blocking release".
 

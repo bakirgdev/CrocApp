@@ -38,7 +38,6 @@
 | Theme: to dark (web only) | `moon` | — |
 | Theme: to light (web only) | `sun` | — |
 | Sponsor / support (web only) | `heart` | — |
-| Command line / Homebrew (web only) | `terminal` | — |
 
 **Lucide 1.x has no brand icons** — `github.svg` was removed. The landing page's GitHub link uses `star` plus the word "GitHub" rather than the Octocat mark, which also sidesteps the trademark question. Do not reintroduce a brand glyph from an older Lucide version.
 

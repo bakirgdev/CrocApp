@@ -12,20 +12,19 @@ description: CrocApp wurde noch nicht veröffentlicht. Hier ist der aktuelle Sta
 
 ## Vertriebskanäle
 
-CrocApp ist für vier Kanäle geplant. Keiner ist bisher live.
+CrocApp ist für drei Kanäle geplant. Keiner ist bisher live.
 
 | Kanal | Status |
 |---|---|
 | iOS / iPadOS App Store | Geplant |
 | Mac App Store | Geplant |
 | Direkter Download für macOS (notarisierte DMG) | Geplant |
-| Homebrew-Cask | Blockiert durch Notarisierung |
 
 Hinweise zu den Blockern:
 
 - **Notarisierung ist noch nicht real.** Das Notarisierungsskript des Projekts bricht derzeit bei einer Trockenlaufprüfung (`syspolicy_check distribution`) ab und reicht kein echtes Notarisierungsticket ein oder heftet eines an.
-- **Homebrew verlangt seit dem 2026-09-01 Codesigning und Notarisierung für offizielle Casks**, sodass der Cask-Kanal blockiert bleibt, bis echte Notarisierung vorliegt.
 - Eine TestFlight-Beta ist ebenfalls geplant, sobald es einen Build zum Verteilen gibt.
+- Es gibt keinen Paketmanager-Kanal, und vorerst ist auch keiner geplant.
 
 Jedes V1-Feature ist implementiert; was zwischen der App und einem Release steht, wird in den [bekannten Problemen](https://github.com/bakirgdev/CrocApp/blob/main/docs/known-issues.md) des Projekts unter "Blocking release" nachgehalten.
 

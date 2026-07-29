@@ -12,20 +12,19 @@ description: CrocApp još nije objavljen. Evo trenutnog statusa svakog planirano
 
 ## Kanali distribucije
 
-CrocApp je planiran za četiri kanala. Nijedan još nije aktivan.
+CrocApp je planiran za tri kanala. Nijedan još nije aktivan.
 
 | Kanal | Status |
 |---|---|
 | iOS / iPadOS App Store | Planirano |
 | Mac App Store | Planirano |
 | macOS direktno preuzimanje (notarizovani DMG) | Planirano |
-| Homebrew cask | Blokirano na notarizaciji |
 
 Napomene o blokadama:
 
 - **Notarizacija još nije stvarna.** Skripta za notarizaciju projekta trenutno staje na dry-run provjeri (`syspolicy_check distribution`) i ne podnosi zahtjev niti pribavlja pravu notarizacijsku potvrdu.
-- **Homebrew zahtijeva potpisivanje koda i notarizaciju za zvanične caskove** od 2026-09-01, tako da kanal caska ostaje blokiran dok prava notarizacija ne bude dostupna.
 - Planirana je i TestFlight beta verzija, za kada bude postojala verzija za distribuciju.
+- Nema kanala preko menadžera paketa i zasad se nijedan ne planira.
 
 Svaka V1 funkcija je implementirana; ono što stoji između aplikacije i izdanja prati se u projektovim [poznatim problemima](https://github.com/bakirgdev/CrocApp/blob/main/docs/known-issues.md) pod "Blocking release".
 
