@@ -2,7 +2,7 @@
   "name": "crocapp-docs",
   "version": "0.9.9",
   "private": true,
-  "packageManager": "pnpm@11.17.0",
+  "packageManager": "pnpm@11.18.0",
   "scripts": {
     "docusaurus": "docusaurus",
     "tokens": "cp ../../design/tokens.css src/css/tokens.css",

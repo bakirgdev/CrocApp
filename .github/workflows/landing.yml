@@ -35,7 +35,14 @@ jobs:
           fetch-depth: 0 # docs showLastUpdateTime reads each file's git history
 
       - name: Enable pnpm
-        run: corepack enable pnpm
+        # corepack resolves `packageManager` from the working directory, and the
+        # repo root has no package.json. Without this it activates whatever pnpm
+        # the runner image ships, then pnpm reads web/docs/package.json, sees a
+        # different version and refuses to run rather than switching. --activate
+        # makes the pinned version the shim's default for later root-level calls
+        # (scripts/assemble-site.sh invokes `pnpm --dir web/docs`).
+        run: corepack enable pnpm && corepack prepare --activate
+        working-directory: web/docs
 
       - name: Resolve pnpm store path
         id: pnpm-store
