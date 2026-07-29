@@ -35,7 +35,9 @@ struct ContentView: View {
         }
             #endif
             .task {
-                if !onboardingSeen && !AutoVerify.isHarnessRun { showOnboarding = true }
+                if AutoVerify.forcesOnboarding || (!onboardingSeen && !AutoVerify.isHarnessRun) {
+                    showOnboarding = true
+                }
                 await AutoVerify.runIfRequested(controller: controller)
             }
             .onChange(of: controller.isActive) { _, active in
