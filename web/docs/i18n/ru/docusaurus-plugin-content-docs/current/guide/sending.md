@@ -6,6 +6,8 @@ description: Как отправлять файлы, папки и текст в
 
 # Отправка файлов
 
+![Экран Send в CrocApp на macOS: три подготовленных файла и готовая кнопка Send](/img/screenshots/mac-send-files-light.png#gh-light-mode-only)![Экран Send в CrocApp на macOS: три подготовленных файла и готовая кнопка Send](/img/screenshots/mac-send-files-dark.png#gh-dark-mode-only)
+
 Откройте **Send** на главном экране. Переключатель **What to send** переключается между двумя режимами:
 
 ## Файлы (F1, F2)

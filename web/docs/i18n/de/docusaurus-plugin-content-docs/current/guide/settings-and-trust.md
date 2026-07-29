@@ -6,6 +6,8 @@ description: Wo die Einstellungen von CrocApp liegen, warum Sie eventuell einen 
 
 # Einstellungen und Vertrauen
 
+![Die CrocApp-Einstellungen unter macOS mit dem Empfangsordner und den Relay-Adressfeldern](/img/screenshots/mac-settings-light.png#gh-light-mode-only)![Die CrocApp-Einstellungen unter macOS mit dem Empfangsordner und den Relay-Adressfeldern](/img/screenshots/mac-settings-dark.png#gh-dark-mode-only)
+
 ## Wo Einstellungen liegen
 
 Unter macOS liegen die Einstellungen in der Settings-Szene (⌘,), mit einem Bereich **Receive** (Zielordner, plus einer Schaltfläche **Show in Finder**) über den [Leistungsoptionen](power-options.md). Unter iOS enthält der Einstellungsbildschirm (erreichbar über die Startbildschirm-Toolbar) die Leistungsoptionen; der Zielordner für den Empfang wird stattdessen direkt über den **Receive**-Bildschirm geändert.

@@ -6,6 +6,8 @@ description: Cómo enviar archivos, carpetas y texto en CrocApp, incluida la ext
 
 # Envío de archivos
 
+![La pantalla Send de CrocApp en macOS con tres archivos preparados y el botón Send listo](/img/screenshots/mac-send-files-light.png#gh-light-mode-only)![La pantalla Send de CrocApp en macOS con tres archivos preparados y el botón Send listo](/img/screenshots/mac-send-files-dark.png#gh-dark-mode-only)
+
 Abra **Send** desde la pantalla de inicio. El selector **What to send** cambia entre dos modos:
 
 ## Archivos (F1, F2)

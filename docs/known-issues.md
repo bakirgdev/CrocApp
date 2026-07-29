@@ -84,12 +84,14 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 - **The five non-English locales are unreviewed machine-assisted drafts.** `bs`, `de`, `es`, `fr`, `ru` carry a warning admonition saying so, but nothing has native-speaker review yet (ADR 0028).
 - **A landing-only change rebuilds the docs site too, and vice versa.** Both Pages workflows call `scripts/assemble-site.sh`, which builds both surfaces regardless of which one changed (ADR 0025).
 - **A commit touching both `web/landing/` and `web/docs/` deploys twice.** Both workflows match, and the shared `github-pages` concurrency group with `cancel-in-progress: false` queues them rather than collapsing them, so the same artifact from the same SHA is built and published twice, back to back (observed at roughly 45s each). Harmless, since the second deploy is byte-identical to the first, and preferable to `cancel-in-progress: true`, which would abort a deploy mid-flight. The cost disappears if the two workflows are ever collapsed into one.
-- **No app screenshots anywhere.** `assets/screenshots/` is empty, so neither the README nor the guide pages show the app. `assets/screenshots/README.md` holds the manifest of the six light/dark pairs to capture.
+- **Most screenshots are captured but unused.** `scripts/capture-screenshots.sh` writes eighteen light/dark pairs; the README, the four guide pages and the landing hero between them reference four. The rest are carried in the repo without a reader.
 - **No pull-request preview build.** `onBrokenLinks: throw` means a broken docs build is only discovered on push to `main`, when `landing.yml` or `docs.yml` runs and fails.
 - **`web/landing/sitemap.xml` still lists only the landing URL.** `robots.txt` now advertises the Docusaurus-generated `/docs/sitemap.xml` as a second sitemap, so crawlers reach it, but the two sitemaps stay separate and the landing one is hand-maintained.
 
 ## Accepted
 
+- **`mac-settings-*.png` shows a text caret in the Address field.** The macOS Settings scene gives its first `TextField` focus the moment it opens. Defocusing it needs a click somewhere else, and any click that lands outside the window drops it behind the clicked one before `screencapture` can run.
+- **The macOS Settings window cannot be photographed whole.** It is a fixed 480x450 and refuses `AXSize` writes, so the shot ends mid-row wherever the form is longer than that. Scrolled to the top is the framing that at least starts on a section header.
 - **`OutputFolderStore.select` silently no-ops if bookmarking fails.** Rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **No explicit `stopScanning` when the QR scanner sheet dismisses.** VisionKit tears down with the view controller.

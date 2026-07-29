@@ -6,6 +6,8 @@ description: Разбор одной отправки и одного приём
 
 # Ваша первая передача
 
+![CrocApp на macOS: экран Ready to send с кодовой фразой, кнопкой Copy Code и QR-кодом](/img/screenshots/mac-send-light.png#gh-light-mode-only)![CrocApp на macOS: экран Ready to send с кодовой фразой, кнопкой Copy Code и QR-кодом](/img/screenshots/mac-send-dark.png#gh-dark-mode-only)
+
 На главном экране CrocApp есть две кнопки: **Send** и **Receive**. Всё остальное следует из процесса в три шага:
 
 1. Отправитель выбирает файлы, папку или фрагмент текста.

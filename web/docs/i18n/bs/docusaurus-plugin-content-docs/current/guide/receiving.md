@@ -6,6 +6,8 @@ description: Kako primiti prenos u CrocApp-u, pregledati listu dolaznih fajlova 
 
 # Primanje fajlova
 
+![CrocApp na iOS-u prikazuje dolaznu razmjenu od tri datoteke s dugmadima Decline i Accept](/img/screenshots/ios-receive-light.png#gh-light-mode-only)![CrocApp na iOS-u prikazuje dolaznu razmjenu od tri datoteke s dugmadima Decline i Accept](/img/screenshots/ios-receive-dark.png#gh-dark-mode-only)
+
 Otvorite **Receive** sa početnog ekrana.
 
 ## Unos koda (F4)

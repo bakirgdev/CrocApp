@@ -6,6 +6,8 @@ description: Kako slati fajlove, foldere i tekst u CrocApp-u, uključujući ekst
 
 # Slanje fajlova
 
+![Ekran Send u CrocApp-u na macOS-u s tri pripremljene datoteke i spremnim dugmetom Send](/img/screenshots/mac-send-files-light.png#gh-light-mode-only)![Ekran Send u CrocApp-u na macOS-u s tri pripremljene datoteke i spremnim dugmetom Send](/img/screenshots/mac-send-files-dark.png#gh-dark-mode-only)
+
 Otvorite **Send** sa početnog ekrana. Birač **What to send** prebacuje između dva načina rada:
 
 ## Files (F1, F2)

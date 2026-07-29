@@ -64,6 +64,36 @@ flowchart LR
 
 Both sides run PAKE over the code phrase to derive a session key, so the phrase never crosses the network in the clear and the relay never learns the key. When both devices are on the same network, CrocApp connects directly and skips the relay entirely.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" valign="top">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/mac-send-dark.png">
+        <img src="assets/screenshots/mac-send-light.png" width="380" alt="CrocApp on macOS, ready to send: the code phrase, a QR code, and an end-to-end encrypted badge.">
+      </picture>
+      <br><sub><strong>macOS</strong> — send: code phrase and QR</sub>
+    </td>
+    <td align="center" valign="top">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/ios-receive-dark.png">
+        <img src="assets/screenshots/ios-receive-light.png" width="220" alt="CrocApp on iOS showing an incoming transfer of three files with Decline and Accept buttons.">
+      </picture>
+      <br><sub><strong>iOS</strong> — receive: preview, then accept</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/mac-settings-dark.png">
+        <img src="assets/screenshots/mac-settings-light.png" width="420" alt="CrocApp Settings on macOS showing the receive folder and the relay address fields.">
+      </picture>
+      <br><sub><strong>macOS</strong> — settings: your own relay, local-only, compression</sub>
+    </td>
+  </tr>
+</table>
+
 ## Security
 
 Transfers are end-to-end encrypted, the code phrase authenticates both sides, and the relay only ever sees ciphertext. That is the entire claim.

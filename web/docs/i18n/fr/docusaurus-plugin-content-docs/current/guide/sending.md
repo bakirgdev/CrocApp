@@ -6,6 +6,8 @@ description: Comment envoyer des fichiers, des dossiers et du texte dans CrocApp
 
 # Envoyer des fichiers
 
+![L'écran Send de CrocApp sur macOS avec trois fichiers préparés et le bouton Send prêt](/img/screenshots/mac-send-files-light.png#gh-light-mode-only)![L'écran Send de CrocApp sur macOS avec trois fichiers préparés et le bouton Send prêt](/img/screenshots/mac-send-files-dark.png#gh-dark-mode-only)
+
 Ouvrez **Send** depuis l'écran d'accueil. Le sélecteur **What to send** bascule entre deux modes :
 
 ## Fichiers (F1, F2)

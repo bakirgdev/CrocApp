@@ -6,6 +6,8 @@ description: Comment recevoir un transfert dans CrocApp, vérifier la liste des 
 
 # Recevoir des fichiers
 
+![CrocApp sur iOS affichant un transfert entrant de trois fichiers avec les boutons Decline et Accept](/img/screenshots/ios-receive-light.png#gh-light-mode-only)![CrocApp sur iOS affichant un transfert entrant de trois fichiers avec les boutons Decline et Accept](/img/screenshots/ios-receive-dark.png#gh-dark-mode-only)
+
 Ouvrez **Receive** depuis l'écran d'accueil.
 
 ## Saisir un code (F4)

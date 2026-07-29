@@ -6,6 +6,8 @@ description: Eine Anleitung für einen Sende- und einen Empfangsvorgang in CrocA
 
 # Ihre erste Übertragung
 
+![CrocApp unter macOS zeigt Ready to send mit der Code-Phrase, einer Copy-Code-Schaltfläche und einem QR-Code](/img/screenshots/mac-send-light.png#gh-light-mode-only)![CrocApp unter macOS zeigt Ready to send mit der Code-Phrase, einer Copy-Code-Schaltfläche und einem QR-Code](/img/screenshots/mac-send-dark.png#gh-dark-mode-only)
+
 Der Startbildschirm von CrocApp hat zwei Schaltflächen: **Send** und **Receive**. Alles Weitere ergibt sich aus einem dreistufigen Ablauf:
 
 1. Der Sender wählt Dateien, einen Ordner oder einen Textausschnitt.

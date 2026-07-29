@@ -6,6 +6,8 @@ description: How to send files, folders, and text in CrocApp, including the shar
 
 # Sending files
 
+![The CrocApp Send screen on macOS with three files staged and the Send button ready](/img/screenshots/mac-send-files-light.png#gh-light-mode-only)![The CrocApp Send screen on macOS with three files staged and the Send button ready](/img/screenshots/mac-send-files-dark.png#gh-dark-mode-only)
+
 Open **Send** from the home screen. The **What to send** picker switches between two modes:
 
 ## Files (F1, F2)

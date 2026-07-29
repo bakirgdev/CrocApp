@@ -6,6 +6,8 @@ description: Dónde vive la configuración de CrocApp, por qué podría ejecutar
 
 # Configuración y confianza
 
+![Los ajustes de CrocApp en macOS mostrando la carpeta de recepción y los campos de dirección del relay](/img/screenshots/mac-settings-light.png#gh-light-mode-only)![Los ajustes de CrocApp en macOS mostrando la carpeta de recepción y los campos de dirección del relay](/img/screenshots/mac-settings-dark.png#gh-dark-mode-only)
+
 ## Dónde vive la configuración
 
 En macOS, la configuración está en la escena Settings (⌘,), con una sección **Receive** (carpeta de destino, más un botón **Show in Finder**) por encima de las [opciones avanzadas](power-options.md). En iOS, la pantalla de ajustes (accesible desde la barra de herramientas de inicio) contiene las opciones avanzadas; la carpeta de destino de recepción se cambia en su lugar desde la propia pantalla **Receive**.

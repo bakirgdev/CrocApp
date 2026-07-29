@@ -6,6 +6,8 @@ description: Cómo recibir una transferencia en CrocApp, revisar la lista de arc
 
 # Recepción de archivos
 
+![CrocApp en iOS mostrando una transferencia entrante de tres archivos con los botones Decline y Accept](/img/screenshots/ios-receive-light.png#gh-light-mode-only)![CrocApp en iOS mostrando una transferencia entrante de tres archivos con los botones Decline y Accept](/img/screenshots/ios-receive-dark.png#gh-dark-mode-only)
+
 Abra **Receive** desde la pantalla de inicio.
 
 ## Introducir un código (F4)

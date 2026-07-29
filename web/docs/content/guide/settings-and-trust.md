@@ -6,6 +6,8 @@ description: Where CrocApp's settings live, why you might run your own relay, an
 
 # Settings and trust
 
+![CrocApp Settings on macOS showing the receive folder and the relay address fields](/img/screenshots/mac-settings-light.png#gh-light-mode-only)![CrocApp Settings on macOS showing the receive folder and the relay address fields](/img/screenshots/mac-settings-dark.png#gh-dark-mode-only)
+
 ## Where settings live
 
 On macOS, settings are in the Settings scene (⌘,), with a **Receive** section (destination folder, plus a **Show in Finder** button) above the [power options](power-options.md). On iOS, the settings screen (reached from the home toolbar) holds the power options; the receive destination folder is changed from the **Receive** screen itself instead.

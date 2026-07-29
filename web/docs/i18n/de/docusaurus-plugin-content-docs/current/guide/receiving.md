@@ -6,6 +6,8 @@ description: Wie Sie eine Übertragung in CrocApp empfangen, die eingehende Date
 
 # Dateien empfangen
 
+![CrocApp unter iOS zeigt eine eingehende Übertragung mit drei Dateien und den Schaltflächen Decline und Accept](/img/screenshots/ios-receive-light.png#gh-light-mode-only)![CrocApp unter iOS zeigt eine eingehende Übertragung mit drei Dateien und den Schaltflächen Decline und Accept](/img/screenshots/ios-receive-dark.png#gh-dark-mode-only)
+
 Öffnen Sie **Receive** über den Startbildschirm.
 
 ## Einen Code eingeben (F4)

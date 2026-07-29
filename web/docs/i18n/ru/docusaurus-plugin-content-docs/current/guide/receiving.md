@@ -6,6 +6,8 @@ description: Как принять передачу в CrocApp, просмотр
 
 # Приём файлов
 
+![CrocApp на iOS: входящая передача из трёх файлов с кнопками Decline и Accept](/img/screenshots/ios-receive-light.png#gh-light-mode-only)![CrocApp на iOS: входящая передача из трёх файлов с кнопками Decline и Accept](/img/screenshots/ios-receive-dark.png#gh-dark-mode-only)
+
 Откройте **Receive** на главном экране.
 
 ## Ввод кода (F4)

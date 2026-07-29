@@ -111,3 +111,19 @@ body {
   box-shadow: var(--shadow-focus-ring);
   border-radius: var(--radius-sm);
 }
+
+/* Screenshot pairs. `.md` here is CommonMark (docusaurus.config.ts sets
+   markdown.format: 'detect'), so <ThemedImage> is unavailable and the pages
+   use GitHub's #gh-*-mode-only fragments instead. This is the CSS that makes
+   them mean anything, and it keys off the theme toggle rather than the OS
+   setting, so a reader who flips the switch gets the matching shot. */
+[data-theme='light'] img[src$='#gh-dark-mode-only'],
+[data-theme='dark'] img[src$='#gh-light-mode-only'] {
+  display: none;
+}
+
+/* Phone shots are 1206px wide and more than twice as tall as they are wide.
+   At full content width they push the surrounding prose off the screen. */
+.markdown img[src*='/ios-'] {
+  max-width: 260px;
+}

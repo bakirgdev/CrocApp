@@ -6,6 +6,8 @@ description: A walkthrough of one send and one receive in CrocApp, using the app
 
 # Your first transfer
 
+![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](/img/screenshots/mac-send-light.png#gh-light-mode-only)![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](/img/screenshots/mac-send-dark.png#gh-dark-mode-only)
+
 CrocApp's home screen has two buttons: **Send** and **Receive**. Everything else follows from a three-step flow:
 
 1. The sender picks files, a folder, or a snippet of text.

@@ -6,6 +6,8 @@ description: Gdje se nalaze CrocApp-ove postavke, zašto biste možda pokrenuli 
 
 # Postavke i povjerenje
 
+![CrocApp postavke na macOS-u prikazuju odredišni folder i polja za adresu relaya](/img/screenshots/mac-settings-light.png#gh-light-mode-only)![CrocApp postavke na macOS-u prikazuju odredišni folder i polja za adresu relaya](/img/screenshots/mac-settings-dark.png#gh-dark-mode-only)
+
 ## Gdje se nalaze postavke
 
 Na macOS-u, postavke su u Settings sceni (⌘,), sa sekcijom **Receive** (odredišni folder, plus dugme **Show in Finder**) iznad [naprednih opcija](power-options.md). Na iOS-u, ekran postavki (dostupan iz alatne trake na početnom ekranu) sadrži napredne opcije; odredišni folder za prijem se umjesto toga mijenja sa samog ekrana **Receive**.

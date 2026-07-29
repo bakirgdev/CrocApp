@@ -6,6 +6,8 @@ description: Vodič kroz jedno slanje i jedan prijem u CrocApp-u, koristeći stv
 
 # Vaš prvi prenos
 
+![CrocApp na macOS-u prikazuje Ready to send s kodnom frazom, dugmetom Copy Code i QR kodom](/img/screenshots/mac-send-light.png#gh-light-mode-only)![CrocApp na macOS-u prikazuje Ready to send s kodnom frazom, dugmetom Copy Code i QR kodom](/img/screenshots/mac-send-dark.png#gh-dark-mode-only)
+
 Početni ekran CrocApp-a ima dva dugmeta: **Send** i **Receive**. Sve ostalo proizlazi iz procesa u tri koraka:
 
 1. Pošiljalac bira fajlove, folder ili odlomak teksta.

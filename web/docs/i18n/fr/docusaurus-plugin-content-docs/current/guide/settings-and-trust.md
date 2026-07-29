@@ -6,6 +6,8 @@ description: Où se trouvent les réglages de CrocApp, pourquoi vous pourriez ex
 
 # Réglages et confiance
 
+![Les réglages de CrocApp sur macOS montrant le dossier de réception et les champs d'adresse du relais](/img/screenshots/mac-settings-light.png#gh-light-mode-only)![Les réglages de CrocApp sur macOS montrant le dossier de réception et les champs d'adresse du relais](/img/screenshots/mac-settings-dark.png#gh-dark-mode-only)
+
 ## Où se trouvent les réglages
 
 Sur macOS, les réglages sont dans la scène Réglages (⌘,), avec une section **Receive** (dossier de destination, plus un bouton **Show in Finder**) au-dessus des [options avancées](power-options.md). Sur iOS, l'écran de réglages (accessible depuis la barre d'outils de l'accueil) contient les options avancées ; le dossier de destination de réception se change plutôt depuis l'écran **Receive** lui-même.

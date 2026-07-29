@@ -19,5 +19,6 @@ What does not belong here: decisions and their rationale (`../decisions/`), open
 | `device-test-checklist.md` | you are about to test on real iOS hardware |
 | `prior-art.md` | you are making a UX, positioning, or distribution call |
 | `docs-site.md` | **before touching** `web/docs/` |
+| `screenshots.md` | you need to re-capture, add, or move an app screenshot |
 
 Anything visual — app views, landing page, docs site — starts at `design/README.md` instead.
