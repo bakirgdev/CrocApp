@@ -56,6 +56,10 @@ final class TransferController {
     private var sendConfirmArmed = false
     private var autoAcceptActive = false
     private var blockedAutoAccept = false
+    /// Bumped once per `run()`. The async conflict scan captures it and only
+    /// writes back if it still matches, so a scan that outlives a fast transfer
+    /// cannot deposit its stale results onto the next one's `.incoming`.
+    private var transferGeneration = 0
     /// True once any payload bytes moved -- gates the "resume" hint so it
     /// never appears on failures before the transfer started.
     private var sawTransferBytes = false
@@ -104,19 +108,28 @@ final class TransferController {
         // startAccessing returns false for non-scoped URLs (e.g. some drops);
         // keep every path regardless, only track the ones needing release.
         scopedURLs = urls.filter { $0.startAccessingSecurityScopedResource() }
-        let bookmarks: [Data]
-        if urls.count <= TransferRecord.maxBookmarks {
-            let all = urls.compactMap { Self.bookmark(for: $0) }
-            bookmarks = all.count == urls.count ? all : []
-        } else {
-            bookmarks = []
-        }
         pendingRecord = PendingRecord(
             isSend: true, isText: false,
             names: urls.prefix(TransferRecord.maxNames).map(\.lastPathComponent),
             fileCount: urls.count, totalBytes: 0,
             codeHint: Self.codeHint(customCode),
-            bookmarks: bookmarks)
+            bookmarks: [])
+        // Up to maxBookmarks (200) bookmarkData calls, off the main actor so a
+        // slow volume can't stall the send tap. Security scope is held until
+        // releaseScopedURLs, so the URLs stay readable throughout. A transfer
+        // that terminates before this lands leaves pendingRecord nil and the
+        // record simply carries no bookmarks -- the same outcome as the
+        // existing all-or-nothing fallback, so "Send Again" is hidden rather
+        // than broken.
+        if urls.count <= TransferRecord.maxBookmarks {
+            Task { [weak self] in
+                let all = await Task.detached(priority: .userInitiated) {
+                    urls.compactMap { SecurityScopedBookmark.create(for: $0) }
+                }.value
+                guard let self, all.count == urls.count else { return }
+                self.pendingRecord?.bookmarks = all
+            }
+        }
         let paths = urls.map(\.path)
         var options = baseOptions()
         options.customCode = customCode
@@ -211,6 +224,7 @@ final class TransferController {
         cancelRequested = false
         declineRequested = false
         blockedAutoAccept = false
+        transferGeneration += 1
         sawTransferBytes = false
         receivedText = nil
         speedBytesPerSec = 0
@@ -232,10 +246,17 @@ final class TransferController {
                 // Startup failure before any event flowed -- still tear down
                 // the idle-timer lock / BG task requested at the top of run().
                 background.transferEnded(success: false)
-                phase = .failed(
-                    Self.friendlyMessage(
-                        for: "\(error)", cancelRequested: cancelRequested,
-                        declineRequested: declineRequested))
+                // Same precedence as handle(.failed): an expiry that surfaces
+                // as a thrown error must keep the resume hint, not fall back
+                // to generic copy.
+                if backgroundExpired {
+                    phase = .failed(Self.backgroundExpiredCopy)
+                } else {
+                    phase = .failed(
+                        Self.friendlyMessage(
+                            for: "\(error)", cancelRequested: cancelRequested,
+                            declineRequested: declineRequested))
+                }
                 finishRecord(cancelRequested ? .cancelled : .failed, summary: nil)
             }
             releaseScopedURLs()
@@ -279,9 +300,12 @@ final class TransferController {
             // actor would freeze the accept UI, so conflicts fill in async.
             phase = .incoming(list, conflicts: [], blocked: blocked)
             guard let dir = outDir else { return }
+            let generation = transferGeneration
             Task { [weak self] in
                 let conflicts = await Self.scanConflicts(names: names, in: dir)
-                guard let self, !conflicts.isEmpty, case .incoming = self.phase else { return }
+                guard let self, !conflicts.isEmpty, self.transferGeneration == generation,
+                    case .incoming = self.phase
+                else { return }
                 self.phase = .incoming(list, conflicts: conflicts, blocked: blocked)
             }
         case .progress(let p):
@@ -303,17 +327,35 @@ final class TransferController {
             receivedText = t
         case .done(let summary):
             background.transferEnded(success: true)
-            phase = .done(summary, receivedText: receivedText)
-            finishRecord(summary.success ? .completed : .failed, summary: summary)
+            // cancel() is fire-and-forget, so a small enough transfer can reach
+            // .done before the block's cancellation lands on the engine. The
+            // bytes are already written either way; this only stops the UI and
+            // the history record reporting a plain success for a blocked one.
+            if blockedAutoAccept {
+                phase = .failed(Self.blockedAutoAcceptCopy)
+                finishRecord(.failed, summary: summary)
+            } else {
+                phase = .done(summary, receivedText: receivedText)
+                finishRecord(summary.success ? .completed : .failed, summary: summary)
+            }
         case .failed(let message):
             background.transferEnded(success: false)
             if blockedAutoAccept {
-                phase = .failed(
-                    "Blocked: this transfer contained unsafe file names, so auto-accept cancelled it."
-                )
+                phase = .failed(Self.blockedAutoAcceptCopy)
             } else if backgroundExpired {
+                phase = .failed(Self.backgroundExpiredCopy)
+            } else if autoAcceptActive, !cancelRequested,
+                message.lowercased().contains("refused files")
+            {
+                // Not a peer decline. croc forces the receiver prompt whenever
+                // the remote sender ran --ask, regardless of NoPrompt; engine
+                // auto-accept has already closed the prompt pipe, so GetInput
+                // hits EOF and croc reports the local "refused files". While
+                // autoAcceptActive is true respond() is never called, so
+                // declineRequested cannot be set, and the cancel paths are
+                // excluded above -- what is left can only be this.
                 phase = .failed(
-                    "iOS paused the transfer in the background. Start the same transfer again — croc resumes partially transferred files."
+                    "The sender asked to confirm this transfer manually, which auto-accept can't answer. Turn off auto-accept in Settings and try again, or ask the sender to resend without their confirmation option."
                 )
             } else {
                 var copy = Self.friendlyMessage(
@@ -325,9 +367,21 @@ final class TransferController {
                 }
                 phase = .failed(copy)
             }
-            finishRecord(
-                cancelRequested ? .cancelled : declineRequested ? .declined : .failed,
-                summary: nil)
+            // blockedAutoAccept outranks cancelRequested: the block issues the
+            // cancel itself, and "Cancelled" in history reads as a user action.
+            // .failed is the closest existing status; a dedicated case would be
+            // a schema change (ADR 0013).
+            let status: TransferRecord.Status
+            if blockedAutoAccept {
+                status = .failed
+            } else if cancelRequested {
+                status = .cancelled
+            } else if declineRequested {
+                status = .declined
+            } else {
+                status = .failed
+            }
+            finishRecord(status, summary: nil)
             // Engine contract: the consumer must cancel on .failed so the Go
             // session releases and the next transfer can start.
             Task { await engine.cancel() }
@@ -375,10 +429,6 @@ final class TransferController {
         return first + "-…"
     }
 
-    private static func bookmark(for url: URL) -> Data? {
-        SecurityScopedBookmark.create(for: url)
-    }
-
     private func finishRecord(_ status: TransferRecord.Status, summary: Summary?) {
         guard var p = pendingRecord else { return }
         pendingRecord = nil
@@ -395,6 +445,15 @@ final class TransferController {
     }
 
     // MARK: - Error copy
+
+    /// Used from both `.done` and `.failed`: a blocked transfer can terminate
+    /// either way depending on whether the cancel beat the last event.
+    private static let blockedAutoAcceptCopy =
+        "Blocked: this transfer contained unsafe file names, so auto-accept cancelled it."
+
+    /// Used from both `handle(.failed)` and `run()`'s catch.
+    private static let backgroundExpiredCopy =
+        "iOS paused the transfer in the background. Start the same transfer again — croc resumes partially transferred files."
 
     static func friendlyMessage(
         for raw: String, cancelRequested: Bool, declineRequested: Bool

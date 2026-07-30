@@ -14,6 +14,25 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, minHeight: 100)
                 }
                 .buttonStyle(.borderedProminent)
+                .overlay(alignment: .topTrailing) {
+                    // Dock/window/share drops queue into pendingSendURLs
+                    // without navigating while a transfer is active (queue-
+                    // while-busy policy) -- surface the count so it isn't
+                    // discoverable only by manually visiting Send.
+                    if !router.pendingSendURLs.isEmpty {
+                        Text("\(router.pendingSendURLs.count)")
+                            .font(.footnote.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(Color.onAccent)
+                            .padding(.horizontal, Spacing.space3)
+                            .padding(.vertical, Spacing.space1)
+                            .background(Color.accentFill, in: Capsule())
+                            .offset(x: Spacing.space3, y: -Spacing.space3)
+                            .accessibilityLabel(
+                                "^[\(router.pendingSendURLs.count) file](inflect: true) waiting to send"
+                            )
+                    }
+                }
 
                 NavigationLink(value: AppRouter.Route.receive) {
                     Label("Receive", systemImage: "arrow.down.circle.fill")

@@ -13,6 +13,8 @@ This translation is an unreviewed draft. The English version is authoritative.
 
 # Документация CrocApp
 
+![Экран приветствия CrocApp при первом запуске на iOS, объясняющий кодовую фразу в трёх строках](/img/screenshots/ios-onboarding-light.png#gh-light-mode-only)![Экран приветствия CrocApp при первом запуске на iOS, объясняющий кодовую фразу в трёх строках](/img/screenshots/ios-onboarding-dark.png#gh-dark-mode-only)
+
 CrocApp отправляет файлы, папки и текст между двумя устройствами в любой точке мира, со сквозным шифрованием, используя короткую кодовую фразу вроде `8412-mirage-cobalt-fresco`. Не требуется ни учётной записи, ни загрузки в чужое облако, ни того, чтобы оба устройства были в одной сети.
 
 Это графическая оболочка для [croc](https://github.com/schollz/croc) — консольного инструмента передачи файлов от Zack Scholl. CrocApp встраивает Go-библиотеку croc, а не вызывает бинарник через shell, поэтому кодовая фраза, сгенерированная в croc CLI, работает в приложении, а кодовая фраза, сгенерированная в приложении, работает в CLI.

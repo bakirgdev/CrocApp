@@ -35,10 +35,10 @@ These are orthogonal to the `--auto-*` transfer modes and to each other, which i
 
 ## Where they are used
 
-Four pairs are referenced; the rest are captured and unused (`../known-issues.md`).
+Seven pairs are referenced; the remaining eleven are captured and unused (`../known-issues.md`).
 
 - Root `README.md`: `mac-send`, `ios-receive`, `mac-settings`, via `<picture>` elements that swap on the viewer's GitHub theme.
-- Docs site: copies under `web/docs/static/img/screenshots/`, one pair per guide page, in English and all five locale trees. `.md` there is CommonMark (`docusaurus.config.ts` sets `markdown.format: 'detect'`), so `<ThemedImage>` is unavailable; the pages use GitHub's `#gh-light-mode-only` / `#gh-dark-mode-only` fragments and `src/css/custom.css` supplies the rule that makes them mean anything. That keys off Docusaurus's theme toggle rather than the OS setting.
+- Docs site: copies under `web/docs/static/img/screenshots/`, one pair per page, in English and all five locale trees — `mac-send` (first-transfer), `mac-send-files` (sending), `ios-receive` (receiving), `mac-settings` (settings-and-trust), `ios-settings` (power-options), `mac-history` (history), `ios-onboarding` (index). `.md` there is CommonMark (`docusaurus.config.ts` sets `markdown.format: 'detect'`), so `<ThemedImage>` is unavailable; the pages use GitHub's `#gh-light-mode-only` / `#gh-dark-mode-only` fragments and `src/css/custom.css` supplies the rule that makes them mean anything. That keys off Docusaurus's theme toggle rather than the OS setting.
 - Landing hero: `web/landing/assets/img/screenshots/mac-send-*`, two `<img>` elements swapped by CSS. Not a `<picture>` with `prefers-color-scheme`, because the header's toggle pins `[data-theme]` and a media query would ignore it. This replaced a CSS-drawn mockup of the same screen.
 
 A copy is a copy: changing a shot means re-running the script and re-copying to both web surfaces.

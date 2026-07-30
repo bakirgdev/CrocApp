@@ -14,6 +14,8 @@ This translation is an unreviewed draft. The English version is authoritative.
 
 # CrocApp-Dokumentation
 
+![Der Willkommensbildschirm von CrocApp beim ersten Start unter iOS, der die Code-Phrase in drei Zeilen erklärt](/img/screenshots/ios-onboarding-light.png#gh-light-mode-only)![Der Willkommensbildschirm von CrocApp beim ersten Start unter iOS, der die Code-Phrase in drei Zeilen erklärt](/img/screenshots/ios-onboarding-dark.png#gh-dark-mode-only)
+
 CrocApp sendet Dateien, Ordner und Text zwischen zwei Geräten, egal wo auf der Welt, Ende-zu-Ende-verschlüsselt, mit einer kurzen Code-Phrase wie `8412-mirage-cobalt-fresco`. Kein Konto, kein Upload in die Cloud eines Dritten, keine Anforderung, dass beide Geräte im selben Netzwerk sind.
 
 CrocApp ist eine grafische Oberfläche für [croc](https://github.com/schollz/croc), das Kommandozeilen-Tool für Dateiübertragung von Zack Scholl. CrocApp bettet croc's Go-Bibliothek ein, statt das Binary aufzurufen; eine mit der croc-CLI erzeugte Code-Phrase funktioniert also in der App, und eine in der App erzeugte Code-Phrase funktioniert in der CLI.

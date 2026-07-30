@@ -40,7 +40,11 @@ final class ShareInbox {
             return
         }
         let batchDir = inbox.appendingPathComponent(manifest.batch, isDirectory: true)
+        // The App Group container is a trust boundary: the manifest is data
+        // read out of it, not something this process wrote, so validate
+        // names the same way an incoming transfer's file list is validated.
         staged = manifest.files
+            .filter { !ReceivedName.isUnsafe($0) }
             .map { batchDir.appendingPathComponent($0) }
             .filter { FileManager.default.fileExists(atPath: $0.path) }
     }

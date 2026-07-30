@@ -6,6 +6,8 @@ description: Die ausgelieferten Power-User-Einstellungen (F13 bis F19) und die c
 
 # Leistungsoptionen
 
+![Die CrocApp-Einstellungen unter iOS mit den Leistungsoptionen im Einstellungsbildschirm](/img/screenshots/ios-settings-light.png#gh-light-mode-only)![Die CrocApp-Einstellungen unter iOS mit den Leistungsoptionen im Einstellungsbildschirm](/img/screenshots/ios-settings-dark.png#gh-dark-mode-only)
+
 CrocApp bietet eine Reihe von Leistungsoptionen mit sinnvollen Standardwerten. Unter macOS liegen sie in der Settings-Szene (⌘,); unter iOS finden Sie sie über den Einstellungsbildschirm aus der Startbildschirm-Toolbar. Alle sieben unten sind bereits ausgeliefert.
 
 | # | Option | Steuerelement | croc-Entsprechung |

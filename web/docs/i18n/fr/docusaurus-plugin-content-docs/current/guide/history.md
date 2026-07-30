@@ -6,6 +6,8 @@ description: "L'historique des transferts local à CrocApp : ce qu'il enregistre
 
 # Historique (F12)
 
+![L'écran Historique de CrocApp sur macOS listant les transferts passés avec leur direction, le nombre de fichiers et leur statut](/img/screenshots/mac-history-light.png#gh-light-mode-only)![L'écran Historique de CrocApp sur macOS listant les transferts passés avec leur direction, le nombre de fichiers et leur statut](/img/screenshots/mac-history-dark.png#gh-dark-mode-only)
+
 CrocApp conserve une liste locale des transferts passés, accessible depuis l'icône d'historique de l'écran d'accueil. Elle ne quitte jamais l'appareil : il n'y a ni synchronisation, ni export, ni serveur impliqué.
 
 ## Ce qui est enregistré

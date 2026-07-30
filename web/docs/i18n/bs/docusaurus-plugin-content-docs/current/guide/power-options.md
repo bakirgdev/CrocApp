@@ -6,6 +6,8 @@ description: Objavljene napredne postavke (F13 do F19) i croc CLI oznaka na koju
 
 # Napredne opcije
 
+![CrocApp postavke na iOS-u prikazuju napredne opcije na ekranu postavki](/img/screenshots/ios-settings-light.png#gh-light-mode-only)![CrocApp postavke na iOS-u prikazuju napredne opcije na ekranu postavki](/img/screenshots/ios-settings-dark.png#gh-dark-mode-only)
+
 CrocApp izlaže skup naprednih opcija sa razumnim zadanim vrijednostima. Na macOS-u se nalaze u Settings sceni (⌘,); na iOS-u su pod ekranom postavki iz alatne trake na početnom ekranu. Svih sedam ispod je objavljeno.
 
 | # | Opcija | Kontrola | croc ekvivalent |

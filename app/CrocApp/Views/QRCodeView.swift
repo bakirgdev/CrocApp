@@ -32,6 +32,11 @@ struct QRCodeView: View {
                         RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                             .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
                     )
+                    // components.md → QRFrame: --shadow-md. SwiftUI's
+                    // .shadow() is single-layer where the token is two CSS
+                    // layers; .shadowMd() stacks two .shadow() calls to
+                    // reproduce both rather than approximate with one.
+                    .shadowMd()
                     .accessibilityLabel("QR code for the transfer code")
             } else {
                 // Must be a real view, not the implicit EmptyView: SwiftUI
@@ -60,6 +65,9 @@ struct QRCodeView: View {
                 RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                     .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
             )
+            // Same footprint and chrome as the image branch (see doc comment
+            // above) — .shadowMd() has to match too, or the frame would jump.
+            .shadowMd()
             .accessibilityHidden(true)
     }
 

@@ -392,7 +392,9 @@ func (s *session) respond(accept bool) {
 		// One "y\n" per file for the sender's Ask path (croc prompts once per
 		// file, see promptAnswers doc); receiver accept/decline only ever
 		// needs the one. Unread buffered lines beyond what croc consumes are
-		// harmless (pipe buffer is 64KB, each answer is 2 bytes).
+		// harmless. This loop can block once the answers outgrow the pipe
+		// buffer, which is why Transfer.Respond runs it off the caller's
+		// goroutine.
 		n := s.promptAnswers
 		if n < 1 {
 			n = 1
@@ -479,6 +481,9 @@ func (s *session) poll() {
 	t := time.NewTicker(100 * time.Millisecond)
 	defer t.Stop()
 	connected, listSent := false, false
+	// Last payload actually emitted. Its zero value has an empty Step, which no
+	// real snapshot ever carries, so the first tick always emits.
+	var last progressState
 	for {
 		select {
 		case <-s.done:
@@ -498,7 +503,18 @@ func (s *session) poll() {
 				listSent = true
 				s.delegate.OnFileList(s.fileListJSON())
 			}
-			s.delegate.OnProgress(s.progressJSON(connected))
+			// Skip unchanged ticks: idle stretches (unanswered accept prompt,
+			// a stalled connection) would otherwise marshal and cross the
+			// gobind boundary 10x a second with identical numbers. Diff the
+			// scalars, not the JSON, or the marshal being avoided still runs.
+			// No consumer treats a tick as a heartbeat.
+			p := s.progressSnapshot(connected)
+			if p == last {
+				return
+			}
+			last = p
+			b, _ := json.Marshal(p)
+			s.delegate.OnProgress(string(b))
 		}()
 	}
 }
@@ -523,7 +539,20 @@ func (s *session) fileListJSON() string {
 	return string(b)
 }
 
-func (s *session) progressJSON(connected bool) string {
+// progressState is the whole progress payload as comparable scalars, so poll
+// can diff two ticks without marshalling either of them.
+type progressState struct {
+	CurrentFile   int    `json:"currentFile"`
+	TotalFiles    int    `json:"totalFiles"`
+	FileName      string `json:"fileName"`
+	FileSent      int64  `json:"fileSent"`
+	FileSize      int64  `json:"fileSize"`
+	BytesFinished int64  `json:"bytesFinished"`
+	TotalSize     int64  `json:"totalSize"`
+	Step          string `json:"step"`
+}
+
+func (s *session) progressSnapshot(connected bool) progressState {
 	c := s.client
 	step := "waiting"
 	if connected {
@@ -551,12 +580,11 @@ func (s *session) progressJSON(connected bool) string {
 	if c.Step3RecipientRequestFile || sent > 0 {
 		step = "transferring"
 	}
-	b, _ := json.Marshal(map[string]any{
-		"currentFile": cur, "totalFiles": len(c.FilesToTransfer), "fileName": fileName,
-		"fileSent": sent, "fileSize": fileSize, "bytesFinished": bytesFinished,
-		"totalSize": totalSize, "step": step,
-	})
-	return string(b)
+	return progressState{
+		CurrentFile: cur, TotalFiles: len(c.FilesToTransfer), FileName: fileName,
+		FileSent: sent, FileSize: fileSize, BytesFinished: bytesFinished,
+		TotalSize: totalSize, Step: step,
+	}
 }
 
 func (s *session) summaryJSON() string {

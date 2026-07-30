@@ -21,7 +21,9 @@ struct SendView: View {
 
     var body: some View {
         Group {
-            if controller.isActive {
+            // See ReceiveView: gate on direction too, or an active Receive
+            // renders under the "Send" title.
+            if controller.isActive, controller.direction == .send {
                 TransferStatusView()
             } else {
                 form
@@ -105,24 +107,23 @@ struct SendView: View {
                         description: Text("or add them with the buttons below"))
                 } else {
                     List {
-                        ForEach(pickedURLs, id: \.self) { url in
-                            HStack {
-                                Image(systemName: url.hasDirectoryPath ? "folder" : "doc")
-                                Text(url.lastPathComponent)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                                Spacer()
-                                Button {
-                                    pickedURLs.removeAll { $0 == url }
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Remove \(url.lastPathComponent)")
+                        ForEach(Array(pickedURLs.enumerated()), id: \.element) { index, url in
+                            FileRow(
+                                url: url,
+                                isFirst: index == 0,
+                                isLast: index == pickedURLs.count - 1
+                            ) {
+                                pickedURLs.removeAll { $0 == url }
                             }
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                         }
                     }
+                    // Matches IncomingRequestView's own fix for the same
+                    // problem: without this the List paints the system
+                    // grouped background behind FileRow's own card fill.
+                    .scrollContentBackground(.hidden)
                 }
             }
             .frame(minHeight: 160, maxHeight: 280)
@@ -137,8 +138,9 @@ struct SendView: View {
             .dropDestination(for: URL.self) { urls, _ in
                 let files = urls.filter(\.isFileURL)
                 guard !files.isEmpty else { return false }
-                pickedURLs.append(contentsOf: files.filter { !pickedURLs.contains($0) })
-                return true
+                let newFiles = files.filter { !pickedURLs.contains($0) }
+                pickedURLs.append(contentsOf: newFiles)
+                return !newFiles.isEmpty
             } isTargeted: {
                 isDropTargeted = $0
             }

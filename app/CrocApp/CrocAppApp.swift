@@ -32,6 +32,9 @@ struct CrocAppApp: App {
         let controller = TransferController(settings: settings)
         controller.history = history
         _controller = State(initialValue: controller)
+        // AppRouter.shared is constructed before this init runs; attach the
+        // controller now so AppRouter.isBusy can read isActive live.
+        AppRouter.shared.attach(controller: controller)
     }
 
     var body: some Scene {
@@ -61,6 +64,14 @@ struct CrocAppApp: App {
                 .environment(outputFolder)
                 .environment(settings)
         }
+        // A Settings scene's default .automatic resizability resolves to
+        // .contentSize — min == max == content size — which is where the old
+        // fixed 480x450 came from. It was never a platform limit.
+        // .defaultSize is needed alongside it: with only a minimum declared,
+        // AppKit picked its own opening width (measured at ~900) and left the
+        // form marooned in the middle.
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 480, height: 780)
         #endif
     }
 }

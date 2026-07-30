@@ -22,7 +22,8 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 - progress `{"currentFile","totalFiles","fileName","fileSent","fileSize","bytesFinished","totalSize","step"}`, step ∈ waiting|connected|transferring; `fileSent` is per-current-file (croc `TotalSent` resets per file)
 - summary `{"success","files","totalSize"}`; a malformed/undecodable `done` summary yields `.failed("malformed done payload")` and finishes the stream. Malformed `progress` payloads are dropped silently (advisory; next 10 Hz tick retries).
 - Sub-100ms transfers may deliver `done` with no `connected`/`progress`/`fileList` events — UI keys off `done`/`failed` only.
-- `progress` keeps ticking (~10 Hz, step `connected`) while the accept prompt raised by `fileList` is unanswered — consumers must not let it clobber their prompt state (croc blocks in GetInput until `Respond`).
+- `progress` ticks are deduplicated: `poll()` samples at 10 Hz but only emits when a field actually changed, so idle and plateau stretches (notably the unanswered accept prompt, where nothing moves) go quiet instead of repeating. Cadence only — the JSON schema is unchanged, and no consumer may treat a tick as a heartbeat. Consumers must still not let a tick clobber their prompt state (croc blocks in GetInput until `Respond`).
+- `Respond` returns immediately and answers on its own goroutine. An accept writes one `y\n` per file, which can outgrow the pipe buffer and block until croc drains it; the caller is CrocKit's `CrocEngine` actor, so a synchronous write would queue a following `Cancel` behind it. Do not make it synchronous again for "ordering": `session.respond` serialises on `promptM` and `closePrompt` is idempotent.
 - `.failed` semantics: local cancel during the accept-prompt window surfaces croc's `"refused files"` string, not "cancelled" — map wording in UI layer.
 
 ## Engine behavior invariants

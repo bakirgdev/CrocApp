@@ -31,8 +31,14 @@ type Options struct {
 	NoMultiplexing bool
 }
 
-// NewOptions returns croc CLI defaults.
-func NewOptions() *Options {
+// NewOptionsDefault returns croc CLI defaults.
+//
+// Named with a suffix on purpose. gobind treats any func matching
+// "New"+TypeName as a constructor and derives the ObjC selector from the
+// remaining suffix, so a bare NewOptions produces `- (nullable instancetype)init`
+// on CrocmobileOptions, which clashes with NSObject's nonnull init and warns on
+// every Swift build. The suffix makes the selector `initDefault` instead.
+func NewOptionsDefault() *Options {
 	return &Options{
 		RelayAddress:  "croc.schollz.com:9009",
 		RelayAddress6: "croc6.schollz.com:9009",
@@ -75,13 +81,22 @@ func (t *Transfer) Cancel() {
 
 // Respond answers the receive accept/decline request raised by OnFileList.
 // No-op for senders or AutoAccept receivers. See Cancel for why this recovers.
+//
+// Asynchronous on purpose: an accept writes one "y\n" per file (promptAnswers),
+// and a large enough sender-Ask batch overruns the pipe buffer, blocking the
+// write until croc drains it over the network. The caller is CrocKit's
+// CrocEngine actor, which runs queued work to completion, so a blocking Respond
+// would strand a following Cancel behind it. session.respond self-serialises on
+// promptM, so running it off the caller's goroutine is safe.
 func (t *Transfer) Respond(accept bool) {
-	defer func() {
-		if r := recover(); r != nil {
-			reportPanic(t.s, r)
-		}
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				reportPanic(t.s, r)
+			}
+		}()
+		t.s.respond(accept)
 	}()
-	t.s.respond(accept)
 }
 
 // StartSend begins sending. paths is newline-joined absolute paths.
@@ -97,7 +112,7 @@ func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *T
 		}
 	}()
 	if opts == nil {
-		opts = NewOptions()
+		opts = NewOptionsDefault()
 	}
 	if d == nil {
 		return nil, errors.New("delegate required")
@@ -128,7 +143,7 @@ func StartReceive(code string, opts *Options, d Delegate) (t *Transfer, err erro
 		}
 	}()
 	if opts == nil {
-		opts = NewOptions()
+		opts = NewOptionsDefault()
 	}
 	if d == nil {
 		return nil, errors.New("delegate required")

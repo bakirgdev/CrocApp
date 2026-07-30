@@ -12,7 +12,10 @@ struct ReceiveView: View {
 
     var body: some View {
         Group {
-            if controller.isActive {
+            // Direction matters: isActive alone rendered a running Send under
+            // this screen's "Receive" title. Starting one from the fallback
+            // form is already a no-op (startReceive's `guard !isActive`).
+            if controller.isActive, controller.direction == .receive {
                 TransferStatusView()
             } else {
                 form
@@ -23,21 +26,12 @@ struct ReceiveView: View {
 
     private var form: some View {
         VStack(spacing: 16) {
-            HStack {
-                TextField("Code phrase", text: $code)
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-                    #if os(iOS)
-                .textInputAutocapitalization(.never)
-                    #endif
-                PasteButton(payloadType: String.self) { strings in
-                    if let pasted = strings.first {
-                        Task { @MainActor in
-                            code = Self.extractCode(from: pasted) ?? code
-                        }
-                    }
-                }
-                .labelStyle(.iconOnly)
+            CodeField(
+                placeholder: "Code phrase",
+                text: $code,
+                isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength
+            ) { pasted in
+                code = Self.extractCode(from: pasted) ?? code
             }
 
             #if os(iOS)

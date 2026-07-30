@@ -1,22 +1,26 @@
 import Foundation
+import Network
 import Observation
 
-#if os(iOS)
-import Network
-#endif
-
-// iOS has no official local-network authorization API (verified 2026-07).
-// Probe: advertise a Bonjour service and browse for it ourselves — seeing our
-// own service means access is granted; a browser stuck in .waiting(error)
-// means denied. The probe also triggers the system permission prompt at a
-// moment tied to a real transfer, instead of mid-handshake.
+// Neither platform has an official local-network authorization API (verified
+// 2026-07). Probe: advertise a Bonjour service and browse for it ourselves —
+// seeing our own service means access is granted; a browser stuck in
+// .waiting(error) means denied. The probe also triggers the system permission
+// prompt at a moment tied to a real transfer, instead of mid-handshake.
+//
+// Cross-platform on purpose. macOS 15 added its own Local Network privacy
+// pane; it is enforced as a Network Extension packet filter rather than
+// through TCC, and denial surfaces through this same probe as
+// .waiting(NWError.dns(-65570)) (kDNSServiceErr_PolicyDenied), which the
+// existing sawWaiting handling already resolves to .denied at the timeout.
+// Nothing here touches UIKit, and the macOS target already carries both
+// network.client and network.server entitlements.
 @MainActor
 @Observable
 final class LocalNetworkChecker {
     enum Status { case unknown, granted, denied }
     private(set) var status: Status = .unknown
 
-    #if os(iOS)
     private var started = false
     private var isRechecking = false
 
@@ -106,8 +110,4 @@ final class LocalNetworkChecker {
             }
         }
     }
-    #else
-    func checkIfNeeded() {}
-    func recheckIfDenied() {}
-    #endif
 }

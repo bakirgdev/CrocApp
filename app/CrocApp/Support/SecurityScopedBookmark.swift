@@ -9,7 +9,10 @@ enum SecurityScopedBookmark {
     /// Create a bookmark for `url`. Callers are expected to already hold the
     /// security scope (via `startAccessingSecurityScopedResource()`) before
     /// calling this, same as reading any other attribute under sandbox.
-    static func create(for url: URL) -> Data? {
+    ///
+    /// `nonisolated` so TransferController can batch up to 200 of these off the
+    /// main actor. `URL.bookmarkData` touches no shared mutable state.
+    nonisolated static func create(for url: URL) -> Data? {
         #if os(macOS)
         try? url.bookmarkData(
             options: .withSecurityScope,

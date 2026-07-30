@@ -133,7 +133,7 @@ One SwiftUI target, `#if os(iOS)` / `#if os(macOS)` isolated to dedicated files 
 |---|---|---|
 | Backgrounding | `BackgroundCoordinator` wraps transfers in `BGContinuedProcessingTask`; system Live Activity | no-op (all `BackgroundCoordinator` bodies are `#if os(iOS)`) |
 | External send entry point | Share extension (`CrocShare` appex) + `ShareInbox`/`StagedFilesSheet` | Dock-icon drop + window drop, via `AppDelegate.application(_:open:)` and `AppRouter.shared` |
-| Local-network probe | `LocalNetworkChecker` (Bonjour self-probe) | not applicable (macOS has no local-network permission prompt) |
+| Local-network probe | `LocalNetworkChecker` (Bonjour self-probe) | same file, same probe — macOS 15 added its own Local Network privacy pane, enforced as a Network Extension packet filter rather than through TCC |
 | QR scan | `QRScannerView` (VisionKit `DataScannerViewController`), whole file `#if os(iOS)` | not offered (QR *generation*, `QRCodeView`, is cross-platform) |
 | Settings surface | `SettingsScreen` (`Route.settings`, gear toolbar icon) | `SettingsView` (native `Settings` scene, ⌘,) |
 | Menu commands | n/a | `AppCommands` (Send ⌘1, Receive ⌘2, Show Receive Folder ⇧⌘R) |

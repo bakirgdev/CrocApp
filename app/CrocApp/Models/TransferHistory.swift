@@ -36,6 +36,10 @@ final class TransferRecord {
 
     var status: Status { Status(rawValue: statusRaw) ?? .failed }
 
+    /// "Send Again" needs the original files back, which only resolvable
+    /// bookmarks give. Text sends have no files to resolve.
+    var canResend: Bool { isSend && !isText && !bookmarks.isEmpty }
+
     init(
         isSend: Bool, status: Status, isText: Bool, fileCount: Int,
         totalBytes: Int64, names: [String], codeHint: String, bookmarks: [Data]

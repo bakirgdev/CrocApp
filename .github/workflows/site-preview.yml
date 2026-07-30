@@ -1,0 +1,48 @@
+name: Preview site build
+
+# Build-only check for PRs touching either Pages surface. landing.yml and
+# docs.yml both deploy on push to main; neither runs on pull_request, so a
+# broken docs build (onBrokenLinks: throw, see docs/knowledge/docs-site.md)
+# is otherwise only caught after a live deploy fails. This mirrors both
+# workflows' push paths but never calls upload-pages-artifact or
+# deploy-pages, which need the github-pages environment PRs can't access.
+
+on:
+  pull_request:
+    paths:
+      - "web/landing/**"
+      - "web/docs/**"
+      - "design/tokens.css"
+      - "scripts/assemble-site.sh"
+      - ".github/workflows/site-preview.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (no deploy)
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # showLastUpdateTime reads the file's git history
+
+      - name: Enable pnpm
+        # corepack resolves `packageManager` from the working directory, and the
+        # repo root has no package.json. Without this it activates whatever pnpm
+        # the runner image ships, then pnpm reads web/docs/package.json, sees a
+        # different version and refuses to run rather than switching. --activate
+        # makes the pinned version the shim's default for later root-level calls
+        # (scripts/assemble-site.sh invokes `pnpm --dir web/docs`).
+        run: corepack enable pnpm && corepack prepare --activate
+        working-directory: web/docs
+
+      - name: Assemble _site
+        run: scripts/assemble-site.sh

@@ -13,6 +13,8 @@ This translation is an unreviewed draft. The English version is authoritative.
 
 # CrocApp dokumentacija
 
+![Ekran dobrodošlice CrocApp-a pri prvom pokretanju na iOS-u, koji objašnjava kodnu frazu u tri linije](/img/screenshots/ios-onboarding-light.png#gh-light-mode-only)![Ekran dobrodošlice CrocApp-a pri prvom pokretanju na iOS-u, koji objašnjava kodnu frazu u tri linije](/img/screenshots/ios-onboarding-dark.png#gh-dark-mode-only)
+
 CrocApp šalje fajlove, foldere i tekst između dva uređaja bilo gdje u svijetu, enkriptovano od kraja do kraja, koristeći kratku kodnu frazu poput `8412-mirage-cobalt-fresco`. Nema naloga, nema otpremanja na tuđi cloud, nema uslova da oba uređaja dijele istu mrežu.
 
 To je grafički interfejs za [croc](https://github.com/schollz/croc), alat za prenos fajlova putem komandne linije koji je napravio Zack Scholl. CrocApp ugrađuje croc-ovu Go biblioteku umjesto da poziva binarni fajl, tako da kodna fraza generisana croc CLI-jem radi u aplikaciji, a kodna fraza generisana u aplikaciji radi u CLI-ju.

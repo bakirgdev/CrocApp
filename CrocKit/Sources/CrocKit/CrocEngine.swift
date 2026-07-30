@@ -82,7 +82,7 @@ public actor CrocEngine {
     }
 
     private func crocOptions(from o: EngineOptions) throws -> CrocmobileOptions {
-        guard let opts = CrocmobileNewOptions() else {
+        guard let opts = CrocmobileNewOptionsDefault() else {
             throw CrocEngineError.startFailed("options init failed")
         }
         opts.relayAddress = o.relayAddress

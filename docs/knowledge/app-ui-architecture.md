@@ -32,7 +32,9 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 - **A local decline surfaces croc's `"refused files"` string** — the same string the sender sees. Track `cancelRequested` / `declineRequested` to pick the right copy: "Transfer cancelled." / "You declined the transfer." / "The other side declined the transfer."
 - **`transferActive` on start: retry once after ~300 ms.** There is a release window after `done` where the next start still throws.
 - `engine.cancel()` on `.failed`, belt-and-suspenders with the stream's `onTermination`.
-- Copy precedence when several conditions collide: `backgroundExpired` beats cancel/decline mapping; `blockedAutoAccept` beats `backgroundExpired`.
+- Copy precedence when several conditions collide, highest first: `blockedAutoAccept`, `backgroundExpired`, the auto-accept-vs-remote-`--ask` case, then cancel/decline mapping. `run()`'s catch mirrors the `backgroundExpired` step so a thrown expiry keeps the resume hint.
+- **`"refused files"` under auto-accept is not a peer decline.** croc forces the receiver prompt whenever the *remote sender* ran `--ask` (`croc.go`: `!NoPrompt || Ask || senderInfo.Ask`), and engine auto-accept has already closed the prompt pipe, so `GetInput` hits EOF and croc reports its local `"refused files"`. `autoAcceptActive && !cancelRequested && !blockedAutoAccept` discriminates it: `respond()` is never called on the auto-accept path, so `declineRequested` cannot be set. Do **not** "fix" this by pre-writing `y\n` under AutoAccept — croc's empty-folder-overwrite prompt is gated on neither `NoPrompt` nor `Ask` and reads the same pipe, so a buffered `y` would turn its safe EOF default into an unwanted overwrite.
+- `blockedAutoAccept` is checked in `.done` as well as `.failed`: `cancel()` is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed` (ADR 0013's schema has no blocked case, and "Cancelled" reads as a user action).
 - `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) spent in `.starting`/`.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips, so the hint never keeps counting once a transfer moves on, but it does survive the `.starting → .connecting` handoff — same stall to the user, no reason to reset the clock.
 
 ### Options, security scope, progress
@@ -52,6 +54,8 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 ## Settings and trust
 
 `Models/AppSettings.swift` — `@MainActor @Observable`, `UserDefaults` keys prefixed `settings.`, `didSet` persistence gated by a `persist` flag (the harness override channel).
+
+`relayPassword` is the one setting that is **not** in `UserDefaults`: it lives in the Keychain via `Support/KeychainStore.swift` (ADR 0033), migrated out of the plist on first launch. Its `didSet` goes through `persistRelayPassword()`, which honours the same `persist` gate — that gate is load-bearing here in a way it is not for the other settings, because `resetToDefaults()` assigns `relayPassword = ""` and an ungated write would blank a real user's stored password on any machine that has ever run a verify script.
 
 Relay strings use `""` to mean "croc default", shown as a `TextField` prompt. Two accessor families, and the difference matters:
 
@@ -82,7 +86,9 @@ That blanking is CLI parity (ADR 0012): croc skips empty relay addresses when di
 
 ## Conflict scan
 
-Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanConflicts` runs `Task.detached` and stats off the main actor; the write-back happens only `if case .incoming` and only when non-empty. Doing it synchronously froze the accept UI on large file lists.
+Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanConflicts` runs `Task.detached` and stats off the main actor; the write-back happens only when non-empty, only `if case .incoming`, and only if `transferGeneration` still matches the value captured at `.fileList`. The shape check alone was not enough: a scan can outlive a whole fast transfer and land on the *next* one's `.incoming`. Doing the scan synchronously froze the accept UI on large file lists.
+
+`startSend`'s up-to-200 `bookmarkData` calls run off the main actor the same way, writing back into `pendingRecord`. If a transfer somehow terminates first, `pendingRecord` is already nil and the record carries no bookmarks — the same outcome as the pre-existing all-or-nothing fallback, so "Send Again" hides rather than breaks. `SecurityScopedBookmark.create` is `nonisolated` for this.
 
 10k-file smoke tests pass in both directions: receive 427 s, send 358 s.
 
@@ -92,7 +98,7 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 - `Platform/LocalNetworkChecker.swift` — Bonjour self-probe on `_crocapp._tcp`, iOS only (the macOS branch is a no-op stub, `../known-issues.md`). `checkIfNeeded()` probes once per process, triggered by `ContentView.onChange(controller.isActive)`; `recheckIfDenied()` re-probes from `.denied` on `ContentView.onChange(scenePhase)` going `.active` (e.g. the user granted access in Settings and returned), gated so it never re-probes `.granted`/unresolved and never stacks a second in-flight probe. Denial shows a banner plus Open Settings in `TransferStatusView`. Denial only resolves at the 8 s timeout, because a first `.waiting` may just be the pending permission prompt.
 - `Models/ShareInbox.swift` + `Views/StagedFilesSheet.swift` — App Group pickup of batches staged by the share extension (`ShareInbox/batch-<UUID>/` plus `manifest.json`). The whole `scenePhase` refresh is gated on `!controller.isActive`; an ungated refresh once purged a live batch mid-send, caught by harness. The manifest is consumed on the user's decision, the batch files outlive the send, and `purgeStaleBatches` runs at idle.
 - `app/CrocShare/` — iOS-only appex. The pbxproj entry is hand-built; `platformFilters=(ios,)` on the dependency and the embed keep macOS clean. File-copy staging happens inside the `loadFileRepresentation` handler because of the ~120 MB extension memory cap, and never wipes existing batches. Both `Info.plist` files live in `app/Config/`, outside the synced folders, to avoid a generated-plist collision; the app's `INFOPLIST_FILE` is sdk-scoped to iOS.
-- Files-app visibility comes from `INFOPLIST_KEY_UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace`, both sdk-scoped to iOS. "Open in Files" on receive-done uses the `shareddocuments://` scheme — community standard, no public API.
+- Files-app visibility comes from `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace`. **Those two do not work the same way, despite both being declared as sdk-scoped `INFOPLIST_KEY_*` settings in the pbxproj.** `LSSupportsOpeningDocumentsInPlace` is injected into the built `Info.plist` from the build setting alone; `UIFileSharingEnabled` is not, and only lands because `app/Config/CrocApp-Info.plist` also declares it literally. Measured, not inferred: delete the two plist lines and `plutil -p` on the built `CrocApp.app/Info.plist` shows `UIFileSharingEnabled` gone while `LSSupportsOpeningDocumentsInPlace`, `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription` all survive — even though `xcodebuild -showBuildSettings` resolves `INFOPLIST_KEY_UIFileSharingEnabled = YES`. So the plist declaration is load-bearing and the pbxproj pair is inert for that one key. Do not "deduplicate" by deleting the plist lines; that silently removes the app from the Files app. "Open in Files" on receive-done uses the `shareddocuments://` scheme — community standard, no public API.
 
 ## Platform layer, macOS
 
