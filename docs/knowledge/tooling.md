@@ -13,7 +13,9 @@ What is wired up, what was deliberately skipped, and the traps in each. Decision
 | xcbeautify | none | CI only |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, PRs (code paths) |
 | GitHub Actions | `.github/workflows/govulncheck.yml` | Mondays 06:00 UTC + manual |
-| GitHub Actions | `.github/workflows/landing.yml` | push to main (`web/**`, `design/tokens.css`) + manual |
+| GitHub Actions | `.github/workflows/landing.yml`, `docs.yml` | push to main (`web/**`, `design/tokens.css`) + manual |
+| GitHub Actions | `.github/workflows/site-preview.yml` | pull requests touching either site surface; build only, never deploys |
+| GitHub Actions | `.github/workflows/release.yml` | `workflow_dispatch` rehearses, `v*` tag publishes (ADR 0032) |
 
 Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file. The `macos-26` runner image carries 26.0.1 through 26.6, default 26.5, so the pin must name a version that image actually has.
 
@@ -28,7 +30,7 @@ CI gotchas:
 
 - **`ci.yml` triggers on a `paths` allowlist**, not `paths-ignore`, shared by both triggers through a YAML anchor: `app/**`, `CrocKit/**`, `crocmobile/**`, `scripts/build-xcframework.sh`, `.swift-format`, `.xcode-version`, `.github/workflows/ci.yml`. The earlier ignore-list rotted — `design/` and `.claude/` were not on it and each paid for a full macOS matrix. An allowlist fails closed: a new non-code directory costs nothing until someone adds it. Adding a file CI *does* consume (a new script, a new dotfile config) means adding it here. If CI ever becomes a required check, a filtered-out PR leaves the check pending — switch to a change-detection job that reports success instead.
 - **govulncheck under the go job's cross-compile env.** The go job sets `GOOS=darwin GOARCH=arm64` job-wide so vet/build analyse the shipping target. `go install` honours that and drops a darwin binary into `$GOPATH/bin/darwin_arm64/` (unrunnable on the Linux host, and not where `$(go env GOPATH)/bin/…` looks) → exit 127. Install the tool with `env -u GOOS -u GOARCH` so the binary is host-native in `$GOPATH/bin`, then run it with the job env intact so the *analysis* still targets darwin.
-- **`conflicting nullability specifier on return types` is expected noise.** Every macOS/iOS build job emits it while compiling `CrocKit`. Source is gomobile's generated header, not repo code: `Croc.framework/Headers/Crocmobile.objc.h` declares `- (nullable instancetype)init;` for `CrocmobileOptions` (the Go constructor `NewOptions`), which clashes with `NSObject`'s `nonnull init`. Regenerated on every `build-xcframework.sh` run, so it cannot be patched away. Ignore it; do not "fix" it in Swift.
+- **`conflicting nullability specifier on return types` was fixed on the Go side, not suppressed.** It used to fire on every macOS/iOS build: gomobile treats any `New<TypeName>` func as a constructor and builds the ObjC selector from whatever *follows* that prefix (`bind/gen.go`, `bind/genobjc.go`), so `NewOptions` on type `Options` left an empty suffix and emitted a bare `- (nullable instancetype)init` on `CrocmobileOptions`, clashing with `NSObject`'s `nonnull init`. Renaming the Go constructor to `NewOptionsDefault` keeps it recognised and yields `initDefault`. Do not rename it back, and do not add a `New<Type>` func whose suffix is empty.
 - **macOS app build has no signing identity.** The runner has no `Mac Development` cert, so the `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` to `xcodebuild`. The iOS Simulator destination never signs, so it needs nothing.
 - **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `landing.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and uses `cancel-in-progress: false` so deploys queue instead of cancelling each other.
 - **Scheduled workflows are disabled after 60 days of repo inactivity.** `govulncheck.yml` stops firing silently; `workflow_dispatch` restarts it.
@@ -39,7 +41,7 @@ CI gotchas:
 - **Several enabled rules are lint-only**: they flag but never rewrite, so `format --in-place` leaves them and they must be fixed by hand. CI runs `lint --strict`, which turns every such warning into a build failure, so none may be left behind. Verified lint-only: `ReplaceForEachWithForLoop` (`.forEach { }` → for-in loop), `OnlyOneTrailingClosureArgument` (a call mixing a closure argument such as `onDismiss:` with a trailing closure → pass the trailing closure as an explicit `content:` argument), `AlwaysUseLowerCamelCase`, `TypeNamesShouldBeCapitalized`, `DontRepeatTypeInStaticProperties`, `NoBlockComments`, `AvoidRetroactiveConformances`. A clean `format` run is not evidence CI will pass; run `lint --strict` too.
 - **Every rule in the config is listed explicitly**, enabled and disabled alike, and every non-default config knob is pinned. A rule swift-format adds in a future release still lands on its own default, but nothing already listed can shift underneath a contributor. The formatter binary itself is pinned by `.xcode-version`, which the CI job reads.
 - `UseSynthesizedInitializer` is off. It flags hand-written memberwise inits that SwiftData/`@Model` types need.
-- `NeverForceUnwrap` and `NeverUseForceTry` are off for two specific sites, not from indifference. `CrocEngine.crocOptions` force-unwraps the gomobile-generated `CrocmobileNewOptions()`; the only alternative is `guard else fatalError`, the same crash with more lines. `HistoryStore.makeContainer` uses `try!` inside the *catch* branch that already fell back to a memory-only store, and its return type is non-optional, so there is nothing left to fall back to.
+- `NeverForceUnwrap` and `NeverUseForceTry` are off for two specific sites, not from indifference. `CrocEngine.crocOptions` force-unwraps the gomobile-generated `CrocmobileNewOptionsDefault()`; the only alternative is `guard else fatalError`, the same crash with more lines. `HistoryStore.makeContainer` uses `try!` inside the *catch* branch that already fell back to a memory-only store, and its return type is non-optional, so there is nothing left to fall back to.
 - `AllPublicDeclarationsHaveDocumentation` (41 violations) and `BeginDocumentationCommentWithOneLineSummary` (24) are off. `CrocKit` is a public package, so both are worth enabling once the doc comments exist.
 
 ## golangci-lint traps
@@ -67,7 +69,7 @@ These cost real debugging time on this machine. All are environment quirks, not 
 | Periphery | pre-1.0 dead-code sweep. Needs a committed scheme (none exist today) and false-positives on gomobile bindings + SwiftUI reflection |
 | Danger | after main is PR-only |
 | Tuist / XcodeGen | first real `.pbxproj` merge conflict (Kintsugi is the lighter answer) |
-| fastlane | App Store / TestFlight upload. Note ASC API keys cannot authenticate `notarytool`, so it does not remove that step |
+| fastlane | App Store / TestFlight upload. Notarization stays a separate step, but the credentials can be shared: `notarytool` accepts an App Store Connect API key via `--key` / `--key-id` / `--issuer`, alongside `--apple-id`/`--password` and `--keychain-profile` |
 
 ## Not done yet: real notarization
 

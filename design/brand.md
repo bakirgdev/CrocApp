@@ -27,7 +27,9 @@ Accent is for: primary action fills, active/selected state, links, file-type gly
 | Asset | Path | Use |
 |---|---|---|
 | App icon source | `assets/CrocAppIcon.icon` | Xcode icon composer source; export for App Store, docs favicon, README |
-| Banner | `assets/banner.webp` | README header, landing hero, social card |
+| Banner | `assets/banner.webp` | README header |
+| Screenshots | `assets/screenshots/<name>-{light,dark}.png` | landing hero, README, docs pages. Regenerated only by `scripts/capture-screenshots.sh` — never hand-edited or hand-cropped |
+| Social card | `web/landing/assets/img/og.jpg` | Open Graph / link previews. Hand-made on purpose, not derived from the tokens |
 | Mascot | `assets/mascot.png` | source, 512px. Never served |
 | Mascot, web | `web/landing/assets/img/mascot-web.webp` | 128px derivative — landing page, empty states on web, docs 404 |
 | Disk image background | `assets/dmg-background.png` | 660×400, the macOS DMG's Finder window. Spec in `components.md` → DiskImage |
