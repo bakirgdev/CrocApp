@@ -152,9 +152,9 @@ capture_mac() {                                     # capture_mac MODE CODE_A CO
     if want mac-settings; then
       osascript -e 'tell application "System Events" to keystroke "," using command down'
       sleep 3
-      # A freshly opened Settings scene is scrolled to the top. The window is
-      # a fixed 480x450 and refuses AXSize writes, so this framing is the
-      # only one available.
+      # A freshly opened Settings scene is scrolled to the top. It opens at
+      # its .defaultSize (480x780) and is user-resizable (ADR 0036), which is
+      # why this catches the whole form rather than stopping mid-row.
       shoot_window "$OUT/mac-settings-$mode.png" "CrocApp Settings"
     fi
     mac_quit

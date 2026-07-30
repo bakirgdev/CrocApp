@@ -26,21 +26,12 @@ struct ReceiveView: View {
 
     private var form: some View {
         VStack(spacing: 16) {
-            HStack {
-                TextField("Code phrase", text: $code)
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-                    #if os(iOS)
-                .textInputAutocapitalization(.never)
-                    #endif
-                PasteButton(payloadType: String.self) { strings in
-                    if let pasted = strings.first {
-                        Task { @MainActor in
-                            code = Self.extractCode(from: pasted) ?? code
-                        }
-                    }
-                }
-                .labelStyle(.iconOnly)
+            CodeField(
+                placeholder: "Code phrase",
+                text: $code,
+                isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength
+            ) { pasted in
+                code = Self.extractCode(from: pasted) ?? code
             }
 
             #if os(iOS)

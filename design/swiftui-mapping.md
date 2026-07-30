@@ -18,6 +18,7 @@ Define one asset-catalog **Color Set per semantic alias**, with Any/Dark appeara
 | `--color-status-*-tint` | the status color at `.opacity(0.14)` light / `0.18` dark, or a color set |
 | `--color-surface-grouped` | `Color(.systemGroupedBackground)` (iOS); on macOS use `.windowBackground` |
 | `--color-surface-card` | `Color(.secondarySystemGroupedBackground)` (iOS); macOS `.background(.regularMaterial)` or a color set |
+| `--color-surface-base` | `Color(.systemBackground)` (iOS); macOS has no "base" surface distinct from the window background, so a bordered control's own fill takes `.textBackgroundColor` |
 | `--color-separator` | `Color(.separator)` / the `Divider` default |
 | `--color-scrim` | `.black.opacity(0.25 / 0.5)` |
 

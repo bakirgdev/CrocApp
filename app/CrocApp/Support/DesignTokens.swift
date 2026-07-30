@@ -91,6 +91,48 @@ enum Motion {
     static let pressScale: CGFloat = 0.97
 }
 
+/// design/materials-motion.md → Elevation. Geometry is theme-independent
+/// (materials-motion.md's own words); only the shadow alpha flips per
+/// appearance, which is why the applied form lives behind a view modifier
+/// below instead of sitting here as plain constants like `Motion`.
+enum Shadow {
+    /// `--shadow-md` outer layer: `0 4px 16px`.
+    static let mdOuterRadius: CGFloat = 16
+    static let mdOuterY: CGFloat = 4
+    /// `--shadow-md` inner layer: `0 1px 3px`.
+    static let mdInnerRadius: CGFloat = 3
+    static let mdInnerY: CGFloat = 1
+    static let mdAlphaLight: (outer: Double, inner: Double) = (0.08, 0.05)
+    static let mdAlphaDark: (outer: Double, inner: Double) = (0.50, 0.40)
+}
+
+/// SwiftUI's `.shadow()` is single-layer where `--shadow-md` is two CSS
+/// layers, so this stacks two `.shadow()` calls to reproduce both rather
+/// than collapsing to a one-layer approximation.
+private struct ShadowMdModifier: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        let alpha = colorScheme == .dark ? Shadow.mdAlphaDark : Shadow.mdAlphaLight
+        content
+            .shadow(
+                color: .black.opacity(alpha.outer), radius: Shadow.mdOuterRadius, x: 0,
+                y: Shadow.mdOuterY
+            )
+            .shadow(
+                color: .black.opacity(alpha.inner), radius: Shadow.mdInnerRadius, x: 0,
+                y: Shadow.mdInnerY
+            )
+    }
+}
+
+extension View {
+    /// design/materials-motion.md → Elevation, `--shadow-md`.
+    func shadowMd() -> some View {
+        modifier(ShadowMdModifier())
+    }
+}
+
 extension Color {
     // MARK: - Accent (design/colors.md → Semantic aliases; design/swiftui-mapping.md → Colors)
 
@@ -166,6 +208,22 @@ extension Color {
         Color(uiColor: .systemGroupedBackground)
         #else
         Color(nsColor: .windowBackgroundColor)
+        #endif
+    }
+
+    /// `--color-surface-base` (colors.md → Semantic aliases): the plain,
+    /// unelevated page fill beneath grouped/card surfaces. Not in
+    /// swiftui-mapping.md's Colors table (a gap in that doc); iOS takes the
+    /// literal match, `.systemBackground`. macOS has no equivalent "base"
+    /// surface distinct from the window background, so this takes the
+    /// closest system semantic for a bordered control's own fill —
+    /// `.textBackgroundColor` — which is what CodeField (today's only
+    /// consumer) needs it for.
+    static var surfaceBase: Color {
+        #if os(iOS)
+        Color(uiColor: .systemBackground)
+        #else
+        Color(nsColor: .textBackgroundColor)
         #endif
     }
 

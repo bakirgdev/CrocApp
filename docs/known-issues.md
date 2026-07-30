@@ -35,8 +35,8 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Design system
 
-- `CodeField` and `FileRow` from `design/components.md` are still not implemented as their own components.
-- No shadow token exists in `DesignTokens.swift`. The QR frame (`design/components.md` → QRFrame) specs `--shadow-md`, but `QRCodeView` currently has no shadow at all; the macOS drop overlay uses `.glassEffect()` instead, which is correct per `design/materials-motion.md` ("prefer the material's own depth where one exists") and needs no manual shadow.
+- **`CodeField`'s focused state has no focus ring.** `design/components.md` specs `--shadow-focus-ring` on a focused, valid field; the Swift component changes the border colour to accent but does not add the two-ring halo. The border change is a visible focus indicator, so this is a spec gap, not a WCAG 2.2 SC 1.4.11 failure.
+- **`FileRow` stats each file for its size label inside `body`.** `List` is lazy so only visible rows pay, but it is still synchronous I/O on the main actor during layout, and a network or iCloud volume could make it hitch. Not measured.
 
 ## Landing page
 
@@ -60,8 +60,6 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 ## Accepted
 
 - **When both relay addresses are customised, both are sent.** croc's own CLI blanks `RelayAddress6` whenever v4 is customised, without checking whether v6 was customised too (`src/cli/cli.go`, send and receive alike), so it silently discards a user's custom v6 relay. Keeping both is more correct, not less. The divergence is deliberate (ADR 0012) and is not going to be "fixed" toward the CLI's behaviour.
-- **`mac-settings-*.png` shows a text caret in the Address field.** The macOS Settings scene gives its first `TextField` focus the moment it opens. Defocusing it needs a click somewhere else, and any click that lands outside the window drops it behind the clicked one before `screencapture` can run.
-- **The macOS Settings window cannot be photographed whole.** It is a fixed 480x450 and refuses `AXSize` writes, so the shot ends mid-row wherever the form is longer than that. Scrolled to the top is the framing that at least starts on a section header.
 - **`OutputFolderStore.select` silently no-ops if bookmarking fails.** Rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **`.combine` on the transfer progress view may hide the percentage from VoiceOver.** Worth a real accessibility pass, not a spot fix.
