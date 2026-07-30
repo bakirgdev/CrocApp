@@ -1,6 +1,6 @@
 # v0.9.9
 
-First public build of CrocApp. It is a preview: the app does everything V1 is meant to do, but it is not signed with an Apple Developer ID and it is not notarized, so macOS refuses to open it until you allow it by hand. Read "Opening it the first time" below before downloading.
+First public build of CrocApp. It is a symbolic release: the app does everything V1 is meant to do, but it is not signed with an Apple Developer ID and it is not notarized, so macOS refuses to open it until you allow it by hand. Read "Opening it the first time" below before downloading.
 
 **macOS 26 or later, Apple silicon only.** No Intel build, and no iPhone or iPad build in this release.
 
