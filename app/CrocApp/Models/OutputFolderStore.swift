@@ -26,7 +26,14 @@ final class OutputFolderStore {
         let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
         let folder = downloads.appendingPathComponent("CrocApp", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        return folder
+        // This is a static computed property (called with no instance in
+        // scope), so there's nowhere to hang a bookmarkWasReset-style flag --
+        // fall back to a directory that is actually guaranteed to exist
+        // instead, rather than handing the engine a path that startReceive
+        // would then fail against opaquely.
+        var isDirectory: ObjCBool = false
+        let created = FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDirectory)
+        return created && isDirectory.boolValue ? folder : downloads
         #else
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         #endif

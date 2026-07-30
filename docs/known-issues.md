@@ -19,39 +19,19 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 - **`xfer()` has no watchdog.** If croc ever blocks past context cancel and prompt-pipe close, `activeMu` is held for the process's lifetime and every later transfer returns "another transfer is active". Deliberately not fixed: forcing the lock open while croc is still running would let two sessions mutate the same process-global state (`os.Chdir`, stdin/stdout swaps).
 - **`poll()` reads `croc.Client` scalar and slice fields with no synchronization** (croc's own goroutines write them unguarded). Degrades to inconsistent progress numbers; bounds-checked (`session.go`'s `progressSnapshot`) so it cannot panic.
 
-## Transfer controller
-
-- No Cancel during `.incoming` — Decline is the only exit, and the terminal event can lag while croc auto-reconnects.
-
-## Settings and trust
-
-- Relay password is stored in plaintext `UserDefaults`. Keychain is the fix.
-- When both relay addresses are customised, both are sent. The croc CLI blanks `relay6` in that case. Deliberate divergence, revisit if a peer ever disagrees.
-
 ## History
 
-- `HistoryStore.clear()` uses `delete(model:)`. Whether a live `@Query` updates from it is unconfirmed in manual QA; fallback is a fetch-and-delete loop.
+- `HistoryStore.clear()` uses `delete(model:)` on `container.mainContext` and saves immediately, from a `@MainActor` type. Apple documents that deletion via that method takes effect on the next save, which is satisfied, and the known `@Query` refresh asymmetry is specifically about *inserts* from a background `ModelActor` context, not main-context deletes — so it should be fine by construction. Nobody has actually watched the list empty without a relaunch; the repo has no harness that drives History. Fallback if it ever misbehaves is a fetch-and-delete loop.
 - `AutoVerify` duplicates the history-write path.
 
 ## iOS
 
-- A queued `BGContinuedProcessingTask` request is not cancelled when the transfer ends before the system adopts it.
-- Manifest-name validation in `ShareInbox` does not match `ReceivedName`'s rules.
-- "Open in Files" silently no-ops for provider-picked folders (`shareddocuments://` resolves local paths only). Consider hiding the button there.
-- `UIFileSharingEnabled` is declared twice.
-- The staged-files sheet is only offered on the next foregrounding, and starting a send from it does not route to a status view.
-- Onboarding's `onDismiss` re-offer of the staged sheet has no `!controller.isActive` gate.
+- `UIFileSharingEnabled` is declared twice, in `app/Config/CrocApp-Info.plist` and as a pair of sdk-scoped `INFOPLIST_KEY_*` settings in the pbxproj. Deliberately left that way: the plist declaration is the one that works. Removing it drops the key from the built `Info.plist` entirely and takes the app out of the Files app, even though `xcodebuild -showBuildSettings` resolves the build setting to `YES` (measured on a simulator build). The pbxproj pair is inert for this key and harmless; drift risk only, since the values agree.
 
 ## macOS
 
-- Dock-drop URLs queue invisibly: no badge, no route once the running transfer completes. The user has to visit Send to find them.
-- `isBusy` mirrors `controller.isActive` one cycle late.
-- `SendView`'s drop handler returns `true` even when every dropped file was already staged.
-- `createDirectory` failure is swallowed in `OutputFolderStore.defaultFolder`.
-- The receive-folder guard is duplicated across the iOS and macOS `doneView` branches.
-- `pendingSendURLs` deduplicates against already-picked URLs but not within a single dropped batch.
-- `AppRouter` is a singleton with no reset hook; multiple windows share one navigation path.
-- **`LocalNetworkChecker` is a no-op stub on macOS.** `app/CrocApp/Platform/LocalNetworkChecker.swift`'s macOS branch does nothing, so `status` never leaves `.unknown` and `.denied` is unreachable there. `TransferStatusView` gates the whole local-network-denied banner on `status == .denied`, so on macOS the banner never renders — dead code, not a missing feature flag. macOS 15+ does have a Local Network privacy pane, so a real probe is possible but unwritten; no "Open Settings" button was added for it since that would read as live when it cannot be reached. Either gate the banner `#if os(iOS)` to say so explicitly, or give `LocalNetworkChecker` a real macOS implementation.
+- **The macOS local-network denial path is hard to exercise during development.** Enforcement reportedly only engages for builds resident in `/Applications` (single developer-forum thread FB16077972, not Apple documentation — strong inference, not verified here), so a DerivedData-launched Debug build can sit at `.ready` and read as falsely granted. Copy the app to `/Applications` before trying to reproduce a denial (ADR 0034).
+- `AppRouter` is a singleton with no reset hook, so multiple windows share one navigation path. Deliberately not fixed: per-window navigation needs `@FocusedValue` plumbing to reach `AppDelegate` and `Commands`, which sit outside the environment graph, and multi-window reachability has never actually been observed. Revisit if someone reports it.
 
 ## Design system
 
@@ -60,12 +40,12 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Landing page
 
-- **The primary CTA still resolves to nothing installable.** "Download" in the hero scrolls to three channels: two unlinked store badges and a GitHub releases link that 404s until there is a release. Honest, but the page's strongest call to action cannot yet be completed. The badges clear when the apps ship. The release link starts resolving on the first tag — and because v0.9.9 publishes as a normal release rather than a prerelease, it will point at an ad-hoc signed build that Gatekeeper refuses on first launch. The card's "Notarized DMG, signed with a Developer ID" line is wrong from that moment until notarization is real.
+- **The primary CTA still resolves to nothing installable.** "Download" in the hero scrolls to three channels: two unlinked store badges and a GitHub releases link that 404s until there is a release. Honest, but the page's strongest call to action cannot yet be completed. The badges clear when the apps ship. The release link starts resolving on the first tag, and because v0.9.9 publishes as a normal release rather than a prerelease, it points at an ad-hoc signed build that Gatekeeper refuses on first launch until notarization is real.
 - **The disk image background is 1x only.** `create-dmg` documents png, gif and jpg backgrounds, so `assets/dmg-background.png` has no HiDPI representation and reads soft on a Retina display. Fixing it means a multi-representation TIFF, which `create-dmg` does not document and which has not been tested here.
 - **`--content-max-width` on the hero mockup.** `design/brand.md` now carves an explicit exception for elements that depict the app, so this is documented rather than fixed — but the exception is narrow and easy to over-apply.
 - **Store badges are inverted in dark mode with a CSS filter.** Apple ships black and white variants; the repo has black only. Inverting a black-on-transparent badge produces the white variant, but it is a filter over supplied artwork, not the supplied artwork.
-- **`assets/banner.webp` is orphaned.** `design/brand.md` assigns it to the README header, the landing hero and the social card. It appears in none of them.
-- **Three landing dependencies are hand-maintained and nothing checks them:** `llms.txt`'s release status, the footer's "last updated" date, and `og.jpg`. The first two have to be edited by hand on every release; `og.jpg` is deliberately a fixed hand-made asset and is not derived from the tokens.
+- **`assets/banner.webp` is used in one of its three assigned places.** `design/brand.md` assigns it to the README header, the landing hero and the social card. It is the README header. The hero now carries real screenshots, and the social card is a purpose-built `og.jpg` — both deliberate, so `brand.md`'s table is the thing that is stale.
+- **Two landing dependencies are hand-maintained and nothing checks them:** `llms.txt`'s release status and the JSON-LD `dateModified` in `index.html`. Both have to be edited by hand on every release. There is no rendered "last updated" line in the footer — the JSON-LD field is the only date on the page. Templating `dateModified` from `git log` would fix the rot but puts a moving part inside a JSON-LD block, where a broken template silently corrupts structured data rather than failing loudly. `og.jpg` is a third hand-made asset but a deliberate one, fixed rather than rotting.
 
 ## Docs site
 
@@ -79,10 +59,10 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Accepted
 
+- **When both relay addresses are customised, both are sent.** croc's own CLI blanks `RelayAddress6` whenever v4 is customised, without checking whether v6 was customised too (`src/cli/cli.go`, send and receive alike), so it silently discards a user's custom v6 relay. Keeping both is more correct, not less. The divergence is deliberate (ADR 0012) and is not going to be "fixed" toward the CLI's behaviour.
 - **`mac-settings-*.png` shows a text caret in the Address field.** The macOS Settings scene gives its first `TextField` focus the moment it opens. Defocusing it needs a click somewhere else, and any click that lands outside the window drops it behind the clicked one before `screencapture` can run.
 - **The macOS Settings window cannot be photographed whole.** It is a fixed 480x450 and refuses `AXSize` writes, so the shot ends mid-row wherever the form is longer than that. Scrolled to the top is the framing that at least starts on a section header.
 - **`OutputFolderStore.select` silently no-ops if bookmarking fails.** Rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
-- **No explicit `stopScanning` when the QR scanner sheet dismisses.** VisionKit tears down with the view controller.
 - **`.combine` on the transfer progress view may hide the percentage from VoiceOver.** Worth a real accessibility pass, not a spot fix.
-- **Gesture-level flows are not machine-verified.** Drag-and-drop, camera QR, and taps have no XCUITest coverage by project rule. Verify them by hand.
+- **Gesture-level flows are not machine-verified.** Drag-and-drop, camera QR, and taps have no XCUITest coverage. No ADR decides this; the rule is the repo owner's standing instruction not to write tests unasked. Verify them by hand.

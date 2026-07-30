@@ -38,10 +38,17 @@ struct ContentView: View {
                 if AutoVerify.forcesOnboarding || (!onboardingSeen && !AutoVerify.isHarnessRun) {
                     showOnboarding = true
                 }
+                // Cold launch renders .active with no prior phase, so
+                // scenePhase's onChange below (a transition) never fires for
+                // it; offer the staged sheet here too, under the same
+                // !controller.isActive gating as that handler.
+                if !controller.isActive {
+                    shareInbox.refresh()
+                    showStagedSheet = !shareInbox.staged.isEmpty && !showOnboarding
+                }
                 await AutoVerify.runIfRequested(controller: controller)
             }
             .onChange(of: controller.isActive) { _, active in
-                router.isBusy = active
                 if active { localNetwork.checkIfNeeded() }
             }
             .onChange(of: scenePhase) { _, phase in
@@ -71,6 +78,11 @@ struct ContentView: View {
                         let urls = shareInbox.staged
                         shareInbox.consumeManifest()
                         showStagedSheet = false
+                        // Navigate to Send first: TransferStatusView only
+                        // renders inside SendView/ReceiveView, so without
+                        // this the transfer would run invisibly under
+                        // HomeView. Mirrors AppDelegate's dock-drop routing.
+                        router.path = [.send]
                         controller.startSend(urls: urls, customCode: "")
                     },
                     discard: {
@@ -85,12 +97,11 @@ struct ContentView: View {
                     onboardingSeen = true
                     // The staged sheet yields to onboarding on first launch;
                     // offer it now instead of waiting for the next foreground.
-                    showStagedSheet = !shareInbox.staged.isEmpty
-                    // This onDismiss only ever fires for the genuine first-run
-                    // sheet (showOnboarding is gated on !onboardingSeen &&
-                    // !AutoVerify.isHarnessRun in .task above), so no extra
-                    // guard is needed here. Sequenced, not simultaneous: two
-                    // stacked system prompts on first launch is bad UX.
+                    // Guarded the same way as the scenePhase and .task offers,
+                    // for symmetry with them.
+                    showStagedSheet = !shareInbox.staged.isEmpty && !controller.isActive
+                    // Sequenced, not simultaneous: two stacked system prompts
+                    // on first launch is bad UX.
                     #if os(iOS)
                     Task {
                         await CameraPermission.requestIfNeeded()

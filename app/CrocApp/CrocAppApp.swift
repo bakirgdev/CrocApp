@@ -32,6 +32,9 @@ struct CrocAppApp: App {
         let controller = TransferController(settings: settings)
         controller.history = history
         _controller = State(initialValue: controller)
+        // AppRouter.shared is constructed before this init runs; attach the
+        // controller now so AppRouter.isBusy can read isActive live.
+        AppRouter.shared.attach(controller: controller)
     }
 
     var body: some Scene {

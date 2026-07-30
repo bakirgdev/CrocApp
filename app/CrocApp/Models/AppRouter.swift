@@ -14,13 +14,27 @@ final class AppRouter {
     var path: [Route] = []
     /// URLs waiting for SendView to pick up into its staged list.
     var pendingSendURLs: [URL] = []
-    /// Mirrors TransferController.isActive (set from ContentView's onChange);
-    /// lets delegate-originated opens queue URLs without yanking navigation
-    /// away from an active transfer.
-    var isBusy = false
+
+    /// Weak: AppRouter.shared is constructed before TransferController
+    /// exists, so CrocAppApp.init() attaches it after the fact; weak avoids
+    /// a retain cycle since TransferController never needs to reach back.
+    private weak var controller: TransferController?
+
+    func attach(controller: TransferController) {
+        self.controller = controller
+    }
+
+    /// Reads TransferController.isActive live instead of mirroring it via a
+    /// separate onChange-maintained flag, so a dock drop landing in the same
+    /// update pass as an isActive flip can't navigate mid-transfer-start.
+    /// Reading it here still invalidates observers correctly: Observation
+    /// tracks the access transitively through this computed property.
+    var isBusy: Bool { controller?.isActive ?? false }
 
     func openSend(with urls: [URL]) {
-        pendingSendURLs.append(contentsOf: urls)
+        for url in urls where !pendingSendURLs.contains(url) {
+            pendingSendURLs.append(url)
+        }
         if !isBusy, path != [.send] { path = [.send] }
     }
 

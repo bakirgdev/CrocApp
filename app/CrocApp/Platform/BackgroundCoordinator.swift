@@ -20,6 +20,11 @@ final class BackgroundCoordinator {
     private static var staticRegistered = false
 
     private var task: BGContinuedProcessingTask?
+    // The identifier of a request submitted but not yet adopted via
+    // launchHandler -- needed to cancel it if the transfer finishes first,
+    // since BGTaskScheduler has no way to cancel by BGContinuedProcessingTask
+    // reference, only by identifier.
+    private var pendingRequestIdentifier: String?
     private var title = ""
     private var subtitle = ""
     private var onExpiration: (@MainActor () -> Void)?
@@ -60,6 +65,7 @@ final class BackgroundCoordinator {
         request.strategy = .queue
         do {
             try BGTaskScheduler.shared.submit(request)
+            pendingRequestIdentifier = identifier
         } catch {
             // Simulator or unsupported device: transfer still runs while foregrounded.
         }
@@ -81,8 +87,15 @@ final class BackgroundCoordinator {
     func transferEnded(success: Bool) {
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = false
-        task?.setTaskCompleted(success: success)
+        if let task {
+            task.setTaskCompleted(success: success)
+        } else if let pendingRequestIdentifier {
+            // The transfer finished before the system ever launched the
+            // request -- cancel it so it doesn't stay queued forever.
+            BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: pendingRequestIdentifier)
+        }
         task = nil
+        pendingRequestIdentifier = nil
         onExpiration = nil
         #endif
     }
@@ -102,6 +115,8 @@ final class BackgroundCoordinator {
             return
         }
         task = continued
+        // Adopted: no longer a pending request to cancel, it's a live task.
+        pendingRequestIdentifier = nil
         continued.progress.totalUnitCount = 1
         continued.progress.completedUnitCount = 0
         continued.expirationHandler = { [weak self] in

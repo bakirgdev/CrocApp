@@ -9,6 +9,7 @@ import AppKit
 struct TransferStatusView: View {
     @Environment(TransferController.self) private var controller
     @Environment(LocalNetworkChecker.self) private var localNetwork
+    @Environment(OutputFolderStore.self) private var outputFolder
     @State private var showsSlowPhaseHint = false
 
     // Long enough that ordinary relay/handshake latency doesn't false-positive,
@@ -86,12 +87,22 @@ struct TransferStatusView: View {
 
     private var showsCancel: Bool {
         switch controller.phase {
-        case .starting, .waiting, .connecting, .transferring: return true
+        case .starting, .waiting, .connecting, .transferring, .incoming: return true
         default: return false
         }
     }
 
     // MARK: - Local network denied
+
+    // The two platforms spell the same pane differently, and naming the wrong
+    // one is worse than naming none.
+    #if os(iOS)
+    private static let localNetworkDeniedDetail =
+        "Transfers use the relay only. Enable it in Settings › Privacy & Security › Local Network for faster direct transfers."
+    #else
+    private static let localNetworkDeniedDetail =
+        "Transfers use the relay only. Enable it in System Settings › Privacy & Security › Local Network for faster direct transfers."
+    #endif
 
     // design/colors.md line 107: local-network-denied is `info` (blue), not
     // a warning — the relay path still works, this is a "could be faster"
@@ -101,17 +112,25 @@ struct TransferStatusView: View {
             StatusBanner(
                 kind: .info,
                 title: "Local network access is off",
-                detail:
-                    "Transfers use the relay only. Enable it in Settings › Privacy › Local Network for faster direct transfers."
+                detail: Self.localNetworkDeniedDetail
             )
-            #if os(iOS)
             Button("Open Settings") {
+                #if os(iOS)
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
+                #else
+                // Community-standard deep link, not a documented Apple API --
+                // same category as shareddocuments:// on the receive side.
+                if let url = URL(
+                    string:
+                        "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork"
+                ) {
+                    NSWorkspace.shared.open(url)
+                }
+                #endif
             }
             .font(.footnote)
-            #endif
         }
     }
 
@@ -227,6 +246,18 @@ struct TransferStatusView: View {
         whole > 0 ? min(1, Double(part) / Double(whole)) : 0
     }
 
+    // Combines the store's live selection flag with a standardized path
+    // check against the current default, rather than trusting either alone:
+    // isUserSelected can't drift stale here (this only runs while the
+    // receive-done screen from that same folder is on screen), and the path
+    // check is the actual "inside our container" guarantee shareddocuments://
+    // needs.
+    private func isDefaultOutputFolder(_ folder: URL) -> Bool {
+        !outputFolder.isUserSelected
+            && folder.standardizedFileURL.path
+                == OutputFolderStore.defaultFolder.standardizedFileURL.path
+    }
+
     // MARK: - Done / Failed
 
     private func doneView(_ summary: Summary, receivedText: String?) -> some View {
@@ -254,27 +285,30 @@ struct TransferStatusView: View {
                     Label("Copy Text", systemImage: "doc.on.doc")
                 }
             }
-            #if os(iOS)
             if controller.direction == .receive, let folder = controller.lastOutputFolder {
-                Button {
-                    // shareddocuments:// opens the Files app at the given path (community-standard scheme; no public API equivalent).
-                    let target = "shareddocuments://" + folder.path(percentEncoded: true)
-                    if let url = URL(string: target) {
-                        UIApplication.shared.open(url)
+                #if os(iOS)
+                // shareddocuments:// only resolves paths inside the app's own
+                // container -- a fileImporter-picked iCloud Drive or other
+                // provider folder isn't reachable through it, so only offer
+                // the button when the folder is still our own default.
+                if isDefaultOutputFolder(folder) {
+                    Button {
+                        let target = "shareddocuments://" + folder.path(percentEncoded: true)
+                        if let url = URL(string: target) {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        Label("Open in Files", systemImage: "folder")
                     }
-                } label: {
-                    Label("Open in Files", systemImage: "folder")
                 }
-            }
-            #else
-            if controller.direction == .receive, let folder = controller.lastOutputFolder {
+                #else
                 Button {
                     NSWorkspace.shared.activateFileViewerSelecting([folder])
                 } label: {
                     Label("Show in Finder", systemImage: "folder")
                 }
+                #endif
             }
-            #endif
             Button("Done") { controller.reset() }
                 .buttonStyle(.borderedProminent)
         }

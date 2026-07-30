@@ -139,8 +139,9 @@ struct SendView: View {
             .dropDestination(for: URL.self) { urls, _ in
                 let files = urls.filter(\.isFileURL)
                 guard !files.isEmpty else { return false }
-                pickedURLs.append(contentsOf: files.filter { !pickedURLs.contains($0) })
-                return true
+                let newFiles = files.filter { !pickedURLs.contains($0) }
+                pickedURLs.append(contentsOf: newFiles)
+                return !newFiles.isEmpty
             } isTargeted: {
                 isDropTargeted = $0
             }

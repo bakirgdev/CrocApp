@@ -117,6 +117,15 @@ private struct QRScannerView: UIViewControllerRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(onScan: onScan) }
 
+    // ReceiveView presents this as an interactively-dismissible sheet, so
+    // updateUIViewController's startScanning may not be the last word --
+    // stop explicitly when SwiftUI tears the controller down.
+    static func dismantleUIViewController(
+        _ controller: DataScannerViewController, coordinator: Coordinator
+    ) {
+        controller.stopScanning()
+    }
+
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
         let onScan: (String) -> Void
         init(onScan: @escaping (String) -> Void) { self.onScan = onScan }
