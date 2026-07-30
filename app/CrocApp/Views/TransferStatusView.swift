@@ -122,6 +122,11 @@ struct TransferStatusView: View {
                 #else
                 // Community-standard deep link, not a documented Apple API --
                 // same category as shareddocuments:// on the receive side.
+                // Measured on macOS 26: this opens Privacy & Security at the
+                // top; the ?Privacy_LocalNetwork anchor does not select the
+                // Local Network row (nor does the .PrivacySecurity.extension
+                // spelling). The banner names the rest of the path, so the
+                // user finishes the last hop. Recheck if Apple ever honours it.
                 if let url = URL(
                     string:
                         "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork"

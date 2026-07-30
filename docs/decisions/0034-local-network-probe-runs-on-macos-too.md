@@ -17,6 +17,8 @@ Delete the `#if os(iOS)` split. `import Network` unconditionally and let both pl
 
 The banner's action button diverges: iOS opens `UIApplication.openSettingsURLString`, macOS opens `x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork` via `NSWorkspace`. That URL scheme is community-standard and not formally documented by Apple — the same category this codebase already accepts for `shareddocuments://`.
 
+Measured on macOS 26, not assumed: that URL opens Privacy & Security **at the top**. The `?Privacy_LocalNetwork` anchor does not select the Local Network row, and neither does the `com.apple.settings.PrivacySecurity.extension` spelling. Both were tried. The button is still worth having — it lands the user on the right pane — and the banner's copy names the remaining hop, which is why the copy spells the full path per platform rather than saying "open Settings".
+
 `NSLocalNetworkUsageDescription` already ships unscoped, so it covers macOS. `NSBonjourServices` is an iOS-only scope restriction; its absence from the macOS plist is not a blocker.
 
 ## Consequences
