@@ -55,6 +55,8 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 
 `Models/AppSettings.swift` — `@MainActor @Observable`, `UserDefaults` keys prefixed `settings.`, `didSet` persistence gated by a `persist` flag (the harness override channel).
 
+`relayPassword` is the one setting that is **not** in `UserDefaults`: it lives in the Keychain via `Support/KeychainStore.swift` (ADR 0033), migrated out of the plist on first launch. Its `didSet` goes through `persistRelayPassword()`, which honours the same `persist` gate — that gate is load-bearing here in a way it is not for the other settings, because `resetToDefaults()` assigns `relayPassword = ""` and an ungated write would blank a real user's stored password on any machine that has ever run a verify script.
+
 Relay strings use `""` to mean "croc default", shown as a `TextField` prompt. Two accessor families, and the difference matters:
 
 | Accessor | Purpose |
