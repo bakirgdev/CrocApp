@@ -6,6 +6,8 @@ description: "El historial de transferencias solo local de CrocApp: qué registr
 
 # Historial (F12)
 
+![La pantalla de historial de CrocApp en macOS mostrando transferencias pasadas con su dirección, número de archivos y estado](/img/screenshots/mac-history-light.png#gh-light-mode-only)![La pantalla de historial de CrocApp en macOS mostrando transferencias pasadas con su dirección, número de archivos y estado](/img/screenshots/mac-history-dark.png#gh-dark-mode-only)
+
 CrocApp mantiene una lista local de transferencias pasadas, accesible desde el icono de historial de la pantalla de inicio. Nunca sale del dispositivo: no hay sincronización, no hay exportación y no hay servidor involucrado.
 
 ## Qué se registra

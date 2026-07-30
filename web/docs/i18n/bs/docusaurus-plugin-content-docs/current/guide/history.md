@@ -6,6 +6,8 @@ description: "CrocApp-ova historija prenosa, dostupna samo lokalno: šta biljež
 
 # Historija (F12)
 
+![Ekran historije CrocApp-a na macOS-u koji prikazuje prethodne prijenose s njihovim smjerom, brojem datoteka i statusom](/img/screenshots/mac-history-light.png#gh-light-mode-only)![Ekran historije CrocApp-a na macOS-u koji prikazuje prethodne prijenose s njihovim smjerom, brojem datoteka i statusom](/img/screenshots/mac-history-dark.png#gh-dark-mode-only)
+
 CrocApp čuva lokalnu listu prošlih prenosa, dostupnu preko ikone historije na početnom ekranu. Nikada ne napušta uređaj: nema sinhronizacije, nema izvoza, i nije uključen nijedan server.
 
 ## Šta se bilježi

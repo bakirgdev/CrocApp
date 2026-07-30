@@ -74,9 +74,8 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 - **The five non-English locales are unreviewed machine-assisted drafts.** `bs`, `de`, `es`, `fr`, `ru` carry a warning admonition saying so, but nothing has native-speaker review yet (ADR 0028).
 - **A landing-only change rebuilds the docs site too, and vice versa.** Both Pages workflows call `scripts/assemble-site.sh`, which builds both surfaces regardless of which one changed (ADR 0025).
 - **A commit touching both `web/landing/` and `web/docs/` deploys twice.** Both workflows match, and the shared `github-pages` concurrency group with `cancel-in-progress: false` queues them rather than collapsing them, so the same artifact from the same SHA is built and published twice, back to back (observed at roughly 45s each). Harmless, since the second deploy is byte-identical to the first, and preferable to `cancel-in-progress: true`, which would abort a deploy mid-flight. The cost disappears if the two workflows are ever collapsed into one.
-- **Most screenshots are captured but unused.** `scripts/capture-screenshots.sh` writes eighteen light/dark pairs; the README, the four guide pages and the landing hero between them reference four. The rest are carried in the repo without a reader.
-- **No pull-request preview build.** `onBrokenLinks: throw` means a broken docs build is only discovered on push to `main`, when `landing.yml` or `docs.yml` runs and fails.
-- **`web/landing/sitemap.xml` still lists only the landing URL.** `robots.txt` now advertises the Docusaurus-generated `/docs/sitemap.xml` as a second sitemap, so crawlers reach it, but the two sitemaps stay separate and the landing one is hand-maintained.
+- **Eleven of the eighteen screenshot pairs are unused.** `scripts/capture-screenshots.sh` writes eighteen light/dark pairs; the README, six docs pages and the landing hero between them reference seven. The rest are deliberate headroom, not waste — adding a usage is cheap, re-capturing a deleted one is not.
+- **The two sitemaps stay separate.** `web/landing/sitemap.xml` is hand-maintained and lists the one landing URL; `robots.txt` advertises the Docusaurus-generated `/docs/sitemap.xml` alongside it, so crawlers reach both. Not a defect with a single landing route — the `lastmod` that used to rot there has been dropped.
 
 ## Accepted
 

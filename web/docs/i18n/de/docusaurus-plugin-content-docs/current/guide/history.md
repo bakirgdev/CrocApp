@@ -6,6 +6,8 @@ description: "Der rein lokale Übertragungsverlauf von CrocApp: was er aufzeichn
 
 # Verlauf (F12)
 
+![Der Verlauf-Bildschirm von CrocApp unter macOS mit vergangenen Übertragungen samt Richtung, Dateianzahl und Status](/img/screenshots/mac-history-light.png#gh-light-mode-only)![Der Verlauf-Bildschirm von CrocApp unter macOS mit vergangenen Übertragungen samt Richtung, Dateianzahl und Status](/img/screenshots/mac-history-dark.png#gh-dark-mode-only)
+
 CrocApp führt eine lokale Liste vergangener Übertragungen, erreichbar über das Verlaufssymbol auf dem Startbildschirm. Sie verlässt nie das Gerät: es gibt keine Synchronisierung, keinen Export und keinen beteiligten Server.
 
 ## Was aufgezeichnet wird

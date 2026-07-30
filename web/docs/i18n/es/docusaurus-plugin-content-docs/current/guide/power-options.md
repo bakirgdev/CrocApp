@@ -6,6 +6,8 @@ description: Los ajustes avanzados publicados (F13 a F19) y el flag de la CLI de
 
 # Opciones avanzadas
 
+![Los ajustes de CrocApp en iOS mostrando las opciones avanzadas en la pantalla de ajustes](/img/screenshots/ios-settings-light.png#gh-light-mode-only)![Los ajustes de CrocApp en iOS mostrando las opciones avanzadas en la pantalla de ajustes](/img/screenshots/ios-settings-dark.png#gh-dark-mode-only)
+
 CrocApp expone un conjunto de opciones avanzadas con valores predeterminados razonables. En macOS viven en la escena Settings (⌘,); en iOS están en la pantalla de ajustes accesible desde la barra de herramientas de inicio. Las siete siguientes ya están publicadas.
 
 | # | Opción | Control | Equivalente en croc |

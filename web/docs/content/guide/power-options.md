@@ -6,6 +6,8 @@ description: The shipped power-user settings (F13 through F19) and the croc CLI 
 
 # Power options
 
+![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/ios-settings-light.png#gh-light-mode-only)![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/ios-settings-dark.png#gh-dark-mode-only)
+
 CrocApp exposes a set of power options with sane defaults. On macOS they live in the Settings scene (⌘,); on iOS they're under the settings screen from the home toolbar. All seven below are shipped.
 
 | # | Option | Control | croc equivalent |
