@@ -12,7 +12,7 @@ A native SwiftUI front end for [croc](https://github.com/schollz/croc). It embed
 - Receive with a code phrase, or by scanning a QR code
 - See the file list before accepting, resume interrupted transfers, confirm overwrites
 - Direct transfer when both devices share a network, relay otherwise; the relay only ever sees ciphertext
-- Point it at your own croc relay, with password and IPv6
+- Point it at your own croc relay, with password and IPv6; the password is kept in the Keychain
 - Local-only mode, auto-accept off by default, optional confirmation on both sides
 - Transfer history, stored only on your device
 - Send from any app through the share extension
@@ -57,4 +57,3 @@ gh attestation verify CrocApp-0.9.9-arm64.dmg --repo bakirgdev/CrocApp
 - No App Store or TestFlight builds; those need a paid Apple Developer account
 - No notarization, so no clean first launch
 - No Intel or Rosetta build. The Go engine's macOS slice is arm64 only
-- No screenshots in the README or on the docs site yet
