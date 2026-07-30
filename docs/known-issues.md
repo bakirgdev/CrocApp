@@ -17,15 +17,10 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 ## Engine (crocmobile)
 
 - **`xfer()` has no watchdog.** If croc ever blocks past context cancel and prompt-pipe close, `activeMu` is held for the process's lifetime and every later transfer returns "another transfer is active". Deliberately not fixed: forcing the lock open while croc is still running would let two sessions mutate the same process-global state (`os.Chdir`, stdin/stdout swaps).
-- **`poll()` reads `croc.Client` scalar and slice fields with no synchronization** (croc's own goroutines write them unguarded). Degrades to inconsistent progress numbers; bounds-checked (`session.go`'s `progressJSON`) so it cannot panic.
+- **`poll()` reads `croc.Client` scalar and slice fields with no synchronization** (croc's own goroutines write them unguarded). Degrades to inconsistent progress numbers; bounds-checked (`session.go`'s `progressSnapshot`) so it cannot panic.
 
 ## Transfer controller
 
-- Auto-accept against a remote sender running `--ask` auto-declines, and the resulting copy blames the wrong side ("the other side declined").
-- `blockedAutoAccept` is mostly dormant — croc has sanitised incoming names since v10 — and a tiny transfer can reach `.done` before the block is evaluated.
-- The async conflict scan's write-back guard is shape-based (`if case .incoming`), not generation-based: a stale scan from a previous transfer could in principle land on a new `.incoming`.
-- The resend condition (`record.isSend && !record.isText && !record.bookmarks.isEmpty`) is duplicated across `HistoryView`'s context-menu and swipe-action sites, not shared.
-- Cross-flow status bleed: an active Send renders on the Receive screen, because `isActive` is direction-agnostic. One-at-a-time is still enforced.
 - No Cancel during `.incoming` — Decline is the only exit, and the terminal event can lag while croc auto-reconnects.
 
 ## Settings and trust
@@ -36,14 +31,11 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 ## History
 
 - `HistoryStore.clear()` uses `delete(model:)`. Whether a live `@Query` updates from it is unconfirmed in manual QA; fallback is a fetch-and-delete loop.
-- Up to 200 synchronous `bookmarkData` calls run on the main actor at send tap.
-- `blockedAutoAccept` transfers record as `.cancelled`.
 - `AutoVerify` duplicates the history-write path.
 
 ## iOS
 
 - A queued `BGContinuedProcessingTask` request is not cancelled when the transfer ends before the system adopts it.
-- `backgroundExpired` is ignored in `run()`'s catch, so an expiry that surfaces as a thrown error gets generic copy.
 - Manifest-name validation in `ShareInbox` does not match `ReceivedName`'s rules.
 - "Open in Files" silently no-ops for provider-picked folders (`shareddocuments://` resolves local paths only). Consider hiding the button there.
 - `UIFileSharingEnabled` is declared twice.

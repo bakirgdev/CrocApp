@@ -12,7 +12,10 @@ struct ReceiveView: View {
 
     var body: some View {
         Group {
-            if controller.isActive {
+            // Direction matters: isActive alone rendered a running Send under
+            // this screen's "Receive" title. Starting one from the fallback
+            // form is already a no-op (startReceive's `guard !isActive`).
+            if controller.isActive, controller.direction == .receive {
                 TransferStatusView()
             } else {
                 form

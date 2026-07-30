@@ -32,7 +32,7 @@ struct HistoryView: View {
                     ForEach(records) { record in
                         HistoryRow(record: record)
                             .contextMenu {
-                                if record.isSend && !record.isText && !record.bookmarks.isEmpty {
+                                if record.canResend {
                                     Button("Send Again") { resend(record) }
                                 }
                                 Button("Delete", role: .destructive) { history.delete(record) }
@@ -42,7 +42,7 @@ struct HistoryView: View {
                             Button("Delete", role: .destructive) { history.delete(record) }
                         }
                         .swipeActions(edge: .leading) {
-                            if record.isSend && !record.isText && !record.bookmarks.isEmpty {
+                            if record.canResend {
                                 Button("Send Again") { resend(record) }.tint(.accentColor)
                             }
                         }

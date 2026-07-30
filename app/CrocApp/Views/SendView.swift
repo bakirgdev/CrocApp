@@ -21,7 +21,9 @@ struct SendView: View {
 
     var body: some View {
         Group {
-            if controller.isActive {
+            // See ReceiveView: gate on direction too, or an active Receive
+            // renders under the "Send" title.
+            if controller.isActive, controller.direction == .send {
                 TransferStatusView()
             } else {
                 form

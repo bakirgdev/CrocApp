@@ -32,7 +32,9 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 - **A local decline surfaces croc's `"refused files"` string** — the same string the sender sees. Track `cancelRequested` / `declineRequested` to pick the right copy: "Transfer cancelled." / "You declined the transfer." / "The other side declined the transfer."
 - **`transferActive` on start: retry once after ~300 ms.** There is a release window after `done` where the next start still throws.
 - `engine.cancel()` on `.failed`, belt-and-suspenders with the stream's `onTermination`.
-- Copy precedence when several conditions collide: `backgroundExpired` beats cancel/decline mapping; `blockedAutoAccept` beats `backgroundExpired`.
+- Copy precedence when several conditions collide, highest first: `blockedAutoAccept`, `backgroundExpired`, the auto-accept-vs-remote-`--ask` case, then cancel/decline mapping. `run()`'s catch mirrors the `backgroundExpired` step so a thrown expiry keeps the resume hint.
+- **`"refused files"` under auto-accept is not a peer decline.** croc forces the receiver prompt whenever the *remote sender* ran `--ask` (`croc.go`: `!NoPrompt || Ask || senderInfo.Ask`), and engine auto-accept has already closed the prompt pipe, so `GetInput` hits EOF and croc reports its local `"refused files"`. `autoAcceptActive && !cancelRequested && !blockedAutoAccept` discriminates it: `respond()` is never called on the auto-accept path, so `declineRequested` cannot be set. Do **not** "fix" this by pre-writing `y\n` under AutoAccept — croc's empty-folder-overwrite prompt is gated on neither `NoPrompt` nor `Ask` and reads the same pipe, so a buffered `y` would turn its safe EOF default into an unwanted overwrite.
+- `blockedAutoAccept` is checked in `.done` as well as `.failed`: `cancel()` is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed` (ADR 0013's schema has no blocked case, and "Cancelled" reads as a user action).
 - `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) spent in `.starting`/`.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips, so the hint never keeps counting once a transfer moves on, but it does survive the `.starting → .connecting` handoff — same stall to the user, no reason to reset the clock.
 
 ### Options, security scope, progress
@@ -82,7 +84,9 @@ That blanking is CLI parity (ADR 0012): croc skips empty relay addresses when di
 
 ## Conflict scan
 
-Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanConflicts` runs `Task.detached` and stats off the main actor; the write-back happens only `if case .incoming` and only when non-empty. Doing it synchronously froze the accept UI on large file lists.
+Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanConflicts` runs `Task.detached` and stats off the main actor; the write-back happens only when non-empty, only `if case .incoming`, and only if `transferGeneration` still matches the value captured at `.fileList`. The shape check alone was not enough: a scan can outlive a whole fast transfer and land on the *next* one's `.incoming`. Doing the scan synchronously froze the accept UI on large file lists.
+
+`startSend`'s up-to-200 `bookmarkData` calls run off the main actor the same way, writing back into `pendingRecord`. If a transfer somehow terminates first, `pendingRecord` is already nil and the record carries no bookmarks — the same outcome as the pre-existing all-or-nothing fallback, so "Send Again" hides rather than breaks. `SecurityScopedBookmark.create` is `nonisolated` for this.
 
 10k-file smoke tests pass in both directions: receive 427 s, send 358 s.
 
