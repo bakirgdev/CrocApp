@@ -1,0 +1,85 @@
+name: Weekly Go vulnerabilities check
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  perform-checks:
+    name: Perform checks
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      GOOS: darwin
+      GOARCH: arm64
+
+    defaults:
+      run:
+        working-directory: crocmobile
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: crocmobile/go.mod
+          cache-dependency-path: crocmobile/go.sum
+
+      - name: govulncheck
+        run: |
+          env -u GOOS -u GOARCH go install golang.org/x/vuln/cmd/govulncheck@latest
+          "$(env -u GOOS -u GOARCH go env GOPATH)/bin/govulncheck" ./...
+
+      - name: File issue on failure
+        if: failure()
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const title = "govulncheck: weekly scan failed";
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "security",
+            });
+            const existing = openIssues.find((issue) => issue.title === title);
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `Still failing on \`${context.sha}\`: ${runUrl}`,
+              });
+              return;
+            }
+
+            const body = [
+              "## Weekly govulncheck run failed",
+              "",
+              `**Run:** ${runUrl}`,
+              `**Commit:** \`${context.sha}\``,
+              "",
+              "### Next steps",
+              "1. Open the run log above — determine whether govulncheck found a reachable vulnerability, or the job itself broke (install/setup failure).",
+              "2. If a real finding: bump the affected dependency in `crocmobile/go.mod`, re-run `govulncheck ./...` locally to confirm clean, close this issue.",
+              "3. If not fixable yet: record it in `docs/known-issues.md` per project convention, close this issue.",
+            ].join("\n");
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ["bug", "security"],
+              assignees: ["bakirgdev"],
+            });
