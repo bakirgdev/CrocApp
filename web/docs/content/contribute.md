@@ -14,7 +14,6 @@ Contributor and internals documentation lives in the repository, not on this sit
 - [`docs/ARCHITECTURE.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/ARCHITECTURE.md): system map, layers, event flow
 - [`docs/BUILDING.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/BUILDING.md): exact toolchain, fresh-clone steps, verification harnesses
 - [`docs/GLOSSARY.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/GLOSSARY.md): full contributor and internals vocabulary
-- [`docs/decisions/`](https://github.com/bakirgdev/CrocApp/tree/main/docs/decisions): architecture decision records, numbered and dated
 - [Issue templates](https://github.com/bakirgdev/CrocApp/tree/main/.github/ISSUE_TEMPLATE): where to file bugs, features, and other reports
 
 Pull requests are welcome: bugs, features, docs, design, landing page. Start with `CONTRIBUTING.md` above.

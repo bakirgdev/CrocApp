@@ -38,7 +38,7 @@ It is a graphical front end for [croc](https://github.com/schollz/croc), the com
 | macOS direct download (notarized DMG) | Planned |
 | TestFlight beta | Planned |
 
-Four channels, no package managers ([ADR 0031](docs/decisions/0031-no-homebrew-cask-channel.md)).
+Four channels, no package managers.
 
 Every V1 feature is implemented. What stands between the app and a release is tracked in [`docs/known-issues.md`](docs/known-issues.md) under "Blocking release".
 
@@ -167,7 +167,7 @@ open app/CrocApp.xcodeproj
 ```
 
 > [!IMPORTANT]
-> A fresh clone builds nothing until the xcframework exists. `CrocKit`'s binary target points at a gitignored artifact, so `scripts/build-xcframework.sh` is not optional ([ADR 0006](docs/decisions/0006-gomobile-binding.md)).
+> A fresh clone builds nothing until the xcframework exists. `CrocKit`'s binary target points at a gitignored artifact, so `scripts/build-xcframework.sh` is not optional.
 
 Full toolchain reference, build settings, and troubleshooting: [`docs/BUILDING.md`](docs/BUILDING.md).
 
@@ -220,7 +220,7 @@ Yes, in both directions. CrocApp embeds croc v10.5.0 as a library, so it speaks 
 <details>
 <summary><strong>Why iOS 26 and macOS 26 only?</strong></summary>
 
-Greenfield app with no existing users. Supporting older releases means availability checks everywhere and giving up current SwiftUI APIs and the Liquid Glass design language. The minimum is `26.0` and every later version works; the floor is pinned at `26.0` rather than at a minor so nobody on 26.0 through 26.4 is locked out ([ADR 0003](docs/decisions/0003-min-os-ios26-macos26.md)).
+Greenfield app with no existing users. Supporting older releases means availability checks everywhere and giving up current SwiftUI APIs and the Liquid Glass design language. The minimum is `26.0` and every later version works; the floor is pinned at `26.0` rather than at a minor so nobody on 26.0 through 26.4 is locked out.
 
 </details>
 
@@ -259,7 +259,6 @@ No. CrocApp is Apple-platform only by design. Use the [croc CLI](https://github.
 | [`docs/BUILDING.md`](docs/BUILDING.md) | Exact toolchain, fresh-clone steps, verification harnesses, troubleshooting |
 | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | croc, bridge, app, and repo vocabulary in one line each |
 | [`docs/knowledge/`](docs/knowledge/README.md) | What croc is, how the bridge works, UI architecture, platform constraints |
-| [`docs/decisions/`](docs/decisions/README.md) | Architecture decision records, numbered and dated |
 | [`docs/known-issues.md`](docs/known-issues.md) | Triaged defects and accepted papercuts. **Check here before filing a bug** |
 | [`design/`](design/README.md) | Canonical design system for the app, landing page, and docs site |
 | [crocapp.dev/docs](https://crocapp.dev/docs/) | User documentation: install, transfers, settings, security, troubleshooting |

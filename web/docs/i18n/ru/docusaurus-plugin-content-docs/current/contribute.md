@@ -14,7 +14,6 @@ description: Где найти документацию для участник�
 - [`docs/ARCHITECTURE.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/ARCHITECTURE.md): карта системы, слои, поток событий
 - [`docs/BUILDING.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/BUILDING.md): точный набор инструментов, шаги для чистого клона, инструменты проверки
 - [`docs/GLOSSARY.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/GLOSSARY.md): полный словарь терминов для участников и внутреннего устройства
-- [`docs/decisions/`](https://github.com/bakirgdev/CrocApp/tree/main/docs/decisions): записи архитектурных решений, пронумерованные и датированные
 - [Шаблоны issue](https://github.com/bakirgdev/CrocApp/tree/main/.github/ISSUE_TEMPLATE): куда подавать баги, предложения функций и другие сообщения
 
 Pull request приветствуются: баги, функции, документация, дизайн, лендинг. Начните с `CONTRIBUTING.md` выше.

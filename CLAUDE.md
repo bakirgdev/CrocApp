@@ -30,7 +30,7 @@ Close every session with this, in order, no praise, no prompt recap, always in s
 
 1. **Done**: what changed, one line per file or area.
 2. **Verified**: commands actually run and their result. Anything not run is listed as "not verified".
-3. **Docs**: ADRs and knowledge files added, changed, deleted, or an explicit "nothing doc-worthy".
+3. **Docs**: knowledge files added, changed, deleted, or an explicit "nothing doc-worthy".
 4. **Open**: known gaps, deferred work, follow-ups. Anything durable goes in `docs/known-issues.md`, not only in the report.
 
 Mark speculation as speculation.

@@ -2,7 +2,7 @@
 
 How the SwiftUI app is wired and which of its behaviours are load-bearing. Most of what follows was learned by breaking it. Read the relevant section before editing a view that observes `TransferController`.
 
-Decisions: conflict/paste/QR ADR 0009, iOS integration ADR 0010, macOS integration ADR 0011, settings/trust ADR 0012, history ADR 0013. Engine contract: `crocmobile-bridge.md`. Open defects: `../known-issues.md`.
+Engine contract: `crocmobile-bridge.md`. Open defects: `../known-issues.md`.
 
 ## Structure
 
@@ -34,7 +34,7 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 - `engine.cancel()` on `.failed`, belt-and-suspenders with the stream's `onTermination`.
 - Copy precedence when several conditions collide, highest first: `blockedAutoAccept`, `backgroundExpired`, the auto-accept-vs-remote-`--ask` case, then cancel/decline mapping. `run()`'s catch mirrors the `backgroundExpired` step so a thrown expiry keeps the resume hint.
 - **`"refused files"` under auto-accept is not a peer decline.** croc forces the receiver prompt whenever the *remote sender* ran `--ask` (`croc.go`: `!NoPrompt || Ask || senderInfo.Ask`), and engine auto-accept has already closed the prompt pipe, so `GetInput` hits EOF and croc reports its local `"refused files"`. `autoAcceptActive && !cancelRequested && !blockedAutoAccept` discriminates it: `respond()` is never called on the auto-accept path, so `declineRequested` cannot be set. Do **not** "fix" this by pre-writing `y\n` under AutoAccept — croc's empty-folder-overwrite prompt is gated on neither `NoPrompt` nor `Ask` and reads the same pipe, so a buffered `y` would turn its safe EOF default into an unwanted overwrite.
-- `blockedAutoAccept` is checked in `.done` as well as `.failed`: `cancel()` is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed` (ADR 0013's schema has no blocked case, and "Cancelled" reads as a user action).
+- `blockedAutoAccept` is checked in `.done` as well as `.failed`: `cancel()` is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed` (the schema has no blocked case, and "Cancelled" reads as a user action).
 - `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) spent in `.starting`/`.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips, so the hint never keeps counting once a transfer moves on, but it does survive the `.starting → .connecting` handoff — same stall to the user, no reason to reset the clock.
 
 ### Options, security scope, progress
@@ -55,7 +55,7 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 
 `Models/AppSettings.swift` — `@MainActor @Observable`, `UserDefaults` keys prefixed `settings.`, `didSet` persistence gated by a `persist` flag (the harness override channel).
 
-`relayPassword` is the one setting that is **not** in `UserDefaults`: it lives in the Keychain via `Support/KeychainStore.swift` (ADR 0033), migrated out of the plist on first launch. Its `didSet` goes through `persistRelayPassword()`, which honours the same `persist` gate — that gate is load-bearing here in a way it is not for the other settings, because `resetToDefaults()` assigns `relayPassword = ""` and an ungated write would blank a real user's stored password on any machine that has ever run a verify script.
+`relayPassword` is the one setting that is **not** in `UserDefaults`: it lives in the Keychain via `Support/KeychainStore.swift`, migrated out of the plist on first launch. Its `didSet` goes through `persistRelayPassword()`, which honours the same `persist` gate — that gate is load-bearing here in a way it is not for the other settings, because `resetToDefaults()` assigns `relayPassword = ""` and an ungated write would blank a real user's stored password on any machine that has ever run a verify script.
 
 Relay strings use `""` to mean "croc default", shown as a `TextField` prompt. Two accessor families, and the difference matters:
 
@@ -64,7 +64,7 @@ Relay strings use `""` to mean "croc default", shown as a `TextField` prompt. Tw
 | `effective*` | display only; never hands back an empty value |
 | `engineRelayAddresses` | what reaches the engine; blanks the *non*-customised side when only one of v4/v6 is customised |
 
-That blanking is CLI parity (ADR 0012): croc skips empty relay addresses when dialling, so it stops a custom relay from losing the dial race to the public default. Never leave both empty. `relayKind` (`publicDefault` / `custom` / `localOnly`) classifies as custom if either address is customised.
+That blanking is CLI parity: croc skips empty relay addresses when dialling, so it stops a custom relay from losing the dial race to the public default. Never leave both empty. `relayKind` (`publicDefault` / `custom` / `localOnly`) classifies as custom if either address is customised.
 
 `Views/PowerSettingsSections.swift` holds the shared `Form` sections — relay, transfer toggles, exclusions, confirmation with the auto-accept warning footer — embedded in both the macOS `SettingsView` (Settings scene, ⌘,) and the iOS `SettingsScreen` (gear toolbar → `Route.settings`). `TrustBadge(relay:)` appears in the waiting, transferring, and confirm-send views. `HowItWorksView` is the plain-language explainer; its facts come from `what-is-croc.md`.
 
@@ -72,7 +72,7 @@ That blanking is CLI parity (ADR 0012): croc skips empty relay addresses when di
 
 ## History
 
-`Models/TransferHistory.swift` — `TransferRecord` is a SwiftData `@Model` (fields per ADR 0013, including `statusRaw` string storage for the enum). `HistoryStore` is `@MainActor @Observable`, wraps `container.mainContext`, exposes `add` / `delete` / `clear` / `recordCount`. The container is in-memory when `AutoVerify.isHarnessRun`, and is injected twice: as `.environment(history)` and as `.modelContainer(history.container)`.
+`Models/TransferHistory.swift` — `TransferRecord` is a SwiftData `@Model` (fields including `statusRaw` string storage for the enum). `HistoryStore` is `@MainActor @Observable`, wraps `container.mainContext`, exposes `add` / `delete` / `clear` / `recordCount`. The container is in-memory when `AutoVerify.isHarnessRun`, and is injected twice: as `.environment(history)` and as `.modelContainer(history.container)`.
 
 `Views/HistoryView.swift` (`Route.history`, clock toolbar icon on both platforms): `@Query` sorted date-descending, swipe and context delete, Clear behind a confirmation, and "Send Again" for send records that carry bookmarks — resolve bookmarks, then `router.openSend`.
 
@@ -82,7 +82,7 @@ That blanking is CLI parity (ADR 0012): croc skips empty relay addresses when di
 
 - `Support/SecurityScopedBookmark.swift` — bookmark create/resolve/resolveIfReachable, shared by `OutputFolderStore` and `HistoryView`'s resend path (previously written four times over, one per platform per call site). `resolveIfReachable` starts the security scope before the existence probe — the sandbox denies `stat` on an unopened scope.
 - `Support/EngineConstraints.swift` — `minCodeLength = 6`, mirroring the Go engine's `len(secret) < 6` check in `crocmobile/session.go` and `crocmobile.go`. UI-side validation only, for inline feedback before a doomed `startSend`/`startReceive` call; no shared source of truth across the Go/Swift boundary, kept in sync by hand.
-- `Support/DesignTokens.swift` — the app's routing layer onto `design/`: `Spacing`, `Radius`, `BorderWidth`, `ControlHeight`, `IconSize`, `LayoutCap`, `ComponentMetrics`, `Motion`, plus `Color` aliases. The one file that splits `#if os(iOS)`/`#if os(macOS)` for UIKit/AppKit-backed colors. Where a system semantic already matches a token exactly, the alias routes there instead of duplicating an asset-catalog entry (ADR 0029).
+- `Support/DesignTokens.swift` — the app's routing layer onto `design/`: `Spacing`, `Radius`, `BorderWidth`, `ControlHeight`, `IconSize`, `LayoutCap`, `ComponentMetrics`, `Motion`, plus `Color` aliases. The one file that splits `#if os(iOS)`/`#if os(macOS)` for UIKit/AppKit-backed colors. Where a system semantic already matches a token exactly, the alias routes there instead of duplicating an asset-catalog entry.
 
 ## Conflict scan
 
@@ -107,7 +107,7 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 - Dock drop works because `Config/CrocApp-macOS-Info.plist` declares `public.item` / Viewer / rank None document types. Side effect: the app is listed in Finder's "Open With" for everything, and `INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]=YES` is required or Xcode auto-injects an invalid `NO`.
 - `Views/SettingsView.swift` — output-folder change/reset plus Show in Finder. `Views/AppCommands.swift` — Send ⌘1, Receive ⌘2 (disabled while active), Show Receive Folder ⇧⌘R. Window: `.defaultSize(560×700)`, content `minWidth 480` / `minHeight 560`.
 - Default output folder is `~/Downloads/CrocApp`, needing the `files.downloads.read-write` entitlement; the folder is auto-created in `defaultFolder` and `defaultDisplayName` supplies the UI label. Receive-done offers "Show in Finder" via `NSWorkspace.activateFileViewerSelecting`.
-- Distribution: `scripts/build-devid.sh` archives with `ARCHS=arm64`, exports Developer ID, runs `codesign --verify`, then `syspolicy_check distribution`; it degrades to `DEVID-PENDING-CERT` until a cert is installed. `Config/ExportOptions-{MAS,DevID}.plist` carry the per-channel settings — no extra pbxproj configurations (ADR 0011).
+- Distribution: `scripts/build-devid.sh` archives with `ARCHS=arm64`, exports Developer ID, runs `codesign --verify`, then `syspolicy_check distribution`; it degrades to `DEVID-PENDING-CERT` until a cert is installed. `Config/ExportOptions-{MAS,DevID}.plist` carry the per-channel settings — no extra pbxproj configurations.
 
 ## Onboarding and store compliance
 
@@ -115,7 +115,7 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 - Onboarding also primes the two system permission prompts it now names in its copy: `onDismiss` (iOS only) awaits `CameraPermission.requestIfNeeded()` then calls `localNetwork.checkIfNeeded()`, sequenced rather than simultaneous so the user never sees two system prompts stack. Camera and local-network are never requested during an `AutoVerify` harness run.
 - `Platform/CameraPermission.swift` (iOS only) wraps `AVCaptureDevice.authorizationStatus/requestAccess(for: .video)`. `QRScannerSheet` resolves its own authorization first, as a separate gate from `DataScannerViewController.isSupported`, and renders distinct copy for all four `AVAuthorizationStatus` cases: `.authorized` shows the scanner, `.notDetermined` requests then re-reads status, `.denied` offers an Open Settings button, `.restricted` does not (Settings cannot fix a restriction).
 - `PrivacyInfo.xcprivacy` sits in both synced target folders — app declares UserDefaults CA92.1 and FileTimestamp C617.1, extension declares an empty accessed-API list, both declare no tracking and no collection. Bundle inclusion was verified in the build products.
-- `ITSAppUsesNonExemptEncryption=true` in both Config plists — croc bundles its own AES-256-GCM/ChaCha20-Poly1305 rather than calling Apple OS crypto, so no exemption applies (ADR 0030).
+- `ITSAppUsesNonExemptEncryption=true` in both Config plists — croc bundles its own AES-256-GCM/ChaCha20-Poly1305 rather than calling Apple OS crypto, so no exemption applies.
 - Two `.glassEffect()` call sites: the code card in `waitingView`, and the macOS-only "Drop to send" full-window overlay in `ContentView` (design/components.md → DropZone macOS overlay).
 
 ## SwiftUI and Xcode API facts

@@ -1,6 +1,6 @@
 /* CrocApp landing page. Loaded after tokens.css, which supplies every value
    here. No raw hex, px or ms below the reset block: a missing value is a
-   missing token — add it to design/*.md and design/tokens.css first (ADR 0015).
+   missing token — add it to design/*.md and design/tokens.css first.
 
    Page fill is --color-surface-base, not the app's grouped fill, because
    --color-text-link is 4.94:1 on base and only 4.42:1 on grouped and this page

@@ -1,0 +1,1 @@
+- periodically checking for skills updates, noted in some file for maintaners as checklist for weekly/monthly maintenance things to do (not yet added, will be later, noted)

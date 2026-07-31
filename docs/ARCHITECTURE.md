@@ -4,7 +4,7 @@ Top-down map of CrocApp. Start here, then follow the links at the bottom for dep
 
 ## System summary
 
-CrocApp is a native SwiftUI app (iOS 26 + macOS 26, one multiplatform target, ADR 0005) that embeds [croc](https://github.com/schollz/croc) as a Go library rather than shelling out to a CLI. There is **one process**: the app binary. croc's transfer engine runs in-process as linked Go code (via a `gomobile`-built `.xcframework`), not as a subprocess and not as a daemon — iOS forbids spawning processes, so a subprocess model was never an option (ADR 0006). A single Swift actor, `CrocEngine`, is the only thing in the app that calls into that Go code, and `TransferController` is the only thing in the app that calls `CrocEngine`. Everything above that is SwiftUI views reacting to one `@Observable` state machine.
+CrocApp is a native SwiftUI app (iOS 26 + macOS 26, one multiplatform target) that embeds [croc](https://github.com/schollz/croc) as a Go library rather than shelling out to a CLI. There is **one process**: the app binary. croc's transfer engine runs in-process as linked Go code (via a `gomobile`-built `.xcframework`), not as a subprocess and not as a daemon — iOS forbids spawning processes, so a subprocess model was never an option. A single Swift actor, `CrocEngine`, is the only thing in the app that calls into that Go code, and `TransferController` is the only thing in the app that calls `CrocEngine`. Everything above that is SwiftUI views reacting to one `@Observable` state machine.
 
 ## Layer diagram
 
@@ -20,7 +20,7 @@ crocmobile/ (Go wrapper package)
     ▼
 gomobile bind -target ios,iossimulator,macos/arm64
     ▼
-CrocKit/Croc.xcframework  (gitignored build artifact, ADR 0006)
+CrocKit/Croc.xcframework  (gitignored build artifact)
     │  ObjC-bridged Go symbols: CrocmobileOptions, CrocmobileTransfer,
     │  CrocmobileDelegateProtocol; import Croc
     ▼
@@ -47,7 +47,7 @@ Files: `crocmobile.go` (public API: `Options`, `Delegate` interface, `Transfer` 
 
 Responsibility: adapt croc's CLI-shaped library API (process-global `os.Chdir`, stdin-bound prompts, `os.Stdout`-piped text receive) into something callable repeatedly and concurrently-safely from a GUI. Key types: `Options` (mirrors croc CLI flags, gobind-safe scalar fields only), `Delegate` (7-method callback interface: `OnCodeReady`, `OnConnected`, `OnFileList`, `OnProgress`, `OnText`, `OnDone`, `OnError`), `Transfer` (`Cancel()`, `Respond(accept bool)`).
 
-Deliberately does **not**: run more than one transfer at a time (package-global `activeMu` mutex, ADR 0008 — second `Start*` call returns `"another transfer is active"`), expose every croc knob (`RelayPorts`, `Curve`, `HashAlgorithm`, `ThrottleUpload`, `NoMultiplexing` are settable in `Options` but unwired above CrocKit — F20-F29 backlog, `docs/knowledge/features.md`), or let a Go panic cross the gobind boundary uncaught: `StartSend`/`StartReceive`/`Cancel`/`Respond` each carry their own `recover()`, `run()` recovers around `xfer()` and again around the terminal `OnError`/`OnText`/`OnDone` calls, and `poll()` recovers per tick around `OnConnected`/`OnFileList`/`OnProgress` (`session.go`'s `reportPanic`). `xfer()` itself has no watchdog, though — a hang there past context cancel still holds `activeMu` forever (`docs/known-issues.md`).
+Deliberately does **not**: run more than one transfer at a time (package-global `activeMu` mutex — second `Start*` call returns `"another transfer is active"`), expose every croc knob (`RelayPorts`, `Curve`, `HashAlgorithm`, `ThrottleUpload`, `NoMultiplexing` are settable in `Options` but unwired above CrocKit — F20-F29 backlog, `docs/knowledge/features.md`), or let a Go panic cross the gobind boundary uncaught: `StartSend`/`StartReceive`/`Cancel`/`Respond` each carry their own `recover()`, `run()` recovers around `xfer()` and again around the terminal `OnError`/`OnText`/`OnDone` calls, and `poll()` recovers per tick around `OnConnected`/`OnFileList`/`OnProgress` (`session.go`'s `reportPanic`). `xfer()` itself has no watchdog, though — a hang there past context cancel still holds `activeMu` forever (`docs/known-issues.md`).
 
 Gobind surface: the xcframework's ObjC module is `Croc` (`import Croc`); Go symbols get an `Crocmobile`-prefixed ObjC name (`CrocmobileOptions`, `CrocmobileStartSend`, protocol `CrocmobileDelegateProtocol` → Swift `CrocmobileDelegateProtocol`). Full type-restriction list and the JSON field-by-field contract: `docs/knowledge/crocmobile-bridge.md`.
 
@@ -88,7 +88,7 @@ Real event names are the `TransferEvent` cases; `Phase` is `TransferController.P
 
 ### Receive, happy path (with accept prompt)
 
-1. `ReceiveView` calls `controller.startReceive(code:into:folderIsScoped:)`. `options.overwrite = true` always (conflicts are surfaced in the UI, not deferred to croc — ADR 0009); `options.autoAccept = settings.autoAccept && !settings.bothSidesConfirm` (Ask always wins over auto-accept, since engine-level `AutoAccept` closes the prompt pipe and the resulting EOF would decline instead of accept).
+1. `ReceiveView` calls `controller.startReceive(code:into:folderIsScoped:)`. `options.overwrite = true` always (conflicts are surfaced in the UI, not deferred to croc); `options.autoAccept = settings.autoAccept && !settings.bothSidesConfirm` (Ask always wins over auto-accept, since engine-level `AutoAccept` closes the prompt pipe and the resulting EOF would decline instead of accept).
 2. `OnFileList` → `.fileList(FileList)`. If auto-accept is off, `phase = .incoming(list, conflicts: [], blocked: [...])` immediately (unsafe names, via `ReceivedName.isUnsafe`, are computed synchronously); a detached task then stats the output folder for name collisions and back-fills `conflicts` if the phase is still `.incoming`. Progress keeps ticking underneath (guarded, per above) because croc is blocked in `utils.GetInput`, reading the dup2'd fd0 pipe (`crocmobile/session.go`), waiting on `Respond`.
 3. User accepts: `TransferController.respond(accept: true)` calls `engine.respond(accept:)` → `CrocmobileTransfer.respond` → Go writes `y\n` to the pipe (once, for receive; per-file for a sender-side Ask, see `docs/knowledge/crocmobile-bridge.md`) and closes it. `phase = .connecting`.
 4. `OnProgress` resumes normally, `phase = .transferring(TransferProgress)`.
@@ -97,7 +97,7 @@ Real event names are the `TransferEvent` cases; `Phase` is `TransferController.P
 ### Decline and cancel
 
 - User declines `.incoming`: `respond(accept: false)` writes `n\n`, sets `declineRequested = true`. croc surfaces this to both sides as the string `"refused files"` — `TransferController.friendlyMessage` maps it to "You declined the transfer." locally and "The other side declined the transfer." when it arrives as `.failed` on the peer's controller.
-- User cancels mid-transfer: `controller.cancel()` sets `cancelRequested = true` and calls `engine.cancel()`, which calls the Go `Transfer.Cancel()` → `session.cancel()`: context-cancels *and* closes the prompt pipe (a bare context cancel does not unblock a pending `GetInput` read — ADR 0008's rationale for why `cancel()` must also touch the pipe).
+- User cancels mid-transfer: `controller.cancel()` sets `cancelRequested = true` and calls `engine.cancel()`, which calls the Go `Transfer.Cancel()` → `session.cancel()`: context-cancels *and* closes the prompt pipe (a bare context cancel does not unblock a pending `GetInput` read, so `cancel()` must also touch the pipe).
 - Any terminal event also triggers `Task { await engine.cancel() }` from `TransferController.handle(.failed)` as a belt-and-suspenders release, since the engine must be free for the next transfer to start.
 
 Full JSON field lists, the `fileSent`-is-per-current-file wrinkle, and sub-100ms transfers that skip straight to `done`: `docs/knowledge/crocmobile-bridge.md`.
@@ -127,7 +127,7 @@ Persistence:
 
 ## Platform split
 
-One SwiftUI target, `#if os(iOS)` / `#if os(macOS)` isolated to dedicated files where real divergence exists (ADR 0005):
+One SwiftUI target, `#if os(iOS)` / `#if os(macOS)` isolated to dedicated files where real divergence exists:
 
 | Concern | iOS | macOS |
 |---|---|---|
@@ -151,7 +151,7 @@ Sandbox boundaries that shaped the design, concretely:
 - Security-scoped URLs: every send/receive intent in `TransferController` calls `startAccessingSecurityScopedResource()` on user-picked URLs and tracks them in `scopedURLs` for release at stream end; `OutputFolderStore` and `HistoryView`'s bookmark-resolve path do the same, on both platforms, before any `fileExists`/`stat` call (the sandbox denies `stat` on an unopened scope — a defect caught separately on each platform, per `docs/knowledge/app-ui-architecture.md`).
 - App Group container: the only channel between `CrocShare` (a separate process, ~120 MB memory cap, no long-running work) and the main app. The extension copies attachment bytes in `loadFileRepresentation`'s synchronous callback (the source temp file is deleted once that callback returns) and never deletes existing batches — a batch may be mid-send.
 - Output folder: iOS defaults to the app's own Documents (Files-app visible via `UIFileSharingEnabled` + `LSSupportsOpeningDocumentsInPlace`); macOS defaults to `~/Downloads/CrocApp`, requiring the `files.downloads.read-write` entitlement — this is why that entitlement exists at all.
-- `network.server` on macOS exists solely so croc's local relay listener can bind a port inside the sandbox (`--local`/`onlyLocal`); this was proven, not assumed (`docs/decisions/0011-macos-platform-integration-choices.md`).
+- `network.server` on macOS exists solely so croc's local relay listener can bind a port inside the sandbox (`--local`/`onlyLocal`); this was proven, not assumed.
 
 ## Concurrency model
 
@@ -161,7 +161,7 @@ Swift 6 language mode (`SWIFT_VERSION = 6.0`), `SWIFT_DEFAULT_ACTOR_ISOLATION = 
 
 ## Build-time architecture
 
-`CrocKit/Package.swift` declares `Croc` as a `.binaryTarget(path: "Croc.xcframework")`; that path is gitignored. A fresh clone therefore builds nothing in `CrocKit` or the app until `scripts/build-xcframework.sh` has run once (ADR 0006). Full toolchain requirements, CI wiring, and the manual steps: `docs/BUILDING.md`.
+`CrocKit/Package.swift` declares `Croc` as a `.binaryTarget(path: "Croc.xcframework")`; that path is gitignored. A fresh clone therefore builds nothing in `CrocKit` or the app until `scripts/build-xcframework.sh` has run once. Full toolchain requirements, CI wiring, and the manual steps: `docs/BUILDING.md`.
 
 ## Where to go next
 
@@ -170,7 +170,6 @@ Swift 6 language mode (`SWIFT_VERSION = 6.0`), `SWIFT_DEFAULT_ACTOR_ISOLATION = 
 | Exact event JSON fields, croc gotchas, verification harnesses | `docs/knowledge/crocmobile-bridge.md` |
 | View-by-view UI invariants, settings/trust details, platform layer specifics | `docs/knowledge/app-ui-architecture.md` |
 | iOS/macOS platform limits (background, multicast, sandbox, App Store review) | `docs/knowledge/apple-platform-constraints.md` |
-| Why a structural choice was made | `docs/decisions/` (ADRs, `NNNN-slug.md`) |
 | Feature status (shipped / planned / skipped) | `docs/knowledge/features.md` |
 | Fresh-clone build steps | `docs/BUILDING.md` |
 | Design tokens, component specs, SF Symbols mapping | `design/README.md` |

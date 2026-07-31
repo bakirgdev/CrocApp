@@ -1,5 +1,4 @@
-- to manage
-  - versions of runners
-  - versions of actions from gh marketplace
-  - explain what each does simply-shortly
-  - when creating new workflow and/or using external actions, pin versions to latest version like v9.9.9 (major.minor.patch). dependabot will check for updated, but on creation i want latest versions
+- versions of runners
+- versions of actions from gh marketplace
+- explain what each does simply-shortly
+- when creating new workflow and/or using external actions, pin versions to latest version like v9.9.9 (major.minor.patch). dependabot will check for updated, but on creation i want latest versions

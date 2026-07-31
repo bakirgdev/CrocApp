@@ -22,7 +22,7 @@ These files are the **canonical, human-readable token set**. `tokens.css` is a c
 
 ## Provenance
 
-Generated in Claude Design and extracted here on 2026-07-25 (ADR 0015). That project is gone — this directory is the whole design system now, and nothing outside the repo needs consulting.
+Generated in Claude Design and extracted here on 2026-07-25. That project is gone — this directory is the whole design system now, and nothing outside the repo needs consulting.
 
 ## Binding rules
 

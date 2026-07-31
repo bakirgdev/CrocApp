@@ -1,6 +1,6 @@
 # Physical-device test checklist
 
-The simulator cannot verify any of these. Run them on a real iOS 26 device before store submission — this is the hardware gate (ADR 0010). Nothing here has been run yet.
+The simulator cannot verify any of these. Run them on a real iOS 26 device before store submission — this is the hardware gate. Nothing here has been run yet.
 
 ## Background continuation (BGContinuedProcessingTask)
 - [ ] Start multi-GB receive, background the app → system Live Activity shows title + progress + cancel

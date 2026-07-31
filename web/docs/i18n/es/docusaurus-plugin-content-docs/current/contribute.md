@@ -14,7 +14,6 @@ La documentación para colaboradores e internals vive en el repositorio, no en e
 - [`docs/ARCHITECTURE.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/ARCHITECTURE.md): mapa del sistema, capas, flujo de eventos
 - [`docs/BUILDING.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/BUILDING.md): toolchain exacto, pasos desde un clon nuevo, arneses de verificación
 - [`docs/GLOSSARY.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/GLOSSARY.md): vocabulario completo para colaboradores e internals
-- [`docs/decisions/`](https://github.com/bakirgdev/CrocApp/tree/main/docs/decisions): registros de decisiones de arquitectura, numerados y fechados
 - [Plantillas de incidencias](https://github.com/bakirgdev/CrocApp/tree/main/.github/ISSUE_TEMPLATE): dónde reportar errores, funciones y otros informes
 
 Las pull requests son bienvenidas: errores, funciones, documentación, diseño, página de aterrizaje. Empiece por `CONTRIBUTING.md` arriba.

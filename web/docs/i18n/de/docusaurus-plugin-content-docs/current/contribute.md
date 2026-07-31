@@ -14,7 +14,6 @@ Die Dokumentation für Mitwirkende und Interna liegt im Repository, nicht auf di
 - [`docs/ARCHITECTURE.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/ARCHITECTURE.md): Systemkarte, Schichten, Ereignisfluss
 - [`docs/BUILDING.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/BUILDING.md): exakte Toolchain, Schritte für einen frischen Checkout, Verifikations-Harnesses
 - [`docs/GLOSSARY.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/GLOSSARY.md): vollständiges Vokabular für Mitwirkende und Interna
-- [`docs/decisions/`](https://github.com/bakirgdev/CrocApp/tree/main/docs/decisions): Architekturentscheidungsprotokolle, nummeriert und datiert
 - [Issue-Vorlagen](https://github.com/bakirgdev/CrocApp/tree/main/.github/ISSUE_TEMPLATE): wo Sie Bugs, Features und andere Meldungen einreichen
 
 Pull Requests sind willkommen: Bugs, Features, Dokumentation, Design, Landingpage. Beginnen Sie mit `CONTRIBUTING.md` oben.

@@ -54,7 +54,7 @@
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
     <!-- Copied in at deploy time from design/tokens.css. Never committed
-         under web/ — one source of truth, no drift (ADR 0015). -->
+         under web/ — one source of truth, no drift. -->
     <link rel="stylesheet" href="tokens.css" />
     <link rel="stylesheet" href="styles.css" />
 
@@ -105,7 +105,7 @@
           <a class="nav__link" href="#how">How it works</a>
           <a class="nav__link" href="#features">Features</a>
           <!-- Same origin, a real page rather than a section, so it navigates
-               in this tab and carries no new-tab affordance (ADR 0022). -->
+               in this tab and carries no new-tab affordance. -->
           <a class="nav__link" href="/docs/">Docs</a>
           <!-- The one link that survives the phone breakpoint. -->
           <a class="nav__link nav__link--primary" href="#download">Download</a>
@@ -523,15 +523,6 @@
               clients' architecture does not port to Apple platforms.
             </p>
             <p>SwiftUI throughout, targeting iOS 26 and macOS 26.</p>
-            <p>
-              Every decision of consequence is written down as a numbered ADR in the repository, so
-              the reasoning is auditable rather than remembered.
-            </p>
-            <p>
-              <a href="https://github.com/bakirgdev/CrocApp/tree/main/docs/decisions" target="_blank" rel="noopener">
-                Read the decision records
-              </a>
-            </p>
           </div>
         </div>
       </section>

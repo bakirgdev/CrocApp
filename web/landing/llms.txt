@@ -35,6 +35,5 @@ Transfers are end-to-end encrypted, the code phrase authenticates both sides, an
 
 - Documentation (install, transfers, settings, security, troubleshooting; English plus Bosnian, German, Spanish, French, Russian): https://crocapp.dev/docs/
 - Source and issue tracker: https://github.com/bakirgdev/CrocApp
-- Architecture decision records: https://github.com/bakirgdev/CrocApp/tree/main/docs/decisions
 - croc, the underlying engine: https://github.com/schollz/croc
 - Sponsor: https://github.com/sponsors/bakirgdev

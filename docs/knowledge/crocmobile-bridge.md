@@ -1,6 +1,6 @@
 # crocmobile / CrocKit engine bridge
 
-The engine contract between Go and Swift, and the croc behaviours it has to work around. Architecture rationale: ADR 0006, ADR 0008. UI side: `app-ui-architecture.md`.
+The engine contract between Go and Swift, and the croc behaviours it has to work around. UI side: `app-ui-architecture.md`.
 
 ## Layers
 
@@ -28,7 +28,7 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 
 ## Engine behavior invariants
 
-- One transfer at a time (ADR 0008); second start → `CrocEngineError.transferActive`. Brief window after `done` where the next start can still throw — retry once.
+- One transfer at a time; second start → `CrocEngineError.transferActive`. Brief window after `done` where the next start can still throw — retry once.
 - Receiver MUST set `outDir`; sender sets `workDir` (writable, for text/zip temp files; iOS cwd is `/`).
 - Abandoning the event stream cancels the Go session (`onTermination`); `Cancel()` also unblocks a pending accept prompt (closes prompt pipe → croc declines).
 - `Options.Ask` is exposed: sender sessions with Ask install the same dup2 fd0 pipe as receive (sender-only helper), and `Respond(true)` writes one `y\n` PER FILE (`promptAnswers = len(filesInfo)`) — croc's sender prompt fires per `TypeRecipientReady`, once per file; a single answer starves multi-file sends at file 2 (EOF ⇒ "refusing files"). Decline/cancel close the pipe; EOF at the Ask prompt refuses safely (croc checks the input error before its default-yes).

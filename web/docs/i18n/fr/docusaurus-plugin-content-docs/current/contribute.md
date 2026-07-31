@@ -14,7 +14,6 @@ La documentation destinée aux contributeurs et à l'architecture interne se tro
 - [`docs/ARCHITECTURE.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/ARCHITECTURE.md) : plan du système, couches, flux d'événements
 - [`docs/BUILDING.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/BUILDING.md) : chaîne d'outils exacte, étapes après un clone, harnais de vérification
 - [`docs/GLOSSARY.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/GLOSSARY.md) : vocabulaire complet pour les contributeurs et l'architecture interne
-- [`docs/decisions/`](https://github.com/bakirgdev/CrocApp/tree/main/docs/decisions) : registres de décisions d'architecture, numérotés et datés
 - [Modèles de tickets](https://github.com/bakirgdev/CrocApp/tree/main/.github/ISSUE_TEMPLATE) : où signaler des bugs, des fonctionnalités et d'autres rapports
 
 Les pull requests sont bienvenues : bugs, fonctionnalités, documentation, design, page d'accueil. Commencez par `CONTRIBUTING.md` ci-dessus.

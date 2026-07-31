@@ -35,10 +35,10 @@ IDEWorkspaceChecks.plist
 # Go (cmd/croctest builds an in-tree binary)
 crocmobile/cmd/croctest/croctest
 
-# gomobile build output (ADR 0006: xcframework not committed)
+# gomobile build output (xcframework not committed)
 CrocKit/Croc.xcframework/
 
-# Web surface tokens (ADR 0015: design/tokens.css is the only copy)
+# Web surface tokens (design/tokens.css is the only copy)
 web/landing/tokens.css
 web/docs/src/css/tokens.css
 

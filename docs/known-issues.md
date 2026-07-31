@@ -9,7 +9,7 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 ## Blocking release
 
 - **Notarization is not real.** `scripts/build-devid.sh` stops at `syspolicy_check distribution`, a dry run. No `notarytool submit --wait`, no `stapler staple`. Until it lands, a downloaded build shows Gatekeeper's unidentified-developer refusal on first launch (`knowledge/tooling.md`).
-- **The release pipeline ships an ad-hoc signature.** `.github/workflows/release.yml` builds with `CODE_SIGN_IDENTITY=-` because no Developer ID certificate exists. Enough for arm64 to execute, not enough for Gatekeeper on a downloaded copy: the first launch needs System Settings > Privacy & Security > Open Anyway. This is what v0.9.9 actually shipped as, accepted because it is a symbolic release (ADR 0032); a blocker for anything after it.
+- **The release pipeline ships an ad-hoc signature.** `.github/workflows/release.yml` builds with `CODE_SIGN_IDENTITY=-` because no Developer ID certificate exists. Enough for arm64 to execute, not enough for Gatekeeper on a downloaded copy: the first launch needs System Settings > Privacy & Security > Open Anyway. This is what v0.9.9 actually shipped as, accepted because it is a symbolic release; a blocker for anything after it.
 - **No Developer ID Application certificate is installed.** Only `Apple Development` is present, so `scripts/build-devid.sh` stops at `DEVID-PENDING-CERT` before it ever reaches the notarization step above. Owner action: create one at developer.apple.com (Certificates > Developer ID Application).
 - **`ExportOptions-MAS.plist` is committed but never exercised.** First real MAS export is its first test.
 - **`actions/attest-build-provenance` runs before the DMG would be stapled** (`.github/workflows/release.yml`, "Attest build provenance" step). Harmless today, since nothing staples: the attested hash is the final hash. Once notarization lands, `stapler staple` rewrites the DMG after this step and the attestation would cover a pre-staple hash. Move the step after stapling when that happens.
@@ -30,7 +30,7 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## macOS
 
-- **The macOS local-network denial path is hard to exercise during development.** Enforcement reportedly only engages for builds resident in `/Applications` (single developer-forum thread FB16077972, not Apple documentation — strong inference, not verified here), so a DerivedData-launched Debug build can sit at `.ready` and read as falsely granted. Copy the app to `/Applications` before trying to reproduce a denial (ADR 0034).
+- **The macOS local-network denial path is hard to exercise during development.** Enforcement reportedly only engages for builds resident in `/Applications` (single developer-forum thread FB16077972, not Apple documentation — strong inference, not verified here), so a DerivedData-launched Debug build can sit at `.ready` and read as falsely granted. Copy the app to `/Applications` before trying to reproduce a denial.
 - `AppRouter` is a singleton with no reset hook, so multiple windows share one navigation path. Deliberately not fixed: per-window navigation needs `@FocusedValue` plumbing to reach `AppDelegate` and `Commands`, which sit outside the environment graph, and multi-window reachability has never actually been observed. Revisit if someone reports it.
 
 ## Design system
@@ -50,16 +50,16 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 ## Docs site
 
 - **No site search, on purpose.** A local search plugin is a new dependency and Algolia DocSearch is an external account plus a third-party request from a page that makes a privacy claim. Sixteen pages with a full sidebar and browser find-in-page is enough for now. Revisit if the page count grows.
-- **The version dropdown is invisible.** Docusaurus hides `docsVersionDropdown` while only one version exists (ADR 0027); it stays hidden until the first `docusaurus docs:version` cut.
-- **The five non-English locales are unreviewed machine-assisted drafts.** `bs`, `de`, `es`, `fr`, `ru` carry a warning admonition saying so, but nothing has native-speaker review yet (ADR 0028).
-- **A landing-only change rebuilds the docs site too, and vice versa.** `github-pages.yml` calls `scripts/assemble-site.sh`, which builds both surfaces regardless of which one changed (ADR 0025, ADR 0037).
+- **The version dropdown is invisible.** Docusaurus hides `docsVersionDropdown` while only one version exists; it stays hidden until the first `docusaurus docs:version` cut.
+- **The five non-English locales are unreviewed machine-assisted drafts.** `bs`, `de`, `es`, `fr`, `ru` carry a warning admonition saying so, but nothing has native-speaker review yet.
+- **A landing-only change rebuilds the docs site too, and vice versa.** `github-pages.yml` calls `scripts/assemble-site.sh`, which builds both surfaces regardless of which one changed.
 - **Eleven of the eighteen screenshot pairs are unused.** `scripts/capture-screenshots.sh` writes eighteen light/dark pairs; the README, six docs pages and the landing hero between them reference seven. The rest are deliberate headroom, not waste — adding a usage is cheap, re-capturing a deleted one is not.
 - **The two sitemaps stay separate.** `web/landing/sitemap.xml` is hand-maintained and lists the one landing URL; `robots.txt` advertises the Docusaurus-generated `/docs/sitemap.xml` alongside it, so crawlers reach both. Not a defect with a single landing route — the `lastmod` that used to rot there has been dropped.
 
 ## Accepted
 
-- **When both relay addresses are customised, both are sent.** croc's own CLI blanks `RelayAddress6` whenever v4 is customised, without checking whether v6 was customised too (`src/cli/cli.go`, send and receive alike), so it silently discards a user's custom v6 relay. Keeping both is more correct, not less. The divergence is deliberate (ADR 0012) and is not going to be "fixed" toward the CLI's behaviour.
+- **When both relay addresses are customised, both are sent.** croc's own CLI blanks `RelayAddress6` whenever v4 is customised, without checking whether v6 was customised too (`src/cli/cli.go`, send and receive alike), so it silently discards a user's custom v6 relay. Keeping both is more correct, not less. The divergence is deliberate and is not going to be "fixed" toward the CLI's behaviour.
 - **`OutputFolderStore.select` silently no-ops if bookmarking fails.** Rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **`.combine` on the transfer progress view may hide the percentage from VoiceOver.** Worth a real accessibility pass, not a spot fix.
-- **Gesture-level flows are not machine-verified.** Drag-and-drop, camera QR, and taps have no XCUITest coverage. No ADR decides this; the rule is the repo owner's standing instruction not to write tests unasked. Verify them by hand.
+- **Gesture-level flows are not machine-verified.** Drag-and-drop, camera QR, and taps have no XCUITest coverage. There's no formal decision behind this; the rule is the repo owner's standing instruction not to write tests unasked. Verify them by hand.

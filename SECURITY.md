@@ -53,4 +53,4 @@ Transfers are end-to-end encrypted, the code phrase authenticates both sides, an
 > [!WARNING]
 > There has been **no formal third-party security audit** of croc, and CrocApp does not claim one. Do not describe CrocApp as audited, certified, or zero-knowledge-verified.
 
-Supporting facts, not claims: no telemetry, no analytics, no accounts, transfer history stays on the device, and you can point the app at your own relay. Dependencies in `crocmobile/` are scanned by `govulncheck` on every CI run and again on a weekly schedule ([ADR 0018](docs/decisions/0018-vulnerability-scanning-on-a-schedule.md)).
+Supporting facts, not claims: no telemetry, no analytics, no accounts, transfer history stays on the device, and you can point the app at your own relay. Dependencies in `crocmobile/` are scanned by `govulncheck` on every CI run and again on a weekly schedule.

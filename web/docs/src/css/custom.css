@@ -1,7 +1,7 @@
 /* CrocApp docs theme: Infima re-pointed at the design tokens.
  *
  * tokens.css is copied in from design/ by the `tokens` package script (it is
- * gitignored here, exactly like web/landing/tokens.css, ADR 0015). It already
+ * gitignored here, exactly like web/landing/tokens.css). It already
  * pins color-scheme on [data-theme="light"|"dark"], which is the same attribute
  * Docusaurus toggles, so every light-dark() pair resolves correctly and the
  * dark theme needs no second block below.

@@ -18,7 +18,7 @@ Both are spelled out below.
 | [Code style](#code-style) | swift-format, golangci-lint, dependencies |
 | [Design rules](#design-rules) | Tokens, symbols, themes, screenshots |
 | [Verification](#verification) | What to run, and how to report it |
-| [Docs](#docs) | ADRs, knowledge, known issues |
+| [Docs](#docs) | Knowledge, known issues |
 | [AI-assisted contributions](#ai-assisted-contributions) | Allowed, with disclosure |
 | [Opening a pull request](#opening-a-pull-request) | Flow and expectations |
 | [Unlikely to be merged](#unlikely-to-be-merged) | Save yourself the work |
@@ -59,7 +59,7 @@ open app/CrocApp.xcodeproj
 ```
 
 > [!IMPORTANT]
-> A fresh clone builds nothing until the xcframework exists. `CrocKit`'s binary target points at a gitignored build artifact, so `scripts/build-xcframework.sh` is not optional. Rerun it after any change under `crocmobile/`. See [ADR 0006](docs/decisions/0006-gomobile-binding.md).
+> A fresh clone builds nothing until the xcframework exists. `CrocKit`'s binary target points at a gitignored build artifact, so `scripts/build-xcframework.sh` is not optional. Rerun it after any change under `crocmobile/`.
 
 The verification harnesses also need the real `croc` CLI and outbound network access to the public relay:
 
@@ -82,7 +82,7 @@ Deeper references: [`docs/BUILDING.md`](docs/BUILDING.md) for the exact toolchai
 | `app/CrocShare/` | Share extension | same file |
 | `design/` | Canonical design system for app, landing, docs | [`design/README.md`](design/README.md) |
 | `web/landing/` | The crocapp.dev landing page | `design/README.md` |
-| `docs/` | Knowledge base, ADRs, known issues | [`docs/knowledge/README.md`](docs/knowledge/README.md) |
+| `docs/` | Knowledge base, known issues | [`docs/knowledge/README.md`](docs/knowledge/README.md) |
 | `scripts/` | Build and live-transfer verification harnesses | the script headers |
 
 > [!WARNING]
@@ -110,7 +110,7 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 |---|---|
 | `feat` | New user-visible capability |
 | `fix` | Bug fix |
-| `docs` | Docs, ADRs, README, comments-only changes |
+| `docs` | Docs, README, comments-only changes |
 | `style` | Formatting only, no behavior change |
 | `refactor` | Restructuring with no behavior change |
 | `perf` | Performance work |
@@ -148,7 +148,7 @@ golangci-lint run ./...
 govulncheck ./...
 ```
 
-swift-format ships with the toolchain, so there is nothing to install. Config lives in [`.swift-format`](.swift-format): 4-space indent, non-indented `#if` bodies. Go config is in [`crocmobile/.golangci.yml`](crocmobile/.golangci.yml). Rationale for the whole toolchain is [ADR 0014](docs/decisions/0014-code-style-and-ci.md).
+swift-format ships with the toolchain, so there is nothing to install. Config lives in [`.swift-format`](.swift-format): 4-space indent, non-indented `#if` bodies. Go config is in [`crocmobile/.golangci.yml`](crocmobile/.golangci.yml).
 
 Other expectations:
 
@@ -182,7 +182,7 @@ A build that compiles proves nothing about a transfer. CI deliberately does not 
 | `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` | the matching harness below, no exceptions |
 | Share extension | `scripts/verify-share-sim.sh` |
 | `web/landing/` | Load it locally: `cp design/tokens.css web/landing/ && python3 -m http.server --directory web/landing` |
-| Docs, ADRs, comments only | Nothing beyond reading it back |
+| Docs, comments only | Nothing beyond reading it back |
 
 ```bash
 scripts/verify-interop.sh     # 9 scenarios, engine <-> croc CLI, both directions, decline, cancel, relay, LAN
@@ -210,8 +210,6 @@ Documentation is part of the change, not a follow-up. Before you open the PR:
 
 | What happened | Where it goes |
 |---|---|
-| You made or reversed an architectural decision | New ADR in [`docs/decisions/`](docs/decisions/README.md), next number. Reversing an old one means a new ADR plus `Status: superseded by NNNN` on the old |
-| A fact inside an existing ADR stopped being true | Overwrite it in place. No amendment markers, git history is the changelog. Re-verify what it claims |
 | You learned something durable about the project | Add or update a file in [`docs/knowledge/`](docs/knowledge/README.md), and `CLAUDE.md` if it changes how the repo is worked in |
 | You fixed a listed defect | Delete its line from [`docs/known-issues.md`](docs/known-issues.md) |
 | You found a defect and consciously left it | Add a line to `docs/known-issues.md` |
@@ -253,12 +251,12 @@ Not a hard no, but open an issue first and expect a long conversation. These run
 | Change | Why |
 |---|---|
 | Windows, Linux, or Android support | Apple-platform only by design. The croc CLI covers everywhere else and interoperates with the app |
-| Support for iOS or macOS below 26 | Floor is `26.0`, never a minor. It is a minimum, so 26.0 and everything above it already runs ([ADR 0003](docs/decisions/0003-min-os-ios26-macos26.md)) |
+| Support for iOS or macOS below 26 | Floor is `26.0`, never a minor. It is a minimum, so 26.0 and everything above it already runs |
 | Telemetry, analytics, crash reporting, ads | No data leaves the device. This is a product promise, not a technical gap |
 | A paid tier, license keys, or in-app purchases | MIT and free, permanently. Funding is optional sponsorship only |
-| Shelling out to the `croc` binary instead of the embedded library | The Go library binding is the whole architecture ([ADR 0006](docs/decisions/0006-gomobile-binding.md)) |
+| Shelling out to the `croc` binary instead of the embedded library | The Go library binding is the whole architecture |
 | A new third-party dependency | Discuss it first. Everything in `crocmobile/` ships inside the binary |
-| A UIKit or AppKit rewrite of a SwiftUI surface | Native SwiftUI is the deliberate choice ([ADR 0005](docs/decisions/0005-native-swiftui.md)) |
+| A UIKit or AppKit rewrite of a SwiftUI surface | Native SwiftUI is the deliberate choice |
 | Bundled fonts or icon sets | Undistributable in Apple's case, and unnecessary in every other |
 | Rewriting croc's protocol or crypto | Belongs [upstream](https://github.com/schollz/croc), where the whole ecosystem gets it |
 

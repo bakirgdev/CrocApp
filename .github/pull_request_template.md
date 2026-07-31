@@ -23,7 +23,6 @@ paste harness output here (if long, prefer summarizing with AI)
 
 ## Docs
 
-- [ ] Decisions updated → ADR in `docs/decisions/`
 - [ ] Durable knowledge → `docs/knowledge/` and/or `CLAUDE.md`
 - [ ] Defect fixed or accepted → `docs/known-issues.md` line deleted or added
 - [ ] Nothing doc-worthy

@@ -370,7 +370,7 @@ final class TransferController {
             // blockedAutoAccept outranks cancelRequested: the block issues the
             // cancel itself, and "Cancelled" in history reads as a user action.
             // .failed is the closest existing status; a dedicated case would be
-            // a schema change (ADR 0013).
+            // a schema change.
             let status: TransferRecord.Status
             if blockedAutoAccept {
                 status = .failed

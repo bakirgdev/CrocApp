@@ -12,7 +12,7 @@ import Security
 /// Deliberately does *not* set `kSecUseDataProtectionKeychain`, so macOS uses
 /// the file-based keychain. The data-protection keychain is the modern
 /// recommendation, but it resolves an app's keychain access group from the
-/// team ID in its signature, and this app ships ad-hoc signed (ADR 0032) — an
+/// team ID in its signature, and this app ships ad-hoc signed — an
 /// ad-hoc build has no team ID and would fail with `errSecMissingEntitlement`.
 /// Revisit once a Developer ID certificate exists. iOS is unaffected: it only
 /// has the data-protection keychain.

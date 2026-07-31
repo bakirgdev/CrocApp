@@ -21,5 +21,5 @@ Apple-native croc niche effectively empty: only iCroc (paid, closed-source, stal
 
 - Repo description = pitch one-liner; screenshots/recordings top of README; store badges.
 - Ship minimal fast, iterate in public; donations only, no monetization.
-- Distribution breadth: App Store + TestFlight public link + DMG (ADR 0031).
+- Distribution breadth: App Store + TestFlight public link + DMG.
 - Post-launch: PR adding CrocApp to croc README GUI section (how crocgui/croc-app get found); HN, r/selfhosted, r/opensource, Mac blogs (MacStories et al.); translations early.

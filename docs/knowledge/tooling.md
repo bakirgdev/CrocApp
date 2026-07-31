@@ -1,6 +1,6 @@
 # Tooling
 
-What is wired up, what was deliberately skipped, and the traps in each. Decision records: ADR 0014 (style + CI), ADR 0018 (scheduled vuln scan), ADR 0037 (Pages deploy).
+What is wired up, what was deliberately skipped, and the traps in each.
 
 ## In use
 
@@ -15,14 +15,14 @@ What is wired up, what was deliberately skipped, and the traps in each. Decision
 | GitHub Actions | `.github/workflows/govulncheck.yml` | Mondays 06:00 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) |
 | GitHub Actions | `.github/workflows/github-pages-preview.yml` | pull requests touching either site surface; build only, never deploys |
-| GitHub Actions | `.github/workflows/release.yml` | `workflow_dispatch` rehearses, `v*` tag publishes (ADR 0032) |
+| GitHub Actions | `.github/workflows/release.yml` | `workflow_dispatch` rehearses, `v*` tag publishes |
 
 Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file. The `macos-26` runner image carries 26.0.1 through 26.6, default 26.5, so the pin must name a version that image actually has.
 
 ## Build configuration you cannot casually change
 
 - **Swift 6 language mode everywhere.** App and extension are `SWIFT_VERSION = 6.0`, `CrocKit` is swift-tools 6.0. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default and `nonisolated` is the explicit case. Strict concurrency is an error, not a warning.
-- **Deployment targets are `26.0` everywhere** — pbxproj, `Package.swift`, and `gomobile -iosversion`/`-macosversion`. Never a minor pin (ADR 0003).
+- **Deployment targets are `26.0` everywhere** — pbxproj, `Package.swift`, and `gomobile -iosversion`/`-macosversion`. Never a minor pin.
 - **macOS is arm64 only** (`ARCHS[sdk=macosx*] = arm64`). `Croc.xcframework` has no x86_64 slice because gomobile cannot produce one (golang/go#73119), so Intel Macs cannot run the app. Removing the pin does not add Intel support, it breaks the link.
 - **Go toolchain ≥ 1.26.5**, pinned in `crocmobile/go.mod`. `scripts/build-xcframework.sh` auto-installs gomobile and gobind at `@latest` — unpinned, worth pinning if a bind ever regresses.
 
@@ -73,4 +73,4 @@ These cost real debugging time on this machine. All are environment quirks, not 
 
 ## Not done yet: real notarization
 
-`scripts/build-devid.sh` stops at `syspolicy_check`, which is a dry run. There is no `xcrun notarytool submit --wait` and no `xcrun stapler staple`. Without stapling, first launch on a fresh Mac needs network for Gatekeeper; without notarization at all, it needs a right-click Open and a trust prompt. The direct-download channel (ADR 0031) is the one this blocks.
+`scripts/build-devid.sh` stops at `syspolicy_check`, which is a dry run. There is no `xcrun notarytool submit --wait` and no `xcrun stapler staple`. Without stapling, first launch on a fresh Mac needs network for Gatekeeper; without notarization at all, it needs a right-click Open and a trust prompt. The direct-download channel is the one this blocks.

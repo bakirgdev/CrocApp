@@ -24,7 +24,7 @@ Nothing Swift builds before the xcframework exists. `CrocKit/Package.swift` decl
 .binaryTarget(name: "Croc", path: "Croc.xcframework"),
 ```
 
-`CrocKit/Croc.xcframework/` is gitignored (`.gitignore`, "gomobile build output (ADR 0006: xcframework not committed)"), so a fresh clone has no file there and every Swift build fails until one exists. `scripts/build-xcframework.sh` is step one, not optional.
+`CrocKit/Croc.xcframework/` is gitignored (`.gitignore`, "gomobile build output: xcframework not committed"), so a fresh clone has no file there and every Swift build fails until one exists. `scripts/build-xcframework.sh` is step one, not optional.
 
 ```bash
 # from the repo root
@@ -61,7 +61,7 @@ gomobile bind \
 - **Targets**: `ios`, `iossimulator`, `macos/arm64`. Only an arm64 macOS slice, no `macos/amd64`.
 - **`-iosversion` / `-macosversion`**: both `26.0`, matching the deployment target everywhere else in the repo (section 6).
 - **Output**: `CrocKit/Croc.xcframework`, removed and rebuilt on every run (`rm -rf "$OUT"` before binding).
-- **Why arm64-only on macOS**: [golang/go#73119](https://github.com/golang/go/issues/73119), gomobile cannot currently produce a multi-arch macOS bind. `Croc.xcframework` therefore has no `x86_64` slice, and Intel Macs that can otherwise run macOS 26 (ADR 0006 names the 2019 MacBook Pro 16", 2020 iMac, and 2019 Mac Pro) cannot run CrocApp. The pbxproj pins `ARCHS[sdk=macosx*] = arm64` for this reason; removing that pin does not restore Intel support, it just breaks the link.
+- **Why arm64-only on macOS**: [golang/go#73119](https://github.com/golang/go/issues/73119), gomobile cannot currently produce a multi-arch macOS bind. `Croc.xcframework` therefore has no `x86_64` slice, and Intel Macs that can otherwise run macOS 26 (the 2019 MacBook Pro 16", 2020 iMac, and 2019 Mac Pro) cannot run CrocApp. The pbxproj pins `ARCHS[sdk=macosx*] = arm64` for this reason; removing that pin does not restore Intel support, it just breaks the link.
 - **Open note on iOS device archives**: [golang/go#66500](https://github.com/golang/go/issues/66500) is a device-slice layout issue that affects App Store archives specifically, not simulator or local device builds. Still open; revisit before the first store submission.
 
 `gomobile`/`gobind` are installed at `@latest`, unpinned. If a future gomobile release ever regresses the bind, pin the version in this script and record it in `docs/knowledge/tooling.md`.
@@ -96,7 +96,7 @@ govulncheck ./...
 
 ## 5. Verification harnesses
 
-A green build is **not** evidence a transfer works. CI deliberately does not run any of these (ADR 0014, `docs/knowledge/tooling.md`: they need a public relay and are flaky on shared runners), so running them is on whoever touched the transfer path.
+A green build is **not** evidence a transfer works. CI deliberately does not run any of these (`docs/knowledge/tooling.md`: they need a public relay and are flaky on shared runners), so running them is on whoever touched the transfer path.
 
 | Harness | Proves | Needs | Env vars |
 |---|---|---|---|
@@ -113,7 +113,7 @@ Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferControlle
 ## 6. Build settings that must not be casually changed
 
 - **Swift 6 language mode everywhere.** `SWIFT_VERSION = 6.0` on both targets (`CrocApp`, `CrocShare`, all build configurations, `app/CrocApp.xcodeproj/project.pbxproj`) and `CrocKit`'s `swift-tools-version: 6.0`. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default, `nonisolated` is the explicit opt-out, and strict concurrency violations are build errors, not warnings.
-- **Deployment target is `26.0` everywhere, never a minor.** `IPHONEOS_DEPLOYMENT_TARGET = 26.0` and `MACOSX_DEPLOYMENT_TARGET = 26.0` in the pbxproj, `platforms: [.iOS("26.0"), .macOS("26.0")]` in `CrocKit/Package.swift`, and `-iosversion 26.0 -macosversion 26.0` in `scripts/build-xcframework.sh`. All four must move together (ADR 0003).
+- **Deployment target is `26.0` everywhere, never a minor.** `IPHONEOS_DEPLOYMENT_TARGET = 26.0` and `MACOSX_DEPLOYMENT_TARGET = 26.0` in the pbxproj, `platforms: [.iOS("26.0"), .macOS("26.0")]` in `CrocKit/Package.swift`, and `-iosversion 26.0 -macosversion 26.0` in `scripts/build-xcframework.sh`. All four must move together.
 - **macOS is arm64-only.** `"ARCHS[sdk=macosx*]" = arm64` in the pbxproj. `Croc.xcframework` has no `x86_64` macOS slice (golang/go#73119, section 3), so this pin exists to fail the link cleanly rather than let an Intel archive attempt one that cannot succeed.
 - **Go toolchain pin, `>= 1.26.5` in `crocmobile/go.mod`.** Bumping it means rerunning `scripts/build-xcframework.sh` to confirm the bind still works on the new toolchain before trusting anything downstream.
 
@@ -147,7 +147,7 @@ Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 
 - **Xcode bump**: update `.xcode-version` (single line). Confirm the `macos-26` GitHub runner image actually carries that exact version first (`docs/knowledge/tooling.md` notes the image has spanned `26.0.1`-`26.6`, default `26.5`). Rerun `scripts/build-xcframework.sh` to confirm gomobile still binds clean, then the full build matrix, then at least one `verify-*.sh` harness live.
 - **Go bump**: update `go 1.x.y` in `crocmobile/go.mod`, rerun `scripts/build-xcframework.sh`.
-- **croc bump**: `go get github.com/schollz/croc/v10@vX.Y.Z` in `crocmobile/`, rebind, then update every place that names the version by hand: `README.md` FAQ, `CONTRIBUTING.md`'s croc-install line, this file's prerequisites table, `docs/knowledge/crocmobile-bridge.md`, and ADR 0006. Check `docs/knowledge/croc-upgrade-playbook.md` for the full procedure.
+- **croc bump**: `go get github.com/schollz/croc/v10@vX.Y.Z` in `crocmobile/`, rebind, then update every place that names the version by hand: `README.md` FAQ, `CONTRIBUTING.md`'s croc-install line, this file's prerequisites table, and `docs/knowledge/crocmobile-bridge.md`. Check `docs/knowledge/croc-upgrade-playbook.md` for the full procedure.
 - **golangci-lint bump**: change the `version:` input on the `golangci-lint-action` step in `.github/workflows/ci.yml`; update `crocmobile/.golangci.yml`'s schema `version:` if the new major changes it.
 - **gomobile/gobind**: unpinned by design (`@latest`). If a bind ever regresses on a new release, pin it explicitly in `scripts/build-xcframework.sh` and record the pin in `docs/knowledge/tooling.md`.
 - Whatever changed, re-check whether [golang/go#73119](https://github.com/golang/go/issues/73119) (macOS multi-arch bind) or [golang/go#66500](https://github.com/golang/go/issues/66500) (iOS device archive layout) have been fixed upstream before assuming either still blocks Intel Mac support or App Store archives; both are live gates on real behavior, not just build warnings.
