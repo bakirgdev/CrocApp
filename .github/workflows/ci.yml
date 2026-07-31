@@ -27,19 +27,68 @@ jobs:
 
     runs-on: macos-26
 
+    permissions:
+      contents: read
+      pull-requests: write
+
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
 
       - id: xcode
         run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
 
-      - uses: maxim-lobanov/setup-xcode@v1
+      - uses: maxim-lobanov/setup-xcode@v1.7.0
         with:
           xcode-version: ${{ steps.xcode.outputs.version }}
 
       - name: Lint formatting
         run: |
           xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
+
+      - name: Comment formatting instructions
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const marker = "<!-- swift-format-lint -->";
+            const body = [
+              marker,
+              "### Formatting check failed",
+              "",
+              "Format the code and push a new commit to fix this.",
+            ].join("\n");
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
+            }
+
+      - name: Resolve formatting comment
+        if: success() && github.event_name == 'pull_request'
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const marker = "<!-- swift-format-lint -->";
+            const body = `${marker}\n### Formatting check passed\n\nPreviously flagged formatting is fixed.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
+            }
 
   go:
     name: go
@@ -55,9 +104,9 @@ jobs:
         working-directory: crocmobile
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: crocmobile/go.mod
           cache-dependency-path: crocmobile/go.sum
@@ -66,14 +115,14 @@ jobs:
 
       - run: go vet ./...
 
-      - uses: golangci/golangci-lint-action@v9
+      - uses: golangci/golangci-lint-action@v9.3.0
         with:
           version: v2.12.2
           working-directory: crocmobile
 
       - name: govulncheck
         run: |
-          env -u GOOS -u GOARCH go install golang.org/x/vuln/cmd/govulncheck@latest
+          env -u GOOS -u GOARCH go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
           "$(env -u GOOS -u GOARCH go env GOPATH)/bin/govulncheck" ./...
 
   build:
@@ -92,9 +141,9 @@ jobs:
             destination: generic/platform=iOS Simulator
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: crocmobile/go.mod
           cache-dependency-path: crocmobile/go.sum
@@ -102,11 +151,29 @@ jobs:
       - id: xcode
         run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
 
-      - uses: maxim-lobanov/setup-xcode@v1
+      - uses: maxim-lobanov/setup-xcode@v1.7.0
         with:
           xcode-version: ${{ steps.xcode.outputs.version }}
 
       - run: brew install xcbeautify
+
+      - name: Cache SwiftPM
+        uses: actions/cache@v6.1.0
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            CrocKit/.build
+          key: swiftpm-${{ steps.xcode.outputs.version }}-${{ hashFiles('CrocKit/Package.swift') }}
+          restore-keys: |
+            swiftpm-${{ steps.xcode.outputs.version }}-
+
+      - name: Cache DerivedData
+        uses: actions/cache@v6.1.0
+        with:
+          path: ${{ runner.temp }}/dd
+          key: deriveddata-${{ matrix.platform }}-${{ steps.xcode.outputs.version }}-${{ github.sha }}
+          restore-keys: |
+            deriveddata-${{ matrix.platform }}-${{ steps.xcode.outputs.version }}-
 
       - name: Build Croc.xcframework
         run: scripts/build-xcframework.sh

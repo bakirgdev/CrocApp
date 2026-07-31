@@ -2,10 +2,34 @@
 
 Personal scratch list. Not a doc — never cite from `docs/`.
 
+## FROM REFACTOR
+
+### MAINTAINER
+- see and manage discussions on github via GUI!
+- make CLAUDE.md file in each subdir that a little bit more explains what subdir has and does (MAINTAINER + CLAUDE CODE)
+
+### CLAUDE CODE
+- check if all local project mcps and plugins are allowed in permissions.allow in settings.json with correct strings! also research codebase and include any commands that are 100% safe to be allowed so Claude Code does not prompt for permission every time for those safe commands/executions.
+- in  contribution guide or somewhere fitting there should be a word about rtk and caveman, i.e. any tool used by the original creator/maintainer that are opinionated, so every other contributor can set those up and know what they do, since i want to enforce those. research and suggest implementation (dont do! just suggest). right now i know those are custom project mcp servers, custom plugins needing to be used etc.
+- via local gh cli, if you can, fetch what current issue labels exists and their colors, then suggest if there are any labels missing or that would be good to be added, suggest only, i approve.
+- revise what harnesses and verifications are actually needed for PR template and update them, reduce harshness on PR makers for this.
+- what is the best PR merging strategy for this repo? suggest, i approve. (squash, rebase, merge commit, etc.)
+- make newe file MAINTENANCE.md where you will store things needing attention for maintenance of the project. first thing, in the Monthly section is to check versions of github actions workflows e.g. 'actions/checkout' or 'actions/upload-pages-artifact' and bump if safe, etc.
+- verify quality, correctness, optimal-ness, clarity, edge cases and actionability on go-vuln-check.yml workflow. it is there just to run weekly and check for go vulns to be reported and fixed. the action should fail if vulns are found, that will send nofication to maintainers. also add this in Weekly section of MAINTENANCE.md file: to be looked at action runs for failures of this workflow and if any vulns are found, they should be fixed.
+- is it possible to clear workflow runs on github repo since there were many changes of workflows and i want fresh history etc. - also is it possible to delete caches for e.g. pnpm install cache etc.?
+- delete ADRs completely, 90% sure, just overhead, no real usage instead of enforcing things that later may be overwritten/stale etc.
+- any ideas for new github workflows for this project? suggest, i approve. (e.g. for PRs, for releases, for security, for code quality, etc. - anything!)
+- add direction correction for updating docs: since CLAUDE.md files will also be per dir, claude should update those only if something core changed by overwriting, not appending what changed. on each file modify it should be as the file is freshly generated to reflect actual image of what is describes, not historical info!
+
+--
+
 ## Before repo public release
 
 - Main branch: no direct pushes, contributions via PR only
 - Main branch: block force pushes of any kind
+- main branch: block merge if not all checks pass
+- main branch: block merge if not at least 1 approval is present
+- add appropriate rules for pushing tags, since new tags build releases on github, only maintainers can do it!
 - Required status check: CI from the PR must pass
 - Required status check: Pages preview must pass for landing and/or docs page changes
 - Review for more rules worth adding at the same time

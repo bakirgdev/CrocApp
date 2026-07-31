@@ -1,6 +1,6 @@
 # 0025. One Pages artifact serves both web surfaces
 
-Status: accepted
+Status: superseded by 0037
 Date: 2026-07-28
 
 ## Context

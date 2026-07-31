@@ -4,7 +4,7 @@ Single source of truth for CrocApp's visual language: the SwiftUI app (iOS 26 / 
 
 These files are the **canonical, human-readable token set**. `tokens.css` is a convenience mirror for web consumers — if you change a value in a markdown file, change it in `tokens.css` too (and vice versa). Nothing generates one from the other.
 
-`design/tokens.css` is the only copy. `web/landing/tokens.css` is gitignored and copied in: by `.github/workflows/landing.yml` at deploy, and by hand for local preview (`cp design/tokens.css web/landing/ && python3 -m http.server --directory web/landing`).
+`design/tokens.css` is the only copy. `web/landing/tokens.css` is gitignored and copied in: by `.github/workflows/github-pages.yml` at deploy, and by hand for local preview (`cp design/tokens.css web/landing/ && python3 -m http.server --directory web/landing`).
 
 ## Files
 

@@ -1,0 +1,37 @@
+name: Note dependabot coverage gaps
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    if: github.actor == 'dependabot[bot]'
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 5
+
+    steps:
+      - name: Comment coverage gaps
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const body = [
+              "### What dependabot does not track here",
+              "",
+              "This PR comes from `.github/dependabot.yml` — see that file for which ecosystems and paths it watches.",
+              "",
+              "It can't see anything outside those manifests: versions pinned directly in workflow/script text rather than a manifest — e.g. the macOS runner image, Xcode/swift-format, the croc CLI, or any Go/Swift/Node tool installed ad hoc. Check those manually on their own cadence.",
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

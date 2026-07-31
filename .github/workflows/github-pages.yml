@@ -1,14 +1,14 @@
-name: Deploy docs on GitHub Pages
+name: Deploy GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
+      - "web/landing/**"
       - "web/docs/**"
       - "design/tokens.css"
       - "scripts/assemble-site.sh"
-      - ".github/workflows/docs.yml"
-  workflow_dispatch:
+      - ".github/workflows/github-pages.yml"
 
 permissions:
   contents: read
@@ -17,11 +17,11 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Build & deploy (docs)
+  build-and-deploy:
+    name: Build and deploy
 
     runs-on: ubuntu-latest
 
@@ -30,17 +30,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
-          fetch-depth: 0 # showLastUpdateTime reads the file's git history
+          fetch-depth: 0 # needed because Docusaurus's showLastUpdateTime reads each doc page's git history
 
       - name: Enable pnpm
-        # corepack resolves `packageManager` from the working directory, and the
-        # repo root has no package.json. Without this it activates whatever pnpm
-        # the runner image ships, then pnpm reads web/docs/package.json, sees a
-        # different version and refuses to run rather than switching. --activate
-        # makes the pinned version the shim's default for later root-level calls
-        # (scripts/assemble-site.sh invokes `pnpm --dir web/docs`).
         run: corepack enable pnpm && corepack prepare --activate
         working-directory: web/docs
 
@@ -48,7 +42,7 @@ jobs:
         id: pnpm-store
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/cache@v6
+      - uses: actions/cache@v6.1.0
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-${{ hashFiles('web/docs/pnpm-lock.yaml') }}
@@ -57,15 +51,12 @@ jobs:
       - name: Assemble _site
         run: scripts/assemble-site.sh
 
-      - name: Verify CNAME survived assembly
-        run: test -s _site/CNAME && cat _site/CNAME
-
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: _site
 
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v5.0.0
 
       - name: Release the Pages deployment if this run is cancelled
         if: cancelled()

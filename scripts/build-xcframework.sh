@@ -13,8 +13,9 @@ cd "$(dirname "$0")/.."
 command -v go >/dev/null || { echo "error: go not installed (brew install go)"; exit 1; }
 GOBIN="$(go env GOPATH)/bin"
 export PATH="$PATH:$GOBIN"
-command -v gomobile >/dev/null || go install golang.org/x/mobile/cmd/gomobile@latest
-command -v gobind  >/dev/null || go install golang.org/x/mobile/cmd/gobind@latest
+XMOBILE_VERSION="v0.0.0-20260730202154-c700fe717e6e"
+command -v gomobile >/dev/null || go install "golang.org/x/mobile/cmd/gomobile@$XMOBILE_VERSION"
+command -v gobind  >/dev/null || go install "golang.org/x/mobile/cmd/gobind@$XMOBILE_VERSION"
 
 OUT="CrocKit/Croc.xcframework"
 rm -rf "$OUT"

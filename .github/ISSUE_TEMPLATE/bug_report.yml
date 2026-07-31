@@ -1,7 +1,11 @@
 name: Bug report
+
 description: Something in the app is broken or behaves wrong
+
 title: "[Bug]: "
+
 labels: ["bug"]
+
 body:
   - type: checkboxes
     id: checks
@@ -27,6 +31,7 @@ body:
     id: steps
     attributes:
       label: Steps to reproduce
+      description: Exact or approximate steps to reproduce the problem.
       placeholder: |
         1. Open Send
         2. Pick a 2 GB file
@@ -38,10 +43,11 @@ body:
     id: platform
     attributes:
       label: Platform
+      description: Select the platform where you encountered or think the problem is.
       options:
-        - macOS
         - iOS
         - iPadOS
+        - macOS
     validations:
       required: true
 
@@ -58,6 +64,7 @@ body:
     id: peer
     attributes:
       label: Other side of the transfer
+      description: Select what's on the other side of the transfer, if applicable.
       options:
         - croc CLI
         - CrocApp
@@ -70,11 +77,13 @@ body:
     id: relay
     attributes:
       label: Relay
+      description: Select the relay used when error occured, if applicable.
       options:
         - Default public relay
         - Custom relay
         - Local / LAN only
         - Not sure
+        - Not applicable
     validations:
       required: true
 

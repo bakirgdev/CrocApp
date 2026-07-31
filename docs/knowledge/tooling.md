@@ -1,6 +1,6 @@
 # Tooling
 
-What is wired up, what was deliberately skipped, and the traps in each. Decision records: ADR 0014 (style + CI), ADR 0018 (scheduled vuln scan), ADR 0019 (Pages deploy).
+What is wired up, what was deliberately skipped, and the traps in each. Decision records: ADR 0014 (style + CI), ADR 0018 (scheduled vuln scan), ADR 0037 (Pages deploy).
 
 ## In use
 
@@ -13,8 +13,8 @@ What is wired up, what was deliberately skipped, and the traps in each. Decision
 | xcbeautify | none | CI only |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, PRs (code paths) |
 | GitHub Actions | `.github/workflows/govulncheck.yml` | Mondays 06:00 UTC + manual |
-| GitHub Actions | `.github/workflows/landing.yml`, `docs.yml` | push to main (`web/**`, `design/tokens.css`) + manual |
-| GitHub Actions | `.github/workflows/site-preview.yml` | pull requests touching either site surface; build only, never deploys |
+| GitHub Actions | `.github/workflows/github-pages.yml` | push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) |
+| GitHub Actions | `.github/workflows/github-pages-preview.yml` | pull requests touching either site surface; build only, never deploys |
 | GitHub Actions | `.github/workflows/release.yml` | `workflow_dispatch` rehearses, `v*` tag publishes (ADR 0032) |
 
 Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file. The `macos-26` runner image carries 26.0.1 through 26.6, default 26.5, so the pin must name a version that image actually has.
@@ -32,7 +32,7 @@ CI gotchas:
 - **govulncheck under the go job's cross-compile env.** The go job sets `GOOS=darwin GOARCH=arm64` job-wide so vet/build analyse the shipping target. `go install` honours that and drops a darwin binary into `$GOPATH/bin/darwin_arm64/` (unrunnable on the Linux host, and not where `$(go env GOPATH)/bin/…` looks) → exit 127. Install the tool with `env -u GOOS -u GOARCH` so the binary is host-native in `$GOPATH/bin`, then run it with the job env intact so the *analysis* still targets darwin.
 - **`conflicting nullability specifier on return types` was fixed on the Go side, not suppressed.** It used to fire on every macOS/iOS build: gomobile treats any `New<TypeName>` func as a constructor and builds the ObjC selector from whatever *follows* that prefix (`bind/gen.go`, `bind/genobjc.go`), so `NewOptions` on type `Options` left an empty suffix and emitted a bare `- (nullable instancetype)init` on `CrocmobileOptions`, clashing with `NSObject`'s `nonnull init`. Renaming the Go constructor to `NewOptionsDefault` keeps it recognised and yields `initDefault`. Do not rename it back, and do not add a `New<Type>` func whose suffix is empty.
 - **macOS app build has no signing identity.** The runner has no `Mac Development` cert, so the `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` to `xcodebuild`. The iOS Simulator destination never signs, so it needs nothing.
-- **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `landing.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and uses `cancel-in-progress: false` so deploys queue instead of cancelling each other.
+- **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `github-pages.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and uses `cancel-in-progress: false` so deploys queue instead of cancelling each other.
 - **Scheduled workflows are disabled after 60 days of repo inactivity.** `govulncheck.yml` stops firing silently; `workflow_dispatch` restarts it.
 
 ## swift-format traps

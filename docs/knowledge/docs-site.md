@@ -40,11 +40,11 @@ Not needed yet, current *is* 0.9.9 (ADR 0027), no `versioned_docs/` exists. When
 
 ## Broken links fail the build
 
-`onBrokenLinks`, `onBrokenAnchors`, `markdown.hooks.onBrokenMarkdownLinks`, and `markdown.hooks.onBrokenMarkdownImages` are all `throw`. A bad internal link or anchor fails `pnpm run build`, which fails `scripts/assemble-site.sh`, which fails CI, for both `landing.yml` and `docs.yml` (ADR 0025). There is no PR preview build, so this is only ever caught after push to `main`.
+`onBrokenLinks`, `onBrokenAnchors`, `markdown.hooks.onBrokenMarkdownLinks`, and `markdown.hooks.onBrokenMarkdownImages` are all `throw`. A bad internal link or anchor fails `pnpm run build`, which fails `scripts/assemble-site.sh`, which fails `github-pages.yml` (ADR 0037). `github-pages-preview.yml` runs the same assembly on `pull_request`, so this is caught before merge, not only after a push to `main`.
 
-## Both Pages workflows publish both surfaces
+## One workflow publishes both surfaces
 
-`landing.yml` and `docs.yml` both call `scripts/assemble-site.sh` and upload the same `_site/`. Editing only `web/docs/**` still triggers `docs.yml`, which rebuilds the Docusaurus site *and* re-copies `web/landing/` verbatim. Editing only `web/landing/**` triggers the reverse. See ADR 0025.
+`github-pages.yml` calls `scripts/assemble-site.sh` and uploads the whole `_site/`. Editing only `web/docs/**` still rebuilds the Docusaurus site *and* re-copies `web/landing/` verbatim, and editing only `web/landing/**` triggers the reverse — GitHub Pages replaces the entire artifact on every deploy, so a single workflow always ships both. See ADR 0037.
 
 ## Traps
 

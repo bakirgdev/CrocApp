@@ -15,7 +15,7 @@ Extract the design system into `design/` in this repo, as markdown, and treat it
 
 - `design/*.md` — the token set and component specs, written for humans and AI sessions. Canonical.
 - `design/tokens.css` — hand-maintained mirror of the same values for web consumers. Changing a value means changing both; nothing generates one from the other.
-- Web consumers never keep their own copy. `web/landing/tokens.css` is gitignored and produced by copying `design/tokens.css` in — by `landing.yml` at deploy (ADR 0019), and by hand for local preview. One committed copy exists, so a stale token under `web/` is not a state the repo can reach.
+- Web consumers never keep their own copy. `web/landing/tokens.css` is gitignored and produced by copying `design/tokens.css` in — by `github-pages.yml` at deploy (ADR 0037), and by hand for local preview. One committed copy exists, so a stale token under `web/` is not a state the repo can reach.
 - The Claude Design project stays the *visual* reference (screen layouts, renders). It is not a build dependency and is not required to work on the repo.
 - Two owner rules are binding on the app: **SF Symbols only** and **system font only**. The design system's Lucide glyphs and self-hosted SF Pro OTFs exist solely because a web canvas cannot use Apple system resources.
 
