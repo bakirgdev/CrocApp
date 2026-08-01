@@ -11,11 +11,13 @@ on:
       - ".swift-format"
       - ".xcode-version"
       - ".github/workflows/ci.yml"
+      - ".github/workflows/reusable-go.yml"
+      - ".github/workflows/reusable-swift-format.yml"
   pull_request:
     paths: *code-paths
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -23,40 +25,37 @@ permissions:
 
 jobs:
   swift-format:
-    name: swift-format
+    uses: ./.github/workflows/reusable-swift-format.yml
 
-    runs-on: macos-26
+  go:
+    uses: ./.github/workflows/reusable-go.yml
+
+  format-comment:
+    name: format comment
+
+    needs: swift-format
+
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+
+    runs-on: ubuntu-24.04
+
+    timeout-minutes: 5
 
     permissions:
       contents: read
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v7.0.1
-
-      - id: xcode
-        run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
-
-      - uses: maxim-lobanov/setup-xcode@v1.7.0
-        with:
-          xcode-version: ${{ steps.xcode.outputs.version }}
-
-      - name: Lint formatting
-        run: |
-          xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
-
-      - name: Comment formatting instructions
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v9.0.0
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          LINT_RESULT: ${{ needs.swift-format.result }}
         with:
           script: |
             const marker = "<!-- swift-format-lint -->";
-            const body = [
-              marker,
-              "### Formatting check failed",
-              "",
-              "Format the code and push a new commit to fix this.",
-            ].join("\n");
+            const failed = process.env.LINT_RESULT !== "success";
+            const body = failed
+              ? `${marker}\n### Formatting check failed\n\nFormat the code and push a new commit to fix this.`
+              : `${marker}\n### Formatting check passed\n\nPreviously flagged formatting is fixed.`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -67,68 +66,16 @@ jobs:
 
             if (existing) {
               await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
-            } else {
+            } else if (failed) {
               await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
             }
-
-      - name: Resolve formatting comment
-        if: success() && github.event_name == 'pull_request'
-        uses: actions/github-script@v9.0.0
-        with:
-          script: |
-            const marker = "<!-- swift-format-lint -->";
-            const body = `${marker}\n### Formatting check passed\n\nPreviously flagged formatting is fixed.`;
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find((c) => c.body.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
-            }
-
-  go:
-    name: go
-
-    runs-on: ubuntu-latest
-
-    env:
-      GOOS: darwin
-      GOARCH: arm64
-
-    defaults:
-      run:
-        working-directory: crocmobile
-
-    steps:
-      - uses: actions/checkout@v7.0.1
-
-      - uses: actions/setup-go@v7.0.0
-        with:
-          go-version-file: crocmobile/go.mod
-          cache-dependency-path: crocmobile/go.sum
-
-      - run: go build ./...
-
-      - run: go vet ./...
-
-      - uses: golangci/golangci-lint-action@v9.3.0
-        with:
-          version: v2.12.2
-          working-directory: crocmobile
-
-      - name: govulncheck
-        run: |
-          env -u GOOS -u GOARCH go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
-          "$(env -u GOOS -u GOARCH go env GOPATH)/bin/govulncheck" ./...
 
   build:
     name: build (${{ matrix.platform }})
 
     runs-on: macos-26
+
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
@@ -141,9 +88,11 @@ jobs:
             destination: generic/platform=iOS Simulator
 
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: crocmobile/go.mod
           cache-dependency-path: crocmobile/go.sum
@@ -151,24 +100,14 @@ jobs:
       - id: xcode
         run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
 
-      - uses: maxim-lobanov/setup-xcode@v1.7.0
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: ${{ steps.xcode.outputs.version }}
 
       - run: brew install xcbeautify
 
-      - name: Cache SwiftPM
-        uses: actions/cache@v6.1.0
-        with:
-          path: |
-            ~/Library/Caches/org.swift.swiftpm
-            CrocKit/.build
-          key: swiftpm-${{ steps.xcode.outputs.version }}-${{ hashFiles('CrocKit/Package.swift') }}
-          restore-keys: |
-            swiftpm-${{ steps.xcode.outputs.version }}-
-
-      - name: Cache DerivedData
-        uses: actions/cache@v6.1.0
+      - name: Restore DerivedData
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/dd
           key: deriveddata-${{ matrix.platform }}-${{ steps.xcode.outputs.version }}-${{ github.sha }}
@@ -193,3 +132,10 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build \
             | xcbeautify --renderer github-actions
+
+      - name: Save DerivedData
+        if: github.event_name == 'push'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/dd
+          key: deriveddata-${{ matrix.platform }}-${{ steps.xcode.outputs.version }}-${{ github.sha }}

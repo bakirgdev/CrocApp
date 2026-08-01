@@ -2,7 +2,8 @@
 # Builds CrocKit/Croc.xcframework from crocmobile via gomobile.
 #
 # Requires: Go >= 1.26.5 (go.mod pin; brew install go), Xcode 26+.
-# gomobile/gobind are auto-installed to $(go env GOPATH)/bin if missing.
+# gomobile and gobind come from the `tool` directives in crocmobile/go.mod, so
+# there is one x/mobile version in the repo and dependabot can see it.
 #
 # macOS slice is arm64-only: golang/go#73119 (multi-arch macos bind broken).
 # iOS device slice layout issue golang/go#66500 affects App Store archives,
@@ -11,11 +12,14 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 command -v go >/dev/null || { echo "error: go not installed (brew install go)"; exit 1; }
-GOBIN="$(go env GOPATH)/bin"
-export PATH="$PATH:$GOBIN"
-XMOBILE_VERSION="v0.0.0-20260730202154-c700fe717e6e"
-command -v gomobile >/dev/null || go install "golang.org/x/mobile/cmd/gomobile@$XMOBILE_VERSION"
-command -v gobind  >/dev/null || go install "golang.org/x/mobile/cmd/gobind@$XMOBILE_VERSION"
+
+# Rebuilt every run rather than skipped when already present: the old "install
+# only if missing" check is what let a stale binary outlive its pin. Go's build
+# cache makes the repeat cost nothing. First on PATH, not appended, because
+# gomobile shells out to gobind by looking it up there.
+TOOLS="$PWD/.tools"
+(cd crocmobile && go build -o "$TOOLS/" golang.org/x/mobile/cmd/gomobile golang.org/x/mobile/cmd/gobind)
+export PATH="$TOOLS:$PATH"
 
 OUT="CrocKit/Croc.xcframework"
 rm -rf "$OUT"

@@ -44,10 +44,11 @@ body:
     id: platform
     attributes:
       label: Platform
-      description: Which platform(s) should this feature be implemented for?
+      description: Select every platform this feature should be built for.
+      multiple: true
       options:
-        - Both
         - macOS
-        - iOS / iPadOS
+        - iOS
+        - iPadOS
     validations:
       required: true

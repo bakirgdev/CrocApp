@@ -43,11 +43,12 @@ body:
     id: platform
     attributes:
       label: Platform
-      description: Select the platform where you encountered or think the problem is.
+      description: Select every platform where you saw the problem, or think it is.
+      multiple: true
       options:
+        - macOS
         - iOS
         - iPadOS
-        - macOS
     validations:
       required: true
 

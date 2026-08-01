@@ -18,7 +18,7 @@ A green build is not evidence a transfer works. List the commands you actually r
 - [ ] Matching `scripts/verify-*.sh` harness — required for changes to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController`
 
 ```
-paste harness output here (if long, prefer summarizing with AI)
+paste harness output here (if long, paste the summary lines and any failures, not the whole log)
 ```
 
 ## Docs

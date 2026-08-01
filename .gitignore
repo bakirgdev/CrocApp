@@ -35,6 +35,9 @@ IDEWorkspaceChecks.plist
 # Go (cmd/croctest builds an in-tree binary)
 crocmobile/cmd/croctest/croctest
 
+# gomobile/gobind, built from go.mod tool directives (scripts/build-xcframework.sh)
+/.tools/
+
 # gomobile build output (xcframework not committed)
 CrocKit/Croc.xcframework/
 

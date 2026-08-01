@@ -1,4 +1,4 @@
-name: Weekly Go vulnerabilities check
+name: Weekly Go checks
 
 on:
   schedule:
@@ -7,42 +7,31 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
-  perform-checks:
-    name: Perform checks
+  checks:
+    uses: ./.github/workflows/reusable-go.yml
 
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+  report:
+    name: report
 
-    env:
-      GOOS: darwin
-      GOARCH: arm64
+    needs: checks
 
-    defaults:
-      run:
-        working-directory: crocmobile
+    if: failure()
+
+    runs-on: ubuntu-24.04
+
+    timeout-minutes: 5
+
+    permissions:
+      contents: read
+      issues: write
 
     steps:
-      - uses: actions/checkout@v7.0.1
-
-      - uses: actions/setup-go@v7.0.0
-        with:
-          go-version-file: crocmobile/go.mod
-          cache-dependency-path: crocmobile/go.sum
-
-      - name: govulncheck
-        run: |
-          env -u GOOS -u GOARCH go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
-          "$(env -u GOOS -u GOARCH go env GOPATH)/bin/govulncheck" ./...
-
-      - name: File issue on failure
-        if: failure()
-        uses: actions/github-script@v9.0.0
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const title = "govulncheck: weekly scan failed";
+            const title = "Weekly Go checks failed";
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             const { data: openIssues } = await github.rest.issues.listForRepo({
@@ -64,15 +53,16 @@ jobs:
             }
 
             const body = [
-              "## Weekly govulncheck run failed",
+              "## The weekly run of the Go checks failed",
               "",
               `**Run:** ${runUrl}`,
               `**Commit:** \`${context.sha}\``,
               "",
               "### Next steps",
-              "1. Open the run log above — determine whether govulncheck found a reachable vulnerability, or the job itself broke (install/setup failure).",
-              "2. If a real finding: bump the affected dependency in `crocmobile/go.mod`, re-run `govulncheck ./...` locally to confirm clean, close this issue.",
-              "3. If not fixable yet: record it in `docs/known-issues.md` per project convention, close this issue.",
+              "1. Open the run log above and find which step failed: `go build`, `go vet`, golangci-lint, or govulncheck.",
+              "2. A govulncheck finding: bump the affected dependency in `crocmobile/go.mod`, re-run `go tool govulncheck ./...` locally to confirm clean, close this issue.",
+              "3. A lint or build failure with no source change behind it usually means a new golangci-lint or Go toolchain release changed the defaults. Pin or adapt, then close this issue.",
+              "4. If not fixable yet: record it in `docs/known-issues.md` per project convention, close this issue.",
             ].join("\n");
 
             await github.rest.issues.create({

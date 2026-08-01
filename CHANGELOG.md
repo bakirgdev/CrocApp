@@ -1,10 +1,23 @@
-# v0.9.9
+# Changelog
+
+All notable changes to CrocApp are recorded here. Each version's section is
+also the body of its GitHub release, so it is written for someone deciding
+whether to download, not as a summary of commits.
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
+the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+Nothing yet.
+
+## [0.9.9] - 2026-07-30
 
 First public build of CrocApp. It is a symbolic release: the app does everything V1 is meant to do, but it is not signed with an Apple Developer ID and it is not notarized, so macOS refuses to open it until you allow it by hand. Read "Opening it the first time" below before downloading.
 
 **macOS 26 or later, Apple silicon only.** No Intel build, and no iPhone or iPad build in this release.
 
-## What CrocApp does
+### What CrocApp does
 
 A native SwiftUI front end for [croc](https://github.com/schollz/croc). It embeds croc's Go library rather than shelling out to the binary, so a code phrase from the croc CLI works in the app and the other way round.
 
@@ -20,7 +33,7 @@ A native SwiftUI front end for [croc](https://github.com/schollz/croc). It embed
 
 Transfers are end-to-end encrypted and the code phrase authenticates both sides. That is the whole security claim. croc has had no formal third-party audit and CrocApp does not claim one.
 
-## Opening it the first time
+### Opening it the first time
 
 The build carries an ad-hoc signature. Enough for it to run, not enough for Gatekeeper: macOS will say the app cannot be opened because it cannot be checked for malicious software.
 
@@ -37,7 +50,7 @@ xattr -d com.apple.quarantine /Applications/CrocApp.app
 
 This goes away once the app is signed with a Developer ID and notarized, which is the next release.
 
-## Downloads
+### Downloads
 
 | File | What it is |
 |---|---|
@@ -52,8 +65,11 @@ Every asset carries a build provenance attestation. To check a download really c
 gh attestation verify CrocApp-0.9.9-arm64.dmg --repo bakirgdev/CrocApp
 ```
 
-## Not in this release
+### Not in this release
 
 - No App Store or TestFlight builds; those need a paid Apple Developer account
 - No notarization, so no clean first launch
 - No Intel or Rosetta build. The Go engine's macOS slice is arm64 only
+
+[unreleased]: https://github.com/bakirgdev/CrocApp/compare/v0.9.9...HEAD
+[0.9.9]: https://github.com/bakirgdev/CrocApp/releases/tag/v0.9.9

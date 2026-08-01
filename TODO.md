@@ -7,6 +7,7 @@ Personal scratch list. Not a doc — never cite from `docs/`.
 ### MAINTAINER
 - see and manage discussions on github via GUI!
 - make CLAUDE.md file in each subdir that a little bit more explains what subdir has and does (MAINTAINER + CLAUDE CODE)
+- maybe later add codeowners?
 
 ### CLAUDE CODE
 - check if all local project mcps and plugins are allowed in permissions.allow in settings.json with correct strings! also research codebase and include any commands that are 100% safe to be allowed so Claude Code does not prompt for permission every time for those safe commands/executions.
