@@ -23,6 +23,7 @@ paste harness output here (if long, paste the summary lines and any failures, no
 
 ## Docs
 
+- [ ] Anything a user would notice → a line under `## [Unreleased]` in `CHANGELOG.md`. Write it for someone deciding whether to update, not as a summary of this diff. That section becomes the release notes verbatim
 - [ ] Durable knowledge → `docs/knowledge/` and/or `CLAUDE.md`
 - [ ] Defect fixed or accepted → `docs/known-issues.md` line deleted or added
 - [ ] Nothing doc-worthy
