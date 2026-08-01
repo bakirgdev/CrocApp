@@ -61,6 +61,3 @@ docs/superpowers/plans/
 
 # Claude
 .claude/settings.local.json
-
-# Playwrigth
-.playwright-mcp/
