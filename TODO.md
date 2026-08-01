@@ -20,6 +20,7 @@ Personal scratch list. Not a doc — never cite from `docs/`.
 - any ideas for new github workflows for this project? suggest, i approve. (e.g. for PRs, for releases, for security, for code quality, etc. - anything!)
 - add direction correction for updating docs: since CLAUDE.md files will also be per dir, claude should update those only if something core changed by overwriting, not appending what changed. on each file modify it should be as the file is freshly generated to reflect actual image of what is describes, not historical info!
 - in maintenance file add entry to weekly check for skills updates in .claude dir
+- when reviewing the app itself: is it nicely styled and working for all devices supporting ios/macos 26? iphone 11 and onwards and macs with m1 onward?
 
 --
 
