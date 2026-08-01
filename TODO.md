@@ -19,6 +19,7 @@ Personal scratch list. Not a doc — never cite from `docs/`.
 - in maintenance file add entry to weekly check for skills updates in .claude dir
 - when reviewing the app itself: is it nicely styled and working for all devices supporting ios/macos 26? iphone 11 and onwards and macs with m1 onward?
 - conduct research and suggest authoritative skills to add to project that will benefit the project
+- make screenshots of app: every possible view, for iphone, ipad and mac devices, both in dark and light mode, show some mock data to demonstrate the app's functionality.
 
 --
 
