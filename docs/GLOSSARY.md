@@ -66,7 +66,7 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 
 | Term | Means |
 |---|---|
-| design token | a named value (color, spacing, type, motion) in `design/`, the only source of such values allowed in app or web code; no raw hex/px (`design/README.md`). |
+| design token | a named value (color, spacing, type, motion) in `design/`, the only source of such values allowed in app or web code; no raw hex/px (`design/CLAUDE.md`). |
 | harness | one of the `scripts/verify-*.sh` scripts, or `crockit-verify`; proves a real transfer works against the croc CLI, since a green build alone is not evidence. |
 | self-heal | the end-of-session rule (root `CLAUDE.md`) that `docs/knowledge/` and `docs/known-issues.md` are updated to match reality before a session ends. |
 | verify script | any `scripts/verify-*.sh` harness; needs outbound network to the public relay plus a `croc` CLI, and is not run by CI (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |

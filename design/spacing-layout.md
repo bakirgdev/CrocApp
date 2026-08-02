@@ -43,7 +43,7 @@ On Apple platforms use `.rect(cornerRadius:style: .continuous)` — never the de
 | `--content-max-width` | 480px | content column cap; centered on wider viewports |
 | `--sheet-max-width` | 540px | sheet / modal cap |
 
-macOS keeps the same column cap; only density, chrome and input affordances change (no sidebar, drop hint in the window, full-window "Drop to send" glass overlay).
+Every platform keeps this column cap; extra width becomes margin. What legitimately differs per platform is `platforms.md`.
 
 ## Web layout (landing + docs only)
 
@@ -92,7 +92,9 @@ Two layers, both tokenized. Anything that wants a third needs a reason first.
 | `--icon-size-md` | 22px | default icon |
 | `--icon-size-lg` | 28px | prominent icons |
 
-Row heights that are not tokenized (they are component constants, see `components.md`): settings row min 52, file row min 48, sheet header min 52, switch 51×31, settings row icon tile 29×29 at radius 7, StatusBlock glyph circle 64, TrustBadge full glyph circle 34, QR frame default 168.
+These are not tokens, they are component constants, specced in `components.md`: settings row min 52, file row min 48, sheet header min 52, switch 51×31, settings row icon tile 29×29 at radius 7, StatusBlock glyph circle 64, TrustBadge full glyph circle 34, QR frame default 168.
+
+The app collects them in one `ComponentMetrics` enum rather than repeating them at call sites, and the web side tokenizes the subset it needs (below). Both are the same numbers; neither is a licence to invent a new one at a call site.
 
 ## Component metrics tokenized for web (landing + docs only)
 
@@ -126,4 +128,4 @@ Focus is a 4px halo (`--shadow-focus-ring`), not a border — see `materials-mot
 
 ## Writing direction
 
-Use logical properties everywhere: `padding-inline`, `margin-block`, `inset-inline-start`, `border-start-start-radius`. The specs in `components.md` name a leading and a trailing edge, never a left and a right. Nothing in this system is laid out in physical directions, so an RTL locale is a `dir="rtl"` away rather than a rewrite.
+Every spec names a leading and a trailing edge, never a left and a right. Nothing in this system is laid out in physical directions. The CSS side of that is `web.md` → Writing direction.

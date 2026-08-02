@@ -80,8 +80,8 @@ Deeper references: [`docs/BUILDING.md`](docs/BUILDING.md) for the exact toolchai
 | `CrocKit/` | Swift package: `CrocEngine` actor, `AsyncStream<TransferEvent>` | same file |
 | `app/CrocApp/` | SwiftUI app, iOS + macOS | [`docs/knowledge/app-ui-architecture.md`](docs/knowledge/app-ui-architecture.md) |
 | `app/CrocShare/` | Share extension | same file |
-| `design/` | Canonical design system for app, landing, docs | [`design/README.md`](design/README.md) |
-| `web/landing/` | The crocapp.dev landing page | `design/README.md` |
+| `design/` | Canonical design system for app, landing, docs | [`design/CLAUDE.md`](design/CLAUDE.md) |
+| `web/landing/` | The crocapp.dev landing page | `design/CLAUDE.md` |
 | `docs/` | Knowledge base, known issues | [`docs/knowledge/README.md`](docs/knowledge/README.md) |
 | `scripts/` | Build and live-transfer verification harnesses | the script headers |
 
@@ -159,13 +159,13 @@ Other expectations:
 
 ## Design rules
 
-Anything visual, in the app or on the web, starts at [`design/README.md`](design/README.md). Its binding rules, in short:
+Anything visual, in the app or on the web, starts at [`design/CLAUDE.md`](design/CLAUDE.md). Its binding rules, in short:
 
 1. **Tokens, not literals.** No raw hex, px, pt, or duration in app or site code. If a value is missing, add the token to `design/` first (and mirror it into `design/tokens.css` for web).
 2. **SF Symbols only in the app.** Never bundle an icon font, never draw a custom glyph where a symbol exists.
 3. **System font only.** No bundled Apple font files, ever. They are not redistributable.
 4. **Both themes, always.** Every surface has a light and a dark value.
-5. **Accessibility floor is binding**: 4.5:1 for body text, 3:1 for large text and UI boundaries, 44x44pt minimum hit target, `prefers-reduced-motion` and `prefers-reduced-transparency` respected, and never encode transfer direction in color alone.
+5. **Accessibility floor is binding** (`design/accessibility.md`): 4.5:1 for body text, 3:1 for large text and UI boundaries, 44x44pt minimum hit target, `prefers-reduced-motion` and `prefers-reduced-transparency` respected, and never encode transfer direction in color alone.
 
 UI pull requests need **before and after screenshots in both light and dark**, and on both platforms if both are affected.
 

@@ -1,19 +1,15 @@
-/* CrocApp design tokens — web mirror. Canonical values live in design/*.md;
-   change one, change both. Nothing generates this file.
+/* CrocApp design tokens — hand-written web mirror. Canonical values and the
+   rules behind them live in design/*.md; start at design/CLAUDE.md.
 
-   Every themed value is a light-dark() pair resolved by color-scheme, so the
-   dark theme is not a second block. :root declares `light dark` (follows the
-   OS); [data-theme] pins it and wins in both directions.
+   Themed values are light-dark() pairs, so dark is not a second block: :root
+   declares `light dark` and follows the OS, [data-theme] pins it.
 
-   No @font-face: SF Pro / SF Mono are Apple system fonts and are not
-   redistributable. See design/typography.md. */
+   No @font-face — Apple's system fonts are not redistributable. */
 
 :root {
   color-scheme: light dark;
 
   /* Brand: croc green. Theme-independent literals — the aliases pick a step. */
-  --green-50:  #E8F7F0;
-  --green-100: #C9ECDC;
   --green-200: #97DBBD;
   --green-300: #57C598;
   --green-400: #2DC585;
@@ -34,9 +30,7 @@
   --paper:            light-dark(#FFFFFF, #000000);
   --label-1:          light-dark(rgba(0,0,0,1),         rgba(255,255,255,1));
   --label-2:          light-dark(rgba(60,60,67,0.60),   rgba(235,235,245,0.60));
-  /* Apple's secondaryLabel is 3.44:1 on white — under AA for anything smaller
-     than large text, which is most of a web page. --label-2 keeps the true
-     system value for app parity; --color-text-secondary resolves to this. */
+  /* --label-2 is Apple's secondaryLabel and fails AA on white. colors.md rule 4. */
   --label-2-web:      light-dark(rgba(60,60,67,0.75),   rgba(235,235,245,0.60));
   --label-3:          light-dark(rgba(60,60,67,0.30),   rgba(235,235,245,0.30));
   --label-4:          light-dark(rgba(60,60,67,0.18),   rgba(235,235,245,0.16));
@@ -67,10 +61,9 @@
   --color-accent-pressed: light-dark(var(--green-700), var(--green-500));
   --color-accent-tint:    var(--glass-tint-accent);
   --color-on-accent:      light-dark(#FFFFFF, #05271A);
-  /* Accent as *text* is a different problem from accent as a fill: the brand
-     green is 3.41:1 on white and 2.98:1 on its own tint. Icons and fills keep
-     --color-accent; anything with a letter in it takes one of these two.
-     -on-tint (--green-800) is also required on --color-surface-grouped. */
+  --color-on-status:      #FFFFFF;
+  /* Accent as text is not accent as a fill. Anything with a letter in it takes
+     one of these two, -on-tint on grouped and tinted surfaces. colors.md rule 1. */
   --color-accent-text:         light-dark(var(--green-700), var(--green-400));
   --color-accent-text-on-tint: light-dark(var(--green-800), var(--green-400));
 
@@ -129,8 +122,8 @@
   --type-code-hero-size: 30px;    --type-code-hero-lh: 38px;
   --type-code-body-size: 15px;    --type-code-body-lh: 22px;
 
-  /* Web display scale (landing + docs) — never used by the app. The app scale
-     tops out at 34px because it is a phone screen title. Unitless line-heights. */
+  /* Web display scale (landing + docs) — never used by the app. Unitless
+     line-heights. typography.md → Web display scale. */
   --type-web-hero-size:      clamp(40px, 6.2vw, 68px);
   --type-web-hero-lh:        1.06;
   --type-web-hero-weight:    700;
@@ -148,7 +141,6 @@
   --tracking-title2:      0.35px;
   --tracking-headline:   -0.43px;
   --tracking-body:       -0.41px;
-  --tracking-caption:     0px;
   --tracking-code:        0.5px;
   --tracking-eyebrow:     0.6px;
   --tracking-web-hero:   -1.5px;
@@ -198,25 +190,28 @@
   --icon-size-md: 22px;
   --icon-size-lg: 28px;
 
-  /* Lucide stroke weights. Unitless on purpose — stroke-width scales with the
-     viewBox, so a unit here would break every glyph. See iconography.md for
-     which context takes which. */
+  /* Lucide stroke weights. Unitless on purpose — a unit here breaks every
+     glyph, since stroke-width scales with the viewBox. iconography.md. */
   --icon-stroke-light:    1.5;
   --icon-stroke:          1.8;
   --icon-stroke-medium:   2;
   --icon-stroke-heavy:    2.2;
   --icon-stroke-heaviest: 2.4;
 
-  /* Stacking order. Two layers is the whole scale: a bar that outranks the
-     page, and a skip link that outranks the bar it exists to jump past. */
+  /* Stacking order. Two layers is the whole scale. spacing-layout.md. */
   --z-nav: 2;
   --z-skip-link: 3;
 
   --border-hairline: 1px;
   --border-hairline-half: 0.5px;
 
-  /* Component metrics, tokenized for web only. components.md keeps these as
-     component constants; SwiftUI can, styles.css cannot. Do not use in the app. */
+  /* Two disabled opacities: a control is one object, a row is a composite whose
+     subtitle would vanish before its title. components.md -> States. */
+  --opacity-disabled: 0.4;
+  --opacity-disabled-container: 0.5;
+
+  /* Component metrics, tokenized for web only — styles.css cannot hold a raw
+     px the way a SwiftUI component can. Do not use these in the app. */
   --btn-pad-x-lg: 22px;
   --btn-pad-x-md: var(--space-5);
   --btn-pad-x-sm: var(--space-4);
@@ -235,15 +230,13 @@
   --pill-pad-inline-end:   11px;
   --pill-icon-size:        14px;
 
-  /* Apple's stated minimum for the App Store badge. Not a control height —
-     the badge is a supplied asset and this is the floor it may be drawn at. */
+  /* Apple's stated minimum for the supplied App Store badge, not a control height. */
   --store-badge-height: 40px;
 
   --step-marker-size: 32px;
   --mascot-size-web:  64px;
   --nav-height-web: 56px;
-  /* auto-fit column floor: 984 usable − 3 gaps of 16 = 936, 936 / 4 = 234, so
-     232 is the largest 4pt step that still fits 4-up at 1080. 2-up at 768. */
+  /* auto-fit column floor: 4-up at 1080, 2-up at 768. spacing-layout.md. */
   --grid-min-card:  232px;
 
   /* Glass blur */
@@ -264,18 +257,14 @@
                   inset 0 1px 0 var(--glass-highlight);
   --shadow-knob: 0 3px 8px light-dark(rgba(0,0,0,0.15), rgba(0,0,0,0.50)),
                  0 1px 1px light-dark(rgba(0,0,0,0.16), rgba(0,0,0,0.40));
-  /* Two rings, not one tint. The old 4px --glass-tint-accent halo measured
-     1.14:1 on --color-surface-base: a focus indicator nobody could see, and a
-     WCAG 2.2 SC 1.4.11 failure. The inner ring is the page fill, so the outer
-     accent ring has a guaranteed 3.41:1 edge whatever it lands on — including
-     the accent-filled button, where the roles simply swap. */
+  /* Two solid bands, never a tint: whatever the ring lands on, one band has a
+     3.41:1 edge against it. Do not collapse it. colors.md rule 7. */
   --shadow-focus-ring: 0 0 0 2px var(--color-surface-base),
                        0 0 0 4px var(--color-accent);
 
   /* Motion */
   --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --dur-fast: 120ms;
   --dur-base: 220ms;
   --dur-slow: 360ms;
@@ -329,8 +318,8 @@ a:active { opacity: 0.7; }
 .t-caption     { font: var(--type-caption1-weight) var(--type-caption1-size)/var(--type-caption1-lh) var(--font-sans); }
 .t-code        { font: var(--weight-medium) var(--type-code-body-size)/var(--type-code-body-lh) var(--font-mono); letter-spacing: var(--tracking-code); }
 
-/* Longhand, not the `font:` shorthand: its size/line-height slot does not
-   reliably survive a clamp() substituted through var(). */
+/* Longhand, not `font:` — its size/line-height slot does not reliably survive
+   a clamp() substituted through var(). */
 .t-web-hero    { font-family: var(--font-sans); font-size: var(--type-web-hero-size);    line-height: var(--type-web-hero-lh);    font-weight: var(--type-web-hero-weight);    letter-spacing: var(--tracking-web-hero); }
 .t-web-section { font-family: var(--font-sans); font-size: var(--type-web-section-size); line-height: var(--type-web-section-lh); font-weight: var(--type-web-section-weight); letter-spacing: var(--tracking-web-section); }
 .t-web-sub     { font-family: var(--font-sans); font-size: var(--type-web-sub-size);     line-height: var(--type-web-sub-lh);     font-weight: var(--type-web-sub-weight);     letter-spacing: var(--tracking-web-section); }
@@ -340,8 +329,7 @@ a:active { opacity: 0.7; }
   :root { --press-scale: 1; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
 }
 
-/* Glass is decoration; legibility never depends on it. Drop the blur when the
-   OS asks and fall back to the opaque card fill. See design/materials-motion.md. */
+/* Glass is decoration; legibility never depends on it. materials-motion.md. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --blur-thin: 0px;

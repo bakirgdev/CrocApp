@@ -35,16 +35,14 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Design system
 
-- **`CodeField`'s focused state has no focus ring.** `design/components.md` specs `--shadow-focus-ring` on a focused, valid field; the Swift component changes the border colour to accent but does not add the two-ring halo. The border change is a visible focus indicator, so this is a spec gap, not a WCAG 2.2 SC 1.4.11 failure.
 - **`FileRow` stats each file for its size label inside `body`.** `List` is lazy so only visible rows pay, but it is still synchronous I/O on the main actor during layout, and a network or iCloud volume could make it hitch. Not measured.
 
 ## Landing page
 
 - **The primary CTA's two store badges still resolve to nothing.** "Download" in the hero scrolls to three channels; the GitHub releases link works now that v0.9.9 is published, but the two store badges stay unlinked until the apps ship. The release it reaches is ad-hoc signed, so Gatekeeper refuses it on first launch until notarization is real — the release notes carry the Privacy & Security route.
 - **The disk image background is 1x only.** `create-dmg` documents png, gif and jpg backgrounds, so `assets/dmg-background.png` has no HiDPI representation and reads soft on a Retina display. Fixing it means a multi-representation TIFF, which `create-dmg` does not document and which has not been tested here.
-- **`--content-max-width` on the hero mockup.** `design/brand.md` now carves an explicit exception for elements that depict the app, so this is documented rather than fixed — but the exception is narrow and easy to over-apply.
+- **`--content-max-width` on the hero mockup.** `design/web.md` now carves an explicit exception for elements that depict the app, so this is documented rather than fixed — but the exception is narrow and easy to over-apply.
 - **Store badges are inverted in dark mode with a CSS filter.** Apple ships black and white variants; the repo has black only. Inverting a black-on-transparent badge produces the white variant, but it is a filter over supplied artwork, not the supplied artwork.
-- **`assets/banner.webp` is used in one of its three assigned places.** `design/brand.md` assigns it to the README header, the landing hero and the social card. It is the README header. The hero now carries real screenshots, and the social card is a purpose-built `og.jpg` — both deliberate, so `brand.md`'s table is the thing that is stale.
 - **Two landing dependencies are hand-maintained and nothing checks them:** `llms.txt`'s release status and the JSON-LD `dateModified` in `index.html`. Both have to be edited by hand on every release. There is no rendered "last updated" line in the footer — the JSON-LD field is the only date on the page. Templating `dateModified` from `git log` would fix the rot but puts a moving part inside a JSON-LD block, where a broken template silently corrupts structured data rather than failing loudly. `og.jpg` is a third hand-made asset but a deliberate one, fixed rather than rotting.
 
 ## Docs site

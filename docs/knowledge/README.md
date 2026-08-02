@@ -21,4 +21,4 @@ What does not belong here: decisions and their rationale (`../decisions/`), open
 | `docs-site.md` | **before touching** `web/docs/` |
 | `screenshots.md` | you need to re-capture, add, or move an app screenshot |
 
-Anything visual — app views, landing page, docs site — starts at `design/README.md` instead.
+Anything visual — app views, landing page, docs site — starts at `design/CLAUDE.md` instead.

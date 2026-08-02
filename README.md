@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://crocapp.dev"><img src="assets/banner.webp" width="640" alt="CrocApp"></a>
+  <a href="https://crocapp.dev"><img src="assets/croc-banner.webp" width="640" alt="CrocApp"></a>
 </p>
 
 <h1 align="center">CrocApp</h1>
@@ -260,7 +260,7 @@ No. CrocApp is Apple-platform only by design. Use the [croc CLI](https://github.
 | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) | croc, bridge, app, and repo vocabulary in one line each |
 | [`docs/knowledge/`](docs/knowledge/README.md) | What croc is, how the bridge works, UI architecture, platform constraints |
 | [`docs/known-issues.md`](docs/known-issues.md) | Triaged defects and accepted papercuts. **Check here before filing a bug** |
-| [`design/`](design/README.md) | Canonical design system for the app, landing page, and docs site |
+| [`design/`](design/CLAUDE.md) | Canonical design system for the app, landing page, and docs site |
 | [crocapp.dev/docs](https://crocapp.dev/docs/) | User documentation: install, transfers, settings, security, troubleshooting |
 
 ## Contributing

@@ -1,10 +1,31 @@
 # Components
 
-Fourteen primitives cover every screen. Measurements below are exact — they come from the design system's component source, not from eyeballing a render. Anything not listed as a token is a component constant; keep it in the component, not scattered at call sites.
+These primitives cover every screen. Measurements are exact — they come from the design system's component source, not from eyeballing a render. Anything not listed as a token is a component constant; keep it in the component, not scattered at call sites.
 
 Composition order on a screen: page (`--color-surface-grouped`) → `GlassCard` → grouped rows / controls → buttons.
 
-Every foreground here obeys the six rules in `colors.md` → Contrast. Two of them decide most of this file: **accent never labels anything** (use `--color-accent-text`, or `--color-accent-text-on-tint` on grouped and on tint), and **a status color is a fill, never a foreground** (status *text* is `--color-text-primary`; the tint carries the meaning).
+Every foreground here obeys the seven rules in `colors.md` → Contrast. Two of them decide most of this file: **accent never labels anything** (use `--color-accent-text`, or `--color-accent-text-on-tint` on grouped and on tint), and **a status color is a fill, never a foreground** (status *text* is `--color-text-primary`; the tint carries the meaning).
+
+---
+
+## States
+
+Every interactive element supports the same six states. A component that needs a seventh needs a reason written down.
+
+| State | What changes | Timing |
+|---|---|---|
+| rest | the variant's own values | — |
+| hover | the variant's **pressed background**, nothing else. No scale, no lift, no shadow change | `--dur-fast` `--ease-standard` |
+| pressed | hover, plus `scale(var(--press-scale))` | `--dur-fast` `--ease-out` |
+| focus | `--shadow-focus-ring`, replacing the variant's own shadow | none |
+| disabled | `--opacity-disabled` on controls, `--opacity-disabled-container` on rows and fields, no pointer | none |
+| loading | see below | — |
+
+**Hover is pointer-only** and never exists on touch. Nothing may be discoverable only on hover: no hover-only buttons, no hover-to-reveal remove controls. See `platforms.md` → Hover.
+
+**Two disabled opacities, on purpose.** A control dims to 0.4 because it is one object. A row or a field dims to 0.5 because it is a composite whose subtitle and separator would otherwise disappear before its title does.
+
+**Loading.** No skeletons anywhere in this system. Work with a known extent shows `ProgressBar`; work without one shows the indeterminate bar. A button that is working keeps its label and its width, swaps its leading glyph for a spinner, and goes disabled. It never collapses to a bare spinner and never changes size, because a control that resizes under the pointer is a control you cannot click twice.
 
 ---
 
@@ -27,9 +48,9 @@ Always `--weight-semibold`, `--tracking-headline`, `line-height: 1`, `--radius-c
 | Variant | Background | Foreground | Border | Pressed |
 |---|---|---|---|---|
 | `prominent` | `--color-accent` | `--color-on-accent` | transparent | `--color-accent-pressed` |
-| `secondary` | `--color-accent-tint` | `--color-accent-text-on-tint` | transparent | tint mixed 12% toward accent |
-| `destructive` | `--color-status-error` | `#fff` | transparent | error mixed 82% toward black |
-| `destructive-tinted` | `--color-status-error-tint` | `--color-text-primary` | 22% error | tint mixed 12% toward error |
+| `secondary` | `--color-accent-tint` | `--color-accent-text-on-tint` | transparent | `color-mix(in srgb, var(--color-accent) 12%, var(--color-accent-tint))` |
+| `destructive` | `--color-status-error` | `--color-on-status` | transparent | `color-mix(in srgb, var(--color-status-error) 82%, black)` |
+| `destructive-tinted` | `--color-status-error-tint` | `--color-text-primary` | 22% error | `color-mix(in srgb, var(--color-status-error) 12%, var(--color-status-error-tint))` |
 | `glass` | `--color-surface-glass` + regular blur | `--color-accent-text` | `--color-glass-border` | `--color-surface-glass-thick` |
 | `plain` | transparent | `--color-accent-text` | transparent | `--color-fill-tertiary` |
 
@@ -39,13 +60,13 @@ Foreground caveats, all from `colors.md`:
 
 - `plain` and `glass` sit on whatever is behind them. `--color-accent-text` only clears AA on `--color-surface-base` / `--color-surface-card`; on `--color-surface-grouped` the label must be `--color-accent-text-on-tint`.
 - `prominent` (3.41:1) and `destructive` (3.55:1) are the documented filled-button deviation. Label stays ≥ 17px semibold. **There is no `sm` filled button** — a small accent or destructive action uses `secondary` or `destructive-tinted`.
-- `destructive-tinted` cannot draw its label in the error color (2.95:1). The tint plus the 22% border carries "destructive"; the leading glyph may stay `--color-status-error`.
+- `destructive-tinted` cannot draw its label in the error color (2.94:1). The tint plus the 22% border carries "destructive"; the leading glyph may stay `--color-status-error`.
 
-**States** — pressed: `scale(var(--press-scale))` + pressed background, `--dur-fast` `--ease-out`. Focused: `--shadow-focus-ring` replaces the variant shadow. Disabled: `opacity: 0.4`, no pointer.
+States are the shared six above; the Pressed column feeds both hover and pressed.
 
 Screen usage: one `prominent` primary action per screen; `destructive` only for Decline / Cancel transfer / Clear history; `glass` for floating actions over content.
 
-The incoming accept gate needs a designed exit that is not Decline — declining tells the sender something, backing out should not. Not yet specced.
+The accept gate's two actions and its third, unlabelled exit are specced below.
 
 ---
 
@@ -83,7 +104,7 @@ Segments: `--type-subhead` 15px, semibold when selected / medium otherwise, `--c
 
 Monospaced entry for `NNNN-word-word-word`, with a paste affordance.
 
-Wrapper: height `--control-height-lg` 50, padding `0 6px 0 14px`, `--color-surface-base`, `--radius-md`, 1px border. Border color: `--color-separator` idle → `--color-accent` focused → `--color-status-error` invalid. Focused (and valid) adds `--shadow-focus-ring`. Disabled `opacity: 0.5`.
+Wrapper: height `--control-height-lg` 50, padding `0 6px 0 14px`, `--color-surface-base`, `--radius-md`, 1px border. Border color: `--color-separator` idle → `--color-accent` focused → `--color-status-error` invalid. Focused (and valid) adds `--shadow-focus-ring`. Disabled `--opacity-disabled-container`.
 
 Input: `--font-mono`, `--type-code-body` 15, `--tracking-code`, autocapitalize/autocorrect/spellcheck off.
 
@@ -95,11 +116,11 @@ Paste button: height 38, padding `0 12px`, `--radius-sm`, `--color-accent-text-o
 
 Inset-grouped list row. Types: `toggle`, `field` (right-aligned inline text field), `disclosure` (chevron), `value` (static trailing detail).
 
-Row: min height 52, padding `10px --space-5`, gap `--space-4`, `--color-surface-card`. `first`/`last` flags round the outer corners at `--radius-md`; every row but the last draws `inset 0 -0.5px 0 --color-separator`. Disabled `opacity: 0.5`.
+Row: min height 52, padding `10px --space-5`, gap `--space-4`, `--color-surface-card`. `first`/`last` flags round the outer corners at `--radius-md`; every row but the last draws `inset 0 -0.5px 0 --color-separator`. Disabled `--opacity-disabled-container`.
 
-Leading icon tile: 29×29, radius 7, fill `iconTint` or `--color-accent`, white glyph at 17 / stroke 2.
+Leading icon tile: 29×29, radius 7, fill `iconTint` or `--color-accent`, `--color-on-accent` glyph at 17 / stroke 2.
 
-Title `--type-body` with `--tracking-body`, truncating. Subtitle `--type-footnote` `--color-text-secondary`. Trailing value `--type-body` secondary. Chevron `chevron-right` at 18, stroke 2.4, `--color-text-secondary` — it is the only signal that a row navigates, so it does not get tertiary (1.74:1).
+Title `--type-body` with `--tracking-body`, truncating. Subtitle `--type-footnote` `--color-text-secondary`. Trailing value `--type-body` secondary. Chevron `chevron-right` at 18, stroke 2.4, `--color-text-secondary` — it is the only signal that a row navigates, so it does not get tertiary (1.73:1).
 
 Switch: 51×31 capsule, 2px padding, 27px `--paper` knob with `--shadow-knob`. Track `--color-status-success` on, `--color-fill` off, `--dur-base`.
 
@@ -154,7 +175,7 @@ Inline advisory. Padding `--space-4 --space-5`, gap `--space-3`, `--radius-md`, 
 
 Leading glyph 19 stroke 2 in the kind color — decorative, per `colors.md` rule 2. Title `--type-subhead` semibold in **`--color-text-primary`**; body `--type-footnote` in `--color-text-secondary`. Optional trailing action slot.
 
-The title is not drawn in the kind color: on its own tint that measures 1.96 – 2.95:1 in light. The tint and the border are what say "warning", and the title says it in words.
+The title is not drawn in the kind color: on its own tint that measures 1.96 - 2.94:1 in light. The tint and the border are what say "warning", and the title says it in words.
 
 ---
 
@@ -193,9 +214,124 @@ Title `--type-headline` semibold. Actions `--type-body` in `--color-accent-text`
 
 ---
 
+## AcceptGate
+
+The incoming request. Not a sheet and not an alert: it is a phase of the transfer screen, so it cannot be dismissed by accident.
+
+Composition: direction header, `TrustBadge` pill, the file list as `FileRow`s, a `StatusBanner` for each of overwrite conflicts and blocked-unsafe items, then the two actions. Decline is `destructive`, Accept is `prominent`. Nothing here auto-advances and nothing is preselected.
+
+**Two answers and one silence.** Declining and leaving are different acts and the design must not blur them:
+
+| Exit | What the other device learns | What we do |
+|---|---|---|
+| Decline | that you said no, immediately | respond, then terminal phase |
+| Accept | that you said yes | respond, then transfer |
+| Navigating away | nothing | respond with nothing. The request stays live |
+
+Leaving the screen is the third exit and it is deliberately unlabelled, because a "Not now" button would promise a deferral the protocol cannot deliver. The sender is blocked on an answer; silence is simply the answer not arriving yet, which is also what happens if the phone stays in a pocket. We never synthesize a decline on the user's behalf, and the sender's own timeout is the only thing that ends the wait.
+
+Three rules make that safe:
+
+1. **Navigating away never responds.** Not accept, not decline, not on backgrounding, not on timeout of our own.
+2. **A live request is never lost.** While one is pending and the user is elsewhere, an `info` `StatusBanner` with an action slot sits on Home, naming the request and returning to the gate. Persistent, not a toast, and it does not go away on its own.
+3. **The copy separates them.** Decline is worded as telling the other device no. Nothing on this screen describes leaving as an action, because it is not one.
+
+`brand.md`'s rule holds throughout: nothing is accepted without an explicit yes.
+
+---
+
+## HistoryRow
+
+One past transfer. Leading direction glyph at `--icon-size-md` (`arrow.up.circle` / `arrow.down.circle`), `--color-accent` when the transfer completed and `--color-text-secondary` otherwise, because a failed transfer is not an accent moment.
+
+Title `--type-body`, middle-truncated, one line: the first filename, plus `+ N more` when there were others, or "Text snippet". Metadata row underneath at `--type-caption1` secondary, gap `--space-3`: relative date, size, then the code hint in `--font-mono`. Sizes and dates follow `content.md` → Numbers and Dates.
+
+Trailing status glyph, `aria-label` carrying the status word because the glyph is the only thing that shows it:
+
+| Status | Glyph | Color |
+|---|---|---|
+| completed | `checkmark.circle.fill` | `--color-status-success` |
+| failed | `xmark.circle.fill` | `--color-status-error` |
+| cancelled | `slash.circle` | `--color-text-secondary` |
+| declined | `hand.raised.fill` | `--color-status-warning` |
+
+This is the one place a status color appears without an adjacent word, so the accessibility label is not optional (`colors.md` rule 2, `accessibility.md` → Never color alone).
+
+Row actions are `ContextMenu` on both platforms, plus swipe actions on iOS. Empty list is `EmptyState` with two actions.
+
+---
+
+## OnboardingSheet
+
+First-run explainer, three points, then gone forever. **It is not a tour and never gains a pager.** Full detail lives on the How It Works screen, one tap deeper.
+
+Centered column, gap `--space-7`, padding `--space-8`, capped at `--content-max-width`. Mark glyph at 56 in `--color-accent`. Title `--type-title2`. Three bullets at gap `--space-5`, each a leading glyph at `--icon-size-lg` in `--color-accent` with a `--type-headline` title and a `--type-callout` secondary body, gap `--space-4`.
+
+Glyph frames use a **minimum** width, never a fixed one, or the glyph clips at accessibility text sizes.
+
+Closing action is one full-width `prominent` large button.
+
+Any system permission prompt is raised **after** this sheet dismisses, one at a time, never stacked behind it.
+
+---
+
+## HowItWorksList
+
+The trust screen. Scrolling list of labelled paragraphs, gap `--space-6`, capped at `--content-max-width`. Each item: leading glyph at `--icon-size-lg`, title `--type-headline`, body `--type-callout` secondary, inner gap `--space-2`.
+
+No card, no tint, no accent wash. This screen is the one that has to read as plain and true, so it is typography on the page fill and nothing else. Claims are capped by `content.md` → Claims.
+
+---
+
+## ScannerSheet
+
+QR capture, iOS only. Sheet with a cancel-only header (`SheetHeader`) and the live camera filling the body.
+
+Four states, four distinct copies, and they are not interchangeable:
+
+| State | Body | Action |
+|---|---|---|
+| authorized and supported | live scanner | — |
+| resolving permission | centered indeterminate `ProgressView` | — |
+| denied | `EmptyState`, camera glyph | "Open Settings" |
+| restricted, or unsupported hardware | `EmptyState`, camera glyph | **none** |
+
+Restricted gets no Settings button on purpose: the user cannot fix it there, and a button that does nothing is worse than no button (`content.md` → Errors).
+
+---
+
+## SettingsForm
+
+macOS Settings scene (⌘,), a grouped `Form` in sections, minimum 480×420. Not a screen inside the main window.
+
+Default keyboard focus goes to a **real, visible button**, never to the first text field, or macOS opens the window with a blinking caret sitting in an address field.
+
+Trailing values truncate in the middle so the tail of a path stays readable.
+
+---
+
+## Alert + ConfirmationDialog
+
+System presentations, never custom-drawn. Reach for them in exactly two cases: a destructive action that cannot be undone, and a failure the user must acknowledge before continuing. Everything else is a `StatusBanner`.
+
+- Title is a question for a confirmation ("Clear all history?"), a statement for a failure.
+- Message is one sentence, sentence case, and says what will *not* happen as well as what will ("Removes the list only — received files stay where they are.").
+- The destructive choice takes the destructive role; the safe choice is the cancel role and is what Return selects.
+- Never more than two actions. Three means the screen needed a decision it did not make.
+
+---
+
+## ContextMenu + SwipeActions
+
+Always additive. Every action in a context menu or a swipe is reachable another way, because neither is discoverable and neither exists for VoiceOver users the way it does for pointer users.
+
+Destructive entries take the destructive role. A swipe's leading edge carries the constructive action and takes `--color-accent`; the trailing edge carries the destructive one.
+
+---
+
 ## Icon
 
-24×24 viewBox, `fill: none`, `stroke: currentColor`, round caps and joins, default size 22, default stroke width 1.8. Heavier strokes (2 – 2.4) for small glyphs so they hold weight. Always `aria-hidden` — the label next to it carries the meaning. See `iconography.md`.
+Rendering, sizes and stroke weights are `iconography.md`'s — this file only names which glyph a component uses.
 
 ---
 

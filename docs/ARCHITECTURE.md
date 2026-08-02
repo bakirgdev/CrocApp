@@ -172,6 +172,6 @@ Swift 6 language mode (`SWIFT_VERSION = 6.0`), `SWIFT_DEFAULT_ACTOR_ISOLATION = 
 | iOS/macOS platform limits (background, multicast, sandbox, App Store review) | `docs/knowledge/apple-platform-constraints.md` |
 | Feature status (shipped / planned / skipped) | `docs/knowledge/features.md` |
 | Fresh-clone build steps | `docs/BUILDING.md` |
-| Design tokens, component specs, SF Symbols mapping | `design/README.md` |
+| Design tokens, component specs, SF Symbols mapping | `design/CLAUDE.md` |
 | Term definitions (croc, PAKE, relay, etc.) | `docs/GLOSSARY.md` |
 | Known defects, accepted papercuts | `docs/known-issues.md` |

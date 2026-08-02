@@ -78,9 +78,10 @@ SF tightens optically at large sizes; these mirror Apple's metrics.
 | `--tracking-title2` | `0.35px` |
 | `--tracking-headline` | `-0.43px` |
 | `--tracking-body` | `-0.41px` |
-| `--tracking-caption` | `0px` |
 | `--tracking-code` | `0.5px` |
 | `--tracking-eyebrow` | `0.6px` |
+
+Caption sizes and below take no tracking at all, which is why there is no token for it.
 
 `--tracking-eyebrow` is the uppercase footnote label above a code phrase ("READY TO SEND", `components.md` → CodePhraseDisplay). Uppercase needs the extra letter-spacing that lowercase does not.
 
@@ -99,4 +100,4 @@ Tokens are the source of truth; these are shorthands defined in `tokens.css`:
 - Uppercase only for the small eyebrow label above the code phrase (`--type-footnote`, weight 600, `letter-spacing: 0.6px`). Nowhere else.
 - No serif, anywhere. A serif headline is the usual first sign that a generated mockup has left this system.
 - Line length capped by `--content-max-width` (480px) in the app, `--content-max-width-prose` (680px) on web — not by a character count.
-- In the app, respect Dynamic Type — use text styles, never a hardcoded point size, and verify at the largest accessibility size.
+- In the app, respect Dynamic Type. See `accessibility.md` → Dynamic Type.

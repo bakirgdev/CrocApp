@@ -4,12 +4,10 @@ Apple system color model (iOS 26 / macOS 26) plus a croc-green brand scale. Base
 
 ## Brand — croc green
 
-Theme-independent literals. The accent alias swaps which step it points at.
+Theme-independent literals. The accent alias swaps which step it points at. The scale starts at 200 because nothing in the system needs a lighter opaque green: washes are `--color-accent-tint`, which is translucent.
 
 | Token | Hex | Use |
 |---|---|---|
-| `--green-50` | `#E8F7F0` | lightest wash |
-| `--green-100` | `#C9ECDC` | |
 | `--green-200` | `#97DBBD` | |
 | `--green-300` | `#57C598` | |
 | `--green-400` | `#2DC585` | **dark-mode accent** |
@@ -83,6 +81,7 @@ Pair each with the matching `--blur-*` and `--glass-saturate` (see `materials-mo
 | `--color-accent-text-on-tint` | `--green-800` | `--green-400` |
 | `--color-accent-tint` | `--glass-tint-accent` | `--glass-tint-accent` |
 | `--color-on-accent` | `#FFFFFF` | `#05271A` |
+| `--color-on-status` | `#FFFFFF` | `#FFFFFF` |
 | `--color-text-primary` | `--label-1` | `--label-1` |
 | `--color-text-secondary` | `--label-2-web` | `--label-2-web` |
 | `--color-text-tertiary` | `--label-3` | `--label-3` |
@@ -106,42 +105,42 @@ Pair each with the matching `--blur-*` and `--glass-saturate` (see `materials-mo
 
 Status → meaning in CrocApp: **success** = transfer complete, E2E trust badge. **warning** = overwrite conflict, auto-accept enabled. **error** = failed / declined / blocked-unsafe. **info** = local-network-denied, relay notes, "how it works".
 
-## Theming on web
+## Theming
 
-Every token is a `light-dark()` pair resolved by `color-scheme`. `:root` declares `light dark`, so an untouched page follows the OS; `[data-theme="dark"]` / `[data-theme="light"]` pin `color-scheme` and win in both directions. `tokens.css` ships this — a consuming page sets `data-theme` from a small inline script before first paint (avoids a flash) and needs nothing else.
+Light values sit on `:root`, dark under `[data-theme="dark"]`. The web mechanism (`light-dark()`, `color-scheme`, the pre-paint script) is `web.md` → Theming; the app gets it from the asset catalog, `swiftui.md` → Colors.
 
 ## Contrast (verified, WCAG 2.2)
 
-Recomputed from the hex values above on 2026-07-26. **Light is the constrained theme — check it first.**
+Every row is recomputed from `tokens.css` by `scripts/verify-contrast.py`, which also asserts the rules below as invariants. Run it after touching any color. **Light is the constrained theme — check it first.**
 
 | Pair | Ratio | Verdict |
 |---|---|---|
-| `--color-accent` on base / grouped / its own tint | 3.41 / 3.06 / 2.98 | UI + large text only; never a letter |
+| `--color-accent` on base / grouped / its own tint | 3.41 / 3.06 / 2.99 | UI + large text only; never a letter |
 | `--color-accent-text` `#178055` on base | 4.94 | AA body |
-| `--color-accent-text` on grouped / accent tint | 4.42 / 4.31 | fails body — use the step below |
-| `--color-accent-text-on-tint` `#116243` on base / grouped / accent tint | 7.36 / 6.60 / 6.43 | AA body everywhere |
+| `--color-accent-text` on grouped / accent tint | 4.42 / 4.32 | fails body — use the step below |
+| `--color-accent-text-on-tint` `#116243` on base / grouped / accent tint | 7.36 / 6.60 / 6.45 | AA body everywhere |
 | `--label-2` 0.60 on base | 3.44 | fails body — Apple's own secondaryLabel |
-| `--label-2-web` 0.75 on base / grouped | 5.15 / 4.82 | AA body |
-| `--label-3` on base | 1.74 | decorative fill only |
+| `--label-2-web` 0.75 on base / grouped | 5.16 / 4.85 | AA body |
+| `--label-3` on base | 1.73 | decorative fill only |
 | `--color-accent` band of `--shadow-focus-ring` on base / on the accent fill | 3.41 / 3.41 | AA non-text, rule 7 |
-| `#FFFFFF` on `--color-accent` | 3.41 | filled-button deviation, rule 3 |
-| `#FFFFFF` on `--color-status-error` | 3.55 | filled-button deviation, rule 3 |
-| `--color-status-success` / `-warning` / `-error` on its own tint | 1.98 / 1.96 / 2.95 | nothing |
+| `--color-on-accent` on `--color-accent` | 3.41 | filled-button deviation, rule 3 |
+| `--color-on-status` on `--color-status-error` | 3.55 | filled-button deviation, rule 3 |
+| `--color-status-success` / `-warning` / `-error` on its own tint | 1.98 / 1.96 / 2.94 | nothing |
 | `--color-status-success` / `-warning` / `-error` / `-info` on base | 2.22 / 2.20 / 3.55 / 4.02 | fill and glyph only |
 
-Dark, for the record: accent 9.44 on base, 7.65 on card, 7.69 on its own tint; `--color-on-accent` 7.19 on the accent; `--label-2` 6.36 on base; every status color ≥ 4.91 on its own tint. Nothing in dark needs a substitute, which is why all three accent-text aliases collapse to `--green-400` there.
+Dark, for the record: accent 9.44 on base, 7.65 on card, 7.72 on its own tint; `--color-on-accent` 7.19 on the accent; `--color-on-status` 3.41 on `--color-status-error`, the same rule-3 deviation as light; `--label-2` 6.36 on base; every status color ≥ 4.91 on its own tint. Nothing else in dark needs a substitute, which is why all three accent-text aliases collapse to `--green-400` there.
 
 ### Rules
 
 1. **Accent as text is not accent as a fill.** Icons, fills, borders and progress bars keep `--color-accent` — they owe 3:1 and clear it. Anything with a letter in it takes `--color-accent-text` on `--color-surface-base` / `--color-surface-card`, and `--color-accent-text-on-tint` on every other light surface: `--color-accent-tint`, and `--color-surface-grouped`, which is the landing page's default fill. `--green-800` is the only accent step that clears AA everywhere in light.
 
-2. **A status color is a fill, never a foreground.** In light it fails on its own tint (1.96 – 2.95) and three of four fail on base. Status *text* — banner titles, tinted-destructive labels, trust-badge labels — is `--color-text-primary`; the tint and border carry the semantic. Status *glyphs* may stay in the kind color: they are `aria-hidden` and always redundant with an adjacent label (`iconography.md`), which makes them decorative, so 1.4.11 does not bind them. They do read faint in light — that is why the label, not the glyph, has to carry the meaning. Never "improve" a banner by tinting its body copy.
+2. **A status color is a fill, never a foreground.** In light it fails on its own tint (1.96 - 2.94) and three of four fail on base. Status *text* — banner titles, tinted-destructive labels, trust-badge labels — is `--color-text-primary`; the tint and border carry the semantic. Status *glyphs* may stay in the kind color: they are `aria-hidden` and always redundant with an adjacent label (`iconography.md`), which makes them decorative, so 1.4.11 does not bind them. They do read faint in light — that is why the label, not the glyph, has to carry the meaning. Never "improve" a banner by tinting its body copy.
 
-3. **Filled prominent and destructive buttons ship at 3.41:1 and 3.55:1.** Both clear 3:1, neither clears 4.5:1. Accepted, because it is what Apple's own filled controls measure, on two conditions: the label stays ≥ 17px semibold and never shrinks, and small sizes use a tinted variant instead of a filled one.
+3. **Filled prominent and destructive buttons ship at 3.41:1 and 3.55:1.** Both clear 3:1, neither clears 4.5:1. Accepted, because it is what Apple's own filled controls measure, on two conditions: the label stays ≥ 17px semibold and never shrinks, and small sizes use a tinted variant instead of a filled one. Their ink is `--color-on-accent` and `--color-on-status` — the only two places a knocked-out white label is allowed, and neither is a raw literal.
 
 4. **`--color-text-secondary` is not `--label-2` in light.** Apple's secondaryLabel (0.60) is 3.44:1 on white, below AA for anything under large text — which is most of a web page. `--label-2` keeps the true system value so the app stays visually native; the alias resolves to `--label-2-web` (0.75). An app view consuming these tokens directly wants `--label-2`.
 
-5. **`--color-text-tertiary` is not a text color and not a UI-boundary color.** 1.74:1. Decorative fills only. Anything a sighted user has to *see* — disclosure chevrons, remove controls, empty-state glyphs — takes secondary or better.
+5. **`--color-text-tertiary` is not a text color and not a UI-boundary color.** 1.73:1. Decorative fills only. Anything a sighted user has to *see* — disclosure chevrons, remove controls, empty-state glyphs — takes secondary or better.
 
 6. **`--color-text-link` is `--green-700`, not the accent**, and follows rule 1: on `--color-surface-grouped` a link needs `--green-800`, or it needs to sit on a card.
 

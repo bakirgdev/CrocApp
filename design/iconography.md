@@ -32,12 +32,31 @@
 | Disclosure | `chevron-right` | `chevron.right` |
 | Share sheet | `share` | `square.and.arrow.up` |
 | Drop zone / upload | `upload` | `square.and.arrow.up` |
+| Drag-here hint (DMG background only) | `arrow-right` | — |
 | Speed / relay | `zap` | `bolt.fill` |
 | Settings | `settings` | `gearshape` |
 | Star / GitHub count (web only) | `star` | — |
 | Theme: to dark (web only) | `moon` | — |
 | Theme: to light (web only) | `sun` | — |
 | Sponsor / support (web only) | `heart` | — |
+
+App-only screens have no web call site yet, so the Lucide column stays empty until one appears. Pick the match then, in this table, before writing the markup.
+
+| Meaning | Lucide key (web / design system) | SF Symbol (app) |
+|---|---|---|
+| History | — | `clock.arrow.circlepath` |
+| Transfer completed (history status) | — | `checkmark.circle.fill` |
+| Transfer failed (history status) | — | `xmark.circle.fill` |
+| Transfer cancelled (history status) | — | `slash.circle` |
+| Transfer declined (history status) | — | `hand.raised.fill` |
+| Code phrase (concept) | — | `key.fill` |
+| PAKE / strong key from short code | — | `lock.shield.fill` |
+| Relay | — | `antenna.radiowaves.left.and.right` |
+| Works anywhere | — | `globe` |
+| App mark in the onboarding sheet | — | `arrow.left.arrow.right.circle.fill` |
+| Camera unavailable / denied / restricted | — | `video.slash` |
+
+`xmark.circle.fill` does double duty: Remove item, and the failed history status. That is deliberate. It is never both on one screen, and the history use carries an accessibility label naming the status (`components.md` → HistoryRow).
 
 **Lucide 1.x has no brand icons** — `github.svg` was removed. The landing page's GitHub link uses `star` plus the word "GitHub" rather than the Octocat mark, which also sidesteps the trademark question. Do not reintroduce a brand glyph from an older Lucide version.
 
