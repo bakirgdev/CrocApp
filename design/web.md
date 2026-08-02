@@ -36,7 +36,7 @@ Hero, section headings, card titles and leads take the web display scale (`typog
 
 ## Glass
 
-Glass needs something to blur. On a flat single-color background it reads as a slightly tinted rectangle, so prefer the `solid` material on these pages unless there is real imagery behind. The CSS `backdrop-filter` recipe in `materials-motion.md` is an approximation of `.glassEffect()`, never a target of its own.
+Glass needs something to blur. On a flat single-color background it reads as a slightly tinted rectangle, so prefer the `solid` material on these pages unless there is real imagery behind. The CSS `backdrop-filter` recipe in `materials.md` is an approximation of `.glassEffect()`, never a target of its own.
 
 ## Hover
 

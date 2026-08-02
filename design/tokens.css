@@ -329,7 +329,7 @@ a:active { opacity: 0.7; }
   :root { --press-scale: 1; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
 }
 
-/* Glass is decoration; legibility never depends on it. materials-motion.md. */
+/* Glass is decoration; legibility never depends on it. materials.md. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --blur-thin: 0px;

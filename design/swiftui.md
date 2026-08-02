@@ -80,9 +80,9 @@ Corner styles are `.concentric`, `.concentric(minimum:)` and `.fixed(_:)`. A cus
 func glassEffect(_ glass: Glass = .regular, in shape: some Shape = DefaultGlassEffectShape()) -> some View
 ```
 
-`Glass` carries the variants (`.regular`, `.clear`). Multiple glass surfaces belong inside a **`GlassEffectContainer`** — it renders them as one shape set, which is both faster and what lets them morph into each other. Never hand-roll the CSS recipe with `.ultraThinMaterial` plus a shadow (`materials-motion.md` → Liquid Glass).
+`Glass` carries the variants (`.regular`, `.clear`). Multiple glass surfaces belong inside a **`GlassEffectContainer`** — it renders them as one shape set, which is both faster and what lets them morph into each other. Never hand-roll the CSS recipe with `.ultraThinMaterial` plus a shadow (`materials.md` → Liquid Glass).
 
-`.accessibilityReduceTransparency` falls back to `--color-surface-card`, not to a weaker blur (`materials-motion.md` → Reduced transparency).
+`.accessibilityReduceTransparency` falls back to `--color-surface-card`, not to a weaker blur (`materials.md` → Reduced transparency).
 
 Shadows: `--shadow-sm/md/lg` map to `.shadow(radius:y:)` with the same geometry, but prefer the material's own depth where one exists. `Shadow` in `DesignTokens.swift` currently carries only `md`; `sm`, `lg` and `knob` are still literal at their call sites, and `--shadow-focus-ring` has no Swift form at all (see below).
 
@@ -112,7 +112,7 @@ Not every token has a Swift counterpart, and the gaps are decisions, not drift:
 
 ## Haptics
 
-`.sensoryFeedback(_:trigger:)`, iPhone only, four events, all additive to something already visible. The table is in `materials-motion.md` → Haptics and sound. The app plays no audio at all.
+`.sensoryFeedback(_:trigger:)`, iPhone only, four events, all additive to something already visible. The table is in `motion.md` → Haptics and sound. The app plays no audio at all.
 
 ## Components
 

@@ -60,7 +60,7 @@ Page default is `--bg-grouped`; cards sit on `--bg-grouped-elevated`.
 
 ## Glass fills
 
-Pair each with the matching `--blur-*` and `--glass-saturate` (see `materials-motion.md`).
+Pair each with the matching `--blur-*` and `--glass-saturate` (see `materials.md`).
 
 | Token | Light | Dark |
 |---|---|---|

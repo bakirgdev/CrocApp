@@ -124,7 +124,7 @@ Same numbers `components.md` already specifies, promoted to tokens because the w
 
 Grouped lists separate rows with `inset 0 -0.5px 0 var(--color-separator)` (a half-pixel inset shadow, not a border) so the row corners stay clean; the last row omits it.
 
-Focus is a 4px halo (`--shadow-focus-ring`), not a border — see `materials-motion.md`.
+Focus is a 4px halo (`--shadow-focus-ring`), not a border — see `materials.md`.
 
 ## Writing direction
 

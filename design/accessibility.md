@@ -15,7 +15,7 @@ Two deviations are documented and accepted at `colors.md` rule 3: filled promine
 
 ## Focus
 
-Every interactive element takes `--shadow-focus-ring` on `:focus-visible`. Never remove focus styling without replacing it. A focus indicator owes 3:1 under SC 1.4.11 — it is not decoration, and it cannot be a tint. Mechanics in `materials-motion.md` → Focus.
+Every interactive element takes `--shadow-focus-ring` on `:focus-visible`. Never remove focus styling without replacing it. A focus indicator owes 3:1 under SC 1.4.11 — it is not decoration, and it cannot be a tint. Mechanics in `materials.md` → Focus.
 
 ## Hit targets
 
@@ -35,11 +35,11 @@ In the app use text styles, never a hardcoded point size, and verify at the larg
 
 ## Reduced motion
 
-`prefers-reduced-motion` / `.accessibilityReduceMotion`: drop `--press-scale`, drop the indeterminate slide. Keep every state change — instant, not removed. See `materials-motion.md` → Motion.
+`prefers-reduced-motion` / `.accessibilityReduceMotion`: drop `--press-scale`, drop the indeterminate slide. Keep every state change — instant, not removed. See `motion.md` → Motion.
 
 ## Reduced transparency
 
-`prefers-reduced-transparency` / `.accessibilityReduceTransparency`: all three glass materials collapse to `solid`. `tokens.css` handles this at the token level, so a component consuming `--color-surface-glass` needs no branch of its own. See `materials-motion.md` → Reduced transparency.
+`prefers-reduced-transparency` / `.accessibilityReduceTransparency`: all three glass materials collapse to `solid`. `tokens.css` handles this at the token level, so a component consuming `--color-surface-glass` needs no branch of its own. See `materials.md` → Reduced transparency.
 
 ## Nothing is hover-only
 

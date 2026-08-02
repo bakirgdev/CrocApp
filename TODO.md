@@ -21,7 +21,16 @@ Personal scratch list. Not a doc — never cite from `docs/`.
 - conduct research and suggest authoritative skills to add to project that will benefit the project
 - make screenshots of app: every possible view, for iphone, ipad and mac devices, both in dark and light mode, show some mock data to demonstrate the app's functionality.
 - when tsgo (typescript v7) becomes stable and has version with API and docusaurus supports it, update the versions for it in the project and update docusaurus app if there are any breaking changes.
-- refactor app/, CrocKit/ and crocmobile like other directories, you skipped those for later phase of refactoring/validation/improvement.
+- refactor app/, CrocKit/ and crocmobile like other directories, you skipped those for later phase of refactoring/validation/improvement. same for: .gitignore (everything must be done so cc decides if anything else to add or something to remove/update), docs/ (everything must be refactored in order to upate docs to actual state of app)
+- Sync CrocApp's design system into its two mirrors. design/ is canonical: start
+at design/CLAUDE.md, read what it indexes, run scripts/verify-contrast.py.
+Bring web/landing, web/docs and app/CrocApp in line with it, including the
+rules that have no code yet (hover, haptics, phase choreography, loading
+buttons, capitalization, number formats). Never invent a value: if one is
+missing, add the token to design/ first. If the shipped code looks better than
+the spec, stop and ask instead of changing either. Verify with a macOS and an
+iOS build, swift-format lint, and the landing page loaded locally; report
+anything not run as "not verified".
 
 --
 

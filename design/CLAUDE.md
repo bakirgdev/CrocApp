@@ -1,6 +1,6 @@
 # design/
 
-Canonical design system for every CrocApp surface: the SwiftUI app (iOS 26 / macOS 26), the landing page, and the docs site. Every color, size, type style, motion value and component measurement in the project is defined here. Nothing visual is invented at a call site.
+Canonical design system for every CrocApp surface: the SwiftUI apps (iOS / macOS / iPadOS), the landing page, and the docs site. Every color, size, type style, motion value and component measurement in the project is defined here. Nothing visual is invented at a call site.
 
 ## Layout
 
@@ -9,7 +9,8 @@ Canonical design system for every CrocApp surface: the SwiftUI app (iOS 26 / mac
 | `colors.md` | Brand green scale, Apple system semantics, semantic aliases, verified contrast, the seven contrast rules |
 | `typography.md` | Font stacks, app type scale, web display scale, mono sizes, tracking |
 | `spacing-layout.md` | 4pt grid, concentric radii, control sizing, layout caps, breakpoints, borders |
-| `materials-motion.md` | Liquid Glass materials, elevation, focus ring, easing, durations |
+| `materials.md` | Liquid Glass materials, reduced transparency, elevation, focus ring |
+| `motion.md` | Easing, durations, phase choreography, haptics, the no-audio rule |
 | `components.md` | Every component's exact measurements, variants and states |
 | `iconography.md` | SF Symbols (app) ↔ Lucide (web) mapping, sizes, stroke weights |
 | `accessibility.md` | The binding accessibility floor for all three surfaces |
@@ -40,7 +41,7 @@ Change a value in a markdown file and change it in both mirrors in the same comm
 ## Rules
 
 1. **Tokens, not literals.** No raw hex, px, pt or duration in app or site code. If a value is missing, add the token here first.
-2. **SF Symbols only in the app.** Lucide exists purely because SF Symbols cannot ship to the web. Never bundle Lucide, never draw a custom glyph where a symbol exists. See `iconography.md`.
+2. **SF Symbols only in SwiftUI apps.** Lucide exists purely because SF Symbols cannot ship to the web. Never bundle Lucide, never draw a custom glyph where a symbol exists. See `iconography.md`.
 3. **System font only.** SF Pro / SF Mono through the system font APIs. Apple's font files are not redistributable — never ship one.
 4. **Both themes, always.** Every surface has a light and a dark value: `light-dark()` on web, the asset catalog in SwiftUI. One exception, `components.md` → DiskImage, because Finder cannot swap a DMG background.
 5. **Liquid Glass is native.** `.glassEffect()` is the target; the CSS `backdrop-filter` recipe approximates it, never the reverse.

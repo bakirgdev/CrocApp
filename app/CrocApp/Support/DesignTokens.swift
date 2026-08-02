@@ -83,7 +83,7 @@ enum ComponentMetrics {
     static let qrFrameDefault: CGFloat = 168
 }
 
-/// design/materials-motion.md → Motion. Durations in seconds for `Animation`.
+/// design/motion.md → Motion. Durations in seconds for `Animation`.
 enum Motion {
     static let durationFast: Double = 0.12
     static let durationBase: Double = 0.22
@@ -91,8 +91,8 @@ enum Motion {
     static let pressScale: CGFloat = 0.97
 }
 
-/// design/materials-motion.md → Elevation. Geometry is theme-independent
-/// (materials-motion.md's own words); only the shadow alpha flips per
+/// design/materials.md → Elevation. Geometry is theme-independent
+/// (materials.md's own words); only the shadow alpha flips per
 /// appearance, which is why the applied form lives behind a view modifier
 /// below instead of sitting here as plain constants like `Motion`.
 enum Shadow {
@@ -127,7 +127,7 @@ private struct ShadowMdModifier: ViewModifier {
 }
 
 extension View {
-    /// design/materials-motion.md → Elevation, `--shadow-md`.
+    /// design/materials.md → Elevation, `--shadow-md`.
     func shadowMd() -> some View {
         modifier(ShadowMdModifier())
     }
