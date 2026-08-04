@@ -34,6 +34,13 @@ anything not run as "not verified".
 
 --
 
+## NEW FEATURE IDEAS
+
+RESEARCH, INVESTIGATE, VALIDATE, PLAN, IMPLEMENT
+
+- web app with web croc CLI client (to expand app even more to web besides apple)
+- mac menu bar icon (opt in, on by default, with mini UI and fast access. supplemental to current window being opened. maybe with drag-n-drop place, auto accept, or paste (Cmd-V) of files or text from clipboard)
+
 ## Before repo public release
 
 - Main branch: no direct pushes, contributions via PR only
