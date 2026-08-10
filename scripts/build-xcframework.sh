@@ -11,12 +11,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-command -v go >/dev/null || { echo "error: go not installed (brew install go)"; exit 1; }
+command -v go >/dev/null || { echo "error: go not installed (brew install go)" >&2; exit 1; }
 
-# Rebuilt every run rather than skipped when already present: the old "install
-# only if missing" check is what let a stale binary outlive its pin. Go's build
-# cache makes the repeat cost nothing. First on PATH, not appended, because
-# gomobile shells out to gobind by looking it up there.
+# Rebuilt every run, never skipped when present: an "install only if missing"
+# check is what lets a stale binary outlive its pin, and Go's build cache makes
+# the repeat free. Prepended to PATH, not appended, because gomobile shells out
+# to gobind by looking it up there.
 TOOLS="$PWD/.tools"
 (cd crocmobile && go build -o "$TOOLS/" golang.org/x/mobile/cmd/gomobile golang.org/x/mobile/cmd/gobind)
 export PATH="$TOOLS:$PATH"

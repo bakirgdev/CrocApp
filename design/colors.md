@@ -111,7 +111,7 @@ Light values sit on `:root`, dark under `[data-theme="dark"]`. The web mechanism
 
 ## Contrast (verified, WCAG 2.2)
 
-Every row is recomputed from `tokens.css` by `scripts/verify-contrast.py`, which also asserts the rules below as invariants. Run it after touching any color. **Light is the constrained theme — check it first.**
+Every row is recomputed from `tokens.css` by `scripts/verify-contrast.sh`, which also asserts the rules below as invariants. Run it after touching any color. **Light is the constrained theme — check it first.**
 
 | Pair | Ratio | Verdict |
 |---|---|---|

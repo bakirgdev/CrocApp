@@ -23,7 +23,7 @@ Canonical design system for every CrocApp surface: the SwiftUI apps (iOS / macOS
 
 Topic files define values. `swiftui.md` and `web.md` are the two platform files — they translate, never redefine.
 
-`scripts/verify-contrast.py` recomputes every ratio `colors.md` claims, straight from `tokens.css`, and asserts the seven rules as invariants. Run it after touching any color.
+`scripts/verify-contrast.sh` recomputes every ratio `colors.md` claims, straight from `tokens.css`, and asserts the seven rules as invariants. Run it after touching any color.
 
 ## Three mirrors, hand-synced
 
@@ -66,7 +66,7 @@ Never encode a value in a name (`--green-600`, not `--green-dark`), never encode
 2. Add it to the topic file that owns it, with the role it plays, not just the number.
 3. Add it to `tokens.css` in the matching group.
 4. Add it to `swiftui.md`, and to `DesignTokens.swift` or a color set if the app needs it. If the app deliberately does not need it, say so in `swiftui.md` rather than leaving a hole.
-5. If it is a color, run `scripts/verify-contrast.py`, and add a row to `colors.md` → Contrast if anything reads on top of it.
+5. If it is a color, run `scripts/verify-contrast.sh`, and add a row to `colors.md` → Contrast if anything reads on top of it.
 6. If it is a component measurement, it probably is not a token: `components.md` keeps those as component constants.
 
 ## Reserved tokens

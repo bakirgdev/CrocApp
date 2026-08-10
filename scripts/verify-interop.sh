@@ -33,11 +33,10 @@ diff "$TMP/src/a.txt" "$TMP/dst/a.txt" > /dev/null || fail "send file"
 wait; pass "send file"
 
 # 2. CLI sends file -> wrapper receives (accept)
+# --ignore-stdin: the CLI probes stdin for piped content and a non-tty send can
+# misbehave without it. CROC_SECRET (not --code): v10.5.0's non-classic send
+# mode refuses a custom codephrase passed via --code.
 C=$(code f2)
-# --ignore-stdin: the CLI probes stdin for piped content; without it, a
-# non-tty send can misbehave.
-# CROC_SECRET (not --code): v10.5.0's non-classic send mode refuses a custom
-# codephrase passed via --code and tells you to use CROC_SECRET instead.
 ( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" --ignore-stdin send a.txt ) > /dev/null 2>&1 &
 sleep 3
 timeout 60 "$CT" receive -out "$TMP/dst2" -answer y "$C" > "$TMP/2.log" 2>&1
@@ -65,7 +64,7 @@ wait; pass "receive folder"
 C=$(code t1)
 timeout 90 "$CT" send -code "$C" -text "wrapper text" > /dev/null 2>&1 &
 sleep 3
-OUT=$( cd "$TMP" && CROC_SECRET="$C" timeout 60 "$CROC" --yes --overwrite --stdout 2>/dev/null )
+OUT=$( cd "$TMP" && CROC_SECRET="$C" timeout 60 "$CROC" --yes --overwrite --stdout 2>/dev/null ) || true
 [ "$OUT" = "wrapper text" ] || fail "send text (got: $OUT)"
 wait; pass "send text"
 
@@ -91,11 +90,10 @@ grep -Eqi "refus|context canceled" "$TMP/5s.log" || fail "decline sender not not
 pass "decline notifies sender"
 
 # 6. receiver cancels mid-transfer -> sender errors out
-# Throttle to 200 KB/s so the 5 MB file takes ~25s. Unthrottled loopback
-# (~250 MB/s) sends the whole file before any cancel fires, which reduces this
-# to a test of the receiver's post-transfer hash step. At 200 KB/s the cancel
-# lands at ~20% sent. Dedicated dst dir: scenario 7 reuses big.bin and must
-# not see this scenario's partial copy.
+# Throttle to 200 KB/s so the cancel lands at ~20% sent. Unthrottled loopback
+# (~250 MB/s) finishes the 5 MB file before any cancel fires, reducing this to a
+# test of the receiver's post-transfer hash step. Dedicated dst dir: scenario 7
+# reuses big.bin and must not see this scenario's partial copy.
 C=$(code c1)
 mkdir -p "$TMP/dst6"
 ( cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" --ignore-stdin --throttleUpload 200k send big.bin > "$TMP/6s.log" 2>&1; echo "rc=$?" >> "$TMP/6s.log" ) &
@@ -133,11 +131,11 @@ diff "$TMP/src/a.txt" "$TMP/dst8/a.txt" > /dev/null || fail "forced relay"
 wait; pass "forced relay"
 
 # 9. LAN only (no internet relay)
-# croc's sender-side local relay control port is the first configured relay
-# port (9009 by default). --ip routes the receiver straight there, bypassing
-# multicast discovery, while still never touching the public relay. Failing
-# hard on a missing IP beats falling back to discovery-only, which on this
-# class of network finds zero peers and hangs until timeout.
+# croc's sender-side local relay control port is the first configured relay port
+# (9009 by default). --ip routes the receiver straight there, bypassing
+# multicast discovery, while still never touching the public relay. Failing hard
+# on a missing IP beats discovery-only, which finds zero peers on this class of
+# network and hangs until timeout.
 C=$(code l1)
 LOCAL_IP=$(local_ip)
 [ -n "$LOCAL_IP" ] || fail "LAN only: no local IP, cannot bypass multicast discovery"

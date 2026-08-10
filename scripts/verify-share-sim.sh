@@ -17,6 +17,7 @@ CODE="shr-$$-send"
 SIM="${SIM:-iPhone 17 Pro}"   # list runtimes with: xcrun simctl list devices
 BUNDLE=com.bakirgdev.CrocApp
 GROUP=group.com.bakirgdev.CrocApp
+DD="$TMPROOT/dd-sim"
 
 TMP=$(mktemp -d)
 trap 'kill_jobs; rm -rf "$TMP"' EXIT
@@ -24,9 +25,9 @@ trap 'kill_jobs; rm -rf "$TMP"' EXIT
 xcrun simctl boot "$SIM" 2>/dev/null || true
 ( cd app && xcodebuild -scheme CrocApp \
     -destination "platform=iOS Simulator,name=$SIM" \
-    -derivedDataPath /tmp/dd-sim build ) > /tmp/share-sim-build.log 2>&1
-APP=$(find /tmp/dd-sim/Build/Products -maxdepth 3 -name CrocApp.app | head -1)
-[ -n "$APP" ] || fail "no CrocApp.app in /tmp/dd-sim (see /tmp/share-sim-build.log)"
+    -derivedDataPath "$DD" build ) > "$TMPROOT/share-sim-build.log" 2>&1
+APP=$(find "$DD/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
+[ -n "$APP" ] || fail "no CrocApp.app in $DD (see $TMPROOT/share-sim-build.log)"
 xcrun simctl install "$SIM" "$APP"
 
 # Clear artifacts from a previous run so a crashed or no-op app cannot leave
@@ -34,7 +35,8 @@ xcrun simctl install "$SIM" "$APP"
 # passed. `get_app_container <device> <bundle> <group-id>` mis-parses the group
 # identifier as a flag on this simctl version, so list the groups and pick ours.
 CONTAINER=$(xcrun simctl get_app_container "$SIM" "$BUNDLE" data)
-rm -f "$CONTAINER/Documents/verify-result.txt"
+RESULT="$CONTAINER/Documents/verify-result.txt"
+rm -f "$RESULT"
 GROUP_DIR=$(xcrun simctl get_app_container "$SIM" "$BUNDLE" groups | awk -v g="$GROUP" '$1 == g { print $2 }')
 [ -n "$GROUP_DIR" ] || fail "could not resolve app group container $GROUP"
 rm -rf "$GROUP_DIR/ShareInbox"
@@ -52,14 +54,12 @@ sleep 3
 
 # CROC_SECRET rather than a positional code: v10.5.0's non-classic receive mode
 # refuses a positional one and points at CROC_SECRET.
-( cd "$TMP" && CROC_SECRET="$CODE" timeout 120 "$CROC" --ignore-stdin --yes ) > /tmp/share-sim-recv.log 2>&1
+( cd "$TMP" && CROC_SECRET="$CODE" timeout 120 "$CROC" --ignore-stdin --yes ) \
+    > "$TMPROOT/share-sim-recv.log" 2>&1
 
-for _ in $(seq 1 120); do
-  [ -f "$CONTAINER/Documents/verify-result.txt" ] && break
-  sleep 1
-done
-RESULT=$(cat "$CONTAINER/Documents/verify-result.txt" 2>/dev/null || echo missing)
-echo "result: $RESULT"
-[ "$RESULT" = "ok success=true" ] || fail "expected 'ok success=true', got '$RESULT'"
+await_file "$RESULT" 120 || true
+GOT=$(cat "$RESULT" 2>/dev/null || echo missing)
+echo "result: $GOT"
+[ "$GOT" = "ok success=true" ] || fail "expected 'ok success=true', got '$GOT'"
 diff "$GROUP_DIR/ShareInbox/$BATCH/payload.bin" "$TMP/payload.bin" || fail "received bytes differ"
 echo SHARE-SIM-OK

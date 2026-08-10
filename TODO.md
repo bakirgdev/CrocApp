@@ -23,7 +23,7 @@ Personal scratch list. Not a doc — never cite from `docs/`.
 - when tsgo (typescript v7) becomes stable and has version with API and docusaurus supports it, update the versions for it in the project and update docusaurus app if there are any breaking changes.
 - refactor app/, CrocKit/ and crocmobile like other directories, you skipped those for later phase of refactoring/validation/improvement. same for: .gitignore (everything must be done so cc decides if anything else to add or something to remove/update), docs/ (everything must be refactored in order to upate docs to actual state of app)
 - Sync CrocApp's design system into its two mirrors. design/ is canonical: start
-at design/CLAUDE.md, read what it indexes, run scripts/verify-contrast.py.
+at design/CLAUDE.md, read what it indexes, run scripts/verify-contrast.sh.
 Bring web/landing, web/docs and app/CrocApp in line with it, including the
 rules that have no code yet (hover, haptics, phase choreography, loading
 buttons, capitalization, number formats). Never invent a value: if one is

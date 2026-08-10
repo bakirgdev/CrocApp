@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 # Writes every screenshot in assets/screenshots/ from real builds -- no mockups,
 # no device frames, no real transfer codes. This file is the manifest: each
-# `want <name>` block below is one shot, captured light and dark, at 2x.
-#
-#   macOS  home, send-files, send, receive, transferring, done, history,
-#          howitworks, settings
-#   iOS    home, onboarding, send, receive-code, receive, history, settings,
-#          transferring, done
+# `want <name>` block below is one shot, captured light and dark, at 2x, and
+# SHOTS lists them all.
 #
 # Staging rides on the DEBUG-only harness flags in AutoVerify.swift: --screen
 # navigates, --stage preloads the Send list, --seed-history fills the
@@ -30,7 +26,17 @@ SIM="${SIM:-iPhone 17 Pro}"
 BUNDLE=com.bakirgdev.CrocApp
 OUT=assets/screenshots
 DOCS="$HOME/Library/Containers/$BUNDLE/Data/Documents"
+
+SHOTS="mac-home mac-send-files mac-send mac-receive mac-transferring mac-done \
+mac-history mac-howitworks mac-settings ios-home ios-onboarding ios-send \
+ios-receive-code ios-receive ios-history ios-settings ios-transferring ios-done"
 ONLY="${1:-}"
+if [ -n "$ONLY" ]; then
+  case " $SHOTS " in
+    *" $ONLY "*) ;;
+    *) fail "unknown shot '$ONLY'. One of: $SHOTS" ;;
+  esac
+fi
 
 TMP=$(mktemp -d)
 APP_PID=""
@@ -81,6 +87,7 @@ for window in list where window[kCGWindowOwnerName as String] as? String == owne
     print("\(number)\t\(layer)\t\(name)")
 }
 SWIFT
+xcrun swiftc -O "$TMP/windowid.swift" -o "$TMP/windowid"
 
 activate_croc() {
   # An unfocused window photographs with grey traffic lights and a dimmed
@@ -91,7 +98,7 @@ activate_croc() {
 
 shoot_window() {                                    # shoot_window OUTFILE TITLE
   local wid
-  wid=$(xcrun swift "$TMP/windowid.swift" CrocApp \
+  wid=$("$TMP/windowid" CrocApp \
     | awk -F'\t' -v t="$2" '$2 == 0 && $3 == t { print $1; exit }')
   [ -n "$wid" ] || fail "no on-screen CrocApp window titled '$2'"
   screencapture -x -o -l "$wid" "$1"
@@ -232,11 +239,7 @@ capture_mac() {                                     # capture_mac MODE CODE_A CO
     JOB_PID=$!
     sleep 5
     mac_launch --auto-receive "$code_c" --screen receive
-    for _ in $(seq 1 90); do
-      [ -f "$DOCS/verify-result.txt" ] && break
-      sleep 1
-    done
-    [ -f "$DOCS/verify-result.txt" ] || fail "mac-done: transfer never finished"
+    await_file "$DOCS/verify-result.txt" 90 || fail "mac-done: transfer never finished"
     sleep 2
     activate_croc
     shoot_window "$OUT/mac-done-$mode.png" Receive
@@ -339,11 +342,7 @@ capture_ios() {                                     # capture_ios MODE CODE_A CO
     JOB_PID=$!
     sleep 5
     ios_launch --auto-receive "$code_c" --screen receive
-    for _ in $(seq 1 120); do
-      [ -f "$simdocs/verify-result.txt" ] && break
-      sleep 1
-    done
-    if [ ! -f "$simdocs/verify-result.txt" ]; then
+    if ! await_file "$simdocs/verify-result.txt" 120; then
       echo "--- croc sender log ---" >&2
       tail -5 "$TMP/ios-c.log" >&2
       fail "ios-done: transfer never finished"
@@ -383,16 +382,16 @@ cp "$TMP/payload"/* "$TMP/Field-Recordings.zip" "$DOCS/shots/"
 
 echo "building macOS..."
 ( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
-    -derivedDataPath /tmp/dd-mac build ) > /tmp/shots-mac-build.log 2>&1
-BIN=$(find /tmp/dd-mac/Build/Products -maxdepth 3 -name CrocApp.app | head -1)/Contents/MacOS/CrocApp
-[ -x "$BIN" ] || fail "no CrocApp.app in /tmp/dd-mac (see /tmp/shots-mac-build.log)"
+    -derivedDataPath "$TMPROOT/dd-mac" build ) > "$TMPROOT/shots-mac-build.log" 2>&1
+BIN=$(find "$TMPROOT/dd-mac/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)/Contents/MacOS/CrocApp
+[ -x "$BIN" ] || fail "no CrocApp.app in $TMPROOT/dd-mac (see $TMPROOT/shots-mac-build.log)"
 
 echo "building iOS..."
 xcrun simctl boot "$SIM" 2>/dev/null || true
 ( cd app && xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,name=$SIM" \
-    -derivedDataPath /tmp/dd-sim build ) > /tmp/shots-sim-build.log 2>&1
-SIM_APP=$(find /tmp/dd-sim/Build/Products -maxdepth 3 -name CrocApp.app | head -1)
-[ -n "$SIM_APP" ] || fail "no CrocApp.app in /tmp/dd-sim (see /tmp/shots-sim-build.log)"
+    -derivedDataPath "$TMPROOT/dd-sim" build ) > "$TMPROOT/shots-sim-build.log" 2>&1
+SIM_APP=$(find "$TMPROOT/dd-sim/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
+[ -n "$SIM_APP" ] || fail "no CrocApp.app in $TMPROOT/dd-sim (see $TMPROOT/shots-sim-build.log)"
 xcrun simctl install "$SIM" "$SIM_APP"
 SIM_DOCS=$(xcrun simctl get_app_container "$SIM" "$BUNDLE" data)/Documents
 mkdir -p "$SIM_DOCS/shots"

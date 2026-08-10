@@ -8,12 +8,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-ARCHIVE=/tmp/crocapp-devid/CrocApp.xcarchive
-EXPORT=/tmp/crocapp-devid/export
-rm -rf /tmp/crocapp-devid
+TMPROOT="${TMPDIR:-/tmp}"
+WORK="${TMPROOT%/}/crocapp-devid"
+ARCHIVE="$WORK/CrocApp.xcarchive"
+EXPORT="$WORK/export"
+rm -rf "$WORK"
 
 ( cd app && xcodebuild -scheme CrocApp -destination 'generic/platform=macOS' \
-    -archivePath "$ARCHIVE" archive ARCHS=arm64 ) > /tmp/devid-archive.log 2>&1
+    -archivePath "$ARCHIVE" archive ARCHS=arm64 ) > "$WORK.archive.log" 2>&1
 echo "archive: OK"
 
 if ! security find-identity -v -p codesigning | grep -q "Developer ID Application"; then
@@ -26,14 +28,13 @@ fi
 
 ( cd app && xcodebuild -exportArchive -archivePath "$ARCHIVE" \
     -exportOptionsPlist Config/ExportOptions-DevID.plist \
-    -exportPath "$EXPORT" ) > /tmp/devid-export.log 2>&1
+    -exportPath "$EXPORT" ) > "$WORK.export.log" 2>&1
 APP=$(find "$EXPORT" -maxdepth 2 -name CrocApp.app | head -1)
-[ -n "$APP" ] || { echo "error: no CrocApp.app in $EXPORT (see /tmp/devid-export.log)"; exit 1; }
+[ -n "$APP" ] || { echo "error: no CrocApp.app in $EXPORT (see $WORK.export.log)" >&2; exit 1; }
 codesign --verify --strict --deep "$APP"
 echo DEVID-EXPORT-OK
 
-# Notarization dry-run: Apple's pre-submission checker catches signing,
-# entitlement and hardened-runtime problems that notarization or Gatekeeper
-# would reject.
+# Apple's pre-submission checker catches signing, entitlement and
+# hardened-runtime problems that notarization or Gatekeeper would reject.
 syspolicy_check distribution "$APP"
 echo DEVID-CHECK-OK
