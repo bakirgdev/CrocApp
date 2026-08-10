@@ -2,23 +2,8 @@
 .DS_Store
 ._*
 
-# Logs & tests
 *.log
-*.test
-
-# Environment
 .env*
-!.env.example
-
-# Xcode
-build/
-DerivedData/
-xcuserdata/
-IDEWorkspaceChecks.plist
-*.xcarchive/
-*.ipa
-*.dSYM
-*.dSYM.zip
 
 # Signing material
 *.p12
@@ -27,40 +12,36 @@ IDEWorkspaceChecks.plist
 *.mobileprovision
 *.provisionprofile
 
+# Xcode
+DerivedData/
+xcuserdata/
+
 # Swift Package Manager
+# Package.resolved is committed on purpose: app pins must stay reproducible
 .build/
 .swiftpm/
-# Package.resolved is committed on purpose: CrocApp is an app, its pins must be reproducible
 
-# Go (cmd/croctest builds an in-tree binary)
+# In-tree croctest binary
 crocmobile/cmd/croctest/croctest
 
-# gomobile/gobind, built from go.mod tool directives (scripts/build-xcframework.sh)
+# gomobile toolchain and its output (scripts/build-xcframework.sh)
 /.tools/
-
-# gomobile build output (xcframework not committed)
 CrocKit/Croc.xcframework/
 
-# Web surface tokens (design/tokens.css is the only copy)
+# Node / Docusaurus
+node_modules/
+.docusaurus
+
+# Build output (scripts/assemble-site.sh, scripts/build-dmg.sh)
+build/
+/_site
+/dist
+
+# Copied from design/tokens.css at build time
 web/landing/tokens.css
 web/docs/src/css/tokens.css
 
-# Docusaurus
-node_modules/
-/build
-.docusaurus
-.cache-loader
-npm-debug.log*
-
-# Assembled GitHub Pages artifact (scripts/assemble-site.sh)
-/_site
-
-# Release assets (scripts/build-dmg.sh, .github/workflows/release.yml)
-/dist
-
-# Obra superpowers
+# Agent scratch
+.claude/settings.local.json
 .superpowers/
 docs/superpowers/plans/
-
-# Claude
-.claude/settings.local.json
