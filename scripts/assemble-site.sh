@@ -27,9 +27,8 @@ cp -R web/docs/build/. "$OUT/docs/"
 
 test -s "$OUT/index.html"      || { echo "error: no landing index.html in $OUT" >&2; exit 1; }
 test -s "$OUT/404.html"        || { echo "error: no landing 404.html in $OUT" >&2; exit 1; }
-# Empty by definition, hence -e. Without it Pages drops every dot-path at the
-# root and .well-known/security.txt 404s, which SECURITY.md links to.
-test -e "$OUT/.nojekyll"       || { echo "error: no .nojekyll in $OUT" >&2; exit 1; }
+# A dot-path, so it only survives to production while github-pages.yml keeps
+# include-hidden-files: true. SECURITY.md hands this address out.
 test -s "$OUT/.well-known/security.txt" || { echo "error: no security.txt in $OUT" >&2; exit 1; }
 test -s "$OUT/docs/index.html" || { echo "error: no docs index.html in $OUT/docs" >&2; exit 1; }
 
