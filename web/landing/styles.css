@@ -1,16 +1,8 @@
 /* CrocApp landing page. Loaded after tokens.css, which supplies every value
-   here. No raw hex, px or ms below the reset block: a missing value is a
-   missing token — add it to design/*.md and design/tokens.css first.
+   here. No raw hex, px or duration below the reset: a missing value is a
+   missing token — add it to design/*.md and design/tokens.css first. */
 
-   Page fill is --color-surface-base, not the app's grouped fill, because
-   --color-text-link is 4.94:1 on base and only 4.42:1 on grouped and this page
-   runs links through its prose. Cards carry the tonal step instead. */
-
-/* 1. Reset + a11y utilities.
-   The allowed literals: 0, 100%, and the 1px clip box, which appears twice —
-   here as .u-visually-hidden, and again in the < 30rem nav rule that collapses
-   the GitHub label. Same four declarations, same exemption; a media query
-   cannot borrow a class, and a token for a clip box would be a fiction. */
+/* Reset and utilities */
 
 h1,
 h2,
@@ -37,10 +29,8 @@ svg {
   max-width: 100%;
 }
 
-/* ---- Icons ----
-   iconography.md's render rules live here, not on each element: a <use>
-   instance cannot inherit them from the symbol. The size default matters —
-   an <svg> with a viewBox and no dimensions falls back to 300x150. */
+/* A <use> instance cannot inherit these from the symbol, and an <svg> with a
+   viewBox and no dimensions falls back to 300x150. iconography.md. */
 svg {
   width: var(--icon-size-md);
   height: var(--icon-size-md);
@@ -51,7 +41,6 @@ svg {
   stroke-linejoin: round;
 }
 
-/* Sprite itself renders nothing. */
 .sprite {
   position: absolute;
   width: 0;
@@ -66,13 +55,14 @@ button {
   cursor: pointer;
 }
 
-/* Author styles beat the UA sheet, so any class setting `display` defeats the
-   hidden attribute — the JS-gated copy button would render visible and inert. */
+/* Author styles beat the UA sheet, so any class setting `display` would defeat
+   the hidden attribute on the JS-gated theme toggle. */
 [hidden] {
   display: none !important;
 }
 
-/* Screen-reader-only: still focusable, still announced, zero visual box. */
+/* The 1px clip box is the one literal the reset allows; it is repeated in the
+   < 30rem nav rule, because a media query cannot borrow a class. */
 .u-visually-hidden {
   position: absolute;
   width: 1px;
@@ -83,20 +73,11 @@ button {
   white-space: nowrap;
 }
 
-/* 2. Page + layout */
+/* Page and layout */
 
-/* Fragment navigation, both declarations on the scroll container:
-
-   scroll-padding stops the sticky nav from eating whatever the target starts
-   with. It belongs here rather than as scroll-margin on each section, because
-   it also covers the skip link and any id linked from outside the page — one
-   rule that cannot be forgotten when a section is added. The extra space is
-   the gap between the bar and the heading, so the target does not land flush
-   against the hairline.
-
-   scroll-behavior is scoped to the element that actually scrolls, so a nested
-   scroller (the mockup's file list) keeps its own instant behaviour. Section
-   14 restores `auto` under prefers-reduced-motion. */
+/* Both on the scroll container: scroll-padding keeps the sticky nav off every
+   fragment target including the skip link, and scoping scroll-behavior here
+   leaves nested scrollers instant. */
 html {
   scroll-padding-block-start: calc(var(--nav-height-web) + var(--space-5));
   scroll-behavior: smooth;
@@ -117,7 +98,7 @@ body {
   max-width: var(--content-max-width-wide);
 }
 
-/* Caps the *content*, not the container: max-width on the container itself
+/* Caps the content, not the container: max-width on the container itself
    re-centres it and gives the page a third left edge. */
 .container--prose > * {
   max-width: var(--content-max-width-prose);
@@ -127,15 +108,12 @@ body {
   padding-block: var(--section-pad-web);
 }
 
-/* Successive sections would otherwise stack two full pads against one
-   hairline. The rule reads as one section boundary, not two. */
+/* Two adjacent sections read as one boundary, not two. */
 .section + .section {
   padding-block-start: 0;
 }
 
-/* One card track for the three grids that use it. min() keeps the floor from
-   overflowing a 375px viewport, where --grid-min-card alone would exceed the
-   available column. Only the gaps differ, so only the gaps are restated. */
+/* min() keeps the column floor from overflowing a 375px viewport. */
 .grid,
 .steps,
 .inspo {
@@ -160,9 +138,8 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* WCAG 1.4.1: a link inside a paragraph cannot be colour alone. tokens.css
-   strips underlines globally — right for nav and buttons, wrong for prose. A
-   link that is a whole heading or control is not "within a block of text". */
+/* WCAG 1.4.1: tokens.css strips underlines globally, which is right for nav and
+   buttons and wrong for a link inside a block of text. */
 .prose a,
 .card__body a,
 .disclosure__body a,
@@ -172,7 +149,7 @@ body {
   text-underline-offset: var(--space-1);
 }
 
-/* 3. Skip link — first in tab order, invisible until focused */
+/* Skip link */
 
 .skip-link {
   position: fixed;
@@ -188,16 +165,14 @@ body {
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
-/* Ring restated: .skip-link's own box-shadow would beat tokens.css's
+/* Ring restated: this rule's own box-shadow would beat tokens.css's
    :focus-visible on source order at equal specificity. */
 .skip-link:focus-visible {
   transform: translateY(0);
   box-shadow: var(--shadow-md), var(--shadow-focus-ring);
 }
 
-/* 4. Sticky glass nav.
-   Glass needs something to blur; over a flat page it reads as a tinted bar,
-   which is the expected look here. Fallback below for no backdrop-filter. */
+/* Sticky nav */
 
 .nav {
   position: sticky;
@@ -249,31 +224,27 @@ body {
   text-decoration: none;
 }
 
-/* WCAG 1.4.1: the current section cannot be a colour change alone, so it is
-   also the only underlined link in the bar. Underline rather than weight —
-   a weight change reflows the row every time the active section changes. */
+/* WCAG 1.4.1: the current section cannot be colour alone. Underline rather than
+   weight, which would reflow the row on every scroll. */
 .nav__link[aria-current] {
   color: var(--color-text-primary);
   text-decoration: underline;
   text-underline-offset: var(--space-2);
 }
 
-/* Breakpoints are defined in design/spacing-layout.md → Breakpoints. They are
-   literals here by necessity: a custom property does not resolve inside a
-   media condition, so the stylesheet is where the numbers have to live. */
+/* Breakpoints are literals by necessity — a custom property does not resolve
+   inside a media condition. design/spacing-layout.md → Breakpoints is the only
+   place these numbers are defined.
 
-/* Five links do not fit beside a wordmark, repo link and toggle on a phone,
-   but dropping all five takes Download with them — the one anchor the page
-   exists to reach. The other four survive as scrolling, except Docs, which is
-   a real page: the footer carries it at every width. A hamburger for three
-   in-page anchors is more JS and more a11y surface than the problem deserves. */
+   Dropping every link on a phone would take Download with it, and the footer
+   carries Docs at every width. */
 @media (width < 48rem) {
   .nav__link:not(.nav__link--primary) {
     display: none;
   }
 }
 
-/* 5. Buttons — components.md measurements */
+/* Buttons — components.md measurements */
 
 .btn {
   display: inline-flex;
@@ -298,8 +269,7 @@ body {
   text-decoration: none;
 }
 
-/* revert, not 1: this exists only to undo tokens.css's a:active dim, and
-   naming a value would imply a design decision that is not being made here. */
+/* revert, not 1: this only undoes tokens.css's a:active dim. */
 .btn:active {
   opacity: revert;
   transform: scale(var(--press-scale));
@@ -356,23 +326,12 @@ body {
   color: var(--color-accent-text-on-tint);
 }
 
-.btn--plain {
-  color: var(--color-accent-text);
-  background: transparent;
-}
-
-.btn--plain:hover {
-  color: var(--color-accent-text);
-  background: var(--color-fill-tertiary);
-}
-
 /* Focus swaps the variant shadow for the ring rather than stacking both. */
 .btn:focus-visible {
   box-shadow: var(--shadow-focus-ring);
 }
 
-/* Square icon-only control: the hit target, not the glyph, is what has to
-   clear --hit-target-min. */
+/* The hit target, not the glyph, is what clears --hit-target-min. */
 .icon-btn {
   display: inline-flex;
   flex: none;
@@ -384,7 +343,8 @@ body {
   border-radius: var(--radius-capsule);
   transition:
     color var(--dur-fast) var(--ease-standard),
-    background-color var(--dur-fast) var(--ease-standard);
+    background-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-out);
 }
 
 .icon-btn:hover {
@@ -392,12 +352,16 @@ body {
   background: var(--color-fill-tertiary);
 }
 
+.icon-btn:active {
+  transform: scale(var(--press-scale));
+}
+
 .icon-btn svg {
   width: var(--icon-size-md);
   height: var(--icon-size-md);
 }
 
-/* 6. Cards */
+/* Cards */
 
 .card {
   padding: var(--space-6);
@@ -433,7 +397,7 @@ body {
   color: var(--color-accent);
 }
 
-/* 7. Pills — TrustBadge pill geometry */
+/* Pills — TrustBadge geometry */
 
 .pills {
   display: flex;
@@ -457,8 +421,8 @@ body {
   border-radius: var(--radius-capsule);
 }
 
-/* The E2E badge. Success-on-success-tint is 1.98:1, so the tint carries the
-   signal and the label stays primary — colors.md rule 2. */
+/* Success-on-success-tint is 1.98:1, so the tint carries the signal and the
+   label stays primary — colors.md rule 2. */
 .pill--trust {
   background: var(--color-status-success-tint);
 }
@@ -469,7 +433,7 @@ body {
   height: var(--pill-icon-size);
 }
 
-/* 8. Disclosure — <details>, works with JS off */
+/* Disclosure — <details>, works with JS off */
 
 .disclosure {
   padding: var(--space-5) var(--space-6);
@@ -525,20 +489,14 @@ body {
   margin-block-start: var(--space-3);
 }
 
-/* 9. Nav extras — GitHub link, theme toggle */
+/* Nav extras */
 
 .nav__github {
   flex: none;
 }
 
-/* The slot is exactly as wide as its number. A reserved floor was wider than
-   "0" and than any two-digit count, which read as a gap in the button rather
-   than as space held for something. The formatter caps the string at four
-   characters, so what a late-arriving number can move is bounded and small,
-   and after the first load it comes from cache before paint.
-
-   display: none while empty, so the button closes up rather than carrying a
-   blank; that also keeps it out of the accessibility tree. */
+/* The slot is exactly as wide as its number; the formatter caps that at four
+   characters, so a late-arriving count can only move the row by a little. */
 .nav__stars {
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
@@ -548,9 +506,8 @@ body {
   display: none;
 }
 
-/* The glyph shows the theme you would switch *to*, so light shows a moon.
-   This is a display swap, not a colour, so light-dark() cannot carry it and
-   the prefers-color-scheme mirror below is still required. */
+/* The glyph shows the theme you would switch to, so light shows a moon. A
+   display swap cannot ride light-dark(), hence the media mirror below. */
 .theme-toggle__sun {
   display: none;
 }
@@ -573,14 +530,8 @@ body {
   }
 }
 
-/* The star glyph and count still say "GitHub", and the row has to fit a
-   wordmark, two links and a toggle inside --nav-height-web. The label is
-   clipped rather than set to font-size: 0 — the accessible name has to
-   survive, and a 0px word is a hiding technique that only happens to work.
-   Literals per the exemption noted in section 1. */
+/* Clipped, not font-size: 0 — the accessible name has to survive. */
 @media (width < 30rem) {
-  /* Four items on one row at 320px: --space-5 between them overruns the
-     container by ~10px once Download survives the 48rem rule. */
   .nav__inner {
     gap: var(--space-3);
   }
@@ -599,7 +550,7 @@ body {
   }
 }
 
-/* 10. Hero */
+/* Hero */
 
 .hero__inner {
   display: grid;
@@ -607,16 +558,14 @@ body {
   align-items: center;
 }
 
-/* A grid item's automatic minimum size is its min-content, not zero, so one
-   nowrap string inside the column widens the track past the container and the
-   whole page scrolls sideways. At 320px that was 11px of horizontal scroll on
-   every element in the hero — WCAG 2.2 SC 1.4.10. */
+/* A grid item's automatic minimum size is its min-content, so one nowrap string
+   widens the track past the container and the page scrolls sideways —
+   WCAG 2.2 SC 1.4.10. */
 .hero__inner > * {
   min-width: 0;
 }
 
-/* Two columns only when the mockup can hold its 480 cap beside a readable
-   measure of copy. Below that they stack, copy first. */
+/* Two columns only once the mockup can hold its cap beside a readable measure. */
 @media (width >= 64rem) {
   .hero__inner {
     grid-template-columns: 1fr auto;
@@ -635,8 +584,6 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* Shared by the hero, Contribute and Support: named for the job, not for the
-   first section that needed it. */
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -647,11 +594,8 @@ body {
   margin-block-start: var(--space-2);
 }
 
-/* 11. Hero screenshot.
-   A real capture of the macOS Send screen, replacing the CSS mockup that stood
-   in while there was no build worth photographing. Regenerate with
-   scripts/capture-screenshots.sh; the window shape and its rounded corners are
-   in the PNG's alpha, so this adds no frame of its own. */
+/* Hero screenshot. The window shape and its rounded corners are in the PNG's
+   alpha, so this adds no frame of its own. */
 
 .hero__mockup {
   display: flex;
@@ -665,9 +609,8 @@ body {
   height: auto;
 }
 
-/* Mirrors tokens.css: the OS decides by default, [data-theme] pins it and wins
-   in both directions. A <picture> with prefers-color-scheme could not do the
-   second half, because the header's toggle sets [data-theme] and nothing else. */
+/* Mirrors tokens.css: the OS decides by default, [data-theme] wins in both
+   directions. A <picture> could not do the second half. */
 .hero__shot--dark {
   display: none;
 }
@@ -692,10 +635,9 @@ body {
   display: none;
 }
 
-/* 12. Content sections.
-   iconography.md: glyphs under 20px carry a heavier stroke so they hold
-   weight against the text beside them. */
+/* Content sections */
 
+/* iconography.md: glyphs under 20px carry a heavier stroke. */
 .pill__icon,
 .btn--sm .btn__icon,
 .featlist svg {
@@ -706,15 +648,12 @@ body {
   stroke-width: var(--icon-stroke-heaviest);
 }
 
-/* --- Comparison table ---
-   The cards above argue in prose; this says the same thing in the one shape a
-   reader (or a crawler) can check at a glance. Yes/No are words, never marks
-   or colour alone — the tinted row is redundant with its own contents. */
+/* Comparison table. Yes/No are words, never marks or colour alone. */
 
 .compare {
   margin-block-start: var(--stack-web);
-  /* Four nowrap columns will not fit a phone. Scrolling the table beats
-     wrapping a header into three lines or scrolling the whole page sideways. */
+  /* Four nowrap columns do not fit a phone; scrolling the table beats scrolling
+     the page sideways. */
   overflow-x: auto;
   background: var(--color-surface-card);
   border: var(--border-hairline) solid var(--color-separator);
@@ -755,8 +694,8 @@ body {
   border-block-end: var(--border-hairline) solid var(--color-separator);
 }
 
-/* The row the section is arguing for. The tint marks it; the cells still say
-   Yes three times, so the mark adds nothing a reader needs — colors.md rule 2. */
+/* The cells still say Yes three times, so the tint adds nothing a reader
+   needs — colors.md rule 2. */
 .compare tbody tr:last-child {
   background: var(--color-accent-tint);
 }
@@ -765,7 +704,7 @@ body {
   color: var(--color-text-primary);
 }
 
-/* --- Steps --- */
+/* Steps */
 
 .steps {
   gap: var(--space-6);
@@ -777,8 +716,6 @@ body {
   align-items: flex-start;
 }
 
-/* The number is decoration for a sighted reader; the ordered list already
-   carries the sequence for everyone else, which is why it is aria-hidden. */
 .step__num {
   display: flex;
   flex: none;
@@ -809,7 +746,7 @@ body {
   max-width: var(--content-max-width-prose);
 }
 
-/* --- Feature groups --- */
+/* Feature groups */
 
 .featgroup {
   display: flex;
@@ -833,13 +770,12 @@ body {
   flex: none;
   width: var(--btn-icon-sm);
   height: var(--btn-icon-sm);
-  /* Optical alignment: a 15px glyph centred on a 21px line sits high
-     otherwise. Half the difference between line box and glyph. */
+  /* Optical alignment: half the difference between line box and glyph. */
   margin-block-start: var(--space-1);
   color: var(--color-accent);
 }
 
-/* --- Download --- */
+/* Download */
 
 .dlcard {
   display: flex;
@@ -851,8 +787,8 @@ body {
   margin-block-end: 0;
 }
 
-/* Whatever each channel offers sits on the card's bottom edge, so cards
-   of different content still line their actions up. */
+/* Whatever each channel offers sits on the card's bottom edge, so cards of
+   different content still line their actions up. */
 .dlcard__action {
   align-self: flex-start;
   margin-block-start: auto;
@@ -864,9 +800,8 @@ body {
   height: var(--store-badge-height);
 }
 
-/* Apple ships this badge in black and in white; the repo carries the black
-   one. Inverting a pure black-on-transparent badge produces the white variant
-   rather than a recolour, which is why this is a filter and not a tint. */
+/* Apple ships this badge in black and in white; the repo carries the black one,
+   and inverting black-on-transparent produces the white variant. */
 [data-theme="dark"] .dlcard__badge {
   filter: invert(1);
 }
@@ -883,7 +818,7 @@ body {
   text-align: center;
 }
 
-/* --- Prose blocks --- */
+/* Prose blocks */
 
 .prose > * + * {
   margin-block-start: var(--space-5);
@@ -893,14 +828,10 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* --- croc attribution --- */
-
 .croc .card__body,
 .support .card__body {
   color: var(--color-text-primary);
 }
-
-/* --- Contribute / Support --- */
 
 .contribute__actions,
 .support__actions {
@@ -911,7 +842,41 @@ body {
   margin-block-start: var(--space-6);
 }
 
-/* 13. Footer */
+/* 404 */
+
+/* Fills what is left under the bar, so a short page does not sit in the top
+   third of a desktop viewport. The bar is its own height plus its hairline, and
+   the section's padding is inside this height (box-sizing), so nothing is
+   subtracted twice and the page does not gain a one-pixel scrollbar. svh, not
+   vh: the mobile toolbar otherwise pushes the block below the fold. */
+.notfound {
+  display: flex;
+  min-height: calc(100svh - var(--nav-height-web) - var(--border-hairline));
+}
+
+.notfound__inner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-6);
+}
+
+.notfound__mascot {
+  width: var(--mascot-size-web);
+  height: auto;
+}
+
+.notfound__deck {
+  color: var(--color-text-secondary);
+}
+
+.notfound .actions {
+  margin-block-start: var(--space-2);
+}
+
+/* Footer */
 
 .footer {
   padding-block: var(--section-pad-web);
@@ -947,16 +912,13 @@ body {
   margin-inline-start: auto;
 }
 
-/* 14. Reduced motion.
-   tokens.css already zeroes the duration tokens; this is the backstop for
-   anything not token-driven. */
+/* Reduced motion. tokens.css already zeroes the duration tokens; this is the
+   backstop for anything not token-driven. */
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    /* --dur-fast is already 0ms inside this query, so this stays token-driven
-       rather than hardcoding the usual 0.01ms. */
     transition-duration: var(--dur-fast) !important;
     animation-duration: var(--dur-fast) !important;
     animation-iteration-count: 1 !important;

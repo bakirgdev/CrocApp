@@ -1,12 +1,11 @@
 /* CrocApp docs theme: Infima re-pointed at the design tokens.
  *
- * tokens.css is copied in from design/ by the `tokens` package script (it is
- * gitignored here, exactly like web/landing/tokens.css). It already
- * pins color-scheme on [data-theme="light"|"dark"], which is the same attribute
- * Docusaurus toggles, so every light-dark() pair resolves correctly and the
- * dark theme needs no second block below.
+ * tokens.css is copied in from design/ by the `tokens` package script and is
+ * gitignored here. It pins color-scheme on [data-theme="light"|"dark"], the
+ * same attribute Docusaurus toggles, so every light-dark() pair resolves and
+ * dark needs no second block.
  *
- * Rule: map Infima variables to tokens here. No raw hex or px in this file. */
+ * Map Infima variables to tokens here. No raw hex or px in this file. */
 
 @import './tokens.css';
 
@@ -66,9 +65,8 @@
   --docusaurus-highlighted-code-line-bg: var(--color-fill-tertiary);
 }
 
-/* tokens.css sets `body { background: var(--color-surface-grouped) }` for the
-   landing page's grouped-list look. A docs page is a single sheet of prose, so
-   it takes the base surface instead, and the chrome keeps a hairline. */
+/* tokens.css defaults body to the app's grouped fill. Both web surfaces take
+   the base surface instead — design/web.md → Page fill. */
 body {
   background: var(--ifm-background-color);
 }
@@ -102,6 +100,42 @@ body {
   text-underline-offset: var(--space-1);
 }
 
+/* future.v4 puts Infima and the classic theme in cascade layers, so tokens.css's
+   unlayered `a { color: var(--color-text-link) }` beats every --ifm-*-link-color
+   above and paints the whole chrome accent green. Navigation is not prose: it
+   takes the same secondary-to-primary treatment as the landing page's nav, and
+   accent as text is --color-accent-text, never --color-accent (colors.md rule 1). */
+
+.navbar__brand,
+.pagination-nav__link {
+  color: var(--color-text-primary);
+}
+
+.navbar__link,
+.menu__link,
+.table-of-contents__link,
+.breadcrumbs__link,
+.footer__link-item {
+  color: var(--color-text-secondary);
+}
+
+.navbar__link:hover,
+.menu__link:hover,
+.table-of-contents__link:hover,
+.breadcrumbs__link:hover,
+.footer__link-item:hover,
+.navbar__link--active,
+.breadcrumbs__item--active .breadcrumbs__link {
+  color: var(--color-text-primary);
+}
+
+/* The current page and the current heading, the two places accent earns its
+   keep. Both keep the theme's background tint, so colour is not the only cue. */
+.menu__link--active,
+.table-of-contents__link--active {
+  color: var(--color-accent-text);
+}
+
 /* --shadow-focus-ring is defined against --color-surface-base; the theme's own
    outline is redundant once tokens.css has set :focus-visible. */
 .navbar__link:focus-visible,
@@ -122,8 +156,8 @@ body {
   display: none;
 }
 
-/* Phone shots are 1206px wide and more than twice as tall as they are wide.
-   At full content width they push the surrounding prose off the screen. */
+/* Portrait phone shots are more than twice as tall as they are wide; at full
+   content width they push the surrounding prose off the screen. */
 .markdown img[src*='/ios-'] {
-  max-width: 260px;
+  max-width: var(--phone-shot-max-width-web);
 }

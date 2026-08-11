@@ -68,6 +68,8 @@ RESEARCH, INVESTIGATE, VALIDATE, PLAN, IMPLEMENT
 
 Also owner-only, at submission: answer the App Store Connect encryption questionnaire. `ITSAppUsesNonExemptEncryption` is now `true` in both plists (croc bundles its own AES-256-GCM/ChaCha20-Poly1305, so no exemption applies). The plist value and the answer you give must agree.
 
+**Once each listing is live, link its badge on the landing page.** `web/landing/index.html` → Download carries the two Apple badges as bare `<img>` with `alt=""`, because an image that is not a link promises nothing and stays out of the tab order. Wrapping one in `<a href="...">` means giving it real alt text in the same change — "Download on the App Store" / "Download on the Mac App Store" — and dropping the comment above the cards that explains why they are unlinked. Two separate unlocks: iOS/iPadOS App Store and Mac App Store.
+
 ## Homebrew, some day
 
 Cask channel is dropped. Nothing in the repo, the docs or the web surfaces mentions brew any more. Two things to revisit before that changes:

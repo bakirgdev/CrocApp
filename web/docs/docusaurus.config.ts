@@ -2,8 +2,6 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-
 // crocapp.dev is the landing page. GitHub Pages serves one site per repo, so
 // the docs live under /docs/ of that same artifact and both surfaces are
 // published together by scripts/assemble-site.sh.
@@ -12,8 +10,11 @@ const config: Config = {
   tagline: 'Encrypted file transfer for iOS and macOS',
   favicon: 'img/favicon.ico',
 
+  // `faster` is what makes @docusaurus/faster a real dependency: Rspack, SWC
+  // and Lightning CSS instead of webpack, Babel and cssnano.
   future: {
     v4: true,
+    faster: true,
   },
 
   url: 'https://crocapp.dev',
@@ -115,8 +116,9 @@ const config: Config = {
         },
       ],
     },
+    // No `style: 'dark'`: it pins Infima's own slate footer palette locally and
+    // beats the token mappings in src/css/custom.css.
     footer: {
-      style: 'dark',
       links: [
         {
           title: 'Docs',

@@ -4,8 +4,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CrocApp — send files anywhere, encrypted end to end</title>
-    <!-- 155 characters. Past ~160 a SERP truncates mid-clause and the last
-         claim — the one that separates this from AirDrop — is the one lost. -->
     <meta
       name="description"
       content="Free, open-source native app for iPhone, iPad and Mac. Pick a file, read out a code phrase, done. No account, no cloud upload, no same-network requirement."
@@ -13,10 +11,6 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <link rel="canonical" href="https://crocapp.dev/" />
 
-    <!-- Social card. assets/img/og.jpg is a fixed, hand-made asset and is
-         deliberately not derived from the tokens: it does not need to track a
-         palette change, and nothing generates or regenerates it. Edit the file
-         if you want a different card. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="CrocApp" />
     <meta property="og:locale" content="en_US" />
@@ -36,30 +30,21 @@
     />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <!-- No favicon.svg on purpose: it was a 69 KB base64 PNG in an <svg>
-         wrapper, and browsers prefer it over the 3.6 KB PNG. -->
     <link rel="icon" href="assets/img/favicon/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/png" sizes="96x96" href="assets/img/favicon/favicon-96x96.png" />
     <link rel="apple-touch-icon" href="assets/img/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="assets/img/favicon/site.webmanifest" />
 
-    <!-- Literal hex is unavoidable here and in site.webmanifest: neither a
-         <meta> attribute nor JSON can read a CSS custom property. These two
-         are --paper and --ink; keep them in sync with design/colors.md.
-         site.webmanifest's theme_color is the light value of this pair, not
-         the accent: a manifest takes one colour with no media query, and the
-         two files disagreeing about what colours the browser chrome is a bug
-         waiting to be argued about rather than a second opinion. -->
+    <!-- --paper / --ink as literals: a <meta> attribute cannot read a custom
+         property. Keep in sync with design/colors.md and site.webmanifest. -->
     <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
-    <!-- Copied in at deploy time from design/tokens.css. Never committed
-         under web/ — one source of truth, no drift. -->
+    <!-- Copied in at deploy time from design/tokens.css, never committed here. -->
     <link rel="stylesheet" href="tokens.css" />
     <link rel="stylesheet" href="styles.css" />
 
-    <!-- Before first paint, so a stored preference does not flash the other
-         theme. Everything else waits for app.js. -->
+    <!-- Runs before first paint so a stored preference cannot flash. -->
     <script>
       try {
         var t = localStorage.getItem("theme");
@@ -68,12 +53,9 @@
     </script>
   </head>
   <body>
-    <!-- Lucide 1.26.0 (ISC), inlined as a sprite. design/iconography.md is the
-         mapping contract; the package is never bundled. One <symbol> per glyph
-         beats repeating path data at ~30 call sites. -->
-    <!-- Stroke, fill and size live in styles.css, not here: a <use> shadow tree
-         does not inherit presentation attributes from the symbol's ancestors,
-         so wrapping these in a styled <g> would silently do nothing. -->
+    <!-- Lucide 1.26.0 (ISC), inlined per design/iconography.md; the package is
+         never bundled. Stroke, fill and size are in styles.css — a <use> shadow
+         tree does not inherit presentation attributes from the symbol. -->
     <svg class="sprite" aria-hidden="true">
       <defs>
           <symbol id="i-star" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
@@ -104,23 +86,15 @@
           <a class="nav__link" href="#why">Why</a>
           <a class="nav__link" href="#how">How it works</a>
           <a class="nav__link" href="#features">Features</a>
-          <!-- Same origin, a real page rather than a section, so it navigates
-               in this tab and carries no new-tab affordance. -->
           <a class="nav__link" href="/docs/">Docs</a>
           <!-- The one link that survives the phone breakpoint. -->
           <a class="nav__link nav__link--primary" href="#download">Download</a>
         </nav>
 
-        <!-- Tinted, not plain: starring the repo is the only thing a visitor
-             can actually do until there is a build, so it does not get to be
-             the faintest control in the bar. -->
         <a class="btn btn--sm btn--secondary nav__github" href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener">
           <svg class="btn__icon" aria-hidden="true"><use href="#i-star" /></svg>
           <span class="nav__github-label">GitHub</span>
-          <!-- Filled by app.js from cache or the API, and absent entirely
-               until it holds a number, which also keeps it out of the
-               accessibility tree. The unit is spoken because "GitHub, 12" is
-               not a sentence. -->
+          <!-- Filled by app.js; absent until it holds a number. -->
           <span class="nav__stars is-empty" id="stars">
             <span id="stars-count"></span>
             <span class="u-visually-hidden"> stars</span>
@@ -128,10 +102,8 @@
           <span class="u-visually-hidden">(opens in a new tab)</span>
         </a>
 
-        <!-- Ships hidden: with JavaScript off this button can neither switch
-             the theme nor describe the one already in force, and a control
-             that lies about its state is worse than one that is absent. The
-             page still follows the OS without it. -->
+        <!-- Hidden until app.js unhides it: with JS off it could neither switch
+             the theme nor describe the one in force. The page still follows the OS. -->
         <button class="icon-btn" type="button" id="theme-toggle" aria-label="Switch to dark theme" hidden>
           <svg class="theme-toggle__moon" aria-hidden="true"><use href="#i-moon" /></svg>
           <svg class="theme-toggle__sun" aria-hidden="true"><use href="#i-sun" /></svg>
@@ -139,11 +111,8 @@
       </div>
     </header>
 
-    <!-- tabindex is what makes the skip link work: without it the fragment
-         scrolls but focus stays on the link, so the next Tab resumes in the
-         nav the user just asked to skip. -->
+    <!-- tabindex: without it the skip link moves the scroll but not focus. -->
     <main id="main" tabindex="-1">
-      <!-- ===== 2. Hero ===== -->
       <section class="section hero" id="top" aria-labelledby="hero-title">
         <div class="container container--wide hero__inner">
           <div class="hero__copy">
@@ -165,9 +134,8 @@
               </a>
             </div>
 
-            <!-- role="list" throughout: the reset strips the marker, and
-                 Safari drops list semantics from VoiceOver when it does.
-                 This site's audience is disproportionately on Safari. -->
+            <!-- role="list" throughout: the reset strips the marker, and Safari
+                 drops list semantics from VoiceOver when it does. -->
             <ul class="pills hero__pills" role="list">
               <li class="pill pill--trust">
                 <svg class="pill__icon" aria-hidden="true"><use href="#i-lock" /></svg>
@@ -179,23 +147,15 @@
             </ul>
           </div>
 
-          <!-- A real capture of the shipping app (scripts/capture-screenshots.sh),
-               which replaced a CSS mockup of this same screen. The mockup existed
-               because there was nothing to photograph yet; there is now, and a
-               drawing of a product is a weaker claim than the product. Hidden from
-               assistive tech: the figcaption carries the same information. -->
+          <!-- Captured by scripts/capture-screenshots.sh. -->
           <figure class="hero__mockup">
-            <!-- figcaption, not a bare <p>: it is what gives the figure an
-                 accessible name rather than leaving an unnamed group. -->
             <figcaption class="u-visually-hidden">
               The CrocApp send screen on macOS: a code phrase, a Copy code button,
               a QR code for the receiver to scan, and an end-to-end encrypted badge.
             </figcaption>
 
-            <!-- Two elements rather than <picture>: the header's theme toggle pins
-                 [data-theme], which a prefers-color-scheme source would ignore.
-                 The CSS below mirrors tokens.css -- OS by default, [data-theme]
-                 wins in both directions. -->
+            <!-- Two elements rather than <picture>: the theme toggle pins
+                 [data-theme], which a prefers-color-scheme source would ignore. -->
             <img class="hero__shot hero__shot--light" alt="" aria-hidden="true"
                  src="assets/img/screenshots/mac-send-light.png"
                  width="1120" height="1400" decoding="async" />
@@ -206,7 +166,6 @@
         </div>
       </section>
 
-      <!-- ===== 3. Why this exists ===== -->
       <section class="section" id="why" aria-labelledby="why-title">
         <div class="container">
           <div class="section__head">
@@ -297,7 +256,6 @@
         </div>
       </section>
 
-      <!-- ===== 4. How it works ===== -->
       <section class="section" id="how" aria-labelledby="how-title">
         <div class="container">
           <div class="section__head">
@@ -357,7 +315,6 @@
         </div>
       </section>
 
-      <!-- ===== 5. Features ===== -->
       <section class="section" id="features" aria-labelledby="features-title">
         <div class="container">
           <div class="section__head">
@@ -425,7 +382,6 @@
         </div>
       </section>
 
-      <!-- ===== 6. Download ===== -->
       <section class="section" id="download" aria-labelledby="download-title">
         <div class="container">
           <div class="section__head">
@@ -434,16 +390,10 @@
           </div>
 
           <div class="grid">
-            <!-- The two store badges are Apple's supplied artwork and are not
-                 yet links: neither listing exists. An <img> that is not wrapped
-                 in an <a> promises nothing and stays out of the tab order,
-                 which is what aria-disabled on a link fails to do.
-
-                 alt="" for the same reason. "Download on the App Store" spoken
-                 over something that cannot be activated is a worse promise than
-                 the silence, and the card already says "App Store" in text.
-                 Give them real alt text in the change that wraps them in <a>.
-                 Both URLs are tracked under TODO LANDING in TODO.md. -->
+            <!-- Apple's supplied artwork, not yet links: neither listing exists.
+                 A bare <img> promises nothing and stays out of the tab order;
+                 alt="" for the same reason, since the card says "App Store" in
+                 text. Give them real alt text when they become <a>. -->
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">iPhone &amp; iPad</h3>
@@ -493,7 +443,6 @@
         </div>
       </section>
 
-      <!-- ===== 7. Powered by croc ===== -->
       <section class="section" id="croc" aria-labelledby="croc-title">
         <div class="container container--prose">
           <div class="card card--elevated croc">
@@ -509,7 +458,6 @@
         </div>
       </section>
 
-      <!-- ===== 8. How it was made ===== -->
       <section class="section" id="made" aria-labelledby="made-title">
         <div class="container container--prose">
           <div class="section__head">
@@ -527,7 +475,6 @@
         </div>
       </section>
 
-      <!-- ===== 9. Inspirations ===== -->
       <section class="section" id="inspiration" aria-labelledby="inspiration-title">
         <div class="container">
           <div class="section__head">
@@ -587,16 +534,12 @@
         </div>
       </section>
 
-      <!-- ===== 10. FAQ ===== -->
       <section class="section" id="faq" aria-labelledby="faq-title">
         <div class="container container--prose">
           <div class="section__head">
             <h2 class="t-web-section" id="faq-title">Questions</h2>
           </div>
 
-          <!-- Cost leads. It is the shortest answer here and the one that
-               reframes everything under it, and it spent its life at the
-               bottom of eight. -->
           <details class="disclosure">
             <summary class="disclosure__summary">
               What does it cost?
@@ -704,7 +647,6 @@
 
         </div>
       </section>
-      <!-- ===== 11. Contribute ===== -->
       <section class="section" id="contribute" aria-labelledby="contribute-title">
         <div class="container container--prose">
           <div class="section__head">
@@ -728,9 +670,8 @@
             </p>
           </div>
 
-          <!-- Full size, not --md. colors.md rule 3 accepts the filled button's
-               3.41:1 only while its label stays at 17px semibold; --md drops it
-               to 16px and voids the condition. The row matches the hero's. -->
+          <!-- Full size, not --md: colors.md rule 3 accepts the filled button's
+               3.41:1 only while its label stays 17px semibold. -->
           <div class="actions contribute__actions">
             <a class="btn btn--prominent" href="https://github.com/bakirgdev/CrocApp/issues" target="_blank" rel="noopener">
               Open an issue
@@ -748,7 +689,6 @@
         </div>
       </section>
 
-      <!-- ===== 12. Support ===== -->
       <section class="section" id="support" aria-labelledby="support-title">
         <div class="container container--prose">
           <div class="card card--tinted support">
@@ -760,9 +700,6 @@
               cover the Apple Developer Program fee and the hardware to test on. If not, using it
               and reporting what breaks is genuinely worth more.
             </p>
-            <!-- The only two links on the page that open a new tab. Both hand
-                 the visitor to a checkout on someone else's domain, and losing
-                 the page behind it is the one navigation here worth avoiding. -->
             <div class="actions support__actions">
               <a
                 class="btn btn--prominent"
@@ -789,11 +726,8 @@
 
     </main>
 
-    <!-- ===== 13. Footer ===== -->
     <footer class="footer">
       <div class="container footer__inner">
-        <!-- 128px source for a 64px slot. assets/mascot.png is the brand
-             original; this is the web derivative and the only one served. -->
         <img
           class="footer__mascot"
           src="assets/img/mascot-web.webp"
@@ -814,8 +748,7 @@
           </p>
         </div>
         <nav class="footer__links t-footnote" aria-label="Footer">
-          <!-- Same origin, so no new tab and no announcement. Also the only
-               docs entry point below 48rem, where the nav drops it. -->
+          <!-- The only docs entry point below 48rem, where the nav drops it. -->
           <a href="/docs/">Documentation</a>
           <a href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener">
             Source
@@ -833,15 +766,9 @@
       </div>
     </footer>
 
-    <!-- Deliberately without an aggregateRating or a downloadUrl: there are no
-         ratings, and the store links do not exist yet. Structured data that
-         describes something untrue is worse than none.
-
-         FAQPage mirrors the Questions section verbatim. Google no longer draws
-         an FAQ rich result for a site like this one, but the answer engines
-         that do cite it — ChatGPT, Perplexity, Claude — read this markup, and
-         every answer it carries is visible on the page, which is the condition
-         that keeps it honest. Answers here and in the markup move together. -->
+    <!-- No aggregateRating and no downloadUrl: there are no ratings and the
+         store links do not exist yet. FAQPage mirrors the Questions section
+         verbatim — the two move together or the markup starts lying. -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -860,8 +787,7 @@
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "author": { "@id": "https://crocapp.dev/#author" },
             "sameAs": ["https://github.com/bakirgdev/CrocApp"],
-            "datePublished": "2026-07-25",
-            "dateModified": "2026-07-30"
+            "datePublished": "2026-07-25"
           },
           {
             "@type": "Person",

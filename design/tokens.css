@@ -235,6 +235,7 @@
 
   --step-marker-size: 32px;
   --mascot-size-web:  64px;
+  --phone-shot-max-width-web: 260px;
   --nav-height-web: 56px;
   /* auto-fit column floor: 4-up at 1080, 2-up at 768. spacing-layout.md. */
   --grid-min-card:  232px;

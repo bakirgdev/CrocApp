@@ -26,6 +26,7 @@ mkdir -p "$OUT/docs"
 cp -R web/docs/build/. "$OUT/docs/"
 
 test -s "$OUT/index.html"      || { echo "error: no landing index.html in $OUT" >&2; exit 1; }
+test -s "$OUT/404.html"        || { echo "error: no landing 404.html in $OUT" >&2; exit 1; }
 test -s "$OUT/docs/index.html" || { echo "error: no docs index.html in $OUT/docs" >&2; exit 1; }
 
 echo "assembled $OUT:"

@@ -60,6 +60,7 @@ Never used by the app. `--content-max-width` is a phone-width column; a marketin
 | `--store-badge-height` | 40px | Apple's stated minimum for a supplied App Store badge |
 | `--step-marker-size` | 32px | numbered step marker in a How-it-works list |
 | `--mascot-size-web` | 64px | mascot in a footer or empty state |
+| `--phone-shot-max-width-web` | 260px | a phone screenshot inline in docs prose. `--content-max-width` is the app's own column and is the cap for a screenshot that *is* the figure (`web.md` → Width); a portrait phone shot dropped between paragraphs is more than twice as tall as it is wide, so at 480 it pushes the prose around it off the screen |
 
 ### Breakpoints
 

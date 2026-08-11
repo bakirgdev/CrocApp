@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Page not found — CrocApp</title>
+    <meta name="description" content="That page is not here. Links back to crocapp.dev and the CrocApp documentation." />
+    <!-- A 404 is served at whatever path the visitor asked for, so it must not
+         be indexed and every reference below has to be root-absolute. The
+         relative paths index.html uses would resolve against /some/missing/path/. -->
+    <meta name="robots" content="noindex, follow" />
+
+    <link rel="icon" href="/assets/img/favicon/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon/favicon-96x96.png" />
+    <link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png" />
+
+    <!-- --paper / --ink as literals: a <meta> attribute cannot read a custom
+         property. Keep in sync with design/colors.md and index.html. -->
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+
+    <link rel="stylesheet" href="/tokens.css" />
+    <link rel="stylesheet" href="/styles.css" />
+
+    <!-- Runs before first paint so a stored preference cannot flash. This is the
+         page's only script: there is no toggle here, so nothing else is needed. -->
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="nav__brand" href="/">CrocApp</a>
+      </div>
+    </header>
+
+    <main class="section notfound">
+      <div class="container container--prose notfound__inner">
+        <img
+          class="notfound__mascot"
+          src="/assets/img/mascot-web.webp"
+          alt=""
+          width="128"
+          height="128"
+          decoding="async"
+        />
+        <h1 class="t-web-section">Page not found</h1>
+        <p class="t-web-lead notfound__deck">
+          That page is not here. It may have moved, or the link that brought you may be out of date.
+        </p>
+        <div class="actions">
+          <a class="btn btn--prominent" href="/">Home</a>
+          <a class="btn btn--secondary" href="/docs/">Documentation</a>
+          <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp/issues" target="_blank" rel="noopener">
+            Report a broken link
+            <span class="u-visually-hidden">(opens in a new tab)</span>
+          </a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
