@@ -179,9 +179,9 @@ Full toolchain reference, build settings, and troubleshooting: [`docs/BUILDING.m
 xcodebuild -scheme CrocApp -destination 'platform=macOS' -derivedDataPath /tmp/dd-mac build
 xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,name=$SIM" -derivedDataPath /tmp/dd-sim build
 
-# format and lint, same as CI
-xcrun swift-format format --in-place --recursive --parallel app/CrocApp app/CrocShare CrocKit/Sources
-xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
+# format and lint
+scripts/format-swift.sh            # rewrite in place, then lint
+scripts/format-swift.sh --lint     # lint only, same as CI
 golangci-lint run ./...    # from crocmobile/
 govulncheck ./...          # from crocmobile/
 ```

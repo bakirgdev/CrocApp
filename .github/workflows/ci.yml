@@ -8,6 +8,7 @@ on:
       - "CrocKit/**"
       - "crocmobile/**"
       - "scripts/build-xcframework.sh"
+      - "scripts/format-swift.sh"
       - ".swift-format"
       - ".xcode-version"
       - ".github/workflows/ci.yml"

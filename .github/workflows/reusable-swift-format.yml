@@ -27,5 +27,4 @@ jobs:
           xcode-version: ${{ steps.xcode.outputs.version }}
 
       - name: Lint formatting
-        run: |
-          xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
+        run: scripts/format-swift.sh --lint

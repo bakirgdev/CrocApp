@@ -30,16 +30,20 @@
     "allowedFunctions": ["XCTAssertNoThrow"]
   },
   "rules": {
+    "AllPublicDeclarationsHaveDocumentation": false,
     "AlwaysUseLiteralForEmptyCollectionInit": true,
     "AlwaysUseLowerCamelCase": true,
     "AmbiguousTrailingClosureOverload": true,
     "AvoidRetroactiveConformances": true,
+    "BeginDocumentationCommentWithOneLineSummary": false,
     "DoNotUseSemicolons": true,
     "DontRepeatTypeInStaticProperties": true,
     "FileScopedDeclarationPrivacy": true,
     "FullyIndirectEnum": true,
     "GroupNumericLiterals": true,
     "IdentifiersMustBeASCII": true,
+    "NeverForceUnwrap": true,
+    "NeverUseForceTry": true,
     "NeverUseImplicitlyUnwrappedOptionals": true,
     "NoAccessLevelOnExtensionDeclaration": true,
     "NoAssignmentInExpressions": true,
@@ -48,9 +52,11 @@
     "NoEmptyLinesOpeningClosingBraces": true,
     "NoEmptyTrailingClosureParentheses": true,
     "NoLabelsInCasePatterns": true,
+    "NoLeadingUnderscores": false,
     "NoParensAroundConditions": true,
     "NoPlaygroundLiterals": true,
     "NoVoidReturnOnFunctionSignature": true,
+    "OmitExplicitReturns": false,
     "OneCasePerLine": true,
     "OneVariableDeclarationPerLine": true,
     "OnlyOneTrailingClosureArgument": true,
@@ -66,12 +72,6 @@
     "UseSynthesizedInitializer": false,
     "UseTripleSlashForDocumentationComments": true,
     "UseWhereClausesInForLoops": false,
-    "ValidateDocumentationComments": true,
-    "AllPublicDeclarationsHaveDocumentation": false,
-    "BeginDocumentationCommentWithOneLineSummary": false,
-    "NeverForceUnwrap": false,
-    "NeverUseForceTry": false,
-    "NoLeadingUnderscores": false,
-    "OmitExplicitReturns": false
+    "ValidateDocumentationComments": true
   }
 }

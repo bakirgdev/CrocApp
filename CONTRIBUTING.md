@@ -139,16 +139,16 @@ Keep commits scoped. One logical change per commit beats one commit per file, an
 Match the surrounding file. When in doubt, the formatter decides.
 
 ```bash
-# Swift, from the repo root. Same commands CI runs
-xcrun swift-format format --in-place --recursive --parallel app/CrocApp app/CrocShare CrocKit/Sources
-xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
+# Swift, from the repo root
+scripts/format-swift.sh            # rewrite in place, then lint
+scripts/format-swift.sh --lint     # lint only, exactly what CI runs
 
 # Go, from crocmobile/
 golangci-lint run ./...
 govulncheck ./...
 ```
 
-swift-format ships with the toolchain, so there is nothing to install. Config lives in [`.swift-format`](.swift-format): 4-space indent, non-indented `#if` bodies. Go config is in [`crocmobile/.golangci.yml`](crocmobile/.golangci.yml).
+swift-format ships with the toolchain, so there is nothing to install. Config lives in [`.swift-format`](.swift-format): 4-space indent, non-indented `#if` bodies. The source set it covers lives in one place, [`scripts/format-swift.sh`](scripts/format-swift.sh) — add a new Swift target there, not to the command in your shell history. Go config is in [`crocmobile/.golangci.yml`](crocmobile/.golangci.yml).
 
 Other expectations:
 
@@ -177,7 +177,7 @@ A build that compiles proves nothing about a transfer. CI deliberately does not 
 
 | What you changed | What to run |
 |---|---|
-| Any Swift under `app/` or `CrocKit/Sources/` | swift-format lint, plus a macOS and/or iOS Simulator build |
+| Any Swift under `app/` or `CrocKit/` | `scripts/format-swift.sh --lint`, plus a macOS and/or iOS Simulator build |
 | Anything in `crocmobile/` | `golangci-lint run ./...`, `govulncheck ./...`, then `scripts/build-xcframework.sh` |
 | `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` | the matching harness below, no exceptions |
 | Share extension | `scripts/verify-share-sim.sh` |

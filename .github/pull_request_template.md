@@ -12,7 +12,7 @@ Fixes # because...
 
 A green build is not evidence a transfer works. List the commands you actually ran and their result. Write "not verified" for anything you skipped.
 
-- [ ] `xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources`
+- [ ] `scripts/format-swift.sh --lint`
 - [ ] `golangci-lint run ./...` (only if `crocmobile/` changed)
 - [ ] macOS and/or iOS Simulator build
 - [ ] Matching `scripts/verify-*.sh` harness — required for changes to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController`

@@ -10,7 +10,7 @@ Deep reference for the exact toolchain and the exact steps from a fresh clone to
 | Xcode | `26.6` | `.xcode-version` | Apple Developer downloads, or `xcodes install 26.6` |
 | Go | `>= 1.26.5` | `crocmobile/go.mod` (`go 1.26.5`) | `brew install go` |
 | gomobile / gobind | unpinned, `@latest` | `scripts/build-xcframework.sh` installs both on first run if missing | nothing to install by hand; the script runs `go install golang.org/x/mobile/cmd/gomobile@latest` and `.../cmd/gobind@latest` into `$(go env GOPATH)/bin` |
-| swift-format | ships with the Xcode 26.6 toolchain (`docs/knowledge/tooling.md` records the bundled version as 6.3) | `.swift-format` (formatting rules; the binary itself is not separately versioned in this repo) | none, invoke via `xcrun swift-format` |
+| swift-format | ships with the Xcode 26.6 toolchain (`docs/knowledge/tooling.md` records the bundled version as 6.3) | `.swift-format` (formatting rules; the binary itself is not separately versioned in this repo) | none, invoke via `scripts/format-swift.sh` |
 | golangci-lint | `2.x`; CI pins `v2.12.2` exactly | `.github/workflows/ci.yml` (`golangci-lint-action@v9`, `version: v2.12.2`); rule config in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
 | govulncheck | unpinned, `@latest` | `.github/workflows/ci.yml` (go job) and `.github/workflows/govulncheck.yml` | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
 | create-dmg | unpinned | `.github/workflows/release.yml` installs it with `brew` | `brew install create-dmg`. Needed only by `scripts/build-dmg.sh`, not for a plain build |
@@ -68,20 +68,21 @@ gomobile bind \
 
 ## 4. Format and lint
 
-Exact commands CI runs, from the repo root:
+Exact command CI runs, from the repo root:
 
 ```bash
-xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
+scripts/format-swift.sh --lint
 ```
 
-That is the only Swift check the `swift-format` CI job runs. Locally, run the in-place formatter first for convenience, then lint separately:
+That is the only Swift check the `swift-format` CI job runs. Locally, drop the flag to rewrite in place first; the script lints afterwards either way:
 
 ```bash
-xcrun swift-format format --in-place --recursive --parallel app/CrocApp app/CrocShare CrocKit/Sources
-xcrun swift-format lint --recursive --parallel --strict app/CrocApp app/CrocShare CrocKit/Sources
+scripts/format-swift.sh
 ```
 
-**Trap**: `format --in-place` does not fix lint-only rules, several enabled rules only flag and never rewrite (for example `ReplaceForEachWithForLoop`, `OnlyOneTrailingClosureArgument`, `AlwaysUseLowerCamelCase`). A clean `format` run is not evidence `lint --strict` will pass; always run both. Full list and rationale: `docs/knowledge/tooling.md`.
+The script owns the list of paths swift-format covers (`app/CrocApp`, `app/CrocShare`, `CrocKit/Sources`, `CrocKit/Package.swift`). A new Swift target goes in there, so CI and every doc pick it up at once. `CrocKit` is listed file-by-file because a recursive run there descends into `.build/` and `Croc.xcframework/`.
+
+**Trap**: `format --in-place` does not fix lint-only rules, several enabled rules only flag and never rewrite (for example `ReplaceForEachWithForLoop`, `OnlyOneTrailingClosureArgument`, `AlwaysUseLowerCamelCase`). A clean `format` run is not evidence `lint --strict` will pass, which is why the script always runs both. Full list and rationale: `docs/knowledge/tooling.md`.
 
 Go, from `crocmobile/`:
 
@@ -141,7 +142,7 @@ Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 | `gomobile: command not found` right after the script claims to have installed it | `$(go env GOPATH)/bin` not on this shell's `PATH` | The script exports it only for its own run; for a direct `gomobile` invocation afterward, `export PATH="$PATH:$(go env GOPATH)/bin"` |
 | macOS build in CI is unsigned | CI's `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` (no signing identity on the runner) | Expected in CI. Locally, a build signs normally with a `Mac Development` identity in your keychain |
 | `go install .../cmd@latest` (gomobile, gobind, govulncheck) produces a binary you cannot find or run | `GOOS`/`GOARCH` set in the shell (as CI's go job sets `darwin`/`arm64`) makes `go install` drop the binary at `$GOPATH/bin/darwin_arm64/…` instead of `$GOPATH/bin/…` | Install with `env -u GOOS -u GOARCH go install ...`, then run the tool with the original env intact if the analysis itself needs to target darwin (`docs/knowledge/tooling.md`) |
-| `swift-format format --in-place` reports clean, but `lint --strict` (what CI runs) still fails | Several enabled rules are lint-only and never rewrite | Always run `lint --strict` after `format --in-place`; see the rule list in `docs/knowledge/tooling.md` |
+| A hand-rolled `swift-format format --in-place` reports clean, but `lint --strict` (what CI runs) still fails | Several enabled rules are lint-only and never rewrite | Use `scripts/format-swift.sh`, which always lints after formatting; see the rule list in `docs/knowledge/tooling.md` |
 
 ## 9. When the toolchain changes
 
