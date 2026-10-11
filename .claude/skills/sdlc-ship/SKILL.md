@@ -23,17 +23,17 @@ If any fails, stop and say which.
 
 ## Steps
 
-1. Draft the commit message following the repo's convention (read `git log` first). Stage only this change's files. `sdlc/` is gitignored, so the artifacts never land in a commit.
+1. If anything is still uncommitted, draft its commit message following the repo's convention (read `git log` first) and stage only this change's files. If `/sdlc-build` already committed everything, skip the commit; the branch's commits are the record. `sdlc/` is gitignored, so the artifacts never land in a commit.
 2. Draft the PR. The artifacts are not committed, so the PR body is the audit record. Carry the chain:
    - **Intent**: problem and outcome, two lines.
    - **Requirements**: each `R#` and where it is met.
    - **Plan deviations**: what changed from `plan.md` and why, or "None".
    - **Review**: the counts, and any Important finding accepted rather than fixed, with the reason.
    - **Verification**: the commands run and their results, and anything not verified.
-3. Show the user the commit message, PR title, and PR body together. Only after their yes: if on the default branch, create a branch named after the change slug, then commit, push, and run `gh pr create`. Add `PR: <url>` under the `Status:` line of `plan.md`.
+3. Show the user the commit message (if any), PR title, and PR body together. Only after their yes: if still on the default branch, create a branch named after the change slug; commit whatever `/sdlc-build` left uncommitted, push, and run `gh pr create`. Add `PR: <url>` under the `Status:` line of `plan.md`.
 4. Babysit the PR. Watch checks with `gh pr checks <n> --watch` in the background. For each failure, read the log (`gh run view <id> --log-failed`), say whether it looks flaky or real, fix real ones, and commit in the same convention and push. Address review comments the same way (`gh pr view <n> --comments`; inline ones via `gh api repos/{owner}/{repo}/pulls/<n>/comments`), and say what changed with `gh pr comment`. Fix the code, not the check.
 5. Stop when checks are green and the PR waits only on a human to approve or merge. Report the PR URL and its state.
 
 Never merge, approve, force-push, push to the default branch, tag, or trigger a release.
 
-After merge, release is a human call. If something breaks in the field, `/sdlc-maintain` brings it back into the loop.
+After merge, release is a human call. If something breaks in the field, `/sdlc-maintain` brings it back into the loop. End with the handoff from `.claude/CLAUDE.md` (SDLC sessions) for whichever comes next: `/sdlc-maintain` for a failure, `/sdlc-intent` for the next change.

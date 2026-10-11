@@ -7,24 +7,51 @@ Claude Code harness config for CrocApp. Claude Code is the only agent harness th
 | Path | Committed | Purpose |
 | --- | --- | --- |
 | `settings.json` | yes | Shared baseline every contributor gets |
-| `settings.local.example.json` | yes | Template for personal settings |
 | `settings.local.json` | **no**, gitignored | Per-user overrides |
-| `skills/` | yes | Project skills, plus any vendored ones |
+| `skills/` | yes | The `sdlc-*` pipeline skills, nothing else |
 | `agents/` | yes | Project subagents (`verifier`, used by `/sdlc-build`) |
 
 ## Skills
 
-`sdlc-*` are written for this repo, after Anthropic's AI-native SDLC playbook (https://claude.com/blog/the-ai-native-sdlc-playbook). One skill per stage, run in order: `/sdlc-intent`, `/sdlc-spec`, `/sdlc-plan`, `/sdlc-build`, `/sdlc-review`, `/sdlc-ship`; `/sdlc-maintain` turns a failure back into a new intent. Each stage writes one artifact to `sdlc/<date>-<slug>/` (gitignored), and the next stage reads it; a stage only starts from an artifact the user accepted. Edit these skills in place; no tool manages them.
+`sdlc-*` follow Anthropic's AI-native SDLC playbook (https://claude.com/blog/the-ai-native-sdlc-playbook) and stay generic: project specifics live in `CLAUDE.md` and the docs it points to, which every stage reads. One skill per stage, run in order: `/sdlc-intent`, `/sdlc-spec`, `/sdlc-plan`, `/sdlc-build`, `/sdlc-review`, `/sdlc-ship`; `/sdlc-maintain` turns a failure back into a new intent. Each stage writes one artifact to `sdlc/<date>-<slug>/` (gitignored), and the next stage reads it; a stage only starts from an artifact the user accepted. Edit these skills in place; no tool manages them.
 
-Vendored skills are managed with the `skills` CLI (https://skills.sh). It records sources and content hashes in `skills-lock.json` at repo root; restore with `npx skills experimental_install`.
-
-Add with `--copy` so the files land in `skills/` as real files instead of symlinks into `node_modules`:
+No other skill is committed here. Skills the pipeline relies on are installed per user with the `skills` CLI (https://skills.sh):
 
 ```bash
-npx skills add <owner/repo> -s <skill> -a claude-code --copy
+npx skills add mattpocock/skills -s grilling -g -a claude-code
 ```
 
-One `-s` per skill; comma-separated names do not match. Before adding, check the skill is not already provided by an enabled plugin — both copies load under separate names, and the vendored one goes stale.
+`grilling` is required: every stage puts its questions to the user in grilling rounds; a plain yes/no confirmation, such as approving a commit, stays a plain question. If `grilling` is not among the available skills, stop, give the user the command above, and ask them to relaunch the stage. When a change touches a domain (UI, accessibility, security, App Store review, ...) that no installed skill covers, name one for the user to install (`npx skills find <query>`) and carry on without it.
+
+## SDLC sessions
+
+Every stage runs in its own new session, launched with the model and effort below. A fresh session reads the accepted artifact, not the conversation that produced it.
+
+| Stage | Model | Effort | Why |
+| :--- | :--- | :--- | :--- |
+| `/sdlc-intent` | `opus` | `high` | Conversation and judgment over a small context |
+| `/sdlc-spec` | `opus` | `xhigh` | Design mistakes compound through every later stage |
+| `/sdlc-plan` | `opus` | `xhigh` | Build follows the plan literally |
+| `/sdlc-build`, one slice | `sonnet` | `high` | Carries out an accepted plan; fast and cheap over a large context |
+| `/sdlc-build`, slice marked `Risk: high` | `opus` | `high` | Mistakes there are silent or costly |
+| `/sdlc-build sdlc/<change> fix review` | `sonnet` | `high` | Findings are already pinned to file and line |
+| `/sdlc-review` | `opus` | `high` | The gate needs the strongest fresh eyes |
+| `/sdlc-ship` | `sonnet` | `medium` | Commit, PR, and CI are mechanical |
+| `/sdlc-maintain` | `opus` | `high` | Root-cause diagnosis |
+
+Inside a stage, subagents that write code run on the stage's model or `sonnet`; only pure lookups drop to `haiku`.
+
+A build or spec session that outgrows one session (the conversation was compacted, or more work remains than fits) stops at a clean boundary, records its progress (the Build log, or a draft `spec.md`), and hands off to the same stage in a new session.
+
+When a next stage exists, the final message ends with this handoff, after the session-end report `CLAUDE.md` asks for:
+
+```text
+Next: /sdlc-<stage> in a new session (<model>, <effort>: <why>). Quit this session, then run:
+  claude --model <model> --effort <effort> "/sdlc-<stage> sdlc/<change>"
+If the stage does not start, run `claude --model <model> --effort <effort>` and paste: /sdlc-<stage> sdlc/<change>
+```
+
+For a review fix the stage argument is `sdlc/<change> fix review`. For `/sdlc-plan`, add `--permission-mode plan` to both commands. Set effort with the flag, never `/effort`: the flag lasts one session, while `/effort` saves a new default that carries into later sessions.
 
 ## Settings
 
@@ -38,12 +65,8 @@ Adding an MCP server takes three edits:
 
 Plugins from non-Anthropic marketplaces need that marketplace declared in `extraKnownMarketplaces`, otherwise `enabledPlugins` resolves to nothing on a fresh clone.
 
-Never commit `settings.local.json`. To change what new contributors start with, edit `settings.local.example.json`.
+Never commit `settings.local.json`. To change what every contributor gets, edit `settings.json`.
 
 ## Setup
 
-```bash
-cp .claude/settings.local.example.json .claude/settings.local.json
-```
-
-Then edit to taste. `/status` lists which settings files actually loaded.
+Install `grilling` (see Skills). Personal overrides go in `.claude/settings.local.json`; `/status` lists which settings files actually loaded.

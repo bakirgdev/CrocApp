@@ -6,7 +6,9 @@ Free, open-source native SwiftUI GUI for the "croc" file-transfer CLI. Targets i
 
 ### Verify, don't assume
 
-A green build is **not** evidence a transfer works. Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` needs the matching harness above run, output quoted. If a harness was not run, say "not verified" plainly.
+A green build is **not** evidence a transfer works. Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` needs its matching harness run, output quoted. If a harness was not run, say "not verified" plainly.
+
+The checks live in `docs/BUILDING.md`: format and lint under "Format and lint", the transfer harnesses (`scripts/verify-*.sh`, what each covers and needs) under "Verification harnesses".
 
 ### Delegate
 
@@ -14,7 +16,7 @@ Sessions mostly run on a stronger model, so preserve its context and session usa
 
 ### Look up, don't guess
 
-When unsure about any API, library, tool, or platform behavior: query the context7 MCP (see `@.claude/rules/context7.md`), perform web search, deploy research subagent(s), or use tool search, before writing code. A small lookup beats a hallucination, doubly so for Swift/SwiftUI/Xcode 26 APIs (training data lags Apple releases) and the croc CLI (frequent new versions). Prefer semantic tools over grep where they exist: `gopls` MCP for `crocmobile/` (`go_search`, `go_symbol_references`, `go_file_context`, `go_package_api`, `go_diagnostics`), `xcode` MCP for build/test/diagnostics/simulator on the Swift side (needs the project open in Xcode, Settings > Intelligence > MCP enabled; not a substitute for `scripts/verify-*.sh`).
+When unsure about any API, library, tool, or platform behavior: query the context7 MCP, perform web search, deploy research subagent(s), or use tool search, before writing code. A small lookup beats a hallucination, doubly so for Swift/SwiftUI/Xcode 26 APIs (training data lags Apple releases) and the croc CLI (frequent new versions). Prefer semantic tools over grep where they exist: `gopls` MCP for `crocmobile/` (`go_search`, `go_symbol_references`, `go_file_context`, `go_package_api`, `go_diagnostics`), `xcode` MCP for build/test/diagnostics/simulator on the Swift side (needs the project open in Xcode, Settings > Intelligence > MCP enabled; not a substitute for `scripts/verify-*.sh`).
 
 ### Comments
 

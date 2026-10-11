@@ -13,12 +13,12 @@ The user is the originator and the product owner. Claude writes the file; the us
 ## Steps
 
 1. Take the input. For an issue, read it with `gh issue view <n> --comments`. For an idea, let the user describe it in their own terms: what they cannot do today, who is affected, what better looks like, what is out of scope. No formal language needed.
-2. Brainstorm until the idea is concrete. Ask the questions an analyst would ask: scope, users, constraints, what success looks like. One question per message, multiple choice when the options are known. Read `CLAUDE.md` and the docs it points to only enough to ask sharp questions, not to design.
+2. Brainstorm until the idea is concrete. Ask the questions an analyst would ask (scope, users, constraints, what success looks like) in `grilling` rounds, each with your recommended answer. Read `CLAUDE.md` and the docs it points to only enough to ask sharp questions, not to design.
 3. Write `sdlc/<YYYY-MM-DD>-<slug>/intent.md` from the template below: today's date, a 2-5 word kebab-case slug. Keep it short; the playbook's own example is twelve lines.
 4. Show the file and apply the user's corrections. Anything Claude misunderstood is fixed here, before it costs a spec.
 5. Gate: when the user accepts it, set `Status: accepted`. If they drop it, set `Status: rejected` and add one line saying why. A draft never moves to the next stage.
 
-Next stage: `/sdlc-spec`. A small, bounded fix can go straight to `/sdlc-plan`.
+Next stage: `/sdlc-spec`. A small, bounded fix can go straight to `/sdlc-plan`. End with the handoff from `.claude/CLAUDE.md` (SDLC sessions).
 
 ## Template
 

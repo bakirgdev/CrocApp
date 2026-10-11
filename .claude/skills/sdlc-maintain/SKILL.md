@@ -11,13 +11,15 @@ What breaks re-enters the pipeline as `intent.md`, so the user triages and revie
 ## Steps
 
 1. Gather evidence: failed run logs (`gh run view <id> --log-failed`), the issue (`gh issue view <n> --comments`), crash logs, repro steps. Reproduce it if that is cheap and safe.
-2. Check `docs/known-issues.md`. If the failure is already listed, say so and stop unless the user wants it fixed now.
+2. Check the known-issues list `CLAUDE.md` names, if any. If the failure is already listed, say so and stop unless the user wants it fixed now.
 3. Diagnose without editing code. State the root-cause hypothesis and label it verified, inferred, or speculative, with the evidence for each.
 4. Write `sdlc/<YYYY-MM-DD>-<slug>/intent.md` from the template below, the Stage 1 format plus an Evidence section. The proposed outcome includes the regression guard: the test or check that would have caught this, so the same class of failure cannot return silently.
-5. Triage with the user:
+5. Triage with the user in a `grilling` round:
    - **Fix now**: set `Status: accepted`. Small and bounded goes to `/sdlc-plan`, whose bug-fix proof starts with a failing test. Anything wider goes to `/sdlc-spec`.
-   - **Schedule**: add it to `docs/known-issues.md` following that file's rules, and set `Status: deferred`. Nothing picks up a deferred intent until the user accepts it.
+   - **Schedule**: add it to that known-issues list following its rules, and set `Status: deferred`. Nothing picks up a deferred intent until the user accepts it.
    - **Dismiss**: set `Status: rejected` with the reason, so the same finding is recognized next time.
+
+For a fix now, end with the handoff from `.claude/CLAUDE.md` (SDLC sessions) to `/sdlc-plan` or `/sdlc-spec`.
 
 ## Template
 

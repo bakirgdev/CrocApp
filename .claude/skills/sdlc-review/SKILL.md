@@ -2,20 +2,19 @@
 name: sdlc-review
 description: Stage 5 (Deploy) review gate of the AI-native SDLC pipeline. Reviews a change's diff in a fresh context with three passes (bugs, security, compliance against spec.md, plan.md, and CLAUDE.md), ranks findings Important or Nit, and writes sdlc/<change>/review.md. Use after /sdlc-build and before opening a PR, or when the user asks to review a change tracked under sdlc/.
 argument-hint: "[sdlc/<change> directory]"
-context: fork
-agent: general-purpose
-background: false
 ---
 
 # Review the change (Stage 5: Deploy)
 
-You are reviewing work you did not write. The agent that wrote the code has no way to approve it, so you report and change nothing: the author fixes, and the human decides. Your findings free the human to judge only intent and risk.
+You are reviewing work you did not write. This runs in its own new session, so you see the artifacts and the diff, not the conversation that produced them. The agent that wrote the code has no way to approve it, so you report and change nothing: the author fixes, and the human decides. Your findings free the human to judge only intent and risk.
 
 ## Inputs
 
 Use the directory given in the arguments. Otherwise pick the change under `sdlc/` whose `plan.md` is accepted and has no `PR:` line yet; if none or several match, stop and say so. Read `intent.md`, `spec.md` if there is one, `plan.md`, and `CLAUDE.md`. If `REVIEW.md` exists at the repo root, it is the review policy and overrides the defaults below.
 
-Review everything on the branch and in the working tree against `main`: `git diff $(git merge-base HEAD main)`, plus untracked files from `git status --porcelain`. Read the surrounding code wherever a hunk's correctness depends on it.
+Review everything on the branch and in the working tree against the default branch: `git diff $(git merge-base HEAD <default branch>)`, plus untracked files from `git status --porcelain`. Read the surrounding code wherever a hunk's correctness depends on it.
+
+When the diff is too large to review carefully in one context, split it by area (a directory, or a build slice from `plan.md`) and give each area to a read-only subagent with the same inputs and passes. Verify every finding they return before it goes in `review.md`.
 
 ## Passes
 
@@ -42,14 +41,15 @@ Write `review.md` in the change directory:
 
 ```markdown
 # Review: <title>
-Diff base: <short sha>. Important: <n>. Nit: <n> (<m> more not listed).
+Reviewed: <date>, HEAD <short sha>. Diff base: <short sha>. Important: <n>. Nit: <n> (<m> more not listed).
 
-| Severity | File:Line | Issue |
-| :--- | :--- | :--- |
-| Important | <path:line> | <Pass>: <problem and concrete failure>. Fix: <direction>. |
+| ID | Severity | File:Line | Issue |
+| :--- | :--- | :--- | :--- |
+| I1 | Important | <path:line> | <Pass>: <problem and concrete failure>. Fix: <direction>. |
+| N1 | Nit | <path:line> | <Pass>: <problem>. |
 
 ## Proposed CLAUDE.md changes
 <Edit and why, or "None.">
 ```
 
-Reply with the counts, the path to `review.md`, and the Important findings as a short list. End with the next step: fix the Important findings in the main session and run `/sdlc-review` again, or, with none left, `/sdlc-ship`.
+Reply with the counts, the path to `review.md`, and the Important findings as a short list. End with the handoff from `.claude/CLAUDE.md` (SDLC sessions): with Important findings open, `/sdlc-build sdlc/<change> fix review`, followed by a new `/sdlc-review`; with none left, `/sdlc-ship`.
