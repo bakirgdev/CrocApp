@@ -2,7 +2,7 @@
 
 Evergreen project knowledge: what this project is, what croc is and how it works, and the invariants that outlive any individual feature. Written dense, for AI-session consumption first and humans second.
 
-What does not belong here: decisions and their rationale (`../decisions/`), open defects and deferred work (`../known-issues.md`), and anything that is a snapshot of work in progress. Stale facts get fixed or deleted in the session that notices them — see root `CLAUDE.md`, "Docs self-heal".
+What does not belong here: decisions and their rationale (commit messages and PR descriptions carry those), open defects and deferred work (`../known-issues.md`), and anything that is a snapshot of work in progress. Stale facts get fixed or deleted in the session that notices them (root `CLAUDE.md`, "Session end report").
 
 ## Files
 
