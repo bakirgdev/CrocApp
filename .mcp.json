@@ -2,7 +2,7 @@
   "mcpServers": {
     "xcode": {
       "type": "stdio",
-      "command": "npx",
+      "command": "pnpx",
       "args": [
         "-y",
         "caveman-shrink",
@@ -12,7 +12,7 @@
     },
     "gopls": {
       "type": "stdio",
-      "command": "npx",
+      "command": "pnpx",
       "args": [
         "-y",
         "caveman-shrink",

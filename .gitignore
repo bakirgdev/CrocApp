@@ -1,8 +1,8 @@
-# macOS
 .DS_Store
 ._*
 
 *.log
+
 .env*
 
 # Signing material
@@ -17,7 +17,6 @@ DerivedData/
 xcuserdata/
 
 # Swift Package Manager
-# Package.resolved is committed on purpose: app pins must stay reproducible
 .build/
 .swiftpm/
 
@@ -43,5 +42,6 @@ web/docs/src/css/tokens.css
 
 # Agent scratch
 .claude/settings.local.json
-.superpowers/
-docs/superpowers/plans/
+
+# SDLC pipeline artifacts (.claude/skills/sdlc-*)
+/sdlc/

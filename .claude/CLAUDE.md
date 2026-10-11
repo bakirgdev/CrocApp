@@ -9,11 +9,14 @@ Claude Code harness config for CrocApp. Claude Code is the only agent harness th
 | `settings.json` | yes | Shared baseline every contributor gets |
 | `settings.local.example.json` | yes | Template for personal settings |
 | `settings.local.json` | **no**, gitignored | Per-user overrides |
-| `skills/` | yes | Vendored skills useful for the project |
+| `skills/` | yes | Project skills, plus any vendored ones |
+| `agents/` | yes | Project subagents (`verifier`, used by `/sdlc-build`) |
 
 ## Skills
 
-Managed with the `skills` CLI (https://skills.sh). Sources and content hashes live in `skills-lock.json` at repo root; restore with `npx skills experimental_install`.
+`sdlc-*` are written for this repo, after Anthropic's AI-native SDLC playbook (https://claude.com/blog/the-ai-native-sdlc-playbook). One skill per stage, run in order: `/sdlc-intent`, `/sdlc-spec`, `/sdlc-plan`, `/sdlc-build`, `/sdlc-review`, `/sdlc-ship`; `/sdlc-maintain` turns a failure back into a new intent. Each stage writes one artifact to `sdlc/<date>-<slug>/` (gitignored), and the next stage reads it; a stage only starts from an artifact the user accepted. Edit these skills in place; no tool manages them.
+
+Vendored skills are managed with the `skills` CLI (https://skills.sh). It records sources and content hashes in `skills-lock.json` at repo root; restore with `npx skills experimental_install`.
 
 Add with `--copy` so the files land in `skills/` as real files instead of symlinks into `node_modules`:
 
