@@ -21,7 +21,7 @@ No other skill is committed here. Skills the pipeline relies on are installed pe
 npx skills add mattpocock/skills -s grilling -g -a claude-code
 ```
 
-`grilling` is required: every stage puts its questions to the user in grilling rounds; a plain yes/no confirmation, such as approving a commit, stays a plain question. If `grilling` is not among the available skills, stop, give the user the command above, and ask them to relaunch the stage. When a change touches a domain (UI, accessibility, security, App Store review, ...) that no installed skill covers, name one for the user to install (`npx skills find <query>`) and carry on without it.
+`grilling` is required: every stage puts its questions to the user in grilling rounds; a plain yes/no confirmation, such as approving a commit, stays a plain question. A round goes out only after every subagent, lookup, and piece of research it could depend on has finished, so a printed question is never revised or withdrawn; this overrides `grilling`'s advice to ask non-dependent questions while research runs. If a later finding does reopen a settled answer, raise it as a new question in the next round. If `grilling` is not among the available skills, stop, give the user the command above, and ask them to relaunch the stage. When a change touches a domain (UI, accessibility, security, App Store review, ...) that no installed skill covers, name one for the user to install (`npx skills find <query>`) and carry on without it.
 
 ## SDLC sessions
 
