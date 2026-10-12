@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "HBSU359M33.com.bakirgdev.CrocApp",
+          "HBSU359M33.com.bakirgdev.CrocApp.direct"
+        ],
+        "components": [
+          { "/": "/r/*" }
+        ]
+      }
+    ]
+  }
+}

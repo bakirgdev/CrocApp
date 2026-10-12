@@ -54,6 +54,9 @@ jobs:
       - name: Assemble _site
         run: scripts/assemble-site.sh
 
+      - name: Typecheck docs
+        run: pnpm --dir web/docs run typecheck
+
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _site

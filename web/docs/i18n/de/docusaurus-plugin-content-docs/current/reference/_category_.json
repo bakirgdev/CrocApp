@@ -1,8 +1,0 @@
-{
-  "label": "Referenz",
-  "position": 4,
-  "link": {
-    "type": "generated-index",
-    "description": "Interoperabilität mit der croc-CLI, die vollständige Feature-Matrix und ein nutzerorientiertes Glossar."
-  }
-}

@@ -41,14 +41,9 @@ const config: Config = {
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'bs', 'de', 'es', 'fr', 'ru'],
+    locales: ['en'],
     localeConfigs: {
       en: {label: 'English', htmlLang: 'en-US'},
-      bs: {label: 'Bosanski', htmlLang: 'bs-BA'},
-      de: {label: 'Deutsch', htmlLang: 'de-DE'},
-      es: {label: 'Español', htmlLang: 'es-ES'},
-      fr: {label: 'Français', htmlLang: 'fr-FR'},
-      ru: {label: 'Русский', htmlLang: 'ru-RU'},
     },
   },
 
@@ -63,7 +58,6 @@ const config: Config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/bakirgdev/CrocApp/tree/main/web/docs/',
-          editLocalizedFiles: true,
           showLastUpdateTime: true,
           // Current *is* 0.9.9, rather than an unlabeled "Next" sitting on top
           // of a duplicated snapshot. Nothing has shipped yet, so a
@@ -103,10 +97,6 @@ const config: Config = {
         },
         {
           type: 'docsVersionDropdown',
-          position: 'right',
-        },
-        {
-          type: 'localeDropdown',
           position: 'right',
         },
         {
