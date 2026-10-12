@@ -14,7 +14,7 @@ Deep reference for the exact toolchain and the exact steps from a fresh clone to
 | golangci-lint | `2.x`; CI pins `v2.14.0` exactly | `.github/workflows/reusable-go.yml` (`golangci-lint-action`, `version: v2.14.0`); rule config in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
 | govulncheck | pinned by the `tool` block in `crocmobile/go.mod` (`golang.org/x/vuln`) | `.github/workflows/reusable-go.yml` (called by `ci.yml`, `release.yml`, `go-weekly.yml`) | `cd crocmobile && go tool govulncheck ./...` |
 | create-dmg | unpinned | `.github/workflows/release.yml` installs it with `brew` | `brew install create-dmg`. Needed only by `scripts/build-dmg.sh`, not for a plain build |
-| croc CLI | `v10.5.0`, to match the embedded engine | `crocmobile/go.mod` (`github.com/schollz/croc/v10 v10.5.0`, indirect) | `go install github.com/schollz/croc/v10@v10.5.0` (lands at `~/go/bin/croc`, the harnesses' default) or `brew install croc`. Needed only for `scripts/verify-*.sh` and `crockit-verify`, not for a plain build |
+| croc CLI | `v10.5.0`, to match the embedded engine | `crocmobile/go.mod` (`github.com/schollz/croc/v10 v10.5.0`) | `go install github.com/schollz/croc/v10@v10.5.0` (lands at `~/go/bin/croc`, the harnesses' default) or `brew install croc`. Needed only for `scripts/verify-*.sh` and `crockit-verify`, not for a plain build |
 
 ## 2. First build from a fresh clone
 

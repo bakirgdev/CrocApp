@@ -25,7 +25,7 @@ Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it int
 - **Swift 6 language mode everywhere.** App and extension are `SWIFT_VERSION = 6.0`, `CrocKit` is swift-tools 6.0. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default and `nonisolated` is the explicit case. Strict concurrency is an error, not a warning.
 - **Deployment targets are `26.0` everywhere** — pbxproj, `Package.swift`, and `gomobile -iosversion`/`-macosversion`. Never a minor pin.
 - **macOS is arm64 only** (`ARCHS[sdk=macosx*] = arm64`). `Croc.xcframework` has no x86_64 slice because gomobile cannot produce one (golang/go#73119), so Intel Macs cannot run the app. Removing the pin does not add Intel support, it breaks the link.
-- **Go toolchain ≥ 1.27.2**, pinned in `crocmobile/go.mod`. `scripts/build-xcframework.sh` builds gomobile and gobind from the `golang.org/x/mobile` version in the same file's `tool` block (x/mobile `v0.0.0-20261011034528-197770444867`, x/vuln `v1.9.0`); pin x/mobile to the last good version if a bind ever regresses.
+- **Go toolchain ≥ 1.27.2**, pinned in `crocmobile/go.mod`. `scripts/build-xcframework.sh` builds gomobile and gobind from the `golang.org/x/mobile` version in the same file's `tool` block; pin x/mobile to the last good version if a bind ever regresses.
 
 CI gotchas:
 

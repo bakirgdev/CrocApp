@@ -43,4 +43,4 @@ Each subsection describes a trap that will stop existing. **Delete a subsection 
 
 ### `main` branch protection
 
-`main` has no branch protection, only a `v*` tag ruleset, so renaming a job breaks no required check. Protection is planned (P01 step 7), not forgotten, and will require only `ci pass`. Delete this once it is on, and treat that job name as an interface from then on.
+`main` has no branch protection, only a `v*` tag ruleset, so renaming a job breaks no required check. Protection is planned, not forgotten, and will require only `ci pass`. Delete this once it is on, and treat that job name as an interface from then on.
