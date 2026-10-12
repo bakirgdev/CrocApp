@@ -3,8 +3,8 @@ package crocmobile
 import (
 	"context"
 	"strings"
-	"sync"
 
+	"github.com/bakirgdev/CrocApp/crocmobile/internal/relaycache"
 	"github.com/schollz/croc/v11/src/codephrase"
 	"github.com/schollz/croc/v11/src/models"
 	"github.com/schollz/croc/v11/src/publicrelay"
@@ -81,14 +81,6 @@ func poolRelay(code string) (string, error) {
 	return relays[index], nil
 }
 
-// bestRelay is the CLI's best-relay cache (cli.go selectPublicRelay), kept in
-// memory for the process instead of a file.
-var bestRelay struct {
-	sync.Mutex
-	index int
-	ok    bool
-}
-
 // generatePublicCode is the CLI's generated-code path for the public pool: the
 // first relay to answer a ping wins, and the code is drawn so that it maps to
 // that relay.
@@ -100,24 +92,14 @@ func generatePublicCode(probe publicrelay.Probe) (string, error) {
 	return codephrase.GenerateForRelay(index, len(publicrelay.Relays()))
 }
 
+// selectPublicRelay is the CLI's best-relay cache (cli.go selectPublicRelay).
 func selectPublicRelay(probe publicrelay.Probe) (int, error) {
-	bestRelay.Lock()
-	defer bestRelay.Unlock()
-	if bestRelay.ok {
-		return bestRelay.index, nil
-	}
-	index, _, err := publicrelay.SelectFirst(context.Background(), publicrelay.Relays(), publicrelay.ProbeTimeout, probe)
-	if err != nil {
-		return 0, err
-	}
-	bestRelay.index, bestRelay.ok = index, true
-	return index, nil
+	return relaycache.Get(func() (int, error) {
+		index, _, err := publicrelay.SelectFirst(context.Background(), publicrelay.Relays(), publicrelay.ProbeTimeout, probe)
+		return index, err
+	})
 }
 
 // forgetPublicRelay mirrors the CLI clearing its cache when a send on a
 // generated public code cannot reach the relay.
-func forgetPublicRelay() {
-	bestRelay.Lock()
-	bestRelay.ok = false
-	bestRelay.Unlock()
-}
+func forgetPublicRelay() { relaycache.Forget() }

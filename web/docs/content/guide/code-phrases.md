@@ -6,7 +6,7 @@ description: What a CrocApp code phrase is, why it doubles as address and passwo
 
 # Code phrases
 
-A code phrase looks like `8412-mirage-cobalt-fresco`: a short PIN followed by a few words. It is generated fresh for every transfer, unless you set a custom one on the [Send screen](sending.md).
+A code phrase looks like `cape-junky-widow`: three random words. It is generated fresh for every transfer, unless you set a custom one on the [Send screen](sending.md).
 
 ## It is both the address and the password
 

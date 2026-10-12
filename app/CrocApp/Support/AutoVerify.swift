@@ -20,7 +20,9 @@ import Foundation
 /// the default window, so ContentView's .task (and this whole harness) never
 /// runs -- confirmed via `sample` on the hung process (idle in NSApplication's
 /// event loop, no window ever attached). Splitting them with a flag avoids it.
-/// Writes verify-result.txt ("ok success=<bool>" | "error <msg>") to Documents.
+/// Writes verify-result.txt ("ok success=<bool>" | "error <msg>") to Documents,
+/// and verify-code-ready.txt once a send has its code, so a script can start
+/// the receiver only after the app is in the room.
 /// --hold, --screen, --stage and --seed-history exist for
 /// scripts/capture-screenshots.sh rather than the verify-*.sh runs: the harness
 /// drives the controller directly, so without them the UI sits on HomeView
@@ -170,9 +172,16 @@ enum AutoVerify {
     private static func watch(
         _ controller: TransferController, resultURL: URL, autoAccept: Bool
     ) async {
+        var codeReady = false
         while true {
             try? await Task.sleep(for: .milliseconds(200))
             switch controller.phase {
+            case .waiting where !codeReady:
+                codeReady = true
+                try? "ready".write(
+                    to: resultURL.deletingLastPathComponent().appendingPathComponent(
+                        "verify-code-ready.txt"),
+                    atomically: true, encoding: .utf8)
             case .incoming where autoAccept:
                 controller.respond(accept: true)
             case .confirmSend:

@@ -16,7 +16,7 @@ CrocApp is a graphical front end for [croc](https://github.com/schollz/croc), th
 ## How a transfer works
 
 1. The sender picks files, a folder, or a snippet of text.
-2. CrocApp generates a code phrase, for example `8412-mirage-cobalt-fresco`. It can be spoken, messaged, or shown as a QR code.
+2. CrocApp generates a code phrase, for example `cape-junky-widow`. It can be spoken, messaged, or shown as a QR code.
 3. The receiver enters the phrase, sees the file list, and accepts. The transfer begins.
 
 Both sides run PAKE over the code phrase to derive a session key, so the phrase itself never crosses the network in the clear and the relay never learns the key. Files are encrypted before they leave the device. When both devices are on the same network, CrocApp connects directly and skips the relay; otherwise a relay forwards ciphertext between them and does not store anything. Users can point CrocApp at their own croc relay.

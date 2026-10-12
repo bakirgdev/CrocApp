@@ -18,11 +18,11 @@ CrocApp races a direct local-network connection against the relay and uses which
 
 - A code phrase must be at least 6 characters. The **Receive** button stays disabled until you've entered enough.
 - A wrong code fails immediately rather than hanging.
-- If you're using a custom code you also use for testing or scripting, note that codes sharing their first 4 characters can collide into the same relay room. Generated codes don't have this problem.
+- If you're using a custom code you also use for testing or scripting, note that codes sharing their first word can collide into the same relay room. Generated codes rarely do: two share a first word about once in 1296.
 
 ## The other side is using a different croc version
 
-CrocApp embeds croc v10.5.0 as its engine. It's built to interoperate with the `croc` CLI in both directions. If the other side is running a very old or unusually new `croc` build, use a reasonably current CLI version to avoid protocol mismatches.
+CrocApp embeds croc v11.5.4 as its engine. It's built to interoperate with the `croc` CLI in both directions. The other side needs croc 11 or newer: croc 10 cannot complete a transfer with the app.
 
 ## iOS backgrounding limits
 

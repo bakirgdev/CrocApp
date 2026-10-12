@@ -75,7 +75,7 @@ Deeper references: [`docs/BUILDING.md`](docs/BUILDING.md) for the exact toolchai
 
 | Path | What it is | Read first |
 |---|---|---|
-| `crocmobile/` | Go wrapper around croc v10.5.0, bound into `Croc.xcframework`. `session.go` is the engine | [`docs/knowledge/crocmobile-bridge.md`](docs/knowledge/crocmobile-bridge.md) |
+| `crocmobile/` | Go wrapper around croc v11.5.4, bound into `Croc.xcframework`. `session.go` is the engine | [`docs/knowledge/crocmobile-bridge.md`](docs/knowledge/crocmobile-bridge.md) |
 | `CrocKit/` | Swift package: `CrocEngine` actor, `AsyncStream<TransferEvent>` | same file |
 | `app/CrocApp/` | SwiftUI app, iOS + macOS | [`docs/knowledge/app-ui-architecture.md`](docs/knowledge/app-ui-architecture.md) |
 | `app/CrocShare/` | Share extension | same file |
@@ -85,7 +85,7 @@ Deeper references: [`docs/BUILDING.md`](docs/BUILDING.md) for the exact toolchai
 | `scripts/` | Build and live-transfer verification harnesses | the script headers |
 
 > [!WARNING]
-> The bridge and UI knowledge files hold hard-won invariants: event ordering, fd0 prompt-pipe semantics, per-file sender answers, relay-address blanking, room collisions on 4-character code prefixes. Most "obvious" fixes in those areas re-break one of them. Read the relevant file before you edit.
+> The bridge and UI knowledge files hold hard-won invariants: event ordering, fd0 prompt-pipe semantics, per-file sender answers, relay-address blanking, room collisions on shared code prefixes. Most "obvious" fixes in those areas re-break one of them. Read the relevant file before you edit.
 
 ## Branches and commits
 
@@ -184,7 +184,7 @@ A build that compiles proves nothing about a transfer. CI deliberately does not 
 | Docs, comments only | Nothing beyond reading it back |
 
 ```bash
-scripts/verify-interop.sh     # 9 scenarios, engine <-> croc CLI, both directions, decline, cancel, relay, LAN
+scripts/verify-interop.sh     # 10 scenarios, engine <-> croc CLI, both directions, decline, cancel, relay, LAN, every pool relay
 scripts/verify-app-mac.sh     # macOS app, 6 directions: both ways, --local, custom relay, --no-compress, --ask
 scripts/verify-app-sim.sh     # iOS simulator, CLI -> app via --auto-receive
 scripts/verify-share-sim.sh   # share-extension handoff (App Group staging) -> CLI receive
