@@ -34,7 +34,7 @@ scripts/build-xcframework.sh   # Go engine -> CrocKit/Croc.xcframework
 open app/CrocApp.xcodeproj
 ```
 
-No scheme is committed: `xcuserdata/` is gitignored, and CLAUDE.md notes Xcode autocreates schemes on open. Open the project in Xcode at least once (the `open` command above does this) before driving builds from the command line — `xcodebuild -scheme CrocApp` needs a scheme to already exist, and nothing in this repo generates one ahead of time.
+The shared schemes `CrocApp` (builds the app, tests `CrocAppTests`) and `CrocShare` are committed under `app/CrocApp.xcodeproj/xcshareddata/xcschemes/`, so `xcodebuild -scheme CrocApp` works on a fresh clone without opening Xcode. A new target needs its scheme committed there too; per-user schemes in `xcuserdata/` stay gitignored.
 
 Command-line builds, exactly as CLAUDE.md and CI run them:
 
@@ -89,11 +89,19 @@ Go, from `crocmobile/`:
 ```bash
 go build ./...
 go vet ./...
+env -u GOOS -u GOARCH go test -race ./...
 golangci-lint run ./...
 govulncheck ./...
 ```
 
-`go build`/`go vet` are what CI's go job runs alongside lint and vuln, under `GOOS=darwin GOARCH=arm64` (the job analyzes the platform the code ships on, on a cheap Linux runner). If you install `govulncheck` yourself in a shell that already has `GOOS`/`GOARCH` set, see the troubleshooting table below, `go install` will silently misplace the binary.
+Unit tests for Swift, after `scripts/build-xcframework.sh`:
+
+```bash
+swift test --package-path CrocKit
+(cd app && xcodebuild test -scheme CrocApp -destination 'platform=macOS')
+```
+
+`go build`/`go vet` are what CI's go job runs alongside tests, lint and vuln, under `GOOS=darwin GOARCH=arm64` (the job analyzes the platform the code ships on, on a cheap Linux runner). If you install `govulncheck` yourself in a shell that already has `GOOS`/`GOARCH` set, see the troubleshooting table below, `go install` will silently misplace the binary.
 
 ## 5. Verification harnesses
 
@@ -137,7 +145,6 @@ Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 |---|---|---|
 | `conflicting nullability specifier on return types` warning while building `CrocKit` | gomobile-generated `Croc.framework/Headers/Crocmobile.objc.h` declares `- (nullable instancetype)init;` on `CrocmobileOptions`, clashing with `NSObject`'s `nonnull init` | Expected, ignorable. Regenerated on every `build-xcframework.sh` run, cannot be fixed in Swift (`docs/knowledge/tooling.md`) |
 | Xcode or `xcodebuild` fails immediately, missing binary target / no such module `Croc` | `CrocKit/Croc.xcframework` does not exist (gitignored, absent on a fresh clone) | Run `scripts/build-xcframework.sh` first |
-| `xcodebuild -scheme CrocApp` fails with "scheme does not exist" on a brand-new clone | No `.xcscheme` is committed; Xcode autocreates one only after the project is opened | Run `open app/CrocApp.xcodeproj` once, let Xcode autocreate the scheme, then use `xcodebuild` |
 | `scripts/build-xcframework.sh` exits `error: go not installed` | Go not on `PATH` | `brew install go` |
 | `gomobile: command not found` right after the script claims to have installed it | `$(go env GOPATH)/bin` not on this shell's `PATH` | The script exports it only for its own run; for a direct `gomobile` invocation afterward, `export PATH="$PATH:$(go env GOPATH)/bin"` |
 | macOS build in CI is unsigned | CI's `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` (no signing identity on the runner) | Expected in CI. Locally, a build signs normally with a `Mac Development` identity in your keychain |

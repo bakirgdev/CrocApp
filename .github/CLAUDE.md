@@ -6,7 +6,7 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 
 | Path | Purpose |
 | --- | --- |
-| `workflows/ci.yml` | push-main + PR gate: a `changes` job gates lint, Go checks, the contrast check and the macOS and iOS Simulator builds; `ci pass` aggregates them |
+| `workflows/ci.yml` | push-main + PR gate: a `changes` job gates lint, Go checks and `go test -race`, the contrast check, and the macOS and iOS Simulator builds (the macOS leg also runs `swift test` for CrocKit and `xcodebuild test` for `CrocAppTests`); `ci pass` aggregates them |
 | `workflows/release.yml` | on `v*` tag: verify tag against `MARKETING_VERSION`, build, dmg/zip/checksums, attest, publish |
 | `workflows/go-weekly.yml` | Monday scan on a clock, files or updates one `security` issue on failure |
 | `workflows/github-pages.yml` | builds `_site` on PR, also deploys on push to main |

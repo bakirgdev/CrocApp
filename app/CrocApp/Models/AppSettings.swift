@@ -28,6 +28,7 @@ final class AppSettings {
     }
 
     @ObservationIgnored var persist = true
+    @ObservationIgnored private let defaults: UserDefaults
 
     var relayAddress: String { didSet { save(relayAddress, "settings.relayAddress") } }
     var relayAddress6: String { didSet { save(relayAddress6, "settings.relayAddress6") } }
@@ -40,8 +41,8 @@ final class AppSettings {
     var autoAccept: Bool { didSet { save(autoAccept, "settings.autoAccept") } }
     var bothSidesConfirm: Bool { didSet { save(bothSidesConfirm, "settings.bothSidesConfirm") } }
 
-    init() {
-        let d = UserDefaults.standard
+    init(defaults d: UserDefaults = .standard) {
+        defaults = d
         relayAddress = d.string(forKey: "settings.relayAddress") ?? ""
         relayAddress6 = d.string(forKey: "settings.relayAddress6") ?? ""
         // One-time migration off UserDefaults (plaintext plist) into the
@@ -125,7 +126,7 @@ final class AppSettings {
 
     private func save(_ value: Any, _ key: String) {
         guard persist else { return }
-        UserDefaults.standard.set(value, forKey: key)
+        defaults.set(value, forKey: key)
     }
 
     /// Mirrors `save`'s `persist` gate but targets the Keychain instead of

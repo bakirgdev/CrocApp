@@ -61,4 +61,4 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 - **`OutputFolderStore.select` silently no-ops if bookmarking fails.** Rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **`.combine` on the transfer progress view may hide the percentage from VoiceOver.** Worth a real accessibility pass, not a spot fix.
-- **Gesture-level flows are not machine-verified.** Drag-and-drop, camera QR, and taps have no XCUITest coverage. There's no formal decision behind this; the rule is the repo owner's standing instruction not to write tests unasked. Verify them by hand.
+- **Gesture-level flows are not machine-verified.** Drag-and-drop, camera QR, and taps have no XCUITest coverage, by decision: unit tests cover non-UI logic (Go `go test -race`, Swift Testing in `CrocKitTests` and `CrocAppTests`, all in CI), transfers are covered by the harnesses, and UI flows are verified by hand. The rule is in `CONTRIBUTING.md` (Verification, Tests).
