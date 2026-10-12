@@ -10,6 +10,8 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | golangci-lint 2.x (CI pins v2.14.0 in `reusable-go.yml`) | `crocmobile/.golangci.yml` | local + CI |
 | govulncheck (`tool` block in `crocmobile/go.mod`) | none | CI go job + weekly schedule |
 | `go build ./...` + `go vet ./...` | none | CI (go job, alongside lint/vuln) |
+| `go test -race ./...` (Go `testing`) | `crocmobile/*_test.go` | local + CI (go job, `GOOS`/`GOARCH` unset) |
+| Swift Testing (Xcode's built-in) | `CrocKit/Tests/CrocKitTests/`, `app/CrocAppTests/` (shared `CrocApp` scheme) | local + CI (macOS leg of `build`) |
 | xcbeautify | none | CI only |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:00 UTC + manual |

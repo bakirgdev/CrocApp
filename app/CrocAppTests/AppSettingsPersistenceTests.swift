@@ -57,6 +57,27 @@ import Testing
         #expect(r.bothSidesConfirm)
     }
 
+    /// Every bool on at once cannot catch two settings saved under each other's key.
+    @Test func eachBoolPersistsAlone() {
+        defer { cleanUp() }
+        let bools: [(String, ReferenceWritableKeyPath<AppSettings, Bool>)] = [
+            ("onlyLocal", \.onlyLocal),
+            ("noCompress", \.noCompress),
+            ("zipFolder", \.zipFolder),
+            ("useGitIgnore", \.useGitIgnore),
+            ("autoAccept", \.autoAccept),
+            ("bothSidesConfirm", \.bothSidesConfirm),
+        ]
+        for (name, path) in bools {
+            defaults.removePersistentDomain(forName: suiteName)
+            AppSettings(defaults: defaults)[keyPath: path] = true
+            let r = AppSettings(defaults: defaults)
+            for (other, otherPath) in bools {
+                #expect(r[keyPath: otherPath] == (other == name), "set \(name), read \(other)")
+            }
+        }
+    }
+
     @Test func persistOffWritesNothing() {
         defer { cleanUp() }
         let s = AppSettings(defaults: defaults)

@@ -205,7 +205,7 @@ Non-UI logic gets unit tests, and CI runs them on every pull request that touche
 
 - `crocmobile/`: Go's `testing`, run with `go test -race ./...` (from `crocmobile/`, with `GOOS`/`GOARCH` unset).
 - `CrocKit/`: Swift Testing in `CrocKit/Tests/CrocKitTests/`, run with `swift test --package-path CrocKit`.
-- The app: Swift Testing in `app/CrocAppTests/` (hosted in `CrocApp`, run on macOS) for models, parsing, error copy and settings. Tests that persist anything use an injected store, never the real `UserDefaults` or Keychain.
+- The app: Swift Testing in `app/CrocAppTests/` (hosted in `CrocApp`, run on macOS) for models, parsing, error copy and settings. Tests that write settings or secrets use an injected store, never the real `UserDefaults` or Keychain.
 
 New or changed logic in those areas comes with tests. There is no XCUITest: gestures, camera and taps are checked by hand, and transfers by the harnesses above. Unit tests never replace a harness run.
 
