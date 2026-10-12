@@ -47,11 +47,22 @@ When a next stage exists, the final message ends with this handoff, after the se
 
 ```text
 Next: /sdlc-<stage> in a new session (<model>, <effort>: <why>). Quit this session, then run:
-  claude --model <model> --effort <effort> "/sdlc-<stage> sdlc/<change>"
-If the stage does not start, run `claude --model <model> --effort <effort>` and paste: /sdlc-<stage> sdlc/<change>
+  claude --model <model> --effort <effort> --name "<name>" "/sdlc-<stage> sdlc/<change>"
+If the stage does not start, run `claude --model <model> --effort <effort> --name "<name>"` and paste: /sdlc-<stage> sdlc/<change>
 ```
 
 For a review fix the stage argument is `sdlc/<change> fix review`. For `/sdlc-plan`, add `--permission-mode plan` to both commands. Set effort with the flag, never `/effort`: the flag lasts one session, while `/effort` saves a new default that carries into later sessions.
+
+`--name` labels the session in the `/resume` picker and the terminal title, so a later session can find the one that produced an artifact: `claude --resume <change>` opens the picker with that search term. The name is `<change>/<stage>`, where `<change>` is the directory name under `sdlc/`, and `<stage>` drops the `sdlc-` prefix and carries the build slice or the fix:
+
+| Next session | Name |
+| :--- | :--- |
+| `/sdlc-spec`, `/sdlc-plan`, `/sdlc-review`, `/sdlc-ship` | `<change>/spec`, `<change>/plan`, `<change>/review`, `<change>/ship` |
+| `/sdlc-build`, one slice | `<change>/build-<slice>`, e.g. `<change>/build-B1` |
+| `/sdlc-build sdlc/<change> fix review` | `<change>/build-fix-review` |
+| `/sdlc-intent`, `/sdlc-maintain` (no change directory yet) | `<YYYY-MM-DD>-intent`, `<YYYY-MM-DD>-maintain` |
+
+When an earlier session of the change already used the name (a stage handing off to itself, a second review after a fix), append `-2`, `-3`, and so on.
 
 ## Settings
 
