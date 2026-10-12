@@ -1,6 +1,6 @@
 ---
 name: sdlc-ship
-description: Stage 5 (Deploy) of the AI-native SDLC pipeline. Commits a reviewed change, opens a PR that carries its intent, spec, plan, and review record, and babysits it until checks are green and only human approval remains. Never merges or releases.
+description: Stage 5 (Deploy) of the AI-native SDLC pipeline. Commits a reviewed change, opens a PR that carries its intent, spec, plan, and review record, and babysits it until checks are green, then merges only on the user's explicit yes for that PR. Never releases.
 argument-hint: "[sdlc/<change> directory]"
 disable-model-invocation: true
 ---
@@ -32,8 +32,8 @@ If any fails, stop and say which.
    - **Verification**: the commands run and their results, and anything not verified.
 3. Show the user the commit message (if any), PR title, and PR body together. Only after their yes: if still on the default branch, create a branch named after the change slug; commit whatever `/sdlc-build` left uncommitted, push, and run `gh pr create`. Add `PR: <url>` under the `Status:` line of `plan.md`.
 4. Babysit the PR. Watch checks with `gh pr checks <n> --watch` in the background. For each failure, read the log (`gh run view <id> --log-failed`), say whether it looks flaky or real, fix real ones, and commit in the same convention and push. Address review comments the same way (`gh pr view <n> --comments`; inline ones via `gh api repos/{owner}/{repo}/pulls/<n>/comments`), and say what changed with `gh pr comment`. Fix the code, not the check.
-5. Stop when checks are green and the PR waits only on a human to approve or merge. Report the PR URL and its state.
+5. When checks are green and every review comment is addressed, ask the user in one plain question whether to merge: PR URL, one-line summary, check results. Only on an explicit yes for this PR, merge it with the merge method the repo's history uses (`gh pr merge <n> --merge --delete-branch` today), then `git switch <default branch> && git pull --ff-only`, and report the merge commit. A yes covers that one PR only. Without a yes, stop and report the PR URL and its state.
 
-Never merge, approve, force-push, push to the default branch, tag, or trigger a release.
+Never approve a PR review, force-push, push to the default branch, tag, or trigger a release, and never merge without the yes from step 5.
 
-After merge, release is a human call. If something breaks in the field, `/sdlc-maintain` brings it back into the loop. End with the handoff from `.claude/CLAUDE.md` (SDLC sessions) for whichever comes next: `/sdlc-maintain` for a failure, `/sdlc-intent` for the next change.
+After merge, release is a human call. If something breaks in the field, `/sdlc-maintain` brings it back into the loop. End with the handoff from `.claude/CLAUDE.md` (SDLC sessions) for whichever comes next: `/sdlc-build` for the next unchecked slice when the plan ships in several PRs, `/sdlc-maintain` for a failure, `/sdlc-intent` for the next change.

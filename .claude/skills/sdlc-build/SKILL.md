@@ -18,7 +18,7 @@ Use the directory given in the arguments. Otherwise pick the change under `sdlc/
 - **Next slice**: otherwise, the first unchecked slice under Build slices.
 - **Nothing left**: every slice is checked and no review is waiting on fixes. Say so and hand off: to `/sdlc-ship` if the latest `review.md` has no Important finding and nothing changed after it, otherwise to `/sdlc-review`.
 
-Work on a branch named after the change slug. On the first slice, create it from the default branch.
+Work on the branch `plan.md` names for this slice's PR, or else a branch named after the change slug. Create it from the up-to-date default branch when it does not exist yet.
 
 ## Steps
 
