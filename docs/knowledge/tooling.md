@@ -11,11 +11,10 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | govulncheck (`tool` block in `crocmobile/go.mod`) | none | CI go job + weekly schedule |
 | `go build ./...` + `go vet ./...` | none | CI (go job, alongside lint/vuln) |
 | xcbeautify | none | CI only |
-| GitHub Actions | `.github/workflows/ci.yml` | push to main, PRs (code paths) |
-| GitHub Actions | `.github/workflows/govulncheck.yml` | Mondays 06:00 UTC + manual |
-| GitHub Actions | `.github/workflows/github-pages.yml` | push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) |
-| GitHub Actions | `.github/workflows/github-pages-preview.yml` | pull requests touching either site surface; build only, never deploys |
-| GitHub Actions | `.github/workflows/release.yml` | `workflow_dispatch` rehearses, `v*` tag publishes |
+| GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched |
+| GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:00 UTC + manual |
+| GitHub Actions | `.github/workflows/github-pages.yml` | PRs build only; push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) also deploys |
+| GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes |
 
 Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file. Jobs that need Xcode 27 run on the `xcode-27` runner label (a public preview; `macos-26` does not carry Xcode 27). Its image carries 27.0 (default), 27.1 and 27.2 beta, so the pin must name a version that image actually has.
 
@@ -28,12 +27,12 @@ Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it int
 
 CI gotchas:
 
-- **`ci.yml` triggers on a `paths` allowlist**, not `paths-ignore`, shared by both triggers through a YAML anchor: `app/**`, `CrocKit/**`, `crocmobile/**`, `scripts/build-xcframework.sh`, `scripts/format-swift.sh`, `.swift-format`, `.xcode-version`, `.github/workflows/ci.yml`. The earlier ignore-list rotted — `design/` and `.claude/` were not on it and each paid for a full macOS matrix. An allowlist fails closed: a new non-code directory costs nothing until someone adds it. Adding a file CI *does* consume (a new script, a new dotfile config) means adding it here. If CI ever becomes a required check, a filtered-out PR leaves the check pending — switch to a change-detection job that reports success instead.
+- **`ci.yml` has no workflow-level `paths:`.** A filtered-out workflow never reports, so a required check would stay pending. Instead a `changes` job diffs the PR base (or the push's `before`) against the head with plain `git diff --name-only` and sets one output per area (`swift`, `go`, `build`, `design`); each job gates on its output with `if:`. A skipped job counts as passed. Adding a file CI *does* consume (a new script, a new dotfile config) means adding it to the matching regex in the `changes` job. An unknown base (new branch, force push) runs everything. A skipped matrix job reports under its unexpanded name and stays pending, so branch protection requires only the `ci pass` aggregate job, never the individual jobs.
 - **govulncheck under the go job's cross-compile env.** The go job sets `GOOS=darwin GOARCH=arm64` job-wide so vet/build analyse the shipping target. `go install` honours that and drops a darwin binary into `$GOPATH/bin/darwin_arm64/` (unrunnable on the Linux host, and not where `$(go env GOPATH)/bin/…` looks) → exit 127. Install the tool with `env -u GOOS -u GOARCH` so the binary is host-native in `$GOPATH/bin`, then run it with the job env intact so the *analysis* still targets darwin.
 - **`conflicting nullability specifier on return types` was fixed on the Go side, not suppressed.** It used to fire on every macOS/iOS build: gomobile treats any `New<TypeName>` func as a constructor and builds the ObjC selector from whatever *follows* that prefix (`bind/gen.go`, `bind/genobjc.go`), so `NewOptions` on type `Options` left an empty suffix and emitted a bare `- (nullable instancetype)init` on `CrocmobileOptions`, clashing with `NSObject`'s `nonnull init`. Renaming the Go constructor to `NewOptionsDefault` keeps it recognised and yields `initDefault`. Do not rename it back, and do not add a `New<Type>` func whose suffix is empty.
 - **macOS app build has no signing identity.** The runner has no `Mac Development` cert, so the `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` to `xcodebuild`. The iOS Simulator destination never signs, so it needs nothing.
-- **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `github-pages.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and uses `cancel-in-progress: false` so deploys queue instead of cancelling each other.
-- **Scheduled workflows are disabled after 60 days of repo inactivity.** `govulncheck.yml` stops firing silently; `workflow_dispatch` restarts it.
+- **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `github-pages.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and sets `cancel-in-progress` only for pull requests, so deploys on `main` queue instead of cancelling each other.
+- **Scheduled workflows are disabled after 60 days of repo inactivity.** `go-weekly.yml` stops firing silently; `workflow_dispatch` restarts it.
 
 ## swift-format traps
 

@@ -35,7 +35,6 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Design system
 
-- **`scripts/verify-contrast.sh` runs only by hand.** Nothing in `.github/workflows/` calls it, so a `design/tokens.css` edit that breaks a documented ratio or an invariant reaches `main` unnoticed. It is now pure bash + awk with no toolchain of its own, so a `ubuntu-latest` job triggered on `design/**` would cost seconds; not wired up yet.
 - **`FileRow` stats each file for its size label inside `body`.** `List` is lazy so only visible rows pay, but it is still synchronous I/O on the main actor during layout, and a network or iCloud volume could make it hitch. Not measured.
 
 ## Landing page
