@@ -10,7 +10,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
 
-CROC="${CROC:-$HOME/go/bin/croc}"
+CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 require_croc
 
 CODE="shr-$$-send"

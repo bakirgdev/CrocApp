@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Interop verification: crocmobile (via croctest) <-> croc CLI v10.5.0.
+# Interop verification: crocmobile (via croctest) <-> croc CLI v11.
 # Covers: file/folder/text both directions, decline, cancel both directions,
 # forced relay (LAN disabled), LAN-only. Exits non-zero on first failure.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
 
-CROC="${CROC:-$HOME/go/bin/croc}"
+CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 require_croc
 
 TMP=$(mktemp -d)
@@ -76,34 +76,32 @@ grep -q "EVENT text cli text" "$TMP/4.log" || fail "receive text"
 wait; pass "receive text"
 
 # 5. decline notifies sender
-# croc v10.5.0 races on the sender side when a peer decline arrives: usually
-# "peer error: refusing files", occasionally the generic "context canceled"
-# (same event, two internal error-return paths). Accept either as evidence the
-# sender was notified.
+# The croc v11 CLI sender exits 0 on a peer decline and reports it only in its
+# debug log, as "peer error: refusing files".
 C=$(code n1)
-( cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" --ignore-stdin send a.txt > "$TMP/5s.log" 2>&1; echo "rc=$?" >> "$TMP/5s.log" ) &
+( cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" --debug --ignore-stdin send a.txt > "$TMP/5s.log" 2>&1; echo "rc=$?" >> "$TMP/5s.log" ) &
 sleep 3
 timeout 30 "$CT" receive -out "$TMP/dst" -answer n "$C" > "$TMP/5r.log" 2>&1 || true
 wait
 grep -q "refused files" "$TMP/5r.log" || fail "decline receiver side"
-grep -Eqi "refus|context canceled" "$TMP/5s.log" || fail "decline sender not notified"
+grep -q "peer error: refusing files" "$TMP/5s.log" || fail "decline sender not notified"
 pass "decline notifies sender"
 
 # 6. receiver cancels mid-transfer -> sender errors out
 # Throttle to 200 KB/s so the cancel lands at ~20% sent. Unthrottled loopback
 # (~250 MB/s) finishes the 5 MB file before any cancel fires, reducing this to a
 # test of the receiver's post-transfer hash step. Dedicated dst dir: scenario 7
-# reuses big.bin and must not see this scenario's partial copy.
+# reuses big.bin and must not see this scenario's partial copy. As in scenario
+# 5, the v11 CLI sender exits 0 and logs the peer's cancel only with --debug.
 C=$(code c1)
 mkdir -p "$TMP/dst6"
-( cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" --ignore-stdin --throttleUpload 200k send big.bin > "$TMP/6s.log" 2>&1; echo "rc=$?" >> "$TMP/6s.log" ) &
+( cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" --debug --ignore-stdin --throttleUpload 200k send big.bin > "$TMP/6s.log" 2>&1; echo "rc=$?" >> "$TMP/6s.log" ) &
 sleep 3
 timeout 30 "$CT" receive -out "$TMP/dst6" -answer y -cancel-after 6000 "$C" > "$TMP/6r.log" 2>&1 || true
 wait
 ! diff -q "$TMP/src/big.bin" "$TMP/dst6/big.bin" > /dev/null 2>&1 || fail "receiver cancel: transfer completed anyway"
 grep -q "cancelled\|error" "$TMP/6r.log" || fail "receiver cancel: receiver side"
-! grep -q "rc=0" "$TMP/6s.log" || fail "receiver cancel: sender exited 0"
-grep -Eqi "context canceled|peer error|refus" "$TMP/6s.log" || fail "receiver cancel: sender did not report a real error"
+grep -q "peer error: refusing files" "$TMP/6s.log" || fail "receiver cancel: sender not notified"
 pass "receiver cancel"
 
 # 7. sender cancels mid-transfer -> receiver errors out

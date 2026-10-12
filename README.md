@@ -197,7 +197,7 @@ scripts/verify-share-sim.sh   # share-extension handoff
 
 Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` needs the matching harness run.
 
-Env: `CROC` is the croc CLI path (default `~/go/bin/croc`), `SIM` is the simulator name (default `iPhone 17 Pro`; list them with `xcrun simctl list devices`).
+Env: `CROC` is the croc CLI path (default `$HOMEBREW_PREFIX/bin/croc`), `SIM` is the simulator name (default `iPhone 17 Pro`; list them with `xcrun simctl list devices`).
 
 </details>
 

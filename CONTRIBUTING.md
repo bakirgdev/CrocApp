@@ -64,11 +64,10 @@ open app/CrocApp.xcodeproj
 The verification harnesses also need the real `croc` CLI and outbound network access to the public relay:
 
 ```bash
-go install github.com/schollz/croc/v10@v10.5.0   # lands at ~/go/bin/croc, the default
-# or: brew install croc
+brew install croc   # lands at $HOMEBREW_PREFIX/bin/croc, the default
 ```
 
-Env: `CROC` overrides the CLI path (default `~/go/bin/croc`), `SIM` picks the simulator (default `iPhone 17 Pro`; list them with `xcrun simctl list devices`).
+Env: `CROC` overrides the CLI path (default `$HOMEBREW_PREFIX/bin/croc`), `SIM` picks the simulator (default `iPhone 17 Pro`; list them with `xcrun simctl list devices`).
 
 Deeper references: [`docs/BUILDING.md`](docs/BUILDING.md) for the exact toolchain and troubleshooting, [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system map, [`docs/GLOSSARY.md`](docs/GLOSSARY.md) for unfamiliar terms.
 

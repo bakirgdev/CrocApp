@@ -13,8 +13,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/schollz/croc/v10/src/croc"
-	"github.com/schollz/croc/v10/src/utils"
+	"github.com/schollz/croc/v11/src/codephrase"
+	"github.com/schollz/croc/v11/src/croc"
+	"github.com/schollz/croc/v11/src/models"
+	"github.com/schollz/croc/v11/src/tcp"
 )
 
 // One transfer at a time: croc needs process-global os.Chdir/os.Stdin/os.Stdout.
@@ -47,13 +49,22 @@ type session struct {
 	pollDone chan struct{} // closed when poll() returns; run() waits on it before the terminal delegate calls
 }
 
-func buildCrocOptions(sender bool, secret string, o *Options) croc.Options {
+func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, error) {
+	route, err := resolveRelay(secret, o)
+	if err != nil {
+		return croc.Options{}, err
+	}
+	password := o.RelayPassword
+	if password == "" {
+		password = models.DEFAULT_PASSPHRASE
+	}
 	return croc.Options{
 		IsSender:         sender,
 		SharedSecret:     secret,
-		RelayAddress:     o.RelayAddress,
-		RelayAddress6:    o.RelayAddress6,
-		RelayPassword:    o.RelayPassword,
+		RelayAddress:     route.v4,
+		RelayAddress6:    route.v6,
+		PublicRelay:      route.public,
+		RelayPassword:    password,
 		RelayPorts:       splitNonEmpty(o.RelayPorts, ","),
 		Curve:            o.Curve,
 		HashAlgorithm:    o.HashAlgorithm,
@@ -71,7 +82,7 @@ func buildCrocOptions(sender bool, secret string, o *Options) croc.Options {
 		IgnoreStdin:      true,
 		DisableClipboard: true,
 		Quiet:            false, // Quiet=true nukes process stderr globally
-	}
+	}, nil
 }
 
 func splitNonEmpty(s, sep string) []string {
@@ -112,8 +123,17 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 
 	if sender {
 		secret := o.Code
+		generatedPublic := secret == "" && usesPublicRelay(o)
 		if secret == "" {
-			secret = utils.GetRandomName()
+			var err error
+			if generatedPublic {
+				secret, err = generatePublicCode(tcp.MeasureServerLatencyContext)
+			} else {
+				secret, err = codephrase.Generate()
+			}
+			if err != nil {
+				return nil, fmt.Errorf("could not generate code phrase: %w", err)
+			}
 		}
 		if len(secret) < 6 {
 			return nil, errors.New("code is too short (must be at least 6 characters)")
@@ -152,7 +172,13 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			}
 			return nil, err
 		}
-		co := buildCrocOptions(true, secret, o)
+		co, err := buildCrocOptions(true, secret, o)
+		if err != nil {
+			if tempPath != "" {
+				os.Remove(tempPath)
+			}
+			return nil, err
+		}
 		co.SendingText = text != ""
 		ctx, cancel := context.WithCancel(context.Background())
 		c, err := croc.NewCtx(ctx, co)
@@ -185,7 +211,13 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			}
 		}
 		committed = true
-		go s.run(func() error { return c.Send(filesInfo, emptyFolders, totalFolders) }, origWD, func() { activeMu.Unlock() })
+		go s.run(func() error {
+			err := c.Send(filesInfo, emptyFolders, totalFolders)
+			if generatedPublic && errors.Is(err, croc.ErrRelayConnection) {
+				forgetPublicRelay()
+			}
+			return err
+		}, origWD, func() { activeMu.Unlock() })
 		go s.poll()
 		return s, nil
 	}
@@ -212,7 +244,10 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 		return nil, err
 	}
 
-	co := buildCrocOptions(false, code, o)
+	co, err := buildCrocOptions(false, code, o)
+	if err != nil {
+		return nil, err
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	c, err := croc.NewCtx(ctx, co)
 	if err != nil {

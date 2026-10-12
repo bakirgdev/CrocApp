@@ -18,7 +18,7 @@ import Testing
         ("peer refused files", "The other side declined the transfer."),
         ("Room Full", "That code is already in use. Try a different code."),
         (
-            "dial tcp: lookup croc.schollz.com: no such host",
+            "dial tcp: lookup 1.getcroc.com: no such host",
             "Couldn't reach the relay. Check your internet connection."
         ),
         ("connection refused", "Couldn't reach the relay. Check your internet connection."),

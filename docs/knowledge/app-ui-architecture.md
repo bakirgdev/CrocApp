@@ -57,14 +57,7 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 
 `relayPassword` is the one setting that is **not** in `UserDefaults`: it lives in the Keychain via `Support/KeychainStore.swift`, migrated out of the plist on first launch. Its `didSet` goes through `persistRelayPassword()`, which honours the same `persist` gate — that gate is load-bearing here in a way it is not for the other settings, because `resetToDefaults()` assigns `relayPassword = ""` and an ungated write would blank a real user's stored password on any machine that has ever run a verify script.
 
-Relay strings use `""` to mean "croc default", shown as a `TextField` prompt. Two accessor families, and the difference matters:
-
-| Accessor | Purpose |
-|---|---|
-| `effective*` | display only; never hands back an empty value |
-| `engineRelayAddresses` | what reaches the engine; blanks the *non*-customised side when only one of v4/v6 is customised |
-
-That blanking is CLI parity: croc skips empty relay addresses when dialling, so it stops a custom relay from losing the dial race to the public default. Never leave both empty. `relayKind` (`publicDefault` / `custom` / `localOnly`) classifies as custom if either address is customised.
+Relay strings use `""` to mean "croc default" (the `TextField` prompt reads "Public relay pool") and reach the engine as stored, password included. Go resolves them (`crocmobile/relay.go`): blank means croc's default, and with no custom relay and local-only off the relay comes from upstream's public pool by code. `relayKind` (`publicDefault` / `custom` / `localOnly`) is display-only and classifies as custom if either address is set to something other than `RelayDefaults` (CrocKit, read from Go).
 
 `Views/PowerSettingsSections.swift` holds the shared `Form` sections — relay, transfer toggles, exclusions, confirmation with the auto-accept warning footer — embedded in both the macOS `SettingsView` (Settings scene, ⌘,) and the iOS `SettingsScreen` (gear toolbar → `Route.settings`). `TrustBadge(relay:)` appears in the waiting, transferring, and confirm-send views. `HowItWorksView` is the plain-language explainer; its facts come from `what-is-croc.md`.
 

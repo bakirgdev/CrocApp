@@ -9,7 +9,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/schollz/croc/v10/src/croc"
+	"github.com/schollz/croc/v11/src/croc"
 )
 
 func TestSplitNonEmpty(t *testing.T) {
@@ -44,6 +44,15 @@ func TestSplitNonEmpty(t *testing.T) {
 	}
 }
 
+func mustBuildCrocOptions(t *testing.T, sender bool, secret string, o *Options) croc.Options {
+	t.Helper()
+	c, err := buildCrocOptions(sender, secret, o)
+	if err != nil {
+		t.Fatalf("buildCrocOptions: %v", err)
+	}
+	return c
+}
+
 func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 	o := &Options{
 		RelayAddress:   "relay4.example:9009",
@@ -63,7 +72,7 @@ func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 		Ask:            true,
 		NoMultiplexing: true,
 	}
-	got := buildCrocOptions(false, "secret-code", o)
+	got := mustBuildCrocOptions(t, false, "secret-code", o)
 
 	want := croc.Options{
 		IsSender:         false,
@@ -114,7 +123,7 @@ func TestBuildCrocOptionsBoolsMapIndependently(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			o := &Options{}
 			tt.set(o)
-			c := buildCrocOptions(false, "secret-code", o)
+			c := mustBuildCrocOptions(t, false, "secret-code", o)
 			for j, other := range tests {
 				if got, want := other.get(c), i == j; got != want {
 					t.Errorf("setting only %s: croc %s = %v, want %v", tt.name, other.name, got, want)
@@ -136,7 +145,7 @@ func TestBuildCrocOptionsNoPrompt(t *testing.T) {
 		{true, true, true},
 	}
 	for _, tt := range tests {
-		c := buildCrocOptions(tt.sender, "secret-code", &Options{AutoAccept: tt.autoAccept})
+		c := mustBuildCrocOptions(t, tt.sender, "secret-code", &Options{AutoAccept: tt.autoAccept})
 		if c.NoPrompt != tt.want {
 			t.Errorf("sender=%v autoAccept=%v: NoPrompt = %v, want %v", tt.sender, tt.autoAccept, c.NoPrompt, tt.want)
 		}
@@ -148,7 +157,7 @@ func TestBuildCrocOptionsNoPrompt(t *testing.T) {
 
 func TestBuildCrocOptionsFixedValues(t *testing.T) {
 	for _, sender := range []bool{true, false} {
-		c := buildCrocOptions(sender, "my-secret", &Options{})
+		c := mustBuildCrocOptions(t, sender, "my-secret", &Options{})
 		if c.SharedSecret != "my-secret" {
 			t.Errorf("sender=%v: SharedSecret = %q", sender, c.SharedSecret)
 		}
