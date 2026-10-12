@@ -49,7 +49,7 @@ Features carry stable numbers (`F1`, `F2`, …) used across code comments, issue
 
 ## Setup
 
-Requires **macOS 26**, **Xcode 26.6** (the pin lives in [`.xcode-version`](.xcode-version)), and **Go 1.26.5 or newer**. `gomobile` and `gobind` install themselves on first run.
+Requires **macOS 26**, **Xcode 27.0** (the pin lives in [`.xcode-version`](.xcode-version)), and **Go 1.27.2 or newer**. `gomobile` and `gobind` install themselves on first run.
 
 ```bash
 git clone https://github.com/bakirgdev/CrocApp.git

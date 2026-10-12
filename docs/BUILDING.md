@@ -7,12 +7,12 @@ Deep reference for the exact toolchain and the exact steps from a fresh clone to
 | Tool | Required version | Pinned in | Install (macOS) |
 |---|---|---|---|
 | Host OS | macOS 26 | README, CONTRIBUTING.md | — |
-| Xcode | `26.6` | `.xcode-version` | Apple Developer downloads, or `xcodes install 26.6` |
-| Go | `>= 1.26.5` | `crocmobile/go.mod` (`go 1.26.5`) | `brew install go` |
-| gomobile / gobind | unpinned, `@latest` | `scripts/build-xcframework.sh` installs both on first run if missing | nothing to install by hand; the script runs `go install golang.org/x/mobile/cmd/gomobile@latest` and `.../cmd/gobind@latest` into `$(go env GOPATH)/bin` |
-| swift-format | ships with the Xcode 26.6 toolchain (`docs/knowledge/tooling.md` records the bundled version as 6.3) | `.swift-format` (formatting rules; the binary itself is not separately versioned in this repo) | none, invoke via `scripts/format-swift.sh` |
-| golangci-lint | `2.x`; CI pins `v2.12.2` exactly | `.github/workflows/ci.yml` (`golangci-lint-action@v9`, `version: v2.12.2`); rule config in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
-| govulncheck | unpinned, `@latest` | `.github/workflows/ci.yml` (go job) and `.github/workflows/govulncheck.yml` | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
+| Xcode | `27.0` | `.xcode-version` | Apple Developer downloads, or `xcodes install 27.0` |
+| Go | `>= 1.27.2` | `crocmobile/go.mod` (`go 1.27.2`) | `brew install go` |
+| gomobile / gobind | pinned by the `tool` block in `crocmobile/go.mod` (`golang.org/x/mobile`) | `scripts/build-xcframework.sh` rebuilds both into `.tools/` on every run | nothing to install by hand |
+| swift-format | ships with the Xcode 27.0 toolchain (`docs/knowledge/tooling.md` records the bundled toolchain as Swift 6.4) | `.swift-format` (formatting rules; the binary itself is not separately versioned in this repo) | none, invoke via `scripts/format-swift.sh` |
+| golangci-lint | `2.x`; CI pins `v2.14.0` exactly | `.github/workflows/reusable-go.yml` (`golangci-lint-action`, `version: v2.14.0`); rule config in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
+| govulncheck | pinned by the `tool` block in `crocmobile/go.mod` (`golang.org/x/vuln`) | `.github/workflows/reusable-go.yml` (called by `ci.yml`, `release.yml`, `go-weekly.yml`) | `cd crocmobile && go tool govulncheck ./...` |
 | create-dmg | unpinned | `.github/workflows/release.yml` installs it with `brew` | `brew install create-dmg`. Needed only by `scripts/build-dmg.sh`, not for a plain build |
 | croc CLI | `v10.5.0`, to match the embedded engine | `crocmobile/go.mod` (`github.com/schollz/croc/v10 v10.5.0`, indirect) | `go install github.com/schollz/croc/v10@v10.5.0` (lands at `~/go/bin/croc`, the harnesses' default) or `brew install croc`. Needed only for `scripts/verify-*.sh` and `crockit-verify`, not for a plain build |
 
@@ -64,7 +64,7 @@ gomobile bind \
 - **Why arm64-only on macOS**: [golang/go#73119](https://github.com/golang/go/issues/73119), gomobile cannot currently produce a multi-arch macOS bind. `Croc.xcframework` therefore has no `x86_64` slice, and Intel Macs that can otherwise run macOS 26 (the 2019 MacBook Pro 16", 2020 iMac, and 2019 Mac Pro) cannot run CrocApp. The pbxproj pins `ARCHS[sdk=macosx*] = arm64` for this reason; removing that pin does not restore Intel support, it just breaks the link.
 - **Open note on iOS device archives**: [golang/go#66500](https://github.com/golang/go/issues/66500) is a device-slice layout issue that affects App Store archives specifically, not simulator or local device builds. Still open; revisit before the first store submission.
 
-`gomobile`/`gobind` are installed at `@latest`, unpinned. If a future gomobile release ever regresses the bind, pin the version in this script and record it in `docs/knowledge/tooling.md`.
+`gomobile`/`gobind` are built from the `golang.org/x/mobile` version in the `tool` block of `crocmobile/go.mod`. If a future release regresses the bind, pin `x/mobile` to the last good version there and record it in `docs/knowledge/tooling.md`.
 
 ## 4. Format and lint
 
@@ -116,7 +116,7 @@ Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferControlle
 - **Swift 6 language mode everywhere.** `SWIFT_VERSION = 6.0` on both targets (`CrocApp`, `CrocShare`, all build configurations, `app/CrocApp.xcodeproj/project.pbxproj`) and `CrocKit`'s `swift-tools-version: 6.0`. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default, `nonisolated` is the explicit opt-out, and strict concurrency violations are build errors, not warnings.
 - **Deployment target is `26.0` everywhere, never a minor.** `IPHONEOS_DEPLOYMENT_TARGET = 26.0` and `MACOSX_DEPLOYMENT_TARGET = 26.0` in the pbxproj, `platforms: [.iOS("26.0"), .macOS("26.0")]` in `CrocKit/Package.swift`, and `-iosversion 26.0 -macosversion 26.0` in `scripts/build-xcframework.sh`. All four must move together.
 - **macOS is arm64-only.** `"ARCHS[sdk=macosx*]" = arm64` in the pbxproj. `Croc.xcframework` has no `x86_64` macOS slice (golang/go#73119, section 3), so this pin exists to fail the link cleanly rather than let an Intel archive attempt one that cannot succeed.
-- **Go toolchain pin, `>= 1.26.5` in `crocmobile/go.mod`.** Bumping it means rerunning `scripts/build-xcframework.sh` to confirm the bind still works on the new toolchain before trusting anything downstream.
+- **Go toolchain pin, `>= 1.27.2` in `crocmobile/go.mod`.** Bumping it means rerunning `scripts/build-xcframework.sh` to confirm the bind still works on the new toolchain before trusting anything downstream.
 
 ## 7. Distribution builds
 
@@ -146,9 +146,9 @@ Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 
 ## 9. When the toolchain changes
 
-- **Xcode bump**: update `.xcode-version` (single line). Confirm the `macos-26` GitHub runner image actually carries that exact version first (`docs/knowledge/tooling.md` notes the image has spanned `26.0.1`-`26.6`, default `26.5`). Rerun `scripts/build-xcframework.sh` to confirm gomobile still binds clean, then the full build matrix, then at least one `verify-*.sh` harness live.
+- **Xcode bump**: update `.xcode-version` (single line). Confirm the `xcode-27` GitHub runner image actually carries that exact version first (`docs/knowledge/tooling.md` notes the image carries 27.0 (default), 27.1 and 27.2 beta). Rerun `scripts/build-xcframework.sh` to confirm gomobile still binds clean, then the full build matrix, then at least one `verify-*.sh` harness live.
 - **Go bump**: update `go 1.x.y` in `crocmobile/go.mod`, rerun `scripts/build-xcframework.sh`.
 - **croc bump**: `go get github.com/schollz/croc/v10@vX.Y.Z` in `crocmobile/`, rebind, then update every place that names the version by hand: `README.md` FAQ, `CONTRIBUTING.md`'s croc-install line, this file's prerequisites table, and `docs/knowledge/crocmobile-bridge.md`. Check `docs/knowledge/croc-upgrade-playbook.md` for the full procedure.
-- **golangci-lint bump**: change the `version:` input on the `golangci-lint-action` step in `.github/workflows/ci.yml`; update `crocmobile/.golangci.yml`'s schema `version:` if the new major changes it.
-- **gomobile/gobind**: unpinned by design (`@latest`). If a bind ever regresses on a new release, pin it explicitly in `scripts/build-xcframework.sh` and record the pin in `docs/knowledge/tooling.md`.
+- **golangci-lint bump**: change the `version:` input on the `golangci-lint-action` step in `.github/workflows/reusable-go.yml`; update `crocmobile/.golangci.yml`'s schema `version:` if the new major changes it.
+- **gomobile/gobind**: pinned by the `tool` block in `crocmobile/go.mod`; bump with `go get golang.org/x/mobile@latest`. If a bind regresses on a new release, pin the last good version there and record it in `docs/knowledge/tooling.md`.
 - Whatever changed, re-check whether [golang/go#73119](https://github.com/golang/go/issues/73119) (macOS multi-arch bind) or [golang/go#66500](https://github.com/golang/go/issues/66500) (iOS device archive layout) have been fixed upstream before assuming either still blocks Intel Mac support or App Store archives; both are live gates on real behavior, not just build warnings.

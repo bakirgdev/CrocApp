@@ -58,6 +58,7 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 ## Accepted
 
 - **When both relay addresses are customised, both are sent.** croc's own CLI blanks `RelayAddress6` whenever v4 is customised, without checking whether v6 was customised too (`src/cli/cli.go`, send and receive alike), so it silently discards a user's custom v6 relay. Keeping both is more correct, not less. The divergence is deliberate and is not going to be "fixed" toward the CLI's behaviour.
+- **`dropDestination(for:action:isTargeted:)` stays at `ContentView.swift` and `SendView.swift`.** The Xcode 27 SDK marks it deprecated only for a future OS (`deprecated: 100000.0`), so builds emit no warning. The replacement `dropDestination(for:isEnabled:action:)` takes a `Void` action (a drop cannot be rejected) and has no `isTargeted`; its highlight API `onDropSessionUpdated` is iOS 27 / macOS 26 only, and the deployment target is iOS 26.0. Revisit when the minimum OS reaches 27.
 - **`OutputFolderStore.select` silently no-ops if bookmarking fails.** Rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **`.combine` on the transfer progress view may hide the percentage from VoiceOver.** Worth a real accessibility pass, not a spot fix.
