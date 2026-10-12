@@ -33,7 +33,7 @@ Transfers are end-to-end encrypted, the code phrase authenticates both sides, an
 
 ## Links
 
-- Documentation (install, transfers, settings, security, troubleshooting; English plus Bosnian, German, Spanish, French, Russian): https://crocapp.dev/docs/
+- Documentation (install, transfers, settings, security, troubleshooting; English): https://crocapp.dev/docs/
 - Source and issue tracker: https://github.com/bakirgdev/CrocApp
 - croc, the underlying engine: https://github.com/schollz/croc
 - Sponsor: https://github.com/sponsors/bakirgdev

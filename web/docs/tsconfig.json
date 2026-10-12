@@ -2,8 +2,9 @@
 {
   "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
+    // TS 7 removed baseUrl but the extended config still sets it; `paths` below then resolves from this file.
+    "baseUrl": null,
+    "paths": { "@site/*": ["./*"] },
     "strict": true
   },
   "exclude": [".docusaurus", "build"]

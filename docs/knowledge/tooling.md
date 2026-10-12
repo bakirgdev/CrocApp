@@ -13,6 +13,9 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | `go test -race ./...` (Go `testing`) | `crocmobile/*_test.go` | local + CI (go job, `GOOS`/`GOARCH` unset) |
 | Swift Testing (Xcode's built-in) | `CrocKit/Tests/CrocKitTests/`, `app/CrocAppTests/` (shared `CrocApp` scheme) | local + CI (macOS leg of `build`) |
 | xcbeautify | none | CI only |
+| Node 24 (latest LTS) | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
+| pnpm 12 | `packageManager` in `web/docs/package.json` (CI: `corepack enable pnpm` reads it) | docs site, local + CI |
+| Docusaurus 3.10, React 19.3, TypeScript 7 | `web/docs/package.json`, `pnpm-lock.yaml`; `pnpm-workspace.yaml` holds `overrides` for transitive advisories | docs site, local + CI (`pnpm run typecheck` in `github-pages.yml`) |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:00 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | PRs build only; push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) also deploys |

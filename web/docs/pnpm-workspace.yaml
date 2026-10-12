@@ -1,3 +1,9 @@
 allowBuilds:
   '@swc/core': true
   core-js: true
+# Floors for transitive advisories the Docusaurus 3.10 tree has not picked up yet; drop each once `pnpm audit` is clean without it.
+overrides:
+  serialize-javascript: '>=7.0.5'
+  uuid: '>=11.1.1'
+  tinypool: '>=2.1.2'
+  postcss-selector-parser: '>=7.1.6'
