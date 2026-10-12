@@ -40,7 +40,7 @@ Not needed yet, current *is* 0.9.9, no `versioned_docs/` exists. When 1.0.0 tags
 
 ## Broken links fail the build
 
-`onBrokenLinks`, `onBrokenAnchors`, `markdown.hooks.onBrokenMarkdownLinks`, and `markdown.hooks.onBrokenMarkdownImages` are all `throw`. A bad internal link or anchor fails `pnpm run build`, which fails `scripts/assemble-site.sh`, which fails `github-pages.yml`. `github-pages-preview.yml` runs the same assembly on `pull_request`, so this is caught before merge, not only after a push to `main`.
+`onBrokenLinks`, `onBrokenAnchors`, `markdown.hooks.onBrokenMarkdownLinks`, and `markdown.hooks.onBrokenMarkdownImages` are all `throw`. A bad internal link or anchor fails `pnpm run build`, which fails `scripts/assemble-site.sh`, which fails `github-pages.yml`. `github-pages.yml` runs the same assembly on `pull_request` (build only, no deploy), so this is caught before merge, not only after a push to `main`.
 
 ## One workflow publishes both surfaces
 

@@ -3,19 +3,7 @@ name: CI pass
 on:
   push:
     branches: [main]
-    paths: &code-paths
-      - "app/**"
-      - "CrocKit/**"
-      - "crocmobile/**"
-      - "scripts/build-xcframework.sh"
-      - "scripts/format-swift.sh"
-      - ".swift-format"
-      - ".xcode-version"
-      - ".github/workflows/ci.yml"
-      - ".github/workflows/reusable-go.yml"
-      - ".github/workflows/reusable-swift-format.yml"
   pull_request:
-    paths: *code-paths
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,18 +13,97 @@ permissions:
   contents: read
 
 jobs:
+  # No workflow-level `paths:`: a filtered-out workflow never reports, which
+  # leaves a required check pending forever. Jobs skip via `if:` instead.
+  changes:
+    name: changes
+
+    runs-on: ubuntu-24.04
+
+    timeout-minutes: 5
+
+    outputs:
+      swift: ${{ steps.filter.outputs.swift }}
+      go: ${{ steps.filter.outputs.go }}
+      build: ${{ steps.filter.outputs.build }}
+      design: ${{ steps.filter.outputs.design }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: filter
+        shell: bash
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+
+          # A new branch push has an all-zero `before`, a force push may point at
+          # a commit the clone no longer has: run everything rather than guess.
+          all=""
+          if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            files=$(git diff --name-only "$BASE" "$GITHUB_SHA")
+          else
+            files=""
+            all=1
+          fi
+
+          out() {
+            if [ -n "$all" ] || grep -qE "$2" <<<"$files"; then
+              echo "$1=true"
+            else
+              echo "$1=false"
+            fi
+          }
+
+          {
+            out swift '^(app|CrocKit)/|^\.swift-format$|^\.xcode-version$|^scripts/format-swift\.sh$|^\.github/workflows/(ci|reusable-swift-format)\.yml$'
+            out go '^crocmobile/|^\.github/workflows/(ci|reusable-go)\.yml$'
+            out build '^(app|CrocKit|crocmobile)/|^scripts/build-xcframework\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
+            out design '^design/|^scripts/(lib|verify-contrast)\.sh$|^\.github/workflows/ci\.yml$'
+          } | tee -a "$GITHUB_OUTPUT"
+
   swift-format:
+    needs: changes
+
+    if: needs.changes.outputs.swift == 'true'
+
     uses: ./.github/workflows/reusable-swift-format.yml
 
   go:
+    needs: changes
+
+    if: needs.changes.outputs.go == 'true'
+
     uses: ./.github/workflows/reusable-go.yml
+
+  contrast:
+    name: contrast
+
+    needs: changes
+
+    if: needs.changes.outputs.design == 'true'
+
+    runs-on: ubuntu-24.04
+
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - run: scripts/verify-contrast.sh
 
   format-comment:
     name: format comment
 
     needs: swift-format
 
-    if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ !cancelled() && needs.swift-format.result != 'skipped' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
 
     runs-on: ubuntu-24.04
 
@@ -74,7 +141,11 @@ jobs:
   build:
     name: build (${{ matrix.platform }})
 
-    runs-on: macos-26
+    needs: changes
+
+    if: needs.changes.outputs.build == 'true'
+
+    runs-on: xcode-27
 
     timeout-minutes: 30
 
@@ -125,13 +196,33 @@ jobs:
       - name: Build CrocApp
         shell: bash
         working-directory: app
+        env:
+          DESTINATION: ${{ matrix.destination }}
         run: |
           set -o pipefail
           xcodebuild -scheme CrocApp \
-            -destination '${{ matrix.destination }}' \
+            -destination "$DESTINATION" \
             -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGNING_ALLOWED=NO \
             build \
+            | xcbeautify --renderer github-actions
+
+      - name: Test CrocKit
+        if: matrix.platform == 'macOS'
+        shell: bash
+        run: set -o pipefail && swift test --package-path CrocKit 2>&1 | xcbeautify --renderer github-actions
+
+      - name: Test CrocApp
+        if: matrix.platform == 'macOS'
+        shell: bash
+        working-directory: app
+        run: |
+          set -o pipefail
+          xcodebuild -scheme CrocApp \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO \
+            test \
             | xcbeautify --renderer github-actions
 
       - name: Save DerivedData
@@ -140,3 +231,29 @@ jobs:
         with:
           path: ${{ runner.temp }}/dd
           key: deriveddata-${{ matrix.platform }}-${{ steps.xcode.outputs.version }}-${{ github.sha }}
+
+  # The one required check. A job skipped by `if:` counts as passed, but a
+  # skipped matrix job reports under its unexpanded name and stays pending, so
+  # branch protection requires this aggregate instead of the individual jobs.
+  pass:
+    name: ci pass
+
+    needs: [changes, swift-format, go, contrast, build]
+
+    if: ${{ always() }}
+
+    runs-on: ubuntu-24.04
+
+    timeout-minutes: 5
+
+    steps:
+      - name: Fail unless every job succeeded or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            case "$result" in
+              success | skipped) ;;
+              *) echo "error: a required job finished as '$result'"; exit 1 ;;
+            esac
+          done

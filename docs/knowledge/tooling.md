@@ -6,40 +6,41 @@ What is wired up, what was deliberately skipped, and the traps in each.
 
 | Tool | Config | Where it runs |
 |---|---|---|
-| swift-format 6.3 (toolchain) | `.swift-format` (rules) + `scripts/format-swift.sh` (source set) | local + CI |
-| golangci-lint 2.x (CI pins v2.12.2) | `crocmobile/.golangci.yml` | local + CI |
-| govulncheck | none | CI go job + weekly schedule (`go install` on demand) |
+| swift-format (Xcode 27 toolchain, Swift 6.4) | `.swift-format` (rules) + `scripts/format-swift.sh` (source set) | local + CI |
+| golangci-lint 2.x (CI pins v2.14.0 in `reusable-go.yml`) | `crocmobile/.golangci.yml` | local + CI |
+| govulncheck (`tool` block in `crocmobile/go.mod`) | none | CI go job + weekly schedule |
 | `go build ./...` + `go vet ./...` | none | CI (go job, alongside lint/vuln) |
+| `go test -race ./...` (Go `testing`) | `crocmobile/*_test.go` | local + CI (go job, `GOOS`/`GOARCH` unset) |
+| Swift Testing (Xcode's built-in) | `CrocKit/Tests/CrocKitTests/`, `app/CrocAppTests/` (shared `CrocApp` scheme) | local + CI (macOS leg of `build`) |
 | xcbeautify | none | CI only |
-| GitHub Actions | `.github/workflows/ci.yml` | push to main, PRs (code paths) |
-| GitHub Actions | `.github/workflows/govulncheck.yml` | Mondays 06:00 UTC + manual |
-| GitHub Actions | `.github/workflows/github-pages.yml` | push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) |
-| GitHub Actions | `.github/workflows/github-pages-preview.yml` | pull requests touching either site surface; build only, never deploys |
-| GitHub Actions | `.github/workflows/release.yml` | `workflow_dispatch` rehearses, `v*` tag publishes |
+| GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched |
+| GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:00 UTC + manual |
+| GitHub Actions | `.github/workflows/github-pages.yml` | PRs build only; push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) also deploys |
+| GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes |
 
-Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file. The `macos-26` runner image carries 26.0.1 through 26.6, default 26.5, so the pin must name a version that image actually has.
+Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file. Jobs that need Xcode 27 run on the `xcode-27` runner label (a public preview; `macos-26` does not carry Xcode 27). Its image carries 27.0 (default), 27.1 and 27.2 beta, so the pin must name a version that image actually has.
 
 ## Build configuration you cannot casually change
 
 - **Swift 6 language mode everywhere.** App and extension are `SWIFT_VERSION = 6.0`, `CrocKit` is swift-tools 6.0. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default and `nonisolated` is the explicit case. Strict concurrency is an error, not a warning.
 - **Deployment targets are `26.0` everywhere** — pbxproj, `Package.swift`, and `gomobile -iosversion`/`-macosversion`. Never a minor pin.
 - **macOS is arm64 only** (`ARCHS[sdk=macosx*] = arm64`). `Croc.xcframework` has no x86_64 slice because gomobile cannot produce one (golang/go#73119), so Intel Macs cannot run the app. Removing the pin does not add Intel support, it breaks the link.
-- **Go toolchain ≥ 1.26.5**, pinned in `crocmobile/go.mod`. `scripts/build-xcframework.sh` auto-installs gomobile and gobind at `@latest` — unpinned, worth pinning if a bind ever regresses.
+- **Go toolchain ≥ 1.27.2**, pinned in `crocmobile/go.mod`. `scripts/build-xcframework.sh` builds gomobile and gobind from the `golang.org/x/mobile` version in the same file's `tool` block; pin x/mobile to the last good version if a bind ever regresses.
 
 CI gotchas:
 
-- **`ci.yml` triggers on a `paths` allowlist**, not `paths-ignore`, shared by both triggers through a YAML anchor: `app/**`, `CrocKit/**`, `crocmobile/**`, `scripts/build-xcframework.sh`, `scripts/format-swift.sh`, `.swift-format`, `.xcode-version`, `.github/workflows/ci.yml`. The earlier ignore-list rotted — `design/` and `.claude/` were not on it and each paid for a full macOS matrix. An allowlist fails closed: a new non-code directory costs nothing until someone adds it. Adding a file CI *does* consume (a new script, a new dotfile config) means adding it here. If CI ever becomes a required check, a filtered-out PR leaves the check pending — switch to a change-detection job that reports success instead.
+- **`ci.yml` has no workflow-level `paths:`.** A filtered-out workflow never reports, so a required check would stay pending. Instead a `changes` job diffs the PR base (or the push's `before`) against the head with plain `git diff --name-only` and sets one output per area (`swift`, `go`, `build`, `design`); each job gates on its output with `if:`. A skipped job counts as passed. Adding a file CI *does* consume (a new script, a new dotfile config) means adding it to the matching regex in the `changes` job. An unknown base (new branch, force push) runs everything. A skipped matrix job reports under its unexpanded name and stays pending, so branch protection requires only the `ci pass` aggregate job, never the individual jobs. Unit tests ride on existing jobs: `go test -race` in `reusable-go.yml` (with `GOOS`/`GOARCH` unset for that step, since the job-level `darwin` would build a test binary the Linux runner cannot run), and `swift test` plus `xcodebuild test` on the macOS leg of `build`.
 - **govulncheck under the go job's cross-compile env.** The go job sets `GOOS=darwin GOARCH=arm64` job-wide so vet/build analyse the shipping target. `go install` honours that and drops a darwin binary into `$GOPATH/bin/darwin_arm64/` (unrunnable on the Linux host, and not where `$(go env GOPATH)/bin/…` looks) → exit 127. Install the tool with `env -u GOOS -u GOARCH` so the binary is host-native in `$GOPATH/bin`, then run it with the job env intact so the *analysis* still targets darwin.
 - **`conflicting nullability specifier on return types` was fixed on the Go side, not suppressed.** It used to fire on every macOS/iOS build: gomobile treats any `New<TypeName>` func as a constructor and builds the ObjC selector from whatever *follows* that prefix (`bind/gen.go`, `bind/genobjc.go`), so `NewOptions` on type `Options` left an empty suffix and emitted a bare `- (nullable instancetype)init` on `CrocmobileOptions`, clashing with `NSObject`'s `nonnull init`. Renaming the Go constructor to `NewOptionsDefault` keeps it recognised and yields `initDefault`. Do not rename it back, and do not add a `New<Type>` func whose suffix is empty.
 - **macOS app build has no signing identity.** The runner has no `Mac Development` cert, so the `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` to `xcodebuild`. The iOS Simulator destination never signs, so it needs nothing.
-- **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `github-pages.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and uses `cancel-in-progress: false` so deploys queue instead of cancelling each other.
-- **Scheduled workflows are disabled after 60 days of repo inactivity.** `govulncheck.yml` stops firing silently; `workflow_dispatch` restarts it.
+- **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `github-pages.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and sets `cancel-in-progress` only for pull requests, so deploys on `main` queue instead of cancelling each other.
+- **Scheduled workflows are disabled after 60 days of repo inactivity.** `go-weekly.yml` stops firing silently; `workflow_dispatch` restarts it.
 
 ## swift-format traps
 
 - **Default config does not fit this repo.** `indentation: 2` and `indentConditionalCompilationBlocks: true` are the swift-format defaults; both are wrong here. The `#if os(macOS)` bodies all over `Platform/` would gain a level of indent, producing a ~500-warning reformat that also fights Xcode's editor (Xcode indents from its own text-editing prefs, not `.swift-format`). Repo uses 4 spaces, unindented `#if` bodies.
 - **Several enabled rules are lint-only**: they flag but never rewrite, so `format --in-place` leaves them and they must be fixed by hand. CI runs `lint --strict`, which turns every such warning into a build failure, so none may be left behind. Verified lint-only: `ReplaceForEachWithForLoop` (`.forEach { }` → for-in loop), `OnlyOneTrailingClosureArgument` (a call mixing a closure argument such as `onDismiss:` with a trailing closure → pass the trailing closure as an explicit `content:` argument), `AlwaysUseLowerCamelCase`, `TypeNamesShouldBeCapitalized`, `DontRepeatTypeInStaticProperties`, `NoBlockComments`, `AvoidRetroactiveConformances`. A clean `format` run is not evidence CI will pass; run `lint --strict` too.
-- **Every rule in the config is listed explicitly**, enabled and disabled alike, in one alphabetical block, and every non-default config knob is pinned. Checked against `xcrun swift-format dump-configuration`: all 43 rules and all 21 knobs 6.3 knows are present, no unknown keys. A rule swift-format adds in a future release still lands on its own default, but nothing already listed can shift underneath a contributor. The formatter binary itself is pinned by `.xcode-version`, which the CI job reads.
+- **Every rule in the config is listed explicitly**, enabled and disabled alike, in one alphabetical block, and every non-default config knob is pinned. Checked against `xcrun swift-format dump-configuration`: all 43 rules and all knobs the Xcode 27 toolchain knows are present, no unknown keys, except `multilineTrailingCommaBehavior` (left at its default `keptAsWritten`). Xcode 27 made `orderedImports.shouldGroupImports` mandatory: a missing key fails every file with "Unable to read configuration". A rule swift-format adds in a future release still lands on its own default, but nothing already listed can shift underneath a contributor. The formatter binary itself is pinned by `.xcode-version`, which the CI job reads.
 - **The source set lives in `scripts/format-swift.sh`, not in the config.** swift-format has no "which files" setting, so the path list used to be copy-pasted into CI, the PR template, `README.md`, `CONTRIBUTING.md` and here — and drifted: `CrocKit/Package.swift` was never linted by any of them. One script now owns it. `CrocKit` is enumerated file-by-file rather than passed as a directory, because `--recursive` there descends into `.build/` and `Croc.xcframework/`.
 - `UseSynthesizedInitializer` is off. It flags hand-written memberwise inits that SwiftData/`@Model` types need.
 - `NeverForceUnwrap` and `NeverUseForceTry` are **on** as of 2026-08-10. They used to be off for two sites; one is gone (`CrocEngine.crocOptions` now does `guard let ... else throw` on `CrocmobileNewOptionsDefault()`), and the other, `HistoryStore.makeContainer`, carries a `// swift-format-ignore: NeverUseForceTry` on the single line. That `try!` sits inside the *catch* branch that already fell back to a memory-only store and the return type is non-optional, so there is nothing left to fall back to. Suppressing per line makes the exception enforced instead of a prose comment nobody checks. Both rules were zero-finding on the rest of the tree when enabled.
@@ -68,7 +69,7 @@ These cost real debugging time on this machine. All are environment quirks, not 
 | Tool | Revisit when |
 |---|---|
 | SwiftLint | more than one person writes Swift here |
-| Periphery | pre-1.0 dead-code sweep. Needs a committed scheme (none exist today) and false-positives on gomobile bindings + SwiftUI reflection |
+| Periphery | pre-1.0 dead-code sweep. Can use the committed `CrocApp` scheme; false-positives on gomobile bindings + SwiftUI reflection |
 | Danger | after main is PR-only |
 | Tuist / XcodeGen | first real `.pbxproj` merge conflict (Kintsugi is the lighter answer) |
 | fastlane | App Store / TestFlight upload. Notarization stays a separate step, but the credentials can be shared: `notarytool` accepts an App Store Connect API key via `--key` / `--key-id` / `--issuer`, alongside `--apple-id`/`--password` and `--keychain-profile` |

@@ -41,12 +41,12 @@ final class BackgroundCoordinator {
         self.onExpiration = onExpiration
         generation += 1
         let expected = generation
-        let handler: (BGTask) -> Void = { bgTask in
+        let handler: (BGTask) -> Void = { [weak self] bgTask in
             guard let continued = bgTask as? BGContinuedProcessingTask else {
                 bgTask.setTaskCompleted(success: false)
                 return
             }
-            Task { @MainActor [weak self] in self?.adopt(continued, expected: expected) }
+            Task { @MainActor in self?.adopt(continued, expected: expected) }
         }
         var identifier = Self.wildcardPrefix + UUID().uuidString
         if !BGTaskScheduler.shared.register(

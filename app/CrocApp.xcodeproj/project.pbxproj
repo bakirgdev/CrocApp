@@ -12,6 +12,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		844EAD48307C8833006F34A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84DEC93F30101868006ECBE6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 84DEC94630101868006ECBE6;
+			remoteInfo = CrocApp;
+		};
 		CA000000000000000000000A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 84DEC93F30101868006ECBE6 /* Project object */;
@@ -36,11 +43,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		844EAD41307C8833006F34A7 /* CrocAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CrocAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		84DEC94730101868006ECBE6 /* CrocApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CrocApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0000000000000000000001 /* CrocShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrocShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		844EAD42307C8833006F34A7 /* CrocAppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CrocAppTests;
+			sourceTree = "<group>";
+		};
 		84DEC94930101868006ECBE6 /* CrocApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = CrocApp;
@@ -54,6 +67,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		844EAD3E307C8833006F34A7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		84DEC94430101868006ECBE6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -77,6 +97,7 @@
 			children = (
 				84DEC94930101868006ECBE6 /* CrocApp */,
 				CA0000000000000000000002 /* CrocShare */,
+				844EAD42307C8833006F34A7 /* CrocAppTests */,
 				84DEC94830101868006ECBE6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -86,6 +107,7 @@
 			children = (
 				84DEC94730101868006ECBE6 /* CrocApp.app */,
 				CA0000000000000000000001 /* CrocShare.appex */,
+				844EAD41307C8833006F34A7 /* CrocAppTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -93,6 +115,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		844EAD40307C8833006F34A7 /* CrocAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 844EAD47307C8833006F34A7 /* Build configuration list for PBXNativeTarget "CrocAppTests" */;
+			buildPhases = (
+				844EAD3D307C8833006F34A7 /* Sources */,
+				844EAD3E307C8833006F34A7 /* Frameworks */,
+				844EAD3F307C8833006F34A7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				844EAD49307C8833006F34A7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				844EAD42307C8833006F34A7 /* CrocAppTests */,
+			);
+			name = CrocAppTests;
+			packageProductDependencies = (
+			);
+			productName = CrocAppTests;
+			productReference = 844EAD41307C8833006F34A7 /* CrocAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		84DEC94630101868006ECBE6 /* CrocApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 84DEC95230101869006ECBE6 /* Build configuration list for PBXNativeTarget "CrocApp" */;
@@ -147,9 +192,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2660;
+				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					844EAD40307C8833006F34A7 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 84DEC94630101868006ECBE6;
+					};
 					84DEC94630101868006ECBE6 = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -177,11 +226,19 @@
 			targets = (
 				84DEC94630101868006ECBE6 /* CrocApp */,
 				CA0000000000000000000006 /* CrocShare */,
+				844EAD40307C8833006F34A7 /* CrocAppTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		844EAD3F307C8833006F34A7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		84DEC94530101868006ECBE6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -199,6 +256,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		844EAD3D307C8833006F34A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		84DEC94330101868006ECBE6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -216,6 +280,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		844EAD49307C8833006F34A7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 84DEC94630101868006ECBE6 /* CrocApp */;
+			targetProxy = 844EAD48307C8833006F34A7 /* PBXContainerItemProxy */;
+		};
 		CA000000000000000000000B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			platformFilter = ios;
@@ -225,6 +294,56 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		844EAD45307C8833006F34A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"ARCHS[sdk=macosx*]" = arm64;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CrocApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CrocApp";
+			};
+			name = Debug;
+		};
+		844EAD46307C8833006F34A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"ARCHS[sdk=macosx*]" = arm64;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CrocApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CrocApp";
+			};
+			name = Release;
+		};
 		84DEC95030101869006ECBE6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -516,6 +635,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		844EAD47307C8833006F34A7 /* Build configuration list for PBXNativeTarget "CrocAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				844EAD45307C8833006F34A7 /* Debug */,
+				844EAD46307C8833006F34A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		84DEC94230101868006ECBE6 /* Build configuration list for PBXProject "CrocApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

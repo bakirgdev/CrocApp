@@ -49,7 +49,7 @@ Features carry stable numbers (`F1`, `F2`, …) used across code comments, issue
 
 ## Setup
 
-Requires **macOS 26**, **Xcode 26.6** (the pin lives in [`.xcode-version`](.xcode-version)), and **Go 1.26.5 or newer**. `gomobile` and `gobind` install themselves on first run.
+Requires **macOS 26**, **Xcode 27.0** (the pin lives in [`.xcode-version`](.xcode-version)), and **Go 1.27.2 or newer**. `gomobile` and `gobind` are rebuilt from the `go.mod` `tool` block on every run.
 
 ```bash
 git clone https://github.com/bakirgdev/CrocApp.git
@@ -177,8 +177,8 @@ A build that compiles proves nothing about a transfer. CI deliberately does not 
 
 | What you changed | What to run |
 |---|---|
-| Any Swift under `app/` or `CrocKit/` | `scripts/format-swift.sh --lint`, plus a macOS and/or iOS Simulator build |
-| Anything in `crocmobile/` | `golangci-lint run ./...`, `govulncheck ./...`, then `scripts/build-xcframework.sh` |
+| Any Swift under `app/` or `CrocKit/` | `scripts/format-swift.sh --lint`, `swift test --package-path CrocKit`, `xcodebuild test -scheme CrocApp -destination 'platform=macOS'` (from `app/`), plus a macOS and/or iOS Simulator build |
+| Anything in `crocmobile/` | `go test -race ./...`, `golangci-lint run ./...`, `govulncheck ./...`, then `scripts/build-xcframework.sh` |
 | `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` | the matching harness below, no exceptions |
 | Share extension | `scripts/verify-share-sim.sh` |
 | `web/landing/` | Load it locally: `cp design/tokens.css web/landing/ && python3 -m http.server --directory web/landing` |
@@ -198,6 +198,16 @@ cd app
 xcodebuild -scheme CrocApp -destination 'platform=macOS' -derivedDataPath /tmp/dd-mac build
 xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,name=$SIM" -derivedDataPath /tmp/dd-sim build
 ```
+
+### Tests
+
+Non-UI logic gets unit tests, and CI runs them on every pull request that touches their code:
+
+- `crocmobile/`: Go's `testing`, run with `go test -race ./...` (from `crocmobile/`, with `GOOS`/`GOARCH` unset).
+- `CrocKit/`: Swift Testing in `CrocKit/Tests/CrocKitTests/`, run with `swift test --package-path CrocKit`.
+- The app: Swift Testing in `app/CrocAppTests/` (hosted in `CrocApp`, run on macOS) for models, parsing, error copy and settings. Tests that write settings or secrets use an injected store, never the real `UserDefaults` or Keychain.
+
+New or changed logic in those areas comes with tests. There is no XCUITest: gestures, camera and taps are checked by hand, and transfers by the harnesses above. Unit tests never replace a harness run.
 
 **Paste the harness output into the pull request.** Not a summary of it, the output.
 

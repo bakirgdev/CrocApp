@@ -11,5 +11,6 @@ let package = Package(
         .binaryTarget(name: "Croc", path: "Croc.xcframework"),
         .target(name: "CrocKit", dependencies: ["Croc"]),
         .executableTarget(name: "crockit-verify", dependencies: ["CrocKit"]),
+        .testTarget(name: "CrocKitTests", dependencies: ["CrocKit", "Croc"]),
     ]
 )

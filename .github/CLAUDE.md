@@ -6,7 +6,7 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 
 | Path | Purpose |
 | --- | --- |
-| `workflows/ci.yml` | push-main + PR gate: lint, Go checks, macOS and iOS Simulator builds |
+| `workflows/ci.yml` | push-main + PR gate: a `changes` job gates lint, Go checks and `go test -race`, the contrast check, and the macOS and iOS Simulator builds (the macOS leg also runs `swift test` for CrocKit and `xcodebuild test` for `CrocAppTests`); `ci pass` aggregates them |
 | `workflows/release.yml` | on `v*` tag: verify tag against `MARKETING_VERSION`, build, dmg/zip/checksums, attest, publish |
 | `workflows/go-weekly.yml` | Monday scan on a clock, files or updates one `security` issue on failure |
 | `workflows/github-pages.yml` | builds `_site` on PR, also deploys on push to main |
@@ -23,14 +23,14 @@ gh api repos/OWNER/REPO/git/ref/tags/TAG --jq '.object.type + " " + .object.sha'
 # type "tag" is annotated: deref with git/tags/SHA --jq .object.sha
 ```
 
-**Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block. Runners are pinned (`ubuntu-24.04`, `macos-26`) and are the one thing dependabot cannot see.
+**Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block. Runners are pinned (`ubuntu-24.04`, `xcode-27`) and are the one thing dependabot cannot see.
 
 ## Gotchas
 
 - **Fork pull requests get a read-only `GITHUB_TOKEN`.** Any step that writes a comment, label, or issue needs `github.event.pull_request.head.repo.full_name == github.repository`, or a green run goes red.
 - **A label named in config must already exist** in the repo. Dependabot silently drops missing ones, and a `labels:` filter on `listForRepo` silently matches nothing, which breaks issue dedup.
 - **Go jobs cross-target `darwin/arm64`** because the module only ships through gomobile. Tools have to be built for the runner (`env -u GOOS -u GOARCH go build -o ...`) and then run under the job's env.
-- **YAML anchors work** in workflows here (`paths: &code-paths` / `*code-paths`), despite the common claim that Actions rejects them.
+- **YAML anchors work** in workflows here (`paths: &site-paths` / `*site-paths` in `github-pages.yml`), despite the common claim that Actions rejects them.
 - **`release.yml` parses `CHANGELOG.md`.** It requires a Keep a Changelog heading, dated: `## [1.2.3] - YYYY-MM-DD`. Change the changelog's heading style and the tag stops releasing. Following practices from [Keep a Changelog](https://keepachangelog.com/).
 
 ## Expiring notes
@@ -43,4 +43,4 @@ Each subsection describes a trap that will stop existing. **Delete a subsection 
 
 ### `main` branch protection
 
-`main` has no branch protection, only a `v*` tag ruleset, so renaming a job breaks no required check. Protection is planned, not forgotten. Delete this once it is on, and treat job names as an interface from then on.
+`main` has no branch protection, only a `v*` tag ruleset, so renaming a job breaks no required check. Protection is planned, not forgotten, and will require only `ci pass`. Delete this once it is on, and treat that job name as an interface from then on.

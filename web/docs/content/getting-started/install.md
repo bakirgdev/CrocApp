@@ -33,8 +33,8 @@ Every V1 feature is implemented; what stands between the app and a release is tr
 Requires:
 
 - **macOS 26**
-- **Xcode 26.6**
-- **Go 1.26.5** or newer (`gomobile` and `gobind` install themselves on first run)
+- **Xcode 27.0**
+- **Go 1.27.2** or newer (`gomobile` and `gobind` are rebuilt from the `go.mod` `tool` block on every run)
 
 ```bash
 git clone https://github.com/bakirgdev/CrocApp.git

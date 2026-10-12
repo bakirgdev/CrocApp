@@ -56,7 +56,7 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 
 ## Toolchain
 
-- Go ≥1.26.5 (brew; `crocmobile/go.mod` pins `go 1.26.5`), gomobile+gobind auto-installed by build script (currently `@latest`, unpinned — pin when CI lands). Xcode 26.6 binds clean (no #53316-class friction). macOS slice arm64-only (golang/go#73119); iOS device App Store layout issue golang/go#66500 is still open and bites at store submission, not before.
+- Go ≥1.27.2 (brew; `crocmobile/go.mod` pins `go 1.27.2`), gomobile+gobind built by the build script from the `tool` block in `crocmobile/go.mod`. Xcode 27.0 binds clean (no #53316-class friction). macOS slice arm64-only (golang/go#73119); iOS device App Store layout issue golang/go#66500 is still open and bites at store submission, not before.
 - CI notes: verify scripts need outbound network (public relay) + `CROC`/`SIM` env; fresh clone must run `scripts/build-xcframework.sh` before any Swift build (binaryTarget points at gitignored artifact).
 
 Shell and build-tool traps that bite these harnesses live in `tooling.md`.

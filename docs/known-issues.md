@@ -18,6 +18,7 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 - **`xfer()` has no watchdog.** If croc ever blocks past context cancel and prompt-pipe close, `activeMu` is held for the process's lifetime and every later transfer returns "another transfer is active". Deliberately not fixed: forcing the lock open while croc is still running would let two sessions mutate the same process-global state (`os.Chdir`, stdin/stdout swaps).
 - **`poll()` reads `croc.Client` scalar and slice fields with no synchronization** (croc's own goroutines write them unguarded). Degrades to inconsistent progress numbers; bounds-checked (`session.go`'s `progressSnapshot`) so it cannot panic.
+- **The harnesses fail at random against the public relay when it rate-limits.** `croc.schollz.com` answers `got bad response: rate limited` after repeated runs from one machine, and `verify-interop.sh`, `verify-app-mac.sh` and `verify-share-sim.sh` then fail at whichever scenario hits it. On 2026-10-12 an interleaved CLI-send → `croctest`-receive A/B gave `main` 6/10 and the Go 1.27.2 branch 7/10, while a local `croc relay` passed every run. Until the harnesses gain a local-relay mode, use a local relay for a deterministic result. Treat a public-relay failure as a regression only after finding the cause in its log.
 
 ## History
 
@@ -35,7 +36,6 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Design system
 
-- **`scripts/verify-contrast.sh` runs only by hand.** Nothing in `.github/workflows/` calls it, so a `design/tokens.css` edit that breaks a documented ratio or an invariant reaches `main` unnoticed. It is now pure bash + awk with no toolchain of its own, so a `ubuntu-latest` job triggered on `design/**` would cost seconds; not wired up yet.
 - **`FileRow` stats each file for its size label inside `body`.** `List` is lazy so only visible rows pay, but it is still synchronous I/O on the main actor during layout, and a network or iCloud volume could make it hitch. Not measured.
 
 ## Landing page
@@ -58,7 +58,8 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 ## Accepted
 
 - **When both relay addresses are customised, both are sent.** croc's own CLI blanks `RelayAddress6` whenever v4 is customised, without checking whether v6 was customised too (`src/cli/cli.go`, send and receive alike), so it silently discards a user's custom v6 relay. Keeping both is more correct, not less. The divergence is deliberate and is not going to be "fixed" toward the CLI's behaviour.
+- **`dropDestination(for:action:isTargeted:)` stays at `ContentView.swift` and `SendView.swift`.** The Xcode 27 SDK marks it deprecated only for a future OS (`deprecated: 100000.0`), so builds emit no warning. The replacement `dropDestination(for:isEnabled:action:)` takes a `Void` action (a drop cannot be rejected) and has no `isTargeted`; its highlight API `onDropSessionUpdated` is iOS 27 / macOS 26 only, and the deployment target is iOS 26.0. Revisit when the minimum OS reaches 27.
 - **`OutputFolderStore.select` silently no-ops if bookmarking fails.** Rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **`.combine` on the transfer progress view may hide the percentage from VoiceOver.** Worth a real accessibility pass, not a spot fix.
-- **Gesture-level flows are not machine-verified.** Drag-and-drop, camera QR, and taps have no XCUITest coverage. There's no formal decision behind this; the rule is the repo owner's standing instruction not to write tests unasked. Verify them by hand.
+- **Gesture-level flows are not machine-verified.** Drag-and-drop, camera QR, and taps have no XCUITest coverage, by decision: unit tests cover non-UI logic (Go `go test -race`, Swift Testing in `CrocKitTests` and `CrocAppTests`, all in CI), transfers are covered by the harnesses, and UI flows are verified by hand. The rule is in `CONTRIBUTING.md` (Verification, Tests).
