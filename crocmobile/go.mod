@@ -2,7 +2,7 @@ module github.com/bakirgdev/CrocApp/crocmobile
 
 go 1.27.2
 
-require github.com/schollz/croc/v10 v10.5.0
+require github.com/schollz/croc/v10 v10.7.0
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
