@@ -4,7 +4,8 @@ import Observation
 /// App-wide navigation plus externally-injected send payloads (window drop,
 /// dock-icon drop, menu commands). Singleton: NSApplicationDelegate and menu
 /// Commands live outside the SwiftUI environment graph and need a stable
-/// reference. (Module default actor isolation is MainActor.)
+/// reference.
+@MainActor
 @Observable
 final class AppRouter {
     static let shared = AppRouter()

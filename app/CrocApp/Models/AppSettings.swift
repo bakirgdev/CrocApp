@@ -14,6 +14,7 @@ import Observation
 @Observable
 final class AppSettings {
     private static let relayPasswordAccount = "relayPassword"
+    private static let legacyRelayPasswordKey = "settings.relayPassword"
 
     enum RelayKind: Equatable {
         case publicDefault
@@ -23,6 +24,7 @@ final class AppSettings {
 
     @ObservationIgnored var persist = true
     @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let secrets: any SecretStore
 
     var relayAddress: String { didSet { save(relayAddress, "settings.relayAddress") } }
     var relayAddress6: String { didSet { save(relayAddress6, "settings.relayAddress6") } }
@@ -35,21 +37,15 @@ final class AppSettings {
     var autoAccept: Bool { didSet { save(autoAccept, "settings.autoAccept") } }
     var bothSidesConfirm: Bool { didSet { save(bothSidesConfirm, "settings.bothSidesConfirm") } }
 
-    init(defaults d: UserDefaults = .standard) {
+    init(defaults d: UserDefaults = .standard, secrets: any SecretStore = KeychainStore()) {
         defaults = d
+        self.secrets = secrets
         relayAddress = d.string(forKey: "settings.relayAddress") ?? ""
         relayAddress6 = d.string(forKey: "settings.relayAddress6") ?? ""
-        // One-time migration off UserDefaults (plaintext plist) into the
-        // Keychain. Runs before AutoVerify can ever flip `persist` false
-        // (AppSettings() is constructed first in CrocAppApp.init), so this
-        // always sees a real launch's persist=true default. Idempotent: the
-        // UserDefaults key is removed as soon as it's migrated, so a second
-        // run finds nothing left to migrate.
-        if let legacy = d.string(forKey: "settings.relayPassword"), !legacy.isEmpty {
-            KeychainStore.set(legacy, account: Self.relayPasswordAccount)
-            d.removeObject(forKey: "settings.relayPassword")
-        }
-        relayPassword = KeychainStore.get(account: Self.relayPasswordAccount) ?? ""
+        // Runs before AutoVerify can ever flip `persist` false (AppSettings()
+        // is constructed first in CrocAppApp.init), so this always sees a
+        // real launch's persist=true default.
+        relayPassword = Self.migrateRelayPassword(defaults: d, secrets: secrets)
         onlyLocal = d.bool(forKey: "settings.onlyLocal")
         noCompress = d.bool(forKey: "settings.noCompress")
         zipFolder = d.bool(forKey: "settings.zipFolder")
@@ -91,6 +87,22 @@ final class AppSettings {
         bothSidesConfirm = false
     }
 
+    /// One-time move of the relay password off UserDefaults (plaintext
+    /// plist) into the Keychain. The legacy value is removed only after the
+    /// Keychain write succeeds; on failure this launch uses it and the next
+    /// launch retries.
+    private static func migrateRelayPassword(
+        defaults: UserDefaults, secrets: any SecretStore
+    ) -> String {
+        guard let legacy = defaults.string(forKey: legacyRelayPasswordKey), !legacy.isEmpty else {
+            return secrets.get(account: relayPasswordAccount) ?? ""
+        }
+        if secrets.set(legacy, account: relayPasswordAccount) {
+            defaults.removeObject(forKey: legacyRelayPasswordKey)
+        }
+        return legacy
+    }
+
     private func save(_ value: Any, _ key: String) {
         guard persist else { return }
         defaults.set(value, forKey: key)
@@ -98,13 +110,15 @@ final class AppSettings {
 
     /// Mirrors `save`'s `persist` gate but targets the Keychain instead of
     /// UserDefaults. Deletes rather than stores "" so clearing the field
-    /// doesn't leave a Keychain item with an empty password behind.
+    /// doesn't leave a Keychain item with an empty password behind. A
+    /// successful write also drops a legacy value a failed migration kept,
+    /// which would otherwise overwrite this one on the next launch.
     private func persistRelayPassword() {
         guard persist else { return }
-        if relayPassword.isEmpty {
-            KeychainStore.delete(account: Self.relayPasswordAccount)
-        } else {
-            KeychainStore.set(relayPassword, account: Self.relayPasswordAccount)
-        }
+        let stored =
+            relayPassword.isEmpty
+            ? secrets.delete(account: Self.relayPasswordAccount)
+            : secrets.set(relayPassword, account: Self.relayPasswordAccount)
+        if stored { defaults.removeObject(forKey: Self.legacyRelayPasswordKey) }
     }
 }

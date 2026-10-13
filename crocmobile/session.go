@@ -142,8 +142,8 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 				return nil, fmt.Errorf("could not generate code phrase: %w", err)
 			}
 		}
-		if len(secret) < 6 {
-			return nil, errors.New("code is too short (must be at least 6 characters)")
+		if len(secret) < minCodeLength {
+			return nil, fmt.Errorf("code is too short (must be at least %d characters)", minCodeLength)
 		}
 		if o.WorkDir != "" {
 			if err := os.Chdir(o.WorkDir); err != nil {

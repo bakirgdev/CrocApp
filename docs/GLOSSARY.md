@@ -41,7 +41,7 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 
 | Term | Means |
 |---|---|
-| `AppRouter` | `@Observable` singleton (`app/CrocApp/Models/AppRouter.swift`) holding the macOS navigation path and pending drop/dock URLs, needed because `AppDelegate` and menu commands sit outside the SwiftUI environment graph. |
+| `AppRouter` | `@Observable` singleton (`app/CrocApp/Models/AppRouter.swift`) holding the navigation path (both platforms) and pending drop/dock URLs, needed because `AppDelegate` and menu commands sit outside the SwiftUI environment graph. |
 | App Group | `group.com.bakirgdev.CrocApp`, the shared container the iOS share extension stages files into (`ShareInbox/batch-<UUID>/` + `manifest.json`) for the main app to pick up (`app/CrocApp/Models/ShareInbox.swift`). |
 | `AutoVerify` harness | `app/CrocApp/Support/AutoVerify.swift`, launch-argument-driven code path (`--auto-receive`, `--auto-send`, `--ask`, etc.) that drives the real `TransferController` state machine instead of the engine directly, so verify scripts exercise the path users actually take. |
 | `BGContinuedProcessingTask` | iOS 26+ API wrapping a transfer so it survives backgrounding and gets a system Live Activity; `app/CrocApp/Platform/BackgroundCoordinator.swift`, no macOS equivalent (`docs/knowledge/apple-platform-constraints.md`). |

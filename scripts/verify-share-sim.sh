@@ -54,15 +54,20 @@ xcrun simctl launch "$SIM" "$BUNDLE" --auto-share-send "$CODE"
 # The receiver must join the room after the app. One that arrives first times
 # out croc's 500 ms local-endpoint probe, then decodes the app's late reply to
 # it as transfer data and fails with "flate: corrupt input". A fixed sleep lost
-# that race whenever the app launched slowly. The extra second covers the relay
-# dial after the code is ready.
+# that race whenever the app launched slowly. The marker fires before croc
+# dials the relay, so wait 3 s more (1 s still lost the race once).
 await_file "$READY" 60 || fail "app never reported its code (no $READY)"
-sleep 1
+sleep 3
 
 # CROC_SECRET rather than a positional code: the croc CLI refuses a positional
 # receive code and points at CROC_SECRET.
+RECV_RC=0
 ( cd "$TMP" && CROC_SECRET="$CODE" timeout 120 "$CROC" --ignore-stdin --yes ) \
-    > "$TMPROOT/share-sim-recv.log" 2>&1
+    > "$TMPROOT/share-sim-recv.log" 2>&1 || RECV_RC=$?
+if [ "$RECV_RC" -ne 0 ]; then
+  tail -n 30 "$TMPROOT/share-sim-recv.log" >&2
+  fail "croc receive exited $RECV_RC (log: $TMPROOT/share-sim-recv.log)"
+fi
 
 await_file "$RESULT" 120 || true
 GOT=$(cat "$RESULT" 2>/dev/null || echo missing)

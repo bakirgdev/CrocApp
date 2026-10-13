@@ -427,15 +427,18 @@ final class TransferController {
         }.value
     }
 
-    /// First code segment only ("7291-…") — enough to recognise a transfer,
-    /// useless to an attacker, and codes are single-use anyway.
-    private static func codeHint(_ code: String) -> String {
+    /// Enough to recognise a transfer in history, not enough to reuse the
+    /// code. A generated code's first word ("wiry-…", or "7291-…" for a
+    /// legacy code) is a third of it at most; any other shape is likely a
+    /// reusable custom code, so only its first two characters are kept.
+    static func codeHint(_ code: String) -> String {
         let t = code.trimmingCharacters(in: .whitespaces)
         guard !t.isEmpty else { return "" }
-        guard let first = t.split(separator: "-").first, first.count < t.count else {
-            return String(t.prefix(4)) + "…"
+        let segments = t.split(separator: "-", omittingEmptySubsequences: false)
+        if segments.count >= 3, let first = segments.first, (1...5).contains(first.count) {
+            return first + "-…"
         }
-        return first + "-…"
+        return String(t.prefix(2)) + "…"
     }
 
     private func finishRecord(_ status: TransferRecord.Status, summary: Summary?) {

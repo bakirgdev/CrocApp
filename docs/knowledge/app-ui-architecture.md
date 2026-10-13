@@ -95,7 +95,7 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 
 ## Platform layer, macOS
 
-- `Models/AppRouter.swift` — `@Observable` singleton (`shared`). `path: [Route]` drives `HomeView`'s `NavigationStack`. `pendingSendURLs` is consumed by `SendView` (`onAppear` plus `onChange`, deduplicated against `pickedURLs`, then cleared). `isBusy` mirrors `controller.isActive`, set in `ContentView`'s `onChange`, so a dock drop mid-transfer queues without navigating. It is a singleton because `AppDelegate` and `Commands` sit outside the environment graph.
+- `Models/AppRouter.swift` — `@Observable` singleton (`shared`). `path: [Route]` drives `HomeView`'s `NavigationStack`. `pendingSendURLs` is consumed by `SendView` (`onAppear` plus `onChange`, deduplicated against `pickedURLs`, then cleared). `isBusy` is a computed read of `controller.isActive` through a weak controller reference that `CrocAppApp.init` attaches with `attach(controller:)`, so a dock drop mid-transfer queues without navigating. It is a singleton because `AppDelegate` and `Commands` sit outside the environment graph.
 - Three drop entry points, one guard policy: the window drop (`ContentView`, macOS-only) refuses while active and filters `\.isFileURL`; the `SendView` list drop filters too; the dock drop (`Platform/AppDelegate.swift`, `application(_:open:)`) always queues and navigates only when idle.
 - Dock drop works because `Config/CrocApp-macOS-Info.plist` declares `public.item` / Viewer / rank None document types. Side effect: the app is listed in Finder's "Open With" for everything, and `INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]=YES` is required or Xcode auto-injects an invalid `NO`.
 - `Views/SettingsView.swift` — output-folder change/reset plus Show in Finder. `Views/AppCommands.swift` — Send ⌘1, Receive ⌘2 (disabled while active), Show Receive Folder ⇧⌘R. Window: `.defaultSize(560×700)`, content `minWidth 480` / `minHeight 560`.
@@ -131,17 +131,19 @@ Launch arguments that drive the real controller, not the engine directly — the
 
 | Argument | Effect |
 |---|---|
-| `--auto-receive CODE` | receive into Documents, auto-accept via `respond(true)` on `.incoming` |
-| `--auto-send PATH --code CODE` | send with a custom code; on macOS the source must be container-resident (sandbox) |
+| `--auto-receive CODE` | receive into Documents, auto-accept via `respond(true)` on `.incoming` unless `--hold` is passed |
+| `--auto-send PATH --code CODE` | send with a custom code; on macOS the source must be container-resident (sandbox). Needs `--code`: without it nothing happens |
 | `--auto-share-send CODE` | read the share inbox, then custom-code send |
 | `--local` | sets `settings.onlyLocal` unpersisted (croc `onlyLocal`) |
 | `--relay ADDR` | custom relay, plus `harnessDisableLocal` to kill the LAN race |
 | `--no-compress` | disable compression |
-| `--ask` | auto-answers `.confirmSend` |
+| `--ask` | sets `settings.bothSidesConfirm` unpersisted (sender-side confirm, F19). The `.confirmSend` auto-answer happens in every harness mode, with or without this flag |
 
-Settings overrides only apply when an `--auto-*` mode is present (the `isHarnessRun` guard) and start from `resetToDefaults()`, with `persist = false` set first so real `UserDefaults` are never touched.
+Settings overrides apply in any harness run (`isHarnessRun` is true for `--auto-receive`, `--auto-send`, `--auto-share-send` or `--screen`) and start from `resetToDefaults()`, with `persist = false` set first so real `UserDefaults` are never touched.
 
-The harness writes `verify-result.txt` (`ok success=<bool>` or `error <msg>`) to Documents. That contract is shared by `scripts/verify-app-sim.sh`, `verify-app-mac.sh`, and `verify-share-sim.sh`. AutoVerify's Documents path is hardcoded, decoupled from `OutputFolderStore.defaultFolder`.
+The screenshot flags (`--screen`, `--stage`, `--seed-history`, `--hold`) are documented in `docs/knowledge/screenshots.md`.
+
+The harness writes `verify-result.txt` (`ok success=<bool>` or `error <msg>`) to Documents. It also writes `verify-code-ready.txt` (contents `ready`, written once, when the phase first reaches `.waiting`, i.e. a send has its code; `verify-share-sim.sh` and `verify-app-mac.sh` wait for it) and `verify-history.txt` (`records=N`, written when the transfer is done or failed; `verify-app-mac.sh` reads it). The result contract is shared by `scripts/verify-app-sim.sh`, `verify-app-mac.sh`, and `verify-share-sim.sh`. AutoVerify's Documents path is hardcoded, decoupled from `OutputFolderStore.defaultFolder`.
 
 Launch gotchas, both macOS:
 

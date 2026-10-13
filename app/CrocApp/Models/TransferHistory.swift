@@ -1,11 +1,12 @@
 import Foundation
+import OSLog
 import Observation
 import SwiftData
 
 /// One finished (or failed) transfer (F12). Local only — never synced.
-/// Privacy: stores at most `maxNames` file names, a code *hint* (first
-/// segment only), and, for sends, bookmarks so history can re-stage the
-/// same files. Never file contents, never the full code phrase.
+/// Privacy: stores at most `maxNames` file names, a code *hint*
+/// (`TransferController.codeHint`), and, for sends, bookmarks so history can
+/// re-stage the same files. Never file contents, never the full code phrase.
 /// Bookmarks are stored only for sends of at most `maxBookmarks` items and
 /// only when every bookmark resolves — all-or-nothing at capture time. Re-send
 /// still drops files that have vanished since (the user sees the staged list
@@ -62,6 +63,8 @@ final class TransferRecord {
 @MainActor
 @Observable
 final class HistoryStore {
+    private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "history")
+
     let container: ModelContainer
 
     init(container: ModelContainer) {
@@ -73,6 +76,9 @@ final class HistoryStore {
             let config = ModelConfiguration(isStoredInMemoryOnly: inMemory)
             return try ModelContainer(for: TransferRecord.self, configurations: config)
         } catch {
+            Self.log.error(
+                "history store failed to open, using memory only: \(String(describing: error), privacy: .public)"
+            )
             // Corrupt store beats a launch crash: fall back to memory-only.
             let config = ModelConfiguration(isStoredInMemoryOnly: true)
             // try! is deliberate, the only one in the app: this schema is
@@ -88,7 +94,7 @@ final class HistoryStore {
 
     func add(_ record: TransferRecord) {
         container.mainContext.insert(record)
-        try? container.mainContext.save()
+        save("add")
         pruneToRetentionCap()
     }
 
@@ -103,22 +109,48 @@ final class HistoryStore {
         var descriptor = FetchDescriptor<TransferRecord>(
             sortBy: [SortDescriptor(\.date, order: .forward)])
         descriptor.fetchLimit = overflow
-        guard let stale = try? container.mainContext.fetch(descriptor) else { return }
+        let stale: [TransferRecord]
+        do {
+            stale = try container.mainContext.fetch(descriptor)
+        } catch {
+            Self.log.error(
+                "history prune fetch failed: \(String(describing: error), privacy: .public)")
+            return
+        }
         for record in stale { container.mainContext.delete(record) }
-        try? container.mainContext.save()
+        save("prune")
     }
 
     func delete(_ record: TransferRecord) {
         container.mainContext.delete(record)
-        try? container.mainContext.save()
+        save("delete")
     }
 
     func clear() {
-        try? container.mainContext.delete(model: TransferRecord.self)
-        try? container.mainContext.save()
+        do {
+            try container.mainContext.delete(model: TransferRecord.self)
+        } catch {
+            Self.log.error("history clear failed: \(String(describing: error), privacy: .public)")
+        }
+        save("clear")
     }
 
     func recordCount() -> Int {
-        (try? container.mainContext.fetchCount(FetchDescriptor<TransferRecord>())) ?? 0
+        do {
+            return try container.mainContext.fetchCount(FetchDescriptor<TransferRecord>())
+        } catch {
+            Self.log.error("history count failed: \(String(describing: error), privacy: .public)")
+            return 0
+        }
+    }
+
+    private func save(_ operation: String) {
+        do {
+            try container.mainContext.save()
+        } catch {
+            Self.log.error(
+                "history \(operation, privacy: .public) save failed: \(String(describing: error), privacy: .public)"
+            )
+        }
     }
 }

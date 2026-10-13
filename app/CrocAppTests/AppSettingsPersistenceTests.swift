@@ -3,11 +3,12 @@ import Testing
 
 @testable import CrocApp
 
-/// Each test gets its own defaults suite, so the host app's real settings are never touched.
-/// The relay password (Keychain) is left to the migration tests over an injected store.
+/// Each test gets its own defaults suite and an in-memory secret store, so the host app's real
+/// settings and Keychain are never touched. The relay password is covered by `RelayPasswordMigrationTests`.
 @Suite struct AppSettingsPersistenceTests {
     private let suiteName = "CrocAppTests.\(UUID().uuidString)"
     private let defaults: UserDefaults
+    private let secrets = FakeSecretStore()
 
     init() throws {
         defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -19,7 +20,7 @@ import Testing
 
     @Test func freshDefaultsGiveBlankSettings() {
         defer { cleanUp() }
-        let s = AppSettings(defaults: defaults)
+        let s = AppSettings(defaults: defaults, secrets: secrets)
         #expect(s.relayAddress == "")
         #expect(s.relayAddress6 == "")
         #expect(!s.onlyLocal)
@@ -34,7 +35,7 @@ import Testing
 
     @Test func changesSurviveARelaunch() {
         defer { cleanUp() }
-        let s = AppSettings(defaults: defaults)
+        let s = AppSettings(defaults: defaults, secrets: secrets)
         s.relayAddress = "relay.example:9009"
         s.relayAddress6 = "[::1]:9009"
         s.onlyLocal = true
@@ -45,7 +46,7 @@ import Testing
         s.autoAccept = true
         s.bothSidesConfirm = true
 
-        let r = AppSettings(defaults: defaults)
+        let r = AppSettings(defaults: defaults, secrets: secrets)
         #expect(r.relayAddress == "relay.example:9009")
         #expect(r.relayAddress6 == "[::1]:9009")
         #expect(r.onlyLocal)
@@ -70,8 +71,8 @@ import Testing
         ]
         for (name, path) in bools {
             defaults.removePersistentDomain(forName: suiteName)
-            AppSettings(defaults: defaults)[keyPath: path] = true
-            let r = AppSettings(defaults: defaults)
+            AppSettings(defaults: defaults, secrets: secrets)[keyPath: path] = true
+            let r = AppSettings(defaults: defaults, secrets: secrets)
             for (other, otherPath) in bools {
                 #expect(r[keyPath: otherPath] == (other == name), "set \(name), read \(other)")
             }
@@ -80,14 +81,14 @@ import Testing
 
     @Test func persistOffWritesNothing() {
         defer { cleanUp() }
-        let s = AppSettings(defaults: defaults)
+        let s = AppSettings(defaults: defaults, secrets: secrets)
         s.persist = false
         s.relayAddress = "relay.example:9009"
         s.autoAccept = true
         s.resetToDefaults()
         s.zipFolder = true
 
-        let r = AppSettings(defaults: defaults)
+        let r = AppSettings(defaults: defaults, secrets: secrets)
         #expect(r.relayAddress == "")
         #expect(!r.autoAccept)
         #expect(!r.zipFolder)

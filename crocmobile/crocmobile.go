@@ -54,6 +54,10 @@ func NewOptionsDefault() *Options {
 	}
 }
 
+// minCodeLength is the shortest code phrase StartSend and StartReceive accept,
+// counted in bytes. Swift mirrors it as EngineConstraints.minCodeLength.
+const minCodeLength = 6
+
 // Delegate receives transfer events. Called on arbitrary Go threads.
 type Delegate interface {
 	OnCodeReady(code string)
@@ -153,8 +157,8 @@ func StartReceive(code string, opts *Options, d Delegate) (t *Transfer, err erro
 	if d == nil {
 		return nil, startError(errors.New("delegate required"))
 	}
-	if len(code) < 6 {
-		return nil, startError(errors.New("code is too short (must be at least 6 characters)"))
+	if len(code) < minCodeLength {
+		return nil, startError(fmt.Errorf("code is too short (must be at least %d characters)", minCodeLength))
 	}
 	s, err := startSession(false, code, nil, "", opts, d)
 	if err != nil {

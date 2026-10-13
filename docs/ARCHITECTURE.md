@@ -113,7 +113,7 @@ Full JSON field lists, the `fileSent`-is-per-current-file wrinkle, and sub-100ms
 
 `WindowGroup` content gets all six as `.environment(...)`, plus `.modelContainer(history.container)` for `@Query` in `HistoryView`. The macOS `Settings` scene is deliberately narrower: only `outputFolder` and `settings` are injected — no `router`, no `controller`, no `localNetwork` (Settings has no transfer to be busy with).
 
-`@MainActor @Observable` types: `AppSettings`, `TransferController`, `HistoryStore`, `OutputFolderStore`, `LocalNetworkChecker`, `AppRouter` (all of them — the module default actor isolation is `MainActor`, see Concurrency below).
+`@MainActor @Observable` types: `AppSettings`, `TransferController`, `HistoryStore`, `OutputFolderStore`, `LocalNetworkChecker`, `AppRouter`, `ShareInbox` (all of them — the module default actor isolation is `MainActor`, see Concurrency below).
 
 Persistence:
 
@@ -144,7 +144,7 @@ Two entitlement sets for the main app target, selected by SDK in the pbxproj (`C
 - `app/CrocApp/CrocApp-iOS.entitlements`: just `com.apple.security.application-groups` (`group.com.bakirgdev.CrocApp`, for the share-extension handoff).
 - `app/CrocShare/CrocShare.entitlements`: same App Group group, nothing else (the extension has no network, no sandbox exception beyond the group).
 
-Three `Info.plist` sources (`app/Config/CrocApp-Info.plist` for iOS, `CrocApp-macOS-Info.plist` for macOS, `CrocShare-Info.plist` for the extension) merged over Xcode's `GENERATE_INFOPLIST_FILE=YES` output; SDK-scoped `INFOPLIST_KEY_*` build settings (camera usage, local-network usage, file-sharing, document-types-in-place) live directly in the pbxproj rather than in these files.
+Three `Info.plist` sources (`app/Config/CrocApp-Info.plist` for iOS, `CrocApp-macOS-Info.plist` for macOS, `CrocShare-Info.plist` for the extension) merged over Xcode's `GENERATE_INFOPLIST_FILE=YES` output; `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription` are plain `INFOPLIST_KEY_*` build settings in the pbxproj, not SDK-scoped, so they apply to every platform (macOS 15 and later also gates local network access, so the local-network string is needed there too). `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace` are SDK-scoped `INFOPLIST_KEY_*[sdk=...]` settings; `UIFileSharingEnabled` is also declared in `CrocApp-Info.plist`, and that plist copy is the one that takes effect (see `docs/known-issues.md`). `NSBonjourServices` is declared only in `CrocApp-Info.plist`, which applies to the iOS SDKs only.
 
 Sandbox boundaries that shaped the design, concretely:
 
@@ -155,7 +155,7 @@ Sandbox boundaries that shaped the design, concretely:
 
 ## Concurrency model
 
-Swift 6 language mode (`SWIFT_VERSION = 6.0`), `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES` set for every target in the pbxproj (app, both platform build configs, and `CrocShare`). Practical effect: any type in the app or share extension that doesn't opt out is implicitly `@MainActor` — this is why `AppSettings`, `TransferController`, `HistoryStore`, `OutputFolderStore`, `LocalNetworkChecker`, and `AppRouter` all carry an explicit `@MainActor` (belt-and-suspenders documentation of what the compiler already enforces) rather than needing it to compile.
+Swift 6 language mode (`SWIFT_VERSION = 6.0`), `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES` set on every target (`CrocApp`, `CrocShare`, `CrocAppTests`), Debug and Release. Practical effect: any type in the app or share extension that doesn't opt out is implicitly `@MainActor` — this is why `AppSettings`, `TransferController`, `HistoryStore`, `OutputFolderStore`, `LocalNetworkChecker`, `AppRouter`, `ShareInbox`, and `BackgroundCoordinator` all carry an explicit `@MainActor` (belt-and-suspenders documentation of what the compiler already enforces) rather than needing it to compile.
 
 `CrocEngine` is the one deliberate exception: it's a plain `actor`, isolated to its own executor, not `MainActor`. `CrocmobileDelegate` callbacks (`OnCodeReady`, `OnProgress`, etc.) arrive on arbitrary Go threads — `crocmobile`'s poller goroutine and the transfer goroutine both call the delegate directly, with no serialization guarantee about which Swift/Go thread runs which callback. `DelegateBridge` (`@unchecked Sendable`, because `NSObject` subclasses conforming to an ObjC protocol can't be verified `Sendable` by the compiler) receives those calls and does exactly one thing: `continuation.yield(...)` into the `AsyncStream`. `AsyncStream.Continuation.yield` is safe to call from any thread. The hop to `MainActor` happens implicitly at the `for await event in stream` loop inside `TransferController.run(_:)`, because that method (and the whole class) is `@MainActor`.
 
