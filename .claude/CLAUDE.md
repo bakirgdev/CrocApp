@@ -64,6 +64,10 @@ For a review fix the stage argument is `sdlc/<change> fix review`. For `/sdlc-pl
 
 When an earlier session of the change already used the name (a stage handing off to itself, a second review after a fix), append `-2`, `-3`, and so on.
 
+## Autonomous build phase
+
+Owner decision, 2026-10-13, for the build phase only: Claude commits, pushes, opens PRs and merges them (`/sdlc-ship` step 5) without asking, on any branch except force-push and direct pushes to `main`. Questions go unasked: take the recommended option, record it in the plan's Build log, and carry on. This overrides the "ask" clauses in the `sdlc-*` skills and the global "ask first" git rule. The owner reviews the whole project at the end and runs each new session with the commands the handoff prints. Still the owner's: device-gated proofs, secrets and signing steps (`plan.md` Owner steps), App Store submission, tags and releases. Remove this section when the build phase ends.
+
 ## Settings
 
 `settings.json` is the shared floor, `settings.local.json` overrides it per person. Precedence: local > project > user.
