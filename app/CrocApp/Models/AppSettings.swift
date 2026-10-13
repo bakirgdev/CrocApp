@@ -61,9 +61,9 @@ final class AppSettings {
 
     var relayKind: RelayKind {
         if onlyLocal { return .localOnly }
-        let addr = relayAddress.trimmingCharacters(in: .whitespaces)
+        let addr = relayAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         if !addr.isEmpty, addr != RelayDefaults.address { return .custom(addr) }
-        let addr6 = relayAddress6.trimmingCharacters(in: .whitespaces)
+        let addr6 = relayAddress6.trimmingCharacters(in: .whitespacesAndNewlines)
         if !addr6.isEmpty, addr6 != RelayDefaults.address6 { return .custom(addr6) }
         return .publicDefault
     }

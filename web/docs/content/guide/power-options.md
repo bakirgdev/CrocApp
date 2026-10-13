@@ -22,7 +22,7 @@ CrocApp exposes a set of power options with sane defaults. On macOS they live in
 
 ## Relay (F13)
 
-The **Address** and **IPv6 address** fields show croc's own defaults as placeholder text; leave them blank to use croc's default relay. Leave **Password** blank to use croc's default relay password.
+The **Address** and **IPv6 address** fields read "Public relay pool" as placeholder text; leave them blank to use croc's public relay pool, the same one the croc command line uses. Leave **Password** blank to use croc's default relay password.
 
 ## Local network only (F14)
 
