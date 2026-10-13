@@ -23,7 +23,7 @@ gh api repos/OWNER/REPO/git/ref/tags/TAG --jq '.object.type + " " + .object.sha'
 # type "tag" is annotated: deref with git/tags/SHA --jq .object.sha
 ```
 
-**Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block. Runners are pinned (`ubuntu-24.04`, `macos-26`, `xcode-27`) and are the one thing dependabot cannot see.
+**Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block, the croc v10 test peer in `scripts/croc-v10.version`. Runners are pinned (`ubuntu-24.04`, `macos-26`, `xcode-27`) and are the one thing dependabot cannot see.
 
 ## Gotchas
 

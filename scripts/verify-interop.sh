@@ -14,8 +14,9 @@ cd "$(dirname "$0")/.."
 CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 CROC_V10="${CROC_V10:-$HOME/go/bin/croc}"
 require_croc
-"$CROC_V10" --version 2>/dev/null | grep -q ' v10\.' \
-  || fail "croc v10 not found at '$CROC_V10' (go install github.com/schollz/croc/v10@v10.5.0, or set CROC_V10)"
+V10_VERSION=$(cat scripts/croc-v10.version)
+"$CROC_V10" --version 2>/dev/null | grep -qwF "$V10_VERSION" \
+  || fail "croc $V10_VERSION not found at '$CROC_V10' (go install github.com/schollz/croc/v10@$V10_VERSION, or set CROC_V10)"
 
 # One word each, empty without RELAY: croctest takes -relay after its mode,
 # the CLI takes --relay before its command.

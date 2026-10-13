@@ -65,7 +65,7 @@ jobs:
             out go '^crocmobile/|^\.github/workflows/(ci|reusable-go)\.yml$'
             out build '^(app|CrocKit|crocmobile)/|^scripts/build-xcframework\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
             out design '^design/|^scripts/(lib|verify-contrast)\.sh$|^\.github/workflows/ci\.yml$'
-            out interop '^(crocmobile|CrocKit)/|^scripts/(lib|verify-interop)\.sh$|^\.github/workflows/ci\.yml$'
+            out interop '^(crocmobile|CrocKit)/|^scripts/(lib|verify-interop)\.sh$|^scripts/croc-v10\.version$|^\.github/workflows/ci\.yml$'
           } | tee -a "$GITHUB_OUTPUT"
 
   swift-format:
@@ -127,7 +127,7 @@ jobs:
       - run: brew install croc
 
       # The R8 scenario's croc v10 peer.
-      - run: go install github.com/schollz/croc/v10@v10.5.0
+      - run: go install "github.com/schollz/croc/v10@$(cat scripts/croc-v10.version)"
 
       # Admission limits raised as a margin: every connection comes from
       # 127.0.0.1, which a relay admits 30 times a minute by default.
