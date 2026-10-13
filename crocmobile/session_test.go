@@ -2,6 +2,7 @@ package crocmobile
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -9,7 +10,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/schollz/croc/v10/src/croc"
+	"github.com/schollz/croc/v11/src/croc"
 )
 
 func TestSplitNonEmpty(t *testing.T) {
@@ -44,6 +45,15 @@ func TestSplitNonEmpty(t *testing.T) {
 	}
 }
 
+func mustBuildCrocOptions(t *testing.T, sender bool, secret string, o *Options) croc.Options {
+	t.Helper()
+	c, err := buildCrocOptions(sender, secret, o)
+	if err != nil {
+		t.Fatalf("buildCrocOptions: %v", err)
+	}
+	return c
+}
+
 func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 	o := &Options{
 		RelayAddress:   "relay4.example:9009",
@@ -63,7 +73,7 @@ func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 		Ask:            true,
 		NoMultiplexing: true,
 	}
-	got := buildCrocOptions(false, "secret-code", o)
+	got := mustBuildCrocOptions(t, false, "secret-code", o)
 
 	want := croc.Options{
 		IsSender:         false,
@@ -114,7 +124,7 @@ func TestBuildCrocOptionsBoolsMapIndependently(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			o := &Options{}
 			tt.set(o)
-			c := buildCrocOptions(false, "secret-code", o)
+			c := mustBuildCrocOptions(t, false, "secret-code", o)
 			for j, other := range tests {
 				if got, want := other.get(c), i == j; got != want {
 					t.Errorf("setting only %s: croc %s = %v, want %v", tt.name, other.name, got, want)
@@ -136,7 +146,7 @@ func TestBuildCrocOptionsNoPrompt(t *testing.T) {
 		{true, true, true},
 	}
 	for _, tt := range tests {
-		c := buildCrocOptions(tt.sender, "secret-code", &Options{AutoAccept: tt.autoAccept})
+		c := mustBuildCrocOptions(t, tt.sender, "secret-code", &Options{AutoAccept: tt.autoAccept})
 		if c.NoPrompt != tt.want {
 			t.Errorf("sender=%v autoAccept=%v: NoPrompt = %v, want %v", tt.sender, tt.autoAccept, c.NoPrompt, tt.want)
 		}
@@ -148,7 +158,7 @@ func TestBuildCrocOptionsNoPrompt(t *testing.T) {
 
 func TestBuildCrocOptionsFixedValues(t *testing.T) {
 	for _, sender := range []bool{true, false} {
-		c := buildCrocOptions(sender, "my-secret", &Options{})
+		c := mustBuildCrocOptions(t, sender, "my-secret", &Options{})
 		if c.SharedSecret != "my-secret" {
 			t.Errorf("sender=%v: SharedSecret = %q", sender, c.SharedSecret)
 		}
@@ -453,4 +463,74 @@ func TestClosePromptIdempotent(t *testing.T) {
 
 	var empty session
 	empty.closePrompt()
+}
+
+type errorDelegate struct{ errors []string }
+
+func (d *errorDelegate) OnCodeReady(string) {}
+func (d *errorDelegate) OnConnected()       {}
+func (d *errorDelegate) OnFileList(string)  {}
+func (d *errorDelegate) OnProgress(string)  {}
+func (d *errorDelegate) OnText(string)      {}
+func (d *errorDelegate) OnDone(string)      {}
+func (d *errorDelegate) OnError(m string)   { d.errors = append(d.errors, m) }
+
+func mkSendFolder(t *testing.T, dir string) string {
+	t.Helper()
+	src := filepath.Join(dir, "src")
+	if err := os.MkdirAll(src, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "a.txt"), []byte("a"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return src
+}
+
+func assertNoZip(t *testing.T, dir string) {
+	t.Helper()
+	if zips, _ := filepath.Glob(filepath.Join(dir, "*.zip")); len(zips) != 0 {
+		t.Fatalf("temp zip left behind: %v", zips)
+	}
+}
+
+// croc deletes the zip it builds for a zipped-folder send only when the send
+// succeeds; otherwise the caller must (the CLI does it on exit).
+func TestRunRemovesMarkedZip(t *testing.T) {
+	dir := t.TempDir()
+	t.Chdir(dir)
+	mkSendFolder(t, dir)
+	if _, _, _, err := croc.GetFilesInfoWithExactExclusions([]string{"src"}, true, false, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "src.zip")); err != nil {
+		t.Fatalf("croc did not build the zip: %v", err)
+	}
+	d := &errorDelegate{}
+	pollDone := make(chan struct{})
+	close(pollDone)
+	s := &session{delegate: d, done: make(chan struct{}), pollDone: pollDone}
+
+	s.run(func() error { return errors.New("relay down") }, dir, func() {})
+
+	assertNoZip(t, dir)
+	if len(d.errors) != 1 {
+		t.Fatalf("OnError calls = %v, want one", d.errors)
+	}
+}
+
+func TestSendSetupFailureRemovesZip(t *testing.T) {
+	dir := t.TempDir()
+	src := mkSendFolder(t, dir)
+	o := NewOptionsDefault()
+	o.Code = "zipfail-test"
+	o.WorkDir = dir
+	o.ZipFolder = true
+	o.ThrottleUpload = "xk" // croc.NewCtx panics on an unparsable rate, after the zip exists
+
+	if _, err := StartSend(src, "", o, &errorDelegate{}); err == nil {
+		t.Fatal("StartSend with an unparsable throttle: want error")
+	}
+
+	assertNoZip(t, dir)
 }

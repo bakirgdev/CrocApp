@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Power-option form sections (F13-F19), shared by the macOS Settings scene
-/// and the iOS settings screen. Relay fields show croc defaults as prompts;
-/// empty means "use default" (AppSettings.effective*).
+/// and the iOS settings screen. Empty relay fields mean croc's defaults: with
+/// no custom relay, the public relay pool.
 struct PowerSettingsSections: View {
     @Environment(AppSettings.self) private var settings
 
@@ -12,12 +12,12 @@ struct PowerSettingsSections: View {
         Section("Relay") {
             TextField(
                 "Address", text: $settings.relayAddress,
-                prompt: Text(AppSettings.defaultRelayAddress)
+                prompt: Text("Public relay pool")
             )
             .autocorrectionDisabled()
             TextField(
                 "IPv6 address", text: $settings.relayAddress6,
-                prompt: Text(AppSettings.defaultRelayAddress6)
+                prompt: Text("Public relay pool")
             )
             .autocorrectionDisabled()
             SecureField(

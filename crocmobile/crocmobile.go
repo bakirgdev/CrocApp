@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"runtime/debug"
 	"strings"
+
+	"github.com/schollz/croc/v11/src/models"
 )
 
 // Options mirrors croc CLI flags with gobind-safe scalar fields.
+//
+// Blank relay addresses and password mean croc's defaults. With no custom relay
+// and OnlyLocal off, the relay comes from the public pool by code (relay.go).
 type Options struct {
 	RelayAddress   string
 	RelayAddress6  string
@@ -40,9 +45,9 @@ type Options struct {
 // every Swift build. The suffix makes the selector `initDefault` instead.
 func NewOptionsDefault() *Options {
 	return &Options{
-		RelayAddress:  "croc.schollz.com:9009",
-		RelayAddress6: "croc6.schollz.com:9009",
-		RelayPassword: "pass123",
+		RelayAddress:  models.DEFAULT_RELAY,
+		RelayAddress6: models.DEFAULT_RELAY6,
+		RelayPassword: models.DEFAULT_PASSPHRASE,
 		RelayPorts:    "9009,9010,9011,9012,9013",
 		Curve:         "p256",
 		HashAlgorithm: "xxhash",

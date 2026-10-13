@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
 
-CROC="${CROC:-$HOME/go/bin/croc}"
+CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 require_croc
 
 BUNDLE=com.bakirgdev.CrocApp
@@ -84,7 +84,7 @@ echo MAC-RECEIVE-OK
 
 # --- 2: app -> CLI, custom code ----------------------------------------------
 # The source file must live inside the app container (sandbox). CROC_SECRET
-# rather than a positional code: v10.5.0's non-classic receive mode refuses a
+# rather than a positional code: the CLI's non-classic receive mode refuses a
 # positional one and points at CROC_SECRET.
 C=$(code send)
 rm -f "$RESULT" "$HISTORY"

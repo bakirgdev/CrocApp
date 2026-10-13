@@ -102,7 +102,7 @@ Segments: `--type-subhead` 15px, semibold when selected / medium otherwise, `--c
 
 ## CodeField
 
-Monospaced entry for `NNNN-word-word-word`, with a paste affordance.
+Monospaced entry for `word-word-word`, with a paste affordance.
 
 Wrapper: height `--control-height-lg` 50, padding `0 6px 0 14px`, `--color-surface-base`, `--radius-md`, 1px border. Border color: `--color-separator` idle → `--color-accent` focused → `--color-status-error` invalid. Focused (and valid) adds `--shadow-focus-ring`. Disabled `--opacity-disabled-container`.
 

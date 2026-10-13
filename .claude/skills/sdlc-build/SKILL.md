@@ -29,7 +29,7 @@ Work on the branch `plan.md` names for this slice's PR, or else a branch named a
 5. Keep `plan.md` true. When the implementation departs from the plan, update `plan.md` at once and say what changed and why. Review checks the diff against the plan, so a stale plan turns correct code into findings.
 6. Before ending the session, run the checks covering everything it touched, plus any `CLAUDE.md` requires for those areas. After the last slice or a review fix, run every check in the Proof instead, then dispatch the `verifier` subagent with the change directory. It runs in a fresh context and cannot edit, so its verdict is not colored by the assumptions that produced the code.
 7. Tick the slice and append a Build log entry to `plan.md`: date, the slice, or "review fix" with the review's `Reviewed:` line and the finding IDs fixed, steps done, checks run with their result, deviations, and anything not verified. If the session must stop early, stop at a step boundary and log where the next session resumes.
-8. Ask the user whether to commit this session's work locally on the change branch, following the repo's commit convention. Never push; `/sdlc-ship` does.
+8. Commit this session's work on the change branch, following the repo's commit convention, without asking (autonomous build phase, `.claude/CLAUDE.md`). Push is `/sdlc-ship`'s job.
 9. Report in the session-end format `CLAUDE.md` asks for, covering each step, the commands run with their output, and anything not verified.
 
 Next stage: the next slice, or `/sdlc-review` after the last slice or a review fix. End with the handoff from `.claude/CLAUDE.md` (SDLC sessions), using the next slice's risk to pick its model.

@@ -1,9 +1,18 @@
+import Croc
 import Foundation
 
+/// croc's default relays, from the engine. A relay setting that is blank or
+/// equal to one of these is not custom, so the engine uses the public relay pool.
+public enum RelayDefaults {
+    public static var address: String { CrocmobileDefaultRelayAddress() }
+    public static var address6: String { CrocmobileDefaultRelayAddress6() }
+}
+
 public struct EngineOptions: Sendable {
-    public var relayAddress = "croc.schollz.com:9009"
-    public var relayAddress6 = "croc6.schollz.com:9009"
-    public var relayPassword = "pass123"
+    /// Blank relay fields mean croc's defaults (see `RelayDefaults`).
+    public var relayAddress = ""
+    public var relayAddress6 = ""
+    public var relayPassword = ""
     public var customCode = ""
     public var outDir = ""
     public var workDir = ""

@@ -8,18 +8,18 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 |---|---|
 | `--ask` | croc flag requiring confirmation on both sides before a transfer starts, not just the receiver's normal accept prompt; bridged into the engine via the same fd0 pipe trick as receive (`docs/knowledge/crocmobile-bridge.md`). |
 | classic mode | croc's `--classic` flag, the only mode where `--code` accepts a custom secret directly; insecure by design and deliberately unsupported here (F39, `docs/knowledge/features.md`). |
-| code phrase / secret | the `NNNN-word-word-word` string (4-digit PIN + mnemonicode words) both sides use to find each other and derive the session key; custom via `CROC_SECRET`, min 6 chars (`docs/knowledge/what-is-croc.md`). |
+| code phrase / secret | the `word-word-word` string (three random words from the EFF short wordlist) both sides use to find each other and derive the session key; custom via `CROC_SECRET`, min 6 chars (`docs/knowledge/what-is-croc.md`). |
 | compression | croc DEFLATE-compresses (HuffmanOnly) file data by default; `--no-compress` disables it (F15). |
 | `CROC_SECRET` | env var for a custom code phrase; the only way non-classic croc accepts one, on both send and receive (`docs/knowledge/what-is-croc.md`). |
-| curve | the elliptic curve PAKE runs over, default P-256 (`--curve`, `crocmobile.Options.Curve`); SIEC was the original default, dropped after cryptographer criticism. |
+| curve | the elliptic curve PAKE runs over, default P-256 (`--curve`, `crocmobile.Options.Curve`). |
 | hash algorithm | integrity check for transferred files, default xxhash; alternatives imohash, md5, highway via `--hash` (`crocmobile.Options.HashAlgorithm`). |
 | `--ignore-stdin` | croc CLI flag needed for non-interactive runs; the Go library equivalent (`Options.IgnoreStdin`) is always set `true` in `crocmobile/session.go`, since the app supplies its own prompt pipe instead of a real terminal. |
 | LAN peer discovery | UDP multicast peer discovery (`schollz/peerdiscovery`, ~500 ms window) that lets same-network transfers skip the relay; not guaranteed to work on every network, see `docs/knowledge/what-is-croc.md` §6. |
 | `--local` / only-local | forces a transfer to stay on the LAN, refusing the public relay; maps to `crocmobile.Options.OnlyLocal` / `AppSettings.onlyLocal` (F14). |
 | PAKE | Password-Authenticated Key Exchange (`github.com/schollz/pake/v3`, Boneh-Shoup construction); turns the weak code phrase into a strong session key without the relay ever learning it (`docs/knowledge/what-is-croc.md`). |
-| relay | the rendezvous/transport server both sides connect to when a direct LAN path is not available; sees ciphertext only, default `croc.schollz.com:9009`. |
-| room | the rendezvous channel on the relay, named `SHA-256(secret[:4] + "croc")`; two codes sharing their first 4 characters collide into the same room ("room full"). |
-| shared secret prefix collision | the failure mode above: because the room name only hashes the first 4 characters of the secret, concurrent transfers or test scripts using codes with the same prefix collide (`docs/knowledge/crocmobile-bridge.md`). |
+| relay | the rendezvous/transport server both sides connect to when a direct LAN path is not available; sees ciphertext only. With no custom relay the default is croc's public relay pool (`1.getcroc.com:9009` to `4.getcroc.com:9009`), picked by the code; the old single default `croc.schollz.com:9009` survives as `models.DEFAULT_RELAY`, and a relay field equal to it means "not custom". |
+| room | the rendezvous channel on the relay, named `SHA-256(selector + "croc")`, where the selector is the first word of a three-word code (the first 4 characters for a legacy code like `NNNN-word`); two codes sharing it on the same relay collide into the same room ("room full"). |
+| shared secret prefix collision | the failure mode above: because the room name only hashes the code's selector (first word, or first 4 characters of a legacy code), concurrent transfers or test scripts using codes with the same selector collide (`docs/knowledge/crocmobile-bridge.md`). |
 
 ## Go bridge
 

@@ -14,7 +14,7 @@ Deep reference for the exact toolchain and the exact steps from a fresh clone to
 | golangci-lint | `2.x`; CI pins `v2.14.0` exactly | `.github/workflows/reusable-go.yml` (`golangci-lint-action`, `version: v2.14.0`); rule config in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
 | govulncheck | pinned by the `tool` block in `crocmobile/go.mod` (`golang.org/x/vuln`) | `.github/workflows/reusable-go.yml` (called by `ci.yml`, `release.yml`, `go-weekly.yml`) | `cd crocmobile && go tool govulncheck ./...` |
 | create-dmg | unpinned | `.github/workflows/release.yml` installs it with `brew` | `brew install create-dmg`. Needed only by `scripts/build-dmg.sh`, not for a plain build |
-| croc CLI | `v10.5.0`, to match the embedded engine | `crocmobile/go.mod` (`github.com/schollz/croc/v10 v10.5.0`) | `go install github.com/schollz/croc/v10@v10.5.0` (lands at `~/go/bin/croc`, the harnesses' default) or `brew install croc`. Needed only for `scripts/verify-*.sh` and `crockit-verify`, not for a plain build |
+| croc CLI | `v11.5.4`, to match the embedded engine | `crocmobile/go.mod` (`github.com/schollz/croc/v11 v11.5.4`) | `brew install croc` (lands at `$HOMEBREW_PREFIX/bin/croc`, the harnesses' default). Needed only for `scripts/verify-*.sh` and `crockit-verify`, not for a plain build |
 
 ## 2. First build from a fresh clone
 
@@ -109,13 +109,13 @@ A green build is **not** evidence a transfer works. CI deliberately does not run
 
 | Harness | Proves | Needs | Env vars |
 |---|---|---|---|
-| `scripts/verify-interop.sh` | 9 scenarios, crocmobile (via its `croctest` CLI) ↔ croc CLI: file/folder/text both directions, decline, cancel both directions, forced relay, LAN-only | outbound network (public relay), croc CLI | `CROC` |
+| `scripts/verify-interop.sh` | 10 scenarios, crocmobile (via its `croctest` CLI) ↔ croc CLI: file/folder/text both directions, decline, cancel both directions, forced relay, LAN-only, and every public pool relay in both directions (LAN off, asserting which relay each side used) | outbound network (public relay), croc CLI | `CROC` |
 | `scripts/verify-app-mac.sh` | macOS app, 6 directions: CLI→app receive (plus SwiftData history), app→CLI send, `--local`, custom self-hosted relay, `--no-compress`, `--ask` (both sides confirm) | outbound network, croc CLI, a macOS app build | `CROC` |
 | `scripts/verify-app-sim.sh` | iOS simulator, CLI→app via the `--auto-receive` launch argument, gated on a byte-identical diff | outbound network, croc CLI, an iOS Simulator | `CROC`, `SIM` |
-| `scripts/verify-share-sim.sh` | Share-extension handoff: files staged into the App Group container the way `CrocShare` does, app launched with `--auto-share-send`, received by the croc CLI | outbound network, croc CLI, an iOS Simulator | `CROC`, `SIM` |
+| `scripts/verify-share-sim.sh` | Share-extension handoff: files staged into the App Group container the way `CrocShare` does, app launched with `--auto-share-send`, received by the croc CLI (the receiver starts only after the app writes `verify-code-ready.txt`, since a receiver that joins the room first fails) | outbound network, croc CLI, an iOS Simulator | `CROC`, `SIM` |
 | `crockit-verify` (run via `swift run --package-path CrocKit crockit-verify send\|receive\|twice ...`) | Swift-layer send/receive, cancel fired mid-wire, and two transfers back-to-back in one process (proves fd0/stdout/cwd/mutex restoration composes) | outbound network, croc CLI, macOS only | optional `CROC_RELAY`, `CROC_PASS` to point at a private relay |
 
-`CROC` overrides the CLI path (default `~/go/bin/croc`); `SIM` picks the simulator (default `iPhone 17 Pro`).
+`CROC` overrides the CLI path (default `$HOMEBREW_PREFIX/bin/croc`, falling back to `/opt/homebrew/bin/croc`); `SIM` picks the simulator (default `iPhone 17 Pro`).
 
 Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` needs the matching harness run, its output quoted, not summarized. If a harness could not be run, say "not verified" and why.
 
@@ -155,7 +155,7 @@ Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 
 - **Xcode bump**: update `.xcode-version` (single line). Confirm the `xcode-27` GitHub runner image actually carries that exact version first (`docs/knowledge/tooling.md` notes the image carries 27.0 (default), 27.1 and 27.2 beta). Rerun `scripts/build-xcframework.sh` to confirm gomobile still binds clean, then the full build matrix, then at least one `verify-*.sh` harness live.
 - **Go bump**: update `go 1.x.y` in `crocmobile/go.mod`, rerun `scripts/build-xcframework.sh`.
-- **croc bump**: `go get github.com/schollz/croc/v10@vX.Y.Z` in `crocmobile/`, rebind, then update every place that names the version by hand: `README.md` FAQ, `CONTRIBUTING.md`'s croc-install line, this file's prerequisites table, and `docs/knowledge/crocmobile-bridge.md`. Check `docs/knowledge/croc-upgrade-playbook.md` for the full procedure.
+- **croc bump**: `go get github.com/schollz/croc/v11@vX.Y.Z` in `crocmobile/` (`brew upgrade croc` for the test CLI), rebind, then update every place that names the version by hand: `README.md` FAQ, `CONTRIBUTING.md`'s croc-install line, this file's prerequisites table, and `docs/knowledge/crocmobile-bridge.md`. Check `docs/knowledge/croc-upgrade-playbook.md` for the full procedure.
 - **golangci-lint bump**: change the `version:` input on the `golangci-lint-action` step in `.github/workflows/reusable-go.yml`; update `crocmobile/.golangci.yml`'s schema `version:` if the new major changes it.
 - **gomobile/gobind**: pinned by the `tool` block in `crocmobile/go.mod`; bump with `go get golang.org/x/mobile@latest`. If a bind regresses on a new release, pin the last good version there and record it in `docs/knowledge/tooling.md`.
 - Whatever changed, re-check whether [golang/go#73119](https://github.com/golang/go/issues/73119) (macOS multi-arch bind) or [golang/go#66500](https://github.com/golang/go/issues/66500) (iOS device archive layout) have been fixed upstream before assuming either still blocks Intel Mac support or App Store archives; both are live gates on real behavior, not just build warnings.

@@ -32,7 +32,7 @@ AirDrop needs two Apple devices in physical proximity. CrocApp works between any
 
 ## Does it work with the croc command line tool?
 
-Yes, in both directions. CrocApp embeds croc v10.5.0 as a library, so it speaks the same protocol. `croc send` on a laptop, receive in the app on a phone, and the reverse.
+Yes, in both directions. CrocApp embeds croc v11.5.4 as a library, so it speaks the same protocol. `croc send` on a laptop, receive in the app on a phone, and the reverse. The other side needs croc 11 or newer; croc 10 cannot complete a transfer with it.
 
 ## Can I run my own relay?
 

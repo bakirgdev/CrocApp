@@ -1,13 +1,20 @@
 // croctest exercises crocmobile from the command line for interop verification.
 //
-//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-throttle RATE] [PATH...]
+//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [PATH...]
 //	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-cancel-after MS] CODE
+//	croctest relay CODE
+//	croctest relays
 //
 // -throttle caps the sender's upload rate (e.g. "200k", "1m") so cancel
 // timing in a slow/fast test environment can be made deterministic instead
 // of racing a transfer that may already be finished.
 //
-// Events print as lines: EVENT <kind> <payload>
+// -relay-index makes a generated code map to that public pool relay, as if the
+// latency probe had picked it. relay prints the pool relay a code maps to;
+// relays prints the pool in index order.
+//
+// Events print as lines: EVENT <kind> <payload>. With the public pool in use,
+// EVENT relay names the relay the code maps to.
 package main
 
 import (
@@ -18,10 +25,13 @@ import (
 	"time"
 
 	"github.com/bakirgdev/CrocApp/crocmobile"
+	"github.com/bakirgdev/CrocApp/crocmobile/internal/relaycache"
+	"github.com/schollz/croc/v11/src/publicrelay"
 )
 
 type printDelegate struct {
 	answer   string
+	pool     bool
 	transfer **crocmobile.Transfer
 }
 
@@ -30,8 +40,13 @@ type printDelegate struct {
 // fmt.Print of a received text payload (see session.go). Printing events to
 // stdout here would race that swap and vanish into the capture buffer instead
 // of reaching this process's actual output.
-func (p *printDelegate) OnCodeReady(code string) { fmt.Fprintf(os.Stderr, "EVENT code %s\n", code) }
-func (p *printDelegate) OnConnected()            { fmt.Fprintln(os.Stderr, "EVENT connected") }
+func (p *printDelegate) OnCodeReady(code string) {
+	fmt.Fprintf(os.Stderr, "EVENT code %s\n", code)
+	if p.pool {
+		printRelay(code)
+	}
+}
+func (p *printDelegate) OnConnected() { fmt.Fprintln(os.Stderr, "EVENT connected") }
 func (p *printDelegate) OnFileList(j string) {
 	fmt.Fprintf(os.Stderr, "EVENT filelist %s\n", j)
 	if *p.transfer != nil {
@@ -50,12 +65,30 @@ func (p *printDelegate) OnError(m string) {
 	os.Exit(1)
 }
 
+func printRelay(code string) {
+	fmt.Fprintf(os.Stderr, "EVENT relay %s\n", crocmobile.RelayForCode(code))
+}
+
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: croctest send|receive ...")
+		fmt.Fprintln(os.Stderr, "usage: croctest send|receive|relay|relays ...")
 		os.Exit(2)
 	}
 	mode := os.Args[1]
+	switch mode {
+	case "relay":
+		if len(os.Args) != 3 {
+			fmt.Fprintln(os.Stderr, "relay needs CODE")
+			os.Exit(2)
+		}
+		fmt.Println(crocmobile.RelayForCode(os.Args[2]))
+		return
+	case "relays":
+		for _, r := range publicrelay.Relays() {
+			fmt.Println(r)
+		}
+		return
+	}
 	fs := flag.NewFlagSet(mode, flag.ExitOnError)
 	relay := fs.String("relay", "", "relay address override")
 	noLocal := fs.Bool("no-local", false, "disable LAN discovery")
@@ -67,7 +100,13 @@ func main() {
 	yes := fs.Bool("yes", false, "auto-accept (receive)")
 	cancelAfter := fs.Int("cancel-after", 0, "cancel after N ms")
 	throttle := fs.String("throttle", "", "cap sender upload rate, e.g. 200k, 1m (send)")
+	relayIndex := fs.Int("relay-index", -1, "public pool relay a generated code maps to (send)")
+	noMulti := fs.Bool("no-multi", false, "one data connection instead of one per relay port (send)")
 	_ = fs.Parse(os.Args[2:])
+
+	if *relayIndex >= 0 {
+		relaycache.Set(*relayIndex)
+	}
 
 	opts := crocmobile.NewOptionsDefault()
 	if *relay != "" {
@@ -80,9 +119,10 @@ func main() {
 	opts.OutDir = *out
 	opts.AutoAccept = *yes
 	opts.ThrottleUpload = *throttle
+	opts.NoMultiplexing = *noMulti
 
 	var tr *crocmobile.Transfer
-	d := &printDelegate{answer: *answer, transfer: &tr}
+	d := &printDelegate{answer: *answer, pool: *relay == "" && !*onlyLocal, transfer: &tr}
 	var err error
 	switch mode {
 	case "send":
@@ -91,6 +131,9 @@ func main() {
 		if fs.NArg() != 1 {
 			fmt.Fprintln(os.Stderr, "receive needs CODE")
 			os.Exit(2)
+		}
+		if d.pool {
+			printRelay(fs.Arg(0))
 		}
 		tr, err = crocmobile.StartReceive(fs.Arg(0), opts, d)
 	default:

@@ -6,9 +6,9 @@ import Testing
 @Suite struct CrocOptionsMappingTests {
     @Test func defaultsMapThrough() throws {
         let o = try CrocEngine.crocOptions(from: EngineOptions())
-        #expect(o.relayAddress == "croc.schollz.com:9009")
-        #expect(o.relayAddress6 == "croc6.schollz.com:9009")
-        #expect(o.relayPassword == "pass123")
+        #expect(o.relayAddress == "")
+        #expect(o.relayAddress6 == "")
+        #expect(o.relayPassword == "")
         #expect(o.code == "")
         #expect(o.exclude == "")
         #expect(!o.autoAccept)

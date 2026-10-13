@@ -88,10 +88,9 @@ final class TransferController {
 
     private func baseOptions() -> EngineOptions {
         var o = EngineOptions()
-        let relays = settings.engineRelayAddresses
-        o.relayAddress = relays.v4
-        o.relayAddress6 = relays.v6
-        o.relayPassword = settings.effectiveRelayPassword
+        o.relayAddress = settings.relayAddress
+        o.relayAddress6 = settings.relayAddress6
+        o.relayPassword = settings.relayPassword
         o.onlyLocal = settings.onlyLocal
         o.disableLocal = harnessDisableLocal
         o.noCompress = settings.noCompress

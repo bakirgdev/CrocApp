@@ -9,7 +9,7 @@ CrocApp is a native SwiftUI app (iOS 26 + macOS 26, one multiplatform target) th
 ## Layer diagram
 
 ```
-croc v10.5.0 (schollz/croc, go.mod pin)
+croc v11.5.4 (schollz/croc, go.mod pin)
     │  Go function calls (croc.NewCtx, Client polling)
     ▼
 crocmobile/ (Go wrapper package)
@@ -39,7 +39,7 @@ SwiftUI views (app/CrocApp/Views/)
 
 ### croc (vendored dependency, not this repo's code)
 
-`schollz/croc/v10` v10.5.0, pinned in `crocmobile/go.mod`. PAKE-secured, relay-assisted, end-to-end encrypted transfer protocol. CrocApp does not fork or reimplement it (project non-goal, `docs/knowledge/project-overview.md`); upgrades are a version bump + rebind, tracked in `docs/knowledge/croc-upgrade-playbook.md`.
+`schollz/croc/v11` v11.5.4, pinned in `crocmobile/go.mod`. PAKE-secured, relay-assisted, end-to-end encrypted transfer protocol. CrocApp does not fork or reimplement it (project non-goal, `docs/knowledge/project-overview.md`); upgrades are a version bump + rebind, tracked in `docs/knowledge/croc-upgrade-playbook.md`.
 
 ### `crocmobile/` — Go wrapper
 

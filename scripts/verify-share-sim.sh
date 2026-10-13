@@ -5,12 +5,12 @@
 # UI itself (share sheet invocation) is device/manual territory.
 #
 # The app is the sender here, so it launches and registers its code before the
-# CLI receiver connects -- same sender-first ordering as the other harnesses.
+# CLI receiver connects (sender-first ordering, see the wait below).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
 
-CROC="${CROC:-$HOME/go/bin/croc}"
+CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 require_croc
 
 CODE="shr-$$-send"
@@ -36,7 +36,8 @@ xcrun simctl install "$SIM" "$APP"
 # identifier as a flag on this simctl version, so list the groups and pick ours.
 CONTAINER=$(xcrun simctl get_app_container "$SIM" "$BUNDLE" data)
 RESULT="$CONTAINER/Documents/verify-result.txt"
-rm -f "$RESULT"
+READY="$CONTAINER/Documents/verify-code-ready.txt"
+rm -f "$RESULT" "$READY"
 GROUP_DIR=$(xcrun simctl get_app_container "$SIM" "$BUNDLE" groups | awk -v g="$GROUP" '$1 == g { print $2 }')
 [ -n "$GROUP_DIR" ] || fail "could not resolve app group container $GROUP"
 rm -rf "$GROUP_DIR/ShareInbox"
@@ -50,10 +51,16 @@ printf '{"batch":"%s","files":["payload.bin"]}\n' "$BATCH" > "$GROUP_DIR/ShareIn
 
 xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
 xcrun simctl launch "$SIM" "$BUNDLE" --auto-share-send "$CODE"
-sleep 3
+# The receiver must join the room after the app. One that arrives first times
+# out croc's 500 ms local-endpoint probe, then decodes the app's late reply to
+# it as transfer data and fails with "flate: corrupt input". A fixed sleep lost
+# that race whenever the app launched slowly. The extra second covers the relay
+# dial after the code is ready.
+await_file "$READY" 60 || fail "app never reported its code (no $READY)"
+sleep 1
 
-# CROC_SECRET rather than a positional code: v10.5.0's non-classic receive mode
-# refuses a positional one and points at CROC_SECRET.
+# CROC_SECRET rather than a positional code: the croc CLI refuses a positional
+# receive code and points at CROC_SECRET.
 ( cd "$TMP" && CROC_SECRET="$CODE" timeout 120 "$CROC" --ignore-stdin --yes ) \
     > "$TMPROOT/share-sim-recv.log" 2>&1
 

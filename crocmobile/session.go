@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -13,8 +14,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/schollz/croc/v10/src/croc"
-	"github.com/schollz/croc/v10/src/utils"
+	"github.com/schollz/croc/v11/src/codephrase"
+	"github.com/schollz/croc/v11/src/croc"
+	"github.com/schollz/croc/v11/src/models"
+	"github.com/schollz/croc/v11/src/tcp"
+	"github.com/schollz/croc/v11/src/utils"
 )
 
 // One transfer at a time: croc needs process-global os.Chdir/os.Stdin/os.Stdout.
@@ -47,13 +51,22 @@ type session struct {
 	pollDone chan struct{} // closed when poll() returns; run() waits on it before the terminal delegate calls
 }
 
-func buildCrocOptions(sender bool, secret string, o *Options) croc.Options {
+func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, error) {
+	route, err := resolveRelay(secret, o)
+	if err != nil {
+		return croc.Options{}, err
+	}
+	password := o.RelayPassword
+	if password == "" {
+		password = models.DEFAULT_PASSPHRASE
+	}
 	return croc.Options{
 		IsSender:         sender,
 		SharedSecret:     secret,
-		RelayAddress:     o.RelayAddress,
-		RelayAddress6:    o.RelayAddress6,
-		RelayPassword:    o.RelayPassword,
+		RelayAddress:     route.v4,
+		RelayAddress6:    route.v6,
+		PublicRelay:      route.public,
+		RelayPassword:    password,
 		RelayPorts:       splitNonEmpty(o.RelayPorts, ","),
 		Curve:            o.Curve,
 		HashAlgorithm:    o.HashAlgorithm,
@@ -71,7 +84,7 @@ func buildCrocOptions(sender bool, secret string, o *Options) croc.Options {
 		IgnoreStdin:      true,
 		DisableClipboard: true,
 		Quiet:            false, // Quiet=true nukes process stderr globally
-	}
+	}, nil
 }
 
 func splitNonEmpty(s, sep string) []string {
@@ -105,6 +118,7 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 	committed := false
 	defer func() {
 		if !committed {
+			removeTempFiles()
 			_ = os.Chdir(origWD)
 			activeMu.Unlock()
 		}
@@ -112,8 +126,17 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 
 	if sender {
 		secret := o.Code
+		generatedPublic := secret == "" && usesPublicRelay(o)
 		if secret == "" {
-			secret = utils.GetRandomName()
+			var err error
+			if generatedPublic {
+				secret, err = generatePublicCode(tcp.MeasureServerLatencyContext)
+			} else {
+				secret, err = codephrase.Generate()
+			}
+			if err != nil {
+				return nil, fmt.Errorf("could not generate code phrase: %w", err)
+			}
 		}
 		if len(secret) < 6 {
 			return nil, errors.New("code is too short (must be at least 6 characters)")
@@ -152,7 +175,13 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			}
 			return nil, err
 		}
-		co := buildCrocOptions(true, secret, o)
+		co, err := buildCrocOptions(true, secret, o)
+		if err != nil {
+			if tempPath != "" {
+				os.Remove(tempPath)
+			}
+			return nil, err
+		}
 		co.SendingText = text != ""
 		ctx, cancel := context.WithCancel(context.Background())
 		c, err := croc.NewCtx(ctx, co)
@@ -185,7 +214,13 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			}
 		}
 		committed = true
-		go s.run(func() error { return c.Send(filesInfo, emptyFolders, totalFolders) }, origWD, func() { activeMu.Unlock() })
+		go s.run(func() error {
+			err := c.Send(filesInfo, emptyFolders, totalFolders)
+			if generatedPublic && errors.Is(err, croc.ErrRelayConnection) {
+				forgetPublicRelay()
+			}
+			return err
+		}, origWD, func() { activeMu.Unlock() })
 		go s.poll()
 		return s, nil
 	}
@@ -212,7 +247,10 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 		return nil, err
 	}
 
-	co := buildCrocOptions(false, code, o)
+	co, err := buildCrocOptions(false, code, o)
+	if err != nil {
+		return nil, err
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	c, err := croc.NewCtx(ctx, co)
 	if err != nil {
@@ -222,14 +260,15 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 	s := &session{client: c, ctxCancel: cancel, delegate: d, sender: false, done: make(chan struct{}), pollDone: make(chan struct{})}
 
 	// Accept/decline prompt bridge: croc reads the answer via
-	// utils.GetInput, which reads a bufio.Reader created once, at package
+	// utils.GetInputContext, which reads a bufio.Reader created once, at package
 	// init, wrapping the real fd 0 -- reassigning the os.Stdin *variable*
 	// later has no effect on that already-built reader. So beyond swapping
 	// the variable (for anything that does read it fresh), dup2 the pipe's
 	// read end onto fd 0 itself so the cached reader also pulls from our
 	// pipe. With AutoAccept the accept prompt is skipped, so close
-	// immediately: any un-gated prompt (empty folder, unzip overwrite) then
-	// hits EOF -> safe default, no hang.
+	// immediately: any un-gated prompt then hits EOF instead of hanging. EOF
+	// means "no" at the empty-folder prompt but fails the transfer at the unzip
+	// overwrite prompt (docs/known-issues.md).
 	pr, pw, err := os.Pipe()
 	if err != nil {
 		cancel()
@@ -328,6 +367,7 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 	if s.tempPath != "" {
 		os.Remove(s.tempPath)
 	}
+	removeTempFiles()
 	_ = os.Chdir(origWD)
 
 	// poll() only notices s.done on its next 100ms tick; wait for it to
@@ -361,6 +401,16 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 	s.delegate.OnDone(s.summaryJSON())
 }
 
+// removeTempFiles deletes the zip croc builds for a zipped-folder send. croc
+// deletes it itself only after a successful send; on a failure, a cancel or a
+// setup error it is left to the caller (the CLI sweeps it on exit). A failed
+// delete must not fail the transfer, so it is logged.
+func removeTempFiles() {
+	if err := utils.RemoveMarkedFiles(); err != nil {
+		log.Printf("crocmobile: remove temp files: %v", err)
+	}
+}
+
 // reportPanic converts a recovered panic into an OnError delegate call,
 // guarded against the delegate itself panicking again on the way out.
 func reportPanic(s *session, r any) {
@@ -368,15 +418,13 @@ func reportPanic(s *session, r any) {
 	s.delegate.OnError(fmt.Sprintf("croc panic: %v\n%s", r, debug.Stack()))
 }
 
-// cancel must unblock a pending accept prompt, not just cancel the context:
-// croc's transfer goroutine blocks in GetInput reading our prompt pipe when
-// waiting on the receiver to accept/decline, and ctx cancellation alone does
-// not interrupt that read. Without closePrompt here, that goroutine stays
-// blocked forever, Receive() never returns, run() never releases activeMu,
-// and the whole engine is bricked. closePrompt is idempotent and nil-guarded
-// (already a no-op for senders, or once respond() has run), so it's always
-// safe to call: closing the pipe here makes GetInput hit EOF, croc refuses
-// the files, and Receive() returns normally through run()'s existing cleanup.
+// cancel also closes the prompt pipe. croc's GetInputContext returns as soon
+// as the context is cancelled, so a pending accept prompt unwinds Receive()
+// with context.Canceled, but the goroutine it started to read fd 0 stays
+// blocked until the pipe closes. Closing it here ends that read before run()
+// restores fd 0, so it cannot linger into the next transfer. closePrompt is
+// idempotent and nil-guarded (a no-op for senders, or once respond() has run),
+// so it's always safe to call.
 func (s *session) cancel() {
 	s.ctxCancel()
 	s.closePrompt()
@@ -405,8 +453,8 @@ func (s *session) respond(accept bool) {
 	} else {
 		_, _ = s.promptW.WriteString("n\n")
 	}
-	// Close so any later un-gated prompt (empty-folder, unzip overwrite)
-	// hits EOF and takes its safe default instead of hanging.
+	// Close so any later un-gated prompt hits EOF instead of hanging (see the
+	// AutoAccept note in startReceiveSession).
 	s.promptW.Close()
 	s.promptW = nil
 }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Monospaced entry for the `NNNN-word-word-word` transfer code.
+/// Monospaced entry for the `word-word-word` transfer code.
 /// design/components.md → CodeField, lines 82-91.
 ///
 /// The paste affordance is part of this component's own spec (the wrapper's
