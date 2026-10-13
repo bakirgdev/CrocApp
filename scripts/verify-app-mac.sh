@@ -14,6 +14,7 @@ BUNDLE=com.bakirgdev.CrocApp
 DOCS="$HOME/Library/Containers/$BUNDLE/Data/Documents"
 RESULT="$DOCS/verify-result.txt"
 HISTORY="$DOCS/verify-history.txt"
+READY="$DOCS/verify-code-ready.txt"
 DD="$TMPROOT/dd-mac"
 
 TMP=$(mktemp -d)
@@ -32,8 +33,17 @@ rm -f "$RESULT" "$HISTORY" "$DOCS/macfile.txt"
 # treated as a document to open -- pass everything as a flag. Window-state
 # restoration hangs a headless launch, hence -ApplePersistenceIgnoreState.
 run_app() {
+  rm -f "$READY"
   "$BIN" -ApplePersistenceIgnoreState YES "$@" &
   APP_PID=$!
+}
+
+# The receiver must join the relay room after the app: one that arrives first
+# fails with "flate: corrupt input". The marker fires before croc dials the
+# relay, hence the extra sleep.
+await_ready() {
+  await_file "$READY" 60 || fail "app never reported its code (no $READY)"
+  sleep 3
 }
 
 await_app() {                                       # await_app SECONDS
@@ -90,7 +100,7 @@ C=$(code send)
 rm -f "$RESULT" "$HISTORY"
 echo "mac app send $$" > "$DOCS/sendme.txt"
 run_app --auto-send "$DOCS/sendme.txt" --code "$C" > "$TMPROOT/mac-app-send.log" 2>&1
-sleep 3
+await_ready
 recv_from_app send "$DOCS/sendme.txt" "$TMP/d2"
 echo MAC-SEND-OK
 
@@ -106,7 +116,7 @@ else
   rm -f "$RESULT"
   echo "mac local send $$" > "$DOCS/localme.txt"
   run_app --auto-send "$DOCS/localme.txt" --code "$C" --local > "$TMPROOT/mac-app-local.log" 2>&1
-  sleep 3
+  await_ready
   recv_from_app local "$DOCS/localme.txt" "$TMP/d3" --ip "$LOCAL_IP:9009"
   echo MAC-LOCAL-SEND-OK
 fi
@@ -122,7 +132,7 @@ sleep 1
 rm -f "$RESULT"
 echo "mac relay send $$" > "$DOCS/relayme.txt"
 run_app --auto-send "$DOCS/relayme.txt" --code "$C" --relay localhost:9021 > "$TMPROOT/mac-app-relay.log" 2>&1
-sleep 3
+await_ready
 recv_from_app relay "$DOCS/relayme.txt" "$TMP/d4" --relay localhost:9021
 kill "$RELAY_PID" 2>/dev/null || true
 wait "$RELAY_PID" 2>/dev/null || true
@@ -136,7 +146,7 @@ C=$(code ncmp)
 rm -f "$RESULT"
 echo "mac nocomp send $$" > "$DOCS/nocompme.txt"
 run_app --auto-send "$DOCS/nocompme.txt" --code "$C" --no-compress > "$TMPROOT/mac-app-nocomp.log" 2>&1
-sleep 3
+await_ready
 recv_from_app nocomp "$DOCS/nocompme.txt" "$TMP/d5"
 echo MAC-NOCOMP-OK
 
@@ -152,7 +162,7 @@ rm -rf "$DOCS/askdir"; mkdir -p "$DOCS/askdir"
 echo "mac ask send 1 $$" > "$DOCS/askdir/askme1.txt"
 echo "mac ask send 2 $$" > "$DOCS/askdir/askme2.txt"
 run_app --auto-send "$DOCS/askdir" --code "$C" --ask > "$TMPROOT/mac-app-ask.log" 2>&1
-sleep 3
+await_ready
 DST="$TMP/d6"; mkdir -p "$DST"
 printf 'y\ny\n' > "$TMP/ask-answers"
 ( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" --yes < "$TMP/ask-answers" ) > "$TMPROOT/mac-cli-ask.log" 2>&1

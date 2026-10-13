@@ -27,5 +27,5 @@ How to bump the pinned croc version (go.mod). Run this as one session whenever u
 
 ## Notes
 
-- A new major needs both sides upgraded. v10 and v11 peers cannot complete a transfer: v11 rejects a PAKE message that lacks protocol version 2 (`pakekey.ProtocolVersion`), and v10.5.0's message type has no version field. `~/go/bin/croc` v10.5.0 is kept only as `CROC_V10` for the v10-peer message test. Coordinate app release timing with upstream adoption.
+- A new major needs both sides upgraded. v10 and v11 peers cannot complete a transfer: v11 rejects a PAKE message that lacks protocol version 2 (`pakekey.ProtocolVersion`), and v10.5.0's message type has no version field. The peers often never meet (different room derivation and default relay), so `peerVersion` fires only on a shared room. `~/go/bin/croc` v10.5.0 is kept only as `CROC_V10` for the v10-peer message test. Coordinate app release timing with upstream adoption.
 - Watch croc's README/issues for a callback-based embedder API; that is the single change that most simplifies crocmobile.

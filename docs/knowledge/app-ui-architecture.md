@@ -29,11 +29,11 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 ### Event handling, learned the hard way
 
 - **`.progress` ticks (~10 Hz) keep arriving while the accept prompt is unanswered, and must not clobber `.incoming`.** If they do, croc blocks in `GetInput` forever. Found by harness, fixed in d278c2e. Same guard protects `.confirmSend`. Also ignore `step == "waiting"` ticks.
-- **A local decline surfaces croc's `"refused files"` string** — the same string the sender sees. Track `cancelRequested` / `declineRequested` to pick the right copy: "Transfer cancelled." / "You declined the transfer." / "The other side declined the transfer."
+- **Failure copy is picked by `EngineFailure.code`, never by text.** `friendlyMessage(for:cancelRequested:declineRequested:)` checks `cancelRequested` ("Transfer cancelled.") and `declineRequested` ("You declined the transfer.") first, then maps the code; it never shows `failure.message` (croc's wording changes per release and a recovered panic carries a stack trace). A peer's decline arrives as `.declined` ("The other side declined or cancelled the transfer."; a peer's cancel is indistinguishable), this side's own decline or prompt EOF as `.refused`.
 - **`transferActive` on start: retry once after ~300 ms.** There is a release window after `done` where the next start still throws.
-- `engine.cancel()` on `.failed`, belt-and-suspenders with the stream's `onTermination`.
+- `handle(.failed)` does not call the engine: the stream's `onTermination` cancels and clears the transfer by its ID. `TransferController` keeps that `transferID`; every cancel (user, background expiry, auto-accept block) targets it, and a cancel tapped before `run()` has the ID is applied as soon as `startSend`/`startReceive` returns.
 - Copy precedence when several conditions collide, highest first: `blockedAutoAccept`, `backgroundExpired`, the auto-accept-vs-remote-`--ask` case, then cancel/decline mapping. `run()`'s catch mirrors the `backgroundExpired` step so a thrown expiry keeps the resume hint.
-- **`"refused files"` under auto-accept is not a peer decline.** croc forces the receiver prompt whenever the *remote sender* ran `--ask` (`croc.go`: `!NoPrompt || Ask || senderInfo.Ask`), and engine auto-accept has already closed the prompt pipe, so `GetInput` hits EOF and croc reports its local `"refused files"`. `autoAcceptActive && !cancelRequested && !blockedAutoAccept` discriminates it: `respond()` is never called on the auto-accept path, so `declineRequested` cannot be set. Do **not** "fix" this by pre-writing `y\n` under AutoAccept — croc's empty-folder-overwrite prompt is gated on neither `NoPrompt` nor `Ask` and reads the same pipe, so a buffered `y` would turn its safe EOF default into an unwanted overwrite.
+- **Code `refused` under auto-accept is not a peer decline.** croc forces the receiver prompt whenever the *remote sender* ran `--ask` (`croc.go`: `!NoPrompt || Ask || senderInfo.Ask`), and engine auto-accept has already closed the prompt pipe, so `GetInput` hits EOF and croc reports its local `refused files`. `autoAcceptActive && !cancelRequested && failure.code == .refused` discriminates it (after the `blockedAutoAccept` and `backgroundExpired` branches): `respond()` is never called on the auto-accept path, so `declineRequested` cannot be set. Do **not** "fix" this by pre-writing `y\n` under AutoAccept — croc's empty-folder-overwrite prompt is gated on neither `NoPrompt` nor `Ask` and reads the same pipe, so a buffered `y` would turn its safe EOF default into an unwanted overwrite.
 - `blockedAutoAccept` is checked in `.done` as well as `.failed`: `cancel()` is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed` (the schema has no blocked case, and "Cancelled" reads as a user action).
 - `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) spent in `.starting`/`.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips, so the hint never keeps counting once a transfer moves on, but it does survive the `.starting → .connecting` handoff — same stall to the user, no reason to reset the clock.
 
@@ -95,7 +95,7 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 
 ## Platform layer, macOS
 
-- `Models/AppRouter.swift` — `@Observable` singleton (`shared`). `path: [Route]` drives `HomeView`'s `NavigationStack`. `pendingSendURLs` is consumed by `SendView` (`onAppear` plus `onChange`, deduplicated against `pickedURLs`, then cleared). `isBusy` mirrors `controller.isActive`, set in `ContentView`'s `onChange`, so a dock drop mid-transfer queues without navigating. It is a singleton because `AppDelegate` and `Commands` sit outside the environment graph.
+- `Models/AppRouter.swift` — `@Observable` singleton (`shared`). `path: [Route]` drives `HomeView`'s `NavigationStack`. `pendingSendURLs` is consumed by `SendView` (`onAppear` plus `onChange`, deduplicated against `pickedURLs`, then cleared). `isBusy` is a computed read of `controller.isActive` through a weak controller reference that `CrocAppApp.init` attaches with `attach(controller:)`, so a dock drop mid-transfer queues without navigating. It is a singleton because `AppDelegate` and `Commands` sit outside the environment graph.
 - Three drop entry points, one guard policy: the window drop (`ContentView`, macOS-only) refuses while active and filters `\.isFileURL`; the `SendView` list drop filters too; the dock drop (`Platform/AppDelegate.swift`, `application(_:open:)`) always queues and navigates only when idle.
 - Dock drop works because `Config/CrocApp-macOS-Info.plist` declares `public.item` / Viewer / rank None document types. Side effect: the app is listed in Finder's "Open With" for everything, and `INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]=YES` is required or Xcode auto-injects an invalid `NO`.
 - `Views/SettingsView.swift` — output-folder change/reset plus Show in Finder. `Views/AppCommands.swift` — Send ⌘1, Receive ⌘2 (disabled while active), Show Receive Folder ⇧⌘R. Window: `.defaultSize(560×700)`, content `minWidth 480` / `minHeight 560`.
@@ -131,17 +131,19 @@ Launch arguments that drive the real controller, not the engine directly — the
 
 | Argument | Effect |
 |---|---|
-| `--auto-receive CODE` | receive into Documents, auto-accept via `respond(true)` on `.incoming` |
-| `--auto-send PATH --code CODE` | send with a custom code; on macOS the source must be container-resident (sandbox) |
+| `--auto-receive CODE` | receive into Documents, auto-accept via `respond(true)` on `.incoming` unless `--hold` is passed |
+| `--auto-send PATH --code CODE` | send with a custom code; on macOS the source must be container-resident (sandbox). Needs `--code`: without it nothing happens |
 | `--auto-share-send CODE` | read the share inbox, then custom-code send |
 | `--local` | sets `settings.onlyLocal` unpersisted (croc `onlyLocal`) |
 | `--relay ADDR` | custom relay, plus `harnessDisableLocal` to kill the LAN race |
 | `--no-compress` | disable compression |
-| `--ask` | auto-answers `.confirmSend` |
+| `--ask` | sets `settings.bothSidesConfirm` unpersisted (sender-side confirm, F19). The `.confirmSend` auto-answer happens in every harness mode, with or without this flag |
 
-Settings overrides only apply when an `--auto-*` mode is present (the `isHarnessRun` guard) and start from `resetToDefaults()`, with `persist = false` set first so real `UserDefaults` are never touched.
+Settings overrides apply in any harness run (`isHarnessRun` is true for `--auto-receive`, `--auto-send`, `--auto-share-send` or `--screen`) and start from `resetToDefaults()`, with `persist = false` set first so real `UserDefaults` are never touched.
 
-The harness writes `verify-result.txt` (`ok success=<bool>` or `error <msg>`) to Documents. That contract is shared by `scripts/verify-app-sim.sh`, `verify-app-mac.sh`, and `verify-share-sim.sh`. AutoVerify's Documents path is hardcoded, decoupled from `OutputFolderStore.defaultFolder`.
+The screenshot flags (`--screen`, `--stage`, `--seed-history`, `--hold`) are documented in `docs/knowledge/screenshots.md`.
+
+The harness writes `verify-result.txt` (`ok success=<bool>` or `error <msg>`) to Documents. It also writes `verify-code-ready.txt` (contents `ready`, written once, when the phase first reaches `.waiting`, i.e. a send has its code; `verify-share-sim.sh` and `verify-app-mac.sh` wait for it) and `verify-history.txt` (`records=N`, written when the transfer is done or failed; `verify-app-mac.sh` reads it). The result contract is shared by `scripts/verify-app-sim.sh`, `verify-app-mac.sh`, and `verify-share-sim.sh`. AutoVerify's Documents path is hardcoded, decoupled from `OutputFolderStore.defaultFolder`.
 
 Launch gotchas, both macOS:
 

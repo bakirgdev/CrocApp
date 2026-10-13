@@ -173,6 +173,13 @@ enum AutoVerify {
         _ controller: TransferController, resultURL: URL, autoAccept: Bool
     ) async {
         var codeReady = false
+        func finish(_ result: String) {
+            try? result.write(to: resultURL, atomically: true, encoding: .utf8)
+            let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent(
+                "verify-history.txt")
+            try? "records=\(controller.history?.recordCount() ?? -1)".write(
+                to: historyURL, atomically: true, encoding: .utf8)
+        }
         while true {
             try? await Task.sleep(for: .milliseconds(200))
             switch controller.phase {
@@ -187,19 +194,10 @@ enum AutoVerify {
             case .confirmSend:
                 controller.respond(accept: true)
             case .done(let summary, _):
-                try? "ok success=\(summary.success)".write(
-                    to: resultURL, atomically: true, encoding: .utf8)
-                let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent(
-                    "verify-history.txt")
-                try? "records=\(controller.history?.recordCount() ?? -1)".write(
-                    to: historyURL, atomically: true, encoding: .utf8)
+                finish("ok success=\(summary.success)")
                 return
             case .failed(let message):
-                try? "error \(message)".write(to: resultURL, atomically: true, encoding: .utf8)
-                let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent(
-                    "verify-history.txt")
-                try? "records=\(controller.history?.recordCount() ?? -1)".write(
-                    to: historyURL, atomically: true, encoding: .utf8)
+                finish("error \(message)")
                 return
             default:
                 break

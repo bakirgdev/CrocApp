@@ -6,9 +6,8 @@ import Foundation
 ///
 /// On a malformed `fileList` payload the bridge cannot cancel the Go
 /// transfer itself (only `CrocEngine` holds the `CrocmobileTransfer`
-/// handle) — it yields `.failed` and finishes the stream; the consumer
-/// must call `engine.cancel()` on seeing `.failed` to actually tear down
-/// the abandoned Go-side session.
+/// handle) — it yields `.failed` and finishes the stream; finishing runs
+/// `CrocEngine`'s onTermination, which cancels that transfer by its ID.
 final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sendable {
     private let continuation: AsyncStream<TransferEvent>.Continuation
     // Progress ticks at ~10 Hz, so a one-hour transfer decodes ~36,000 times;
@@ -38,7 +37,8 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
         guard let json = listJSON, let list = decode(json, as: FileList.self) else {
             // Unrecoverable: without a decoded list the consumer can never call
             // respond(accept:), so the Go side would otherwise wait forever.
-            continuation.yield(.failed("malformed fileList payload"))
+            continuation.yield(
+                .failed(EngineFailure(code: .other, message: "malformed fileList payload")))
             continuation.finish()
             return
         }
@@ -59,12 +59,13 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
         if let json = summaryJSON, let s = decode(json, as: Summary.self) {
             continuation.yield(.done(s))
         } else {
-            continuation.yield(.failed("malformed done payload"))
+            continuation.yield(
+                .failed(EngineFailure(code: .other, message: "malformed done payload")))
         }
         continuation.finish()
     }
-    func onError(_ message: String?) {
-        continuation.yield(.failed(message ?? "unknown error"))
+    func onError(_ payload: String?) {
+        continuation.yield(.failed(EngineFailure(payload: payload)))
         continuation.finish()
     }
 }

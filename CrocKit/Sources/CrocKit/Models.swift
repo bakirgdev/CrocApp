@@ -38,7 +38,46 @@ public enum TransferEvent: Sendable {
     case progress(TransferProgress)
     case text(String)
     case done(Summary)
-    case failed(String)
+    case failed(EngineFailure)
+}
+
+/// Why a transfer failed, classified by the engine next to croc. Show copy for
+/// `code`; `message` is croc's own text, for logs only, and changes between
+/// croc releases.
+public struct EngineFailure: Error, Equatable, Sendable {
+    /// Mirrors the codes in `crocmobile/errors.go`. An unknown code decodes as
+    /// `.other`, so a newer engine never breaks an older decoder.
+    public enum Code: String, Sendable, CaseIterable {
+        case peerVersion, relayUnreachable, noPublicRelay, declined, refused
+        case roomFull, badPassword, wrongCode, cancelled, connectionLost, other
+    }
+
+    public let code: Code
+    public let message: String
+
+    public init(code: Code, message: String) {
+        self.code = code
+        self.message = message
+    }
+
+    private struct Payload: Decodable {
+        let code: String
+        let message: String
+    }
+
+    /// Decodes the engine's `{"code","message"}` payload. Anything else
+    /// becomes `.other` carrying the raw text.
+    init(payload: String?) {
+        guard let payload else {
+            self.init(code: .other, message: "unknown error")
+            return
+        }
+        guard let decoded = try? JSONDecoder().decode(Payload.self, from: Data(payload.utf8)) else {
+            self.init(code: .other, message: payload)
+            return
+        }
+        self.init(code: Code(rawValue: decoded.code) ?? .other, message: decoded.message)
+    }
 }
 
 public struct FileList: Codable, Sendable {

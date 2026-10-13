@@ -172,7 +172,7 @@ UI pull requests need **before and after screenshots in both light and dark**, a
 
 This is the part reviewers actually check.
 
-A build that compiles proves nothing about a transfer. CI deliberately does not run the harnesses (they need a public relay and are flaky on shared runners), so that job falls on you.
+A build that compiles proves nothing about a transfer. CI runs only `verify-interop.sh`, against a local relay. The other harnesses and the public-pool scenario need a public relay or a device and are flaky on shared runners, so that job falls on you.
 
 | What you changed | What to run |
 |---|---|
@@ -184,7 +184,7 @@ A build that compiles proves nothing about a transfer. CI deliberately does not 
 | Docs, comments only | Nothing beyond reading it back |
 
 ```bash
-scripts/verify-interop.sh     # 10 scenarios, engine <-> croc CLI, both directions, decline, cancel, relay, LAN, every pool relay
+scripts/verify-interop.sh     # 11 scenarios, engine <-> croc CLI, both directions, decline, cancel, relay, LAN, croc v10 peer, every pool relay
 scripts/verify-app-mac.sh     # macOS app, 6 directions: both ways, --local, custom relay, --no-compress, --ask
 scripts/verify-app-sim.sh     # iOS simulator, CLI -> app via --auto-receive
 scripts/verify-share-sim.sh   # share-extension handoff (App Group staging) -> CLI receive

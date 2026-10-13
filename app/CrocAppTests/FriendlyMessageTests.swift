@@ -1,39 +1,49 @@
+import CrocKit
 import Testing
 
 @testable import CrocApp
 
 @Suite struct FriendlyMessageTests {
-    private func message(_ raw: String, cancel: Bool = false, decline: Bool = false) -> String {
+    private func message(
+        _ code: EngineFailure.Code, _ text: String = "croc text", cancel: Bool = false,
+        decline: Bool = false
+    ) -> String {
         TransferController.friendlyMessage(
-            for: raw, cancelRequested: cancel, declineRequested: decline)
+            for: EngineFailure(code: code, message: text), cancelRequested: cancel,
+            declineRequested: decline)
     }
 
-    @Test func localIntentWinsOverEngineText() {
-        #expect(message("refused files", cancel: true) == "Transfer cancelled.")
-        #expect(message("refused files", decline: true) == "You declined the transfer.")
-        #expect(message("room full", cancel: true, decline: true) == "Transfer cancelled.")
+    @Test func localIntentWinsOverEngineCode() {
+        #expect(message(.refused, cancel: true) == "Transfer cancelled.")
+        #expect(message(.cancelled, decline: true) == "You declined the transfer.")
+        #expect(message(.roomFull, cancel: true, decline: true) == "Transfer cancelled.")
     }
 
     @Test(arguments: [
-        ("peer refused files", "The other side declined the transfer."),
-        ("Room Full", "That code is already in use. Try a different code."),
         (
-            "dial tcp: lookup 1.getcroc.com: no such host",
-            "Couldn't reach the relay. Check your internet connection."
+            EngineFailure.Code.peerVersion,
+            "The other device runs an older croc. Both sides need croc 11 or newer."
         ),
-        ("connection refused", "Couldn't reach the relay. Check your internet connection."),
-        ("read tcp: i/o timeout", "Couldn't reach the relay. Check your internet connection."),
-        ("bad password", "Wrong code phrase, or the sender is no longer available."),
-        ("write: broken pipe", "Lost connection to the other device."),
-        ("connection reset by peer", "Lost connection to the other device."),
-        ("unexpected EOF", "Lost connection to the other device."),
+        (.relayUnreachable, "Couldn't reach the relay. Check your internet connection."),
+        (
+            .noPublicRelay,
+            "No public relay answered. Check your internet connection, or turn on Local network only in Settings if both devices are on the same network."
+        ),
+        (.declined, "The other side declined or cancelled the transfer."),
+        (.refused, "You declined the transfer."),
+        (.roomFull, "That code is already in use. Try a different code."),
+        (.badPassword, "The relay rejected its password. Check the relay password in Settings."),
+        (.wrongCode, "The codes don't match. Check the code on both devices and try again."),
+        (.cancelled, "Transfer cancelled."),
+        (.connectionLost, "Lost connection to the other device."),
+        (.other, "Transfer failed. Try again, or check your connection."),
     ])
-    func mapsKnownEngineErrors(raw: String, expected: String) {
-        #expect(message(raw) == expected)
+    func mapsEveryCode(code: EngineFailure.Code, expected: String) {
+        #expect(message(code) == expected)
     }
 
-    @Test(arguments: ["", "something new in croc", "panic: runtime error\ngoroutine 1 [running]:"])
-    func neverEchoesUnknownEngineText(raw: String) {
-        #expect(message(raw) == "Transfer failed. Try again, or check your connection.")
+    @Test(arguments: ["", "room full", "panic: runtime error\ngoroutine 1 [running]:"])
+    func neverEchoesEngineText(text: String) {
+        #expect(message(.other, text) == "Transfer failed. Try again, or check your connection.")
     }
 }

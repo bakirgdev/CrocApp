@@ -189,7 +189,7 @@ govulncheck ./...          # from crocmobile/
 A green build is **not** evidence that a transfer works. Real behaviour is checked by harnesses that run live transfers against the croc CLI over the public relay:
 
 ```bash
-scripts/verify-interop.sh     # 10 scenarios, engine <-> croc CLI, both directions
+scripts/verify-interop.sh     # 11 scenarios, engine <-> croc CLI, both directions, croc v10 peer
 scripts/verify-app-mac.sh     # macOS app, 6 transfer directions
 scripts/verify-app-sim.sh     # iOS simulator receive
 scripts/verify-share-sim.sh   # share-extension handoff

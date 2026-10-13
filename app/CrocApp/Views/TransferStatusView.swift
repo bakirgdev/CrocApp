@@ -225,6 +225,7 @@ struct TransferStatusView: View {
                 .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
+            .accessibilityValue(percent(fraction(p.fileSent, of: p.fileSize)))
             VStack(alignment: .leading, spacing: Spacing.space3) {
                 ProgressView(value: fraction(p.bytesFinished + p.fileSent, of: p.totalSize))
                     .accessibilityLabel("Overall progress")
@@ -243,12 +244,19 @@ struct TransferStatusView: View {
                 .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
+            .accessibilityValue(percent(fraction(p.bytesFinished + p.fileSent, of: p.totalSize)))
             TrustBadge(relay: controller.activeRelay)
         }
     }
 
     private func fraction(_ part: Int64, of whole: Int64) -> Double {
         whole > 0 ? min(1, Double(part) / Double(whole)) : 0
+    }
+
+    /// The percentage VoiceOver reads for a combined progress group (on
+    /// macOS it lands in `AXValueDescription`, beside the raw fraction).
+    private func percent(_ fraction: Double) -> String {
+        fraction.formatted(.percent.precision(.fractionLength(0)))
     }
 
     // Combines the store's live selection flag with a standardized path

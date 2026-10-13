@@ -28,6 +28,7 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 | `binaryTarget` | the `Package.swift` declaration (`CrocKit/Package.swift`) pointing `CrocKit` at the gitignored `Croc.xcframework`; nothing builds until `scripts/build-xcframework.sh` produces it. |
 | delegate bridge | `DelegateBridge` (`CrocKit/Sources/CrocKit/DelegateBridge.swift`), the `NSObject` implementing gobind's `CrocmobileDelegateProtocol` and turning its callbacks (arrived on arbitrary Go threads) into `AsyncStream<TransferEvent>` yields. |
 | event stream | the `AsyncStream<TransferEvent>` returned by `CrocEngine.startSend`/`startReceive`; abandoning it cancels the underlying Go session (`onTermination`). |
+| failure code | the `code` in the `{"code","message"}` JSON that `OnError` and failed starts carry (`crocmobile/errors.go`), decoded in Swift as `EngineFailure.Code`; the app picks its copy from the code and never from croc's text (`docs/knowledge/crocmobile-bridge.md`). |
 | gobind | the Go tool (part of gomobile) that generates the ObjC/Swift binding layer from the `crocmobile` package; source of the `Crocmobile`-prefixed symbols. |
 | gomobile | the Go toolchain used to bind the `crocmobile` package into `Croc.xcframework` for iOS/macOS (`scripts/build-xcframework.sh`). |
 | ObjC symbol prefix `Crocmobile` | gobind derives this from the Go package name `crocmobile`: `CrocmobileOptions`, `CrocmobileTransfer`, `CrocmobileStartSend`/`StartReceive`, protocol `CrocmobileDelegate` → Swift `CrocmobileDelegateProtocol` (`docs/knowledge/crocmobile-bridge.md`). |
@@ -40,7 +41,7 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 
 | Term | Means |
 |---|---|
-| `AppRouter` | `@Observable` singleton (`app/CrocApp/Models/AppRouter.swift`) holding the macOS navigation path and pending drop/dock URLs, needed because `AppDelegate` and menu commands sit outside the SwiftUI environment graph. |
+| `AppRouter` | `@Observable` singleton (`app/CrocApp/Models/AppRouter.swift`) holding the navigation path (both platforms) and pending drop/dock URLs, needed because `AppDelegate` and menu commands sit outside the SwiftUI environment graph. |
 | App Group | `group.com.bakirgdev.CrocApp`, the shared container the iOS share extension stages files into (`ShareInbox/batch-<UUID>/` + `manifest.json`) for the main app to pick up (`app/CrocApp/Models/ShareInbox.swift`). |
 | `AutoVerify` harness | `app/CrocApp/Support/AutoVerify.swift`, launch-argument-driven code path (`--auto-receive`, `--auto-send`, `--ask`, etc.) that drives the real `TransferController` state machine instead of the engine directly, so verify scripts exercise the path users actually take. |
 | `BGContinuedProcessingTask` | iOS 26+ API wrapping a transfer so it survives backgrounding and gets a system Live Activity; `app/CrocApp/Platform/BackgroundCoordinator.swift`, no macOS equivalent (`docs/knowledge/apple-platform-constraints.md`). |
@@ -69,5 +70,5 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 | design token | a named value (color, spacing, type, motion) in `design/`, the only source of such values allowed in app or web code; no raw hex/px (`design/CLAUDE.md`). |
 | harness | one of the `scripts/verify-*.sh` scripts, or `crockit-verify`; proves a real transfer works against the croc CLI, since a green build alone is not evidence. |
 | self-heal | the end-of-session rule (root `CLAUDE.md`, "Session end report") that `docs/knowledge/` and `docs/known-issues.md` are updated to match reality before a session ends. |
-| verify script | any `scripts/verify-*.sh` harness; needs outbound network to the public relay plus a `croc` CLI, and is not run by CI (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |
+| verify script | any `scripts/verify-*.sh` harness; needs outbound network to the public relay plus a `croc` CLI; CI runs only `verify-interop.sh`, against a local relay (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |
 | xcframework build step | `scripts/build-xcframework.sh`, the required first build step on a fresh clone: Go compile + gomobile bind into `CrocKit/Croc.xcframework`. |

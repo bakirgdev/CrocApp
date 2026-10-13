@@ -5,7 +5,7 @@ import CrocKit
 //   crockit-verify receive <code> <outdir> [y|n] [cancel-after-ms]
 //   crockit-verify twice <code1> <code2> <outdir>
 // Prints EVENT lines like croctest; exits 0 on done, 1 on error.
-// cancel-after-ms: fires engine.cancel() from a detached timer after the
+// cancel-after-ms: fires engine.cancel(_:) from a detached timer after the
 // given delay, to prove the Swift-side cancel path actually tears down a
 // transfer mid-wire (as opposed to only being exercised pre/post-transfer).
 // twice: receives code1 to completion, then code2 to completion, in the same
@@ -51,8 +51,8 @@ func drive(_ stream: AsyncStream<TransferEvent>, answer: Bool) async -> Bool {
         case .done(let s):
             print("EVENT done success=\(s.success)")
             return s.success
-        case .failed(let message):
-            print("EVENT error \(message)")
+        case .failed(let failure):
+            print("EVENT error \(failure.code.rawValue) \(failure.message)")
             return false
         }
     }
@@ -64,10 +64,10 @@ func drive(_ stream: AsyncStream<TransferEvent>, answer: Bool) async -> Bool {
 /// unstructured Task spawned from onTermination (see CrocEngine.swift), so it
 /// can still be racing to clear when the next transfer wants to start.
 func receiveToCompletion(code: String, options: EngineOptions) async -> Bool {
-    var stream: AsyncStream<TransferEvent>?
+    var transfer: EngineTransfer?
     for _ in 0..<40 {
         do {
-            stream = try await engine.startReceive(code: code, options: options)
+            transfer = try await engine.startReceive(code: code, options: options)
             break
         } catch CrocEngineError.transferActive {
             try? await Task.sleep(nanoseconds: 50_000_000)
@@ -76,11 +76,11 @@ func receiveToCompletion(code: String, options: EngineOptions) async -> Bool {
             return false
         }
     }
-    guard let stream else {
+    guard let transfer else {
         print("EVENT error transfer still active after retries")
         return false
     }
-    return await drive(stream, answer: true)
+    return await drive(transfer.events, answer: true)
 }
 
 func run() async {
@@ -89,26 +89,23 @@ func run() async {
         case "send":
             var options = defaultOptions()
             options.customCode = args[2]
-            let stream = try await engine.startSend(paths: [args[3]], text: nil, options: options)
-            let ok = await drive(stream, answer: true)
+            let transfer = try await engine.startSend(
+                paths: [args[3]], text: nil, options: options)
+            let ok = await drive(transfer.events, answer: true)
             exit(ok ? 0 : 1)
         case "receive":
             var options = defaultOptions()
             options.outDir = args[3]
             let answer = args.count < 5 || args[4] == "y"
-            let stream = try await engine.startReceive(code: args[2], options: options)
+            let transfer = try await engine.startReceive(code: args[2], options: options)
             if args.count >= 6, let ms = UInt64(args[5]) {
-                // Spawned only after startReceive has returned, so
-                // activeTransfer is guaranteed set before the timer can fire
-                // -- otherwise a short delay could race engine.cancel() into
-                // a silent no-op (activeTransfer still nil).
                 Task {
                     try? await Task.sleep(nanoseconds: ms * 1_000_000)
                     print("EVENT cancelling")
-                    await engine.cancel()
+                    await engine.cancel(transfer.id)
                 }
             }
-            let ok = await drive(stream, answer: answer)
+            let ok = await drive(transfer.events, answer: answer)
             exit(ok ? 0 : 1)
         case "twice":
             guard args.count >= 5 else { exit(2) }

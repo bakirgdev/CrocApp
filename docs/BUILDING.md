@@ -105,17 +105,22 @@ swift test --package-path CrocKit
 
 ## 5. Verification harnesses
 
-A green build is **not** evidence a transfer works. CI deliberately does not run any of these (`docs/knowledge/tooling.md`: they need a public relay and are flaky on shared runners), so running them is on whoever touched the transfer path.
+A green build is **not** evidence a transfer works. CI runs only `verify-interop.sh`, against a local relay (job `interop (local relay)`, `docs/knowledge/tooling.md`). The other harnesses and the public-pool scenario need a public relay or a device and are flaky on shared runners, so running them is on whoever touched the transfer path.
 
 | Harness | Proves | Needs | Env vars |
 |---|---|---|---|
-| `scripts/verify-interop.sh` | 10 scenarios, crocmobile (via its `croctest` CLI) ↔ croc CLI: file/folder/text both directions, decline, cancel both directions, forced relay, LAN-only, and every public pool relay in both directions (LAN off, asserting which relay each side used) | outbound network (public relay), croc CLI | `CROC` |
-| `scripts/verify-app-mac.sh` | macOS app, 6 directions: CLI→app receive (plus SwiftData history), app→CLI send, `--local`, custom self-hosted relay, `--no-compress`, `--ask` (both sides confirm) | outbound network, croc CLI, a macOS app build | `CROC` |
+| `scripts/verify-interop.sh` | 11 scenarios, crocmobile (via its `croctest` CLI) ↔ croc CLI: file/folder/text both directions, decline, cancel both directions, forced relay, LAN-only, a croc v10 peer in both directions (R8: crocmobile reports failure code `peerVersion`), and every public pool relay in both directions (LAN off, asserting which relay each side used). With `RELAY` set every transfer uses that relay and the pool scenario (11) is skipped | croc CLI, croc v10 CLI (`scripts/croc-v10.version`), outbound network (public relay) unless `RELAY` is set | `CROC`, `CROC_V10`, `RELAY` |
+| `scripts/verify-app-mac.sh` | macOS app, 6 directions: CLI→app receive (plus SwiftData history), app→CLI send, `--local`, custom self-hosted relay, `--no-compress`, `--ask` (both sides confirm); in the app-as-sender scenarios the CLI receiver starts only after the app writes `verify-code-ready.txt` | outbound network, croc CLI, a macOS app build | `CROC` |
 | `scripts/verify-app-sim.sh` | iOS simulator, CLI→app via the `--auto-receive` launch argument, gated on a byte-identical diff | outbound network, croc CLI, an iOS Simulator | `CROC`, `SIM` |
 | `scripts/verify-share-sim.sh` | Share-extension handoff: files staged into the App Group container the way `CrocShare` does, app launched with `--auto-share-send`, received by the croc CLI (the receiver starts only after the app writes `verify-code-ready.txt`, since a receiver that joins the room first fails) | outbound network, croc CLI, an iOS Simulator | `CROC`, `SIM` |
 | `crockit-verify` (run via `swift run --package-path CrocKit crockit-verify send\|receive\|twice ...`) | Swift-layer send/receive, cancel fired mid-wire, and two transfers back-to-back in one process (proves fd0/stdout/cwd/mutex restoration composes) | outbound network, croc CLI, macOS only | optional `CROC_RELAY`, `CROC_PASS` to point at a private relay |
 
-`CROC` overrides the CLI path (default `$HOMEBREW_PREFIX/bin/croc`, falling back to `/opt/homebrew/bin/croc`); `SIM` picks the simulator (default `iPhone 17 Pro`).
+`CROC` overrides the CLI path (default `$HOMEBREW_PREFIX/bin/croc`, falling back to `/opt/homebrew/bin/croc`); `SIM` picks the simulator (default `iPhone 17 Pro`). `CROC_V10` is the croc v10 binary for `verify-interop.sh` scenario 10 (default `$HOME/go/bin/croc`; install with `go install github.com/schollz/croc/v10@$(cat scripts/croc-v10.version)`), and the script fails at start if it is not the version in `scripts/croc-v10.version`. `RELAY=host:port` sends every transfer of `verify-interop.sh` through that relay instead of the public pool. CI raises the local relay's admission limits as a margin, because every connection comes from 127.0.0.1 and croc v11's relay admits 30 joins a minute per address by default (a run on default limits passed on 2026-10-13):
+
+```bash
+croc relay --host 127.0.0.1 --ports 9309,9310,9311,9312,9313 --source-join-limit 1000 --room-join-limit 1000
+RELAY=127.0.0.1:9309 scripts/verify-interop.sh
+```
 
 Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` needs the matching harness run, its output quoted, not summarized. If a harness could not be run, say "not verified" and why.
 

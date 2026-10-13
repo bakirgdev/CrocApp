@@ -22,7 +22,7 @@ CrocApp races a direct local-network connection against the relay and uses which
 
 ## The other side is using a different croc version
 
-CrocApp embeds croc v11.5.4 as its engine. It's built to interoperate with the `croc` CLI in both directions. The other side needs croc 11 or newer: croc 10 cannot complete a transfer with the app.
+CrocApp embeds croc v11.5.4 as its engine. It's built to interoperate with the `croc` CLI in both directions. The other side needs croc 11 or newer: croc 10 cannot complete a transfer with the app. When both sides reach the same relay, the app says the other device runs an older croc. Often they do not (with a generated code, or when the two use different relays), and the app just keeps waiting for the other side, so if a transfer with a croc 10 user never connects, ask them to upgrade to croc 11.
 
 ## iOS backgrounding limits
 
