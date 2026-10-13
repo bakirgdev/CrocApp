@@ -2,7 +2,6 @@ package crocmobile
 
 import (
 	"context"
-	"math/rand/v2"
 	"strings"
 
 	"github.com/bakirgdev/CrocApp/crocmobile/internal/relaycache"
@@ -84,19 +83,13 @@ func poolRelay(code string) (string, error) {
 
 // generatePublicCode is the CLI's generated-code path for the public pool: the
 // first relay to answer a ping wins, and the code is drawn so that it maps to
-// that relay. Unlike the CLI, when no relay answers it still draws a code (for a
-// random relay, not cached) so the send starts and the LAN path stays usable
-// offline; only the relay leg then fails.
+// that relay.
 func generatePublicCode(probe publicrelay.Probe) (string, error) {
-	n := len(publicrelay.Relays())
 	index, err := selectPublicRelay(probe)
 	if err != nil {
-		if n == 0 {
-			return "", err
-		}
-		index = rand.IntN(n)
+		return "", err
 	}
-	return codephrase.GenerateForRelay(index, n)
+	return codephrase.GenerateForRelay(index, len(publicrelay.Relays()))
 }
 
 // selectPublicRelay is the CLI's best-relay cache (cli.go selectPublicRelay).

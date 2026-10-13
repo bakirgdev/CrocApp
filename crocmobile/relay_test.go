@@ -158,12 +158,8 @@ func TestSelectPublicRelayFailureIsNotCached(t *testing.T) {
 	down := func(context.Context, string, time.Duration) (time.Duration, error) {
 		return 0, errors.New("unreachable")
 	}
-	code, err := generatePublicCode(down)
-	if err != nil {
-		t.Fatalf("generatePublicCode with every relay down: %v; want a code so a LAN send can start", err)
-	}
-	if c := mustBuildCrocOptions(t, true, code, &Options{}); !c.PublicRelay || c.RelayAddress != wantPool[oracleIndex(code)] {
-		t.Errorf("fallback code %q: relay %q public=%v, want pool relay %q", code, c.RelayAddress, c.PublicRelay, wantPool[oracleIndex(code)])
+	if _, err := generatePublicCode(down); err == nil {
+		t.Fatal("generatePublicCode with every relay down: want error")
 	}
 	var calls atomic.Int32
 	if idx, err := selectPublicRelay(probeOnly(1, &calls)); err != nil || idx != 1 {
