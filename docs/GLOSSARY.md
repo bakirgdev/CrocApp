@@ -70,5 +70,5 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 | design token | a named value (color, spacing, type, motion) in `design/`, the only source of such values allowed in app or web code; no raw hex/px (`design/CLAUDE.md`). |
 | harness | one of the `scripts/verify-*.sh` scripts, or `crockit-verify`; proves a real transfer works against the croc CLI, since a green build alone is not evidence. |
 | self-heal | the end-of-session rule (root `CLAUDE.md`, "Session end report") that `docs/knowledge/` and `docs/known-issues.md` are updated to match reality before a session ends. |
-| verify script | any `scripts/verify-*.sh` harness; needs outbound network to the public relay plus a `croc` CLI, and is not run by CI (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |
+| verify script | any `scripts/verify-*.sh` harness; needs outbound network to the public relay plus a `croc` CLI; CI runs only `verify-interop.sh`, against a local relay (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |
 | xcframework build step | `scripts/build-xcframework.sh`, the required first build step on a fresh clone: Go compile + gomobile bind into `CrocKit/Croc.xcframework`. |

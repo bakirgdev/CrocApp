@@ -6,7 +6,7 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 
 | Path | Purpose |
 | --- | --- |
-| `workflows/ci.yml` | push-main + PR gate: a `changes` job gates lint, Go checks and `go test -race`, the contrast check, and the macOS and iOS Simulator builds (the macOS leg also runs `swift test` for CrocKit and `xcodebuild test` for `CrocAppTests`); `ci pass` aggregates them |
+| `workflows/ci.yml` | push-main + PR gate: a `changes` job gates lint, Go checks and `go test -race`, the contrast check, and the macOS and iOS Simulator builds (the macOS leg also runs `swift test` for CrocKit and `xcodebuild test` for `CrocAppTests`), and `interop (local relay)` (`scripts/verify-interop.sh` against a `croc relay` on 127.0.0.1, on `macos-26`); `ci pass` aggregates them |
 | `workflows/release.yml` | on `v*` tag: verify tag against `MARKETING_VERSION`, build, dmg/zip/checksums, attest, publish |
 | `workflows/go-weekly.yml` | Monday scan on a clock, files or updates one `security` issue on failure |
 | `workflows/github-pages.yml` | builds `_site` on PR, also deploys on push to main |
@@ -23,7 +23,7 @@ gh api repos/OWNER/REPO/git/ref/tags/TAG --jq '.object.type + " " + .object.sha'
 # type "tag" is annotated: deref with git/tags/SHA --jq .object.sha
 ```
 
-**Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block. Runners are pinned (`ubuntu-24.04`, `xcode-27`) and are the one thing dependabot cannot see.
+**Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block. Runners are pinned (`ubuntu-24.04`, `macos-26`, `xcode-27`) and are the one thing dependabot cannot see.
 
 ## Gotchas
 

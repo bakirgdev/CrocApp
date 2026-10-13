@@ -27,6 +27,7 @@ jobs:
       go: ${{ steps.filter.outputs.go }}
       build: ${{ steps.filter.outputs.build }}
       design: ${{ steps.filter.outputs.design }}
+      interop: ${{ steps.filter.outputs.interop }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -64,6 +65,7 @@ jobs:
             out go '^crocmobile/|^\.github/workflows/(ci|reusable-go)\.yml$'
             out build '^(app|CrocKit|crocmobile)/|^scripts/build-xcframework\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
             out design '^design/|^scripts/(lib|verify-contrast)\.sh$|^\.github/workflows/ci\.yml$'
+            out interop '^(crocmobile|CrocKit)/|^scripts/(lib|verify-interop)\.sh$|^\.github/workflows/ci\.yml$'
           } | tee -a "$GITHUB_OUTPUT"
 
   swift-format:
@@ -97,6 +99,47 @@ jobs:
           persist-credentials: false
 
       - run: scripts/verify-contrast.sh
+
+  # The interop harness against a relay on localhost, never the public relays:
+  # those rate-limit a shared runner address and make the run flaky. The
+  # public-pool scenario stays a local run (docs/BUILDING.md).
+  interop:
+    name: interop (local relay)
+
+    needs: changes
+
+    if: needs.changes.outputs.interop == 'true'
+
+    runs-on: macos-26
+
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: crocmobile/go.mod
+          cache-dependency-path: crocmobile/go.sum
+
+      - run: brew install croc
+
+      # The R8 scenario's croc v10 peer.
+      - run: go install github.com/schollz/croc/v10@v10.5.0
+
+      # Admission limits raised as a margin: every connection comes from
+      # 127.0.0.1, which a relay admits 30 times a minute by default.
+      - name: Interop against a local croc relay
+        shell: bash
+        run: |
+          set -euo pipefail
+          croc=$(brew --prefix)/bin/croc
+          "$croc" relay --host 127.0.0.1 --ports 9309,9310,9311,9312,9313 \
+            --source-join-limit 1000 --room-join-limit 1000 > "$RUNNER_TEMP/relay.log" 2>&1 &
+          for _ in $(seq 50); do nc -z 127.0.0.1 9309 && break; sleep 0.2; done
+          CROC="$croc" CROC_V10="$(go env GOPATH)/bin/croc" RELAY=127.0.0.1:9309 scripts/verify-interop.sh
 
   format-comment:
     name: format comment
@@ -238,7 +281,7 @@ jobs:
   pass:
     name: ci pass
 
-    needs: [changes, swift-format, go, contrast, build]
+    needs: [changes, swift-format, go, contrast, interop, build]
 
     if: ${{ always() }}
 
