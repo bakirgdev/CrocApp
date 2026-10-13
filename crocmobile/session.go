@@ -114,12 +114,16 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 	if !activeMu.TryLock() {
 		return nil, errors.New("another transfer is active")
 	}
-	origWD, _ := os.Getwd()
+	origWD, err := os.Getwd()
+	if err != nil {
+		activeMu.Unlock()
+		return nil, fmt.Errorf("working directory: %w", err)
+	}
 	committed := false
 	defer func() {
 		if !committed {
 			removeTempFiles()
-			_ = os.Chdir(origWD)
+			restoreWD(origWD)
 			activeMu.Unlock()
 		}
 	}()
@@ -368,7 +372,7 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 		os.Remove(s.tempPath)
 	}
 	removeTempFiles()
-	_ = os.Chdir(origWD)
+	restoreWD(origWD)
 
 	// poll() only notices s.done on its next 100ms tick; wait for it to
 	// actually exit so a straggling OnProgress can't interleave with the
@@ -392,7 +396,7 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 		}
 	}()
 	if err != nil {
-		s.delegate.OnError(err.Error())
+		s.delegate.OnError(errorJSON(err))
 		return
 	}
 	if text != "" {
@@ -415,7 +419,16 @@ func removeTempFiles() {
 // guarded against the delegate itself panicking again on the way out.
 func reportPanic(s *session, r any) {
 	defer func() { recover() }() //nolint:errcheck // OnError may panic again; never let that escape
-	s.delegate.OnError(fmt.Sprintf("croc panic: %v\n%s", r, debug.Stack()))
+	s.delegate.OnError(failureJSON(codeOther, fmt.Sprintf("croc panic: %v\n%s", r, debug.Stack())))
+}
+
+// restoreWD puts back the cwd a transfer changed. A failure cannot be undone
+// here, but it leaves the next transfer resolving relative paths elsewhere, so
+// it is logged rather than dropped.
+func restoreWD(dir string) {
+	if err := os.Chdir(dir); err != nil {
+		log.Printf("crocmobile: restore working directory: %v", err)
+	}
 }
 
 // cancel also closes the prompt pipe. croc's GetInputContext returns as soon

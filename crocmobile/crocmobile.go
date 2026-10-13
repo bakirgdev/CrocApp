@@ -113,14 +113,14 @@ func (t *Transfer) Respond(accept bool) {
 func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *Transfer, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			t, err = nil, fmt.Errorf("croc panic: %v\n%s", r, debug.Stack())
+			t, err = nil, startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
 		}
 	}()
 	if opts == nil {
 		opts = NewOptionsDefault()
 	}
 	if d == nil {
-		return nil, errors.New("delegate required")
+		return nil, startError(errors.New("delegate required"))
 	}
 	var paths []string
 	for _, p := range strings.Split(pathsJoined, "\n") {
@@ -129,11 +129,11 @@ func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *T
 		}
 	}
 	if text == "" && len(paths) == 0 {
-		return nil, errors.New("nothing to send")
+		return nil, startError(errors.New("nothing to send"))
 	}
 	s, err := startSession(true, "", paths, text, opts, d)
 	if err != nil {
-		return nil, err
+		return nil, startError(err)
 	}
 	return &Transfer{s: s}, nil
 }
@@ -144,21 +144,21 @@ func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *T
 func StartReceive(code string, opts *Options, d Delegate) (t *Transfer, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			t, err = nil, fmt.Errorf("croc panic: %v\n%s", r, debug.Stack())
+			t, err = nil, startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
 		}
 	}()
 	if opts == nil {
 		opts = NewOptionsDefault()
 	}
 	if d == nil {
-		return nil, errors.New("delegate required")
+		return nil, startError(errors.New("delegate required"))
 	}
 	if len(code) < 6 {
-		return nil, errors.New("code is too short (must be at least 6 characters)")
+		return nil, startError(errors.New("code is too short (must be at least 6 characters)"))
 	}
 	s, err := startSession(false, code, nil, "", opts, d)
 	if err != nil {
-		return nil, err
+		return nil, startError(err)
 	}
 	return &Transfer{s: s}, nil
 }

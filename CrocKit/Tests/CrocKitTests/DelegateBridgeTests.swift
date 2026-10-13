@@ -93,19 +93,19 @@ private func events(_ drive: (DelegateBridge) -> Void) async -> [TransferEvent] 
 
     @Test func errorFailsAndFinishesStream() async {
         let got = await events {
-            $0.onError("room full")
+            $0.onError(#"{"code":"roomFull","message":"relay admission rejected"}"#)
             $0.onConnected()
         }
         #expect(got.count == 1)
-        if case .failed(let m) = got.first {
-            #expect(m == "room full")
+        if case .failed(let f) = got.first {
+            #expect(f == EngineFailure(code: .roomFull, message: "relay admission rejected"))
         } else {
             Issue.record("\(got)")
         }
 
         let unknown = await events { $0.onError(nil) }
-        if case .failed(let m) = unknown.first {
-            #expect(m == "unknown error")
+        if case .failed(let f) = unknown.first {
+            #expect(f == EngineFailure(code: .other, message: "unknown error"))
         } else {
             Issue.record("\(unknown)")
         }
@@ -120,8 +120,8 @@ private func events(_ drive: (DelegateBridge) -> Void) async -> [TransferEvent] 
             $0.onConnected()
         }
         #expect(got.count == 1)
-        if case .failed(let m) = got.first {
-            #expect(m == "malformed fileList payload")
+        if case .failed(let f) = got.first {
+            #expect(f == EngineFailure(code: .other, message: "malformed fileList payload"))
         } else {
             Issue.record("\(got)")
         }
@@ -134,8 +134,8 @@ private func events(_ drive: (DelegateBridge) -> Void) async -> [TransferEvent] 
             $0.onConnected()
         }
         #expect(got.count == 1)
-        if case .failed(let m) = got.first {
-            #expect(m == "malformed done payload")
+        if case .failed(let f) = got.first {
+            #expect(f == EngineFailure(code: .other, message: "malformed done payload"))
         } else {
             Issue.record("\(got)")
         }

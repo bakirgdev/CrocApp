@@ -46,6 +46,9 @@ final class TransferController {
     private let background = BackgroundCoordinator()
     private var backgroundExpired = false
     private var streamTask: Task<Void, Never>?
+    /// The engine transfer this controller started last; every cancel targets it,
+    /// so a late cancel cannot reach the next transfer.
+    private var transferID: TransferID?
     private var scopedURLs: [URL] = []
     private var cancelRequested = false
     private var declineRequested = false
@@ -193,7 +196,10 @@ final class TransferController {
 
     func cancel() {
         cancelRequested = true
-        Task { await engine.cancel() }
+        // Before the engine has started there is nothing to cancel yet; run()
+        // cancels as soon as the ID exists.
+        guard let id = transferID else { return }
+        Task { await engine.cancel(id) }
     }
 
     /// Back to idle. Only meaningful from terminal phases; the stream has
@@ -211,7 +217,7 @@ final class TransferController {
 
     // MARK: - Engine plumbing
 
-    private func run(_ start: @escaping () async throws -> AsyncStream<TransferEvent>) {
+    private func run(_ start: @escaping () async throws -> EngineTransfer) {
         phase = .starting
         background.transferStarted(
             title: direction == .send ? "Sending with CrocApp" : "Receiving with CrocApp"
@@ -229,18 +235,21 @@ final class TransferController {
         speedBytesPerSec = 0
         lastProgressDate = nil
         lastProgressBytes = 0
+        transferID = nil
         streamTask = Task {
             do {
-                var stream: AsyncStream<TransferEvent>
+                var transfer: EngineTransfer
                 do {
-                    stream = try await start()
+                    transfer = try await start()
                 } catch CrocEngineError.transferActive {
                     // Brief window after `done` where the engine still holds
                     // the previous transfer (bridge doc) -- retry once.
                     try await Task.sleep(for: .milliseconds(300))
-                    stream = try await start()
+                    transfer = try await start()
                 }
-                for await event in stream { handle(event) }
+                transferID = transfer.id
+                if cancelRequested { cancel() }
+                for await event in transfer.events { handle(event) }
             } catch {
                 // Startup failure before any event flowed -- still tear down
                 // the idle-timer lock / BG task requested at the top of run().
@@ -251,9 +260,15 @@ final class TransferController {
                 if backgroundExpired {
                     phase = .failed(Self.backgroundExpiredCopy)
                 } else {
+                    let failure: EngineFailure
+                    if case CrocEngineError.startFailed(let f) = error {
+                        failure = f
+                    } else {
+                        failure = EngineFailure(code: .other, message: "\(error)")
+                    }
                     phase = .failed(
                         Self.friendlyMessage(
-                            for: "\(error)", cancelRequested: cancelRequested,
+                            for: failure, cancelRequested: cancelRequested,
                             declineRequested: declineRequested))
                 }
                 finishRecord(cancelRequested ? .cancelled : .failed, summary: nil)
@@ -337,19 +352,17 @@ final class TransferController {
                 phase = .done(summary, receivedText: receivedText)
                 finishRecord(summary.success ? .completed : .failed, summary: summary)
             }
-        case .failed(let message):
+        case .failed(let failure):
             background.transferEnded(success: false)
             if blockedAutoAccept {
                 phase = .failed(Self.blockedAutoAcceptCopy)
             } else if backgroundExpired {
                 phase = .failed(Self.backgroundExpiredCopy)
-            } else if autoAcceptActive, !cancelRequested,
-                message.lowercased().contains("refused files")
-            {
-                // Not a peer decline. croc forces the receiver prompt whenever
-                // the remote sender ran --ask, regardless of NoPrompt; engine
-                // auto-accept has already closed the prompt pipe, so GetInput
-                // hits EOF and croc reports the local "refused files". While
+            } else if autoAcceptActive, !cancelRequested, failure.code == .refused {
+                // This side's prompt refused without anyone answering it. croc
+                // forces the receiver prompt whenever the remote sender ran
+                // --ask, regardless of NoPrompt; engine auto-accept has already
+                // closed the prompt pipe, so GetInput hits EOF. While
                 // autoAcceptActive is true respond() is never called, so
                 // declineRequested cannot be set, and the cancel paths are
                 // excluded above -- what is left can only be this.
@@ -358,7 +371,7 @@ final class TransferController {
                 )
             } else {
                 var copy = Self.friendlyMessage(
-                    for: message, cancelRequested: cancelRequested,
+                    for: failure, cancelRequested: cancelRequested,
                     declineRequested: declineRequested)
                 if sawTransferBytes && !cancelRequested && !declineRequested {
                     copy +=
@@ -381,9 +394,6 @@ final class TransferController {
                 status = .failed
             }
             finishRecord(status, summary: nil)
-            // Engine contract: the consumer must cancel on .failed so the Go
-            // session releases and the next transfer can start.
-            Task { await engine.cancel() }
         }
     }
 
@@ -455,30 +465,36 @@ final class TransferController {
         "iOS paused the transfer in the background. Start the same transfer again — croc resumes partially transferred files."
 
     static func friendlyMessage(
-        for raw: String, cancelRequested: Bool, declineRequested: Bool
+        for failure: EngineFailure, cancelRequested: Bool, declineRequested: Bool
     ) -> String {
         if cancelRequested { return "Transfer cancelled." }
         if declineRequested { return "You declined the transfer." }
-        let m = raw.lowercased()
-        // Local cancel during the accept prompt also surfaces "refused files";
-        // that case is caught by cancelRequested above.
-        if m.contains("refused files") { return "The other side declined the transfer." }
-        if m.contains("room full") { return "That code is already in use. Try a different code." }
-        if m.contains("no such host") || m.contains("connection refused")
-            || m.contains("i/o timeout") || m.contains("dial tcp")
-        {
+        // Never echo failure.message: croc adds new error text every release,
+        // and a recovered Go panic arrives with a full stack trace attached.
+        switch failure.code {
+        case .peerVersion:
+            return "The other device runs an older croc. Both sides need croc 11 or newer."
+        case .relayUnreachable:
             return "Couldn't reach the relay. Check your internet connection."
-        }
-        if m.contains("bad password") {
-            return "Wrong code phrase, or the sender is no longer available."
-        }
-        if m.contains("broken pipe") || m.contains("connection reset")
-            || m.contains("unexpected eof")
-        {
+        case .noPublicRelay:
+            return
+                "No public relay answered. Check your internet connection, or turn on Local network only in Settings if both devices are on the same network."
+        case .declined:
+            return "The other side declined or cancelled the transfer."
+        case .refused:
+            return "You declined the transfer."
+        case .roomFull:
+            return "That code is already in use. Try a different code."
+        case .badPassword:
+            return "The relay rejected its password. Check the relay password in Settings."
+        case .wrongCode:
+            return "The codes don't match. Check the code on both devices and try again."
+        case .cancelled:
+            return "Transfer cancelled."
+        case .connectionLost:
             return "Lost connection to the other device."
+        case .other:
+            return "Transfer failed. Try again, or check your connection."
         }
-        // Never echo the engine string: croc adds new error text every release,
-        // and a recovered Go panic arrives here with a full stack trace attached.
-        return "Transfer failed. Try again, or check your connection."
     }
 }

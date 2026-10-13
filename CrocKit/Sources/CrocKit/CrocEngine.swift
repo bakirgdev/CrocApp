@@ -3,7 +3,19 @@ import Foundation
 
 public enum CrocEngineError: Error, Sendable {
     case transferActive
-    case startFailed(String)
+    case startFailed(EngineFailure)
+}
+
+/// Identifies one started transfer, so a late `cancel` aimed at a finished
+/// transfer cannot reach the next one.
+public struct TransferID: Hashable, Sendable {
+    private let value = UUID()
+}
+
+/// A started transfer: its ID and its event stream.
+public struct EngineTransfer: Sendable {
+    public let id: TransferID
+    public let events: AsyncStream<TransferEvent>
 }
 
 /// Wraps the gomobile croc bridge. One transfer at a time (crocmobile
@@ -12,17 +24,18 @@ public actor CrocEngine {
     public init() {}
 
     private var activeTransfer: CrocmobileTransfer?
+    private var activeID: TransferID?
     private var bridge: DelegateBridge?
 
     public func startSend(
         paths: [String], text: String?, options: EngineOptions
-    ) throws -> AsyncStream<TransferEvent> {
+    ) throws -> EngineTransfer {
         try start(send: true, code: "", paths: paths, text: text ?? "", options: options)
     }
 
     public func startReceive(
         code: String, options: EngineOptions
-    ) throws -> AsyncStream<TransferEvent> {
+    ) throws -> EngineTransfer {
         try start(send: false, code: code, paths: [], text: "", options: options)
     }
 
@@ -31,13 +44,18 @@ public actor CrocEngine {
         activeTransfer?.respond(accept)
     }
 
-    public func cancel() {
+    /// Cancels the transfer `id` if it is still the active one; a stale ID is
+    /// ignored.
+    public func cancel(_ id: TransferID) {
+        guard id == activeID else { return }
         activeTransfer?.cancel()
     }
 
+    func isActive(_ id: TransferID) -> Bool { id == activeID }
+
     private func start(
         send: Bool, code: String, paths: [String], text: String, options: EngineOptions
-    ) throws -> AsyncStream<TransferEvent> {
+    ) throws -> EngineTransfer {
         guard activeTransfer == nil else { throw CrocEngineError.transferActive }
 
         let opts = try Self.crocOptions(from: options)
@@ -55,35 +73,39 @@ public actor CrocEngine {
         }
         guard let transfer else {
             self.bridge = nil
-            throw CrocEngineError.startFailed(error?.localizedDescription ?? "unknown")
+            // gobind passes only the Go error's text, which carries the same
+            // payload as OnError.
+            throw CrocEngineError.startFailed(EngineFailure(payload: error?.localizedDescription))
         }
+        let id = TransferID()
         activeTransfer = transfer
+        activeID = id
         continuation.onTermination = { _ in
-            // Stream termination (consumer task cancelled, or the
-            // malformed-fileList path in DelegateBridge finishing early)
-            // must not merely forget the transfer -- the Go session would
-            // keep running forever with activeMu held, bricking the engine
-            // for any future transfer. cancel() is a Go context cancel:
-            // thread-safe and idempotent even if the transfer already
-            // finished on its own. CrocmobileTransfer isn't Sendable, so
-            // rather than capture `transfer` across this @Sendable closure,
-            // cancel via the actor's own isolated state -- `start()` never
-            // lets a second transfer start while this one is still set, so
-            // `self.activeTransfer` here is still this same transfer.
-            Task { await self.cancelAndClear() }
+            // Stream termination (done, failed, the consumer task cancelled,
+            // or the malformed-fileList path in DelegateBridge finishing
+            // early) must not merely forget the transfer -- the Go session
+            // would keep running forever with activeMu held, bricking the
+            // engine for any future transfer. cancel() is a Go context
+            // cancel: thread-safe and idempotent even if the transfer already
+            // finished on its own. CrocmobileTransfer isn't Sendable, so the
+            // closure carries only the ID and the actor looks the transfer up.
+            Task { await self.cancelAndClear(id) }
         }
-        return stream
+        return EngineTransfer(id: id, events: stream)
     }
 
-    private func cancelAndClear() {
+    private func cancelAndClear(_ id: TransferID) {
+        guard id == activeID else { return }
         activeTransfer?.cancel()
         activeTransfer = nil
+        activeID = nil
         bridge = nil
     }
 
     static func crocOptions(from o: EngineOptions) throws -> CrocmobileOptions {
         guard let opts = CrocmobileNewOptionsDefault() else {
-            throw CrocEngineError.startFailed("options init failed")
+            throw CrocEngineError.startFailed(
+                EngineFailure(code: .other, message: "options init failed"))
         }
         opts.relayAddress = o.relayAddress
         opts.relayAddress6 = o.relayAddress6

@@ -83,11 +83,11 @@ func poolRelay(code string) (string, error) {
 
 // generatePublicCode is the CLI's generated-code path for the public pool: the
 // first relay to answer a ping wins, and the code is drawn so that it maps to
-// that relay.
+// that relay. With none answering, the send fails as the CLI's does.
 func generatePublicCode(probe publicrelay.Probe) (string, error) {
 	index, err := selectPublicRelay(probe)
 	if err != nil {
-		return "", err
+		return "", &codedError{code: codeNoPublicRelay, err: err}
 	}
 	return codephrase.GenerateForRelay(index, len(publicrelay.Relays()))
 }
