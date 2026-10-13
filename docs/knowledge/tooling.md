@@ -17,6 +17,7 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | Node 24 (latest LTS) | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
 | pnpm 12 | `packageManager` in `web/docs/package.json` (CI: `corepack enable pnpm` reads it) | docs site, local + CI |
 | Docusaurus 3.10, React 19.3, TypeScript 7 | `web/docs/package.json`, `pnpm-lock.yaml`; `pnpm-workspace.yaml` holds `overrides` for transitive advisories | docs site, local + CI (`pnpm run typecheck` in `github-pages.yml`) |
+| Sparkle 2.10.0 (SwiftPM, `CrocApp Direct` only; auto-update for the direct-download build) | `Package.resolved` under `app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/`, minimum in the `XCRemoteSwiftPackageReference` in `project.pbxproj`; Dependabot does not cover Xcode-project pins, so bump by hand | `CrocApp Direct` build, local + CI (unsigned build step) |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched; `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26` against a local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:00 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | PRs build only; push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) also deploys |
@@ -29,6 +30,7 @@ Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it int
 - **Swift 6 language mode everywhere.** App and extension are `SWIFT_VERSION = 6.0`, `CrocKit` is swift-tools 6.0. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default and `nonisolated` is the explicit case. Strict concurrency is an error, not a warning.
 - **Deployment targets are `26.0` everywhere** — pbxproj, `Package.swift`, and `gomobile -iosversion`/`-macosversion`. Never a minor pin.
 - **macOS is arm64 only** (`ARCHS[sdk=macosx*] = arm64`). `Croc.xcframework` has no x86_64 slice because gomobile cannot produce one (golang/go#73119), so Intel Macs cannot run the app. Removing the pin does not add Intel support, it breaks the link.
+- **Version numbers live in `app/Config/Version.xcconfig`** (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`), the base configuration of the project-level Debug and Release configurations; no target sets either. `release.yml`'s tag check reads `MARKETING_VERSION` from it.
 - **Go toolchain ≥ 1.27.2**, pinned in `crocmobile/go.mod`. `scripts/build-xcframework.sh` builds gomobile and gobind from the `golang.org/x/mobile` version in the same file's `tool` block; pin x/mobile to the last good version if a bind ever regresses.
 
 CI gotchas:

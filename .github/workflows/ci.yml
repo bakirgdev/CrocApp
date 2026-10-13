@@ -268,6 +268,20 @@ jobs:
             test \
             | xcbeautify --renderer github-actions
 
+      # Last: it writes CrocApp.app into the same DerivedData as the test step.
+      - name: Build CrocApp Direct
+        if: matrix.platform == 'macOS'
+        shell: bash
+        working-directory: app
+        run: |
+          set -o pipefail
+          xcodebuild -scheme 'CrocApp Direct' \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO \
+            build \
+            | xcbeautify --renderer github-actions
+
       - name: Save DerivedData
         if: github.event_name == 'push'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

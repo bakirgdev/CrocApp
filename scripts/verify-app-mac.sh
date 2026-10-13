@@ -21,7 +21,7 @@ TMP=$(mktemp -d)
 trap 'kill_jobs; rm -rf "$TMP"' EXIT
 
 ( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
-    -derivedDataPath "$DD" build ) > "$TMPROOT/mac-build.log" 2>&1
+    -derivedDataPath "$DD" -allowProvisioningUpdates build ) > "$TMPROOT/mac-build.log" 2>&1
 APP=$(find "$DD/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
 [ -n "$APP" ] || fail "no CrocApp.app in $DD (see $TMPROOT/mac-build.log)"
 BIN="$APP/Contents/MacOS/CrocApp"

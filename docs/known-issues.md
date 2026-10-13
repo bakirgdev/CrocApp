@@ -24,6 +24,8 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 - **`verify-app-mac.sh` exits with no `FAIL:` line when a CLI receive fails** (`recv_from_app`, under `set -e`). Its log is still in `$TMPDIR`. `verify-share-sim.sh` and `verify-interop.sh` already report this case.
 - **`BUILDING.md` §5's `croc relay` runs whichever `croc` is first on `PATH`.** On a machine set up with `CROC_V10` at `~/go/bin/croc` ahead of Homebrew, that is v10, which rejects `--source-join-limit`, and every scenario then fails `connection refused`. Run `"$(brew --prefix)/bin/croc" relay ...` there.
 
+- **The first local Sparkle update test hung after "Install and Relaunch".** In the update test (`docs/BUILDING.md`, "Testing a Sparkle update locally"), run 1, the very first launch of the `com.bakirgdev.CrocApp.direct` bundle ID on that Mac, downloaded and prepared the update, but after "Install and Relaunch" the app never terminated. Its own Quit menu item was then ignored too (main thread idle), and the installer kept waiting. The next 4 runs passed, 3 of them with Sparkle's first-launch defaults deleted, so first-launch state alone does not explain it. Cause unknown. If it recurs, watch `log stream` for `org.sparkle-project.Sparkle` and for the app's termination, and repeat the release rehearsal from a clean macOS account.
+
 ## Design system
 
 - **`FileRow` stats each file for its size label inside `body`.** `List` is lazy so only visible rows pay, but it is still synchronous I/O on the main actor during layout, and a network or iCloud volume could make it hitch. Not measured.

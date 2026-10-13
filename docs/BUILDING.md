@@ -34,7 +34,7 @@ scripts/build-xcframework.sh   # Go engine -> CrocKit/Croc.xcframework
 open app/CrocApp.xcodeproj
 ```
 
-The shared schemes `CrocApp` (builds the app, tests `CrocAppTests`) and `CrocShare` are committed under `app/CrocApp.xcodeproj/xcshareddata/xcschemes/`, so `xcodebuild -scheme CrocApp` works on a fresh clone without opening Xcode. A new target needs its scheme committed there too; per-user schemes in `xcuserdata/` stay gitignored.
+The shared schemes `CrocApp` (builds the app, tests `CrocAppTests`), `CrocApp Direct` (the Developer ID build, section 7, no test action) and `CrocShare` are committed under `app/CrocApp.xcodeproj/xcshareddata/xcschemes/`, so `xcodebuild -scheme CrocApp` works on a fresh clone without opening Xcode. A new target needs its scheme committed there too; per-user schemes in `xcuserdata/` stay gitignored.
 
 Command-line builds, exactly as CLAUDE.md and CI run them:
 
@@ -80,7 +80,7 @@ That is the only Swift check the `swift-format` CI job runs. Locally, drop the f
 scripts/format-swift.sh
 ```
 
-The script owns the list of paths swift-format covers (`app/CrocApp`, `app/CrocShare`, `app/CrocAppTests`, `CrocKit/Sources`, `CrocKit/Tests`, `CrocKit/Package.swift`). A new Swift target goes in there, so CI and every doc pick it up at once. `CrocKit` is listed file-by-file because a recursive run there descends into `.build/` and `Croc.xcframework/`.
+The script owns the list of paths swift-format covers (`app/CrocApp`, `app/CrocAppDirect`, `app/CrocShare`, `app/CrocAppTests`, `CrocKit/Sources`, `CrocKit/Tests`, `CrocKit/Package.swift`). A new Swift target goes in there, so CI and every doc pick it up at once. `CrocKit` is listed file-by-file because a recursive run there descends into `.build/` and `Croc.xcframework/`.
 
 **Trap**: `format --in-place` does not fix lint-only rules, several enabled rules only flag and never rewrite (for example `ReplaceForEachWithForLoop`, `OnlyOneTrailingClosureArgument`, `AlwaysUseLowerCamelCase`). A clean `format` run is not evidence `lint --strict` will pass, which is why the script always runs both. Full list and rationale: `docs/knowledge/tooling.md`.
 
@@ -122,13 +122,16 @@ croc relay --host 127.0.0.1 --ports 9309,9310,9311,9312,9313 --source-join-limit
 RELAY=127.0.0.1:9309 scripts/verify-interop.sh
 ```
 
+Local signed macOS builds of `CrocApp` need a provisioning profile, because `app/CrocApp/CrocApp.entitlements` carries Associated Domains (`applinks:crocapp.dev`). `scripts/verify-app-mac.sh` and `scripts/capture-screenshots.sh` therefore pass `-allowProvisioningUpdates` to their macOS `xcodebuild`, and Xcode needs an account in team `HBSU359M33`. The first time on a new Mac, also pass `-allowProvisioningDeviceRegistration` once so the Mac is registered as a development device. A contributor outside that team cannot sign these builds; unsigned builds (`CODE_SIGNING_ALLOWED=NO`, what CI does) still work.
+
 Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` needs the matching harness run, its output quoted, not summarized. If a harness could not be run, say "not verified" and why.
 
 ## 6. Build settings that must not be casually changed
 
-- **Swift 6 language mode everywhere.** `SWIFT_VERSION = 6.0` on every target (`CrocApp`, `CrocShare`, `CrocAppTests`, all build configurations, `app/CrocApp.xcodeproj/project.pbxproj`) and `CrocKit`'s `swift-tools-version: 6.0`. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default, `nonisolated` is the explicit opt-out, and strict concurrency violations are build errors, not warnings.
+- **Swift 6 language mode everywhere.** `SWIFT_VERSION = 6.0` on every target (`CrocApp`, `CrocApp Direct`, `CrocShare`, `CrocAppTests`, all build configurations, `app/CrocApp.xcodeproj/project.pbxproj`) and `CrocKit`'s `swift-tools-version: 6.0`. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default, `nonisolated` is the explicit opt-out, and strict concurrency violations are build errors, not warnings.
 - **Deployment target is `26.0` everywhere, never a minor.** `IPHONEOS_DEPLOYMENT_TARGET = 26.0` and `MACOSX_DEPLOYMENT_TARGET = 26.0` in the pbxproj, `platforms: [.iOS("26.0"), .macOS("26.0")]` in `CrocKit/Package.swift`, and `-iosversion 26.0 -macosversion 26.0` in `scripts/build-xcframework.sh`. All four must move together.
 - **macOS is arm64-only.** `"ARCHS[sdk=macosx*]" = arm64` in the pbxproj. `Croc.xcframework` has no `x86_64` macOS slice (golang/go#73119, section 3), so this pin exists to fail the link cleanly rather than let an Intel archive attempt one that cannot succeed.
+- **One version source, `app/Config/Version.xcconfig`.** It holds `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` and is the base configuration of the project-level Debug and Release configurations, so every target inherits it. Do not set either in a target's build settings. The build number is bumped in its own commit before each upload or tag, and `release.yml`'s tag check reads `MARKETING_VERSION` from this file.
 - **Go toolchain pin, `>= 1.27.2` in `crocmobile/go.mod`.** Bumping it means rerunning `scripts/build-xcframework.sh` to confirm the bind still works on the new toolchain before trusting anything downstream.
 
 ## 7. Distribution builds
@@ -144,6 +147,41 @@ Two export channels, both under `app/Config/`:
 
 Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 
+The `CrocApp Direct` target is the Developer ID channel. It is macOS only and arm64, with bundle ID `com.bakirgdev.CrocApp.direct` and product `CrocApp.app` (the same product name as the App Store target). Its sources are the `app/CrocApp/` synchronized group plus `app/CrocAppDirect/`, built with the Swift condition `DIRECT`. It links Sparkle 2.10.0 (SwiftPM, this target only) and shows "Check for Updates…" in the app menu. Because both targets produce `CrocApp.app`, in one shared DerivedData each scheme's build replaces the other's `CrocApp.app`; the harness scripts and CI use their own `-derivedDataPath`, or build Direct last. `scripts/build-devid.sh` still archives the `CrocApp` scheme, not `CrocApp Direct`; a later step changes that.
+
+Sparkle's public key is pending: `SPARKLE_PUBLIC_ED_KEY` on the Direct target is empty until the owner runs Sparkle's `generate_keys` (owner step O6). The release workflow cannot sign an appcast before that. `SPARKLE_FEED_URL` is `https://github.com/bakirgdev/CrocApp/releases/latest/download/appcast.xml`.
+
+### Testing a Sparkle update locally
+
+Proves a Release `CrocApp Direct` build installs a newer one. It uses a throwaway Ed25519 key, never the release key, and a feed on localhost (Sparkle accepts an `http` localhost feed and only logs a warning about HTTPS; no ATS exception is needed).
+
+Sparkle's tools come with the package: `<DerivedData>/SourcePackages/artifacts/sparkle/Sparkle/bin/`. Work in a scratch directory with a `feed/` folder.
+
+1. Throwaway key (raw 32-byte seed and public key, base64):
+   ```bash
+   openssl genpkey -algorithm ed25519 -out key.pem
+   openssl pkey -in key.pem -outform DER | tail -c 32 | base64 > priv.b64
+   openssl pkey -in key.pem -pubout -outform DER | tail -c 32 | base64 > pub.b64
+   ```
+2. Build twice, as build 1 and build 2, from `app/`:
+   ```bash
+   for N in 1 2; do
+     xcodebuild -scheme 'CrocApp Direct' -configuration Release -destination 'platform=macOS' \
+       -derivedDataPath "dd$N" -allowProvisioningUpdates CURRENT_PROJECT_VERSION=$N \
+       "SPARKLE_PUBLIC_ED_KEY=$(cat pub.b64)" SPARKLE_FEED_URL=http://127.0.0.1:8765/appcast.xml build
+   done
+   ```
+3. Zip build 2 into `feed/` and write the signed appcast:
+   ```bash
+   ditto -c -k --sequesterRsrc --keepParent dd2/Build/Products/Release/CrocApp.app feed/CrocApp-2.zip
+   generate_appcast --ed-key-file - --download-url-prefix http://127.0.0.1:8765/ feed < priv.b64
+   ```
+4. Serve it: `cd feed && python3 -m http.server 8765 --bind 127.0.0.1`.
+5. Copy build 1 somewhere writable (`ditto dd1/Build/Products/Release/CrocApp.app apps/CrocApp.app`), launch it, choose "Check for Updates…", then "Install Update", then "Install and Relaunch" in Sparkle's standard UI. From the second launch on, Sparkle first asks about automatic checks.
+6. Expect the old process to exit, a new process to start, and `apps/CrocApp.app` to report `CFBundleVersion` 2.
+
+4 of 5 runs of this procedure passed; the first run hung after "Install and Relaunch" (`docs/known-issues.md`, "Harnesses").
+
 ## 8. Troubleshooting
 
 | Symptom | Cause | Fix |
@@ -152,7 +190,7 @@ Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 | Xcode or `xcodebuild` fails immediately, missing binary target / no such module `Croc` | `CrocKit/Croc.xcframework` does not exist (gitignored, absent on a fresh clone) | Run `scripts/build-xcframework.sh` first |
 | `scripts/build-xcframework.sh` exits `error: go not installed` | Go not on `PATH` | `brew install go` |
 | `gomobile: command not found` right after the script claims to have installed it | `$(go env GOPATH)/bin` not on this shell's `PATH` | The script exports it only for its own run; for a direct `gomobile` invocation afterward, `export PATH="$PATH:$(go env GOPATH)/bin"` |
-| macOS build in CI is unsigned | CI's `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` (no signing identity on the runner) | Expected in CI. Locally, a build signs normally with a `Mac Development` identity in your keychain |
+| macOS build in CI is unsigned | CI's `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` (no signing identity on the runner) | Expected in CI. Locally, a signed build needs a `Mac Development` identity and a provisioning profile (section 5, Associated Domains), so pass `-allowProvisioningUpdates` |
 | `go install .../cmd@latest` (gomobile, gobind, govulncheck) produces a binary you cannot find or run | `GOOS`/`GOARCH` set in the shell (as CI's go job sets `darwin`/`arm64`) makes `go install` drop the binary at `$GOPATH/bin/darwin_arm64/…` instead of `$GOPATH/bin/…` | Install with `env -u GOOS -u GOARCH go install ...`, then run the tool with the original env intact if the analysis itself needs to target darwin (`docs/knowledge/tooling.md`) |
 | A hand-rolled `swift-format format --in-place` reports clean, but `lint --strict` (what CI runs) still fails | Several enabled rules are lint-only and never rewrite | Use `scripts/format-swift.sh`, which always lints after formatting; see the rule list in `docs/knowledge/tooling.md` |
 

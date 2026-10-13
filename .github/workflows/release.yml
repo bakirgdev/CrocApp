@@ -49,17 +49,16 @@ jobs:
             *[!0-9.]* | "" | *..*) echo "error: '$version' is not a plain dotted version"; exit 1 ;;
           esac
 
-          declared=$(grep -oE 'MARKETING_VERSION = [^;]+;' app/CrocApp.xcodeproj/project.pbxproj \
-            | sed -E 's/MARKETING_VERSION = (.+);/\1/' | sort -u)
+          declared=$(sed -nE 's/^MARKETING_VERSION = ([^ ]+)$/\1/p' app/Config/Version.xcconfig)
 
-          if [ "$(printf '%s\n' "$declared" | wc -l | tr -d ' ')" != "1" ]; then
-            echo "error: project.pbxproj declares more than one MARKETING_VERSION:"
+          if [ "$(printf '%s\n' "$declared" | grep -c .)" != "1" ]; then
+            echo "error: app/Config/Version.xcconfig must declare exactly one MARKETING_VERSION:"
             printf '%s\n' "$declared"
             exit 1
           fi
 
           if [ "$declared" != "$version" ]; then
-            echo "error: tag says $version, project.pbxproj says $declared."
+            echo "error: tag says $version, Version.xcconfig says $declared."
             echo "Bump MARKETING_VERSION in a pull request first, then tag the merge commit."
             exit 1
           fi

@@ -9,7 +9,9 @@ the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- The direct-download (DMG) build can now check for and install updates itself, using Sparkle: choose "Check for Updates…" in the app menu.
 
 ## [0.9.9] - 2026-07-30
 
