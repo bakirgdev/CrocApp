@@ -13,6 +13,7 @@ the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The macOS direct download is now signed with a Developer ID certificate, notarized and stapled, and updates itself with Sparkle: choose "Check for Updates…" in the app menu. The release no longer ships the separate app zip; the disk image is the download.
 - Receiving a file whose name is already taken now offers Keep Both (saves the new one as `name (1).ext`) or Replace. With auto-accept on, the setting "When a file already exists" under Confirmation chooses; it defaults to Keep Both.
+- A Connection setting, Automatic (the default) or Relay only. With Automatic, a send of 128 MB or more can also take a direct path between the devices; Relay only keeps every transfer on croc's relays. The sender's choice applies, and a receive follows it.
 
 ### Fixed
 

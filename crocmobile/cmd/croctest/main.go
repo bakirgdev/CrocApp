@@ -1,6 +1,6 @@
 // croctest exercises crocmobile from the command line for interop verification.
 //
-//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [PATH...]
+//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [-transport auto|relay|derp] [PATH...]
 //	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-policy keepBoth|replace] [-cancel-after MS] CODE
 //	croctest relay CODE
 //	croctest relays
@@ -11,6 +11,9 @@
 //
 // -policy is what a receive does with a file whose name already exists: on the
 // Options for -yes, in the accept answer otherwise.
+//
+// -transport is the sender's data transport; croc's "derp" forces Tailcat with
+// no relay fallback.
 //
 // -relay-index makes a generated code map to that public pool relay, as if the
 // latency probe had picked it. relay prints the pool relay a code maps to;
@@ -107,6 +110,7 @@ func main() {
 	throttle := fs.String("throttle", "", "cap sender upload rate, e.g. 200k, 1m (send)")
 	relayIndex := fs.Int("relay-index", -1, "public pool relay a generated code maps to (send)")
 	noMulti := fs.Bool("no-multi", false, "one data connection instead of one per relay port (send)")
+	transport := fs.String("transport", crocmobile.TransportAuto, "data transport: auto|relay|derp (send)")
 	_ = fs.Parse(os.Args[2:])
 
 	if *policy != crocmobile.PolicyKeepBoth && *policy != crocmobile.PolicyReplace {
@@ -131,6 +135,7 @@ func main() {
 	opts.Rename = !opts.Overwrite
 	opts.ThrottleUpload = *throttle
 	opts.NoMultiplexing = *noMulti
+	opts.Transport = *transport
 
 	var tr *crocmobile.Transfer
 	d := &printDelegate{answer: *answer, policy: *policy, pool: *relay == "" && !*onlyLocal, transfer: &tr}

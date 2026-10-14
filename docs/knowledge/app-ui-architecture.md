@@ -59,7 +59,7 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 
 Relay strings use `""` to mean "croc default" (the `TextField` prompt reads "Public relay pool") and reach the engine as stored, password included. Go resolves them (`crocmobile/relay.go`): blank means croc's default, and with no custom relay and local-only off the relay comes from upstream's public pool by code. `relayKind` (`publicDefault` / `custom` / `localOnly`) is display-only and classifies as custom if either address is set to something other than `RelayDefaults` (CrocKit, read from Go).
 
-`Views/PowerSettingsSections.swift` holds the shared `Form` sections — relay, transfer toggles, exclusions, confirmation with the auto-accept warning footer — embedded in both the macOS `SettingsView` (Settings scene, ⌘,) and the iOS `SettingsScreen` (gear toolbar → `Route.settings`). `TrustBadge(relay:)` appears in the waiting, transferring, and confirm-send views. `HowItWorksView` is the plain-language explainer; its facts come from `what-is-croc.md`.
+`Views/PowerSettingsSections.swift` holds the shared `Form` sections — relay, connection (the Automatic / Relay only `Transport` picker, disabled while Local network only is on), transfer toggles, exclusions, confirmation with the auto-accept warning footer — embedded in both the macOS `SettingsView` (Settings scene, ⌘,) and the iOS `SettingsScreen` (gear toolbar → `Route.settings`). `TrustBadge(relay:)` appears in the waiting, transferring, and confirm-send views. `HowItWorksView` is the plain-language explainer; its facts come from `what-is-croc.md`.
 
 `Phase.confirmSend` is the sender side of croc `--ask`: entered at `.connected` when `bothSidesConfirm` is on, progress-guarded like `.incoming`, accept is `respond(true)`, decline is `cancel()`.
 
@@ -137,6 +137,7 @@ Launch arguments that drive the real controller, not the engine directly — the
 | `--auto-send PATH --code CODE` | send with a custom code; on macOS the source must be container-resident (sandbox). Needs `--code`: without it nothing happens |
 | `--auto-share-send CODE` | read the share inbox, then custom-code send |
 | `--local` | sets `settings.onlyLocal` unpersisted (croc `onlyLocal`) |
+| `--transport auto\|relay` | sets `settings.transport` unpersisted (sender-side Connection, F41); an unknown value is ignored |
 | `--relay ADDR` | custom relay, plus `harnessDisableLocal` to kill the LAN race |
 | `--no-compress` | disable compression |
 | `--ask` | sets `settings.bothSidesConfirm` unpersisted (sender-side confirm, F19). The `.confirmSend` auto-answer happens in every harness mode, with or without this flag |

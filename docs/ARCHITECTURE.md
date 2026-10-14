@@ -119,7 +119,7 @@ Persistence:
 
 | What | Where | Notes |
 |---|---|---|
-| Power settings (F13-F19) | `UserDefaults`, keys prefixed `settings.` | `AppSettings`, `didSet`-triggered, gated by a `persist` flag |
+| Power settings (F13-F19, F41) | `UserDefaults`, keys prefixed `settings.` | `AppSettings`, `didSet`-triggered, gated by a `persist` flag |
 | Output folder choice | `UserDefaults` (security-scoped bookmark) | `OutputFolderStore` |
 | Transfer history (F12) | SwiftData, `TransferRecord` `@Model` | `HistoryStore`, in-memory under `AutoVerify` |
 | Share-extension handoff | App Group container (`group.com.bakirgdev.CrocApp`) | `ShareInbox` reads, `ShareStager` writes; `ShareInbox/batch-<UUID>/` + `manifest.json` |

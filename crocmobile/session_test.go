@@ -102,6 +102,7 @@ func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 		IgnoreStdin:      true,
 		DisableClipboard: true,
 		Quiet:            false,
+		Transport:        croc.TransportAuto,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("buildCrocOptions mismatch\n got: %+v\nwant: %+v", got, want)
@@ -509,6 +510,39 @@ func TestParsePolicy(t *testing.T) {
 		if got := parsePolicy(in); got != want {
 			t.Errorf("parsePolicy(%q) = %v, want %v", in, got, want)
 		}
+	}
+}
+
+// croc refuses a non-auto transport on a receive and on a local-only send, so
+// Transport only reaches croc on any other send.
+func TestBuildCrocOptionsTransport(t *testing.T) {
+	tests := []struct {
+		sender, onlyLocal bool
+		transport         string
+		want              croc.TransportMode
+	}{
+		{true, false, "", croc.TransportAuto},
+		{true, false, TransportAuto, croc.TransportAuto},
+		{true, false, TransportRelay, croc.TransportRelay},
+		{true, false, " Relay ", croc.TransportRelay},
+		{true, false, "derp", croc.TransportDERP},
+		{true, true, TransportRelay, croc.TransportAuto},
+		{false, false, TransportRelay, croc.TransportAuto},
+		{false, false, "bogus", croc.TransportAuto},
+	}
+	for _, tt := range tests {
+		o := &Options{OnlyLocal: tt.onlyLocal, Transport: tt.transport}
+		c := mustBuildCrocOptions(t, tt.sender, "secret-code", o)
+		if c.Transport != tt.want {
+			t.Errorf("sender=%v onlyLocal=%v Transport=%q: croc Transport=%q, want %q",
+				tt.sender, tt.onlyLocal, tt.transport, c.Transport, tt.want)
+		}
+	}
+}
+
+func TestBuildCrocOptionsUnknownTransport(t *testing.T) {
+	if _, err := buildCrocOptions(true, "secret-code", &Options{Transport: "bogus"}); err == nil {
+		t.Fatal("send with Transport \"bogus\": no error")
 	}
 }
 

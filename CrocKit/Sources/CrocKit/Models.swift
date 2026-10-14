@@ -21,6 +21,16 @@ public enum FilePolicy: String, Sendable, CaseIterable {
     case replace
 }
 
+/// How a send carries file data. Raw values mirror `TransportAuto` and
+/// `TransportRelay` in `crocmobile/crocmobile.go`.
+public enum Transport: String, Sendable, CaseIterable {
+    /// For sends of 128 MiB or more, croc races its relay against Tailcat, a
+    /// peer-to-peer path with its own relay fallback.
+    case auto
+    /// croc's relay only; Tailcat never starts.
+    case relay
+}
+
 public struct EngineOptions: Sendable {
     /// Blank relay fields mean croc's defaults (see `RelayDefaults`).
     public var relayAddress = ""
@@ -35,6 +45,8 @@ public struct EngineOptions: Sendable {
     /// Receive: applies as is under `autoAccept`; otherwise
     /// `respond(accept:policy:)` replaces it.
     public var whenFileExists = FilePolicy.keepBoth
+    /// Send only: a receive follows the sender, and a local-only send uses auto.
+    public var transport = Transport.auto
     public var noCompress = false
     public var zipFolder = false
     public var gitIgnore = false

@@ -41,6 +41,16 @@ croc --relay myserver:9009 send file.txt
 
 In CrocApp, set the same address under the [relay power option](../guide/power-options.md).
 
+## Connection and `--transport`
+
+The **Connection** setting maps to croc's `--transport` flag: **Automatic** is `--transport auto` and **Relay only** is `--transport relay`. croc applies the sender's choice and a receiver follows it, so the setting only matters when CrocApp sends. When CrocApp receives, it follows whatever the croc CLI sender used, `--transport derp` included. The app does not offer `derp`, which croc's own command line does.
+
+```bash
+croc send --transport relay file.txt
+```
+
+For a send under 128 MB, the two settings behave the same. See [power options](../guide/power-options.md) for what **Automatic** does above that size.
+
 ## Feature-to-flag mapping
 
 | # | Feature | croc flag / origin |
@@ -64,6 +74,7 @@ In CrocApp, set the same address under the [relay power option](../guide/power-o
 | F17 | Exclude patterns / `.gitignore` | `--exclude --git` |
 | F18 | Auto-accept toggle | `--yes` |
 | F19 | Both-sides confirm | `--ask` |
+| F41 | Connection: Automatic or Relay only | `--transport auto\|relay` |
 
 ## Version and relay compatibility
 

@@ -97,6 +97,7 @@ final class TransferController {
         o.onlyLocal = settings.onlyLocal
         o.disableLocal = harnessDisableLocal
         o.noCompress = settings.noCompress
+        o.transport = settings.transport
         o.ask = settings.bothSidesConfirm
         return o
     }

@@ -56,6 +56,10 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 	if err != nil {
 		return croc.Options{}, err
 	}
+	transport, err := sessionTransport(sender, o)
+	if err != nil {
+		return croc.Options{}, err
+	}
 	password := o.RelayPassword
 	if password == "" {
 		password = models.DEFAULT_PASSPHRASE
@@ -83,9 +87,19 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 		IgnoreStdin:      true,
 		DisableClipboard: true,
 		Quiet:            false, // Quiet=true nukes process stderr globally
+		Transport:        transport,
 	}
 	optionsPolicy(o).apply(&co)
 	return co, nil
+}
+
+// sessionTransport is auto wherever croc refuses anything else: on a receive,
+// which follows the sender, and on a local-only send.
+func sessionTransport(sender bool, o *Options) (croc.TransportMode, error) {
+	if !sender || o.OnlyLocal {
+		return croc.TransportAuto, nil
+	}
+	return croc.ParseTransportMode(o.Transport)
 }
 
 // filePolicy decides what a receive does with a file whose name already

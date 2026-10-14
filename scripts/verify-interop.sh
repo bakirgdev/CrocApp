@@ -2,12 +2,14 @@
 # Interop verification: crocmobile (via croctest) <-> croc CLI v11.
 # Covers: file/folder/text both directions, decline, cancel both directions,
 # forced relay (LAN disabled), LAN-only, a croc v10 peer both directions, a
-# receive onto existing files with Keep Both and Replace (R24), and every public
-# pool relay (custom, wrapper-generated and CLI-generated codes).
+# receive onto existing files with Keep Both and Replace (R24), a 130 MiB send
+# in each transport mode (R17), and every public pool relay (custom,
+# wrapper-generated and CLI-generated codes).
 # Exits non-zero on first failure.
 #
 # RELAY=host:port runs every transfer through that relay instead of the public
-# pool, and skips the pool scenario (CI runs this against a local `croc relay`).
+# pool, and skips the transport and pool scenarios (CI runs this against a local
+# `croc relay`).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
@@ -289,9 +291,50 @@ grep -q 'EVENT error {"code":"refused"' "$TMP/12ask.log" || fail "sender --ask u
 pass "sender --ask under -yes with replace: refused"
 
 if [ -n "${RELAY:-}" ]; then
-  echo "ALL INTEROP CHECKS PASSED (relay $RELAY; public pool scenario skipped)"
+  echo "ALL INTEROP CHECKS PASSED (relay $RELAY; transport and public pool scenarios skipped)"
   exit 0
 fi
+
+# 13. transport (R17): a send over croc's 128 MiB Tailcat threshold in each
+# mode, both directions. Under auto the sender offers Tailcat and races it
+# against the relay; either may carry the data. Under relay no Tailcat offer is
+# made. The --debug CLI logs show the offer ("tailcat-offer") on either side.
+# Public infrastructure only (Tailcat bootstraps from tailcat.dev), so not in
+# RELAY mode.
+SCENARIO=13
+head -c 136314880 /dev/urandom > "$TMP/huge.bin"
+transport_send() {                                  # transport_send MODE
+  local L="$TMP/13s-$1" C
+  C=$(code "ts$1")
+  mkdir -p "$L"
+  timeout 300 "$CT" send -transport "$1" -code "$C" "$TMP/huge.bin" > "$L.log" 2>&1 &
+  sleep 3
+  ( cd "$L" && CROC_SECRET="$C" timeout 280 "$CROC" --debug --yes --overwrite ) > "$L.cli" 2>&1 || true
+  wait
+  cmp -s "$TMP/huge.bin" "$L/huge.bin" || fail "transport $1: wrapper send of 130 MiB"
+}
+transport_receive() {                               # transport_receive MODE
+  local L="$TMP/13r-$1" C
+  C=$(code "tr$1")
+  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" --debug --ignore-stdin send --transport "$1" huge.bin ) > "$L.cli" 2>&1 &
+  sleep 3
+  timeout 280 "$CT" receive -out "$L" -answer y "$C" > "$L.log" 2>&1 || true
+  wait
+  cmp -s "$TMP/huge.bin" "$L/huge.bin" || fail "transport $1: wrapper receive of 130 MiB"
+}
+transport_send auto
+grep -q "tailcat-offer" "$TMP/13s-auto.cli" || fail "transport auto: wrapper sent no Tailcat offer"
+pass "transport auto: wrapper sends 130 MiB, Tailcat offered"
+transport_send relay
+! grep -q "tailcat-offer" "$TMP/13s-relay.cli" || fail "transport relay: wrapper offered Tailcat"
+pass "transport relay: wrapper sends 130 MiB, no Tailcat offer"
+transport_receive auto
+grep -q "selected=derp" "$TMP/13r-auto.cli" || fail "transport auto: CLI did not choose Tailcat for 130 MiB"
+pass "transport auto: wrapper receives 130 MiB, Tailcat offered"
+transport_receive relay
+! grep -q "tailcat-offer" "$TMP/13r-relay.cli" || fail "transport relay: CLI offered Tailcat"
+pass "transport relay: wrapper receives 130 MiB, no Tailcat offer"
+rm -f "$TMP/huge.bin" "$TMP"/13[sr]-*/huge.bin
 
 # 11. public relay pool: every pool relay, both directions, with custom codes
 # and with wrapper-generated codes forced to each relay, plus one CLI-generated

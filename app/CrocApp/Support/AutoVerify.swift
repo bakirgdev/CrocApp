@@ -79,6 +79,11 @@ enum AutoVerify {
         {
             controller.settings.whenFileExists = policy
         }
+        if let i = args.firstIndex(of: "--transport"), i + 1 < args.count,
+            let transport = Transport(rawValue: args[i + 1])
+        {
+            controller.settings.transport = transport
+        }
         if let i = args.firstIndex(of: "--relay"), i + 1 < args.count {
             controller.settings.relayAddress = args[i + 1]
             // Kill the LAN race so success provably went through the relay.

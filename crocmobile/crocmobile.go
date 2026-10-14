@@ -35,6 +35,7 @@ type Options struct {
 	AutoAccept     bool // maps to croc NoPrompt; default false (product pillar)
 	Ask            bool
 	NoMultiplexing bool
+	Transport      string // send: TransportAuto (also when empty) or TransportRelay; a receive follows the sender
 }
 
 // NewOptionsDefault returns croc CLI defaults.
@@ -61,6 +62,15 @@ func NewOptionsDefault() *Options {
 const (
 	PolicyKeepBoth = "keepBoth"
 	PolicyReplace  = "replace"
+)
+
+// Transports a send can use, as Options.Transport takes them. Auto lets croc
+// race its relay against Tailcat for sends of 128 MiB or more; relay never
+// starts Tailcat. croc's own "derp" (Tailcat only, no fallback) also passes
+// through, for harness probes.
+const (
+	TransportAuto  = "auto"
+	TransportRelay = "relay"
 )
 
 // minCodeLength is the shortest code phrase StartSend and StartReceive accept,

@@ -1,18 +1,19 @@
 ---
 sidebar_position: 4
 title: Power Options
-description: The shipped power-user settings (F13 through F19) and the croc CLI flag each one maps to.
+description: The shipped power-user settings and the croc CLI flag each one maps to.
 ---
 
 # Power options
 
 ![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/ios-settings-light.png#gh-light-mode-only)![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/ios-settings-dark.png#gh-dark-mode-only)
 
-CrocApp exposes a set of power options with sane defaults. On macOS they live in the Settings scene (⌘,); on iOS they're under the settings screen from the home toolbar. All seven below are shipped.
+CrocApp exposes a set of power options with sane defaults. On macOS they live in the Settings scene (⌘,); on iOS they're under the settings screen from the home toolbar. All eight below are shipped.
 
 | # | Option | Control | croc equivalent |
 |---|---|---|---|
 | F13 | Custom relay, password, IPv6 | **Address**, **IPv6 address**, **Password** fields under Relay | `--relay --relay6 --pass` |
+| F41 | Connection: Automatic or Relay only | **Connection** picker | `--transport auto\|relay` |
 | F14 | Force local-only transfers | **Local network only** toggle | `--local` |
 | F15 | Disable compression | **Disable compression** toggle | `--no-compress` |
 | F16 | Zip a folder before sending | **Zip folders before sending** toggle | `--zip` |
@@ -23,6 +24,16 @@ CrocApp exposes a set of power options with sane defaults. On macOS they live in
 ## Relay (F13)
 
 The **Address** and **IPv6 address** fields read "Public relay pool" as placeholder text; leave them blank to use croc's public relay pool, the same one the croc command line uses. Leave **Password** blank to use croc's default relay password.
+
+## Connection (F41)
+
+The **Connection** picker has its own section after Relay. **Automatic** is the default. **Relay only** sends every transfer through croc's relays.
+
+With **Automatic**, a send of 128 MB or more also tries a direct path between the two devices. This path is called Tailcat. It is set up through `tailcat.dev`, and it uses its own relays (`*.ipn.dev`) when the devices cannot reach each other. CrocApp starts it next to croc's relay, and whichever path connects first carries the transfer. The data is still end-to-end encrypted on either path. Smaller sends never start it.
+
+With **Relay only**, a send never contacts `tailcat.dev` or the `*.ipn.dev` servers. A receive can still use them when the sender chose Automatic (or the croc CLI's default, `auto`).
+
+Only the sender's choice applies. A receive follows whatever the sender uses, so the picker has no effect when you receive. The picker is disabled while **Local network only** is on, because local-only transfers always use **Automatic**. The footer under the picker reads: "Automatic can carry files of 128 MB or more directly between devices. Only the sender's choice applies; a receive follows it."
 
 ## Local network only (F14)
 

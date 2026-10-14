@@ -40,6 +40,10 @@ final class AppSettings {
     var whenFileExists: FilePolicy {
         didSet { save(whenFileExists.rawValue, "settings.whenFileExists") }
     }
+    /// Send only; a receive follows the sender.
+    var transport: Transport {
+        didSet { save(transport.rawValue, "settings.transport") }
+    }
 
     init(defaults d: UserDefaults = .standard, secrets: any SecretStore = KeychainStore()) {
         defaults = d
@@ -60,6 +64,8 @@ final class AppSettings {
         whenFileExists =
             d.string(forKey: "settings.whenFileExists").flatMap(FilePolicy.init(rawValue:))
             ?? .keepBoth
+        transport =
+            d.string(forKey: "settings.transport").flatMap(Transport.init(rawValue:)) ?? .auto
     }
 
     var relayKind: RelayKind {
@@ -93,6 +99,7 @@ final class AppSettings {
         autoAccept = false
         bothSidesConfirm = false
         whenFileExists = .keepBoth
+        transport = .auto
     }
 
     /// One-time move of the relay password off UserDefaults (plaintext

@@ -2,8 +2,10 @@
 # Verifies the macOS app's UI state machine end-to-end via launch arguments.
 # Six directions: CLI -> app receive (+ history), app -> CLI send, local-only
 # send, custom-relay send, no-compress send, both-sides-confirm send, then a
-# receive onto an existing file with Keep Both and with Replace. Every one
-# gates on a byte-identical diff AND the app's verify-result.txt.
+# receive onto an existing file with Keep Both and with Replace, then a 130 MiB
+# transfer in each direction under Connection Automatic and Relay only (needs
+# the public internet: Tailcat bootstraps from tailcat.dev). Every one gates on
+# a byte-identical diff AND the app's verify-result.txt.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
@@ -19,7 +21,7 @@ READY="$DOCS/verify-code-ready.txt"
 DD="$TMPROOT/dd-mac"
 
 TMP=$(mktemp -d)
-trap 'kill_jobs; rm -rf "$TMP"' EXIT
+trap 'kill_jobs; rm -rf "$TMP"; rm -f "$DOCS"/bigsend.bin "$DOCS"/bigrecv.bin' EXIT
 
 ( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
     -derivedDataPath "$DD" -allowProvisioningUpdates build ) > "$TMPROOT/mac-build.log" 2>&1
@@ -65,7 +67,7 @@ recv_from_app() {                                   # recv_from_app LABEL SRC DS
   local label=$1 src=$2 dst=$3
   shift 3
   mkdir -p "$dst"
-  ( cd "$dst" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes "$@" ) \
+  ( cd "$dst" && CROC_SECRET="$C" timeout "${RECV_TIMEOUT:-120}" "$CROC" --ignore-stdin --yes "$@" ) \
       > "$TMPROOT/mac-cli-$label.log" 2>&1
   await_app 30
   check_result "$label"
@@ -198,3 +200,47 @@ collide() {                                         # collide POLICY
 collide keepBoth
 collide replace
 echo MAC-COLLIDE-OK
+
+# --- 8: 130 MiB in each direction, Connection Automatic and Relay only (R17) --
+# croc offers Tailcat only for sends of 128 MiB or more, so the file is just
+# over that. The CLI's --debug log shows the offer ("tailcat-offer") on the
+# receiving side of an app send, and the sender's size decision
+# ("selected=derp") on a CLI send. Under relay the offer must be absent.
+head -c 136314880 /dev/urandom > "$TMP/bigrecv.bin"
+transport_app_send() {                              # transport_app_send MODE
+  local mode=$1
+  C=$(code "xs$mode")
+  rm -f "$RESULT" "$DOCS/bigsend.bin"
+  head -c 136314880 /dev/urandom > "$DOCS/bigsend.bin"
+  run_app --auto-send "$DOCS/bigsend.bin" --code "$C" --transport "$mode" \
+      > "$TMPROOT/mac-app-xs$mode.log" 2>&1
+  await_ready
+  RECV_TIMEOUT=300 recv_from_app "xsend-$mode" "$DOCS/bigsend.bin" "$TMP/d8s-$mode" --debug
+  cmp -s "$DOCS/bigsend.bin" "$TMP/d8s-$mode/bigsend.bin" || fail "transport $mode send: 130 MiB differs"
+  rm -f "$DOCS/bigsend.bin" "$TMP/d8s-$mode/bigsend.bin"
+}
+transport_app_receive() {                           # transport_app_receive MODE
+  local mode=$1 log="$TMPROOT/mac-cli-xr$1.log" cli_pid
+  C=$(code "xr$mode")
+  rm -f "$RESULT" "$DOCS/bigrecv.bin"
+  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" --debug --ignore-stdin send --transport "$mode" bigrecv.bin ) \
+      > "$log" 2>&1 &
+  cli_pid=$!
+  sleep 3
+  run_app --auto-receive "$C" > "$TMPROOT/mac-app-xr$mode.log" 2>&1
+  await_app 300
+  wait "$cli_pid" || true
+  check_result "transport $mode receive"
+  cmp -s "$TMP/bigrecv.bin" "$DOCS/bigrecv.bin" || fail "transport $mode receive: 130 MiB differs"
+  rm -f "$DOCS/bigrecv.bin"
+}
+transport_app_send auto
+grep -q "tailcat-offer" "$TMPROOT/mac-cli-xsend-auto.log" || fail "transport auto send: no Tailcat offer"
+transport_app_send relay
+! grep -q "tailcat-offer" "$TMPROOT/mac-cli-xsend-relay.log" || fail "transport relay send: Tailcat offered"
+transport_app_receive auto
+grep -q "selected=derp" "$TMPROOT/mac-cli-xrauto.log" || fail "transport auto receive: CLI did not choose Tailcat"
+transport_app_receive relay
+! grep -q "tailcat-offer" "$TMPROOT/mac-cli-xrrelay.log" || fail "transport relay receive: Tailcat offered"
+rm -f "$TMP/bigrecv.bin"
+echo MAC-TRANSPORT-OK

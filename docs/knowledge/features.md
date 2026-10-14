@@ -1,6 +1,6 @@
 # Feature roadmap
 
-Approved 2026-07-22 by Bakir. Tier = target release. Numbers are stable — reference them as F1..F40 in plans, issues, and code comments (several views already carry them).
+Approved 2026-07-22 by Bakir. Tier = target release. Numbers are stable — reference them as F1..F41 in plans, issues, and code comments (several views already carry them).
 
 Status is verified against the code, not against intent. **Shipped** means the feature exists and works in the app; it does not mean it has been tested on physical hardware (`device-test-checklist.md`) or that it has no open defects (`../known-issues.md`).
 
@@ -34,6 +34,7 @@ Status is verified against the code, not against intent. **Shipped** means the f
 | F17 | Exclude patterns / respect .gitignore | `--exclude --git` | shipped |
 | F18 | Auto-accept toggle (off by default, warning shown) | `--yes` | shipped |
 | F19 | Both-sides confirm | `--ask` | shipped |
+| F41 | Connection: Automatic or Relay only (sender-side; a receive follows) | `--transport auto\|relay` | shipped |
 
 ### GUI-native
 

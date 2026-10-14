@@ -32,6 +32,20 @@ struct PowerSettingsSections: View {
         }
 
         Section {
+            Picker("Connection", selection: $settings.transport) {
+                Text("Automatic").tag(Transport.auto)
+                Text("Relay only").tag(Transport.relay)
+            }
+            .disabled(settings.onlyLocal)
+        } header: {
+            Text("Connection")
+        } footer: {
+            Text(
+                "Automatic can carry files of 128 MB or more directly between devices. Only the sender's choice applies; a receive follows it."
+            )
+        }
+
+        Section {
             Toggle("Local network only", isOn: $settings.onlyLocal)
             Toggle("Disable compression", isOn: $settings.noCompress)
             Toggle("Zip folders before sending", isOn: $settings.zipFolder)

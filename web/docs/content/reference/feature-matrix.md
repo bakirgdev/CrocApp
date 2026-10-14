@@ -36,6 +36,7 @@ Feature numbers (`F1`…) are stable identifiers used across the project. "Shipp
 | F17 | Exclude patterns / respect `.gitignore` | `--exclude --git` |
 | F18 | Auto-accept toggle (off by default, warning shown) | `--yes` |
 | F19 | Both-sides confirm | `--ask` |
+| F41 | Connection: Automatic or Relay only (the sender's choice applies, a receive follows it) | `--transport auto\|relay` |
 
 ## GUI-native (shipped)
 
