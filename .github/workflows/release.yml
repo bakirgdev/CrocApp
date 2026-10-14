@@ -172,6 +172,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
           VERSION: ${{ steps.version.outputs.version }}
           GENERATE_APPCAST: ${{ runner.temp }}/devid/dd/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
@@ -185,6 +186,23 @@ jobs:
           assets=$(gh release view --json assets --jq '.assets[].name')
           if grep -qx appcast.xml <<< "$assets"; then
             gh release download --pattern appcast.xml --dir "$feed"
+          fi
+
+          # Sparkle offers an update only when CFBundleVersion goes up, and App
+          # Store Connect accepts a reused build number under a new version, so
+          # an unbumped CURRENT_PROJECT_VERSION would publish an update nobody
+          # is offered. A rehearsal only warns: it may run before the bump.
+          build=$(plutil -extract CFBundleVersion raw "$RUNNER_TEMP/devid/export/CrocApp.app/Contents/Info.plist")
+          newest=0
+          if [ -f "$feed/appcast.xml" ]; then
+            # No match (a feed without items) fails the greps; that means no build to beat.
+            newest=$(grep -oE 'sparkle:version(>|=")[0-9]+' "$feed/appcast.xml" | grep -oE '[0-9]+$' | sort -n | tail -n 1 || true)
+          fi
+          if [ "$build" -le "${newest:-0}" ]; then
+            echo "::warning::build $build is not above $newest, the newest build in the published appcast. Bump CURRENT_PROJECT_VERSION in app/Config/Version.xcconfig."
+            if [ "$EVENT" = "push" ]; then
+              exit 1
+            fi
           fi
 
           if [ -f notes.md ]; then
