@@ -312,8 +312,11 @@ field() {                                           # field LOGFILE KEY: a strin
 }
 cli_store() { CROC_CONFIG_DIR="$TMP/croc-config14" "$CROC" --disable-clipboard "$@"; }
 
-# 14a. wrapper uploads two files (the 5 MiB one spans two chunks), CLI downloads
-"$CT" store-send -server "$STORE" -downloads 1 -lifetime 3600 "$TMP/src/a.txt" "$TMP/src/big.bin" > "$TMP/14a.log" 2>&1 || fail "store send (wrapper)"
+# 14a. wrapper uploads two files (the 5 MiB one spans two chunks), CLI downloads.
+# Two downloads allowed so one is left at revoke time: the last download makes
+# the server answer revoke with 410, which counts as revoked, so a broken revoke
+# would still pass 14b and 14c.
+"$CT" store-send -server "$STORE" -downloads 2 -lifetime 3600 "$TMP/src/a.txt" "$TMP/src/big.bin" > "$TMP/14a.log" 2>&1 || fail "store send (wrapper)"
 LINK=$(field "$TMP/14a.log" link); ID=$(field "$TMP/14a.log" id); TOKEN=$(field "$TMP/14a.log" uploadToken)
 [ -n "$LINK" ] && [ -n "$ID" ] && [ -n "$TOKEN" ] || fail "store send (wrapper): no receipt"
 grep -q 'EVENT done {"files":2,"success":true' "$TMP/14a.log" || fail "store send (wrapper): no success summary"
@@ -334,7 +337,7 @@ pass "store: revoke, then CLI download fails"
 
 # 14c. CLI uploads, wrapper downloads, then the CLI revokes and the wrapper's
 # download fails with storeExpired
-cli_store --ignore-stdin store --url "$STORE" --downloads 1 --expiration 1h "$TMP/src/a.txt" "$TMP/src/big.bin" > "$TMP/14c.cli" 2>&1 || fail "store send (CLI)"
+cli_store --ignore-stdin store --url "$STORE" --downloads 2 --expiration 1h "$TMP/src/a.txt" "$TMP/src/big.bin" > "$TMP/14c.cli" 2>&1 || fail "store send (CLI)"
 LINK=$(grep -o 'http://127.0.0.1:[0-9]*/s/[A-Za-z0-9_-]*#v1\.[A-Za-z0-9_-]*' "$TMP/14c.cli" | head -1)
 ID=${LINK#*/s/}; ID=${ID%%#*}
 [ -n "$LINK" ] && [ -n "$ID" ] || fail "store send (CLI): no link in its output"
