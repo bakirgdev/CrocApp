@@ -72,7 +72,7 @@ Deliberately does **not**: hop to `MainActor` itself. `DelegateBridge` only yiel
 
 ### SwiftUI views
 
-`app/CrocApp/Views/`. `HomeView` is the sole `NavigationStack` (value-based `AppRouter.Route` links). `SendView`/`ReceiveView` show an input form when `!controller.isActive`, else `TransferStatusView`. `TransferStatusView` renders every non-idle `Phase`; `IncomingRequestView` (in the same file) is the accept gate. `SettingsScreen` (iOS route) and `SettingsView` (macOS `Settings` scene) both embed the shared `PowerSettingsSections`. `HistoryView`, `HowItWorksView`, `OnboardingView`, `StagedFilesSheet`, `QRCodeView`, `QRScannerView`, `TrustBadge` round out the view layer. Views never import `Croc` or `CrocKit` — they only read `TransferController.phase` and call its intent methods.
+`app/CrocApp/Views/`. `HomeView` is the sole `NavigationStack` (value-based `AppRouter.Route` links). `SendView`/`ReceiveView` show an input form when `!controller.isActive`, else `TransferStatusView`. `TransferStatusView` renders every non-idle `Phase`; `IncomingRequestView` (in the same file) is the accept gate. `SettingsScreen` (iOS route) and `SettingsView` (macOS `Settings` scene) both embed the shared `PowerSettingsSections`. `HistoryView`, `HowItWorksView`, `OnboardingView`, `StagedFilesSheet`, `QRCodeView`, `QRScannerView`, `TrustBadge` round out the view layer. `Models/TransferLink.swift` is the one parser for every way a code arrives (bare code, `crocapp://`, `crocapp.dev/r/`, `getcroc.com/?code=`, `croc://`); `AppRouter.open(_:)` hands it to Receive, which prefills the code and never connects by itself. Views never import `Croc` or `CrocKit` — they only read `TransferController.phase` and call its intent methods.
 
 ## Event and control flow
 
@@ -81,7 +81,7 @@ Real event names are the `TransferEvent` cases; `Phase` is `TransferController.P
 ### Send, happy path
 
 1. `SendView` calls `controller.startSend(urls:customCode:)`. `phase = .starting`; `BackgroundCoordinator.transferStarted` wraps the transfer (iOS only); `engine.startSend` launches the Go session.
-2. Go delegate fires `OnCodeReady` → Swift `.codeReady(code)` → `phase = .waiting(code:)`. The waiting view shows the code and a QR (`QRCodeView`).
+2. Go delegate fires `OnCodeReady` → Swift `.codeReady(code)` → `phase = .waiting(code:)`. The waiting view shows the code, a QR (`QRCodeView`) of the `https://crocapp.dev/r/#<code>` link, and a Share Link button.
 3. Peer connects: `OnConnected` → `.connected`. If `settings.bothSidesConfirm` (croc `--ask`, F19) is on, `phase = .confirmSend` instead of `.connecting` — this is the sender-side "both sides confirm" gate; the user's accept calls `respond(accept: true)`, decline calls `cancel()`.
 4. Progress ticks arrive at ~10 Hz as `OnProgress` → `.progress(TransferProgress)`, `step` cycling `waiting` → `connected` → `transferring`. `TransferController` ignores `step == "waiting"` ticks and, critically, ignores all progress while `phase` is `.confirmSend` (same guard protects the receive side's `.incoming`) — croc is blocked in `GetInput` waiting for `respond()`, and a clobbered phase there means the UI can never call it.
 5. Transfer completes: `OnDone` → `.done(Summary)` → `phase = .done(summary, receivedText: nil)`. `finishRecord` writes a `TransferRecord` to `HistoryStore`.
@@ -134,6 +134,7 @@ One SwiftUI target, `#if os(iOS)` / `#if os(macOS)` isolated to dedicated files 
 | Backgrounding | `BackgroundCoordinator` wraps transfers in `BGContinuedProcessingTask`; system Live Activity | no-op (all `BackgroundCoordinator` bodies are `#if os(iOS)`) |
 | External send entry point | Share extension (`CrocShare` appex) + `ShareInbox`/`StagedFilesSheet` | Dock-icon drop + window drop, via `AppDelegate.application(_:open:)` and `AppRouter.shared` |
 | Local-network probe | `LocalNetworkChecker` (Bonjour self-probe) | same file, same probe — macOS 15 added its own Local Network privacy pane, enforced as a Network Extension packet filter rather than through TCC |
+| Receive links | `.onOpenURL` in `CrocAppApp` (`crocapp://`, universal links) | `AppDelegate.application(_:open:)`; file URLs still go to Send. Both parse with `TransferLink` and call `AppRouter.open(_:)` |
 | QR scan | `QRScannerView` (VisionKit `DataScannerViewController`), whole file `#if os(iOS)` | not offered (QR *generation*, `QRCodeView`, is cross-platform) |
 | Settings surface | `SettingsScreen` (`Route.settings`, gear toolbar icon) | `SettingsView` (native `Settings` scene, ⌘,) |
 | Menu commands | n/a | `AppCommands` (Send ⌘1, Receive ⌘2, Show Receive Folder ⇧⌘R); in `CrocApp Direct` only, "Check for Updates…" in the app menu right after "About CrocApp" |

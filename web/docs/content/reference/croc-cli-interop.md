@@ -23,6 +23,8 @@ croc send file.txt
 
 On your phone or Mac, open **Receive** in CrocApp and enter the printed code. The file arrives exactly as if the sender had also used CrocApp.
 
+The CLI's `--qrcode` flag shows a QR code of `https://getcroc.com/?code=<code>`. On iOS, scan it with **Scan QR Code** in CrocApp, or paste that link into the **Receive** field: CrocApp reads the code from it. See [Code phrases](../guide/code-phrases.md#accepted-forms).
+
 ## Example: app sends, CLI receives
 
 Start a send in CrocApp, get the code phrase it displays, then on another machine:

@@ -10,6 +10,7 @@ description: User-facing terms used throughout the CrocApp documentation.
 |---|---|
 | Code phrase / secret | The `word-word-word` string both sides use to find each other and derive the session key. Custom codes are at least 6 characters. |
 | PAKE | Password-Authenticated Key Exchange. Turns the weak code phrase into a strong encryption key without the relay ever learning it. |
+| Link | A `https://crocapp.dev/r/#<code>` address that carries a code phrase after the `#`. The QR code on the sender's screen and **Share Link** are this link. Opening one fills in **Receive** and never connects by itself. |
 | Relay | The server both sides connect to when a direct local-network path isn't available. Sees ciphertext only, never the key. |
 | Room | The rendezvous channel on the relay, derived from the first word of the code phrase. Two codes sharing that word can collide into the same room. |
 | Curve | The elliptic curve PAKE runs over. CrocApp uses croc's default. |

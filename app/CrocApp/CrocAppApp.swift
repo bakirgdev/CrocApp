@@ -47,7 +47,13 @@ struct CrocAppApp: App {
                 .environment(router)
                 .environment(history)
                 .modelContainer(history.container)
+                .onOpenURL { url in
+                    if let link = TransferLink.parse(url.absoluteString) { router.open(link) }
+                }
                 #if os(macOS)
+            // Without this every opened URL builds a new window and drops the
+            // typed state of the old one.
+            .handlesExternalEvents(preferring: [], allowing: ["*"])
             .frame(minWidth: 480, minHeight: 560)
                 #endif
         }

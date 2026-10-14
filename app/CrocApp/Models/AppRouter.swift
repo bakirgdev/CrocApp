@@ -15,6 +15,9 @@ final class AppRouter {
     var path: [Route] = []
     /// URLs waiting for SendView to pick up into its staged list.
     var pendingSendURLs: [URL] = []
+    /// A receive link waiting for ReceiveView to prefill from it. Opening a
+    /// link never connects (R22): the user taps Receive.
+    var pendingReceive: TransferLink?
 
     /// Weak: AppRouter.shared is constructed before TransferController
     /// exists, so CrocAppApp.init() attaches it after the fact; weak avoids
@@ -37,6 +40,13 @@ final class AppRouter {
             pendingSendURLs.append(url)
         }
         if !isBusy, path != [.send] { path = [.send] }
+    }
+
+    /// Same busy rule as openSend: a link that arrives mid-transfer is kept
+    /// for the next time Receive is shown, without pulling the user away.
+    func open(_ link: TransferLink) {
+        pendingReceive = link
+        if !isBusy { openReceive() }
     }
 
     func openReceive() {

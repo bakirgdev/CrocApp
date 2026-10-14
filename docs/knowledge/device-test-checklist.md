@@ -28,6 +28,15 @@ The simulator cannot verify any of these. Run them on a real iOS 26 device befor
 ## Idle timer
 - [ ] Screen stays awake during a long foreground transfer; sleeps normally after
 
+## Links and web receive (R22, R23)
+Owner-run on a physical iPhone, with a Mac running CrocApp as the sender (start a send and leave it on the waiting screen). The simulator has no camera and cannot resolve universal links.
+- [ ] 1. CrocApp installed on the iPhone. Point the Camera app at the waiting-screen QR on the Mac. Pass: CrocApp opens on Receive with the code filled in, and nothing connects until you tap Receive; after you tap Receive the transfer completes
+- [ ] 2. Delete CrocApp from the iPhone (or use an iPhone without it) and scan the same QR with the Camera app. Pass: Safari opens `https://crocapp.dev/r/`, the page shows the code, and it has the "Open in CrocApp", "Get CrocApp" (the download section of crocapp.dev), "Mac disk image" and "Receive in your browser" buttons
+- [ ] 3. Install CrocApp again, open the page from step 2 (scan the QR once more, long-press the link and open it in Safari, or open it from Notes), and tap "Open in CrocApp". Pass: CrocApp opens on Receive with the code filled in and does not connect by itself
+- [ ] 4. In CrocApp, tap Scan QR Code and scan an old-style `croc://<code>` QR (make one from any QR generator with text `croc://word-word-word`). Pass: the code field fills with `word-word-word` and nothing connects
+- [ ] 5. Copy `https://getcroc.com/?code=<code>` (a link the croc CLI shows with `--qrcode`, or typed by hand), tap Paste on Receive. Pass: the code field shows only `<code>`, not the link
+- [ ] 6. On the page from step 2, tap "Receive in your browser" while the Mac sender uses default relays. Pass: Safari opens `https://getcroc.com/?code=<code>` and the croc web app offers the transfer. Informational: this is croc's own web app, not CrocApp
+
 ## Transport and Tailcat gate
 Owner-run on a physical iPhone, against the Mac CLI (`/opt/homebrew/bin/croc`, v11). Use a file of at least 130 MiB, because croc starts Tailcat only for sends of 128 MiB or more (`crocmobile-bridge.md`, "Transport"). Under Automatic croc races Tailcat against its relay, so the CLI `--debug` log shows which side offered it. Report each SHA-256 (`shasum -a 256` on the Mac; copy a file received on the iPhone to the Mac to hash it) so Claude can compare them with the source file's. Pass for the gate is (a) to (c) complete with equal SHA-256 and no crash or hang. (d) is informational.
 - [ ] (a) Settings > Connection = Automatic. Send the file from the iPhone to `croc --debug --yes` on the Mac, once with the app in the foreground and once switching to another app mid-transfer and back. Pass: both transfers complete, the SHA-256 matches the source, and the CLI log contains `tailcat-offer`

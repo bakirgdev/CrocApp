@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Receive a file — CrocApp</title>
+    <meta name="description" content="Open this transfer in CrocApp, or get the app. The code stays in your browser." />
+    <!-- The code lives in the URL fragment, which a browser never sends to a
+         server. This page makes no network request, and the policy below keeps
+         the address from leaking to the pages its buttons open. -->
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, follow" />
+
+    <link rel="icon" href="/assets/img/favicon/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon/favicon-96x96.png" />
+    <link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png" />
+
+    <!-- --paper / --ink as literals: a <meta> attribute cannot read a custom
+         property. Keep in sync with design/colors.md and index.html. -->
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+
+    <link rel="stylesheet" href="/tokens.css" />
+    <link rel="stylesheet" href="/styles.css" />
+
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="nav__brand" href="/">CrocApp</a>
+      </div>
+    </header>
+
+    <main class="section receive">
+      <div class="container container--prose receive__inner">
+        <h1 class="t-web-section">Someone is sending you a file</h1>
+
+        <div id="has-code" hidden>
+          <p class="t-web-lead receive__deck">
+            Open this transfer in CrocApp, or receive it in your browser. The code is
+            end-to-end encrypted and stays in your browser until you choose.
+          </p>
+          <p class="receive__code t-code" id="code" aria-label="Transfer code"></p>
+
+          <div class="actions">
+            <a class="btn btn--prominent" id="open-app" href="crocapp://receive">Open in CrocApp</a>
+            <a class="btn btn--secondary" href="/#download">Get CrocApp</a>
+            <a
+              class="btn btn--secondary"
+              href="https://github.com/bakirgdev/CrocApp/releases/latest"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Mac disk image
+              <span class="u-visually-hidden">(opens in a new tab)</span>
+            </a>
+          </div>
+
+          <h2 class="t-headline receive__sub">No app? Receive in your browser</h2>
+          <p class="t-callout receive__note">
+            This opens <strong>getcroc.com</strong>, the web app of the croc project. It is not run by
+            CrocApp, and it serves the code that decrypts your file, so you trust it fully. It needs the
+            default relays, so it does not work when the sender uses a custom relay or the local network
+            only.
+          </p>
+          <div class="actions">
+            <a
+              class="btn btn--md btn--secondary"
+              id="open-browser"
+              href="https://getcroc.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Receive in your browser
+              <span class="u-visually-hidden">(opens getcroc.com in a new tab)</span>
+            </a>
+          </div>
+        </div>
+
+        <div id="no-code" hidden>
+          <p class="t-web-lead receive__deck">
+            This link has no transfer code. Ask the sender to share the link again, or type the code
+            into CrocApp.
+          </p>
+          <div class="actions">
+            <a class="btn btn--prominent" href="/#download">Get CrocApp</a>
+            <a class="btn btn--secondary" href="/">Home</a>
+          </div>
+        </div>
+
+        <noscript>
+          <p class="t-web-lead receive__deck">
+            This page needs JavaScript to read the code from the link. Open the link in CrocApp, or
+            type the code into the app.
+          </p>
+        </noscript>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        function render() {
+          var code = "";
+          try {
+            code = decodeURIComponent(location.hash.slice(1));
+          } catch (e) {}
+          // croc rejects shorter codes (crocmobile minCodeLength); a stray
+          // fragment such as "#top" must not read as one.
+          var valid = code.length >= 6 && !/\s/.test(code);
+          document.getElementById("has-code").hidden = !valid;
+          document.getElementById("no-code").hidden = valid;
+          if (!valid) return;
+          var encoded = encodeURIComponent(code);
+          document.getElementById("code").textContent = code;
+          document.getElementById("open-app").href = "crocapp://receive?code=" + encoded;
+          document.getElementById("open-browser").href = "https://getcroc.com/?code=" + encoded;
+        }
+        render();
+        addEventListener("hashchange", render);
+      })();
+    </script>
+  </body>
+</html>

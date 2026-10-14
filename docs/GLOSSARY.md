@@ -43,7 +43,7 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 
 | Term | Means |
 |---|---|
-| `AppRouter` | `@Observable` singleton (`app/CrocApp/Models/AppRouter.swift`) holding the navigation path (both platforms) and pending drop/dock URLs, needed because `AppDelegate` and menu commands sit outside the SwiftUI environment graph. |
+| `AppRouter` | `@Observable` singleton (`app/CrocApp/Models/AppRouter.swift`) holding the navigation path (both platforms), pending drop/dock URLs and a pending receive link (`pendingReceive`), needed because `AppDelegate` and menu commands sit outside the SwiftUI environment graph. |
 | App Group | `group.com.bakirgdev.CrocApp`, the shared container the iOS share extension stages files into (`ShareInbox/batch-<UUID>/` + `manifest.json`) for the main app to pick up (`app/CrocApp/Models/ShareInbox.swift`). |
 | `AutoVerify` harness | `app/CrocApp/Support/AutoVerify.swift`, launch-argument-driven code path (`--auto-receive`, `--auto-send`, `--ask`, etc.) that drives the real `TransferController` state machine instead of the engine directly, so verify scripts exercise the path users actually take. |
 | `BGContinuedProcessingTask` | iOS 26+ API wrapping a transfer so it survives backgrounding and gets a system Live Activity; `app/CrocApp/Platform/BackgroundCoordinator.swift`, no macOS equivalent (`docs/knowledge/apple-platform-constraints.md`). |
@@ -54,7 +54,9 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 | security-scoped resource | an Apple sandbox URL (from `fileImporter` or a bookmark) that needs `startAccessingSecurityScopedResource()` before use; both `TransferController` and `HistoryView` call it before touching a URL. |
 | share extension (appex) | `CrocShare`, the iOS-only app extension (`app/CrocShare/`) that stages shared files into the App Group for later send; ~120 MB memory cap, no long-running work (`docs/knowledge/app-ui-architecture.md`). |
 | `SwiftData` `TransferRecord` | the `@Model` type (`app/CrocApp/Models/TransferHistory.swift`) persisting one finished/failed transfer for local-only history (F12); never stores file contents or the full code phrase. |
+| `TransferLink` | the one parser (`app/CrocApp/Models/TransferLink.swift`) for every form a code arrives in: bare code, `crocapp://receive?code=`, `croc://<code>`, `https://crocapp.dev/r/#<code>`, `https://getcroc.com/?code=`. `TransferLink.webURL(forCode:)` builds the `crocapp.dev/r/` link. Opening one prefills Receive and never connects. |
 | trust badge | `TrustBadge` view (`app/CrocApp/Views/TrustBadge.swift`), shown in waiting/transferring/confirm-send screens, reading `TransferController.activeRelay` captured at transfer start (F36). |
+| web link / link page | `https://crocapp.dev/r/#<code>`, the waiting-screen QR and Share Link payload, served by `web/landing/r/index.html`. The code sits in the fragment, so browsers never send it to a server; the page makes no network request. It offers Open in CrocApp, the App Store, the DMG, and Receive in your browser (croc's own web app at getcroc.com, which serves the JavaScript that decrypts). |
 | `TransferController` | `@MainActor @Observable` (`app/CrocApp/Models/TransferController.swift`), the sole consumer of `CrocKit` in the app; owns `Phase` and all engine event handling. |
 
 ## Apple platform

@@ -14,6 +14,8 @@ Open **Receive** from the home screen.
 
 Type the **Code phrase** into the field, paste it with the **Paste** button, or (iOS only) tap **Scan QR Code** to scan the sender's QR code. The **Receive** button stays disabled until the entered code is at least 6 characters long.
 
+You can also paste a link, or open one from outside the app (for example by scanning the QR code with the camera). CrocApp fills in the code and waits: nothing connects until you tap **Receive**. See [Code phrases](code-phrases.md#accepted-forms) for the link forms it accepts, and for receiving in a browser instead.
+
 ## Choosing where files land (F7)
 
 Below the code field, CrocApp shows the current destination folder. Tap **Change** to pick a different one, or **Reset** to return to the default.

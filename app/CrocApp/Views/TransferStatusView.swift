@@ -157,14 +157,37 @@ struct TransferStatusView: View {
             } label: {
                 Label("Copy Code", systemImage: "doc.on.doc")
             }
-            QRCodeView(content: "croc://\(code)")
+            let webURL = TransferLink.webURL(forCode: code)
+            QRCodeView(content: webURL?.absoluteString ?? code)
+            if let webURL {
+                ShareLink(item: webURL) {
+                    Label("Share Link", systemImage: "square.and.arrow.up")
+                }
+            }
             Text("On the other device, enter this code or scan the QR.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+            if let note = browserReceiveNote {
+                Text(note)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
             TrustBadge(relay: controller.activeRelay)
             ProgressView()
             Text("Waiting for the receiver…").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    /// R23: croc's browser client only knows the default relays.
+    private var browserReceiveNote: String? {
+        switch controller.activeRelay {
+        case .publicDefault: nil
+        case .custom:
+            "Receiving in a browser needs the default relays. This transfer uses a custom relay."
+        case .localOnly:
+            "Receiving in a browser needs the default relays. This transfer stays on your local network."
         }
     }
 

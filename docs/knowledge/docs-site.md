@@ -34,6 +34,10 @@ Not needed yet, current *is* 0.9.9, no `versioned_docs/` exists. When 1.0.0 tags
 
 `github-pages.yml` calls `scripts/assemble-site.sh` and uploads the whole `_site/`. Editing only `web/docs/**` still rebuilds the Docusaurus site *and* re-copies `web/landing/` verbatim, and editing only `web/landing/**` triggers the reverse — GitHub Pages replaces the entire artifact on every deploy, so a single workflow always ships both.
 
+## What `assemble-site.sh` asserts
+
+After copying both surfaces it fails the build unless `index.html`, `404.html`, `.well-known/security.txt`, `.well-known/apple-app-site-association` (listing both app IDs) and `docs/index.html` exist. It also checks the link page `web/landing/r/index.html` (R23): it must exist, set `<meta name="referrer" content="no-referrer">` (the code lives in the URL fragment), and load no remote `script`, `link`, `img` or `iframe`. Keep that page free of third-party resources; the one network hop it offers is a user-clicked link to getcroc.com.
+
 ## Traps
 
 - **Frontmatter values containing a colon must be quoted.** `description: Fixes for X: stalled transfers` breaks the build with "bad indentation of a mapping entry". Quote the whole value: `description: "Fixes for X: stalled transfers"`. Several pages under `content/` already need this, check before adding a colon to any frontmatter field.

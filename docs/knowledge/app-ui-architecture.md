@@ -85,6 +85,14 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 
 10k-file smoke tests pass in both directions: receive 427 s, send 358 s.
 
+## Receive links (R22)
+
+- `Models/TransferLink.swift` is the one parser. `TransferLink.parse(_:)` takes a bare code, `crocapp://receive?code=`, `croc://<code>` (0.9.9 QR codes), `https://crocapp.dev/r/#<code>` or `https://getcroc.com/?code=`, and yields `.code`. It also parses a stored-transfer link `https://<host>/s/<id>#v1.<key>` (`http` only for localhost, 127.0.0.1 and ::1); nothing receives that yet. `TransferLink.webURL(forCode:)` builds the `crocapp.dev/r/` link.
+- `AppRouter.open(_:)` stores the link in `pendingReceive` and calls `openReceive()` unless `isBusy`; mid-transfer the link is kept and the user is not moved. `ReceiveView` consumes `pendingReceive` (`onChange(initial: true)` on the form) and fills `code`. Opening a link never starts a receive: the user taps Receive.
+- Entry points, all through `TransferLink.parse` then `router.open`: the QR scan sheet (iOS), the Paste button, typed or pasted text containing `://` in the code field, `.onOpenURL` in `CrocAppApp` (iOS universal links and `crocapp://`), and `AppDelegate.application(_:open:)` on macOS (file URLs still go to Send).
+- The `crocapp` scheme is in all three Info.plists (`CrocApp-Info.plist`, `CrocApp-macOS-Info.plist`, `CrocApp-Direct-Info.plist`). Universal links for `crocapp.dev/r/*` need the Associated Domains entitlement and `web/landing/.well-known/apple-app-site-association`.
+- `TransferStatusView.waitingView` encodes the QR as `TransferLink.webURL(forCode:)` and adds a Share Link button. `browserReceiveNote` adds a caption when the active relay is custom or local-only (R23): croc's browser client knows only the default relays.
+
 ## Platform layer, iOS
 
 - `Platform/BackgroundCoordinator.swift` — cross-platform class with `#if os(iOS)` bodies (no-ops on macOS). Wraps a transfer in a `BGContinuedProcessingTask` and holds `isIdleTimerDisabled`. Controller hooks: `transferStarted` in `run()`, `progressChanged` inside the accepted `.progress` path only (the `.incoming` guard stays untouched), `transferEnded` at `.done` / `.failed` / startup catch, idempotent. Expiration sets `backgroundExpired` and cancels, producing dedicated "iOS paused the transfer…" copy. A generation token rejects stale late task launches.
