@@ -136,20 +136,52 @@ Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferControlle
 
 ## 7. Distribution builds
 
-Not implemented: real notarization. `scripts/build-devid.sh` archives the macOS app (`xcodebuild ... archive ARCHS=arm64`), checks for a "Developer ID Application" signing identity in the login keychain, and if one is missing, prints `DEVID-PENDING-CERT` and exits 0 (creating that identity at developer.apple.com is an owner action, not something the script can do). If the identity exists, it exports via `Config/ExportOptions-DevID.plist`, runs `codesign --verify --strict --deep`, then `syspolicy_check distribution` on the exported `.app`. `syspolicy_check` is Apple's pre-submission dry-run checker; it catches signing, entitlement, and hardened-runtime problems that notarization or Gatekeeper would otherwise reject, but it is **not** notarization. There is no `xcrun notarytool submit --wait` and no `xcrun stapler staple` anywhere in this repo (`docs/known-issues.md`, "Blocking release").
+`scripts/build-devid.sh [out-dir]` builds the signed, notarized, stapled macOS disk image (default out-dir `dist`, output `CrocApp-<version>-arm64.dmg`). It does, in order:
+
+1. Resolves the "Developer ID Application" identity for team `HBSU359M33` by SHA-1 and archives the `CrocApp Direct` scheme (Release, arm64) with manual signing and the provisioning profile "CrocApp Direct Developer ID". Prints `archive: OK`.
+2. Exports with `Config/ExportOptions-DevID.plist` and runs `codesign --verify --strict --deep`. Prints `DEVID-EXPORT-OK`.
+3. Zips the app, notarizes it (`xcrun notarytool submit --wait`), staples it, and runs `syspolicy_check distribution` on the stapled app. Prints `DEVID-APP-NOTARIZED-OK`.
+4. Builds the DMG with `scripts/build-dmg.sh` (prints `DMG-OK`), signs it with a timestamp, notarizes and staples it, then runs `stapler validate` and `spctl -a -vv -t open --context context:primary-signature`. Prints `DEVID-NOTARIZED-OK`.
+
+The app and the DMG are notarized separately, so an app copied out of the image opens offline on first launch. The script exits 1 when no Developer ID identity is present (it used to print `DEVID-PENDING-CERT` and exit 0). `syspolicy_check notary-submission` is not used: on macOS 27 it fails every app that is not yet notarized ("Gatekeeper rejected this file", spctl `source=Unnotarized Developer ID`), so a real notarization problem is read from the notary log instead. `syspolicy_check distribution` needs a stapled app, which is why it runs after the app's notarization. A local run passed with both submissions `Accepted`, both staples validated and spctl reporting `accepted, source=Notarized Developer ID`.
+
+To run it locally you need:
+
+- a "Developer ID Application" identity for team `HBSU359M33` in the keychain search list (created at developer.apple.com, Certificates)
+- the "CrocApp Direct Developer ID" profile in `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`
+- the notary credentials as a keychain profile, by default `crocapp-notary`: `xcrun notarytool store-credentials crocapp-notary --key <p8> --key-id <id> --issuer <issuer>`. Set `NOTARY_KEYCHAIN_PROFILE` to use another name, or `NOTARY_KEY`, `NOTARY_KEY_ID` and `NOTARY_ISSUER` (the CI form) to pass the App Store Connect key directly
+- `brew install create-dmg`
+
+`DEVID_WORK` sets the scratch directory (archive, DerivedData, logs).
+
+`.github/workflows/release.yml` runs the same script. It starts on a `v*` tag push or on `workflow_dispatch`. A tag run checks the tag against `MARKETING_VERSION` and the dated `CHANGELOG.md` heading, builds, signs, notarizes, writes a signed `appcast.xml` (Sparkle's `generate_appcast`, seeded with the latest release's appcast, the CHANGELOG section embedded as release notes), attests the stapled files, and publishes the DMG, `appcast.xml`, the `Croc.xcframework` zip and `SHA256SUMS.txt`. A `workflow_dispatch` run is a rehearsal: it skips the tag and CHANGELOG checks and the publish job, and publishes nothing. The build job runs in the `release` environment (required reviewer, deployment policy limited to branch `main` and tags `v*`), which holds seven secrets:
+
+| Secret | Holds |
+|---|---|
+| `DEVID_P12_BASE64` | Developer ID Application certificate and key, base64 `.p12` |
+| `DEVID_P12_PASSWORD` | `.p12` password |
+| `DEVID_PROFILE_BASE64` | "CrocApp Direct Developer ID" profile, base64 |
+| `ASC_KEY_P8` | App Store Connect API key (`.p8` text) used by `notarytool` |
+| `ASC_KEY_ID` | that key's ID |
+| `ASC_ISSUER_ID` | that key's issuer ID |
+| `SPARKLE_ED_PRIVATE_KEY` | Sparkle Ed25519 release private key, passed to `generate_appcast` on stdin |
+
+Before it signs the appcast, the workflow checks that `SPARKLE_ED_PRIVATE_KEY` matches the built app's `SUPublicEDKey`, and after, that the new item carries `sparkle:edSignature`: on a mismatched key `generate_appcast` only warns, exits 0 and writes the item unsigned, which every client rejects.
+
+A dispatch rehearsal can only run once this workflow is on `main`, because dispatch needs the workflow on the default branch and the environment allows `main`. It has not run yet (`docs/known-issues.md`, "Harnesses").
 
 Two export channels, both under `app/Config/`:
 
 | File | `method` | Channel |
 |---|---|---|
-| `ExportOptions-DevID.plist` | `developer-id` | Direct-download DMG, exercised by `scripts/build-devid.sh` |
+| `ExportOptions-DevID.plist` | `developer-id` | Direct-download DMG: manual signing, `signingCertificate` "Developer ID Application", profile "CrocApp Direct Developer ID" for `com.bakirgdev.CrocApp.direct` (the `CrocApp Direct` target); exercised by `scripts/build-devid.sh` |
 | `ExportOptions-MAS.plist` | `app-store-connect` | Mac App Store; committed but never exercised, first real MAS export will be its first test (`docs/known-issues.md`) |
 
 Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 
-The `CrocApp Direct` target is the Developer ID channel. It is macOS only and arm64, with bundle ID `com.bakirgdev.CrocApp.direct` and product `CrocApp.app` (the same product name as the App Store target). Its sources are the `app/CrocApp/` synchronized group plus `app/CrocAppDirect/`, built with the Swift condition `DIRECT`. It links Sparkle 2.10.0 (SwiftPM, this target only) and shows "Check for Updates…" in the app menu. Because both targets produce `CrocApp.app`, in one shared DerivedData each scheme's build replaces the other's `CrocApp.app`; the harness scripts and CI use their own `-derivedDataPath`, or build Direct last. `scripts/build-devid.sh` still archives the `CrocApp` scheme, not `CrocApp Direct`; a later step changes that.
+The `CrocApp Direct` target is the Developer ID channel. It is macOS only and arm64, with bundle ID `com.bakirgdev.CrocApp.direct` and product `CrocApp.app` (the same product name as the App Store target). Its sources are the `app/CrocApp/` synchronized group plus `app/CrocAppDirect/`, built with the Swift condition `DIRECT`. It links Sparkle 2.10.0 (SwiftPM, this target only) and shows "Check for Updates…" in the app menu. Because both targets produce `CrocApp.app`, in one shared DerivedData each scheme's build replaces the other's `CrocApp.app`; the harness scripts and CI use their own `-derivedDataPath`, or build Direct last.
 
-Sparkle's public key is pending: `SPARKLE_PUBLIC_ED_KEY` on the Direct target is empty until the owner creates the release key (owner step O6). The key is made as plain text with `openssl genpkey -algorithm ed25519` (the base64 raw 32-byte private seed and public key, the format step 1 of the procedure below makes), not with Sparkle's `generate_keys`, which stores it in the keychain; the owner keeps the private key and it becomes the `SPARKLE_ED_PRIVATE_KEY` secret. The release workflow cannot sign an appcast before that. `SPARKLE_FEED_URL` is `https://github.com/bakirgdev/CrocApp/releases/latest/download/appcast.xml`.
+`SPARKLE_PUBLIC_ED_KEY` on the Direct target is set to the owner's release public key. The key was made as plain text with `openssl genpkey -algorithm ed25519` (the base64 raw 32-byte private seed and public key, the format step 1 of the procedure below makes), not with Sparkle's `generate_keys`, which stores it in the keychain; the owner keeps the private key and it is the `SPARKLE_ED_PRIVATE_KEY` secret. `SPARKLE_FEED_URL` is `https://github.com/bakirgdev/CrocApp/releases/latest/download/appcast.xml`.
 
 ### Testing a Sparkle update locally
 

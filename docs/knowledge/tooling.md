@@ -12,7 +12,8 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | `go build ./...` + `go vet ./...` | none | CI (go job, alongside lint/vuln) |
 | `go test -race ./...` (Go `testing`) | `crocmobile/*_test.go` | local + CI (go job, `GOOS`/`GOARCH` unset) |
 | Swift Testing (Xcode's built-in) | `CrocKit/Tests/CrocKitTests/`, `app/CrocAppTests/` (shared `CrocApp` scheme) | local + CI (macOS leg of `build`) |
-| xcbeautify | none | CI only |
+| xcbeautify | none | CI only (`ci.yml`; `release.yml` does not use it) |
+| create-dmg 1.3.0 (Homebrew; CI installs it unpinned with `brew install create-dmg`) | none; called by `scripts/build-dmg.sh` | local + `release.yml` |
 | croc v10 CLI (the v10 peer of `verify-interop.sh` scenario 10) | `scripts/croc-v10.version` (read by the script and the `interop` job) | local + CI |
 | Node 24 (latest LTS) | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
 | pnpm 12 | `packageManager` in `web/docs/package.json` (CI: `corepack enable pnpm` reads it) | docs site, local + CI |
@@ -21,7 +22,7 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched; `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26` against a local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:00 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | PRs build only; push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) also deploys |
-| GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes |
+| GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes; `workflow_dispatch` is a rehearsal that publishes nothing |
 
 Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file. Jobs that need Xcode 27 run on the `xcode-27` runner label (a public preview; `macos-26` does not carry Xcode 27). Its image carries 27.0 (default), 27.1 and 27.2 beta, so the pin must name a version that image actually has.
 
@@ -79,7 +80,3 @@ These cost real debugging time on this machine. All are environment quirks, not 
 | Danger | after main is PR-only |
 | Tuist / XcodeGen | first real `.pbxproj` merge conflict (Kintsugi is the lighter answer) |
 | fastlane | App Store / TestFlight upload. Notarization stays a separate step, but the credentials can be shared: `notarytool` accepts an App Store Connect API key via `--key` / `--key-id` / `--issuer`, alongside `--apple-id`/`--password` and `--keychain-profile` |
-
-## Not done yet: real notarization
-
-`scripts/build-devid.sh` stops at `syspolicy_check`, which is a dry run. There is no `xcrun notarytool submit --wait` and no `xcrun stapler staple`. Without stapling, first launch on a fresh Mac needs network for Gatekeeper; without notarization at all, it needs a right-click Open and a trust prompt. The direct-download channel is the one this blocks.

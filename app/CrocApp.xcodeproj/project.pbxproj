@@ -724,7 +724,7 @@
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;
 				SPARKLE_FEED_URL = "https://github.com/bakirgdev/CrocApp/releases/latest/download/appcast.xml";
-				SPARKLE_PUBLIC_ED_KEY = "";
+				SPARKLE_PUBLIC_ED_KEY = "7vFYkIXDHGPg4FHsWDCe3Qz546DfdyQbRKQZOO8zYsE=";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DIRECT $(inherited)";
@@ -761,7 +761,7 @@
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;
 				SPARKLE_FEED_URL = "https://github.com/bakirgdev/CrocApp/releases/latest/download/appcast.xml";
-				SPARKLE_PUBLIC_ED_KEY = "";
+				SPARKLE_PUBLIC_ED_KEY = "7vFYkIXDHGPg4FHsWDCe3Qz546DfdyQbRKQZOO8zYsE=";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DIRECT $(inherited)";

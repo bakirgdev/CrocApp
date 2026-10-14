@@ -8,11 +8,7 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Blocking release
 
-- **Notarization is not real.** `scripts/build-devid.sh` stops at `syspolicy_check distribution`, a dry run. No `notarytool submit --wait`, no `stapler staple`. Until it lands, a downloaded build shows Gatekeeper's unidentified-developer refusal on first launch (`knowledge/tooling.md`).
-- **The release pipeline ships an ad-hoc signature.** `.github/workflows/release.yml` builds with `CODE_SIGN_IDENTITY=-` because no Developer ID certificate exists. Enough for arm64 to execute, not enough for Gatekeeper on a downloaded copy: the first launch needs System Settings > Privacy & Security > Open Anyway. This is what v0.9.9 actually shipped as, accepted because it is a symbolic release; a blocker for anything after it.
-- **No Developer ID Application certificate is installed.** Only `Apple Development` is present, so `scripts/build-devid.sh` stops at `DEVID-PENDING-CERT` before it ever reaches the notarization step above. Owner action: create one at developer.apple.com (Certificates > Developer ID Application).
 - **`ExportOptions-MAS.plist` is committed but never exercised.** First real MAS export is its first test.
-- **`actions/attest-build-provenance` runs before the DMG would be stapled** (`.github/workflows/release.yml`, "Attest build provenance" step). Harmless today, since nothing staples: the attested hash is the final hash. Once notarization lands, `stapler staple` rewrites the DMG after this step and the attestation would cover a pre-staple hash. Move the step after stapling when that happens.
 
 ## Engine (crocmobile)
 
@@ -24,6 +20,8 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 - **`verify-app-mac.sh` exits with no `FAIL:` line when a CLI receive fails** (`recv_from_app`, under `set -e`). Its log is still in `$TMPDIR`. `verify-share-sim.sh` and `verify-interop.sh` already report this case.
 - **`BUILDING.md` §5's `croc relay` runs whichever `croc` is first on `PATH`.** On a machine set up with `CROC_V10` at `~/go/bin/croc` ahead of Homebrew, that is v10, which rejects `--source-join-limit`, and every scenario then fails `connection refused`. Run `"$(brew --prefix)/bin/croc" relay ...` there.
 
+- **The release workflow has not run yet with signing.** `.github/workflows/release.yml` was only exercised through `scripts/build-devid.sh` locally. Run the first `workflow_dispatch` rehearsal from `main` after the P06 merge (dispatch needs the workflow on the default branch, and the `release` environment allows `main`), and check it before tagging a release.
+- **`release.yml` passes the `.p12` password and the throwaway keychain password on `security` argv** (`security import ... -P`, `security create-keychain -p`, `unlock-keychain -p`, `set-key-partition-list -k`). `security` has no stdin option for them, so other processes on the runner can read them while the command runs. Acceptable only on a single-tenant runner. Do not run this workflow on a shared runner.
 - **The first local Sparkle update test hung after "Install and Relaunch".** In the update test (`docs/BUILDING.md`, "Testing a Sparkle update locally"), run 1, the very first launch of the `com.bakirgdev.CrocApp.direct` bundle ID on that Mac, downloaded and prepared the update, but after "Install and Relaunch" the app never terminated. Its own Quit menu item was then ignored too (main thread idle), and the installer kept waiting. The next 4 runs passed, 3 of them with Sparkle's first-launch defaults deleted, so first-launch state alone does not explain it. Cause unknown. If it recurs, watch `log stream` for `org.sparkle-project.Sparkle` and for the app's termination, and repeat the release rehearsal from a clean macOS account.
 
 ## Design system

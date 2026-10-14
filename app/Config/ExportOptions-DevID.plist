@@ -8,5 +8,14 @@
 	<string>HBSU359M33</string>
 	<key>destination</key>
 	<string>export</string>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Developer ID Application</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.bakirgdev.CrocApp.direct</key>
+		<string>CrocApp Direct Developer ID</string>
+	</dict>
 </dict>
 </plist>

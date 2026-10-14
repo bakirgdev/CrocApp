@@ -101,7 +101,7 @@ Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanC
 - `Views/SettingsView.swift` — output-folder change/reset plus Show in Finder. `Views/AppCommands.swift` — Send ⌘1, Receive ⌘2 (disabled while active), Show Receive Folder ⇧⌘R. Window: `.defaultSize(560×700)`, content `minWidth 480` / `minHeight 560`.
 - `CrocApp Direct` only (`#if DIRECT`, `app/CrocAppDirect/AppUpdater.swift`): a "Check for Updates…" item in the app menu right after "About CrocApp", backed by Sparkle's `SPUStandardUpdaterController`. The App Store target has no such item.
 - Default output folder is `~/Downloads/CrocApp`, needing the `files.downloads.read-write` entitlement; the folder is auto-created in `defaultFolder` and `defaultDisplayName` supplies the UI label. Receive-done offers "Show in Finder" via `NSWorkspace.activateFileViewerSelecting`.
-- Distribution: `scripts/build-devid.sh` archives with `ARCHS=arm64`, exports Developer ID, runs `codesign --verify`, then `syspolicy_check distribution`; it degrades to `DEVID-PENDING-CERT` until a cert is installed. `Config/ExportOptions-{MAS,DevID}.plist` carry the per-channel settings — no extra pbxproj configurations.
+- Distribution: `scripts/build-devid.sh` archives the `CrocApp Direct` scheme with `ARCHS=arm64` and manual Developer ID signing, exports with `Config/ExportOptions-DevID.plist`, notarizes and staples the app, then builds, signs, notarizes and staples the DMG (it exits 1 without a Developer ID identity). `Config/ExportOptions-{MAS,DevID}.plist` carry the per-channel settings — no extra pbxproj configurations.
 
 ## Onboarding and store compliance
 

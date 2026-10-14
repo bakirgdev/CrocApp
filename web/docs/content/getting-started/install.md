@@ -22,7 +22,7 @@ CrocApp is planned for three channels. None are live yet.
 
 Notes on the blockers:
 
-- **Notarization is not real yet.** The project's notarization script currently stops at a dry-run check (`syspolicy_check distribution`) and does not submit for or staple a real notarization ticket.
+- **Notarization.** v0.9.9 was not notarized. Later releases are signed with a Developer ID certificate and notarized.
 - A TestFlight beta is also planned, for when there is a build to distribute.
 - There is no package-manager channel and none is planned for now.
 
