@@ -127,7 +127,7 @@ struct SendView: View {
 
     @ViewBuilder private var linkOptions: some View {
         VStack(alignment: .leading, spacing: Spacing.space3) {
-            Toggle("Send as link", isOn: $sendAsLink)
+            Toggle("Send as link", isOn: Binding(get: { linkSelected }, set: { sendAsLink = $0 }))
                 .disabled(linkUnavailableReason != nil)
             if let reason = linkUnavailableReason {
                 Text(reason).font(.caption).foregroundStyle(.secondary)
