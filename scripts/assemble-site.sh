@@ -35,6 +35,13 @@ test -s "$OUT/.well-known/apple-app-site-association" || { echo "error: no apple
 for id in HBSU359M33.com.bakirgdev.CrocApp HBSU359M33.com.bakirgdev.CrocApp.direct; do
   grep -q "\"$id\"" "$OUT/.well-known/apple-app-site-association" || { echo "error: AASA lacks $id" >&2; exit 1; }
 done
+# R23: the code stays in the fragment, so the page must not leak it by referrer
+# or load anything remote.
+test -s "$OUT/r/index.html" || { echo "error: no /r/ page in $OUT" >&2; exit 1; }
+grep -q '<meta name="referrer" content="no-referrer"' "$OUT/r/index.html" || { echo "error: /r/ lacks the no-referrer policy" >&2; exit 1; }
+if tr '\n' ' ' < "$OUT/r/index.html" | grep -Eiq "<(script|link|img|iframe)[^>]*(src|href)=[\"']?(https?:)?//"; then
+  echo "error: /r/ loads a remote resource" >&2; exit 1
+fi
 test -s "$OUT/docs/index.html" || { echo "error: no docs index.html in $OUT/docs" >&2; exit 1; }
 
 echo "assembled $OUT:"

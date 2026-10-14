@@ -33,13 +33,13 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 - **`transferActive` on start: retry once after ~300 ms.** There is a release window after `done` where the next start still throws.
 - `handle(.failed)` does not call the engine: the stream's `onTermination` cancels and clears the transfer by its ID. `TransferController` keeps that `transferID`; every cancel (user, background expiry, auto-accept block) targets it, and a cancel tapped before `run()` has the ID is applied as soon as `startSend`/`startReceive` returns.
 - Copy precedence when several conditions collide, highest first: `blockedAutoAccept`, `backgroundExpired`, the auto-accept-vs-remote-`--ask` case, then cancel/decline mapping. `run()`'s catch mirrors the `backgroundExpired` step so a thrown expiry keeps the resume hint.
-- **Code `refused` under auto-accept is not a peer decline.** croc forces the receiver prompt whenever the *remote sender* ran `--ask` (`croc.go`: `!NoPrompt || Ask || senderInfo.Ask`), and engine auto-accept has already closed the prompt pipe, so `GetInput` hits EOF and croc reports its local `refused files`. `autoAcceptActive && !cancelRequested && failure.code == .refused` discriminates it (after the `blockedAutoAccept` and `backgroundExpired` branches): `respond()` is never called on the auto-accept path, so `declineRequested` cannot be set. Do **not** "fix" this by pre-writing `y\n` under AutoAccept — croc's empty-folder-overwrite prompt is gated on neither `NoPrompt` nor `Ask` and reads the same pipe, so a buffered `y` would turn its safe EOF default into an unwanted overwrite.
+- **Code `refused` under auto-accept is not a peer decline.** croc forces the receiver prompt whenever the *remote sender* ran `--ask` (`croc.go`: `!NoPrompt || Ask || senderInfo.Ask`), and engine auto-accept has already closed the prompt pipe, so `GetInput` hits EOF and croc reports its local `refused files`. `autoAcceptActive && !cancelRequested && failure.code == .refused` discriminates it (after the `blockedAutoAccept` and `backgroundExpired` branches): `respond()` is never called on the auto-accept path, so `declineRequested` cannot be set. Under AutoAccept the pipe is not empty: crocmobile queues a batch of `n` answers for croc's other un-gated prompts (empty-folder, unzip member) and then closes it (`crocmobile-bridge.md`). The forced remote-`--ask` prompt reads the first `n` and ends as `refused` under either policy; the batch is `n` even for Replace for exactly this reason (`verify-interop.sh` scenario 12 checks it).
 - `blockedAutoAccept` is checked in `.done` as well as `.failed`: `cancel()` is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed` (the schema has no blocked case, and "Cancelled" reads as a user action).
 - `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) spent in `.starting`/`.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips, so the hint never keeps counting once a transfer moves on, but it does survive the `.starting → .connecting` handoff — same stall to the user, no reason to reset the clock.
 
 ### Options, security scope, progress
 
-- `baseOptions()` builds `EngineOptions` from `AppSettings`. Receive passes `autoAccept && !bothSidesConfirm` — Ask wins, because engine-level autoAccept closes the prompt pipe and the resulting EOF would decline.
+- `baseOptions()` builds `EngineOptions` from `AppSettings`; receive also passes `whenFileExists` (`AppSettings.whenFileExists`, UserDefaults key `settings.whenFileExists`, default Keep Both, an unknown stored value reads as Keep Both). Receive passes `autoAccept && !bothSidesConfirm` — Ask wins, because engine-level autoAccept answers croc's prompts with `n` and closes the pipe, which would decline.
 - Intent methods start security scope on send URLs and the user-picked output folder, track them in `scopedURLs`, and release at stream end. `startAccessingSecurityScopedResource() == false` is fine for non-scoped drops — keep the call anyway.
 - Speed is an EMA (0.25/0.75) over `bytesFinished + fileSent` deltas, spaced ≥0.2 s. Overall progress is `(bytesFinished + fileSent) / totalSize`; `fileSent` is per-current-file.
 - `activeRelay` is captured at start, for the trust badge.
@@ -59,7 +59,7 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 
 Relay strings use `""` to mean "croc default" (the `TextField` prompt reads "Public relay pool") and reach the engine as stored, password included. Go resolves them (`crocmobile/relay.go`): blank means croc's default, and with no custom relay and local-only off the relay comes from upstream's public pool by code. `relayKind` (`publicDefault` / `custom` / `localOnly`) is display-only and classifies as custom if either address is set to something other than `RelayDefaults` (CrocKit, read from Go).
 
-`Views/PowerSettingsSections.swift` holds the shared `Form` sections — relay, transfer toggles, exclusions, confirmation with the auto-accept warning footer — embedded in both the macOS `SettingsView` (Settings scene, ⌘,) and the iOS `SettingsScreen` (gear toolbar → `Route.settings`). `TrustBadge(relay:)` appears in the waiting, transferring, and confirm-send views. `HowItWorksView` is the plain-language explainer; its facts come from `what-is-croc.md`.
+`Views/PowerSettingsSections.swift` holds the shared `Form` sections — relay, connection (the Automatic / Relay only `Transport` picker, disabled while Local network only is on), transfer toggles, exclusions, confirmation with the auto-accept warning footer — embedded in both the macOS `SettingsView` (Settings scene, ⌘,) and the iOS `SettingsScreen` (gear toolbar → `Route.settings`). `TrustBadge(relay:)` appears in the waiting, transferring, and confirm-send views. `HowItWorksView` is the plain-language explainer; its facts come from `what-is-croc.md`.
 
 `Phase.confirmSend` is the sender side of croc `--ask`: entered at `.connected` when `bothSidesConfirm` is on, progress-guarded like `.incoming`, accept is `respond(true)`, decline is `cancel()`.
 
@@ -79,11 +79,19 @@ Relay strings use `""` to mean "croc default" (the `TextField` prompt reads "Pub
 
 ## Conflict scan
 
-Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanConflicts` runs `Task.detached` and stats off the main actor; the write-back happens only when non-empty, only `if case .incoming`, and only if `transferGeneration` still matches the value captured at `.fileList`. The shape check alone was not enough: a scan can outlive a whole fast transfer and land on the *next* one's `.incoming`. Doing the scan synchronously froze the accept UI on large file lists.
+Asynchronous. `.incoming` is shown immediately with `conflicts: []`; `Self.scanConflicts` runs `Task.detached` and stats off the main actor; the write-back happens only when non-empty, only `if case .incoming`, and only if `transferGeneration` still matches the value captured at `.fileList`. The shape check alone was not enough: a scan can outlive a whole fast transfer and land on the *next* one's `.incoming`. Doing the scan synchronously froze the accept UI on large file lists. With conflicts, the sheet offers Decline, Replace and Keep Both (Keep Both prominent) and a banner; without conflicts, or while the scan runs, a single Accept, which means Keep Both. A zipped folder arrives as one `.zip` name, so the scan sees none of its members (`docs/known-issues.md`, Accepted).
 
 `startSend`'s up-to-200 `bookmarkData` calls run off the main actor the same way, writing back into `pendingRecord`. If a transfer somehow terminates first, `pendingRecord` is already nil and the record carries no bookmarks — the same outcome as the pre-existing all-or-nothing fallback, so "Send Again" hides rather than breaks. `SecurityScopedBookmark.create` is `nonisolated` for this.
 
 10k-file smoke tests pass in both directions: receive 427 s, send 358 s.
+
+## Receive links (R22)
+
+- `Models/TransferLink.swift` is the one parser. `TransferLink.parse(_:)` takes a bare code, `crocapp://receive?code=`, `croc://<code>` (0.9.9 QR codes), `https://crocapp.dev/r/#<code>` or `https://getcroc.com/?code=`, and yields `.code`. It also parses a stored-transfer link `https://<host>/s/<id>#v1.<key>` (`http` only for localhost, 127.0.0.1 and ::1); nothing receives that yet. `TransferLink.webURL(forCode:)` builds the `crocapp.dev/r/` link.
+- `AppRouter.open(_:)` stores the link in `pendingReceive` and calls `openReceive()` unless `isBusy`; mid-transfer the link is kept and the user is not moved. `ReceiveView` consumes `pendingReceive` (`onChange(initial: true)` on the form) and fills `code`. Opening a link never starts a receive: the user taps Receive.
+- Entry points, all through `TransferLink.parse` then `router.open`: the QR scan sheet (iOS), the Paste button, typed or pasted text containing `://` in the code field, `.onOpenURL` in `CrocAppApp` (iOS universal links and `crocapp://`), and `AppDelegate.application(_:open:)` on macOS (file URLs still go to Send).
+- The `crocapp` scheme is in all three Info.plists (`CrocApp-Info.plist`, `CrocApp-macOS-Info.plist`, `CrocApp-Direct-Info.plist`). Universal links for `crocapp.dev/r/*` need the Associated Domains entitlement and `web/landing/.well-known/apple-app-site-association`.
+- `TransferStatusView.waitingView` encodes the QR as `TransferLink.webURL(forCode:)` and adds a Share Link button. `browserReceiveNote` adds a caption when the active relay is custom or local-only (R23): croc's browser client knows only the default relays.
 
 ## Platform layer, iOS
 
@@ -133,9 +141,11 @@ Launch arguments that drive the real controller, not the engine directly — the
 | Argument | Effect |
 |---|---|
 | `--auto-receive CODE` | receive into Documents, auto-accept via `respond(true)` on `.incoming` unless `--hold` is passed |
+| `--when-exists keepBoth\|replace` | the file policy `AutoVerify` answers the incoming sheet with (the setting stays Keep Both, so the late answer must reach croc); default Keep Both |
 | `--auto-send PATH --code CODE` | send with a custom code; on macOS the source must be container-resident (sandbox). Needs `--code`: without it nothing happens |
 | `--auto-share-send CODE` | read the share inbox, then custom-code send |
 | `--local` | sets `settings.onlyLocal` unpersisted (croc `onlyLocal`) |
+| `--transport auto\|relay` | sets `settings.transport` unpersisted (sender-side Connection, F41); an unknown value is ignored |
 | `--relay ADDR` | custom relay, plus `harnessDisableLocal` to kill the LAN race |
 | `--no-compress` | disable compression |
 | `--ask` | sets `settings.bothSidesConfirm` unpersisted (sender-side confirm, F19). The `.confirmSend` auto-answer happens in every harness mode, with or without this flag |

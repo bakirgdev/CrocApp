@@ -22,6 +22,17 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.bakirgdev.CrocApp.receive</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>crocapp</string>
+			</array>
+		</dict>
+	</array>
 	<!-- croc's encryption (AES-256-GCM, PAKE) is standard and its source is
 	     public, so the app relies on the open-source exemption (EAR 742.15(b),
 	     owner decision for 1.0). `true` makes App Store Connect refuse the

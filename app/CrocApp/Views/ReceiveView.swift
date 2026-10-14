@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct ReceiveView: View {
     @Environment(TransferController.self) private var controller
     @Environment(OutputFolderStore.self) private var outputFolder
+    @Environment(AppRouter.self) private var router
 
     @State private var code = ""
     @State private var showScanner = false
@@ -19,6 +20,11 @@ struct ReceiveView: View {
                 TransferStatusView()
             } else {
                 form
+                    .onChange(of: router.pendingReceive, initial: true) { _, link in
+                        guard let link else { return }
+                        router.pendingReceive = nil
+                        if case .code(let linked) = link { code = linked }
+                    }
             }
         }
         .navigationTitle("Receive")
@@ -31,7 +37,10 @@ struct ReceiveView: View {
                 text: $code,
                 isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength
             ) { pasted in
-                code = Self.extractCode(from: pasted) ?? code
+                if let link = TransferLink.parse(pasted) { router.open(link) }
+            }
+            .onChange(of: code) { _, typed in
+                if typed.contains("://"), let link = TransferLink.parse(typed) { router.open(link) }
             }
 
             #if os(iOS)
@@ -42,9 +51,7 @@ struct ReceiveView: View {
             }
             .sheet(isPresented: $showScanner) {
                 QRScannerSheet { payload in
-                    if let scanned = Self.extractCode(from: payload) {
-                        code = scanned
-                    }
+                    if let link = TransferLink.parse(payload) { router.open(link) }
                     showScanner = false
                 }
             }
@@ -94,18 +101,5 @@ struct ReceiveView: View {
         }
         .padding()
         .frame(maxWidth: 480)
-    }
-
-    /// Accepts a bare code, a "croc://<code>" deeplink (our QR payload), or
-    /// clipboard noise around either. Returns nil when nothing code-like.
-    static func extractCode(from raw: String) -> String? {
-        var candidate = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if candidate.hasPrefix("croc://") {
-            candidate = String(candidate.dropFirst("croc://".count))
-        }
-        guard candidate.count >= EngineConstraints.minCodeLength,
-            !candidate.contains(where: \.isWhitespace)
-        else { return nil }
-        return candidate
     }
 }

@@ -24,13 +24,13 @@ Both sides run PAKE over the code phrase to derive a session key, so the phrase 
    - For text: type or paste into the text box.
 3. Optionally set a **Custom code** (at least 6 characters) instead of a generated one.
 4. Tap **Send**.
-5. CrocApp shows **Ready to send** with the code phrase, a **Copy Code** button, and a QR code. Share the code with the receiver over a channel you trust.
+5. CrocApp shows **Ready to send** with the code phrase, a **Copy Code** button, a QR code, and a **Share Link** button. Share the code or the link with the receiver over a channel you trust.
 6. Once the receiver connects and accepts, the transfer starts. When it finishes, CrocApp shows **Transfer complete**.
 
 ## Receiving
 
 1. From the home screen, tap or click **Receive**.
-2. Enter the **Code phrase** the sender gave you, paste it, or (on iOS) tap **Scan QR Code**.
+2. Enter the **Code phrase** the sender gave you, paste it (a link works too), or (on iOS) tap **Scan QR Code**.
 3. Check the destination folder shown below the code field; change it with **Change** if needed.
 4. Tap **Receive**.
 5. CrocApp shows **Incoming transfer** with the file list and total size. Review it, then tap **Accept** or **Decline**.

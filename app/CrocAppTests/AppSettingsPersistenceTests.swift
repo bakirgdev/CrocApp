@@ -1,3 +1,4 @@
+import CrocKit
 import Foundation
 import Testing
 
@@ -30,6 +31,8 @@ import Testing
         #expect(!s.useGitIgnore)
         #expect(!s.autoAccept)
         #expect(!s.bothSidesConfirm)
+        #expect(s.whenFileExists == .keepBoth)
+        #expect(s.transport == .auto)
         #expect(s.relayKind == .publicDefault)
     }
 
@@ -45,6 +48,8 @@ import Testing
         s.useGitIgnore = true
         s.autoAccept = true
         s.bothSidesConfirm = true
+        s.whenFileExists = .replace
+        s.transport = .relay
 
         let r = AppSettings(defaults: defaults, secrets: secrets)
         #expect(r.relayAddress == "relay.example:9009")
@@ -56,6 +61,23 @@ import Testing
         #expect(r.useGitIgnore)
         #expect(r.autoAccept)
         #expect(r.bothSidesConfirm)
+        #expect(r.whenFileExists == .replace)
+        #expect(r.transport == .relay)
+    }
+
+    /// A value this build does not know (a later build's policy, a corrupt
+    /// plist) must not turn into Replace.
+    @Test func unknownFilePolicyReadsAsKeepBoth() {
+        defer { cleanUp() }
+        defaults.set("overwrite", forKey: "settings.whenFileExists")
+        #expect(AppSettings(defaults: defaults, secrets: secrets).whenFileExists == .keepBoth)
+    }
+
+    /// A value this build does not know must not turn into Relay only.
+    @Test func unknownTransportReadsAsAuto() {
+        defer { cleanUp() }
+        defaults.set("tailcat", forKey: "settings.transport")
+        #expect(AppSettings(defaults: defaults, secrets: secrets).transport == .auto)
     }
 
     /// Every bool on at once cannot catch two settings saved under each other's key.
@@ -85,6 +107,8 @@ import Testing
         s.persist = false
         s.relayAddress = "relay.example:9009"
         s.autoAccept = true
+        s.whenFileExists = .replace
+        s.transport = .relay
         s.resetToDefaults()
         s.zipFolder = true
 
@@ -92,6 +116,10 @@ import Testing
         #expect(r.relayAddress == "")
         #expect(!r.autoAccept)
         #expect(!r.zipFolder)
+        #expect(r.whenFileExists == .keepBoth)
+        #expect(s.whenFileExists == .keepBoth, "reset restores Keep Both")
+        #expect(r.transport == .auto)
+        #expect(s.transport == .auto, "reset restores Automatic")
         #expect(defaults.persistentDomain(forName: suiteName)?.isEmpty ?? true)
     }
 }

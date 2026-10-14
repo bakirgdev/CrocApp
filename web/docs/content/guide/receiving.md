@@ -14,6 +14,8 @@ Open **Receive** from the home screen.
 
 Type the **Code phrase** into the field, paste it with the **Paste** button, or (iOS only) tap **Scan QR Code** to scan the sender's QR code. The **Receive** button stays disabled until the entered code is at least 6 characters long.
 
+You can also paste a link, or open one from outside the app (for example by scanning the QR code with the camera). CrocApp fills in the code and waits: nothing connects until you tap **Receive**. See [Code phrases](code-phrases.md#accepted-forms) for the link forms it accepts, and for receiving in a browser instead.
+
 ## Choosing where files land (F7)
 
 Below the code field, CrocApp shows the current destination folder. Tap **Change** to pick a different one, or **Reset** to return to the default.
@@ -27,18 +29,25 @@ Defaults differ by platform:
 
 After you tap **Receive** and connect to the sender, CrocApp shows **Incoming transfer**: the full file list with sizes and a total. From here:
 
-- **Accept** starts the transfer.
+- **Accept** starts the transfer. It appears alone when nothing at the destination clashes with the incoming files, and it then means Keep Both (below).
 - **Decline** refuses it. This is the only way to refuse once you've seen the list — there is no cancel button at this stage.
 
 If the sender has [Confirm on both sides](power-options.md) turned on, the sender must also confirm before the transfer proceeds.
 
 ## Overwrite and conflicts (F8)
 
-CrocApp always allows overwriting on receive. If any incoming file already exists at the destination, the accept screen adds a warning: the affected items will be replaced, and any partially-received file resumes rather than restarting. Files with unsafe names (for example, ones trying to escape the destination folder) block **Accept** entirely, as a safety measure on top of croc's own name sanitization.
+CrocApp never overwrites an existing file unless you say so. If any incoming file already exists at the destination, the accept screen shows a banner ("N item(s) already exist. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files.") and replaces **Accept** with two choices, besides **Decline**:
+
+- **Keep Both** (the prominent default) saves the new file under a new name next to the old one: `name (1).ext`, then `name (2).ext`, and so on.
+- **Replace** overwrites the existing file. A partly received file resumes where it stopped instead of restarting.
+
+A file that already exists with identical content is left as it is under either choice. Files with unsafe names (for example, ones trying to escape the destination folder) block the accept buttons entirely, as a safety measure on top of croc's own name sanitization.
+
+A folder sent as a zip arrives as a single `.zip` name, so the preview cannot see which of its files already exist. The sheet then offers only **Accept**, which is Keep Both: it silently keeps the existing files and skips the matching ones in the archive. Auto-accept keeps them too, even when set to Replace. To get the sender's copies, move the old folder away before receiving.
 
 ## Auto-accept (F18)
 
-Auto-accept is **off by default**. When off, you always see the file-list preview above before anything is saved. Turning it on (in [power options](power-options.md)) skips that preview — see that page for the exact warning CrocApp shows when it's enabled.
+Auto-accept is **off by default**. When off, you always see the file-list preview above before anything is saved. Turning it on (in [power options](power-options.md)) skips that preview — see that page for the exact warning CrocApp shows when it's enabled. Because there is no sheet to ask, a setting under it, **When a file already exists**, decides between Keep Both (the default) and Replace. Replace overwrites existing files, except inside a zipped folder: there the existing files are kept, because answering that unzip prompt with yes would also accept a transfer whose sender asked you to confirm it by hand.
 
 ## After the transfer
 

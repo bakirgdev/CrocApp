@@ -12,6 +12,17 @@ the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - The macOS direct download is now signed with a Developer ID certificate, notarized and stapled, and updates itself with Sparkle: choose "Check for Updates…" in the app menu. The release no longer ships the separate app zip; the disk image is the download.
+- Receiving a file whose name is already taken now offers Keep Both (saves the new one as `name (1).ext`) or Replace. With auto-accept on, the setting "When a file already exists" under Confirmation chooses; it defaults to Keep Both.
+- A Connection setting, Automatic (the default) or Relay only. With Automatic, a send of 128 MB or more can also take a direct path between the devices; Relay only keeps every transfer on croc's relays. The sender's choice applies, and a receive follows it.
+- Links. Opening a CrocApp link, a `crocapp.dev/r/` link or a `getcroc.com/?code=` link, or pasting one into the Receive field, opens Receive with the code filled in; nothing connects until you tap Receive. The sender's waiting screen has a Share Link button. The page at `crocapp.dev/r/` reads the code in your browser (it never reaches a server) and offers to open CrocApp, get the app, or receive in your browser through croc's own web app, which needs the default relays.
+
+### Changed
+
+- The QR code on the sender's waiting screen now encodes a `https://crocapp.dev/r/` link instead of `croc://<code>`, so a phone camera opens CrocApp, or a page that explains what to do when the app is missing. QR codes from 0.9.9 still scan in the app.
+
+### Fixed
+
+- A receive no longer overwrites existing files by default. A zipped folder received into a folder that already holds it no longer fails. Answers left over from one transfer can no longer answer the next transfer's accept prompt.
 
 ## [0.9.9] - 2026-07-30
 

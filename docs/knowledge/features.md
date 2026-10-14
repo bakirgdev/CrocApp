@@ -1,6 +1,6 @@
 # Feature roadmap
 
-Approved 2026-07-22 by Bakir. Tier = target release. Numbers are stable — reference them as F1..F40 in plans, issues, and code comments (several views already carry them).
+Approved 2026-07-22 by Bakir. Tier = target release. Numbers are stable — reference them as F1..F42 in plans, issues, and code comments (several views already carry them).
 
 Status is verified against the code, not against intent. **Shipped** means the feature exists and works in the app; it does not mean it has been tested on physical hardware (`device-test-checklist.md`) or that it has no open defects (`../known-issues.md`).
 
@@ -17,7 +17,7 @@ Status is verified against the code, not against intent. **Shipped** means the f
 | F5 | Custom code phrase (min 6 chars) | `--code` | shipped |
 | F6 | QR show on send + QR scan on receive | `--qrcode` + GUI-native | shipped |
 | F7 | Choose output folder; iOS default = Files-visible app folder | `--out` | shipped |
-| F8 | Overwrite/resume handling via confirm sheets | `--overwrite` + resume | shipped |
+| F8 | Keep Both / Replace on receive, via confirm sheets; resume with Replace | `--rename` / `--overwrite` + resume | shipped |
 | F9 | Incoming file list preview + accept/decline | interactive prompt equivalent | shipped |
 | F10 | Progress, speed, cancel; Live Activity on iOS | polled from engine | shipped |
 | F11 | LAN + relay auto race | croc default | shipped |
@@ -34,13 +34,16 @@ Status is verified against the code, not against intent. **Shipped** means the f
 | F17 | Exclude patterns / respect .gitignore | `--exclude --git` | shipped |
 | F18 | Auto-accept toggle (off by default, warning shown) | `--yes` | shipped |
 | F19 | Both-sides confirm | `--ask` | shipped |
+| F41 | Connection: Automatic or Relay only (sender-side; a receive follows) | `--transport auto\|relay` | shipped |
 
 ### GUI-native
 
 | # | Feature | Status |
 |---|---|---|
 | F30 | Share extension (send from any app) | shipped, iOS only |
+| F32 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` universal links, `https://getcroc.com/?code=`, and `croc://<code>` (0.9.9 QR codes); one parser, `TransferLink`. Opening a link prefills Receive and never connects. Universal links in the Developer ID build are unverified (`../known-issues.md`) | shipped |
 | F36 | Trust UI: E2E badge, "how it works", active-relay indicator | shipped |
+| F42 | Waiting-screen QR and Share Link encode `https://crocapp.dev/r/#<code>`; `web/landing/r/` page reads the code from the fragment (no network request) and offers Open in CrocApp, Get CrocApp (the landing page download section, until the store listing is live), the DMG, and receive in a browser through croc's own web app at getcroc.com (needs the default relays) | shipped |
 
 The whole V1 set is implemented. What stands between it and release is in `../known-issues.md` under "Blocking release", not in this table.
 
@@ -61,7 +64,6 @@ None started. The engine already exposes several of these from Go (`RelayPorts`,
 | F28 | Internal DNS resolver | `--internal-dns` |
 | F29 | Run own relay from Mac app (menu-bar relay server) | `croc relay` |
 | F31 | macOS menu bar quick-send (drag-drop) | GUI-native |
-| F32 | `croc://code` deeplink + universal links | GUI-native |
 | F33 | Saved codes / favorite peers | GUI-native |
 | F34 | App Intents / Shortcuts ("Send via croc") | GUI-native |
 | F35 | Relay health check + diagnostics screen | GUI-native |

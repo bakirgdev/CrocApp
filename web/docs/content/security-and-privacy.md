@@ -20,8 +20,14 @@ There has been **no formal third-party security audit** of croc, and CrocApp doe
 - **Strong keys from short codes.** Both devices run PAKE (password-authenticated key exchange) to turn the code phrase into a strong encryption key. The code itself never crosses the network, and a wrong code fails immediately.
 - **End-to-end encrypted.** Everything is encrypted on your device and decrypted only on the other one. Nothing in between can read it.
 - **The relay is just a pipe.** When devices can't connect directly, an internet relay forwards the encrypted stream. The relay never has the key — it sees only ciphertext. You can also run your own relay and set it in settings.
+- **A direct path for large files.** With the default **Automatic** connection setting, a send of 128 MB or more also tries a peer-to-peer connection, set up through `tailcat.dev`, with its own relays (`*.ipn.dev`) when the devices cannot reach each other. Whichever path connects first carries the transfer, and it is end-to-end encrypted on either path. Those servers are contacted only for such a send. Choose **Relay only** under [power options](guide/power-options.md) and your sends never contact them. A receive follows the sender's choice, so receiving a large file from a sender on Automatic (or the croc CLI's default) can use them.
 - **Local network when possible.** Devices on the same network transfer directly; the data never leaves your network. The local path and the relay race, and the faster one wins.
+- **Links carry the code in the fragment.** A `https://crocapp.dev/r/#<code>` link keeps the code after the `#`, which browsers never send to a server. The page at that address makes no network request and sets a `no-referrer` policy. Anyone who sees the link still has the code, so share it the way you would share the code.
 - **You stay in control.** Nothing is saved without your OK: incoming transfers show a file preview you accept or decline. Auto-accept is off unless you turn it on.
+
+## Receiving in a browser
+
+The link page offers **Receive in your browser**, which opens `https://getcroc.com/?code=<code>`. That is croc's own web app, not run by CrocApp, and the browser path trusts getcroc.com fully: getcroc.com serves the JavaScript that decrypts the file, so whoever controls that site could change the code that handles your data. It also reaches only croc's default relays. The CrocApp and croc CLI paths do not have this dependency. If that trust is more than you want to give, receive in CrocApp.
 
 ## What CrocApp does not do
 

@@ -36,6 +36,14 @@ final class AppSettings {
     var useGitIgnore: Bool { didSet { save(useGitIgnore, "settings.useGitIgnore") } }
     var autoAccept: Bool { didSet { save(autoAccept, "settings.autoAccept") } }
     var bothSidesConfirm: Bool { didSet { save(bothSidesConfirm, "settings.bothSidesConfirm") } }
+    /// Used under auto-accept; the incoming sheet asks instead.
+    var whenFileExists: FilePolicy {
+        didSet { save(whenFileExists.rawValue, "settings.whenFileExists") }
+    }
+    /// Send only; a receive follows the sender.
+    var transport: Transport {
+        didSet { save(transport.rawValue, "settings.transport") }
+    }
 
     init(defaults d: UserDefaults = .standard, secrets: any SecretStore = KeychainStore()) {
         defaults = d
@@ -53,6 +61,11 @@ final class AppSettings {
         useGitIgnore = d.bool(forKey: "settings.useGitIgnore")
         autoAccept = d.bool(forKey: "settings.autoAccept")
         bothSidesConfirm = d.bool(forKey: "settings.bothSidesConfirm")
+        whenFileExists =
+            d.string(forKey: "settings.whenFileExists").flatMap(FilePolicy.init(rawValue:))
+            ?? .keepBoth
+        transport =
+            d.string(forKey: "settings.transport").flatMap(Transport.init(rawValue:)) ?? .auto
     }
 
     var relayKind: RelayKind {
@@ -85,6 +98,8 @@ final class AppSettings {
         useGitIgnore = false
         autoAccept = false
         bothSidesConfirm = false
+        whenFileExists = .keepBoth
+        transport = .auto
     }
 
     /// One-time move of the relay password off UserDefaults (plaintext

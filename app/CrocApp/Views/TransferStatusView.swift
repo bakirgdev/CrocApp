@@ -24,6 +24,27 @@ struct TransferStatusView: View {
     }
 
     var body: some View {
+        // At accessibility text sizes the phase content is taller than a phone
+        // screen: it scrolls there, and stays centred when it fits.
+        ViewThatFits(in: .vertical) {
+            content
+            ScrollView { content }
+        }
+        .padding()
+        .frame(maxWidth: LayoutCap.contentMaxWidth)
+        // Resets and restarts whenever isInEarlyPhase flips, so the hint
+        // never keeps counting into transferring/done/failed, but survives
+        // the starting → connecting handoff (still the same stall to the user).
+        .task(id: isInEarlyPhase) {
+            showsSlowPhaseHint = false
+            guard isInEarlyPhase else { return }
+            try? await Task.sleep(for: Self.slowPhaseThreshold)
+            guard !Task.isCancelled else { return }
+            showsSlowPhaseHint = true
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: Spacing.space7) {
             if localNetwork.status == .denied {
                 localNetworkDeniedBanner
@@ -61,18 +82,6 @@ struct TransferStatusView: View {
             if showsCancel {
                 Button("Cancel", role: .destructive) { controller.cancel() }
             }
-        }
-        .padding()
-        .frame(maxWidth: LayoutCap.contentMaxWidth)
-        // Resets and restarts whenever isInEarlyPhase flips, so the hint
-        // never keeps counting into transferring/done/failed, but survives
-        // the starting → connecting handoff (still the same stall to the user).
-        .task(id: isInEarlyPhase) {
-            showsSlowPhaseHint = false
-            guard isInEarlyPhase else { return }
-            try? await Task.sleep(for: Self.slowPhaseThreshold)
-            guard !Task.isCancelled else { return }
-            showsSlowPhaseHint = true
         }
     }
 
@@ -149,22 +158,47 @@ struct TransferStatusView: View {
                 .textSelection(.enabled)
                 .accessibilityLabel("Transfer code")
                 .accessibilityValue(code.replacingOccurrences(of: "-", with: ", "))
+                .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.space6)
                 .padding(.vertical, Spacing.space4)
-                .glassEffect()
+                // A capsule clips the code once it wraps at large text sizes.
+                .glassEffect(in: .rect(cornerRadius: Radius.xl))
             Button {
                 Clipboard.copy(code)
             } label: {
                 Label("Copy Code", systemImage: "doc.on.doc")
             }
-            QRCodeView(content: "croc://\(code)")
+            let webURL = TransferLink.webURL(forCode: code)
+            QRCodeView(content: webURL?.absoluteString ?? code)
+            if let webURL {
+                ShareLink(item: webURL) {
+                    Label("Share Link", systemImage: "square.and.arrow.up")
+                }
+            }
             Text("On the other device, enter this code or scan the QR.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+            if let note = browserReceiveNote {
+                Text(note)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
             TrustBadge(relay: controller.activeRelay)
             ProgressView()
             Text("Waiting for the receiver…").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    /// R23: croc's browser client only knows the default relays.
+    private var browserReceiveNote: String? {
+        switch controller.activeRelay {
+        case .publicDefault: nil
+        case .custom:
+            "Receiving in a browser needs the default relays. This transfer uses a custom relay."
+        case .localOnly:
+            "Receiving in a browser needs the default relays. This transfer stays on your local network."
         }
     }
 
@@ -336,13 +370,15 @@ struct TransferStatusView: View {
     }
 }
 
-/// Incoming file list preview with accept/decline (F9), conflict warning (F8),
-/// and unsafe-name blocking.
+/// Incoming file list preview with accept/decline (F9), Keep Both / Replace
+/// when files already exist (F8, R24), and unsafe-name blocking.
 struct IncomingRequestView: View {
     @Environment(TransferController.self) private var controller
     let list: FileList
     let conflicts: [String]
     let blocked: [String]
+    @ScaledMetric private var listMinHeight: CGFloat = 120
+    @ScaledMetric private var listMaxHeight: CGFloat = 240
 
     var body: some View {
         VStack(spacing: Spacing.space5) {
@@ -359,7 +395,7 @@ struct IncomingRequestView: View {
             // behind the rows, which reads as a stray grey slab under the
             // file card whenever the list is shorter than its own frame.
             .scrollContentBackground(.hidden)
-            .frame(minHeight: 120, maxHeight: 240)
+            .frame(minHeight: listMinHeight, maxHeight: listMaxHeight)
             Text(
                 "\(list.files.count) file(s) • \(list.totalSize.formatted(.byteCount(style: .file)))"
             )
@@ -371,15 +407,30 @@ struct IncomingRequestView: View {
                 StatusBanner(
                     kind: .warning,
                     title:
-                        "\(conflicts.count) item(s) already exist and will be replaced. Partially received files resume."
+                        "\(conflicts.count) item(s) already exist. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files."
                 )
             }
-            HStack(spacing: Spacing.space5) {
-                Button("Decline", role: .destructive) { controller.respond(accept: false) }
-                Button("Accept") { controller.respond(accept: true) }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!blocked.isEmpty)
+            // Three labels do not fit side by side at accessibility text sizes
+            // on a phone, so they stack there.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: Spacing.space5) { actions }
+                VStack(spacing: Spacing.space3) { actions }
             }
+        }
+    }
+
+    @ViewBuilder private var actions: some View {
+        Button("Decline", role: .destructive) { controller.respond(accept: false) }
+        if blocked.isEmpty, !conflicts.isEmpty {
+            Button("Replace") { controller.respond(accept: true, policy: .replace) }
+            Button("Keep Both") { controller.respond(accept: true, policy: .keepBoth) }
+                .buttonStyle(.borderedProminent)
+        } else {
+            // Until the conflict scan reports, Accept keeps both: it
+            // never overwrites a file the scan has not shown yet.
+            Button("Accept") { controller.respond(accept: true, policy: .keepBoth) }
+                .buttonStyle(.borderedProminent)
+                .disabled(!blocked.isEmpty)
         }
     }
 }

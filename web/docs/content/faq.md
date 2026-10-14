@@ -26,6 +26,14 @@ Usually yes — a relay, which forwards traffic between two devices that can't r
 
 Then the transfer goes straight between the two devices and skips the relay entirely. CrocApp tries both paths at once and uses whichever connects first.
 
+## Can large files go directly between devices?
+
+Yes, with the default **Automatic** connection setting. A send of 128 MB or more also tries a direct path, set up through `tailcat.dev`, and whichever path connects first carries the transfer. It is end-to-end encrypted either way. Choose **Relay only** under [power options](guide/power-options.md) to keep your sends on croc's relays and away from those servers. A receive follows the sender's choice.
+
+## Can the receiver use a browser instead of the app?
+
+Yes. The QR code on the sender's screen and the **Share Link** button open a page at `crocapp.dev/r/` that offers CrocApp, the downloads, and **Receive in your browser**. The browser option is croc's own web app at getcroc.com, not CrocApp, and it only works when the sender uses the default relays. It also trusts getcroc.com to serve code that decrypts honestly; see [Security and privacy](security-and-privacy.md#receiving-in-a-browser).
+
 ## How is this different from AirDrop?
 
 AirDrop needs two Apple devices in physical proximity. CrocApp works between any two devices running croc or CrocApp, on any network, at any distance, including from a Mac to a Linux server across the world.

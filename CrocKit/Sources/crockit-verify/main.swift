@@ -43,7 +43,7 @@ func drive(_ stream: AsyncStream<TransferEvent>, answer: Bool) async -> Bool {
         case .connected: print("EVENT connected")
         case .fileList(let list):
             print("EVENT filelist files=\(list.files.count) total=\(list.totalSize)")
-            await engine.respond(accept: answer)
+            await engine.respond(accept: answer, policy: .keepBoth)
             print("EVENT responded \(answer ? "y" : "n")")
         case .progress(let p):
             print("EVENT progress \(p.step) \(p.fileSent)/\(p.fileSize)")
@@ -111,7 +111,7 @@ func run() async {
             guard args.count >= 5 else { exit(2) }
             var options = defaultOptions()
             options.outDir = args[4]
-            options.overwrite = true
+            options.whenFileExists = .replace
             let ok1 = await receiveToCompletion(code: args[2], options: options)
             let ok2 = await receiveToCompletion(code: args[3], options: options)
             exit(ok1 && ok2 ? 0 : 1)

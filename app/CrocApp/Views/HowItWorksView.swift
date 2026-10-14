@@ -20,7 +20,11 @@ struct HowItWorksView: View {
                 )
                 item(
                     "antenna.radiowaves.left.and.right", "The relay is just a pipe",
-                    "When devices can't connect directly, an internet relay forwards the encrypted stream. The relay never has the key: it sees only ciphertext. You can also run your own relay and set it in Settings."
+                    "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay."
+                )
+                item(
+                    "point.3.connected.trianglepath.dotted", "Direct path for large files",
+                    "With Connection set to Automatic, a send of 128 MB or more also tries Tailcat: a peer-to-peer connection set up through tailcat.dev, with its own relays (*.ipn.dev) when the devices cannot reach each other. Whichever path is faster carries the transfer, still end-to-end encrypted. A send set to Relay only never contacts these servers; a receive follows the sender's choice."
                 )
                 item(
                     "wifi", "Local network when possible",

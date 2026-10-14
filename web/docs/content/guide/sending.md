@@ -27,7 +27,7 @@ The **Custom code** field is optional. Leave it blank for a generated code, or e
 
 ## Starting the send
 
-Tap **Send**. CrocApp shows the generated (or custom) code phrase, a **Copy Code** button, and a QR code (F6) the receiver can scan. The screen also shows a trust badge describing which relay path is in use.
+Tap **Send**. CrocApp shows the generated (or custom) code phrase, a **Copy Code** button, a QR code (F6) the receiver can scan, and a **Share Link** button. The QR code and the link open the receiver's CrocApp, or a page at `crocapp.dev/r/` if they do not have it (see [Code phrases](code-phrases.md#receiving-a-link)). With a custom relay or Local network only, a note on the screen says that receiving in a browser needs the default relays. The screen also shows a trust badge describing which relay path is in use.
 
 ## One active transfer at a time
 

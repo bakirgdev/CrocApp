@@ -30,10 +30,12 @@ type Options struct {
 	NoCompress     bool
 	ZipFolder      bool
 	GitIgnore      bool
-	Overwrite      bool
+	Overwrite      bool // receive: replace a colliding file, unless Rename is set
+	Rename         bool // receive: keep both, croc names the new file "name (1).ext"; also the default when neither is set
 	AutoAccept     bool // maps to croc NoPrompt; default false (product pillar)
 	Ask            bool
 	NoMultiplexing bool
+	Transport      string // send: TransportAuto (also when empty) or TransportRelay; a receive follows the sender
 }
 
 // NewOptionsDefault returns croc CLI defaults.
@@ -53,6 +55,23 @@ func NewOptionsDefault() *Options {
 		HashAlgorithm: "xxhash",
 	}
 }
+
+// Policies for a received file whose name already exists, as Respond takes
+// them. Any other value means PolicyKeepBoth: an unknown policy never
+// overwrites.
+const (
+	PolicyKeepBoth = "keepBoth"
+	PolicyReplace  = "replace"
+)
+
+// Transports a send can use, as Options.Transport takes them. Auto lets croc
+// race its relay against Tailcat for sends of 128 MiB or more; relay never
+// starts Tailcat. croc's own "derp" (Tailcat only, no fallback) also passes
+// through, for harness probes.
+const (
+	TransportAuto  = "auto"
+	TransportRelay = "relay"
+)
 
 // minCodeLength is the shortest code phrase StartSend and StartReceive accept,
 // counted in bytes. Swift mirrors it as EngineConstraints.minCodeLength.
@@ -89,7 +108,9 @@ func (t *Transfer) Cancel() {
 }
 
 // Respond answers the receive accept/decline request raised by OnFileList.
-// No-op for senders or AutoAccept receivers. See Cancel for why this recovers.
+// On accept, policy (PolicyKeepBoth or PolicyReplace) replaces the one the
+// Options gave. No-op for AutoAccept receivers; senders ignore policy. See
+// Cancel for why this recovers.
 //
 // Asynchronous on purpose: an accept writes one "y\n" per file (promptAnswers),
 // and a large enough sender-Ask batch overruns the pipe buffer, blocking the
@@ -97,14 +118,14 @@ func (t *Transfer) Cancel() {
 // CrocEngine actor, which runs queued work to completion, so a blocking Respond
 // would strand a following Cancel behind it. session.respond self-serialises on
 // promptM, so running it off the caller's goroutine is safe.
-func (t *Transfer) Respond(accept bool) {
+func (t *Transfer) Respond(accept bool, policy string) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				reportPanic(t.s, r)
 			}
 		}()
-		t.s.respond(accept)
+		t.s.respond(accept, parsePolicy(policy))
 	}()
 }
 

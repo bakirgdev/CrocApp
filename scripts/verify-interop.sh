@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Interop verification: crocmobile (via croctest) <-> croc CLI v11.
 # Covers: file/folder/text both directions, decline, cancel both directions,
-# forced relay (LAN disabled), LAN-only, a croc v10 peer both directions, and
-# every public pool relay (custom, wrapper-generated and CLI-generated codes).
+# forced relay (LAN disabled), LAN-only, a croc v10 peer both directions, a
+# receive onto existing files with Keep Both and Replace (R24), a 130 MiB send
+# in each transport mode (R17), and every public pool relay (custom,
+# wrapper-generated and CLI-generated codes).
 # Exits non-zero on first failure.
 #
 # RELAY=host:port runs every transfer through that relay instead of the public
-# pool, and skips the pool scenario (CI runs this against a local `croc relay`).
+# pool, and skips the transport and pool scenarios (CI runs this against a local
+# `croc relay`).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
@@ -217,10 +220,121 @@ grep -q 'EVENT error {"code":"peerVersion"' "$TMP/10r.log" || fail "v10 receiver
 [ ! -e "$TMP/dst10/a.txt" ] || fail "v10 receiver: file arrived"
 pass "v10 receiver: peerVersion"
 
+# 12. receive onto existing files (R24): Keep Both and Replace, answered at the
+# prompt and preset with -yes. Keep Both leaves the old file and adds
+# "a (1).txt"; Replace leaves one file with the new content. A zipped folder
+# received twice into one folder hits croc's per-member unzip prompt, which
+# reads the answers crocmobile queues: Keep Both skips the existing member,
+# Replace at the prompt overwrites it, and both finish without an error. Under
+# -yes the queued answers are always "n", so that a sender's --ask prompt,
+# which croc forces even under -yes, is still refused with Replace: the last
+# case checks that, and the zipped folder keeps its member.
+SCENARIO=12
+collide() {                                         # collide NAME POLICY ACCEPT...
+  local name=$1 policy=$2 dir="$TMP/dst12-$1" C
+  shift 2
+  C=$(code "c$name")
+  mkdir -p "$dir"
+  echo "existing file" > "$dir/a.txt"
+  ( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin send a.txt ) > "$TMP/12$name.cli" 2>&1 &
+  sleep 3
+  timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$dir" -policy "$policy" "$@" "$C" > "$TMP/12$name.log" 2>&1 || true
+  wait
+  grep -q 'EVENT done {"files":1,"success":true' "$TMP/12$name.log" || fail "$policy ($*): receive did not succeed"
+  if [ "$policy" = keepBoth ]; then
+    [ "$(cat "$dir/a.txt")" = "existing file" ] || fail "keepBoth ($*): existing file changed"
+    diff "$TMP/src/a.txt" "$dir/a (1).txt" > /dev/null || fail "keepBoth ($*): no a (1).txt with the new content"
+  else
+    diff "$TMP/src/a.txt" "$dir/a.txt" > /dev/null || fail "replace ($*): file not replaced"
+    [ ! -e "$dir/a (1).txt" ] || fail "replace ($*): renamed copy written"
+  fi
+  pass "existing file, $policy ($*)"
+}
+collide kp keepBoth -answer y
+collide rp replace -answer y
+collide ky keepBoth -yes
+collide ry replace -yes
+
+zip_twice() {                                       # zip_twice NAME POLICY ACCEPT...
+  local name=$1 policy=$2 dir="$TMP/dst12z-$1" C round
+  shift 2
+  for round in 1 2; do
+    C=$(code "z$name$round")
+    ( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin send --zip sub ) > "$TMP/12z$name$round.cli" 2>&1 &
+    sleep 3
+    timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$dir" -policy "$policy" "$@" "$C" > "$TMP/12z$name$round.log" 2>&1 || true
+    wait
+    grep -q '"success":true' "$TMP/12z$name$round.log" || fail "zipped folder $policy ($*), round $round: receive did not succeed"
+    [ ! -e "$dir/sub.zip" ] || fail "zipped folder $policy ($*), round $round: archive left behind"
+    [ "$round" = 2 ] || echo "local edit" > "$dir/sub/b.txt"
+  done
+  if [ "$policy" = keepBoth ] || [ "$1" = -yes ]; then
+    [ "$(cat "$dir/sub/b.txt")" = "local edit" ] || fail "zipped folder keepBoth ($*): existing member changed"
+  else
+    diff "$TMP/src/sub/b.txt" "$dir/sub/b.txt" > /dev/null || fail "zipped folder replace ($*): member not replaced"
+  fi
+  pass "zipped folder received twice, $policy ($*)"
+}
+zip_twice kp keepBoth -answer y
+zip_twice rp replace -answer y
+zip_twice ky keepBoth -yes
+zip_twice ry replace -yes
+
+C=$(code ask12)
+mkdir -p "$TMP/dst12-ask"
+( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --ask send a.txt ) > "$TMP/12ask.cli" 2>&1 &
+sleep 3
+timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$TMP/dst12-ask" -policy replace -yes "$C" > "$TMP/12ask.log" 2>&1 || true
+wait
+grep -q 'EVENT error {"code":"refused"' "$TMP/12ask.log" || fail "sender --ask under -yes with replace: not refused"
+[ ! -e "$TMP/dst12-ask/a.txt" ] || fail "sender --ask under -yes with replace: file arrived"
+pass "sender --ask under -yes with replace: refused"
+
 if [ -n "${RELAY:-}" ]; then
-  echo "ALL INTEROP CHECKS PASSED (relay $RELAY; public pool scenario skipped)"
+  echo "ALL INTEROP CHECKS PASSED (relay $RELAY; transport and public pool scenarios skipped)"
   exit 0
 fi
+
+# 13. transport (R17): a send over croc's 128 MiB Tailcat threshold in each
+# mode, both directions. Under auto the sender offers Tailcat and races it
+# against the relay; either may carry the data. Under relay no Tailcat offer is
+# made. The --debug CLI logs show the offer ("tailcat-offer") on either side.
+# Public infrastructure only (Tailcat bootstraps from tailcat.dev), so not in
+# RELAY mode.
+SCENARIO=13
+head -c 136314880 /dev/urandom > "$TMP/huge.bin"
+transport_send() {                                  # transport_send MODE
+  local L="$TMP/13s-$1" C
+  C=$(code "ts$1")
+  mkdir -p "$L"
+  timeout 300 "$CT" send -transport "$1" -code "$C" "$TMP/huge.bin" > "$L.log" 2>&1 &
+  sleep 3
+  ( cd "$L" && CROC_SECRET="$C" timeout 280 "$CROC" --debug --yes --overwrite ) > "$L.cli" 2>&1 || true
+  wait
+  cmp -s "$TMP/huge.bin" "$L/huge.bin" || fail "transport $1: wrapper send of 130 MiB"
+}
+transport_receive() {                               # transport_receive MODE
+  local L="$TMP/13r-$1" C
+  C=$(code "tr$1")
+  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" --debug --ignore-stdin send --transport "$1" huge.bin ) > "$L.cli" 2>&1 &
+  sleep 3
+  timeout 280 "$CT" receive -out "$L" -answer y "$C" > "$L.log" 2>&1 || true
+  wait
+  cmp -s "$TMP/huge.bin" "$L/huge.bin" || fail "transport $1: wrapper receive of 130 MiB"
+}
+transport_send auto
+grep -q "tailcat-offer" "$TMP/13s-auto.cli" || fail "transport auto: wrapper sent no Tailcat offer"
+pass "transport auto: wrapper sends 130 MiB, Tailcat offered"
+transport_send relay
+! grep -q "tailcat-offer" "$TMP/13s-relay.cli" || fail "transport relay: wrapper offered Tailcat"
+pass "transport relay: wrapper sends 130 MiB, no Tailcat offer"
+transport_receive auto
+grep -q "selected=derp" "$TMP/13r-auto.cli" || fail "transport auto: CLI did not choose Tailcat for 130 MiB"
+pass "transport auto: wrapper receives 130 MiB, Tailcat offered"
+transport_receive relay
+! grep -q "tailcat-offer" "$TMP/13r-relay.cli" || fail "transport relay: CLI offered Tailcat"
+pass "transport relay: wrapper receives 130 MiB, no Tailcat offer"
+rm -f "$TMP/huge.bin" "$TMP"/13[sr]-*/huge.bin
 
 # 11. public relay pool: every pool relay, both directions, with custom codes
 # and with wrapper-generated codes forced to each relay, plus one CLI-generated

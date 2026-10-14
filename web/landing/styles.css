@@ -876,6 +876,39 @@ body {
   margin-block-start: var(--space-2);
 }
 
+/* /r/ — the receive-link page. Same column as the 404. */
+.receive__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.receive__deck,
+.receive__note {
+  color: var(--color-text-secondary);
+}
+
+.receive__code {
+  padding: var(--space-4) var(--space-6);
+  overflow-wrap: anywhere;
+  background: var(--color-surface-card);
+  border-radius: var(--radius-md);
+}
+
+.receive__sub {
+  margin-block-start: var(--space-6);
+}
+
+.receive__inner > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.receive__inner > div[hidden] {
+  display: none;
+}
+
 /* Footer */
 
 .footer {

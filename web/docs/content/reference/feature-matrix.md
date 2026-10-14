@@ -19,7 +19,7 @@ Feature numbers (`F1`…) are stable identifiers used across the project. "Shipp
 | F5 | Custom code phrase (min 6 chars) | `--code` |
 | F6 | QR show on send + QR scan on receive | `--qrcode` + GUI-native |
 | F7 | Choose output folder; iOS default is a Files-visible app folder | `--out` |
-| F8 | Overwrite/resume handling via confirm sheets | `--overwrite` + resume |
+| F8 | Keep Both / Replace on receive, resume with Replace | `--rename` (Keep Both), `--overwrite` (Replace) + resume |
 | F9 | Incoming file list preview + accept/decline | interactive prompt equivalent |
 | F10 | Progress, speed, cancel; Live Activity on iOS | polled from engine |
 | F11 | LAN + relay auto race | croc default |
@@ -36,13 +36,16 @@ Feature numbers (`F1`…) are stable identifiers used across the project. "Shipp
 | F17 | Exclude patterns / respect `.gitignore` | `--exclude --git` |
 | F18 | Auto-accept toggle (off by default, warning shown) | `--yes` |
 | F19 | Both-sides confirm | `--ask` |
+| F41 | Connection: Automatic or Relay only (the sender's choice applies, a receive follows it) | `--transport auto\|relay` |
 
 ## GUI-native (shipped)
 
 | # | Feature | Status |
 |---|---|---|
 | F30 | Share extension (send from any app) | shipped, iOS only |
+| F32 | Receive links: `crocapp://` scheme, `crocapp.dev/r/` universal links, and `croc://` QR codes from 0.9.9 | shipped |
 | F36 | Trust UI: end-to-end badge, "how it works", active-relay indicator | shipped |
+| F42 | Share Link, a QR code that is a web link, and a `crocapp.dev/r/` page with an option to receive in a browser | shipped |
 
 ## Planned, not started (V1.x)
 
@@ -61,7 +64,6 @@ None of these are built yet.
 | F28 | Internal DNS resolver | `--internal-dns` |
 | F29 | Run own relay from Mac app (menu-bar relay server) | `croc relay` |
 | F31 | macOS menu bar quick-send (drag-drop) | GUI-native |
-| F32 | `croc://code` deeplink + universal links | GUI-native |
 | F33 | Saved codes / favorite peers | GUI-native |
 | F34 | App Intents / Shortcuts ("Send via croc") | GUI-native |
 | F35 | Relay health check + diagnostics screen | GUI-native |

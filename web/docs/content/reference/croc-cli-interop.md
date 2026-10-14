@@ -23,6 +23,8 @@ croc send file.txt
 
 On your phone or Mac, open **Receive** in CrocApp and enter the printed code. The file arrives exactly as if the sender had also used CrocApp.
 
+The CLI's `--qrcode` flag shows a QR code of `https://getcroc.com/?code=<code>`. On iOS, scan it with **Scan QR Code** in CrocApp, or paste that link into the **Receive** field: CrocApp reads the code from it. See [Code phrases](../guide/code-phrases.md#accepted-forms).
+
 ## Example: app sends, CLI receives
 
 Start a send in CrocApp, get the code phrase it displays, then on another machine:
@@ -41,6 +43,16 @@ croc --relay myserver:9009 send file.txt
 
 In CrocApp, set the same address under the [relay power option](../guide/power-options.md).
 
+## Connection and `--transport`
+
+The **Connection** setting maps to croc's `--transport` flag: **Automatic** is `--transport auto` and **Relay only** is `--transport relay`. croc applies the sender's choice and a receiver follows it, so the setting only matters when CrocApp sends. When CrocApp receives, it follows whatever the croc CLI sender used, `--transport derp` included. The app does not offer `derp`, which croc's own command line does.
+
+```bash
+croc send --transport relay file.txt
+```
+
+For a send under 128 MB, the two settings behave the same. See [power options](../guide/power-options.md) for what **Automatic** does above that size.
+
 ## Feature-to-flag mapping
 
 | # | Feature | croc flag / origin |
@@ -52,7 +64,7 @@ In CrocApp, set the same address under the [relay power option](../guide/power-o
 | F5 | Custom code phrase (min 6 chars) | `--code` |
 | F6 | QR show on send / scan on receive | `--qrcode` |
 | F7 | Choose output folder | `--out` |
-| F8 | Overwrite/resume handling | `--overwrite` |
+| F8 | Keep Both / Replace on receive | `--rename` (Keep Both), `--overwrite` (Replace) |
 | F9 | Incoming file list preview, accept/decline | interactive prompt |
 | F10 | Progress, speed, cancel | — |
 | F11 | LAN + relay auto race | croc default |
@@ -64,6 +76,7 @@ In CrocApp, set the same address under the [relay power option](../guide/power-o
 | F17 | Exclude patterns / `.gitignore` | `--exclude --git` |
 | F18 | Auto-accept toggle | `--yes` |
 | F19 | Both-sides confirm | `--ask` |
+| F41 | Connection: Automatic or Relay only | `--transport auto\|relay` |
 
 ## Version and relay compatibility
 

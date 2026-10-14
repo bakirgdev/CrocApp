@@ -56,11 +56,15 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 	if err != nil {
 		return croc.Options{}, err
 	}
+	transport, err := sessionTransport(sender, o)
+	if err != nil {
+		return croc.Options{}, err
+	}
 	password := o.RelayPassword
 	if password == "" {
 		password = models.DEFAULT_PASSPHRASE
 	}
-	return croc.Options{
+	co := croc.Options{
 		IsSender:         sender,
 		SharedSecret:     secret,
 		RelayAddress:     route.v4,
@@ -77,14 +81,73 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 		ZipFolder:        o.ZipFolder,
 		GitIgnore:        o.GitIgnore,
 		Exclude:          splitNonEmpty(o.Exclude, "\n"),
-		Overwrite:        o.Overwrite,
 		NoPrompt:         sender || o.AutoAccept, // sender-side prompts only exist for Ask
 		Ask:              o.Ask,
 		NoMultiplexing:   o.NoMultiplexing,
 		IgnoreStdin:      true,
 		DisableClipboard: true,
 		Quiet:            false, // Quiet=true nukes process stderr globally
-	}, nil
+		Transport:        transport,
+	}
+	optionsPolicy(o).apply(&co)
+	return co, nil
+}
+
+// sessionTransport is auto wherever croc refuses anything else: on a receive,
+// which follows the sender, and on a local-only send.
+func sessionTransport(sender bool, o *Options) (croc.TransportMode, error) {
+	if !sender || o.OnlyLocal {
+		return croc.TransportAuto, nil
+	}
+	return croc.ParseTransportMode(o.Transport)
+}
+
+// filePolicy decides what a receive does with a file whose name already
+// exists. croc itself has a third state, Rename and Overwrite both false, in
+// which it prompts on stdin; on our closed pipe that prompt skips the file,
+// and on an unzip it aborts the transfer, so it is never passed to croc.
+type filePolicy int
+
+const (
+	keepBoth filePolicy = iota
+	replace
+)
+
+// promptPolicyAnswers is how many answers to croc's per-file stdin prompts a
+// receive queues: the empty-folder prompt and the unzip "Overwrite '<path>'?
+// (y/N)" prompt, which ignore Rename and Overwrite. Past that many collisions
+// an unzip hits EOF and fails, leaving the received zip. 4096 two-byte lines
+// fit a fresh pipe's buffer on Darwin and Linux, so the write never blocks,
+// which startReceiveSession relies on for AutoAccept.
+const promptPolicyAnswers = 4096
+
+func parsePolicy(s string) filePolicy {
+	if s == PolicyReplace {
+		return replace
+	}
+	return keepBoth
+}
+
+func optionsPolicy(o *Options) filePolicy {
+	if o.Overwrite && !o.Rename {
+		return replace
+	}
+	return keepBoth
+}
+
+func (p filePolicy) apply(co *croc.Options) {
+	co.Rename = p == keepBoth
+	co.Overwrite = p == replace
+}
+
+// promptAnswers is the batch of answers croc's per-file prompts read: "y"
+// replaces, "n" keeps what exists (the unzip skips that member).
+func (p filePolicy) promptAnswers() string {
+	answer := "n\n"
+	if p == replace {
+		answer = "y\n"
+	}
+	return strings.Repeat(answer, promptPolicyAnswers)
 }
 
 func splitNonEmpty(s, sep string) []string {
@@ -269,10 +332,9 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 	// later has no effect on that already-built reader. So beyond swapping
 	// the variable (for anything that does read it fresh), dup2 the pipe's
 	// read end onto fd 0 itself so the cached reader also pulls from our
-	// pipe. With AutoAccept the accept prompt is skipped, so close
-	// immediately: any un-gated prompt then hits EOF instead of hanging. EOF
-	// means "no" at the empty-folder prompt but fails the transfer at the unzip
-	// overwrite prompt (docs/known-issues.md).
+	// pipe. With AutoAccept the accept prompt is skipped, so only answers for
+	// the un-gated prompts are queued before the pipe closes; any prompt past
+	// them hits EOF instead of hanging.
 	pr, pw, err := os.Pipe()
 	if err != nil {
 		cancel()
@@ -296,7 +358,7 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 	os.Stdin = pr
 	s.promptW = pw
 	if o.AutoAccept {
-		s.closePrompt()
+		s.answerUngatedPrompts()
 	}
 
 	// Text transfers stream to os.Stdout; capture it.
@@ -367,6 +429,9 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 	}()
 	close(s.done)
 	s.closePrompt()
+	if s.restoreIO != nil {
+		drainPromptInput()
+	}
 	text := s.finishStdoutCapture()
 	if s.tempPath != "" {
 		os.Remove(s.tempPath)
@@ -443,7 +508,7 @@ func (s *session) cancel() {
 	s.closePrompt()
 }
 
-func (s *session) respond(accept bool) {
+func (s *session) respond(accept bool, policy filePolicy) {
 	s.promptM.Lock()
 	defer s.promptM.Unlock()
 	if s.promptW == nil {
@@ -452,17 +517,23 @@ func (s *session) respond(accept bool) {
 	if accept {
 		// One "y\n" per file for the sender's Ask path (croc prompts once per
 		// file, see promptAnswers doc); receiver accept/decline only ever
-		// needs the one. Unread buffered lines beyond what croc consumes are
-		// harmless. This loop can block once the answers outgrow the pipe
-		// buffer, which is why Transfer.Respond runs it off the caller's
+		// needs the one. Writes can block once the answers outgrow the pipe
+		// buffer, which is why Transfer.Respond runs this off the caller's
 		// goroutine.
 		n := s.promptAnswers
 		if n < 1 {
 			n = 1
 		}
-		for i := 0; i < n; i++ {
-			_, _ = s.promptW.WriteString("y\n")
+		answers := strings.Repeat("y\n", n)
+		if !s.sender {
+			// Before the write: croc reads Rename and Overwrite only once the
+			// accept prompt has its answer (croc.go updateIfRecipientHasFileInfo).
+			if s.client != nil {
+				policy.apply(&s.client.Options)
+			}
+			answers += policy.promptAnswers()
 		}
+		_, _ = s.promptW.WriteString(answers)
 	} else {
 		_, _ = s.promptW.WriteString("n\n")
 	}
@@ -470,6 +541,43 @@ func (s *session) respond(accept bool) {
 	// AutoAccept note in startReceiveSession).
 	s.promptW.Close()
 	s.promptW = nil
+}
+
+// answerUngatedPrompts queues answers for an AutoAccept receive, which has no
+// accept prompt, and closes the pipe. Always Keep Both's "n", whatever the
+// policy: croc still forces the accept prompt when the remote sender ran
+// --ask, that prompt reads the first queued line, and "y" would accept a
+// transfer the sender wanted confirmed by hand. So under AutoAccept, Replace
+// overwrites files through croc's Overwrite but keeps existing zip members.
+func (s *session) answerUngatedPrompts() {
+	s.promptM.Lock()
+	defer s.promptM.Unlock()
+	if s.promptW == nil {
+		return
+	}
+	_, _ = s.promptW.WriteString(keepBoth.promptAnswers())
+	s.promptW.Close()
+	s.promptW = nil
+}
+
+// drainPromptInput reads croc's stdin reader to EOF once the prompt pipe is
+// closed and before fd 0 is restored. utils.GetInputContext reads through one
+// process-wide bufio.Reader, which buffers answers croc never asked for (the
+// policy batch, extra sender-Ask lines); left there, the next transfer's
+// accept prompt would read them instead of the user's answer. A croc read
+// left blocked by a cancel sees EOF from the same close, so it cannot hold
+// data back. Bounded by a timeout in case the pipe is somehow still open.
+func drainPromptInput() {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	for {
+		if _, err := utils.GetInputContext(ctx, ""); err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				log.Printf("crocmobile: drain prompt input: %v", err)
+			}
+			return
+		}
+	}
 }
 
 func (s *session) closePrompt() {

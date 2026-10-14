@@ -13,7 +13,17 @@ import Testing
         #expect(o.exclude == "")
         #expect(!o.autoAccept)
         #expect(!o.overwrite)
+        #expect(o.rename, "Keep Both is the default")
         #expect(!o.ask)
+    }
+
+    @Test(arguments: FilePolicy.allCases)
+    func filePolicyMapsToExactlyOneFlag(_ policy: FilePolicy) throws {
+        var e = EngineOptions()
+        e.whenFileExists = policy
+        let o = try CrocEngine.crocOptions(from: e)
+        #expect(o.rename == (policy == .keepBoth))
+        #expect(o.overwrite == (policy == .replace))
     }
 
     @Test func everyFieldMaps() throws {
@@ -27,7 +37,7 @@ import Testing
         e.disableLocal = true
         e.onlyLocal = true
         e.autoAccept = true
-        e.overwrite = true
+        e.whenFileExists = .replace
         e.noCompress = true
         e.zipFolder = true
         e.gitIgnore = true
@@ -45,6 +55,7 @@ import Testing
         #expect(o.onlyLocal)
         #expect(o.autoAccept)
         #expect(o.overwrite)
+        #expect(!o.rename)
         #expect(o.noCompress)
         #expect(o.zipFolder)
         #expect(o.gitIgnore)
@@ -64,7 +75,6 @@ import Testing
             Flag(name: "disableLocal", source: \.disableLocal, target: \.disableLocal),
             Flag(name: "onlyLocal", source: \.onlyLocal, target: \.onlyLocal),
             Flag(name: "autoAccept", source: \.autoAccept, target: \.autoAccept),
-            Flag(name: "overwrite", source: \.overwrite, target: \.overwrite),
             Flag(name: "noCompress", source: \.noCompress, target: \.noCompress),
             Flag(name: "zipFolder", source: \.zipFolder, target: \.zipFolder),
             Flag(name: "gitIgnore", source: \.gitIgnore, target: \.gitIgnore),
