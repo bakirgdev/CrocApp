@@ -175,7 +175,8 @@ diff -r "$DOCS/askdir" "$DST/askdir"
 echo MAC-ASK-OK
 
 # --- 7: CLI -> app onto an existing file, Keep Both and Replace (R24) --------
-# --when-exists is the answer AutoVerify gives the incoming sheet. Keep Both
+# --when-exists is the answer AutoVerify gives the incoming sheet; the setting
+# stays Keep Both, so a Replace proves the late answer reaches croc. Keep Both
 # leaves the existing file and adds "collide (1).txt"; Replace overwrites it.
 collide() {                                         # collide POLICY
   local policy=$1

@@ -11,6 +11,7 @@ import Foundation
 ///   --relay ADDR                   use a custom relay address (F13); also disables local-only race
 ///   --hold                         park at the incoming prompt instead of auto-accepting
 ///   --when-exists keepBoth|replace answer the incoming prompt with this file policy
+///                                  (the setting stays Keep Both, so the late answer must reach croc)
 ///   --screen ROUTE                 navigate to home|send|receive|settings|howItWorks|history|
 ///                                  onboarding on launch; combines with the --auto-* modes
 ///   --stage PATH                   preload PATH into the Send screen's staged list (repeatable)
@@ -74,10 +75,11 @@ enum AutoVerify {
         if args.contains("--local") { controller.settings.onlyLocal = true }
         if args.contains("--no-compress") { controller.settings.noCompress = true }
         if args.contains("--ask") { controller.settings.bothSidesConfirm = true }
+        var sheetPolicy = FilePolicy.keepBoth
         if let i = args.firstIndex(of: "--when-exists"), i + 1 < args.count,
             let policy = FilePolicy(rawValue: args[i + 1])
         {
-            controller.settings.whenFileExists = policy
+            sheetPolicy = policy
         }
         if let i = args.firstIndex(of: "--transport"), i + 1 < args.count,
             let transport = Transport(rawValue: args[i + 1])
@@ -104,7 +106,8 @@ enum AutoVerify {
 
         if let i = args.firstIndex(of: "--auto-receive"), i + 1 < args.count {
             controller.startReceive(code: args[i + 1], into: docs, folderIsScoped: false)
-            await watch(controller, resultURL: resultURL, autoAccept: !hold)
+            await watch(
+                controller, resultURL: resultURL, autoAccept: !hold, sheetPolicy: sheetPolicy)
         } else if let i = args.firstIndex(of: "--auto-send"), i + 1 < args.count,
             let ci = args.firstIndex(of: "--code"), ci + 1 < args.count
         {
@@ -181,7 +184,8 @@ enum AutoVerify {
 
     @MainActor
     private static func watch(
-        _ controller: TransferController, resultURL: URL, autoAccept: Bool
+        _ controller: TransferController, resultURL: URL, autoAccept: Bool,
+        sheetPolicy: FilePolicy = .keepBoth
     ) async {
         var codeReady = false
         func finish(_ result: String) {
@@ -201,7 +205,7 @@ enum AutoVerify {
                         "verify-code-ready.txt"),
                     atomically: true, encoding: .utf8)
             case .incoming where autoAccept:
-                controller.respond(accept: true, policy: controller.settings.whenFileExists)
+                controller.respond(accept: true, policy: sheetPolicy)
             case .confirmSend:
                 controller.respond(accept: true)
             case .done(let summary, _):

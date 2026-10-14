@@ -131,8 +131,14 @@ func main() {
 	opts.Code = *code
 	opts.OutDir = *out
 	opts.AutoAccept = *yes
-	opts.Overwrite = *policy == crocmobile.PolicyReplace
-	opts.Rename = !opts.Overwrite
+	// Without -yes the Options stay at Keep Both, as in the app, so a Replace
+	// answer proves the policy sent at accept time reaches croc.
+	if *yes {
+		opts.Overwrite = *policy == crocmobile.PolicyReplace
+		opts.Rename = !opts.Overwrite
+	} else {
+		opts.Rename = true
+	}
 	opts.ThrottleUpload = *throttle
 	opts.NoMultiplexing = *noMulti
 	opts.Transport = *transport

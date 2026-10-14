@@ -141,7 +141,7 @@ Launch arguments that drive the real controller, not the engine directly — the
 | Argument | Effect |
 |---|---|
 | `--auto-receive CODE` | receive into Documents, auto-accept via `respond(true)` on `.incoming` unless `--hold` is passed |
-| `--when-exists keepBoth\|replace` | the file policy `AutoVerify` answers the incoming sheet with (also sets `whenFileExists`); default Keep Both |
+| `--when-exists keepBoth\|replace` | the file policy `AutoVerify` answers the incoming sheet with (the setting stays Keep Both, so the late answer must reach croc); default Keep Both |
 | `--auto-send PATH --code CODE` | send with a custom code; on macOS the source must be container-resident (sandbox). Needs `--code`: without it nothing happens |
 | `--auto-share-send CODE` | read the share inbox, then custom-code send |
 | `--local` | sets `settings.onlyLocal` unpersisted (croc `onlyLocal`) |
