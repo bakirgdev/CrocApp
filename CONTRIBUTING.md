@@ -79,6 +79,7 @@ Deeper references: [`docs/BUILDING.md`](docs/BUILDING.md) for the exact toolchai
 | `CrocKit/` | Swift package: `CrocEngine` actor, `AsyncStream<TransferEvent>` | same file |
 | `app/CrocApp/` | SwiftUI app, iOS + macOS | [`docs/knowledge/app-ui-architecture.md`](docs/knowledge/app-ui-architecture.md) |
 | `app/CrocShare/` | Share extension | same file |
+| `app/CrocAppDirect/` | Sources only the `CrocApp Direct` (Developer ID, Sparkle) target compiles | [`docs/BUILDING.md`](docs/BUILDING.md) section 7 |
 | `design/` | Canonical design system for app, landing, docs | [`design/CLAUDE.md`](design/CLAUDE.md) |
 | `web/landing/` | The crocapp.dev landing page | `design/CLAUDE.md` |
 | `docs/` | Knowledge base, known issues | [`docs/knowledge/README.md`](docs/knowledge/README.md) |
@@ -197,6 +198,8 @@ cd app
 xcodebuild -scheme CrocApp -destination 'platform=macOS' -derivedDataPath /tmp/dd-mac build
 xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,name=$SIM" -derivedDataPath /tmp/dd-sim build
 ```
+
+A signed local macOS build of `CrocApp` needs a provisioning profile (the entitlements include Associated Domains), so it needs an Xcode account in team `HBSU359M33` and `-allowProvisioningUpdates` on `xcodebuild`; the macOS harness scripts pass it. Outside that team, build unsigned with `CODE_SIGNING_ALLOWED=NO`, as CI does. Details: [`docs/BUILDING.md`](docs/BUILDING.md), section 5.
 
 ### Tests
 

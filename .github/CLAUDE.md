@@ -7,7 +7,7 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 | Path | Purpose |
 | --- | --- |
 | `workflows/ci.yml` | push-main + PR gate: a `changes` job gates lint, Go checks and `go test -race`, the contrast check, and the macOS and iOS Simulator builds (the macOS leg also runs `swift test` for CrocKit and `xcodebuild test` for `CrocAppTests`), and `interop (local relay)` (`scripts/verify-interop.sh` against a `croc relay` on 127.0.0.1, on `macos-26`); `ci pass` aggregates them |
-| `workflows/release.yml` | on `v*` tag: verify tag against `MARKETING_VERSION`, build, dmg/zip/checksums, attest, publish |
+| `workflows/release.yml` | on `v*` tag: verify tag against `MARKETING_VERSION` in `app/Config/Version.xcconfig`, then (in environment `release`) run `scripts/build-devid.sh` for the signed, notarized, stapled DMG, write the Sparkle `appcast.xml`, build the xcframework zip and `SHA256SUMS.txt`, attest, publish. `workflow_dispatch` is a rehearsal: no tag or CHANGELOG check, no publish |
 | `workflows/go-weekly.yml` | Monday scan on a clock, files or updates one `security` issue on failure |
 | `workflows/github-pages.yml` | builds `_site` on PR, also deploys on push to main |
 | `workflows/reusable-*.yml` | `workflow_call` only. Edit the check here, never in a caller |

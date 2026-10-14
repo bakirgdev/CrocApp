@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DA000000000000000000000F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = DA000000000000000000000D /* Sparkle */; };
+		DA0000000000000000000010 /* CrocKit in Frameworks */ = {isa = PBXBuildFile; productRef = DA000000000000000000000E /* CrocKit */; };
 		84F97A57301906920055C4C7 /* CrocKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3F021D37A76468BD7E9B164B /* CrocKit */; };
 		CA000000000000000000000C /* CrocShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000001 /* CrocShare.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -43,9 +45,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		DA0000000000000000000001 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		844EAD41307C8833006F34A7 /* CrocAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CrocAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		84DEC94730101868006ECBE6 /* CrocApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CrocApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0000000000000000000001 /* CrocShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrocShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA0000000000000000000003 /* CrocApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CrocApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -62,6 +66,11 @@
 		CA0000000000000000000002 /* CrocShare */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = CrocShare;
+			sourceTree = "<group>";
+		};
+		DA0000000000000000000004 /* CrocAppDirect */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CrocAppDirect;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -89,6 +98,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DA0000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA0000000000000000000010 /* CrocKit in Frameworks */,
+				DA000000000000000000000F /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -96,10 +114,20 @@
 			isa = PBXGroup;
 			children = (
 				84DEC94930101868006ECBE6 /* CrocApp */,
+				DA0000000000000000000004 /* CrocAppDirect */,
 				CA0000000000000000000002 /* CrocShare */,
 				844EAD42307C8833006F34A7 /* CrocAppTests */,
+				DA0000000000000000000002 /* Config */,
 				84DEC94830101868006ECBE6 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		DA0000000000000000000002 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				DA0000000000000000000001 /* Version.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		84DEC94830101868006ECBE6 /* Products */ = {
@@ -108,6 +136,7 @@
 				84DEC94730101868006ECBE6 /* CrocApp.app */,
 				CA0000000000000000000001 /* CrocShare.appex */,
 				844EAD41307C8833006F34A7 /* CrocAppTests.xctest */,
+				DA0000000000000000000003 /* CrocApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -185,6 +214,31 @@
 			productReference = CA0000000000000000000001 /* CrocShare.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		DA0000000000000000000008 /* CrocApp Direct */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DA0000000000000000000009 /* Build configuration list for PBXNativeTarget "CrocApp Direct" */;
+			buildPhases = (
+				DA0000000000000000000005 /* Sources */,
+				DA0000000000000000000006 /* Frameworks */,
+				DA0000000000000000000007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				84DEC94930101868006ECBE6 /* CrocApp */,
+				DA0000000000000000000004 /* CrocAppDirect */,
+			);
+			name = "CrocApp Direct";
+			packageProductDependencies = (
+				DA000000000000000000000E /* CrocKit */,
+				DA000000000000000000000D /* Sparkle */,
+			);
+			productName = CrocApp;
+			productReference = DA0000000000000000000003 /* CrocApp.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -205,6 +259,9 @@
 					CA0000000000000000000006 = {
 						CreatedOnToolsVersion = 26.6;
 					};
+					DA0000000000000000000008 = {
+						CreatedOnToolsVersion = 27.0;
+					};
 				};
 			};
 			buildConfigurationList = 84DEC94230101868006ECBE6 /* Build configuration list for PBXProject "CrocApp" */;
@@ -218,6 +275,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				198F61BEFE4EF9081521AEEA /* XCLocalSwiftPackageReference "../CrocKit" */,
+				DA000000000000000000000C /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 84DEC94830101868006ECBE6 /* Products */;
@@ -227,6 +285,7 @@
 				84DEC94630101868006ECBE6 /* CrocApp */,
 				CA0000000000000000000006 /* CrocShare */,
 				844EAD40307C8833006F34A7 /* CrocAppTests */,
+				DA0000000000000000000008 /* CrocApp Direct */,
 			);
 		};
 /* End PBXProject section */
@@ -253,6 +312,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DA0000000000000000000007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -271,6 +337,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CA0000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DA0000000000000000000005 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -346,6 +419,7 @@
 		};
 		84DEC95030101869006ECBE6 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DA0000000000000000000001 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -408,6 +482,7 @@
 		};
 		84DEC95130101869006ECBE6 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DA0000000000000000000001 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -470,7 +545,6 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "CrocApp/CrocApp-iOS.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = "CrocApp/CrocApp-iOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = HBSU359M33;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -483,6 +557,7 @@
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]" = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -501,7 +576,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.9.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -527,7 +601,6 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "CrocApp/CrocApp-iOS.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = "CrocApp/CrocApp-iOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = HBSU359M33;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -540,6 +613,7 @@
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]" = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -558,7 +632,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.9.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -579,7 +652,6 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = CrocShare/CrocShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = HBSU359M33;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Config/CrocShare-Info.plist";
@@ -589,7 +661,6 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.CrocShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -608,7 +679,6 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = CrocShare/CrocShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = HBSU359M33;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Config/CrocShare-Info.plist";
@@ -618,7 +688,6 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.CrocShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -629,6 +698,82 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DA000000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CrocAppDirect/CrocAppDirect.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/CrocApp-Direct-Info.plist";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.direct;
+				PRODUCT_NAME = CrocApp;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SPARKLE_FEED_URL = "https://github.com/bakirgdev/CrocApp/releases/latest/download/appcast.xml";
+				SPARKLE_PUBLIC_ED_KEY = "7vFYkIXDHGPg4FHsWDCe3Qz546DfdyQbRKQZOO8zYsE=";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DIRECT $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		DA000000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CrocAppDirect/CrocAppDirect.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/CrocApp-Direct-Info.plist";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSCameraUsageDescription = "CrocApp uses the camera to scan QR transfer codes.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.direct;
+				PRODUCT_NAME = CrocApp;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SPARKLE_FEED_URL = "https://github.com/bakirgdev/CrocApp/releases/latest/download/appcast.xml";
+				SPARKLE_PUBLIC_ED_KEY = "7vFYkIXDHGPg4FHsWDCe3Qz546DfdyQbRKQZOO8zYsE=";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DIRECT $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -671,6 +816,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		DA0000000000000000000009 /* Build configuration list for PBXNativeTarget "CrocApp Direct" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DA000000000000000000000A /* Debug */,
+				DA000000000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -680,8 +834,28 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		DA000000000000000000000C /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		3F021D37A76468BD7E9B164B /* CrocKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CrocKit;
+		};
+		DA000000000000000000000D /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DA000000000000000000000C /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		DA000000000000000000000E /* CrocKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CrocKit;
 		};

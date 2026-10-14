@@ -3,6 +3,9 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # Rehearsal: builds, signs, notarizes and writes the appcast, publishes
+  # nothing. The release environment allows `main` and `v*` tags only.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,7 +28,9 @@ jobs:
 
     runs-on: xcode-27
 
-    timeout-minutes: 30
+    timeout-minutes: 60
+
+    environment: release
 
     permissions:
       contents: read
@@ -42,24 +47,31 @@ jobs:
 
       - name: Resolve the version and the release notes
         id: version
+        env:
+          EVENT: ${{ github.event_name }}
         run: |
+          declared=$(sed -nE 's/^MARKETING_VERSION = ([^ ]+)$/\1/p' app/Config/Version.xcconfig)
+
+          if [ "$(printf '%s\n' "$declared" | grep -c .)" != "1" ]; then
+            echo "error: app/Config/Version.xcconfig must declare exactly one MARKETING_VERSION:"
+            printf '%s\n' "$declared"
+            exit 1
+          fi
+
+          if [ "$EVENT" != "push" ]; then
+            echo "Rehearsal of $declared: no tag, no CHANGELOG check, no release notes."
+            echo "version=$declared" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           version="${GITHUB_REF_NAME#v}"
 
           case "$version" in
             *[!0-9.]* | "" | *..*) echo "error: '$version' is not a plain dotted version"; exit 1 ;;
           esac
 
-          declared=$(grep -oE 'MARKETING_VERSION = [^;]+;' app/CrocApp.xcodeproj/project.pbxproj \
-            | sed -E 's/MARKETING_VERSION = (.+);/\1/' | sort -u)
-
-          if [ "$(printf '%s\n' "$declared" | wc -l | tr -d ' ')" != "1" ]; then
-            echo "error: project.pbxproj declares more than one MARKETING_VERSION:"
-            printf '%s\n' "$declared"
-            exit 1
-          fi
-
           if [ "$declared" != "$version" ]; then
-            echo "error: tag says $version, project.pbxproj says $declared."
+            echo "error: tag says $version, Version.xcconfig says $declared."
             echo "Bump MARKETING_VERSION in a pull request first, then tag the merge commit."
             exit 1
           fi
@@ -104,63 +116,149 @@ jobs:
         with:
           xcode-version: ${{ steps.xcode.outputs.version }}
 
-      - run: brew install create-dmg xcbeautify
+      - run: brew install create-dmg
 
       - name: Build Croc.xcframework
         run: scripts/build-xcframework.sh
 
-      - name: Build CrocApp (Release, ad-hoc signed)
+      # GitHub's documented runner setup: a throwaway keychain first in the
+      # search list, so codesign finds the identity without a UI prompt.
+      - name: Install the signing identity, profile and notary key
         shell: bash
-        working-directory: app
         env:
-          DD: ${{ runner.temp }}/dd
+          DEVID_P12_BASE64: ${{ secrets.DEVID_P12_BASE64 }}
+          DEVID_P12_PASSWORD: ${{ secrets.DEVID_P12_PASSWORD }}
+          DEVID_PROFILE_BASE64: ${{ secrets.DEVID_PROFILE_BASE64 }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
-          set -o pipefail
-          xcodebuild -scheme CrocApp \
-            -configuration Release \
-            -destination 'generic/platform=macOS' \
-            -derivedDataPath "$DD" \
-            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY=- \
-            DEVELOPMENT_TEAM= \
-            PROVISIONING_PROFILE_SPECIFIER= \
-            build \
-            | xcbeautify --renderer github-actions
+          set -euo pipefail
+          umask 077
+          kc="$RUNNER_TEMP/signing.keychain-db"
+          kc_password=$(openssl rand -base64 32)
+          security create-keychain -p "$kc_password" "$kc"
+          security set-keychain-settings -lut 21600 "$kc"
+          security unlock-keychain -p "$kc_password" "$kc"
+
+          printf '%s' "$DEVID_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/devid.p12"
+          security import "$RUNNER_TEMP/devid.p12" -k "$kc" -P "$DEVID_P12_PASSWORD" \
+            -A -t cert -f pkcs12
+          rm -f "$RUNNER_TEMP/devid.p12"
+          security set-key-partition-list -S apple-tool:,apple: -k "$kc_password" "$kc" > /dev/null
+          security list-keychains -d user | xargs security list-keychains -d user -s "$kc"
+
+          profiles="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+          mkdir -p "$profiles"
+          printf '%s' "$DEVID_PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/devid.provisionprofile"
+          uuid=$(security cms -D -i "$RUNNER_TEMP/devid.provisionprofile" | plutil -extract UUID raw -)
+          mv "$RUNNER_TEMP/devid.provisionprofile" "$profiles/$uuid.provisionprofile"
+          printf '%s\n' "$profiles/$uuid.provisionprofile" > "$RUNNER_TEMP/installed-profile"
+
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/notary.p8"
+
+      - name: Archive, sign, notarize and staple the disk image
+        shell: bash
+        env:
+          DEVID_WORK: ${{ runner.temp }}/devid
+          NOTARY_KEY: ${{ runner.temp }}/notary.p8
+          NOTARY_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          NOTARY_ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+        run: scripts/build-devid.sh dist
+
+      # Seeded with the latest release's appcast; generate_appcast keeps its
+      # newest items (default 3) beside the new one, signs the new item with
+      # the release key and embeds the CHANGELOG section as its release notes.
+      - name: Write the signed appcast
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+          GENERATE_APPCAST: ${{ runner.temp }}/devid/dd/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          feed="$RUNNER_TEMP/feed"
+          rm -rf "$feed"
+          mkdir -p "$feed"
+          cp "dist/CrocApp-$VERSION-arm64.dmg" "$feed/"
+
+          assets=$(gh release view --json assets --jq '.assets[].name')
+          if grep -qx appcast.xml <<< "$assets"; then
+            gh release download --pattern appcast.xml --dir "$feed"
+          fi
+
+          # Sparkle offers an update only when CFBundleVersion goes up, and App
+          # Store Connect accepts a reused build number under a new version, so
+          # an unbumped CURRENT_PROJECT_VERSION would publish an update nobody
+          # is offered. A rehearsal only warns: it may run before the bump.
+          build=$(plutil -extract CFBundleVersion raw "$RUNNER_TEMP/devid/export/CrocApp.app/Contents/Info.plist")
+          newest=0
+          if [ -f "$feed/appcast.xml" ]; then
+            # No match (a feed without items) fails the greps; that means no build to beat.
+            newest=$(grep -oE 'sparkle:version(>|=")[0-9]+' "$feed/appcast.xml" | grep -oE '[0-9]+$' | sort -n | tail -n 1 || true)
+          fi
+          if [ "$build" -le "${newest:-0}" ]; then
+            echo "::warning::build $build is not above $newest, the newest build in the published appcast. Bump CURRENT_PROJECT_VERSION in app/Config/Version.xcconfig."
+            if [ "$EVENT" = "push" ]; then
+              exit 1
+            fi
+          fi
+
+          if [ -f notes.md ]; then
+            cp notes.md "$feed/CrocApp-$VERSION-arm64.md"
+          fi
+
+          # generate_appcast only warns when the key does not match the app's
+          # SUPublicEDKey, and then writes the item unsigned, which every client
+          # rejects. So compare first: the secret is a raw 32-byte seed, and the
+          # 16-byte prefix makes it a PKCS#8 Ed25519 key openssl can read.
+          app_key=$(plutil -extract SUPublicEDKey raw "$RUNNER_TEMP/devid/export/CrocApp.app/Contents/Info.plist")
+          secret_key=$( { printf '\x30\x2e\x02\x01\x00\x30\x05\x06\x03\x2b\x65\x70\x04\x22\x04\x20'
+                          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" | base64 --decode; } \
+                        | openssl pkey -inform DER -pubout -outform DER | tail -c 32 | base64)
+          if [ "$app_key" != "$secret_key" ]; then
+            echo "error: SPARKLE_ED_PRIVATE_KEY does not match SUPublicEDKey ($app_key) in the built app."
+            exit 1
+          fi
+
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" | "$GENERATE_APPCAST" --ed-key-file - \
+            --download-url-prefix "https://github.com/$GH_REPO/releases/download/v$VERSION/" \
+            --embed-release-notes "$feed"
+          if ! grep -q "CrocApp-$VERSION-arm64.dmg\".*sparkle:edSignature=" "$feed/appcast.xml"; then
+            echo "error: the $VERSION item in appcast.xml carries no EdDSA signature."
+            exit 1
+          fi
+          cp "$feed/appcast.xml" dist/appcast.xml
+          cat dist/appcast.xml
 
       - name: Assemble the release assets
         shell: bash
         env:
-          DD: ${{ runner.temp }}/dd
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          app="$DD/Build/Products/Release/CrocApp.app"
-          [ -d "$app" ] || { echo "error: no CrocApp.app at $app"; exit 1; }
-
-          mkdir -p dist
-          scripts/build-dmg.sh "$app" "$VERSION" dist
-
-          # ditto, not zip: it preserves the bundle's symlinks and the code
-          # signature, which a plain zip flattens.
-          ditto -c -k --keepParent --sequesterRsrc "$app" "dist/CrocApp-$VERSION-arm64.app.zip"
           ditto -c -k --sequesterRsrc CrocKit/Croc.xcframework "dist/Croc.xcframework-$VERSION.zip"
 
-          # Named, not a glob: the checksum file has to cover exactly the files
-          # that get published, and dist/ also carries the release notes.
+          # Named, not a glob: the checksum file has to cover exactly the
+          # binaries that get published.
           ( cd dist && shasum -a 256 \
               "CrocApp-$VERSION-arm64.dmg" \
-              "CrocApp-$VERSION-arm64.app.zip" \
               "Croc.xcframework-$VERSION.zip" > SHA256SUMS.txt )
           cat dist/SHA256SUMS.txt
 
-          mv notes.md dist/notes.md
+          if [ -f notes.md ]; then
+            mv notes.md dist/notes.md
+          fi
 
+      # After stapling: the staple rewrites the disk image, and the
+      # attestation has to cover the bytes that ship.
       - name: Attest build provenance
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
             dist/*.dmg
             dist/*.zip
+            dist/appcast.xml
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -168,10 +266,29 @@ jobs:
           path: dist/
           if-no-files-found: error
 
+      # Last, so a failure here cannot skip the upload. Files first: a failing
+      # delete-keychain must not leave the keys behind.
+      - name: Remove the signing keychain, profile and keys
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          rm -f "$RUNNER_TEMP/notary.p8" "$RUNNER_TEMP/devid.p12" "$RUNNER_TEMP/devid.provisionprofile"
+          if [ -f "$RUNNER_TEMP/installed-profile" ]; then
+            rm -f "$(cat "$RUNNER_TEMP/installed-profile")" "$RUNNER_TEMP/installed-profile"
+          fi
+          rm -rf "$RUNNER_TEMP/devid" "$RUNNER_TEMP/feed"
+          kc="$RUNNER_TEMP/signing.keychain-db"
+          if [ -f "$kc" ]; then
+            security delete-keychain "$kc"
+          fi
+
   release:
     name: release
 
     needs: build
+
+    if: github.event_name == 'push'
 
     runs-on: ubuntu-24.04
 
@@ -198,6 +315,6 @@ jobs:
             --notes-file dist/notes.md \
             --verify-tag \
             "dist/CrocApp-$VERSION-arm64.dmg#CrocApp $VERSION (Apple silicon, disk image)" \
-            "dist/CrocApp-$VERSION-arm64.app.zip#CrocApp $VERSION (Apple silicon, app bundle)" \
+            "dist/appcast.xml#Update feed" \
             "dist/Croc.xcframework-$VERSION.zip#Croc.xcframework $VERSION (prebuilt engine)" \
             "dist/SHA256SUMS.txt#Checksums"

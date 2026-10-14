@@ -382,7 +382,7 @@ cp "$TMP/payload"/* "$TMP/Field-Recordings.zip" "$DOCS/shots/"
 
 echo "building macOS..."
 ( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
-    -derivedDataPath "$TMPROOT/dd-mac" build ) > "$TMPROOT/shots-mac-build.log" 2>&1
+    -derivedDataPath "$TMPROOT/dd-mac" -allowProvisioningUpdates build ) > "$TMPROOT/shots-mac-build.log" 2>&1
 BIN=$(find "$TMPROOT/dd-mac/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)/Contents/MacOS/CrocApp
 [ -x "$BIN" ] || fail "no CrocApp.app in $TMPROOT/dd-mac (see $TMPROOT/shots-mac-build.log)"
 

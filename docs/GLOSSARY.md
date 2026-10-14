@@ -45,6 +45,7 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 | App Group | `group.com.bakirgdev.CrocApp`, the shared container the iOS share extension stages files into (`ShareInbox/batch-<UUID>/` + `manifest.json`) for the main app to pick up (`app/CrocApp/Models/ShareInbox.swift`). |
 | `AutoVerify` harness | `app/CrocApp/Support/AutoVerify.swift`, launch-argument-driven code path (`--auto-receive`, `--auto-send`, `--ask`, etc.) that drives the real `TransferController` state machine instead of the engine directly, so verify scripts exercise the path users actually take. |
 | `BGContinuedProcessingTask` | iOS 26+ API wrapping a transfer so it survives backgrounding and gets a system Live Activity; `app/CrocApp/Platform/BackgroundCoordinator.swift`, no macOS equivalent (`docs/knowledge/apple-platform-constraints.md`). |
+| `CrocApp Direct` / `DIRECT` | the Developer ID (DMG) macOS target, bundle ID `com.bakirgdev.CrocApp.direct`, arm64 only; builds the `app/CrocApp/` sources plus `app/CrocAppDirect/` (Sparkle updater) under the Swift condition `DIRECT`. Product is `CrocApp.app`, same name as the App Store target (`docs/BUILDING.md` section 7). |
 | output folder store | `OutputFolderStore` (`app/CrocApp/Models/OutputFolderStore.swift`), tracks the receive destination folder and its security-scope bookmark; defaults to `~/Downloads/CrocApp` on macOS, app Documents on iOS. |
 | `Phase` | the enum on `TransferController` driving every view: `idle` → `starting` → `waiting`/`connecting` → `confirmSend` or `incoming` → `transferring` → `done` or `failed` (`app/CrocApp/Models/TransferController.swift`). |
 | security-scoped resource | an Apple sandbox URL (from `fileImporter` or a bookmark) that needs `startAccessingSecurityScopedResource()` before use; both `TransferController` and `HistoryView` call it before touching a URL. |
@@ -57,11 +58,12 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 
 | Term | Means |
 |---|---|
-| entitlement | an Apple capability grant declared in a `.entitlements` file (`app/CrocApp/CrocApp.entitlements`, `CrocApp-iOS.entitlements`, `app/CrocShare/CrocShare.entitlements`); e.g. `network.client`/`network.server` for the sandboxed Mac build, `files.downloads.read-write` for the default output folder. |
-| MAS vs Developer ID | the two macOS distribution paths: Mac App Store (sandbox mandatory) vs. direct-download Developer ID (notarized DMG, sandbox optional); separate `Config/ExportOptions-{MAS,DevID}.plist`. |
-| notarization | Apple's malware scan required before a Developer ID build runs without warnings on a fresh Mac; `scripts/build-devid.sh` currently only runs the `syspolicy_check distribution` dry run, not the real `notarytool submit --wait` (`docs/knowledge/tooling.md`). |
-| `PrivacyInfo.xcprivacy` | Apple's required privacy manifest, present in both `app/CrocApp/` and `app/CrocShare/`; declares accessed API categories (UserDefaults, FileTimestamp) and no tracking/collection. |
-| stapling | attaching Apple's notarization ticket to a build (`xcrun stapler staple`) so first launch works offline; not yet implemented (`docs/knowledge/tooling.md`). |
+| entitlement | an Apple capability grant declared in a `.entitlements` file (`app/CrocApp/CrocApp.entitlements`, `CrocApp-iOS.entitlements`, `app/CrocAppDirect/CrocAppDirect.entitlements`, `app/CrocShare/CrocShare.entitlements`); e.g. `network.client`/`network.server` for the sandboxed Mac build, `files.downloads.read-write` for the default output folder. |
+| MAS vs Developer ID | the two macOS distribution paths: Mac App Store (sandbox mandatory) vs. direct-download Developer ID (notarized DMG, sandbox optional); separate `Config/ExportOptions-{MAS,DevID}.plist` (iOS has its own `ExportOptions-iOS.plist`; `scripts/build-appstore.sh` uses the iOS and MAS ones). |
+| notarization | Apple's malware scan required before a Developer ID build runs without warnings on a fresh Mac; `scripts/build-devid.sh` submits the app and the disk image with `notarytool submit --wait` (`docs/BUILDING.md`, section 7). |
+| `PrivacyInfo.xcprivacy` | Apple's required privacy manifest, present in both `app/CrocApp/` and `app/CrocShare/`; declares accessed API categories (UserDefaults, FileTimestamp, SystemBootTime) and no tracking/collection. |
+| Sparkle | the macOS auto-update framework (2.10.0, SwiftPM), linked into `CrocApp Direct` only; checks `SPARKLE_FEED_URL` for an appcast signed with an Ed25519 key (`SPARKLE_PUBLIC_ED_KEY`, the owner's release public key). |
+| stapling | attaching Apple's notarization ticket to a build (`xcrun stapler staple`) so first launch works offline; `scripts/build-devid.sh` staples the app and the disk image. |
 
 ## Repo conventions
 

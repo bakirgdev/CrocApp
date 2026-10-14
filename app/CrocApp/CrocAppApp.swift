@@ -56,6 +56,9 @@ struct CrocAppApp: App {
         #endif
         .commands {
             AppCommands(router: router, outputFolder: outputFolder, controller: controller)
+            #if DIRECT
+            UpdateCommands()
+            #endif
         }
 
         #if os(macOS)

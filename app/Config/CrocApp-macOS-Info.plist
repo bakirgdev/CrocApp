@@ -22,10 +22,12 @@
 			</array>
 		</dict>
 	</array>
-	<!-- croc bundles its own AES-256-GCM / ChaCha20-Poly1305 encryption
-	     (crypto/aes + cipher.NewGCM in Go), not Apple-OS-provided crypto,
-	     and not limited to authentication -- no export exemption applies. -->
+	<!-- croc's encryption (AES-256-GCM, PAKE) is standard and its source is
+	     public, so the app relies on the open-source exemption (EAR 742.15(b),
+	     owner decision for 1.0). `true` makes App Store Connect refuse the
+	     upload without an ITSEncryptionExportComplianceCode from approved
+	     documentation. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
-	<true/>
+	<false/>
 </dict>
 </plist>

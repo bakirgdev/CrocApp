@@ -34,7 +34,7 @@ scripts/build-xcframework.sh   # Go engine -> CrocKit/Croc.xcframework
 open app/CrocApp.xcodeproj
 ```
 
-The shared schemes `CrocApp` (builds the app, tests `CrocAppTests`) and `CrocShare` are committed under `app/CrocApp.xcodeproj/xcshareddata/xcschemes/`, so `xcodebuild -scheme CrocApp` works on a fresh clone without opening Xcode. A new target needs its scheme committed there too; per-user schemes in `xcuserdata/` stay gitignored.
+The shared schemes `CrocApp` (builds the app, tests `CrocAppTests`), `CrocApp Direct` (the Developer ID build, section 7, no test action) and `CrocShare` are committed under `app/CrocApp.xcodeproj/xcshareddata/xcschemes/`, so `xcodebuild -scheme CrocApp` works on a fresh clone without opening Xcode. A new target needs its scheme committed there too; per-user schemes in `xcuserdata/` stay gitignored.
 
 Command-line builds, exactly as CLAUDE.md and CI run them:
 
@@ -62,7 +62,7 @@ gomobile bind \
 - **`-iosversion` / `-macosversion`**: both `26.0`, matching the deployment target everywhere else in the repo (section 6).
 - **Output**: `CrocKit/Croc.xcframework`, removed and rebuilt on every run (`rm -rf "$OUT"` before binding).
 - **Why arm64-only on macOS**: [golang/go#73119](https://github.com/golang/go/issues/73119), gomobile cannot currently produce a multi-arch macOS bind. `Croc.xcframework` therefore has no `x86_64` slice, and Intel Macs that can otherwise run macOS 26 (the 2019 MacBook Pro 16", 2020 iMac, and 2019 Mac Pro) cannot run CrocApp. The pbxproj pins `ARCHS[sdk=macosx*] = arm64` for this reason; removing that pin does not restore Intel support, it just breaks the link.
-- **Open note on iOS device archives**: [golang/go#66500](https://github.com/golang/go/issues/66500) is a device-slice layout issue that affects App Store archives specifically, not simulator or local device builds. Still open; revisit before the first store submission.
+- **iOS device archives**: [golang/go#66500](https://github.com/golang/go/issues/66500) is a device-slice layout issue that affects App Store archives specifically, not simulator or local device builds. It is closed (fixed in x/mobile CL 574055 and 575115, included in our pin), and the first App Store upload on 2026-10-14 passed validation (section 7, "App Store builds").
 
 `gomobile`/`gobind` are built from the `golang.org/x/mobile` version in the `tool` block of `crocmobile/go.mod`. If a future release regresses the bind, pin `x/mobile` to the last good version there and record it in `docs/knowledge/tooling.md`.
 
@@ -80,7 +80,7 @@ That is the only Swift check the `swift-format` CI job runs. Locally, drop the f
 scripts/format-swift.sh
 ```
 
-The script owns the list of paths swift-format covers (`app/CrocApp`, `app/CrocShare`, `app/CrocAppTests`, `CrocKit/Sources`, `CrocKit/Tests`, `CrocKit/Package.swift`). A new Swift target goes in there, so CI and every doc pick it up at once. `CrocKit` is listed file-by-file because a recursive run there descends into `.build/` and `Croc.xcframework/`.
+The script owns the list of paths swift-format covers (`app/CrocApp`, `app/CrocAppDirect`, `app/CrocShare`, `app/CrocAppTests`, `CrocKit/Sources`, `CrocKit/Tests`, `CrocKit/Package.swift`). A new Swift target goes in there, so CI and every doc pick it up at once. `CrocKit` is listed file-by-file because a recursive run there descends into `.build/` and `Croc.xcframework/`.
 
 **Trap**: `format --in-place` does not fix lint-only rules, several enabled rules only flag and never rewrite (for example `ReplaceForEachWithForLoop`, `OnlyOneTrailingClosureArgument`, `AlwaysUseLowerCamelCase`). A clean `format` run is not evidence `lint --strict` will pass, which is why the script always runs both. Full list and rationale: `docs/knowledge/tooling.md`.
 
@@ -122,27 +122,174 @@ croc relay --host 127.0.0.1 --ports 9309,9310,9311,9312,9313 --source-join-limit
 RELAY=127.0.0.1:9309 scripts/verify-interop.sh
 ```
 
+Local signed macOS builds of `CrocApp` need a provisioning profile, because `app/CrocApp/CrocApp.entitlements` carries Associated Domains (`applinks:crocapp.dev`). `scripts/verify-app-mac.sh` and `scripts/capture-screenshots.sh` therefore pass `-allowProvisioningUpdates` to their macOS `xcodebuild`, and Xcode needs an account in team `HBSU359M33`. The first time on a new Mac, also pass `-allowProvisioningDeviceRegistration` once so the Mac is registered as a development device. A contributor outside that team cannot sign these builds; unsigned builds (`CODE_SIGNING_ALLOWED=NO`, what CI does) still work.
+
 Any change to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` needs the matching harness run, its output quoted, not summarized. If a harness could not be run, say "not verified" and why.
 
 ## 6. Build settings that must not be casually changed
 
-- **Swift 6 language mode everywhere.** `SWIFT_VERSION = 6.0` on every target (`CrocApp`, `CrocShare`, `CrocAppTests`, all build configurations, `app/CrocApp.xcodeproj/project.pbxproj`) and `CrocKit`'s `swift-tools-version: 6.0`. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default, `nonisolated` is the explicit opt-out, and strict concurrency violations are build errors, not warnings.
+- **Swift 6 language mode everywhere.** `SWIFT_VERSION = 6.0` on every target (`CrocApp`, `CrocApp Direct`, `CrocShare`, `CrocAppTests`, all build configurations, `app/CrocApp.xcodeproj/project.pbxproj`) and `CrocKit`'s `swift-tools-version: 6.0`. On top of that, `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default, `nonisolated` is the explicit opt-out, and strict concurrency violations are build errors, not warnings.
 - **Deployment target is `26.0` everywhere, never a minor.** `IPHONEOS_DEPLOYMENT_TARGET = 26.0` and `MACOSX_DEPLOYMENT_TARGET = 26.0` in the pbxproj, `platforms: [.iOS("26.0"), .macOS("26.0")]` in `CrocKit/Package.swift`, and `-iosversion 26.0 -macosversion 26.0` in `scripts/build-xcframework.sh`. All four must move together.
 - **macOS is arm64-only.** `"ARCHS[sdk=macosx*]" = arm64` in the pbxproj. `Croc.xcframework` has no `x86_64` macOS slice (golang/go#73119, section 3), so this pin exists to fail the link cleanly rather than let an Intel archive attempt one that cannot succeed.
+- **One version source, `app/Config/Version.xcconfig`.** It holds `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` and is the base configuration of the project-level Debug and Release configurations, so every target inherits it. Do not set either in a target's build settings. The build number is bumped in its own commit before each upload or tag, and `release.yml`'s tag check reads `MARKETING_VERSION` from this file. A tag run also fails when the build number is not above every build in the published `appcast.xml`, because Sparkle only offers a higher `CFBundleVersion`; a rehearsal only warns.
 - **Go toolchain pin, `>= 1.27.2` in `crocmobile/go.mod`.** Bumping it means rerunning `scripts/build-xcframework.sh` to confirm the bind still works on the new toolchain before trusting anything downstream.
 
 ## 7. Distribution builds
 
-Not implemented: real notarization. `scripts/build-devid.sh` archives the macOS app (`xcodebuild ... archive ARCHS=arm64`), checks for a "Developer ID Application" signing identity in the login keychain, and if one is missing, prints `DEVID-PENDING-CERT` and exits 0 (creating that identity at developer.apple.com is an owner action, not something the script can do). If the identity exists, it exports via `Config/ExportOptions-DevID.plist`, runs `codesign --verify --strict --deep`, then `syspolicy_check distribution` on the exported `.app`. `syspolicy_check` is Apple's pre-submission dry-run checker; it catches signing, entitlement, and hardened-runtime problems that notarization or Gatekeeper would otherwise reject, but it is **not** notarization. There is no `xcrun notarytool submit --wait` and no `xcrun stapler staple` anywhere in this repo (`docs/known-issues.md`, "Blocking release").
+`scripts/build-devid.sh [out-dir]` builds the signed, notarized, stapled macOS disk image (default out-dir `dist`, output `CrocApp-<version>-arm64.dmg`). It does, in order:
 
-Two export channels, both under `app/Config/`:
+1. Resolves the "Developer ID Application" identity for team `HBSU359M33` by SHA-1 and archives the `CrocApp Direct` scheme (Release, arm64) with manual signing and the provisioning profile "CrocApp Direct Developer ID". Prints `archive: OK`.
+2. Exports with `Config/ExportOptions-DevID.plist` and runs `codesign --verify --strict --deep`. Prints `DEVID-EXPORT-OK`.
+3. Zips the app, notarizes it (`xcrun notarytool submit --wait`), staples it, and runs `syspolicy_check distribution` on the stapled app. Prints `DEVID-APP-NOTARIZED-OK`.
+4. Builds the DMG with `scripts/build-dmg.sh` (prints `DMG-OK`), signs it with a timestamp, notarizes and staples it, then runs `stapler validate` and `spctl -a -vv -t open --context context:primary-signature`. Prints `DEVID-NOTARIZED-OK`.
+
+The app and the DMG are notarized separately, so an app copied out of the image opens offline on first launch. The script exits 1 when no Developer ID identity is present (it used to print `DEVID-PENDING-CERT` and exit 0). `syspolicy_check notary-submission` is not used: on macOS 27 it fails every app that is not yet notarized ("Gatekeeper rejected this file", spctl `source=Unnotarized Developer ID`), so a real notarization problem is read from the notary log instead. `syspolicy_check distribution` needs a stapled app, which is why it runs after the app's notarization. A local run passed with both submissions `Accepted`, both staples validated and spctl reporting `accepted, source=Notarized Developer ID`.
+
+To run it locally you need:
+
+- a "Developer ID Application" identity for team `HBSU359M33` in the keychain search list (created at developer.apple.com, Certificates)
+- the "CrocApp Direct Developer ID" profile in `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`
+- the notary credentials as a keychain profile, by default `crocapp-notary`: `xcrun notarytool store-credentials crocapp-notary --key <p8> --key-id <id> --issuer <issuer>`. Set `NOTARY_KEYCHAIN_PROFILE` to use another name, or `NOTARY_KEY`, `NOTARY_KEY_ID` and `NOTARY_ISSUER` (the CI form) to pass the App Store Connect key directly
+- `brew install create-dmg`
+
+`DEVID_WORK` sets the scratch directory (archive, DerivedData, logs).
+
+`.github/workflows/release.yml` runs the same script. It starts on a `v*` tag push or on `workflow_dispatch`. A tag run checks the tag against `MARKETING_VERSION` and the dated `CHANGELOG.md` heading, builds, signs, notarizes, writes a signed `appcast.xml` (Sparkle's `generate_appcast`, seeded with the latest release's appcast, the CHANGELOG section embedded as release notes), attests the stapled files, and publishes the DMG, `appcast.xml`, the `Croc.xcframework` zip and `SHA256SUMS.txt`. A `workflow_dispatch` run is a rehearsal: it skips the tag and CHANGELOG checks and the publish job, and publishes nothing. The build job runs in the `release` environment (required reviewer, deployment policy limited to branch `main` and tags `v*`), which holds seven secrets:
+
+| Secret | Holds |
+|---|---|
+| `DEVID_P12_BASE64` | Developer ID Application certificate and key, base64 `.p12` |
+| `DEVID_P12_PASSWORD` | `.p12` password |
+| `DEVID_PROFILE_BASE64` | "CrocApp Direct Developer ID" profile, base64 |
+| `ASC_KEY_P8` | App Store Connect API key (`.p8` text) used by `notarytool` |
+| `ASC_KEY_ID` | that key's ID |
+| `ASC_ISSUER_ID` | that key's issuer ID |
+| `SPARKLE_ED_PRIVATE_KEY` | Sparkle Ed25519 release private key, passed to `generate_appcast` on stdin |
+
+Before it signs the appcast, the workflow checks that `SPARKLE_ED_PRIVATE_KEY` matches the built app's `SUPublicEDKey`, and after, that the new item carries `sparkle:edSignature`: on a mismatched key `generate_appcast` only warns, exits 0 and writes the item unsigned, which every client rejects.
+
+A dispatch rehearsal can only run once this workflow is on `main`, because dispatch needs the workflow on the default branch and the environment allows `main`. It has not run yet (`docs/known-issues.md`, "Harnesses").
+
+Three export option files, all under `app/Config/`:
 
 | File | `method` | Channel |
 |---|---|---|
-| `ExportOptions-DevID.plist` | `developer-id` | Direct-download DMG, exercised by `scripts/build-devid.sh` |
-| `ExportOptions-MAS.plist` | `app-store-connect` | Mac App Store; committed but never exercised, first real MAS export will be its first test (`docs/known-issues.md`) |
+| `ExportOptions-DevID.plist` | `developer-id` | Direct-download DMG: manual signing, `signingCertificate` "Developer ID Application", profile "CrocApp Direct Developer ID" for `com.bakirgdev.CrocApp.direct` (the `CrocApp Direct` target); exercised by `scripts/build-devid.sh` |
+| `ExportOptions-iOS.plist` | `app-store-connect` | iOS App Store and TestFlight, from the `CrocApp` scheme on `generic/platform=iOS`; automatic signing; exercised by `scripts/build-appstore.sh` |
+| `ExportOptions-MAS.plist` | `app-store-connect` | Mac App Store and TestFlight, from the `CrocApp` scheme on `generic/platform=macOS`; same keys as the iOS file; exercised by `scripts/build-appstore.sh` |
 
-Both plists share `teamID` `HBSU359M33` and `destination` `export`.
+All three share `teamID` `HBSU359M33` and `destination` `export`. The two App Store files also set `signingStyle` `automatic` and `manageAppVersionAndBuildNumber` false. `build-appstore.sh --upload` leaves them alone: it sets `destination` to `upload` in a scratch copy, so the committed files always describe an export to disk.
+
+The `CrocApp Direct` target is the Developer ID channel. It is macOS only and arm64, with bundle ID `com.bakirgdev.CrocApp.direct` and product `CrocApp.app` (the same product name as the App Store target). Its sources are the `app/CrocApp/` synchronized group plus `app/CrocAppDirect/`, built with the Swift condition `DIRECT`. It links Sparkle 2.10.0 (SwiftPM, this target only) and shows "Check for Updates…" in the app menu. Because both targets produce `CrocApp.app`, in one shared DerivedData each scheme's build replaces the other's `CrocApp.app`; the harness scripts and CI use their own `-derivedDataPath`, or build Direct last.
+
+`SPARKLE_PUBLIC_ED_KEY` on the Direct target is set to the owner's release public key. The key was made as plain text with `openssl genpkey -algorithm ed25519` (the base64 raw 32-byte private seed and public key, the format step 1 of the procedure below makes), not with Sparkle's `generate_keys`, which stores it in the keychain; the owner keeps the private key and it is the `SPARKLE_ED_PRIVATE_KEY` secret. `SPARKLE_FEED_URL` is `https://github.com/bakirgdev/CrocApp/releases/latest/download/appcast.xml`.
+
+### Testing a Sparkle update locally
+
+Proves a Release `CrocApp Direct` build installs a newer one. It uses a throwaway Ed25519 key, never the release key, and a feed on localhost (Sparkle accepts an `http` localhost feed and only logs a warning about HTTPS; no ATS exception is needed).
+
+Sparkle's tools come with the package: `<DerivedData>/SourcePackages/artifacts/sparkle/Sparkle/bin/`. Work in a scratch directory with a `feed/` folder.
+
+1. Throwaway key (raw 32-byte seed and public key, base64):
+   ```bash
+   openssl genpkey -algorithm ed25519 -out key.pem
+   openssl pkey -in key.pem -outform DER | tail -c 32 | base64 > priv.b64
+   openssl pkey -in key.pem -pubout -outform DER | tail -c 32 | base64 > pub.b64
+   ```
+2. Build twice, as build 1 and build 2, from `app/`:
+   ```bash
+   for N in 1 2; do
+     xcodebuild -scheme 'CrocApp Direct' -configuration Release -destination 'platform=macOS' \
+       -derivedDataPath "dd$N" -allowProvisioningUpdates CURRENT_PROJECT_VERSION=$N \
+       "SPARKLE_PUBLIC_ED_KEY=$(cat pub.b64)" SPARKLE_FEED_URL=http://127.0.0.1:8765/appcast.xml build
+   done
+   ```
+3. Zip build 2 into `feed/` and write the signed appcast:
+   ```bash
+   ditto -c -k --sequesterRsrc --keepParent dd2/Build/Products/Release/CrocApp.app feed/CrocApp-2.zip
+   generate_appcast --ed-key-file - --download-url-prefix http://127.0.0.1:8765/ feed < priv.b64
+   ```
+4. Serve it: `cd feed && python3 -m http.server 8765 --bind 127.0.0.1`.
+5. Copy build 1 somewhere writable (`ditto dd1/Build/Products/Release/CrocApp.app apps/CrocApp.app`), launch it, choose "Check for Updates…", then "Install Update", then "Install and Relaunch" in Sparkle's standard UI. From the second launch on, Sparkle first asks about automatic checks.
+6. Expect the old process to exit, a new process to start, and `apps/CrocApp.app` to report `CFBundleVersion` 2.
+
+4 of 5 runs of this procedure passed; the first run hung after "Install and Relaunch" (`docs/known-issues.md`, "Harnesses").
+
+### App Store builds
+
+`scripts/build-appstore.sh [--upload] [ios|macos]...` builds the `CrocApp` scheme (Release) for the App Store channels. No platform argument means both. For each platform it:
+
+1. Archives for `generic/platform=iOS` or `generic/platform=macOS` and prints `<platform> archive: OK`.
+2. Runs `xcodebuild -exportArchive` with `ExportOptions-iOS.plist` or `ExportOptions-MAS.plist`.
+   - Without `--upload`, it writes `CrocApp.ipa` (iOS) or `CrocApp.pkg` (macOS) to the scratch directory and prints `APPSTORE-EXPORT-OK <platform>`. Nothing leaves the Mac.
+   - With `--upload`, it sets `destination` to `upload` in a scratch copy of the plist and sends the build to App Store Connect (TestFlight). It prints `APPSTORE-UPLOAD-OK <platform>`.
+
+`APPSTORE_WORK` sets the scratch directory (archives, DerivedData, per-step logs); the script deletes it first. On failure the script prints the tail of the failing log and its path.
+
+To run it you need:
+
+- Xcode signed in to the Apple ID that belongs to team `HBSU359M33` (Settings > Accounts). Signing is automatic and cloud-managed through `-allowProvisioningUpdates`, so no Apple Distribution or Mac Installer certificate has to be in the keychain.
+- `CrocKit/Croc.xcframework` built (`scripts/build-xcframework.sh`).
+- The App Store Connect record "CrocApp" (iOS and macOS on one record, bundle ID `com.bakirgdev.CrocApp`).
+- A build number App Store Connect has not seen for this version. The build number is always `CURRENT_PROJECT_VERSION` in `app/Config/Version.xcconfig` (`manageAppVersionAndBuildNumber` is false), and App Store Connect refuses a number it has already seen for that `MARKETING_VERSION`. Bump it in its own commit before every upload, then run the script without `--upload` first if the change is in doubt.
+
+First upload: 2026-10-14, iOS and macOS 1.0.0 (1). Both ended `** EXPORT SUCCEEDED **` and `Uploaded package is processing`. Things it taught:
+
+- **`MinimumOSVersion = 100.0`.** gomobile writes this into the framework `Info.plist` (x/mobile `bind_iosapp.go`, a SwiftPM workaround). The upload accepted it, so `build-xcframework.sh` is not patched. [golang/go#66500](https://github.com/golang/go/issues/66500) is closed, fixed in x/mobile CL 574055 and 575115, which our pinned x/mobile includes.
+- **"Upload Symbols Failed".** The only warning, for `Croc.framework` (iOS) and `A` (macOS). Xcode embeds a 50 KB stub `Croc.framework` dylib with no dSYM, because the gomobile xcframework is a static archive linked into the app binary. It is not an ITMS warning (`docs/known-issues.md`, "Accepted").
+- **App category.** `LSApplicationCategoryType` is `public.app-category.utilities`, set as `INFOPLIST_KEY_LSApplicationCategoryType` on `CrocApp` and `CrocApp Direct`. Without it the macOS archive warned "No App Category is set".
+- **Privacy manifest.** `app/CrocApp/PrivacyInfo.xcprivacy` declares required-reason APIs the Go engine reaches: `FileTimestamp` (`C617.1`, `3B52.1`) and `SystemBootTime` (`35F9.1`), besides `UserDefaults` (`CA92.1`). The engine is linked statically into the app binary and imports `stat`, `fstat`, `fstatat`, `lstat` and `mach_absolute_time` (`nm -u`); it does not import `statfs`, `statvfs` or `getattrlist`, so there is no `DiskSpace` entry. Whether the processed builds trigger an ITMS-91053 email is not known until the owner checks the developer-account mail (Owner steps, below).
+- **Export compliance** failed the first attempt; see the next section.
+
+### Export compliance
+
+Both app `Info.plist` files (`app/Config/CrocApp-Info.plist`, `CrocApp-macOS-Info.plist`) set `ITSAppUsesNonExemptEncryption` to `false`. The first upload attempt, with `true` and no `ITSEncryptionExportComplianceCode`, failed with `Invalid Export Compliance Code. The export compliance key value [] in the app's Info.plist doesn't match the key value of the app's export compliance documentation.`
+
+`false` is a legal position, not only a way past the check: croc's encryption (AES-256-GCM, PAKE) is standard and its source is public, so the app relies on the open-source exemption (EAR 742.15(b), the owner's 1.0 decision). It stays open until the owner confirms it before Submit for Review: re-read App Store Connect's encryption questions and check France, which asks for an ANSSI declaration; if App Store Connect requires that declaration, leave France out of 1.0's availability and file a `future` issue for it. If the exemption does not hold, set the key to `true` and add the `ITSEncryptionExportComplianceCode` that App Store Connect issues after the documentation is approved (`docs/known-issues.md`, "Blocking release").
+
+### Owner steps
+
+Everything below is done by a person, not by a script. It is written so the next release can repeat it. IDs in brackets match the release plan. Each step is marked done (with the date) or remaining.
+
+1. **Agreements, tax and banking.** Done 2026-10-12. In App Store Connect, accept the Free Apps and Paid Apps agreements, fill in tax and bank details, and declare EU Digital Services Act trader status with public contact details. Before each release, check that no agreement shows as pending or needing re-acceptance.
+2. **Developer ID Application certificate [O1].** Done 2026-10-12.
+   1. At developer.apple.com, Certificates, create a "Developer ID Application" certificate (a certificate signing request comes from Keychain Access, Certificate Assistant). Download it and double-click it to install into the login keychain.
+   2. Check it: `security find-identity -v -p codesigning` lists "Developer ID Application" for team `HBSU359M33`.
+   3. In Keychain Access, export the certificate with its private key as a `.p12` with a password. Keep the `.p12` and the password in the password manager. They become the `DEVID_P12_BASE64` and `DEVID_P12_PASSWORD` secrets (step 7).
+3. **Notarization API key [O2].** Done 2026-10-12, verified 2026-10-14. In App Store Connect, create a team API key named "CrocApp notarization" with the Developer role (the role is enough for `notarytool`). Download the `.p8` (Apple offers it once) and note the Key ID and Issuer ID; keep all three in the password manager. Then, in a terminal:
+   ```bash
+   xcrun notarytool store-credentials crocapp-notary --key <p8 path> --key-id <key id> --issuer <issuer id>
+   xcrun notarytool history --keychain-profile crocapp-notary
+   ```
+   The second command answering confirms the key works. The three values are also the CI secrets `ASC_KEY_P8`, `ASC_KEY_ID` and `ASC_ISSUER_ID`.
+4. **Bundle IDs and the App Store Connect record [O4].** Done.
+   1. `com.bakirgdev.CrocApp` and `com.bakirgdev.CrocApp.CrocShare` exist (2026-10-12), and the App Store Connect record "CrocApp" exists: iOS and macOS on one record (universal purchase), bundle ID `com.bakirgdev.CrocApp`, name reserved.
+   2. `com.bakirgdev.CrocApp.direct` was created on 2026-10-13 by Xcode automatic signing. The same run registered this Mac as a development device and signed both app IDs with Associated Domains. On a new Mac, build once with `-allowProvisioningUpdates -allowProvisioningDeviceRegistration`.
+5. **Developer ID provisioning profile [O10].** Done 2026-10-14. At developer.apple.com, Profiles, create a Developer ID profile named "CrocApp Direct Developer ID" for `com.bakirgdev.CrocApp.direct` with Associated Domains. It expires in 2044. Download it and copy it into `~/Library/Developer/Xcode/UserData/Provisioning Profiles/` (`scripts/build-devid.sh` needs it there). Its base64 is the `DEVID_PROFILE_BASE64` secret.
+6. **Sparkle release key [O6].** Done 2026-10-14. In your own terminal, so the key material never goes through anyone else:
+   ```bash
+   openssl genpkey -algorithm ed25519 -out k.pem && echo "private: $(openssl pkey -in k.pem -outform DER | tail -c 32 | base64)" && echo "public: $(openssl pkey -in k.pem -pubout -outform DER | tail -c 32 | base64)" && rm k.pem
+   ```
+   Save the `private:` line in the password manager (it becomes `SPARKLE_ED_PRIVATE_KEY`, step 7). Put the `public:` line in `SPARKLE_PUBLIC_ED_KEY` on the `CrocApp Direct` target. It is `7vFYkIXDHGPg4FHsWDCe3Qz546DfdyQbRKQZOO8zYsE=` and is public. The key is deliberately plain text that the owner keeps, not a keychain item, so Sparkle's `generate_keys` is not used.
+7. **GitHub `release` environment [O7].** Done 2026-10-12 and 2026-10-14. The environment `release` exists with required reviewer `bakirgdev`, and its deployment policy allows branch `main` and tags `v*`. To create or rotate one of its secrets (table in this section, above), pipe the value from a file so it is never printed or typed:
+   ```bash
+   gh secret set DEVID_P12_PASSWORD --env release < password.txt
+   base64 < cert.p12 | gh secret set DEVID_P12_BASE64 --env release
+   ```
+   Use the `gh` account that matches the repo owner. All seven secrets were set on 2026-10-14, after checking locally that the Sparkle private key derives the committed public key, the password opens the `.p12`, and the `.p8` with its key ID and issuer authenticates `notarytool history`.
+8. **Approve a release run.** Remaining, each release. A `v*` tag push or a `workflow_dispatch` pauses `release.yml` at the `release` environment. Open the run in GitHub Actions and approve the deployment as the required reviewer. The first `workflow_dispatch` rehearsal is still to run, from `main`, before any tag (`docs/known-issues.md`).
+9. **Physical iPhone [O8].** Done: an iPhone on iOS 26 or later, Developer Mode on, shown in Xcode's Devices and Simulators window, and Xcode signed in with the Apple ID that `scripts/build-appstore.sh` uses. Remaining: run the device checklist whenever a slice asks for it.
+10. **Multicast entitlement [O3].** Remaining, pending. The request went in on 2026-10-12 at developer.apple.com/contact/request/networking-multicast, Apple request ID WA7J9P8GM7. Check the developer-account email for Apple's reply. If it is granted, Apple adds "Multicast Networking" as a capability on `com.bakirgdev.CrocApp`, and the `com.apple.developer.networking.multicast` entitlement can then be added to the iOS target. If it is not granted by submission, ship without it, hide the iOS multicast setting, and file a `future` issue quoting WA7J9P8GM7.
+11. **croc maintainer [O5].** Remaining. The maintainer was emailed on 2026-10-12 about the name, the public relay pool default, the Tailcat/DERP `auto` default, getcroc.com stored transfers and the browser link. No reply is recorded. A "no" on any of them changes a default, so ask for the reply before building features on those defaults, and again before Submit for Review.
+12. **Upload to TestFlight.** Done for 1.0.0 (1) on 2026-10-14. For each later build: bump `CURRENT_PROJECT_VERSION` in `app/Config/Version.xcconfig` and commit, then run `scripts/build-appstore.sh --upload`. It prints `APPSTORE-UPLOAD-OK ios` and `APPSTORE-UPLOAD-OK macos`.
+13. **After each upload, check the result.** Remaining, every upload.
+    1. Open the developer-account email. Apple sends ITMS warnings or errors there after processing (for example ITMS-91053, a missing required-reason API declaration). Fix what it names in `PrivacyInfo.xcprivacy` and upload a new build number.
+    2. In App Store Connect, open the app's TestFlight tab and confirm both the iOS and the macOS build finished processing and are not marked invalid.
+14. **Internal testers.** Remaining. In TestFlight, create an internal group (or add yourself as an internal tester), assign build 1 to it, then install it from TestFlight on the iPhone and on the Mac and open it once on each.
+15. **Universal link in the Direct build.** Remaining. Not verified: with the stapled Direct app from `build-devid.sh` (2026-10-14, all checks passed), LaunchServices returned no app link for `https://crocapp.dev/r/...`, for the Direct build and for the dev `CrocApp` build alike, and the Mac was locked so Safari could not be tried. Check it by hand: on an unlocked Mac, install the Direct app in /Applications, click a `https://crocapp.dev/r/...` link in Safari or Notes, and see whether CrocApp opens. If it does not, Direct relies on the `crocapp://` button.
+16. **App Store Connect listing [O9].** Remaining. Set pricing and availability (France only if App Store Connect does not require the French declaration, see Export compliance), the privacy answers, age rating, the export compliance answers, screenshots and metadata. Then Submit for Review. Before submitting, repeat steps 10 and 11 and re-check the export compliance question.
+
+Reminders to give the owner: ask for the croc maintainer's reply before the first 1.0 feature build; check for Apple's reply to the multicast request before building the multicast setting; and before Submit for Review do both again.
 
 ## 8. Troubleshooting
 
@@ -152,7 +299,7 @@ Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 | Xcode or `xcodebuild` fails immediately, missing binary target / no such module `Croc` | `CrocKit/Croc.xcframework` does not exist (gitignored, absent on a fresh clone) | Run `scripts/build-xcframework.sh` first |
 | `scripts/build-xcframework.sh` exits `error: go not installed` | Go not on `PATH` | `brew install go` |
 | `gomobile: command not found` right after the script claims to have installed it | `$(go env GOPATH)/bin` not on this shell's `PATH` | The script exports it only for its own run; for a direct `gomobile` invocation afterward, `export PATH="$PATH:$(go env GOPATH)/bin"` |
-| macOS build in CI is unsigned | CI's `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` (no signing identity on the runner) | Expected in CI. Locally, a build signs normally with a `Mac Development` identity in your keychain |
+| macOS build in CI is unsigned | CI's `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` (no signing identity on the runner) | Expected in CI. Locally, a signed build needs a `Mac Development` identity and a provisioning profile (section 5, Associated Domains), so pass `-allowProvisioningUpdates` |
 | `go install .../cmd@latest` (gomobile, gobind, govulncheck) produces a binary you cannot find or run | `GOOS`/`GOARCH` set in the shell (as CI's go job sets `darwin`/`arm64`) makes `go install` drop the binary at `$GOPATH/bin/darwin_arm64/…` instead of `$GOPATH/bin/…` | Install with `env -u GOOS -u GOARCH go install ...`, then run the tool with the original env intact if the analysis itself needs to target darwin (`docs/knowledge/tooling.md`) |
 | A hand-rolled `swift-format format --in-place` reports clean, but `lint --strict` (what CI runs) still fails | Several enabled rules are lint-only and never rewrite | Use `scripts/format-swift.sh`, which always lints after formatting; see the rule list in `docs/knowledge/tooling.md` |
 
@@ -163,4 +310,4 @@ Both plists share `teamID` `HBSU359M33` and `destination` `export`.
 - **croc bump**: `go get github.com/schollz/croc/v11@vX.Y.Z` in `crocmobile/` (`brew upgrade croc` for the test CLI), rebind, then update every place that names the version by hand: `README.md` FAQ, `CONTRIBUTING.md`'s croc-install line, this file's prerequisites table, and `docs/knowledge/crocmobile-bridge.md`. Check `docs/knowledge/croc-upgrade-playbook.md` for the full procedure.
 - **golangci-lint bump**: change the `version:` input on the `golangci-lint-action` step in `.github/workflows/reusable-go.yml`; update `crocmobile/.golangci.yml`'s schema `version:` if the new major changes it.
 - **gomobile/gobind**: pinned by the `tool` block in `crocmobile/go.mod`; bump with `go get golang.org/x/mobile@latest`. If a bind regresses on a new release, pin the last good version there and record it in `docs/knowledge/tooling.md`.
-- Whatever changed, re-check whether [golang/go#73119](https://github.com/golang/go/issues/73119) (macOS multi-arch bind) or [golang/go#66500](https://github.com/golang/go/issues/66500) (iOS device archive layout) have been fixed upstream before assuming either still blocks Intel Mac support or App Store archives; both are live gates on real behavior, not just build warnings.
+- Whatever changed, re-check whether [golang/go#73119](https://github.com/golang/go/issues/73119) (macOS multi-arch bind) has been fixed upstream before assuming it still blocks Intel Mac support; it is a live gate on real behavior, not just a build warning. [golang/go#66500](https://github.com/golang/go/issues/66500) (iOS device archive layout) is closed and the first App Store upload passed (section 7).

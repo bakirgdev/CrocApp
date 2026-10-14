@@ -6,8 +6,8 @@
 # there is one x/mobile version in the repo and dependabot can see it.
 #
 # macOS slice is arm64-only: golang/go#73119 (multi-arch macos bind broken).
-# iOS device slice layout issue golang/go#66500 affects App Store archives,
-# not simulator/dev builds — revisit before the first store submission.
+# The framework Info.plist keeps gomobile's MinimumOSVersion = 100.0 (an SPM
+# workaround in x/mobile); App Store Connect accepted it on the first upload.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
