@@ -8,6 +8,19 @@ public enum RelayDefaults {
     public static var address6: String { CrocmobileDefaultRelayAddress6() }
 }
 
+/// What a receive does with an incoming file whose name already exists.
+/// Raw values mirror `PolicyKeepBoth` and `PolicyReplace` in
+/// `crocmobile/crocmobile.go`.
+public enum FilePolicy: String, Sendable, CaseIterable {
+    /// The existing file stays; croc saves the new one as "name (1).ext". A
+    /// partly received file is not resumed. In a zipped folder, members that
+    /// already exist are skipped.
+    case keepBoth
+    /// The new file overwrites the existing one; croc resumes a partly
+    /// received file.
+    case replace
+}
+
 public struct EngineOptions: Sendable {
     /// Blank relay fields mean croc's defaults (see `RelayDefaults`).
     public var relayAddress = ""
@@ -19,14 +32,16 @@ public struct EngineOptions: Sendable {
     public var disableLocal = false
     public var onlyLocal = false
     public var autoAccept = false
-    public var overwrite = false
+    /// Receive: applies as is under `autoAccept`; otherwise
+    /// `respond(accept:policy:)` replaces it.
+    public var whenFileExists = FilePolicy.keepBoth
     public var noCompress = false
     public var zipFolder = false
     public var gitIgnore = false
     /// Substring patterns excluded from sends (croc --exclude semantics).
     public var exclude: [String] = []
     /// Both-sides confirm (croc --ask). Sender prompt is bridged via the
-    /// stdin pipe; respond(accept:) answers it.
+    /// stdin pipe; respond(accept:policy:) answers it.
     public var ask = false
     public init() {}
 }

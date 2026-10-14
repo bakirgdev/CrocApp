@@ -12,6 +12,11 @@ the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - The macOS direct download is now signed with a Developer ID certificate, notarized and stapled, and updates itself with Sparkle: choose "Check for Updates…" in the app menu. The release no longer ships the separate app zip; the disk image is the download.
+- Receiving a file whose name is already taken now offers Keep Both (saves the new one as `name (1).ext`) or Replace. With auto-accept on, the setting "When a file already exists" under Confirmation chooses; it defaults to Keep Both.
+
+### Fixed
+
+- A receive no longer overwrites existing files by default. A zipped folder received into a folder that already holds it no longer fails. Answers left over from one transfer can no longer answer the next transfer's accept prompt.
 
 ## [0.9.9] - 2026-07-30
 

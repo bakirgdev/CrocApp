@@ -39,9 +39,11 @@ public actor CrocEngine {
         try start(send: false, code: code, paths: [], text: "", options: options)
     }
 
-    /// Answer the accept/decline request raised by a `.fileList` event.
-    public func respond(accept: Bool) {
-        activeTransfer?.respond(accept)
+    /// Answer the accept/decline request raised by a `.fileList` event. On
+    /// accept, `policy` decides what happens to files that already exist;
+    /// senders ignore it.
+    public func respond(accept: Bool, policy: FilePolicy) {
+        activeTransfer?.respond(accept, policy: policy.rawValue)
     }
 
     /// Cancels the transfer `id` if it is still the active one; a stale ID is
@@ -116,7 +118,8 @@ public actor CrocEngine {
         opts.disableLocal = o.disableLocal
         opts.onlyLocal = o.onlyLocal
         opts.autoAccept = o.autoAccept
-        opts.overwrite = o.overwrite
+        opts.overwrite = o.whenFileExists == .replace
+        opts.rename = o.whenFileExists == .keepBoth
         opts.noCompress = o.noCompress
         opts.zipFolder = o.zipFolder
         opts.gitIgnore = o.gitIgnore

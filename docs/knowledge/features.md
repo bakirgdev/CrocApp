@@ -17,7 +17,7 @@ Status is verified against the code, not against intent. **Shipped** means the f
 | F5 | Custom code phrase (min 6 chars) | `--code` | shipped |
 | F6 | QR show on send + QR scan on receive | `--qrcode` + GUI-native | shipped |
 | F7 | Choose output folder; iOS default = Files-visible app folder | `--out` | shipped |
-| F8 | Overwrite/resume handling via confirm sheets | `--overwrite` + resume | shipped |
+| F8 | Keep Both / Replace on receive, via confirm sheets; resume with Replace | `--rename` / `--overwrite` + resume | shipped |
 | F9 | Incoming file list preview + accept/decline | interactive prompt equivalent | shipped |
 | F10 | Progress, speed, cancel; Live Activity on iOS | polled from engine | shipped |
 | F11 | LAN + relay auto race | croc default | shipped |

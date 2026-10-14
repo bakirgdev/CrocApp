@@ -171,9 +171,9 @@ final class TransferController {
             codeHint: Self.codeHint(code), bookmarks: [])
         var options = baseOptions()
         options.outDir = folder.path
-        // Conflicts are surfaced in the incoming sheet before accept; from
-        // there "Accept" means replace (croc resumes partial files itself).
-        options.overwrite = true
+        // Auto-accept uses the setting; otherwise the incoming sheet's answer
+        // replaces it.
+        options.whenFileExists = settings.whenFileExists
         // Ask forces croc's receiver prompt even under NoPrompt, and the
         // engine's AutoAccept path closes the prompt pipe (EOF = decline),
         // so Ask wins when both are on.
@@ -182,9 +182,11 @@ final class TransferController {
         run { try await self.engine.startReceive(code: code, options: options) }
     }
 
-    /// Answer the accept/decline prompt raised by `.incoming`.
-    func respond(accept: Bool) {
-        Task { await engine.respond(accept: accept) }
+    /// Answer the accept/decline prompt raised by `.incoming` or `.confirmSend`.
+    /// `policy` decides what an accepted receive does with files that already
+    /// exist; a send ignores it.
+    func respond(accept: Bool, policy: FilePolicy = .keepBoth) {
+        Task { await engine.respond(accept: accept, policy: policy) }
         if accept {
             phase = .connecting
         } else {
@@ -374,8 +376,7 @@ final class TransferController {
                     for: failure, cancelRequested: cancelRequested,
                     declineRequested: declineRequested)
                 if sawTransferBytes && !cancelRequested && !declineRequested {
-                    copy +=
-                        " Start the same transfer again — croc resumes partially transferred files."
+                    copy += Self.resumeHint
                 }
                 phase = .failed(copy)
             }
@@ -465,7 +466,12 @@ final class TransferController {
 
     /// Used from both `handle(.failed)` and `run()`'s catch.
     private static let backgroundExpiredCopy =
-        "iOS paused the transfer in the background. Start the same transfer again — croc resumes partially transferred files."
+        "iOS paused the transfer in the background." + resumeHint
+
+    /// Keep Both saves a partly received file as a new copy, so only Replace
+    /// resumes it.
+    private static let resumeHint =
+        " Start the same transfer again; replacing the partly received files resumes it."
 
     static func friendlyMessage(
         for failure: EngineFailure, cancelRequested: Bool, declineRequested: Bool

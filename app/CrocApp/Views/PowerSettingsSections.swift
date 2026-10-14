@@ -1,3 +1,4 @@
+import CrocKit
 import SwiftUI
 
 /// Power-option form sections (F13-F19), shared by the macOS Settings scene
@@ -52,6 +53,12 @@ struct PowerSettingsSections: View {
         Section {
             Toggle("Confirm on both sides", isOn: $settings.bothSidesConfirm)
             Toggle("Auto-accept incoming files", isOn: $settings.autoAccept)
+            if settings.autoAccept {
+                Picker("When a file already exists", selection: $settings.whenFileExists) {
+                    Text("Keep Both").tag(FilePolicy.keepBoth)
+                    Text("Replace").tag(FilePolicy.replace)
+                }
+            }
         } header: {
             Text("Confirmation")
         } footer: {
@@ -60,7 +67,7 @@ struct PowerSettingsSections: View {
                 // already styles footers as secondary, so a status color
                 // here would tint body text (colors.md rule 2 violation).
                 Text(
-                    "Files from anyone who has your code are saved without preview or confirmation. Unsafe file names still cancel the transfer. Both-sides confirm overrides auto-accept."
+                    "Files from anyone who has your code are saved without preview or confirmation. Keep Both saves a new copy next to an existing file; Replace overwrites it. Unsafe file names still cancel the transfer. Both-sides confirm overrides auto-accept."
                 )
             } else {
                 Text(

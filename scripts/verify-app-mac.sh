@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Verifies the macOS app's UI state machine end-to-end via launch arguments.
 # Six directions: CLI -> app receive (+ history), app -> CLI send, local-only
-# send, custom-relay send, no-compress send, both-sides-confirm send. Every one
+# send, custom-relay send, no-compress send, both-sides-confirm send, then a
+# receive onto an existing file with Keep Both and with Replace. Every one
 # gates on a byte-identical diff AND the app's verify-result.txt.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -170,3 +171,30 @@ await_app 30
 check_result "ask send"
 diff -r "$DOCS/askdir" "$DST/askdir"
 echo MAC-ASK-OK
+
+# --- 7: CLI -> app onto an existing file, Keep Both and Replace (R24) --------
+# --when-exists is the answer AutoVerify gives the incoming sheet. Keep Both
+# leaves the existing file and adds "collide (1).txt"; Replace overwrites it.
+collide() {                                         # collide POLICY
+  local policy=$1
+  C=$(code "cl${policy:0:1}")
+  rm -f "$RESULT" "$DOCS/collide.txt" "$DOCS/collide (1).txt"
+  echo "existing file" > "$DOCS/collide.txt"
+  echo "mac collide $policy $$" > "$TMP/collide.txt"
+  ( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin send collide.txt ) \
+      > "$TMPROOT/mac-cli-collide-$policy.log" 2>&1 &
+  sleep 3
+  run_app --auto-receive "$C" --when-exists "$policy" > "$TMPROOT/mac-app-collide-$policy.log" 2>&1
+  await_app 120
+  check_result "collide $policy"
+  if [ "$policy" = keepBoth ]; then
+    [ "$(cat "$DOCS/collide.txt")" = "existing file" ] || fail "keepBoth: existing file changed"
+    diff "$TMP/collide.txt" "$DOCS/collide (1).txt"
+  else
+    diff "$TMP/collide.txt" "$DOCS/collide.txt"
+    [ ! -e "$DOCS/collide (1).txt" ] || fail "replace: renamed copy written"
+  fi
+}
+collide keepBoth
+collide replace
+echo MAC-COLLIDE-OK

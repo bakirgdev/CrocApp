@@ -5,7 +5,7 @@ The simulator cannot verify any of these. Run them on a real iOS 26 device befor
 ## Background continuation (BGContinuedProcessingTask)
 - [ ] Start multi-GB receive, background the app → system Live Activity shows title + progress + cancel
 - [ ] Transfer completes in background (best-effort; low-progress kills expected under pressure)
-- [ ] Force-expire (long background under memory pressure) → reopen app shows "iOS paused the transfer…" message; restarting same transfer resumes partial file (croc resume)
+- [ ] Force-expire (long background under memory pressure) → reopen app shows "iOS paused the transfer…" message; restarting same transfer and choosing Replace resumes partial file (croc resume; Keep Both saves a new copy instead)
 - [ ] Cancel from the system Live Activity → app shows cancelled state
 - [ ] Wildcard identifier registers OK on-device (fallback static id is the backstop; check console for register() failures)
 

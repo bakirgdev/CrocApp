@@ -1,13 +1,16 @@
 // croctest exercises crocmobile from the command line for interop verification.
 //
 //	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [PATH...]
-//	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-cancel-after MS] CODE
+//	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-policy keepBoth|replace] [-cancel-after MS] CODE
 //	croctest relay CODE
 //	croctest relays
 //
 // -throttle caps the sender's upload rate (e.g. "200k", "1m") so cancel
 // timing in a slow/fast test environment can be made deterministic instead
 // of racing a transfer that may already be finished.
+//
+// -policy is what a receive does with a file whose name already exists: on the
+// Options for -yes, in the accept answer otherwise.
 //
 // -relay-index makes a generated code map to that public pool relay, as if the
 // latency probe had picked it. relay prints the pool relay a code maps to;
@@ -31,6 +34,7 @@ import (
 
 type printDelegate struct {
 	answer   string
+	policy   string
 	pool     bool
 	transfer **crocmobile.Transfer
 }
@@ -50,8 +54,8 @@ func (p *printDelegate) OnConnected() { fmt.Fprintln(os.Stderr, "EVENT connected
 func (p *printDelegate) OnFileList(j string) {
 	fmt.Fprintf(os.Stderr, "EVENT filelist %s\n", j)
 	if *p.transfer != nil {
-		(*p.transfer).Respond(p.answer == "y")
-		fmt.Fprintf(os.Stderr, "EVENT responded %s\n", p.answer)
+		(*p.transfer).Respond(p.answer == "y", p.policy)
+		fmt.Fprintf(os.Stderr, "EVENT responded %s %s\n", p.answer, p.policy)
 	}
 }
 func (p *printDelegate) OnProgress(j string) { fmt.Fprintf(os.Stderr, "EVENT progress %s\n", j) }
@@ -98,12 +102,17 @@ func main() {
 	out := fs.String("out", ".", "output dir (receive)")
 	answer := fs.String("answer", "y", "accept answer y|n (receive)")
 	yes := fs.Bool("yes", false, "auto-accept (receive)")
+	policy := fs.String("policy", crocmobile.PolicyKeepBoth, "existing file: keepBoth|replace (receive)")
 	cancelAfter := fs.Int("cancel-after", 0, "cancel after N ms")
 	throttle := fs.String("throttle", "", "cap sender upload rate, e.g. 200k, 1m (send)")
 	relayIndex := fs.Int("relay-index", -1, "public pool relay a generated code maps to (send)")
 	noMulti := fs.Bool("no-multi", false, "one data connection instead of one per relay port (send)")
 	_ = fs.Parse(os.Args[2:])
 
+	if *policy != crocmobile.PolicyKeepBoth && *policy != crocmobile.PolicyReplace {
+		fmt.Fprintln(os.Stderr, "-policy must be keepBoth or replace")
+		os.Exit(2)
+	}
 	if *relayIndex >= 0 {
 		relaycache.Set(*relayIndex)
 	}
@@ -118,11 +127,13 @@ func main() {
 	opts.Code = *code
 	opts.OutDir = *out
 	opts.AutoAccept = *yes
+	opts.Overwrite = *policy == crocmobile.PolicyReplace
+	opts.Rename = !opts.Overwrite
 	opts.ThrottleUpload = *throttle
 	opts.NoMultiplexing = *noMulti
 
 	var tr *crocmobile.Transfer
-	d := &printDelegate{answer: *answer, pool: *relay == "" && !*onlyLocal, transfer: &tr}
+	d := &printDelegate{answer: *answer, policy: *policy, pool: *relay == "" && !*onlyLocal, transfer: &tr}
 	var err error
 	switch mode {
 	case "send":

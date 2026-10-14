@@ -336,8 +336,8 @@ struct TransferStatusView: View {
     }
 }
 
-/// Incoming file list preview with accept/decline (F9), conflict warning (F8),
-/// and unsafe-name blocking.
+/// Incoming file list preview with accept/decline (F9), Keep Both / Replace
+/// when files already exist (F8, R24), and unsafe-name blocking.
 struct IncomingRequestView: View {
     @Environment(TransferController.self) private var controller
     let list: FileList
@@ -371,14 +371,22 @@ struct IncomingRequestView: View {
                 StatusBanner(
                     kind: .warning,
                     title:
-                        "\(conflicts.count) item(s) already exist and will be replaced. Partially received files resume."
+                        "\(conflicts.count) item(s) already exist. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files."
                 )
             }
             HStack(spacing: Spacing.space5) {
                 Button("Decline", role: .destructive) { controller.respond(accept: false) }
-                Button("Accept") { controller.respond(accept: true) }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!blocked.isEmpty)
+                if blocked.isEmpty, !conflicts.isEmpty {
+                    Button("Replace") { controller.respond(accept: true, policy: .replace) }
+                    Button("Keep Both") { controller.respond(accept: true, policy: .keepBoth) }
+                        .buttonStyle(.borderedProminent)
+                } else {
+                    // Until the conflict scan reports, Accept keeps both: it
+                    // never overwrites a file the scan has not shown yet.
+                    Button("Accept") { controller.respond(accept: true, policy: .keepBoth) }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!blocked.isEmpty)
+                }
             }
         }
     }

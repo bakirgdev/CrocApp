@@ -52,7 +52,7 @@ In CrocApp, set the same address under the [relay power option](../guide/power-o
 | F5 | Custom code phrase (min 6 chars) | `--code` |
 | F6 | QR show on send / scan on receive | `--qrcode` |
 | F7 | Choose output folder | `--out` |
-| F8 | Overwrite/resume handling | `--overwrite` |
+| F8 | Keep Both / Replace on receive | `--rename` (Keep Both), `--overwrite` (Replace) |
 | F9 | Incoming file list preview, accept/decline | interactive prompt |
 | F10 | Progress, speed, cancel | — |
 | F11 | LAN + relay auto race | croc default |

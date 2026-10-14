@@ -26,7 +26,7 @@ CrocApp embeds croc v11.5.4 as its engine. It's built to interoperate with the `
 
 ## iOS backgrounding limits
 
-iOS does not allow raw TCP transfers to keep running arbitrarily in the background. CrocApp uses `BGContinuedProcessingTask` (iOS 26+) to keep a transfer going and show a system Live Activity, but it's best-effort: the system can end it under memory pressure, and a low-progress transfer is more likely to be killed than a nearly-finished one. For a transfer you don't want interrupted, keep CrocApp in the foreground until it finishes. If it does get cut off, croc's own resume behavior means restarting the same transfer picks up from where it left off rather than starting over.
+iOS does not allow raw TCP transfers to keep running arbitrarily in the background. CrocApp uses `BGContinuedProcessingTask` (iOS 26+) to keep a transfer going and show a system Live Activity, but it's best-effort: the system can end it under memory pressure, and a low-progress transfer is more likely to be killed than a nearly-finished one. For a transfer you don't want interrupted, keep CrocApp in the foreground until it finishes. If it does get cut off, croc's own resume behavior means restarting the same transfer picks up from where it left off rather than starting over, as long as you choose **Replace** for the partly received files. **Keep Both** saves the partly received file as a new copy instead of resuming it.
 
 ## Local network permission prompt
 

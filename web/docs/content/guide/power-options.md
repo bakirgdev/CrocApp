@@ -34,7 +34,7 @@ Patterns go one per line in the **Patterns, one per line** field. **Respect .git
 
 ## Auto-accept (F18)
 
-Auto-accept is off by default. With it on, CrocApp shows this warning: "Files from anyone who has your code are saved without preview or confirmation. Unsafe file names still cancel the transfer. Both-sides confirm overrides auto-accept." With it off: "Auto-accept skips the incoming-files preview. Leave it off unless you fully trust the sender."
+Auto-accept is off by default. With it on, a picker, **When a file already exists**, chooses what happens to incoming files whose names are already taken: **Keep Both** (the default) saves them under a new name such as `name (1).ext`, **Replace** overwrites the existing file. See [Receiving files](receiving.md) for how each choice behaves. With auto-accept on, CrocApp shows this warning: "Files from anyone who has your code are saved without preview or confirmation. Keep Both saves a new copy next to an existing file; Replace overwrites it. Unsafe file names still cancel the transfer. Both-sides confirm overrides auto-accept." With it off: "Auto-accept skips the incoming-files preview. Leave it off unless you fully trust the sender."
 
 ## Confirm on both sides (F19)
 

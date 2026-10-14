@@ -10,6 +10,7 @@ import Foundation
 ///   --ask                          require sender-side confirm before send (F19)
 ///   --relay ADDR                   use a custom relay address (F13); also disables local-only race
 ///   --hold                         park at the incoming prompt instead of auto-accepting
+///   --when-exists keepBoth|replace answer the incoming prompt with this file policy
 ///   --screen ROUTE                 navigate to home|send|receive|settings|howItWorks|history|
 ///                                  onboarding on launch; combines with the --auto-* modes
 ///   --stage PATH                   preload PATH into the Send screen's staged list (repeatable)
@@ -73,6 +74,11 @@ enum AutoVerify {
         if args.contains("--local") { controller.settings.onlyLocal = true }
         if args.contains("--no-compress") { controller.settings.noCompress = true }
         if args.contains("--ask") { controller.settings.bothSidesConfirm = true }
+        if let i = args.firstIndex(of: "--when-exists"), i + 1 < args.count,
+            let policy = FilePolicy(rawValue: args[i + 1])
+        {
+            controller.settings.whenFileExists = policy
+        }
         if let i = args.firstIndex(of: "--relay"), i + 1 < args.count {
             controller.settings.relayAddress = args[i + 1]
             // Kill the LAN race so success provably went through the relay.
@@ -190,7 +196,7 @@ enum AutoVerify {
                         "verify-code-ready.txt"),
                     atomically: true, encoding: .utf8)
             case .incoming where autoAccept:
-                controller.respond(accept: true)
+                controller.respond(accept: true, policy: controller.settings.whenFileExists)
             case .confirmSend:
                 controller.respond(accept: true)
             case .done(let summary, _):

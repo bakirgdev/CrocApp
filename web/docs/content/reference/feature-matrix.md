@@ -19,7 +19,7 @@ Feature numbers (`F1`…) are stable identifiers used across the project. "Shipp
 | F5 | Custom code phrase (min 6 chars) | `--code` |
 | F6 | QR show on send + QR scan on receive | `--qrcode` + GUI-native |
 | F7 | Choose output folder; iOS default is a Files-visible app folder | `--out` |
-| F8 | Overwrite/resume handling via confirm sheets | `--overwrite` + resume |
+| F8 | Keep Both / Replace on receive, resume with Replace | `--rename` (Keep Both), `--overwrite` (Replace) + resume |
 | F9 | Incoming file list preview + accept/decline | interactive prompt equivalent |
 | F10 | Progress, speed, cancel; Live Activity on iOS | polled from engine |
 | F11 | LAN + relay auto race | croc default |

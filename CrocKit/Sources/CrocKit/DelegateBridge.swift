@@ -36,7 +36,7 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
     func onFileList(_ listJSON: String?) {
         guard let json = listJSON, let list = decode(json, as: FileList.self) else {
             // Unrecoverable: without a decoded list the consumer can never call
-            // respond(accept:), so the Go side would otherwise wait forever.
+            // respond(accept:policy:), so the Go side would otherwise wait forever.
             continuation.yield(
                 .failed(EngineFailure(code: .other, message: "malformed fileList payload")))
             continuation.finish()
@@ -46,7 +46,7 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
     }
     func onProgress(_ progressJSON: String?) {
         // Drop-on-decode-failure is fine here: progress is advisory and the
-        // next tick retries, unlike fileList which gates respond(accept:).
+        // next tick retries, unlike fileList which gates respond(accept:policy:).
         guard let json = progressJSON, let p = decode(json, as: TransferProgress.self) else {
             return
         }
