@@ -8,6 +8,8 @@ struct ReceiveView: View {
     @Environment(AppRouter.self) private var router
 
     @State private var code = ""
+    /// A stored link (R20) replaces the code field until cleared.
+    @State private var storedLink: URL?
     @State private var showScanner = false
     @State private var showFolderPicker = false
 
@@ -23,7 +25,14 @@ struct ReceiveView: View {
                     .onChange(of: router.pendingReceive, initial: true) { _, link in
                         guard let link else { return }
                         router.pendingReceive = nil
-                        if case .code(let linked) = link { code = linked }
+                        switch link {
+                        case .code(let linked):
+                            code = linked
+                            storedLink = nil
+                        case .stored(let url):
+                            storedLink = url
+                            code = ""
+                        }
                     }
             }
         }
@@ -32,15 +41,21 @@ struct ReceiveView: View {
 
     private var form: some View {
         VStack(spacing: 16) {
-            CodeField(
-                placeholder: "Code phrase",
-                text: $code,
-                isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength
-            ) { pasted in
-                if let link = TransferLink.parse(pasted) { router.open(link) }
-            }
-            .onChange(of: code) { _, typed in
-                if typed.contains("://"), let link = TransferLink.parse(typed) { router.open(link) }
+            if let storedLink {
+                storedLinkRow(storedLink)
+            } else {
+                CodeField(
+                    placeholder: "Code phrase",
+                    text: $code,
+                    isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength
+                ) { pasted in
+                    if let link = TransferLink.parse(pasted) { router.open(link) }
+                }
+                .onChange(of: code) { _, typed in
+                    if typed.contains("://"), let link = TransferLink.parse(typed) {
+                        router.open(link)
+                    }
+                }
             }
 
             #if os(iOS)
@@ -85,10 +100,16 @@ struct ReceiveView: View {
             .font(.callout)
 
             Button {
-                controller.startReceive(
-                    code: code.trimmingCharacters(in: .whitespacesAndNewlines),
-                    into: outputFolder.url,
-                    folderIsScoped: outputFolder.isUserSelected)
+                if let storedLink {
+                    controller.startStoreReceive(
+                        link: storedLink, into: outputFolder.url,
+                        folderIsScoped: outputFolder.isUserSelected)
+                } else {
+                    controller.startReceive(
+                        code: code.trimmingCharacters(in: .whitespacesAndNewlines),
+                        into: outputFolder.url,
+                        folderIsScoped: outputFolder.isUserSelected)
+                }
             } label: {
                 Label("Receive", systemImage: "arrow.down.circle.fill")
                     .frame(maxWidth: .infinity)
@@ -96,10 +117,31 @@ struct ReceiveView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .disabled(
-                code.trimmingCharacters(in: .whitespacesAndNewlines).count
-                    < EngineConstraints.minCodeLength)
+                storedLink == nil
+                    && code.trimmingCharacters(in: .whitespacesAndNewlines).count
+                        < EngineConstraints.minCodeLength
+            )
         }
         .padding()
         .frame(maxWidth: 480)
+    }
+
+    private func storedLinkRow(_ url: URL) -> some View {
+        let host = TransferController.codeHint(storedLink: url)
+        return HStack(spacing: Spacing.space3) {
+            Label("Download link from \(host)", systemImage: "link")
+                .lineLimit(2)
+            Spacer()
+            Button("Clear") { storedLink = nil }
+        }
+        .padding(.horizontal, Spacing.space4)
+        .frame(minHeight: ControlHeight.large)
+        .background(
+            Color.surfaceBase, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
+        )
     }
 }

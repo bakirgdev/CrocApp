@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct SendView: View {
     @Environment(TransferController.self) private var controller
     @Environment(AppRouter.self) private var router
+    @Environment(AppSettings.self) private var settings
 
     enum Mode: String, CaseIterable {
         case files = "Files"
@@ -18,6 +19,24 @@ struct SendView: View {
     @State private var showFileImporter = false
     @State private var showFolderImporter = false
     @State private var isDropTargeted = false
+    @State private var sendAsLink = false
+    @State private var linkLifetime = LinkLifetime.day
+    @State private var linkDownloads = 1
+
+    /// How long a stored upload stays on the server (R18).
+    private enum LinkLifetime: Int, CaseIterable {
+        case hour = 3_600
+        case day = 86_400
+        case week = 604_800
+
+        var label: String {
+            switch self {
+            case .hour: "1 hour"
+            case .day: "1 day"
+            case .week: "7 days"
+            }
+        }
+    }
 
     var body: some View {
         Group {
@@ -48,18 +67,26 @@ struct SendView: View {
                 textSection
             }
 
-            TextField(
-                "Custom code (optional, at least \(EngineConstraints.minCodeLength) characters)",
-                text: $customCode
-            )
-            .textFieldStyle(.roundedBorder)
-            .autocorrectionDisabled()
-            #if os(iOS)
-            .textInputAutocapitalization(.never)
-            #endif
+            linkOptions
+
+            if !linkSelected {
+                TextField(
+                    "Custom code (optional, at least \(EngineConstraints.minCodeLength) characters)",
+                    text: $customCode
+                )
+                .textFieldStyle(.roundedBorder)
+                .autocorrectionDisabled()
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                #endif
+            }
 
             Button {
-                if mode == .files {
+                if linkSelected {
+                    controller.startStoreSend(
+                        urls: pickedURLs, downloads: linkDownloads,
+                        lifetimeSeconds: linkLifetime.rawValue)
+                } else if mode == .files {
                     controller.startSend(
                         urls: pickedURLs,
                         customCode: customCode.trimmingCharacters(in: .whitespaces))
@@ -68,8 +95,11 @@ struct SendView: View {
                         text, customCode: customCode.trimmingCharacters(in: .whitespaces))
                 }
             } label: {
-                Label("Send", systemImage: "arrow.up.circle.fill")
-                    .frame(maxWidth: .infinity)
+                Label(
+                    linkSelected ? "Upload" : "Send",
+                    systemImage: linkSelected ? "link.circle.fill" : "arrow.up.circle.fill"
+                )
+                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
@@ -79,7 +109,62 @@ struct SendView: View {
         .frame(maxWidth: LayoutCap.contentMaxWidth)
     }
 
+    /// Why "Send as link" cannot be used for what is staged, or nil (R18).
+    private var linkUnavailableReason: String? {
+        if mode == .text { return "Text can't be sent as a link. Switch to Files." }
+        if pickedURLs.contains(where: Self.isFolder) {
+            return "Folders can't be sent as a link. Remove the folders, or send them with a code."
+        }
+        return nil
+    }
+
+    private var linkSelected: Bool { sendAsLink && linkUnavailableReason == nil }
+
+    private static func isFolder(_ url: URL) -> Bool {
+        url.hasDirectoryPath
+            || (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+    }
+
+    @ViewBuilder private var linkOptions: some View {
+        VStack(alignment: .leading, spacing: Spacing.space3) {
+            Toggle("Send as link", isOn: Binding(get: { linkSelected }, set: { sendAsLink = $0 }))
+                .disabled(linkUnavailableReason != nil)
+            if let reason = linkUnavailableReason {
+                Text(reason).font(.caption).foregroundStyle(.secondary)
+            } else if linkSelected {
+                Picker("Link lasts", selection: $linkLifetime) {
+                    ForEach(LinkLifetime.allCases, id: \.self) { Text($0.label) }
+                }
+                Stepper(value: $linkDownloads, in: 1...100) {
+                    Text("Downloads allowed: \(linkDownloads)")
+                }
+                if let error = AppSettings.storedServerError(settings.storedServer) {
+                    StatusBanner(kind: .error, title: error + " Change it in Settings.")
+                } else {
+                    Text(
+                        "Files are encrypted on this device and uploaded to \(serverHost). Anyone with the link can download them until it expires or runs out."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+            } else {
+                Text("Upload encrypted files and share a link instead of a code.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var serverHost: String {
+        URL(string: settings.storedServer.trimmingCharacters(in: .whitespacesAndNewlines))
+            .map(TransferController.codeHint(storedLink:)) ?? settings.storedServer
+    }
+
     private var canStart: Bool {
+        if linkSelected {
+            return !pickedURLs.isEmpty
+                && AppSettings.storedServerError(settings.storedServer) == nil
+        }
         let codeOK =
             customCode.isEmpty
             || customCode.trimmingCharacters(in: .whitespaces).count

@@ -17,6 +17,7 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
     // init) and keeps its per-call state local, so concurrent decodes don't
     // share mutable state.
     private let decoder = JSONDecoder()
+    private let receiptDecoder = StoredReceipt.decoder()
 
     init(continuation: AsyncStream<TransferEvent>.Continuation) {
         self.continuation = continuation
@@ -54,6 +55,19 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
     }
     func onText(_ text: String?) {
         continuation.yield(.text(text ?? ""))
+    }
+    func onStored(_ receiptJSON: String?) {
+        guard let data = receiptJSON?.data(using: .utf8),
+            let receipt = try? receiptDecoder.decode(StoredReceipt.self, from: data)
+        else {
+            // The upload is on the server but its revoke token is lost; fail
+            // loudly instead of showing a transfer nobody can take back.
+            continuation.yield(
+                .failed(EngineFailure(code: .other, message: "malformed storedReceipt payload")))
+            continuation.finish()
+            return
+        }
+        continuation.yield(.stored(receipt))
     }
     func onDone(_ summaryJSON: String?) {
         if let json = summaryJSON, let s = decode(json, as: Summary.self) {

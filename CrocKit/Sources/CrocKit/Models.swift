@@ -64,8 +64,62 @@ public enum TransferEvent: Sendable {
     case fileList(FileList)
     case progress(TransferProgress)
     case text(String)
+    /// A stored upload finished: the receipt arrives just before `.done`.
+    case stored(StoredReceipt)
     case done(Summary)
     case failed(EngineFailure)
+}
+
+/// A stored-transfer upload: the file contents are encrypted on this device and
+/// kept on `origin` until `expiresAt` or until the download count runs out.
+public struct StoredReceipt: Codable, Sendable, Equatable {
+    public let id: String
+    public let origin: String
+    /// Secret: proves the right to revoke. Never log or display it.
+    public let uploadToken: String
+    /// Secret: the fragment after `#v1.` is the decryption key.
+    public let link: String
+    public let expiresAt: Date
+    public let downloads: Int
+
+    public init(
+        id: String, origin: String, uploadToken: String, link: String, expiresAt: Date,
+        downloads: Int
+    ) {
+        self.id = id
+        self.origin = origin
+        self.uploadToken = uploadToken
+        self.link = link
+        self.expiresAt = expiresAt
+        self.downloads = downloads
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, origin, uploadToken, link, expiresAt, downloads
+    }
+
+    /// The engine writes `expiresAt` as RFC 3339 in UTC, whole seconds.
+    static func decoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }
+}
+
+extension StoredReceipt: CustomStringConvertible, CustomDebugStringConvertible {
+    public var description: String { "StoredReceipt(id: \(id), origin: \(origin), secrets hidden)" }
+    public var debugDescription: String { description }
+}
+
+/// What a stored upload asks of the server. `server` must be an `https` origin
+/// (`http` only on loopback). The server may cap `lifetimeSeconds` and refuses
+/// a `downloads` above its limit with `EngineFailure.Code.storeLimit`.
+public struct StoredSendOptions: Sendable {
+    public var server = "https://getcroc.com"
+    /// 1 to 100.
+    public var downloads = 1
+    public var lifetimeSeconds = 86_400
+    public init() {}
 }
 
 /// Why a transfer failed, classified by the engine next to croc. Show copy for
@@ -77,6 +131,10 @@ public struct EngineFailure: Error, Equatable, Sendable {
     public enum Code: String, Sendable, CaseIterable {
         case peerVersion, relayUnreachable, noPublicRelay, declined, refused
         case roomFull, badPassword, wrongCode, cancelled, connectionLost, other
+        /// Stored transfers: the server's size, file-count, download, quota or rate limit.
+        case storeLimit
+        /// Stored transfers: the server no longer has it (expired, revoked, used up).
+        case storeExpired
     }
 
     public let code: Code

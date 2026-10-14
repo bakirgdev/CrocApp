@@ -6,6 +6,7 @@ import SwiftUI
 /// the scanner side accepts both the bare code and the prefixed form.
 struct QRCodeView: View {
     let content: String
+    var label = "QR code for the transfer code"
     @State private var image: CGImage?
 
     var body: some View {
@@ -37,7 +38,7 @@ struct QRCodeView: View {
                     // layers; .shadowMd() stacks two .shadow() calls to
                     // reproduce both rather than approximate with one.
                     .shadowMd()
-                    .accessibilityLabel("QR code for the transfer code")
+                    .accessibilityLabel(label)
             } else {
                 // Must be a real view, not the implicit EmptyView: SwiftUI
                 // gives EmptyView no identity in the render tree, so the

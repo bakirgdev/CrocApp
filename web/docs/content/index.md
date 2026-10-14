@@ -33,7 +33,7 @@ CrocApp has not been released yet. Nothing is available for download on any chan
 
 - [Install](getting-started/install.md): release status and how to build from source today
 - [Your first transfer](getting-started/first-transfer.md): a walkthrough of one send and one receive
-- [Sending files](guide/sending.md), [Receiving files](guide/receiving.md), [Code phrases](guide/code-phrases.md)
+- [Sending files](guide/sending.md), [Receiving files](guide/receiving.md), [Code phrases](guide/code-phrases.md), [Send as link](guide/stored-transfers.md)
 - [Power options](guide/power-options.md), [Settings and trust](guide/settings-and-trust.md), [History](guide/history.md)
 - [croc CLI interoperability](reference/croc-cli-interop.md) and the [feature matrix](reference/feature-matrix.md)
 - [Security and privacy](security-and-privacy.md), [Troubleshooting](troubleshooting.md), [FAQ](faq.md)

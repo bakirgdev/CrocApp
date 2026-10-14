@@ -32,6 +32,32 @@ struct PowerSettingsSections: View {
         }
 
         Section {
+            TextField(
+                "Server", text: $settings.storedServer,
+                prompt: Text(AppSettings.defaultStoredServer)
+            )
+            .autocorrectionDisabled()
+            #if os(iOS)
+            .textInputAutocapitalization(.never)
+            .keyboardType(.URL)
+            #endif
+            if let error = AppSettings.storedServerError(settings.storedServer) {
+                StatusBanner(kind: .error, title: error)
+            }
+            if settings.storedServer != AppSettings.defaultStoredServer {
+                Button("Reset to \(AppSettings.defaultStoredServer)") {
+                    settings.storedServer = AppSettings.defaultStoredServer
+                }
+            }
+        } header: {
+            Text("Send as link")
+        } footer: {
+            Text(
+                "Send as link uploads encrypted files to this server. The server holds them until the link expires and cannot read them; the key is in the link."
+            )
+        }
+
+        Section {
             Picker("Connection", selection: $settings.transport) {
                 Text("Automatic").tag(Transport.auto)
                 Text("Relay only").tag(Transport.relay)

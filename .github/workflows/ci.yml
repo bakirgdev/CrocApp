@@ -124,7 +124,14 @@ jobs:
           go-version-file: crocmobile/go.mod
           cache-dependency-path: crocmobile/go.sum
 
-      - run: brew install croc
+      # The CLI peer must match the croc the engine embeds: Homebrew's bottle
+      # lagged at 11.5.0, which has no `croc store`.
+      - name: Install the croc CLI at the engine version
+        shell: bash
+        run: |
+          set -euo pipefail
+          v=$(cd crocmobile && go list -m -f '{{.Version}}' github.com/schollz/croc/v11)
+          GOBIN="$RUNNER_TEMP/croc11" go install "github.com/schollz/croc/v11@$v"
 
       # The R8 scenario's croc v10 peer.
       - run: go install "github.com/schollz/croc/v10@$(cat scripts/croc-v10.version)"
@@ -135,7 +142,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          croc=$(brew --prefix)/bin/croc
+          croc="$RUNNER_TEMP/croc11/croc"
           "$croc" relay --host 127.0.0.1 --ports 9309,9310,9311,9312,9313 \
             --source-join-limit 1000 --room-join-limit 1000 > "$RUNNER_TEMP/relay.log" 2>&1 &
           for _ in $(seq 50); do nc -z 127.0.0.1 9309 && break; sleep 0.2; done

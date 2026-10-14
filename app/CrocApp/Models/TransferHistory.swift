@@ -5,8 +5,9 @@ import SwiftData
 
 /// One finished (or failed) transfer (F12). Local only — never synced.
 /// Privacy: stores at most `maxNames` file names, a code *hint*
-/// (`TransferController.codeHint`), and, for sends, bookmarks so history can
-/// re-stage the same files. Never file contents, never the full code phrase.
+/// (`TransferController.codeHint`; only the server host for a stored link),
+/// and, for sends, bookmarks so history can re-stage the same files. Never
+/// file contents, never the full code phrase, never a stored link or token.
 /// Bookmarks are stored only for sends of at most `maxBookmarks` items and
 /// only when every bookmark resolves — all-or-nothing at capture time. Re-send
 /// still drops files that have vanished since (the user sees the staged list
@@ -34,6 +35,12 @@ final class TransferRecord {
     var names: [String]
     var codeHint: String
     var bookmarks: [Data]
+    /// Stored uploads only (R19): the server's id for the upload, which keys
+    /// its receipt in `StoredTransferVault`. These three are optional so
+    /// stores written before stored transfers migrate without a schema step.
+    var storedID: String?
+    var expiresAt: Date?
+    var revokedAt: Date?
 
     var status: Status { Status(rawValue: statusRaw) ?? .failed }
 
@@ -43,7 +50,8 @@ final class TransferRecord {
 
     init(
         isSend: Bool, status: Status, isText: Bool, fileCount: Int,
-        totalBytes: Int64, names: [String], codeHint: String, bookmarks: [Data]
+        totalBytes: Int64, names: [String], codeHint: String, bookmarks: [Data],
+        storedID: String? = nil, expiresAt: Date? = nil
     ) {
         self.date = Date()
         self.isSend = isSend
@@ -54,6 +62,8 @@ final class TransferRecord {
         self.names = names
         self.codeHint = codeHint
         self.bookmarks = bookmarks
+        self.storedID = storedID
+        self.expiresAt = expiresAt
     }
 }
 
@@ -119,6 +129,11 @@ final class HistoryStore {
         }
         for record in stale { container.mainContext.delete(record) }
         save("prune")
+    }
+
+    func markRevoked(_ record: TransferRecord, at date: Date = .now) {
+        record.revokedAt = date
+        save("revoke")
     }
 
     func delete(_ record: TransferRecord) {

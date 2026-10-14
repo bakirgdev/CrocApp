@@ -86,6 +86,8 @@ type Delegate interface {
 	OnText(text string)
 	OnDone(summaryJSON string)
 	OnError(message string)
+	// OnStored delivers a finished stored upload's receipt, just before OnDone.
+	OnStored(receiptJSON string)
 }
 
 // Transfer is a handle to one active transfer.

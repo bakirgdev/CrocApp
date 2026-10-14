@@ -33,6 +33,7 @@ import Testing
         #expect(!s.bothSidesConfirm)
         #expect(s.whenFileExists == .keepBoth)
         #expect(s.transport == .auto)
+        #expect(s.storedServer == "https://getcroc.com")
         #expect(s.relayKind == .publicDefault)
     }
 
@@ -50,6 +51,7 @@ import Testing
         s.bothSidesConfirm = true
         s.whenFileExists = .replace
         s.transport = .relay
+        s.storedServer = "https://store.example"
 
         let r = AppSettings(defaults: defaults, secrets: secrets)
         #expect(r.relayAddress == "relay.example:9009")
@@ -63,6 +65,7 @@ import Testing
         #expect(r.bothSidesConfirm)
         #expect(r.whenFileExists == .replace)
         #expect(r.transport == .relay)
+        #expect(r.storedServer == "https://store.example")
     }
 
     /// A value this build does not know (a later build's policy, a corrupt
@@ -109,6 +112,7 @@ import Testing
         s.autoAccept = true
         s.whenFileExists = .replace
         s.transport = .relay
+        s.storedServer = "https://store.example"
         s.resetToDefaults()
         s.zipFolder = true
 
@@ -120,6 +124,8 @@ import Testing
         #expect(s.whenFileExists == .keepBoth, "reset restores Keep Both")
         #expect(r.transport == .auto)
         #expect(s.transport == .auto, "reset restores Automatic")
+        #expect(r.storedServer == "https://getcroc.com")
+        #expect(s.storedServer == "https://getcroc.com", "reset restores getcroc.com")
         #expect(defaults.persistentDomain(forName: suiteName)?.isEmpty ?? true)
     }
 }

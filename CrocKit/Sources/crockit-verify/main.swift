@@ -48,6 +48,7 @@ func drive(_ stream: AsyncStream<TransferEvent>, answer: Bool) async -> Bool {
         case .progress(let p):
             print("EVENT progress \(p.step) \(p.fileSent)/\(p.fileSize)")
         case .text(let t): print("EVENT text \(t)")
+        case .stored(let receipt): print("EVENT stored \(receipt.id)")
         case .done(let s):
             print("EVENT done success=\(s.success)")
             return s.success

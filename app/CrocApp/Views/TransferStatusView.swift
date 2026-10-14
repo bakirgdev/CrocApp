@@ -75,6 +75,8 @@ struct TransferStatusView: View {
                 transferringView(progress)
             case .done(let summary, let receivedText):
                 doneView(summary, receivedText: receivedText)
+            case .stored(let receipt):
+                storedView(receipt)
             case .failed(let message):
                 failedView(message)
             }
@@ -236,7 +238,7 @@ struct TransferStatusView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Color.accentFill)
                     .accessibilityHidden(true)
-                Text(controller.direction == .send ? "Sending" : "Receiving")
+                Text(transferHeading)
                     .font(.headline)
             }
             VStack(alignment: .leading, spacing: Spacing.space3) {
@@ -279,7 +281,25 @@ struct TransferStatusView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityValue(percent(fraction(p.bytesFinished + p.fileSent, of: p.totalSize)))
-            TrustBadge(relay: controller.activeRelay)
+            if controller.isStoredTransfer {
+                // A stored transfer meets no relay, so the relay badge would
+                // describe a path it does not take.
+                Text("Encrypted on this device. The server only holds the encrypted files.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            } else {
+                TrustBadge(relay: controller.activeRelay)
+            }
+        }
+    }
+
+    private var transferHeading: String {
+        switch (controller.direction, controller.isStoredTransfer) {
+        case (.send, false): "Sending"
+        case (.send, true): "Uploading"
+        case (.receive, false): "Receiving"
+        case (.receive, true): "Downloading"
         }
     }
 
@@ -356,6 +376,43 @@ struct TransferStatusView: View {
                 }
                 #endif
             }
+            Button("Done") { controller.reset() }
+                .buttonStyle(.borderedProminent)
+        }
+    }
+
+    private func storedView(_ receipt: StoredReceipt) -> some View {
+        VStack(spacing: Spacing.space5) {
+            StatusBlock(
+                kind: .success, title: "Link ready",
+                detail:
+                    "Works until \(receipt.expiresAt.formatted(date: .abbreviated, time: .shortened)), for \(receipt.downloads) download(s)"
+            )
+            QRCodeView(content: receipt.link, label: "QR code for the download link")
+            Text(receipt.link)
+                .font(.caption.monospaced())
+                .lineLimit(3)
+                .truncationMode(.middle)
+                .textSelection(.enabled)
+                .accessibilityLabel("Download link")
+            HStack(spacing: Spacing.space5) {
+                Button {
+                    Clipboard.copy(receipt.link, thisDeviceOnly: true)
+                } label: {
+                    Label("Copy Link", systemImage: "doc.on.doc")
+                }
+                if let url = URL(string: receipt.link) {
+                    ShareLink(item: url) {
+                        Label("Share Link", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
+            Text(
+                "Anyone who gets this link can download the files until it expires or runs out. Revoke it any time in History."
+            )
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
             Button("Done") { controller.reset() }
                 .buttonStyle(.borderedProminent)
         }

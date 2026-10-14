@@ -46,6 +46,7 @@ Feature numbers (`F1`…) are stable identifiers used across the project. "Shipp
 | F32 | Receive links: `crocapp://` scheme, `crocapp.dev/r/` universal links, and `croc://` QR codes from 0.9.9 | shipped |
 | F36 | Trust UI: end-to-end badge, "how it works", active-relay indicator | shipped |
 | F42 | Share Link, a QR code that is a web link, and a `crocapp.dev/r/` page with an option to receive in a browser | shipped |
+| F43 | Send as link: encrypted upload of files to a stored-transfer server, a link with a chosen lifetime and download count, receive from the link, and revoke from History | shipped |
 
 ## Planned, not started (V1.x)
 

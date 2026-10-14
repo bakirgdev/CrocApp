@@ -49,6 +49,8 @@ type session struct {
 
 	done     chan struct{}
 	pollDone chan struct{} // closed when poll() returns; run() waits on it before the terminal delegate calls
+
+	storeAnswer chan storeReply // stored receive only: carries Respond to the goroutine waiting at the preview
 }
 
 func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, error) {
@@ -509,6 +511,10 @@ func (s *session) cancel() {
 }
 
 func (s *session) respond(accept bool, policy filePolicy) {
+	if s.storeAnswer != nil {
+		s.answerStore(accept, policy)
+		return
+	}
 	s.promptM.Lock()
 	defer s.promptM.Unlock()
 	if s.promptW == nil {

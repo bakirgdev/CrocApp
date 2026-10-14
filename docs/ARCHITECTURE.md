@@ -29,7 +29,8 @@ CrocKit (Swift package: CrocEngine actor, DelegateBridge, Models.swift)
     │  DelegateBridge only yields into the stream — no MainActor hop here
     ▼
 TransferController (@MainActor @Observable, app/CrocApp/Models/)
-    │  Phase enum; intents (startSend, startReceive, respond, cancel)
+    │  Phase enum; intents (startSend, startReceive, startStoreSend,
+    │  startStoreReceive, respond, cancel, revoke)
     ▼
 SwiftUI views (app/CrocApp/Views/)
     switch over controller.phase; call intents; nothing else touches CrocKit
@@ -45,7 +46,7 @@ SwiftUI views (app/CrocApp/Views/)
 
 Files: `crocmobile.go` (public API: `Options`, `Delegate` interface, `Transfer` handle, `StartSend`/`StartReceive`), `session.go` (the engine: `session` struct, `startSession`/`startReceiveSession`, the fd0 prompt pipe, the 10 Hz poller), `doc.go` (package-level gobind constraint comment), `cmd/croctest/main.go` (CLI harness, not linked into the app).
 
-Responsibility: adapt croc's CLI-shaped library API (process-global `os.Chdir`, stdin-bound prompts, `os.Stdout`-piped text receive) into something callable repeatedly and concurrently-safely from a GUI. Key types: `Options` (mirrors croc CLI flags, gobind-safe scalar fields only), `Delegate` (7-method callback interface: `OnCodeReady`, `OnConnected`, `OnFileList`, `OnProgress`, `OnText`, `OnDone`, `OnError`), `Transfer` (`Cancel()`, `Respond(accept bool, policy string)`, policy `PolicyKeepBoth` or `PolicyReplace`). `OnError` receives a JSON `{"code","message"}` payload, and `StartSend`/`StartReceive` return the same JSON as their error text (gobind hands Swift only the text); `errors.go` classifies croc and package errors into codes (`peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `other`) from croc's sentinels, this package's `codedError`, and croc v11.5.4 error text, so the app never reads croc's wording.
+Responsibility: adapt croc's CLI-shaped library API (process-global `os.Chdir`, stdin-bound prompts, `os.Stdout`-piped text receive) into something callable repeatedly and concurrently-safely from a GUI. Key types: `Options` (mirrors croc CLI flags, gobind-safe scalar fields only), `Delegate` (8-method callback interface: `OnCodeReady`, `OnConnected`, `OnFileList`, `OnProgress`, `OnText`, `OnDone`, `OnError`, `OnStored`), `Transfer` (`Cancel()`, `Respond(accept bool, policy string)`, policy `PolicyKeepBoth` or `PolicyReplace`). `OnError` receives a JSON `{"code","message"}` payload, and `StartSend`/`StartReceive` return the same JSON as their error text (gobind hands Swift only the text); `errors.go` classifies croc and package errors into codes (`peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `other`) from croc's sentinels, this package's `codedError`, and croc v11.5.4 error text, so the app never reads croc's wording. `store.go` adds stored transfers (`StartStoreSend`, `StartStoreReceive`, `RevokeStored`) over croc's `storeclient`, on the same `Transfer` handle and `activeMu` (`docs/knowledge/crocmobile-bridge.md`).
 
 Deliberately does **not**: run more than one transfer at a time (package-global `activeMu` mutex — second `Start*` call returns `"another transfer is active"`), expose every croc knob (`RelayPorts`, `Curve`, `HashAlgorithm`, `ThrottleUpload`, `NoMultiplexing` are settable in `Options` but unwired above CrocKit — F20-F29 backlog, `docs/knowledge/features.md`), or let a Go panic cross the gobind boundary uncaught: `StartSend`/`StartReceive`/`Cancel`/`Respond` each carry their own `recover()`, `run()` recovers around `xfer()` and again around the terminal `OnError`/`OnText`/`OnDone` calls, and `poll()` recovers per tick around `OnConnected`/`OnFileList`/`OnProgress` (`session.go`'s `reportPanic`; a recovered panic reports code `other`). `xfer()` itself has no watchdog, though — a hang there past context cancel still holds `activeMu` forever (`docs/known-issues.md`).
 
@@ -122,6 +123,7 @@ Persistence:
 | Power settings (F13-F19, F41) | `UserDefaults`, keys prefixed `settings.` | `AppSettings`, `didSet`-triggered, gated by a `persist` flag |
 | Output folder choice | `UserDefaults` (security-scoped bookmark) | `OutputFolderStore` |
 | Transfer history (F12) | SwiftData, `TransferRecord` `@Model` | `HistoryStore`, in-memory under `AutoVerify` |
+| Stored-upload receipts (R19) | Keychain, one item `storedReceipts` | `StoredTransferVault`; purged after expiry or revoke; in memory under `AutoVerify` |
 | Share-extension handoff | App Group container (`group.com.bakirgdev.CrocApp`) | `ShareInbox` reads, `ShareStager` writes; `ShareInbox/batch-<UUID>/` + `manifest.json` |
 | Onboarding seen flag | `UserDefaults` via `@AppStorage` | `onboarding.seen`, read in `ContentView` |
 

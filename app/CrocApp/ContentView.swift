@@ -149,7 +149,10 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environment(TransferController(settings: AppSettings()))
+        .environment(
+            TransferController(
+                settings: AppSettings(), vault: StoredTransferVault(secrets: MemorySecretStore()))
+        )
         .environment(OutputFolderStore())
         .environment(LocalNetworkChecker())
         .environment(AppRouter.shared)

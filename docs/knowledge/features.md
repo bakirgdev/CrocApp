@@ -1,6 +1,6 @@
 # Feature roadmap
 
-Approved 2026-07-22 by Bakir. Tier = target release. Numbers are stable — reference them as F1..F42 in plans, issues, and code comments (several views already carry them).
+Approved 2026-07-22 by Bakir. Tier = target release. Numbers are stable — reference them as F1..F43 in plans, issues, and code comments (several views already carry them).
 
 Status is verified against the code, not against intent. **Shipped** means the feature exists and works in the app; it does not mean it has been tested on physical hardware (`device-test-checklist.md`) or that it has no open defects (`../known-issues.md`).
 
@@ -44,6 +44,7 @@ Status is verified against the code, not against intent. **Shipped** means the f
 | F32 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` universal links, `https://getcroc.com/?code=`, and `croc://<code>` (0.9.9 QR codes); one parser, `TransferLink`. Opening a link prefills Receive and never connects. Universal links in the Developer ID build are unverified (`../known-issues.md`) | shipped |
 | F36 | Trust UI: E2E badge, "how it works", active-relay indicator | shipped |
 | F42 | Waiting-screen QR and Share Link encode `https://crocapp.dev/r/#<code>`; `web/landing/r/` page reads the code from the fragment (no network request) and offers Open in CrocApp, Get CrocApp (the landing page download section, until the store listing is live), the DMG, and receive in a browser through croc's own web app at getcroc.com (needs the default relays) | shipped |
+| F43 | Send as link (stored transfers, R18-R21): files only, up to 100 files / 1 GiB, lifetime 1 hour / 1 day / 7 days, 1-100 downloads, to the server in Settings (`https://getcroc.com` by default); link and QR result screen, receive from a pasted or scanned link through the normal incoming preview, History expiry and Revoke. Needs the device checks in `device-test-checklist.md` | shipped |
 
 The whole V1 set is implemented. What stands between it and release is in `../known-issues.md` under "Blocking release", not in this table.
 

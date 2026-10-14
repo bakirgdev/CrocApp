@@ -18,14 +18,20 @@ final class TransferController {
         case incoming(FileList, conflicts: [String], blocked: [String])
         case transferring(TransferProgress)
         case done(Summary, receivedText: String?)
+        /// A stored upload finished. The receipt holds the link to share.
+        case stored(StoredReceipt)
         case failed(String)
     }
 
     private(set) var phase: Phase = .idle
     private(set) var direction: Direction = .send
     private(set) var speedBytesPerSec: Double = 0
+    /// The transfer goes through a stored-transfer server (R18-R20) rather
+    /// than a croc peer.
+    private(set) var isStoredTransfer = false
 
     let settings: AppSettings
+    let vault: StoredTransferVault
 
     /// Relay path of the transfer in flight, captured at start so mid-transfer
     /// settings edits don't lie in the trust UI.
@@ -66,6 +72,8 @@ final class TransferController {
     /// True once any payload bytes moved -- gates the "resume" hint so it
     /// never appears on failures before the transfer started.
     private var sawTransferBytes = false
+    /// Arrives just before `.done` on a stored upload.
+    private var storedReceipt: StoredReceipt?
 
     /// History sink; set once at app startup. nil in previews.
     @ObservationIgnored var history: HistoryStore?
@@ -81,10 +89,13 @@ final class TransferController {
         var totalBytes: Int64
         var codeHint: String
         var bookmarks: [Data]
+        var storedID: String?
+        var expiresAt: Date?
     }
 
-    init(settings: AppSettings) {
+    init(settings: AppSettings, vault: StoredTransferVault) {
         self.settings = settings
+        self.vault = vault
     }
 
     // MARK: - Intents
@@ -105,9 +116,43 @@ final class TransferController {
     func startSend(urls: [URL], customCode: String) {
         guard !isActive else { return }
         direction = .send
+        isStoredTransfer = false
         activeRelay = settings.relayKind
         sendConfirmArmed = settings.bothSidesConfirm
         autoAcceptActive = false
+        beginFileSend(urls: urls, codeHint: Self.codeHint(customCode))
+        let paths = urls.map(\.path)
+        var options = baseOptions()
+        options.customCode = customCode
+        options.workDir = FileManager.default.temporaryDirectory.path
+        options.zipFolder = settings.zipFolder
+        options.gitIgnore = settings.useGitIgnore
+        options.exclude = settings.excludeList
+        run { try await self.engine.startSend(paths: paths, text: nil, options: options) }
+    }
+
+    /// Uploads `urls` (regular files only) encrypted to the stored-transfer
+    /// server in Settings (R18). Ends in `.stored(receipt)`; the receipt also
+    /// goes to the vault so History can revoke it.
+    func startStoreSend(urls: [URL], downloads: Int, lifetimeSeconds: Int) {
+        guard !isActive else { return }
+        direction = .send
+        isStoredTransfer = true
+        activeRelay = settings.relayKind
+        sendConfirmArmed = false
+        autoAcceptActive = false
+        let server = settings.storedServer.trimmingCharacters(in: .whitespacesAndNewlines)
+        beginFileSend(
+            urls: urls, codeHint: URL(string: server).map(Self.codeHint(storedLink:)) ?? "")
+        let paths = urls.map(\.path)
+        var options = StoredSendOptions()
+        options.server = server
+        options.downloads = downloads
+        options.lifetimeSeconds = lifetimeSeconds
+        run { try await self.engine.startStoreSend(paths: paths, options: options) }
+    }
+
+    private func beginFileSend(urls: [URL], codeHint: String) {
         // startAccessing returns false for non-scoped URLs (e.g. some drops);
         // keep every path regardless, only track the ones needing release.
         scopedURLs = urls.filter { $0.startAccessingSecurityScopedResource() }
@@ -115,7 +160,7 @@ final class TransferController {
             isSend: true, isText: false,
             names: urls.prefix(TransferRecord.maxNames).map(\.lastPathComponent),
             fileCount: urls.count, totalBytes: 0,
-            codeHint: Self.codeHint(customCode),
+            codeHint: codeHint,
             bookmarks: [])
         // Up to maxBookmarks (200) bookmarkData calls, off the main actor so a
         // slow volume can't stall the send tap. Security scope is held until
@@ -133,19 +178,12 @@ final class TransferController {
                 self.pendingRecord?.bookmarks = all
             }
         }
-        let paths = urls.map(\.path)
-        var options = baseOptions()
-        options.customCode = customCode
-        options.workDir = FileManager.default.temporaryDirectory.path
-        options.zipFolder = settings.zipFolder
-        options.gitIgnore = settings.useGitIgnore
-        options.exclude = settings.excludeList
-        run { try await self.engine.startSend(paths: paths, text: nil, options: options) }
     }
 
     func startSendText(_ text: String, customCode: String) {
         guard !isActive else { return }
         direction = .send
+        isStoredTransfer = false
         activeRelay = settings.relayKind
         sendConfirmArmed = settings.bothSidesConfirm
         autoAcceptActive = false
@@ -161,15 +199,8 @@ final class TransferController {
     func startReceive(code: String, into folder: URL, folderIsScoped: Bool) {
         guard !isActive else { return }
         direction = .receive
-        activeRelay = settings.relayKind
-        sendConfirmArmed = false
-        outDir = folder
-        if folderIsScoped, folder.startAccessingSecurityScopedResource() {
-            scopedURLs.append(folder)
-        }
-        pendingRecord = PendingRecord(
-            isSend: false, isText: false, names: [], fileCount: 0, totalBytes: 0,
-            codeHint: Self.codeHint(code), bookmarks: [])
+        isStoredTransfer = false
+        beginReceive(into: folder, folderIsScoped: folderIsScoped, codeHint: Self.codeHint(code))
         var options = baseOptions()
         options.outDir = folder.path
         // Auto-accept uses the setting; otherwise the incoming sheet's answer
@@ -181,6 +212,55 @@ final class TransferController {
         options.autoAccept = settings.autoAccept && !settings.bothSidesConfirm
         autoAcceptActive = options.autoAccept
         run { try await self.engine.startReceive(code: code, options: options) }
+    }
+
+    /// Opens a stored link (R20): the incoming preview, then the same accept
+    /// and Keep Both / Replace answer as a live receive. Auto-accept does not
+    /// apply; the engine always waits for `respond`.
+    func startStoreReceive(link: URL, into folder: URL, folderIsScoped: Bool) {
+        guard !isActive else { return }
+        direction = .receive
+        isStoredTransfer = true
+        beginReceive(
+            into: folder, folderIsScoped: folderIsScoped, codeHint: Self.codeHint(storedLink: link))
+        autoAcceptActive = false
+        let path = folder.path
+        let link = link.absoluteString
+        run { try await self.engine.startStoreReceive(link: link, outDir: path) }
+    }
+
+    private func beginReceive(into folder: URL, folderIsScoped: Bool, codeHint: String) {
+        activeRelay = settings.relayKind
+        sendConfirmArmed = false
+        outDir = folder
+        if folderIsScoped, folder.startAccessingSecurityScopedResource() {
+            scopedURLs.append(folder)
+        }
+        pendingRecord = PendingRecord(
+            isSend: false, isText: false, names: [], fileCount: 0, totalBytes: 0,
+            codeHint: codeHint, bookmarks: [])
+    }
+
+    /// Whether History can offer Revoke: an unexpired, unrevoked upload whose
+    /// receipt this device still holds.
+    func canRevoke(_ record: TransferRecord, now: Date = .now) -> Bool {
+        guard let id = record.storedID, record.revokedAt == nil,
+            let expiresAt = record.expiresAt, expiresAt > now
+        else { return false }
+        return vault.receipt(id: id) != nil
+    }
+
+    /// Deletes a stored upload from its server and marks its record (R19). A
+    /// server that no longer has it counts as revoked. Runs alongside any
+    /// active transfer. Throws `EngineFailure`; show
+    /// `friendlyMessage(for:…, stored: true)`.
+    func revoke(_ record: TransferRecord) async throws {
+        guard let id = record.storedID, let receipt = vault.receipt(id: id) else {
+            throw EngineFailure(code: .other, message: "no receipt for this upload")
+        }
+        try await engine.revokeStored(receipt)
+        vault.remove(id: id)
+        history?.markRevoked(record)
     }
 
     /// Answer the accept/decline prompt raised by `.incoming` or `.confirmSend`.
@@ -212,6 +292,7 @@ final class TransferController {
         streamTask = nil
         releaseScopedURLs()
         receivedText = nil
+        storedReceipt = nil
         outDir = nil
         speedBytesPerSec = 0
         backgroundExpired = false
@@ -222,9 +303,14 @@ final class TransferController {
 
     private func run(_ start: @escaping () async throws -> EngineTransfer) {
         phase = .starting
-        background.transferStarted(
-            title: direction == .send ? "Sending with CrocApp" : "Receiving with CrocApp"
-        ) { [weak self] in
+        let title =
+            switch (direction, isStoredTransfer) {
+            case (.send, false): "Sending with CrocApp"
+            case (.send, true): "Uploading with CrocApp"
+            case (.receive, false): "Receiving with CrocApp"
+            case (.receive, true): "Downloading with CrocApp"
+            }
+        background.transferStarted(title: title) { [weak self] in
             guard let self else { return }
             self.backgroundExpired = true
             self.cancel()
@@ -235,6 +321,7 @@ final class TransferController {
         transferGeneration += 1
         sawTransferBytes = false
         receivedText = nil
+        storedReceipt = nil
         speedBytesPerSec = 0
         lastProgressDate = nil
         lastProgressBytes = 0
@@ -261,7 +348,7 @@ final class TransferController {
                 // as a thrown error must keep the resume hint, not fall back
                 // to generic copy.
                 if backgroundExpired {
-                    phase = .failed(Self.backgroundExpiredCopy)
+                    phase = .failed(backgroundExpiredCopy)
                 } else {
                     let failure: EngineFailure
                     if case CrocEngineError.startFailed(let f) = error {
@@ -272,7 +359,7 @@ final class TransferController {
                     phase = .failed(
                         Self.friendlyMessage(
                             for: failure, cancelRequested: cancelRequested,
-                            declineRequested: declineRequested))
+                            declineRequested: declineRequested, stored: isStoredTransfer))
                 }
                 finishRecord(cancelRequested ? .cancelled : .failed, summary: nil)
             }
@@ -342,6 +429,13 @@ final class TransferController {
             phase = .transferring(p)
         case .text(let t):
             receivedText = t
+        case .stored(let receipt):
+            storedReceipt = receipt
+            // A failed write is logged by the vault; the link still works,
+            // only a revoke after relaunch is lost.
+            vault.add(receipt)
+            pendingRecord?.storedID = receipt.id
+            pendingRecord?.expiresAt = receipt.expiresAt
         case .done(let summary):
             background.transferEnded(success: true)
             // cancel() is fire-and-forget, so a small enough transfer can reach
@@ -351,6 +445,9 @@ final class TransferController {
             if blockedAutoAccept {
                 phase = .failed(Self.blockedAutoAcceptCopy)
                 finishRecord(.failed, summary: summary)
+            } else if let storedReceipt {
+                phase = .stored(storedReceipt)
+                finishRecord(.completed, summary: summary)
             } else {
                 phase = .done(summary, receivedText: receivedText)
                 finishRecord(summary.success ? .completed : .failed, summary: summary)
@@ -360,7 +457,7 @@ final class TransferController {
             if blockedAutoAccept {
                 phase = .failed(Self.blockedAutoAcceptCopy)
             } else if backgroundExpired {
-                phase = .failed(Self.backgroundExpiredCopy)
+                phase = .failed(backgroundExpiredCopy)
             } else if autoAcceptActive, !cancelRequested, failure.code == .refused {
                 // This side's prompt refused without anyone answering it. croc
                 // forces the receiver prompt whenever the remote sender ran
@@ -375,8 +472,9 @@ final class TransferController {
             } else {
                 var copy = Self.friendlyMessage(
                     for: failure, cancelRequested: cancelRequested,
-                    declineRequested: declineRequested)
-                if sawTransferBytes && !cancelRequested && !declineRequested {
+                    declineRequested: declineRequested, stored: isStoredTransfer)
+                // A stored transfer cannot resume; it starts over.
+                if sawTransferBytes && !cancelRequested && !declineRequested && !isStoredTransfer {
                     copy += Self.resumeHint
                 }
                 phase = .failed(copy)
@@ -429,6 +527,12 @@ final class TransferController {
         }.value
     }
 
+    /// A stored link carries its id in the path and its key in the fragment,
+    /// so history keeps only the server's host.
+    static func codeHint(storedLink url: URL) -> String {
+        url.host(percentEncoded: false) ?? ""
+    }
+
     /// Enough to recognise a transfer in history, not enough to reuse the
     /// code. A generated code's first word ("wiry-…", or "7291-…" for a
     /// legacy code) is a third of it at most; any other shape is likely a
@@ -455,7 +559,8 @@ final class TransferController {
             TransferRecord(
                 isSend: p.isSend, status: status, isText: p.isText,
                 fileCount: p.fileCount, totalBytes: p.totalBytes,
-                names: p.names, codeHint: p.codeHint, bookmarks: p.bookmarks))
+                names: p.names, codeHint: p.codeHint, bookmarks: p.bookmarks,
+                storedID: p.storedID, expiresAt: p.expiresAt))
     }
 
     // MARK: - Error copy
@@ -465,20 +570,34 @@ final class TransferController {
     private static let blockedAutoAcceptCopy =
         "Blocked: this transfer contained unsafe file names, so auto-accept cancelled it."
 
-    /// Used from both `handle(.failed)` and `run()`'s catch.
-    private static let backgroundExpiredCopy =
-        "iOS paused the transfer in the background." + resumeHint
+    /// Used from both `handle(.failed)` and `run()`'s catch. A stored
+    /// transfer cannot resume (concern 4), so it says to start over.
+    private var backgroundExpiredCopy: String {
+        switch (isStoredTransfer, direction) {
+        case (false, _): "iOS paused the transfer in the background." + Self.resumeHint
+        case (true, .send): "Upload interrupted: iOS stopped it in the background. Try again."
+        case (true, .receive):
+            "Download interrupted: iOS stopped it in the background. Open the link again."
+        }
+    }
 
     /// Keep Both saves a partly received file as a new copy, so only Replace
     /// resumes it.
     private static let resumeHint =
         " Start the same transfer again; replacing the partly received files resumes it."
 
+    /// `stored` words network failures for a stored-transfer server (a store
+    /// call reports them as `relayUnreachable`) instead of a relay or peer.
     static func friendlyMessage(
-        for failure: EngineFailure, cancelRequested: Bool, declineRequested: Bool
+        for failure: EngineFailure, cancelRequested: Bool, declineRequested: Bool,
+        stored: Bool = false
     ) -> String {
         if cancelRequested { return "Transfer cancelled." }
         if declineRequested { return "You declined the transfer." }
+        if stored, failure.code == .relayUnreachable || failure.code == .connectionLost {
+            return
+                "Couldn't reach the transfer server. Check your internet connection and try again."
+        }
         // Never echo failure.message: croc adds new error text every release,
         // and a recovered Go panic arrives with a full stack trace attached.
         switch failure.code {
@@ -503,6 +622,11 @@ final class TransferController {
             return "Transfer cancelled."
         case .connectionLost:
             return "Lost connection to the other device."
+        case .storeLimit:
+            return
+                "The transfer server refused this upload: it is over the server's size, file count or download limit, or too many uploads were made recently."
+        case .storeExpired:
+            return "This link has expired, was revoked, or has no downloads left."
         case .other:
             return "Transfer failed. Try again, or check your connection."
         }
