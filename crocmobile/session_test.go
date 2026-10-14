@@ -678,6 +678,7 @@ func (d *errorDelegate) OnProgress(string)  {}
 func (d *errorDelegate) OnText(string)      {}
 func (d *errorDelegate) OnDone(string)      {}
 func (d *errorDelegate) OnError(m string)   { d.errors = append(d.errors, m) }
+func (d *errorDelegate) OnStored(string)    {}
 
 func mkSendFolder(t *testing.T, dir string) string {
 	t.Helper()

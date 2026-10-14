@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import CrocKit
@@ -124,6 +125,54 @@ private func events(_ drive: (DelegateBridge) -> Void) async -> [TransferEvent] 
             #expect(f == EngineFailure(code: .other, message: "malformed fileList payload"))
         } else {
             Issue.record("\(got)")
+        }
+    }
+
+    @Test func decodesStoredReceiptThenDone() async throws {
+        let got = await events {
+            $0.onStored(
+                #"{"id":"AAAAAAAAAAAAAAAAAAAAAA","origin":"https://store.test","uploadToken":"tok","link":"https://store.test/s/AAAAAAAAAAAAAAAAAAAAAA#v1.KEY","expiresAt":"2026-10-15T12:30:00Z","downloads":3}"#
+            )
+            $0.onDone(#"{"success":true,"files":1,"totalSize":5}"#)
+        }
+        #expect(got.count == 2)
+        guard case .stored(let receipt) = try #require(got.first) else {
+            Issue.record("expected .stored, got \(got)")
+            return
+        }
+        #expect(receipt.id == "AAAAAAAAAAAAAAAAAAAAAA")
+        #expect(receipt.origin == "https://store.test")
+        #expect(receipt.uploadToken == "tok")
+        #expect(receipt.link == "https://store.test/s/AAAAAAAAAAAAAAAAAAAAAA#v1.KEY")
+        #expect(receipt.expiresAt == Date(timeIntervalSince1970: 1_792_067_400))
+        #expect(receipt.downloads == 3)
+        if case .done = got[1] {} else { Issue.record("expected .done, got \(got[1])") }
+    }
+
+    @Test(arguments: [
+        nil, "", "not json", #"{"id":"x"}"#,
+        #"{"id":"x","origin":"o","uploadToken":"t","link":"l","expiresAt":"tomorrow","downloads":1}"#,
+    ])
+    func malformedStoredReceiptFailsAndFinishes(payload: String?) async {
+        let got = await events {
+            $0.onStored(payload)
+            $0.onDone(#"{"success":true,"files":1,"totalSize":5}"#)
+        }
+        #expect(got.count == 1)
+        if case .failed(let f) = got.first {
+            #expect(f == EngineFailure(code: .other, message: "malformed storedReceipt payload"))
+        } else {
+            Issue.record("\(got)")
+        }
+    }
+
+    @Test func receiptDescriptionHidesSecrets() {
+        let receipt = StoredReceipt(
+            id: "id1", origin: "https://store.test", uploadToken: "SECRET-TOKEN",
+            link: "https://store.test/s/id1#v1.SECRET-KEY", expiresAt: .now, downloads: 1)
+        for text in ["\(receipt)", "\(String(reflecting: receipt))"] {
+            #expect(!text.contains("SECRET"))
+            #expect(text.contains("id1"))
         }
     }
 

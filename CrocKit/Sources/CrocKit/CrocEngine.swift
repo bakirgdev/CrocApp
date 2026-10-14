@@ -30,13 +30,51 @@ public actor CrocEngine {
     public func startSend(
         paths: [String], text: String?, options: EngineOptions
     ) throws -> EngineTransfer {
-        try start(send: true, code: "", paths: paths, text: text ?? "", options: options)
+        let opts = try Self.crocOptions(from: options)
+        let joined = paths.joined(separator: "\n")
+        return try start { bridge, error in
+            CrocmobileStartSend(joined, text ?? "", opts, bridge, error)
+        }
     }
 
     public func startReceive(
         code: String, options: EngineOptions
     ) throws -> EngineTransfer {
-        try start(send: false, code: code, paths: [], text: "", options: options)
+        let opts = try Self.crocOptions(from: options)
+        return try start { bridge, error in CrocmobileStartReceive(code, opts, bridge, error) }
+    }
+
+    /// Uploads `paths` (regular files) encrypted to `options.server`. Events:
+    /// `.progress`, then `.stored(receipt)` and `.done`.
+    public func startStoreSend(
+        paths: [String], options: StoredSendOptions
+    ) throws -> EngineTransfer {
+        let opts = CrocmobileStoreOptions()
+        opts.server = options.server
+        opts.downloads = options.downloads
+        opts.lifetimeSeconds = options.lifetimeSeconds
+        let joined = paths.joined(separator: "\n")
+        return try start { bridge, error in
+            CrocmobileStartStoreSend(joined, opts, bridge, error)
+        }
+    }
+
+    /// Opens a stored-transfer link: `.fileList` first, then wait for
+    /// `respond(accept:policy:)`; on accept the files land in `outDir`.
+    public func startStoreReceive(link: String, outDir: String) throws -> EngineTransfer {
+        try start { bridge, error in CrocmobileStartStoreReceive(link, outDir, bridge, error) }
+    }
+
+    /// Deletes a stored upload from its server; a transfer the server no longer
+    /// has counts as revoked. Throws `EngineFailure`. Blocks up to 30 seconds on
+    /// the network, off the caller's actor, and needs no running transfer, so it
+    /// works while another one is active.
+    public nonisolated func revokeStored(_ receipt: StoredReceipt) async throws {
+        var error: NSError?
+        guard CrocmobileRevokeStored(receipt.origin, receipt.id, receipt.uploadToken, &error)
+        else {
+            throw EngineFailure(payload: error?.localizedDescription)
+        }
     }
 
     /// Answer the accept/decline request raised by a `.fileList` event. On
@@ -56,24 +94,16 @@ public actor CrocEngine {
     func isActive(_ id: TransferID) -> Bool { id == activeID }
 
     private func start(
-        send: Bool, code: String, paths: [String], text: String, options: EngineOptions
+        launch: (DelegateBridge, NSErrorPointer) -> CrocmobileTransfer?
     ) throws -> EngineTransfer {
         guard activeTransfer == nil else { throw CrocEngineError.transferActive }
 
-        let opts = try Self.crocOptions(from: options)
         let (stream, continuation) = AsyncStream.makeStream(of: TransferEvent.self)
         let bridge = DelegateBridge(continuation: continuation)
         self.bridge = bridge
 
         var error: NSError?
-        let transfer: CrocmobileTransfer?
-        if send {
-            transfer = CrocmobileStartSend(
-                paths.joined(separator: "\n"), text, opts, bridge, &error)
-        } else {
-            transfer = CrocmobileStartReceive(code, opts, bridge, &error)
-        }
-        guard let transfer else {
+        guard let transfer = launch(bridge, &error) else {
             self.bridge = nil
             // gobind passes only the Go error's text, which carries the same
             // payload as OnError.

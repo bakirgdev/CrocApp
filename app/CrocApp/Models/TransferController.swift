@@ -342,6 +342,9 @@ final class TransferController {
             phase = .transferring(p)
         case .text(let t):
             receivedText = t
+        case .stored:
+            // Nothing starts a stored upload until B17 wires the controller.
+            break
         case .done(let summary):
             background.transferEnded(success: true)
             // cancel() is fire-and-forget, so a small enough transfer can reach
@@ -503,6 +506,11 @@ final class TransferController {
             return "Transfer cancelled."
         case .connectionLost:
             return "Lost connection to the other device."
+        case .storeLimit:
+            return
+                "The transfer server refused this upload: it is over the server's size, file count or download limit, or too many uploads were made recently."
+        case .storeExpired:
+            return "This link has expired, was revoked, or has no downloads left."
         case .other:
             return "Transfer failed. Try again, or check your connection."
         }

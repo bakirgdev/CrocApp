@@ -11,7 +11,7 @@ import Testing
     }
 
     @Test func unknownCodeIsOtherWithMessage() {
-        let f = EngineFailure(payload: #"{"code":"storeExpired","message":"gone"}"#)
+        let f = EngineFailure(payload: #"{"code":"fromANewerEngine","message":"gone"}"#)
         #expect(f == EngineFailure(code: .other, message: "gone"))
     }
 

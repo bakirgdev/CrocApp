@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net/http"
 	"strings"
 	"syscall"
 
 	"github.com/schollz/croc/v11/src/croc"
+	"github.com/schollz/croc/v11/src/storeclient"
 	"github.com/schollz/croc/v11/src/tcp"
 )
 
@@ -27,6 +29,8 @@ const (
 	codeWrongCode        = "wrongCode"        // both peers met but the code phrases differ (PAKE failed)
 	codeCancelled        = "cancelled"        // this side cancelled
 	codeConnectionLost   = "connectionLost"   // the connection dropped mid-transfer
+	codeStoreLimit       = "storeLimit"       // stored transfer: the server's size, file-count, download, quota or rate limit
+	codeStoreExpired     = "storeExpired"     // stored transfer: the server no longer has it (expired, revoked, used up)
 	codeOther            = "other"
 )
 
@@ -72,6 +76,12 @@ func classify(err error) string {
 	if errors.As(err, &coded) {
 		return coded.code
 	}
+	var httpErr *storeclient.HTTPError
+	if errors.As(err, &httpErr) {
+		if code := storeHTTPCode(httpErr); code != "" {
+			return code
+		}
+	}
 	m := strings.ToLower(err.Error())
 	switch {
 	case strings.Contains(m, "unsupported pake protocol version"):
@@ -113,4 +123,22 @@ func classify(err error) string {
 		return codeConnectionLost
 	}
 	return codeOther
+}
+
+// storeHTTPCode maps a stored-transfer server's refusal to a failure code, or
+// "" for statuses with no code of their own. The server answers 400 "invalid
+// stored-transfer declaration" for a size, file count, download count or
+// lifetime outside its configuration, the same refusal as 413 and 507.
+func storeHTTPCode(e *storeclient.HTTPError) string {
+	switch e.StatusCode {
+	case http.StatusNotFound, http.StatusGone:
+		return codeStoreExpired
+	case http.StatusRequestEntityTooLarge, http.StatusTooManyRequests, http.StatusInsufficientStorage:
+		return codeStoreLimit
+	case http.StatusBadRequest:
+		if strings.Contains(strings.ToLower(e.Message), "declaration") {
+			return codeStoreLimit
+		}
+	}
+	return ""
 }

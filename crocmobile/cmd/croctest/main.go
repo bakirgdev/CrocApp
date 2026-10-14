@@ -2,6 +2,10 @@
 //
 //	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [-transport auto|relay|derp] [PATH...]
 //	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-policy keepBoth|replace] [-cancel-after MS] CODE
+//	croctest store-send [-server URL] [-downloads N] [-lifetime SECONDS] PATH...
+//	croctest store-receive [-out DIR] [-answer y|n] [-policy keepBoth|replace] [-cancel-after MS] LINK
+//	croctest store-revoke ORIGIN ID TOKEN
+//	croctest store-server DIR
 //	croctest relay CODE
 //	croctest relays
 //
@@ -19,6 +23,12 @@
 // latency probe had picked it. relay prints the pool relay a code maps to;
 // relays prints the pool in index order.
 //
+// The store modes use a stored-transfer server (default https://getcroc.com).
+// store-server runs croc's own server on a loopback port for the harness,
+// storing in DIR, and prints "STORE-URL <origin>" once it listens.
+// store-send prints EVENT stored with the receipt JSON, whose link and
+// uploadToken are secrets; store-receive answers the preview like receive does.
+//
 // Events print as lines: EVENT <kind> <payload>. With the public pool in use,
 // EVENT relay names the relay the code maps to.
 package main
@@ -26,6 +36,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -33,6 +45,7 @@ import (
 	"github.com/bakirgdev/CrocApp/crocmobile"
 	"github.com/bakirgdev/CrocApp/crocmobile/internal/relaycache"
 	"github.com/schollz/croc/v11/src/publicrelay"
+	"github.com/schollz/croc/v11/src/store"
 )
 
 type printDelegate struct {
@@ -40,6 +53,7 @@ type printDelegate struct {
 	policy   string
 	pool     bool
 	transfer **crocmobile.Transfer
+	ready    chan struct{} // closed once *transfer is set, so a fast OnFileList can respond
 }
 
 // Events print to stderr, not stdout: crocmobile's receive session swaps the
@@ -56,6 +70,7 @@ func (p *printDelegate) OnCodeReady(code string) {
 func (p *printDelegate) OnConnected() { fmt.Fprintln(os.Stderr, "EVENT connected") }
 func (p *printDelegate) OnFileList(j string) {
 	fmt.Fprintf(os.Stderr, "EVENT filelist %s\n", j)
+	<-p.ready
 	if *p.transfer != nil {
 		(*p.transfer).Respond(p.answer == "y", p.policy)
 		fmt.Fprintf(os.Stderr, "EVENT responded %s %s\n", p.answer, p.policy)
@@ -67,8 +82,30 @@ func (p *printDelegate) OnDone(j string) {
 	fmt.Fprintf(os.Stderr, "EVENT done %s\n", j)
 	os.Exit(0)
 }
+func (p *printDelegate) OnStored(j string) { fmt.Fprintf(os.Stderr, "EVENT stored %s\n", j) }
 func (p *printDelegate) OnError(m string) {
 	fmt.Fprintf(os.Stderr, "EVENT error %s\n", m)
+	os.Exit(1)
+}
+
+// serveStore never returns. The limits are lifted far enough for the harness
+// to ask for several downloads; the rate limit would otherwise trip on a run
+// that revokes and re-uploads.
+func serveStore(dir string) {
+	svc, err := store.New(store.Config{
+		Root: dir, MaxDownloads: 100, MinFreeBytes: 1, CreatePerHour: 1000, MaxActiveUploads: 10, DisableRootLock: true,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "EVENT error %s\n", err)
+		os.Exit(1)
+	}
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "EVENT error %s\n", err)
+		os.Exit(1)
+	}
+	fmt.Fprintf(os.Stderr, "STORE-URL http://%s\n", l.Addr())
+	fmt.Fprintf(os.Stderr, "EVENT error %s\n", http.Serve(l, svc))
 	os.Exit(1)
 }
 
@@ -78,7 +115,7 @@ func printRelay(code string) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: croctest send|receive|relay|relays ...")
+		fmt.Fprintln(os.Stderr, "usage: croctest send|receive|store-send|store-receive|store-revoke|store-server|relay|relays ...")
 		os.Exit(2)
 	}
 	mode := os.Args[1]
@@ -90,6 +127,13 @@ func main() {
 		}
 		fmt.Println(crocmobile.RelayForCode(os.Args[2]))
 		return
+	case "store-server":
+		if len(os.Args) != 3 {
+			fmt.Fprintln(os.Stderr, "store-server needs DIR")
+			os.Exit(2)
+		}
+		serveStore(os.Args[2])
+		return
 	case "relays":
 		for _, r := range publicrelay.Relays() {
 			fmt.Println(r)
@@ -97,6 +141,9 @@ func main() {
 		return
 	}
 	fs := flag.NewFlagSet(mode, flag.ExitOnError)
+	server := fs.String("server", "https://getcroc.com", "stored-transfer server (store-send)")
+	downloads := fs.Int("downloads", 1, "downloads allowed (store-send)")
+	lifetime := fs.Int("lifetime", 3600, "storage lifetime in seconds (store-send)")
 	relay := fs.String("relay", "", "relay address override")
 	noLocal := fs.Bool("no-local", false, "disable LAN discovery")
 	onlyLocal := fs.Bool("only-local", false, "LAN only")
@@ -144,9 +191,29 @@ func main() {
 	opts.Transport = *transport
 
 	var tr *crocmobile.Transfer
-	d := &printDelegate{answer: *answer, policy: *policy, pool: *relay == "" && !*onlyLocal, transfer: &tr}
+	d := &printDelegate{answer: *answer, policy: *policy, pool: *relay == "" && !*onlyLocal, transfer: &tr, ready: make(chan struct{})}
 	var err error
 	switch mode {
+	case "store-send":
+		tr, err = crocmobile.StartStoreSend(strings.Join(fs.Args(), "\n"),
+			&crocmobile.StoreOptions{Server: *server, Downloads: *downloads, LifetimeSeconds: *lifetime}, d)
+	case "store-receive":
+		if fs.NArg() != 1 {
+			fmt.Fprintln(os.Stderr, "store-receive needs LINK")
+			os.Exit(2)
+		}
+		tr, err = crocmobile.StartStoreReceive(fs.Arg(0), *out, d)
+	case "store-revoke":
+		if fs.NArg() != 3 {
+			fmt.Fprintln(os.Stderr, "store-revoke needs ORIGIN ID TOKEN")
+			os.Exit(2)
+		}
+		if err := crocmobile.RevokeStored(fs.Arg(0), fs.Arg(1), fs.Arg(2)); err != nil {
+			fmt.Fprintf(os.Stderr, "EVENT error %s\n", err)
+			os.Exit(1)
+		}
+		fmt.Fprintln(os.Stderr, "EVENT revoked")
+		return
 	case "send":
 		tr, err = crocmobile.StartSend(strings.Join(fs.Args(), "\n"), *text, opts, d)
 	case "receive":
@@ -162,6 +229,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "unknown mode", mode)
 		os.Exit(2)
 	}
+	close(d.ready)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "EVENT error %s\n", err)
 		os.Exit(1)

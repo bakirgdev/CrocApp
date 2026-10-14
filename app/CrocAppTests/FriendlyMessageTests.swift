@@ -36,6 +36,11 @@ import Testing
         (.wrongCode, "The codes don't match. Check the code on both devices and try again."),
         (.cancelled, "Transfer cancelled."),
         (.connectionLost, "Lost connection to the other device."),
+        (
+            .storeLimit,
+            "The transfer server refused this upload: it is over the server's size, file count or download limit, or too many uploads were made recently."
+        ),
+        (.storeExpired, "This link has expired, was revoked, or has no downloads left."),
         (.other, "Transfer failed. Try again, or check your connection."),
     ])
     func mapsEveryCode(code: EngineFailure.Code, expected: String) {

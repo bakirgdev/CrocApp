@@ -3,8 +3,9 @@
 # Covers: file/folder/text both directions, decline, cancel both directions,
 # forced relay (LAN disabled), LAN-only, a croc v10 peer both directions, a
 # receive onto existing files with Keep Both and Replace (R24), a 130 MiB send
-# in each transport mode (R17), and every public pool relay (custom,
-# wrapper-generated and CLI-generated codes).
+# in each transport mode (R17), stored transfers against a local store server
+# (R18-R20), and every public pool relay (custom, wrapper-generated and
+# CLI-generated codes).
 # Exits non-zero on first failure.
 #
 # RELAY=host:port runs every transfer through that relay instead of the public
@@ -289,6 +290,83 @@ wait
 grep -q 'EVENT error {"code":"refused"' "$TMP/12ask.log" || fail "sender --ask under -yes with replace: not refused"
 [ ! -e "$TMP/dst12-ask/a.txt" ] || fail "sender --ask under -yes with replace: file arrived"
 pass "sender --ask under -yes with replace: refused"
+
+# 14. stored transfers (R18-R20) against a local croc store server, no relay and
+# no internet: crocmobile uploads and the CLI downloads, the CLI uploads and
+# crocmobile downloads, and a revoked transfer no longer downloads. Every upload
+# lasts an hour, allows the downloads the case needs, and is revoked at the end.
+# The CLI's revoke receipts go to a throwaway config dir.
+SCENARIO=14
+mkdir -p "$TMP/store14" "$TMP/croc-config14"
+"$CT" store-server "$TMP/store14" > "$TMP/14srv.log" 2>&1 &
+STORE_PID=$!
+STORE=""
+for _ in $(seq 1 50); do
+  STORE=$(sed -n 's/^STORE-URL //p' "$TMP/14srv.log")
+  [ -n "$STORE" ] && break
+  sleep 0.2
+done
+[ -n "$STORE" ] || fail "store server did not start"
+field() {                                           # field LOGFILE KEY: a string value from the EVENT stored receipt
+  sed -n "s/.*\"$2\":\"\\([^\"]*\\)\".*/\\1/p" "$1" | head -1
+}
+cli_store() { CROC_CONFIG_DIR="$TMP/croc-config14" "$CROC" --disable-clipboard "$@"; }
+
+# 14a. wrapper uploads two files (the 5 MiB one spans two chunks), CLI downloads
+"$CT" store-send -server "$STORE" -downloads 1 -lifetime 3600 "$TMP/src/a.txt" "$TMP/src/big.bin" > "$TMP/14a.log" 2>&1 || fail "store send (wrapper)"
+LINK=$(field "$TMP/14a.log" link); ID=$(field "$TMP/14a.log" id); TOKEN=$(field "$TMP/14a.log" uploadToken)
+[ -n "$LINK" ] && [ -n "$ID" ] && [ -n "$TOKEN" ] || fail "store send (wrapper): no receipt"
+grep -q 'EVENT done {"files":2,"success":true' "$TMP/14a.log" || fail "store send (wrapper): no success summary"
+mkdir -p "$TMP/dst14a"
+CROC_STORE_TOKEN="$LINK" timeout 60 "$CROC" --yes --out "$TMP/dst14a" > "$TMP/14a.cli" 2>&1 || true
+diff "$TMP/src/a.txt" "$TMP/dst14a/a.txt" > /dev/null || fail "store send (wrapper) -> CLI receive: a.txt"
+diff "$TMP/src/big.bin" "$TMP/dst14a/big.bin" > /dev/null || fail "store send (wrapper) -> CLI receive: big.bin"
+pass "store: wrapper upload, CLI download"
+
+# 14b. revoke from the wrapper, then the transfer is gone for the CLI
+"$CT" store-revoke "$STORE" "$ID" "$TOKEN" > "$TMP/14b.log" 2>&1 || fail "store revoke (wrapper)"
+grep -q 'EVENT revoked' "$TMP/14b.log" || fail "store revoke (wrapper): no revoked event"
+"$CT" store-revoke "$STORE" "$ID" "$TOKEN" > "$TMP/14b2.log" 2>&1 || fail "store revoke twice: a missing transfer must count as revoked"
+mkdir -p "$TMP/dst14b"
+CROC_STORE_TOKEN="$LINK" timeout 60 "$CROC" --yes --out "$TMP/dst14b" > "$TMP/14b.cli" 2>&1 && fail "revoked transfer still downloads (CLI)"
+[ -z "$(ls -A "$TMP/dst14b")" ] || fail "revoked transfer wrote files (CLI)"
+pass "store: revoke, then CLI download fails"
+
+# 14c. CLI uploads, wrapper downloads, then the CLI revokes and the wrapper's
+# download fails with storeExpired
+cli_store --ignore-stdin store --url "$STORE" --downloads 1 --expiration 1h "$TMP/src/a.txt" "$TMP/src/big.bin" > "$TMP/14c.cli" 2>&1 || fail "store send (CLI)"
+LINK=$(grep -o 'http://127.0.0.1:[0-9]*/s/[A-Za-z0-9_-]*#v1\.[A-Za-z0-9_-]*' "$TMP/14c.cli" | head -1)
+ID=${LINK#*/s/}; ID=${ID%%#*}
+[ -n "$LINK" ] && [ -n "$ID" ] || fail "store send (CLI): no link in its output"
+timeout 60 "$CT" store-receive -out "$TMP/dst14c" -answer y "$LINK" > "$TMP/14c.log" 2>&1 || true
+grep -q 'EVENT filelist' "$TMP/14c.log" || fail "store receive: no filelist event"
+diff "$TMP/src/a.txt" "$TMP/dst14c/a.txt" > /dev/null || fail "store send (CLI) -> wrapper receive: a.txt"
+diff "$TMP/src/big.bin" "$TMP/dst14c/big.bin" > /dev/null || fail "store send (CLI) -> wrapper receive: big.bin"
+cli_store --revoke "$ID" > "$TMP/14c.revoke" 2>&1 || fail "store revoke (CLI)"
+timeout 60 "$CT" store-receive -out "$TMP/dst14c2" -answer y "$LINK" > "$TMP/14c2.log" 2>&1 && fail "revoked transfer still downloads (wrapper)"
+grep -q 'EVENT error {"code":"storeExpired"' "$TMP/14c2.log" || fail "revoked transfer: not storeExpired"
+pass "store: CLI upload, wrapper download, revoke, then wrapper download fails"
+
+# 14d. a receive onto an existing name: Keep Both adds "a (1).txt", Replace
+# overwrites, and a declined preview leaves the transfer downloadable
+"$CT" store-send -server "$STORE" -downloads 3 -lifetime 3600 "$TMP/src/a.txt" > "$TMP/14d.log" 2>&1 || fail "store send for collision"
+LINK=$(field "$TMP/14d.log" link); ID=$(field "$TMP/14d.log" id); TOKEN=$(field "$TMP/14d.log" uploadToken)
+mkdir -p "$TMP/dst14d"
+echo "existing file" > "$TMP/dst14d/a.txt"
+timeout 60 "$CT" store-receive -out "$TMP/dst14d" -answer n "$LINK" > "$TMP/14d0.log" 2>&1 && fail "declined store receive exited 0"
+grep -q 'EVENT error {"code":"refused"' "$TMP/14d0.log" || fail "declined store receive: not refused"
+[ "$(cat "$TMP/dst14d/a.txt")" = "existing file" ] || fail "declined store receive changed the existing file"
+[ "$(find "$TMP/dst14d" -type f | wc -l | tr -d ' ')" = 1 ] || fail "declined store receive wrote files"
+timeout 60 "$CT" store-receive -out "$TMP/dst14d" -answer y -policy keepBoth "$LINK" > "$TMP/14d1.log" 2>&1 || fail "store receive, keepBoth"
+[ "$(cat "$TMP/dst14d/a.txt")" = "existing file" ] || fail "store keepBoth: existing file changed"
+diff "$TMP/src/a.txt" "$TMP/dst14d/a (1).txt" > /dev/null || fail "store keepBoth: no a (1).txt with the new content"
+timeout 60 "$CT" store-receive -out "$TMP/dst14d" -answer y -policy replace "$LINK" > "$TMP/14d2.log" 2>&1 || fail "store receive, replace"
+diff "$TMP/src/a.txt" "$TMP/dst14d/a.txt" > /dev/null || fail "store replace: file not replaced"
+"$CT" store-revoke "$STORE" "$ID" "$TOKEN" > "$TMP/14d3.log" 2>&1 || fail "store revoke after collision cases"
+pass "store: existing file with Keep Both and Replace, decline keeps the transfer"
+# Later scenarios end in a bare `wait`, which would wait on the server forever.
+kill "$STORE_PID"
+wait "$STORE_PID" 2>/dev/null || true
 
 if [ -n "${RELAY:-}" ]; then
   echo "ALL INTEROP CHECKS PASSED (relay $RELAY; transport and public pool scenarios skipped)"
