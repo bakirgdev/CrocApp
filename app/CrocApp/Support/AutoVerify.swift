@@ -1,9 +1,14 @@
 import CrocKit
 import Foundation
+import SwiftData
 
 /// Launch-argument harness for scripted verification.
 ///   --auto-receive CODE            receive into Documents, auto-accept
 ///   --auto-send PATH --code CODE   send PATH with custom code CODE
+///   --auto-store-send PATH         "Send as link" PATH (to --store-server URL, allowing --store-downloads N,
+///                                  default 1), write the link to verify-store-link.txt, then wait for
+///                                  verify-store-revoke.go in Documents and revoke the upload
+///   --auto-store-receive LINK      receive a stored link into Documents, auto-accept
 ///   --auto-share-send CODE         send whatever's staged in the ShareInbox with custom code CODE
 ///   --local                        force croc local-only mode (LAN/sandbox listener check)
 ///   --no-compress                  disable croc compression (F15)
@@ -39,7 +44,8 @@ enum AutoVerify {
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments
         return args.contains("--auto-receive") || args.contains("--auto-send")
-            || args.contains("--auto-share-send") || args.contains("--screen")
+            || args.contains("--auto-share-send") || args.contains("--auto-store-send")
+            || args.contains("--auto-store-receive") || args.contains("--screen")
         #else
         return false
         #endif
@@ -114,6 +120,28 @@ enum AutoVerify {
             controller.startSend(
                 urls: [URL(fileURLWithPath: args[i + 1])], customCode: args[ci + 1])
             await watch(controller, resultURL: resultURL, autoAccept: false)
+        } else if let i = args.firstIndex(of: "--auto-store-send"), i + 1 < args.count {
+            if let j = args.firstIndex(of: "--store-server"), j + 1 < args.count {
+                controller.settings.storedServer = args[j + 1]
+            }
+            var downloads = 1
+            if let j = args.firstIndex(of: "--store-downloads"), j + 1 < args.count,
+                let n = Int(args[j + 1])
+            {
+                downloads = n
+            }
+            controller.startStoreSend(
+                urls: [URL(fileURLWithPath: args[i + 1])], downloads: downloads,
+                lifetimeSeconds: 3600)
+            await watchStoreSend(controller, docs: docs, resultURL: resultURL)
+        } else if let i = args.firstIndex(of: "--auto-store-receive"), i + 1 < args.count {
+            guard let link = URL(string: args[i + 1]) else {
+                try? "error bad link".write(to: resultURL, atomically: true, encoding: .utf8)
+                return
+            }
+            controller.startStoreReceive(link: link, into: docs, folderIsScoped: false)
+            await watch(
+                controller, resultURL: resultURL, autoAccept: !hold, sheetPolicy: sheetPolicy)
         } else if let i = args.firstIndex(of: "--auto-share-send"), i + 1 < args.count {
             let inbox = ShareInbox()
             inbox.refresh()
@@ -179,6 +207,52 @@ enum AutoVerify {
                 codeHint: sample.hint, bookmarks: [])
             record.date = Date(timeIntervalSinceNow: -sample.agoHours * 3600)
             history.add(record)
+        }
+    }
+
+    /// The upload leaves its link for the script, then waits for the script's
+    /// signal to revoke it, so the script can download in between.
+    @MainActor
+    private static func watchStoreSend(
+        _ controller: TransferController, docs: URL, resultURL: URL
+    ) async {
+        let linkURL = docs.appendingPathComponent("verify-store-link.txt")
+        let signalURL = docs.appendingPathComponent("verify-store-revoke.go")
+        func finish(_ result: String) {
+            try? result.write(to: resultURL, atomically: true, encoding: .utf8)
+        }
+        while true {
+            try? await Task.sleep(for: .milliseconds(200))
+            switch controller.phase {
+            case .stored(let receipt):
+                if !FileManager.default.fileExists(atPath: linkURL.path) {
+                    try? receipt.link.write(to: linkURL, atomically: true, encoding: .utf8)
+                }
+                guard FileManager.default.fileExists(atPath: signalURL.path) else { continue }
+                var descriptor = FetchDescriptor<TransferRecord>(
+                    sortBy: [SortDescriptor(\.date, order: .reverse)])
+                descriptor.fetchLimit = 1
+                guard let history = controller.history,
+                    let record = try? history.container.mainContext.fetch(descriptor).first
+                else {
+                    finish("error no history record for the upload")
+                    return
+                }
+                do {
+                    try await controller.revoke(record)
+                    finish(
+                        record.revokedAt != nil && !controller.canRevoke(record)
+                            ? "ok success=true revoked=true" : "error revoke left the record live")
+                } catch {
+                    finish("error revoke: \(error)")
+                }
+                return
+            case .failed(let message):
+                finish("error \(message)")
+                return
+            default:
+                break
+            }
         }
     }
 

@@ -29,6 +29,10 @@ The **Custom code** field is optional. Leave it blank for a generated code, or e
 
 Tap **Send**. CrocApp shows the generated (or custom) code phrase, a **Copy Code** button, a QR code (F6) the receiver can scan, and a **Share Link** button. The QR code and the link open the receiver's CrocApp, or a page at `crocapp.dev/r/` if they do not have it (see [Code phrases](code-phrases.md#receiving-a-link)). With a custom relay or Local network only, a note on the screen says that receiving in a browser needs the default relays. The screen also shows a trust badge describing which relay path is in use.
 
+## Send as link
+
+Instead of a code, **Send as link** (files only) uploads your files, encrypted, to a transfer server and gives you a link the receiver can open later, with no need to be online at the same time. You choose how long the link lasts and how many downloads it allows. See [Send as link](stored-transfers.md).
+
 ## One active transfer at a time
 
 CrocApp allows exactly one active transfer at a time, matching a limit in the underlying engine. You cannot start a second send or receive while one is in progress; finish or cancel the current transfer first.

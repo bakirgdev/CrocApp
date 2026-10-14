@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 title: History
 description: "CrocApp's local-only transfer history: what it records, what it deliberately never records, and how to clear it."
 ---
@@ -26,6 +26,10 @@ For each finished or failed transfer:
 - File contents
 - The full code phrase — only that first-segment hint
 - Anything beyond the 20-name and 200-bookmark caps
+
+## Stored uploads
+
+A file sent with [Send as link](stored-transfers.md) is recorded with the server's host name and the time the link expires, then **Link expired** or **Link revoked** later. **Revoke Link**, in the row's context menu (and as a swipe action on iOS), deletes the upload from the server after a confirmation. The link and the upload token are never stored in History; they stay in the Keychain until the link is revoked or expires.
 
 ## Send Again
 

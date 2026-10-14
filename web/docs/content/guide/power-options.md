@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 5
 title: Power Options
 description: The shipped power-user settings and the croc CLI flag each one maps to.
 ---

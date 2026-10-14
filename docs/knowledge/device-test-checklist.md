@@ -1,6 +1,6 @@
 # Physical-device test checklist
 
-The simulator cannot verify any of these. Run them on a real iOS 26 device before store submission — this is the hardware gate. Run so far (owner, 2026-10-14, on a physical iPhone): "Links and web receive" 1-6 and "Transport and Tailcat gate" (a)-(d), all passed. Every other section is still unrun.
+The simulator cannot verify any of these. Run them on a real iOS 26 device before store submission — this is the hardware gate. Run so far (owner, 2026-10-14, on a physical iPhone): "Links and web receive" 1-6 and "Transport and Tailcat gate" (a)-(d), all passed. Every other section, including "Stored transfers (R18-R21)", is still unrun.
 
 ## Background continuation (BGContinuedProcessingTask)
 - [ ] Start multi-GB receive, background the app → system Live Activity shows title + progress + cancel
@@ -36,6 +36,14 @@ Owner-run on a physical iPhone, with a Mac running CrocApp as the sender (start 
 - [x] 4. In CrocApp, tap Scan QR Code and scan an old-style `croc://<code>` QR (make one from any QR generator with text `croc://word-word-word`). Pass: the code field fills with `word-word-word` and nothing connects
 - [x] 5. Copy `https://getcroc.com/?code=<code>` (a link the croc CLI shows with `--qrcode`, or typed by hand), tap Paste on Receive. Pass: the code field shows only `<code>`, not the link
 - [x] 6. On the page from step 2, tap "Receive in your browser" while the Mac sender uses default relays. Pass: Safari opens `https://getcroc.com/?code=<code>` and the croc web app offers the transfer. Informational: this is croc's own web app, not CrocApp
+
+## Stored transfers (R18-R21)
+Owner-run on a physical iPhone, with the default server (`https://getcroc.com`) and the public internet. Items 3 and 4 need a second phone (3) and any device that can hash the received file (4). Use `shasum -a 256` on the Mac; copy a file received on the iPhone to the Mac to hash it.
+- [ ] 1. Send as link a 1-2 MB file (Send > Files > Send as link > Upload). Background the app mid-upload, then return. Pass: the upload completes and shows "Link ready", or it shows "Upload interrupted: iOS stopped it in the background. Try again." and sending again completes
+- [ ] 2. On the iPhone tap Copy Link on the result screen, then paste on a Mac signed in to the same iCloud account (Handoff and Universal Clipboard on). Pass: nothing pastes on the Mac, because the link is copied for this device only
+- [ ] 3. On a second phone with CrocApp, open Receive > Scan QR Code and scan the result-screen QR of a stored link. Pass: Receive shows "Download link from <host>" in place of the code field, and nothing downloads until you tap Receive. Then, on the same QR, point the Camera app of a phone with CrocApp at it and of a phone without CrocApp. Informational: the stored link points at the server, not at `crocapp.dev/r/`, so the Camera is expected to open the server's page in the browser on both phones, not CrocApp. Record what each phone does and what the page shows
+- [ ] 4. In CrocApp, receive the link (tap Receive). Pass: the incoming preview lists the file, Accept saves it, and its SHA-256 equals the source file's
+- [ ] 5. In History, open the upload's row, choose Revoke Link (swipe or touch and hold) and confirm. Pass: the row reads "Link revoked", and reopening the link in a browser reports the link as gone
 
 ## Transport and Tailcat gate
 Owner-run on a physical iPhone, against the Mac CLI (`/opt/homebrew/bin/croc`, v11). Use a file of at least 130 MiB, because croc starts Tailcat only for sends of 128 MiB or more (`crocmobile-bridge.md`, "Transport"). Under Automatic croc races Tailcat against its relay, so the CLI `--debug` log shows which side offered it. Report each SHA-256 (`shasum -a 256` on the Mac; copy a file received on the iPhone to the Mac to hash it) so Claude can compare them with the source file's. Pass for the gate is (a) to (c) complete with equal SHA-256 and no crash or hang. (d) is informational.

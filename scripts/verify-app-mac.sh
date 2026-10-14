@@ -21,7 +21,7 @@ READY="$DOCS/verify-code-ready.txt"
 DD="$TMPROOT/dd-mac"
 
 TMP=$(mktemp -d)
-trap 'kill_jobs; rm -rf "$TMP"; rm -f "$DOCS"/bigsend.bin "$DOCS"/bigrecv.bin' EXIT
+trap 'kill_jobs; rm -rf "$TMP"; rm -rf "$DOCS"/bigsend.bin "$DOCS"/bigrecv.bin "$DOCS"/store-src "$DOCS"/storeme.bin "$DOCS"/verify-store-*' EXIT
 
 ( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
     -derivedDataPath "$DD" -allowProvisioningUpdates build ) > "$TMPROOT/mac-build.log" 2>&1
@@ -245,3 +245,69 @@ transport_app_receive relay
 ! grep -q "tailcat-offer" "$TMPROOT/mac-cli-xrrelay.log" || fail "transport relay receive: Tailcat offered"
 rm -f "$TMP/bigrecv.bin"
 echo MAC-TRANSPORT-OK
+
+# --- 9: stored transfers through the app (R18-R20) ---------------------------
+# A local croc store server (croctest store-server), so no relay and no
+# internet. One app instance uploads and keeps its receipt in memory, so the
+# revoke has to come from that same process: the script signals it with
+# verify-store-revoke.go once the CLI and a second app instance have downloaded.
+# The source sits in a subfolder because the second instance receives into
+# Documents itself.
+CT="$TMP/croctest"
+( cd crocmobile && go build -o "$CT" ./cmd/croctest )
+mkdir -p "$TMP/store9" "$DOCS/store-src"
+"$CT" store-server "$TMP/store9" > "$TMP/9srv.log" 2>&1 &
+STORE=""
+for _ in $(seq 1 50); do
+  STORE=$(sed -n 's/^STORE-URL //p' "$TMP/9srv.log")
+  [ -n "$STORE" ] && break
+  sleep 0.2
+done
+[ -n "$STORE" ] || fail "store server did not start"
+STORE_LINK="$DOCS/verify-store-link.txt"
+rm -f "$RESULT" "$STORE_LINK" "$DOCS/verify-store-revoke.go" "$DOCS/storeme.bin"
+# 5 MiB spans two upload chunks.
+head -c 5242880 /dev/urandom > "$DOCS/store-src/storeme.bin"
+
+run_app --auto-store-send "$DOCS/store-src/storeme.bin" --store-server "$STORE" --store-downloads 3 \
+    > "$TMPROOT/mac-app-store-send.log" 2>&1
+SENDER_PID=$APP_PID
+await_file "$STORE_LINK" 60 || fail "stored upload: the app never wrote its link"
+LINK=$(cat "$STORE_LINK")
+[ -n "$LINK" ] || fail "stored upload: empty link"
+
+mkdir -p "$TMP/d9cli"
+CROC_STORE_TOKEN="$LINK" timeout 60 "$CROC" --yes --out "$TMP/d9cli" > "$TMPROOT/mac-cli-store.log" 2>&1 \
+    || fail "stored upload -> CLI download failed (see $TMPROOT/mac-cli-store.log)"
+cmp "$DOCS/store-src/storeme.bin" "$TMP/d9cli/storeme.bin" || fail "stored upload -> CLI download: file differs"
+
+rm -f "$RESULT"
+run_app --auto-store-receive "$LINK" > "$TMPROOT/mac-app-store-recv.log" 2>&1
+await_app 60
+check_result "stored receive"
+cmp "$DOCS/store-src/storeme.bin" "$DOCS/storeme.bin" || fail "stored upload -> app download: file differs"
+
+rm -f "$RESULT"
+touch "$DOCS/verify-store-revoke.go"
+await_file "$RESULT" 30 || fail "stored revoke: the app wrote no result"
+got=$(cat "$RESULT")
+echo "stored revoke result: $got"
+[ "$got" = "ok success=true revoked=true" ] || fail "stored revoke: got '$got'"
+kill "$SENDER_PID" 2>/dev/null || true
+wait "$SENDER_PID" 2>/dev/null || true
+
+mkdir -p "$TMP/d9gone"
+CROC_STORE_TOKEN="$LINK" timeout 60 "$CROC" --yes --out "$TMP/d9gone" > "$TMPROOT/mac-cli-store-gone.log" 2>&1 \
+    && fail "revoked upload still downloads (CLI)"
+[ -z "$(ls -A "$TMP/d9gone")" ] || fail "revoked upload wrote files (CLI)"
+rm -f "$RESULT" "$DOCS/storeme.bin"
+run_app --auto-store-receive "$LINK" > "$TMPROOT/mac-app-store-gone.log" 2>&1
+await_app 60
+got=$(cat "$RESULT" 2>/dev/null || echo missing)
+echo "revoked receive result: $got"
+case "$got" in
+  "error This link has expired"*) ;;
+  *) fail "revoked upload: the app should report an expired link, got '$got'" ;;
+esac
+[ ! -e "$DOCS/storeme.bin" ] || fail "revoked upload wrote a file (app)"
+echo MAC-STORE-OK

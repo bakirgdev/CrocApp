@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 title: Settings and Trust
 description: Where CrocApp's settings live, why you might run your own relay, and what the trust badge tells you.
 ---
@@ -23,6 +23,10 @@ By default, CrocApp uses croc's public relay. You can point it at a relay you ru
 
 Running `croc relay` on a machine you control is enough; then enter its address (and password, if you set one) in CrocApp's relay fields.
 
+## Send as link server
+
+The **Send as link** section holds the **Server** field for [stored transfers](stored-transfers.md#the-server-setting). It defaults to `https://getcroc.com`, which is run by croc's author, not by CrocApp, and it accepts an `https` address (or `http` on localhost) with nothing after the host. A **Reset** button restores the default. The relay and Connection settings do not apply to a stored upload.
+
 ## Connection
 
 The **Connection** picker under the [power options](power-options.md) chooses how a send carries large files. **Automatic** (the default) can also use a direct path between the devices for a send of 128 MB or more, set up through `tailcat.dev`. A send set to **Relay only** never contacts those servers; a receive follows the sender's choice. The data is end-to-end encrypted either way.
@@ -39,4 +43,4 @@ This is captured at the moment the transfer starts, so changing settings mid-tra
 
 ## What is stored
 
-Settings (relay address, relay password, connection, local-only, compression, zip, exclude patterns, gitignore, both-sides confirm, auto-accept) are stored locally on the device. No settings, transfer content, or code phrases are sent anywhere except as part of an actual transfer you initiate.
+Settings (relay address, relay password, connection, send-as-link server, local-only, compression, zip, exclude patterns, gitignore, both-sides confirm, auto-accept) are stored locally on the device. No settings, transfer content, or code phrases are sent anywhere except as part of an actual transfer you initiate.
