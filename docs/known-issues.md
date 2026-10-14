@@ -8,7 +8,7 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Blocking release
 
-- **`ExportOptions-MAS.plist` is committed but never exercised.** First real MAS export is its first test.
+- **Export compliance rests on the open-source exemption.** Both app `Info.plist` files set `ITSAppUsesNonExemptEncryption` to `false`, because `true` makes App Store Connect refuse the upload without an `ITSEncryptionExportComplianceCode` (the first upload attempt failed that way, 2026-10-14). `false` relies on croc's standard encryption having public source (EAR 742.15(b), the owner's 1.0 decision). Confirm it before Submit for Review: re-read App Store Connect's encryption questions and check France, which asks for an ANSSI declaration; if App Store Connect requires it, leave France out of 1.0 and file a `future` issue. If the exemption does not hold, set `true` and add the `ITSEncryptionExportComplianceCode` App Store Connect issues after approving documentation (`docs/BUILDING.md`, section 7, "Export compliance").
 
 ## Engine (crocmobile)
 
@@ -23,6 +23,11 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 - **The release workflow has not run yet with signing.** `.github/workflows/release.yml` was only exercised through `scripts/build-devid.sh` locally. Run the first `workflow_dispatch` rehearsal from `main` after the P06 merge (dispatch needs the workflow on the default branch, and the `release` environment allows `main`), and check it before tagging a release.
 - **`release.yml` passes the `.p12` password and the throwaway keychain password on `security` argv** (`security import ... -P`, `security create-keychain -p`, `unlock-keychain -p`, `set-key-partition-list -k`). `security` has no stdin option for them, so other processes on the runner can read them while the command runs. Acceptable only on a single-tenant runner. Do not run this workflow on a shared runner.
 - **The first local Sparkle update test hung after "Install and Relaunch".** In the update test (`docs/BUILDING.md`, "Testing a Sparkle update locally"), run 1, the very first launch of the `com.bakirgdev.CrocApp.direct` bundle ID on that Mac, downloaded and prepared the update, but after "Install and Relaunch" the app never terminated. Its own Quit menu item was then ignored too (main thread idle), and the installer kept waiting. The next 4 runs passed, 3 of them with Sparkle's first-launch defaults deleted, so first-launch state alone does not explain it. Cause unknown. If it recurs, watch `log stream` for `org.sparkle-project.Sparkle` and for the app's termination, and repeat the release rehearsal from a clean macOS account.
+
+## Release
+
+- **Universal links are not verified in the Direct build.** On 2026-10-14 the stapled Direct app from `scripts/build-devid.sh` was launched, and LaunchServices' app-link lookup returned no app link for `https://crocapp.dev/r/...`, for the Direct and the dev `CrocApp` builds alike. The Mac was locked, so Safari could not be tried. Direct falls back to the `crocapp://` button. Check by hand: on an unlocked Mac with the Direct app in /Applications, click a `https://crocapp.dev/r/...` link in Safari or Notes and see whether CrocApp opens (`docs/BUILDING.md`, section 7, Owner steps).
+- **Whether the processed TestFlight builds trigger an ITMS-91053 email is unknown.** `PrivacyInfo.xcprivacy` declares the required-reason APIs the Go engine imports (`FileTimestamp`, `SystemBootTime`, `UserDefaults`), but only the developer-account email after processing shows whether Apple finds another (`docs/BUILDING.md`, section 7, Owner steps).
 
 ## Design system
 
@@ -46,6 +51,7 @@ Engine and bridge invariants live in `knowledge/crocmobile-bridge.md`; UI state-
 
 ## Accepted
 
+- **"Upload Symbols Failed" for `Croc.framework` (iOS) and `A` (macOS) on every App Store upload.** Xcode embeds a 50 KB stub `Croc.framework` dylib with no dSYM, because the gomobile xcframework is a static archive linked into the app binary, so there is nothing to symbolicate there. It is a warning of Xcode's upload step, not an ITMS warning, and the build still processes. Seen 2026-10-14, first upload.
 - **When both relay addresses are customised, both are sent.** croc's own CLI blanks `RelayAddress6` whenever v4 is customised, without checking whether v6 was customised too (`src/cli/cli.go`, send and receive alike), so it silently discards a user's custom v6 relay. Keeping both is more correct, not less. The divergence is deliberate and is not going to be "fixed" toward the CLI's behaviour.
 - **`dropDestination(for:action:isTargeted:)` stays at `ContentView.swift` and `SendView.swift`.** The Xcode 27 SDK marks it deprecated only for a future OS (`deprecated: 100000.0`), so builds emit no warning. The replacement `dropDestination(for:isEnabled:action:)` takes a `Void` action (a drop cannot be rejected) and has no `isTargeted`; its highlight API `onDropSessionUpdated` is iOS 27 / macOS 26 only, and the deployment target is iOS 26.0. Revisit when the minimum OS reaches 27.
 - **`OutputFolderStore.select` silently no-ops if bookmarking fails.** Rare, and the alternative is an error path for a condition the user cannot act on.

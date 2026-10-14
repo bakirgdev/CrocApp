@@ -8,5 +8,9 @@
 	<string>HBSU359M33</string>
 	<key>destination</key>
 	<string>export</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
 </dict>
 </plist>

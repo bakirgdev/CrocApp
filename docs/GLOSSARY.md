@@ -59,10 +59,10 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 | Term | Means |
 |---|---|
 | entitlement | an Apple capability grant declared in a `.entitlements` file (`app/CrocApp/CrocApp.entitlements`, `CrocApp-iOS.entitlements`, `app/CrocAppDirect/CrocAppDirect.entitlements`, `app/CrocShare/CrocShare.entitlements`); e.g. `network.client`/`network.server` for the sandboxed Mac build, `files.downloads.read-write` for the default output folder. |
-| MAS vs Developer ID | the two macOS distribution paths: Mac App Store (sandbox mandatory) vs. direct-download Developer ID (notarized DMG, sandbox optional); separate `Config/ExportOptions-{MAS,DevID}.plist`. |
+| MAS vs Developer ID | the two macOS distribution paths: Mac App Store (sandbox mandatory) vs. direct-download Developer ID (notarized DMG, sandbox optional); separate `Config/ExportOptions-{MAS,DevID}.plist` (iOS has its own `ExportOptions-iOS.plist`; `scripts/build-appstore.sh` uses the iOS and MAS ones). |
 | notarization | Apple's malware scan required before a Developer ID build runs without warnings on a fresh Mac; `scripts/build-devid.sh` submits the app and the disk image with `notarytool submit --wait` (`docs/BUILDING.md`, section 7). |
-| `PrivacyInfo.xcprivacy` | Apple's required privacy manifest, present in both `app/CrocApp/` and `app/CrocShare/`; declares accessed API categories (UserDefaults, FileTimestamp) and no tracking/collection. |
-| Sparkle | the macOS auto-update framework (2.10.0, SwiftPM), linked into `CrocApp Direct` only; checks `SPARKLE_FEED_URL` for an appcast signed with an Ed25519 key (`SPARKLE_PUBLIC_ED_KEY`, pending owner step O6). |
+| `PrivacyInfo.xcprivacy` | Apple's required privacy manifest, present in both `app/CrocApp/` and `app/CrocShare/`; declares accessed API categories (UserDefaults, FileTimestamp, SystemBootTime) and no tracking/collection. |
+| Sparkle | the macOS auto-update framework (2.10.0, SwiftPM), linked into `CrocApp Direct` only; checks `SPARKLE_FEED_URL` for an appcast signed with an Ed25519 key (`SPARKLE_PUBLIC_ED_KEY`, the owner's release public key). |
 | stapling | attaching Apple's notarization ticket to a build (`xcrun stapler staple`) so first launch works offline; `scripts/build-devid.sh` staples the app and the disk image. |
 
 ## Repo conventions
