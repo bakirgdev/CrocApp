@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import CrocApp
@@ -25,5 +26,19 @@ import Testing
 
     @Test func emptyCodeHasNoHint() {
         #expect(TransferController.codeHint("  ") == "")
+    }
+
+    /// A stored link's id is in its path and its key in the fragment.
+    @Test(arguments: [
+        ("https://getcroc.com/s/AbCdEf0123456789#v1.c2VjcmV0LWtleS1tYXRlcmlhbA", "getcroc.com"),
+        ("http://localhost:8080/s/AbCdEf0123456789#v1.c2VjcmV0", "localhost"),
+        ("https://getcroc.com", "getcroc.com"),
+    ])
+    func storedLinkKeepsOnlyTheHost(link: String, hint: String) throws {
+        let url = try #require(URL(string: link))
+        let h = TransferController.codeHint(storedLink: url)
+        #expect(h == hint)
+        #expect(!h.contains("AbCdEf"))
+        #expect(!h.contains("c2Vj"))
     }
 }

@@ -44,6 +44,10 @@ final class AppSettings {
     var transport: Transport {
         didSet { save(transport.rawValue, "settings.transport") }
     }
+    /// Where "Send as link" uploads (R21). The engine refuses `http` except
+    /// on loopback.
+    var storedServer: String { didSet { save(storedServer, "settings.storedServer") } }
+    static let defaultStoredServer = StoredSendOptions().server
 
     init(defaults d: UserDefaults = .standard, secrets: any SecretStore = KeychainStore()) {
         defaults = d
@@ -66,6 +70,7 @@ final class AppSettings {
             ?? .keepBoth
         transport =
             d.string(forKey: "settings.transport").flatMap(Transport.init(rawValue:)) ?? .auto
+        storedServer = d.string(forKey: "settings.storedServer") ?? Self.defaultStoredServer
     }
 
     var relayKind: RelayKind {
@@ -100,6 +105,7 @@ final class AppSettings {
         bothSidesConfirm = false
         whenFileExists = .keepBoth
         transport = .auto
+        storedServer = Self.defaultStoredServer
     }
 
     /// One-time move of the relay password off UserDefaults (plaintext

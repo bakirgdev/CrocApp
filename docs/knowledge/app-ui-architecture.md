@@ -24,7 +24,7 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` first, then `Tran
 
 `@MainActor @Observable`, and the only consumer of `CrocKit` in the app.
 
-`Phase`: `idle` → `starting` → `waiting(code)` / `connecting` → `confirmSend` | `incoming(FileList, conflicts, blocked)` → `transferring(TransferProgress)` → `done(Summary, receivedText?)` | `failed(String)`. Views switch on it. `reset()` is unconditional — no guard — but is only meant to be called from a terminal phase, which is the only place the UI offers it.
+`Phase`: `idle` → `starting` → `waiting(code)` / `connecting` → `confirmSend` | `incoming(FileList, conflicts, blocked)` → `transferring(TransferProgress)` → `done(Summary, receivedText?)` | `stored(StoredReceipt)` | `failed(String)`. Views switch on it. `reset()` is unconditional — no guard — but is only meant to be called from a terminal phase, which is the only place the UI offers it.
 
 ### Event handling, learned the hard way
 
@@ -63,9 +63,19 @@ Relay strings use `""` to mean "croc default" (the `TextField` prompt reads "Pub
 
 `Phase.confirmSend` is the sender side of croc `--ask`: entered at `.connected` when `bothSidesConfirm` is on, progress-guarded like `.incoming`, accept is `respond(true)`, decline is `cancel()`.
 
+### Stored transfers (R18-R20)
+
+`isStoredTransfer` marks a transfer that goes through a stored-transfer server instead of a croc peer; it reuses `run()`, `handle(_:)`, the `BGContinuedProcessingTask` wrap and the history record.
+- `startStoreSend(urls:downloads:lifetimeSeconds:)` uploads to `AppSettings.storedServer` (UserDefaults `settings.storedServer`, default `https://getcroc.com`). The engine sends `.progress`, then `.stored(receipt)` just before `.done`; the controller puts the receipt in the vault, keeps its id and expiry for the record, and turns `.done` into `Phase.stored(receipt)`.
+- `startStoreReceive(link:into:folderIsScoped:)` takes the same path as a live receive: `.incoming` with the conflict scan, then `respond(accept:policy:)`. Auto-accept never applies; the engine always waits.
+- A stored transfer cannot resume, so no failure copy offers it. A background expiry reads "Upload interrupted … Try again" (send) or "Download interrupted … Open the link again" (receive), concern 4. `friendlyMessage(…, stored: true)` names the transfer server for `relayUnreachable` and `connectionLost`, which is how a store call reports a network failure.
+- `revoke(_ record:)` (throws `EngineFailure`) calls `CrocEngine.revokeStored`, which needs no free engine slot, then drops the receipt and sets `revokedAt`. `canRevoke(_:)` is true for an unexpired, unrevoked record whose receipt this device still holds.
+
+`Models/StoredTransferVault.swift` keeps receipts (id, origin, upload token, link, expiry) in the Keychain, all in one item (`storedReceipts`, a JSON array), because `SecretStore` cannot list accounts. Expired receipts are purged when the vault opens (each launch). A failed Keychain write is logged, never lost silently, and leaves the receipts already stored untouched; the new receipt then lasts until the app quits. Harness runs and previews use `MemorySecretStore`. History never holds the token or link: a stored record's `codeHint` is the server host (`codeHint(storedLink:)`).
+
 ## History
 
-`Models/TransferHistory.swift` — `TransferRecord` is a SwiftData `@Model` (fields including `statusRaw` string storage for the enum). `HistoryStore` is `@MainActor @Observable`, wraps `container.mainContext`, exposes `add` / `delete` / `clear` / `recordCount`. The container is in-memory when `AutoVerify.isHarnessRun`, and is injected twice: as `.environment(history)` and as `.modelContainer(history.container)`.
+`Models/TransferHistory.swift` — `TransferRecord` is a SwiftData `@Model` (fields including `statusRaw` string storage for the enum). Stored uploads add optional `storedID`, `expiresAt` and `revokedAt`; optional so a store written by an older build opens without a migration step. `HistoryStore` is `@MainActor @Observable`, wraps `container.mainContext`, exposes `add` / `delete` / `clear` / `recordCount` / `markRevoked`. The container is in-memory when `AutoVerify.isHarnessRun`, and is injected twice: as `.environment(history)` and as `.modelContainer(history.container)`.
 
 `Views/HistoryView.swift` (`Route.history`, clock toolbar icon on both platforms): `@Query` sorted date-descending, swipe and context delete, Clear behind a confirmation, and "Send Again" for send records that carry bookmarks — resolve bookmarks, then `router.openSend`.
 

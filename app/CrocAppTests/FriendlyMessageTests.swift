@@ -47,6 +47,29 @@ import Testing
         #expect(message(code) == expected)
     }
 
+    /// A store call reports a network failure as `relayUnreachable`; no relay is involved.
+    @Test(arguments: [EngineFailure.Code.relayUnreachable, .connectionLost])
+    func storedNetworkFailureNamesTheServer(code: EngineFailure.Code) {
+        let copy = TransferController.friendlyMessage(
+            for: EngineFailure(code: code, message: "x"), cancelRequested: false,
+            declineRequested: false, stored: true)
+        #expect(
+            copy
+                == "Couldn't reach the transfer server. Check your internet connection and try again."
+        )
+    }
+
+    @Test func storedKeepsStoreCodesAndLocalIntent() {
+        let expired = TransferController.friendlyMessage(
+            for: EngineFailure(code: .storeExpired, message: "x"), cancelRequested: false,
+            declineRequested: false, stored: true)
+        #expect(expired == "This link has expired, was revoked, or has no downloads left.")
+        let cancelled = TransferController.friendlyMessage(
+            for: EngineFailure(code: .relayUnreachable, message: "x"), cancelRequested: true,
+            declineRequested: false, stored: true)
+        #expect(cancelled == "Transfer cancelled.")
+    }
+
     @Test(arguments: ["", "room full", "panic: runtime error\ngoroutine 1 [running]:"])
     func neverEchoesEngineText(text: String) {
         #expect(message(.other, text) == "Transfer failed. Try again, or check your connection.")

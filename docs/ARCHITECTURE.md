@@ -29,7 +29,8 @@ CrocKit (Swift package: CrocEngine actor, DelegateBridge, Models.swift)
     │  DelegateBridge only yields into the stream — no MainActor hop here
     ▼
 TransferController (@MainActor @Observable, app/CrocApp/Models/)
-    │  Phase enum; intents (startSend, startReceive, respond, cancel)
+    │  Phase enum; intents (startSend, startReceive, startStoreSend,
+    │  startStoreReceive, respond, cancel, revoke)
     ▼
 SwiftUI views (app/CrocApp/Views/)
     switch over controller.phase; call intents; nothing else touches CrocKit
@@ -122,6 +123,7 @@ Persistence:
 | Power settings (F13-F19, F41) | `UserDefaults`, keys prefixed `settings.` | `AppSettings`, `didSet`-triggered, gated by a `persist` flag |
 | Output folder choice | `UserDefaults` (security-scoped bookmark) | `OutputFolderStore` |
 | Transfer history (F12) | SwiftData, `TransferRecord` `@Model` | `HistoryStore`, in-memory under `AutoVerify` |
+| Stored-upload receipts (R19) | Keychain, one item `storedReceipts` | `StoredTransferVault`; purged after expiry or revoke; in memory under `AutoVerify` |
 | Share-extension handoff | App Group container (`group.com.bakirgdev.CrocApp`) | `ShareInbox` reads, `ShareStager` writes; `ShareInbox/batch-<UUID>/` + `manifest.json` |
 | Onboarding seen flag | `UserDefaults` via `@AppStorage` | `onboarding.seen`, read in `ContentView` |
 

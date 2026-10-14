@@ -29,7 +29,8 @@ struct CrocAppApp: App {
         let harness = AutoVerify.isHarnessRun
         let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: harness))
         _history = State(initialValue: history)
-        let controller = TransferController(settings: settings)
+        let vault = StoredTransferVault(secrets: harness ? MemorySecretStore() : KeychainStore())
+        let controller = TransferController(settings: settings, vault: vault)
         controller.history = history
         _controller = State(initialValue: controller)
         // AppRouter.shared is constructed before this init runs; attach the

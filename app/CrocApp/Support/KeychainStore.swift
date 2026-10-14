@@ -98,3 +98,21 @@ struct KeychainStore: SecretStore {
         return true
     }
 }
+
+/// Secrets that never leave the process, for harness runs, which must not
+/// touch the real Keychain.
+final class MemorySecretStore: SecretStore {
+    private var items: [String: String] = [:]
+
+    func get(account: String) -> String? { items[account] }
+
+    func set(_ value: String, account: String) -> Bool {
+        items[account] = value
+        return true
+    }
+
+    func delete(account: String) -> Bool {
+        items[account] = nil
+        return true
+    }
+}

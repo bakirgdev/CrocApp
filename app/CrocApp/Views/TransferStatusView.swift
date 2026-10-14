@@ -75,6 +75,8 @@ struct TransferStatusView: View {
                 transferringView(progress)
             case .done(let summary, let receivedText):
                 doneView(summary, receivedText: receivedText)
+            case .stored(let receipt):
+                storedView(receipt)
             case .failed(let message):
                 failedView(message)
             }
@@ -355,6 +357,27 @@ struct TransferStatusView: View {
                     Label("Show in Finder", systemImage: "folder")
                 }
                 #endif
+            }
+            Button("Done") { controller.reset() }
+                .buttonStyle(.borderedProminent)
+        }
+    }
+
+    // Placeholder until step 41's result screen (QR, Share).
+    private func storedView(_ receipt: StoredReceipt) -> some View {
+        VStack(spacing: Spacing.space5) {
+            StatusBlock(
+                kind: .success, title: "Uploaded",
+                detail:
+                    "Link works until \(receipt.expiresAt.formatted(date: .abbreviated, time: .shortened))"
+            )
+            Text(receipt.link)
+                .font(.body.monospaced())
+                .textSelection(.enabled)
+            Button {
+                Clipboard.copy(receipt.link)
+            } label: {
+                Label("Copy Link", systemImage: "doc.on.doc")
             }
             Button("Done") { controller.reset() }
                 .buttonStyle(.borderedProminent)
