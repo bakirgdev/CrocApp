@@ -141,7 +141,7 @@ final class TransferController {
         activeRelay = settings.relayKind
         sendConfirmArmed = false
         autoAcceptActive = false
-        let server = settings.storedServer
+        let server = settings.storedServer.trimmingCharacters(in: .whitespacesAndNewlines)
         beginFileSend(
             urls: urls, codeHint: URL(string: server).map(Self.codeHint(storedLink:)) ?? "")
         let paths = urls.map(\.path)

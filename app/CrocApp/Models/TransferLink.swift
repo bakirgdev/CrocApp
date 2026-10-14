@@ -11,7 +11,7 @@ enum TransferLink: Equatable {
 
     static let webHost = "crocapp.dev"
     static let browserReceiveHost = "getcroc.com"
-    private static let loopbackHosts: Set<String> = ["localhost", "127.0.0.1", "::1"]
+    static let loopbackHosts: Set<String> = ["localhost", "127.0.0.1", "::1"]
 
     static func parse(_ raw: String) -> TransferLink? {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)

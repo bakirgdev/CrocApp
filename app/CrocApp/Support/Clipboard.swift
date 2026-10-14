@@ -7,9 +7,17 @@ import AppKit
 #endif
 
 enum Clipboard {
-    static func copy(_ string: String) {
+    /// `thisDeviceOnly` keeps the text off Universal Clipboard (iOS only; the
+    /// macOS pasteboard has no such option). For a stored link, whose
+    /// fragment is the decryption key.
+    static func copy(_ string: String, thisDeviceOnly: Bool = false) {
         #if os(iOS)
-        UIPasteboard.general.string = string
+        if thisDeviceOnly {
+            UIPasteboard.general.setItems(
+                [[UIPasteboard.typeAutomatic: string]], options: [.localOnly: true])
+        } else {
+            UIPasteboard.general.string = string
+        }
         #else
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(string, forType: .string)
