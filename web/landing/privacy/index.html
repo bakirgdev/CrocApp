@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy | CrocApp</title>
+    <meta
+      name="description"
+      content="CrocApp has no accounts, no analytics and collects no data. Every server the app can contact, and what each one can see."
+    />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://crocapp.dev/privacy/" />
+
+    <link rel="icon" href="/assets/img/favicon/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon/favicon-96x96.png" />
+    <link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png" />
+
+    <!-- --paper / --ink as literals: a <meta> attribute cannot read a custom
+         property. Keep in sync with design/colors.md and index.html. -->
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+
+    <link rel="stylesheet" href="/tokens.css" />
+    <link rel="stylesheet" href="/styles.css" />
+
+    <!-- Runs before first paint so a stored preference cannot flash. This is the
+         page's only script: there is no toggle here, so nothing else is needed. -->
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="nav__brand" href="/">CrocApp</a>
+
+        <nav class="nav__links" aria-label="Site">
+          <a class="nav__link" href="/docs/">Docs</a>
+          <a class="nav__link" href="/support/">Support</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <section class="section" aria-labelledby="privacy-title">
+        <div class="container container--prose">
+          <div class="section__head">
+            <h1 class="t-web-section" id="privacy-title">Privacy</h1>
+            <p class="t-web-lead">
+              CrocApp has no accounts, no analytics and no tracking. The developer receives no data
+              from the app. This page lists every server the app can talk to and what each one can
+              see.
+            </p>
+            <p class="t-footnote">Applies to CrocApp 1.0. Last updated 15 October 2026.</p>
+          </div>
+
+          <div class="prose t-body">
+            <h2 class="t-web-sub">The short version</h2>
+            <p>
+              There is nothing to sign up for. CrocApp has no analytics, no telemetry, no
+              advertising and no crash-reporting service. The developer runs no server that the app
+              talks to, so there is nowhere for your data to go. The App Store privacy answer is
+              <strong>Data Not Collected</strong>.
+            </p>
+            <p>
+              A transfer still needs the internet, and the servers it uses belong to other people.
+              They are listed below, with what each one can see. Files are encrypted on your device
+              before they leave it, so no server sees file contents. The relays and the direct
+              connection servers never see your code phrase. The one exception is the optional
+              browser link, described under getcroc.com below.
+            </p>
+
+            <h2 class="t-web-sub">Servers CrocApp can contact</h2>
+            <p>
+              All of these are run by someone other than CrocApp. CrocApp
+              cannot see or control what their operators log, so the lists below are what each
+              server can observe by design, not a promise about what it keeps.
+            </p>
+
+            <article class="card">
+              <h3 class="t-headline card__title">croc public relays</h3>
+              <p class="t-callout card__body">
+                <strong>When:</strong> every transfer with a code phrase, unless you set your own
+                relay or turn on Local network only. The relays are four servers,
+                <code class="t-code">1.getcroc.com</code> to <code class="t-code">4.getcroc.com</code>
+                (port 9009), run by the croc project. The code phrase decides which of the four both
+                devices use.
+              </p>
+              <p class="t-callout card__body">
+                <strong>What it can see:</strong> the IP addresses of both devices, when they
+                connect, how long the transfer takes, and how much data moves. It also sees a room
+                name, which is a hash made from the first word of the code phrase. Everything else
+                is ciphertext: it never sees file contents or the code phrase, and it does not
+                store the files.
+              </p>
+            </article>
+
+            <article class="card">
+              <h3 class="t-headline card__title">getcroc.com, stored transfers</h3>
+              <p class="t-callout card__body">
+                <strong>When:</strong> only when you use Send as link, or open or revoke such a
+                link. The server is set in Settings and defaults to
+                <code class="t-code">https://getcroc.com</code>, run by croc's author. A link
+                received from someone else points at the server named in that link.
+              </p>
+              <p class="t-callout card__body">
+                <strong>What it can see:</strong> the encrypted files, their size, the lifetime and
+                download count you chose, and the usual details of any web request, such as your IP
+                address and the time. The decryption key sits in the part of the link after the
+                <code class="t-code">#</code>, which CrocApp and browsers never send to the server,
+                so it cannot read the file contents. CrocApp has not verified whether the server
+                can read file names, so do not rely on names being hidden.
+              </p>
+              <p class="t-callout card__body">
+                <strong>How long it keeps files:</strong> you choose how long the link lasts (1
+                hour, 1 day, which is the default, or 7 days) and how many downloads it allows (1
+                to 100). Revoking a link asks the server to delete the upload. The server
+                decides what it actually keeps and for how long, and may cap the lifetime. That is
+                set by getcroc.com, not by CrocApp, and CrocApp has not checked it beyond the
+                lifetime it requests. Anyone who has the whole link can download the files until it
+                ends.
+              </p>
+            </article>
+
+            <article class="card">
+              <h3 class="t-headline card__title">getcroc.com, the browser client</h3>
+              <p class="t-callout card__body">
+                <strong>When:</strong> only if you press <strong>Receive in your browser</strong> on
+                a <code class="t-code">crocapp.dev/r/</code> link page, or open a link to
+                <a href="https://getcroc.com/" target="_blank" rel="noopener">getcroc.com</a>
+                yourself. The button opens
+                <code class="t-code">https://getcroc.com/?code=&lt;code&gt;</code>. That is croc's
+                own web app, not run by CrocApp.
+              </p>
+              <p class="t-callout card__body">
+                <strong>What it can see:</strong> because the code is in a query string there, it
+                reaches the getcroc.com server, which therefore sees the code phrase along with your
+                IP address and the time. getcroc.com also serves the JavaScript that decrypts the
+                file, so this path trusts that site fully. That site's own pages also load third-party analytics and advertising scripts (Umami and Google AdSense when last checked, 2026-10-15), which CrocApp does not control. The CrocApp and croc command line paths
+                have no such dependency. The <code class="t-code">crocapp.dev/r/</code> page itself
+                keeps the code after the <code class="t-code">#</code>, makes no network request and
+                sends no referrer.
+              </p>
+            </article>
+
+            <article class="card">
+              <h3 class="t-headline card__title">Tailcat and DERP servers</h3>
+              <p class="t-callout card__body">
+                <strong>When:</strong> the Connection setting is Automatic by default. With it, a
+                send of about 128 MB or more also tries a direct device-to-device connection set up
+                through <code class="t-code">tailcat.dev</code>, with relay servers under
+                <code class="t-code">ipn.dev</code> when the devices cannot reach each other
+                directly. Whichever path connects first carries the transfer. A receive follows the
+                sender's choice, so receiving a large file from a sender on Automatic, or from the
+                croc command line with its default, can use them too. Choose Relay only in
+                Settings and your sends never contact these servers. Smaller transfers do not
+                contact them at all.
+              </p>
+              <p class="t-callout card__body">
+                <strong>What they can see:</strong> the IP addresses of both devices, when they
+                connect, and the size and timing of encrypted packets. The data stays end-to-end
+                encrypted on this path too, so they never see file contents or the code phrase.
+                These servers are not run by CrocApp.
+              </p>
+            </article>
+
+            <article class="card">
+              <h3 class="t-headline card__title">github.com, update checks (Mac direct build only)</h3>
+              <p class="t-callout card__body">
+                <strong>When:</strong> the Mac disk image downloaded from GitHub includes the
+                Sparkle updater. It reads an update list (<code class="t-code">appcast.xml</code>) published with this
+                project's GitHub releases when you choose Check for Updates, and after you allow
+                automatic checks when Sparkle asks. If you
+                install an update, it downloads from GitHub too. Sparkle's system profiling is
+                switched off, so the request adds no hardware or system details.
+              </p>
+              <p class="t-callout card__body">
+                <strong>What it can see:</strong> GitHub sees the usual details of any web request,
+                such as your IP address and the time. The iPhone, iPad and Mac App Store builds
+                contain no updater and make no such request.
+              </p>
+            </article>
+
+            <article class="card">
+              <h3 class="t-headline card__title">Servers you choose</h3>
+              <p class="t-callout card__body">
+                You can point CrocApp at your own croc relay, your own stored-transfer server, and a
+                SOCKS5 or HTTP proxy under Advanced settings. Those servers see what the matching
+                public server above would see, and their operator decides what they keep. Use only
+                servers you trust.
+              </p>
+            </article>
+
+            <h2 class="t-web-sub">On your device</h2>
+            <p>
+              <strong>Camera.</strong> On iPhone and iPad, the camera is used only to scan a QR code
+              when you open the scanner. CrocApp reads the code on the device and stores nothing: no
+              photo and no video are saved or sent anywhere.
+            </p>
+            <p>
+              <strong>Keychain.</strong> A custom relay password, proxy credentials and the receipts
+              for your stored uploads (which hold the upload token and the link) are kept in the
+              iOS or macOS Keychain, not in plain settings. A stored-upload receipt is removed when
+              you revoke the link and at the first launch after it expires.
+            </p>
+            <p>
+              <strong>History.</strong> Transfer history stays on your device. There is no sync and
+              no export. It records file names (up to 20 per transfer), counts, sizes, dates, status
+              and only the first segment of the code phrase, never file contents or the full phrase.
+              For a stored upload it keeps the server's host name, not the link or the upload token.
+              Clear it any time from the history screen.
+            </p>
+            <p>
+              <strong>Local network.</strong> To find a nearby device and transfer directly, the
+              two devices look for each other with multicast messages on your local network. That
+              traffic stays on the local network and reaches no server. iOS asks your
+              permission first. Turn on Local network only to use nothing else.
+            </p>
+
+            <h2 class="t-web-sub">This website</h2>
+            <p>
+              crocapp.dev is hosted on GitHub Pages, so GitHub sees ordinary web server details for
+              each page you load. The pages set no cookies and use no analytics. The home page asks
+              <code class="t-code">api.github.com</code> for the project's star count, which tells
+              GitHub your IP address and that you loaded the page, and caches the number in your
+              browser's local storage, refreshing it after six hours. This page and the support page
+              load only their own files from crocapp.dev.
+            </p>
+
+            <h2 class="t-web-sub">Apple</h2>
+            <p>
+              Apple runs the App Store and the operating system. If you share analytics with app
+              developers in your device settings, Apple may pass the developer aggregate reports
+              about the app. CrocApp itself adds nothing to them.
+            </p>
+
+            <h2 class="t-web-sub">Questions and changes</h2>
+            <p>
+              Ask on the <a href="/support/">support page</a>. CrocApp is open source, so you can
+              check any claim above in the
+              <a href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener"
+                >repository<span class="u-visually-hidden"> (opens in a new tab)</span></a
+              >,
+              and the
+              <a href="/docs/security-and-privacy/">security and privacy guide</a>
+              covers the same ground in the documentation. If this page changes, the date at the top
+              changes with it.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <img
+          class="footer__mascot"
+          src="/assets/img/mascot-web.webp"
+          alt=""
+          width="128"
+          height="128"
+          loading="lazy"
+          decoding="async"
+        />
+        <div class="footer__text t-footnote">
+          <p>
+            CrocApp is MIT licensed and built on
+            <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a>
+            by Zack Scholl, also MIT licensed.
+          </p>
+          <p>
+            Unofficial and unaffiliated. Nothing here implies endorsement by croc's author. Apple,
+            iPhone, iPad, Mac and AirDrop are trademarks of Apple Inc.
+          </p>
+        </div>
+        <nav class="footer__links t-footnote" aria-label="Footer">
+          <a href="/">Home</a>
+          <a href="/docs/">Documentation</a>
+          <a href="/support/">Help and contact</a>
+          <a href="/privacy/" aria-current="page">Privacy</a>
+          <a href="https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md" target="_blank" rel="noopener">
+            Security policy
+            <span class="u-visually-hidden">(opens in a new tab)</span>
+          </a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

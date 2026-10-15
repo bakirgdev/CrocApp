@@ -397,7 +397,7 @@
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">iPhone &amp; iPad</h3>
-              <p class="t-callout card__body">App Store</p>
+              <p class="t-callout card__body">App Store. Available at launch.</p>
               <img
                 class="dlcard__action dlcard__badge"
                 src="assets/img/app-store.svg"
@@ -412,7 +412,7 @@
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">Mac</h3>
-              <p class="t-callout card__body">Mac App Store</p>
+              <p class="t-callout card__body">Mac App Store. Available at launch.</p>
               <img
                 class="dlcard__action dlcard__badge"
                 src="assets/img/mac-app-store.svg"
@@ -439,7 +439,16 @@
             </div>
           </div>
 
-          <p class="t-footnote download__req">iOS 26 or later · macOS 26 or later</p>
+          <p class="t-footnote download__req">
+            iOS 26 or later · macOS 26 or later. The Mac disk image is the download available now;
+            the App Store versions follow at launch.
+            <br />
+            Receive in a browser:
+            <a href="https://getcroc.com/" target="_blank" rel="noopener"
+              >croc's own web client<span class="u-visually-hidden"> (opens in a new tab)</span></a
+            >, run by the croc project, not by CrocApp. See the <a href="/privacy/">privacy page</a>
+            for what it can see.
+          </p>
         </div>
       </section>
 
@@ -587,7 +596,7 @@
               <p>
                 Usually yes — a relay, which forwards traffic between two devices that cannot reach
                 each other directly. It sees ciphertext and nothing else, and it does not store your
-                file. You can point CrocApp at your own relay instead.
+                file. Send as link is the exception: it uploads the encrypted file to getcroc.com, or the server you choose, until the link expires. You can point CrocApp at your own relay instead.
               </p>
             </div>
           </details>
@@ -695,7 +704,7 @@
             <svg class="card__icon" aria-hidden="true"><use href="#i-heart" /></svg>
             <h2 class="t-web-sub card__title" id="support-title">Support the project</h2>
             <p class="t-body card__body">
-              CrocApp is free and stays free. There is no paid tier planned and nothing is held
+              CrocApp is free and stays free. There is no paid tier and nothing is held
               back. If it saves you a nuisance often enough to be worth something, you can help
               cover the Apple Developer Program fee and the hardware to test on. If not, using it
               and reporting what breaks is genuinely worth more.
@@ -750,6 +759,8 @@
         <nav class="footer__links t-footnote" aria-label="Footer">
           <!-- The only docs entry point below 48rem, where the nav drops it. -->
           <a href="/docs/">Documentation</a>
+          <a href="/support/">Help and contact</a>
+          <a href="/privacy/">Privacy</a>
           <a href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener">
             Source
             <span class="u-visually-hidden">(opens in a new tab)</span>
@@ -766,8 +777,8 @@
       </div>
     </footer>
 
-    <!-- No aggregateRating and no downloadUrl: there are no ratings and the
-         store links do not exist yet. FAQPage mirrors the Questions section
+    <!-- No aggregateRating: there are no ratings. downloadUrl is the direct
+         download; add the store listings to it once they exist. FAQPage mirrors the Questions section
          verbatim — the two move together or the markup starts lying. -->
     <script type="application/ld+json">
       {
@@ -787,6 +798,7 @@
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "author": { "@id": "https://crocapp.dev/#author" },
             "sameAs": ["https://github.com/bakirgdev/CrocApp"],
+            "downloadUrl": "https://github.com/bakirgdev/CrocApp/releases/latest",
             "datePublished": "2026-07-25"
           },
           {
@@ -837,7 +849,7 @@
                 "name": "Does my file go through a server?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Usually yes — a relay, which forwards traffic between two devices that cannot reach each other directly. It sees ciphertext and nothing else, and it does not store your file. You can point CrocApp at your own relay instead."
+                  "text": "Usually yes — a relay, which forwards traffic between two devices that cannot reach each other directly. It sees ciphertext and nothing else, and it does not store your file. Send as link is the exception: it uploads the encrypted file to getcroc.com, or the server you choose, until the link expires. You can point CrocApp at your own relay instead."
                 }
               },
               {

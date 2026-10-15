@@ -141,6 +141,7 @@ body {
 /* WCAG 1.4.1: tokens.css strips underlines globally, which is right for nav and
    buttons and wrong for a link inside a block of text. */
 .prose a,
+.download__req a,
 .card__body a,
 .disclosure__body a,
 .footer__text a,
@@ -840,6 +841,20 @@ body {
 
 .support__actions {
   margin-block-start: var(--space-6);
+}
+
+/* Long-form pages (/privacy/, /support/): a heading needs more air above it
+   than a paragraph does. */
+.prose > h2 {
+  margin-block-start: var(--stack-web);
+}
+
+.prose > h2 + * {
+  margin-block-start: var(--space-4);
+}
+
+.prose .card__body + .card__body {
+  margin-block-start: var(--space-3);
 }
 
 /* 404 */
