@@ -6,6 +6,10 @@ description: Frequently asked questions about CrocApp, cost, security, accounts,
 
 # FAQ
 
+## Where do I get it, and how does it update?
+
+CrocApp is on the iOS and Mac App Stores and as a notarized disk image for Mac, all version 1.0. The listings are linked from [crocapp.dev](https://crocapp.dev). App Store builds update through the App Store. The disk image updates itself: choose **Check for Updates…** in the CrocApp menu. See [Install](getting-started/install.md).
+
 ## What does it cost?
 
 Nothing. No purchase, no subscription, no advertising, and no analytics. CrocApp is free, MIT-licensed, and stays that way. Monetization is limited to optional sponsorship.

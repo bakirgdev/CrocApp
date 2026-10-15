@@ -51,6 +51,6 @@ Auto-accept is off by default. With it on, a picker, **When a file already exist
 
 When on, the sender also has to approve the transfer (via a **Receiver connected** prompt) before it starts, in addition to the receiver's normal accept step.
 
-## Not yet built
+## Not in the app
 
-Running your own relay from the Mac app is planned for a later release but has not been started. The other croc options (proxies, upload throttling, curve and hash choice, sender IP, multicast address, ports and the internal DNS resolver) are under [Advanced settings](advanced-settings.md).
+The app cannot run a relay itself. To use your own relay, run `croc relay` on a machine you control and enter its address under Relay. The other croc options (proxies, upload throttling, curve and hash choice, sender IP, multicast address, ports and the internal DNS resolver) are under [Advanced settings](advanced-settings.md).

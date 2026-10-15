@@ -59,13 +59,15 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/bakirgdev/CrocApp/tree/main/web/docs/',
           showLastUpdateTime: true,
-          // Current *is* 0.9.9, rather than an unlabeled "Next" sitting on top
-          // of a duplicated snapshot. Nothing has shipped yet, so a
-          // versioned_docs/ copy would only be a second place to edit. Cut the
-          // first snapshot when 1.0.0 tags: `pnpm run docusaurus docs:version`.
+          // Current *is* 1.0 (release 1.0.0, see package.json), rather than an
+          // unlabeled "Next" sitting on top of a duplicated snapshot, so a
+          // versioned_docs/ copy would only be a second place to edit. No
+          // snapshot of the earlier build is cut. Cut the first one when a
+          // release changes behavior this site must still describe for the
+          // old version: `pnpm run docusaurus docs:version 1.0`.
           lastVersion: 'current',
           versions: {
-            current: {label: '0.9.9'},
+            current: {label: '1.0'},
           },
         },
         // No blog. Release notes belong in GitHub Releases and CHANGELOG.md.

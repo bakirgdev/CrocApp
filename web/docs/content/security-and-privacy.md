@@ -35,7 +35,12 @@ The link page offers **Receive in your browser**, which opens `https://getcroc.c
 - No telemetry, no analytics, no ads, no accounts.
 - Transfer history is local to the device — see [History](guide/history.md) for exactly what it records.
 - You can point CrocApp at your own croc relay instead of the default public one.
+- The disk image build checks github.com for updates through Sparkle and installs only updates whose signature matches the key built into the app; it sends no system profile. The App Store builds contain no updater.
 - Dependencies in the Go engine are scanned by `govulncheck` on every CI run and again on a weekly schedule.
+
+## Privacy policy
+
+The [privacy policy](https://crocapp.dev/privacy/) lists every server CrocApp can contact, what each one can see, and how long a stored transfer is kept. CrocApp has no accounts and the developer collects no data.
 
 ## Reporting a vulnerability
 

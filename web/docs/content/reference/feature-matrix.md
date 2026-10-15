@@ -1,12 +1,12 @@
 ---
 sidebar_position: 2
 title: Feature Matrix
-description: Every planned CrocApp feature, numbered, grouped, and marked with its real ship status.
+description: Every CrocApp feature, numbered, grouped, and marked with its ship status.
 ---
 
 # Feature matrix
 
-Feature numbers (`F1`…) are stable identifiers used across the project. "Shipped" means the feature exists and works in the app today; the project has not released a build yet (see [Install](../getting-started/install.md)).
+Feature numbers (`F1`…) are stable identifiers used across the project. "Shipped" means the feature is in CrocApp 1.0 (see [Install](../getting-started/install.md) for where to get it).
 
 ## Core (shipped)
 
@@ -52,7 +52,7 @@ Feature numbers (`F1`…) are stable identifiers used across the project. "Shipp
 | # | Feature | Status |
 |---|---|---|
 | F30 | Share extension (send from any app) | shipped, iOS only |
-| F32 | Receive links: `crocapp://` scheme, `crocapp.dev/r/` universal links, and `croc://` QR codes from 0.9.9 | shipped |
+| F32 | Receive links: `crocapp://` scheme, `crocapp.dev/r/` universal links, and `croc://` QR codes from earlier builds | shipped |
 | F36 | Trust UI: end-to-end badge, "how it works", active-relay indicator | shipped |
 | F42 | Share Link, a QR code that is a web link, and a `crocapp.dev/r/` page with an option to receive in a browser | shipped |
 | F43 | Send as link: encrypted upload of files to a stored-transfer server, a link with a chosen lifetime and download count, receive from the link, and revoke from History | shipped |
@@ -60,7 +60,7 @@ Feature numbers (`F1`…) are stable identifiers used across the project. "Shipp
 | F34 | Shortcuts and Siri actions: Send Files, Send Text and Receive with CrocApp (see [Shortcuts](../guide/shortcuts.md)) | shipped |
 | F44 | iPad File menu: Show Receive Folder in Files | shipped, iPad only |
 
-## Planned, not started (V1.x)
+## After 1.0, not started
 
 None of these are built yet.
 
@@ -76,7 +76,7 @@ None of these are built yet.
 |---|---|---|
 | F37 | Wi-Fi Aware direct path | iOS/iPadOS 26 only, absent on macOS 26; app-to-app fast path |
 
-## Deliberately not planned
+## Deliberately left out
 
 | # | Feature | Reason |
 |---|---|---|

@@ -24,7 +24,7 @@ The docs site is English only. The `bs`, `de`, `es`, `fr` and `ru` drafts were r
 
 ## Cutting a version
 
-Not needed yet, current *is* 0.9.9, no `versioned_docs/` exists. When 1.0.0 tags: `pnpm --dir web/docs run docusaurus docs:version 0.9.9`. Until a second version exists, the navbar's `docsVersionDropdown` renders nothing, that is Docusaurus hiding it below two versions, not a misconfiguration.
+Not needed yet. `current` is labelled `1.0` in `docusaurus.config.ts` (`versions.current.label`) and no `versioned_docs/` exists: no snapshot of the earlier 0.9.9 build is cut, because nothing of it needs its own docs. When a later release changes behavior that the old version's readers still need described, run `pnpm --dir web/docs run docusaurus docs:version 1.0` first, then relabel `current` for the new release. `web/docs/package.json` carries the release version (`1.0.0`). Until a second version exists, the navbar's `docsVersionDropdown` renders nothing, that is Docusaurus hiding it below two versions, not a misconfiguration.
 
 ## Broken links fail the build
 
