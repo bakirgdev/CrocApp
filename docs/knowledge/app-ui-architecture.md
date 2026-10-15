@@ -61,6 +61,8 @@ Relay strings use `""` to mean "croc default" (the `TextField` prompt reads "Pub
 
 `Views/PowerSettingsSections.swift` holds the shared `Form` sections — relay, connection (the Automatic / Relay only `Transport` picker, disabled while Local network only is on), transfer toggles, exclusions, confirmation with the auto-accept warning footer — embedded in both the macOS `SettingsView` (Settings scene, ⌘,) and the iOS `SettingsScreen` (gear toolbar → `Route.settings`). `TrustBadge(relay:)` appears in the waiting, transferring, and confirm-send views. `HowItWorksView` is the plain-language explainer; its facts come from `what-is-croc.md`.
 
+**About and privacy link (R38).** `Views/AboutSection.swift` is the last `Form` section of the macOS General tab and the iOS `SettingsScreen`: version (`CFBundleShortVersionString` and `CFBundleVersion`), Privacy Policy and Support `Link`s. The URLs and the version string live in `Support/AppInfo.swift`; `AppInfoTests` pins their scheme, host and path. On macOS `AppCommands` replaces the `.appInfo` group with an "About CrocApp" button that calls `NSApplication.orderFrontStandardAboutPanel(options:)` with a linked "Privacy Policy" `.credits` string (the Direct build's `UpdateCommands` still attaches after that group).
+
 `Phase.confirmSend` is the sender side of croc `--ask`: entered at `.connected` when `bothSidesConfirm` is on, progress-guarded like `.incoming`, accept is `respond(true)`, decline is `cancel()`.
 
 ### Stored transfers (R18-R21)

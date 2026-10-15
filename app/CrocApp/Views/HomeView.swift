@@ -101,6 +101,7 @@ struct SettingsScreen: View {
             } footer: {
                 Text("Proxies, ports, encryption curve and more. The defaults suit most people.")
             }
+            AboutSection()
         }
         .navigationTitle("Settings")
     }

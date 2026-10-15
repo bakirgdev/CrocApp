@@ -58,6 +58,8 @@ struct SettingsView: View {
             menuBarSection
 
             PowerSettingsSections()
+
+            AboutSection()
         }
         .defaultFocus($focusedControl, .showInFinder)
         .onAppear { loginItem.refresh() }
