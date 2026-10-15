@@ -9,9 +9,16 @@ the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-15
+
+CrocApp 1.0 is on three channels: the iOS and iPadOS App Store, the Mac App Store, and a notarized disk image for Mac. The App Store listings are linked from crocapp.dev when they are live. The other device needs croc 11 or newer.
+
+**iOS 26, iPadOS 26 or macOS 26 or later. The disk image is Apple silicon only.**
+
 ### Added
 
-- The macOS direct download is now signed with a Developer ID certificate, notarized and stapled, and updates itself with Sparkle: choose "Check for Updates…" in the app menu. The release no longer ships the separate app zip; the disk image is the download.
+- iPhone and iPad apps through the App Store, and a Mac App Store build. 0.9.9 was macOS only.
+- The macOS direct download is now signed with a Developer ID certificate, notarized and stapled, so it opens with only the standard first-launch confirmation. It updates itself with Sparkle: choose "Check for Updates…" in the app menu. Sparkle installs an update only when its EdDSA signature matches the key built into the app, and the update check sends no system profile. Only this build has Sparkle; the App Store builds update through the App Store. The release no longer ships the separate app zip; the disk image is the download. Verify a download with `gh attestation verify <file> --repo bakirgdev/CrocApp`: the release workflow attests the disk image, the update feed and the engine archive after stapling, so the attestation covers the bytes you download.
 - Receiving a file whose name is already taken now offers Keep Both (saves the new one as `name (1).ext`) or Replace. With auto-accept on, the setting "When a file already exists" under Confirmation chooses; it defaults to Keep Both.
 - A Connection setting, Automatic (the default) or Relay only. With Automatic, a send of 128 MB or more can also take a direct path between the devices; Relay only keeps every transfer on croc's relays. The sender's choice applies, and a receive follows it.
 - Links. Opening a CrocApp link, a `crocapp.dev/r/` link or a `getcroc.com/?code=` link, or pasting one into the Receive field, opens Receive with the code filled in; nothing connects until you tap Receive. The sender's waiting screen has a Share Link button. The page at `crocapp.dev/r/` reads the code in your browser (it never reaches a server) and offers to open CrocApp, get the app, or receive in your browser through croc's own web app, which needs the default relays.
@@ -24,6 +31,10 @@ the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The transfer engine is croc v11.5.4. A croc 10 device can no longer complete a transfer with CrocApp, in either direction: the other device needs croc 11 or newer. Relays are picked from croc's public relay pool the way the croc 11 command line does, and a send fails with a clear message when no public relay answers.
+- Failures say what went wrong: a wrong code, a refused transfer, a lost connection, a peer on an older croc, or no public relay available, instead of one generic message.
+- The relay password is kept in the Keychain instead of the settings file. History keeps only the first segment of a code phrase, never the whole code.
+- Every 1.0 screen works at the largest text sizes and with VoiceOver, including the transfer percentage.
 - The QR code on the sender's waiting screen now encodes a `https://crocapp.dev/r/` link instead of `croc://<code>`, so a phone camera opens CrocApp, or a page that explains what to do when the app is missing. QR codes from 0.9.9 still scan in the app.
 
 ### Fixed
@@ -97,5 +108,6 @@ gh attestation verify CrocApp-0.9.9-arm64.dmg --repo bakirgdev/CrocApp
 - No notarization, so no clean first launch
 - No Intel or Rosetta build. The Go engine's macOS slice is arm64 only
 
-[unreleased]: https://github.com/bakirgdev/CrocApp/compare/v0.9.9...HEAD
+[unreleased]: https://github.com/bakirgdev/CrocApp/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/bakirgdev/CrocApp/compare/v0.9.9...v1.0.0
 [0.9.9]: https://github.com/bakirgdev/CrocApp/releases/tag/v0.9.9

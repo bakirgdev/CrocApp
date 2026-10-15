@@ -14,6 +14,15 @@ struct AppCommands: Commands {
     let controller: TransferController
 
     var body: some Commands {
+        #if os(macOS)
+        CommandGroup(replacing: .appInfo) {
+            Button("About CrocApp") {
+                NSApplication.shared.orderFrontStandardAboutPanel(options: [
+                    .credits: Self.aboutCredits
+                ])
+            }
+        }
+        #endif
         CommandGroup(replacing: .newItem) {
             Button("Send…") { router.openSend(with: []) }
                 .keyboardShortcut("1")
@@ -41,4 +50,21 @@ struct AppCommands: Commands {
             #endif
         }
     }
+
+    #if os(macOS)
+    // The panel draws credits as plain rich text, so size, alignment and the
+    // adaptive label color have to be set here to match the rest of the panel.
+    private static var aboutCredits: NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        return NSAttributedString(
+            string: "Privacy Policy",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
+                .foregroundColor: NSColor.labelColor,
+                .paragraphStyle: paragraph,
+                .link: AppInfo.privacyURL,
+            ])
+    }
+    #endif
 }

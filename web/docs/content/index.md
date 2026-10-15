@@ -25,16 +25,19 @@ The sender picks files, a folder, or a snippet of text. CrocApp generates a code
 
 CrocApp requires **iOS 26**, **iPadOS 26**, or **macOS 26**, meaning `26.0` or any later version. It is Apple-platform only; there is no Windows, Linux, or Android client.
 
-:::warning
-CrocApp has not been released yet. Nothing is available for download on any channel today. See [Install](getting-started/install.md) for current status and how to build from source.
+:::note
+The other device needs **croc 11 or newer**, whether it runs CrocApp or the croc CLI. croc 10 cannot complete a transfer with CrocApp.
 :::
+
+CrocApp 1.0 comes as an iOS app, a Mac App Store app and a notarized disk image for Mac. The store listings and the 1.0 disk image arrive at launch. See [Install](getting-started/install.md) for where to get each one.
 
 ## Where to go next
 
-- [Install](getting-started/install.md): release status and how to build from source today
+- [Install](getting-started/install.md): the three channels, updates, and how to build from source
 - [Your first transfer](getting-started/first-transfer.md): a walkthrough of one send and one receive
 - [Sending files](guide/sending.md), [Receiving files](guide/receiving.md), [Code phrases](guide/code-phrases.md), [Send as link](guide/stored-transfers.md)
-- [Power options](guide/power-options.md), [Settings and trust](guide/settings-and-trust.md), [History](guide/history.md)
+- [Power options](guide/power-options.md), [Advanced settings](guide/advanced-settings.md), [Settings and trust](guide/settings-and-trust.md), [History](guide/history.md)
+- [Menu bar](guide/menu-bar.md) and [Shortcuts](guide/shortcuts.md)
 - [croc CLI interoperability](reference/croc-cli-interop.md) and the [feature matrix](reference/feature-matrix.md)
 - [Security and privacy](security-and-privacy.md), [Troubleshooting](troubleshooting.md), [FAQ](faq.md)
 - [Contributing](contribute.md)

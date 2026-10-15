@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Support | CrocApp</title>
+    <meta
+      name="description"
+      content="Get help with CrocApp: the documentation, the issue tracker, community discussions, and how to report a security problem privately."
+    />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://crocapp.dev/support/" />
+
+    <link rel="icon" href="/assets/img/favicon/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon/favicon-96x96.png" />
+    <link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png" />
+
+    <!-- --paper / --ink as literals: a <meta> attribute cannot read a custom
+         property. Keep in sync with design/colors.md and index.html. -->
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+
+    <link rel="stylesheet" href="/tokens.css" />
+    <link rel="stylesheet" href="/styles.css" />
+
+    <!-- Runs before first paint so a stored preference cannot flash. This is the
+         page's only script: there is no toggle here, so nothing else is needed. -->
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="nav__brand" href="/">CrocApp</a>
+
+        <nav class="nav__links" aria-label="Site">
+          <a class="nav__link" href="/docs/">Docs</a>
+          <a class="nav__link" href="/privacy/">Privacy</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <section class="section" aria-labelledby="support-title">
+        <div class="container container--prose">
+          <div class="section__head">
+            <h1 class="t-web-section" id="support-title">Support</h1>
+            <p class="t-web-lead">
+              CrocApp is free and maintained by one person. Most answers are in the documentation.
+              For anything else, ask in public so the next person can find the answer too.
+            </p>
+          </div>
+
+          <div class="prose t-body">
+            <h2 class="t-web-sub">Read first</h2>
+            <p>
+              The <a href="/docs/">documentation</a> covers installing, your first transfer,
+              settings, and the exact security claim. Two pages answer most questions:
+              <a href="/docs/troubleshooting/">Troubleshooting</a> (a transfer that will not
+              connect, guest Wi-Fi, relays) and <a href="/docs/faq/">FAQ</a>.
+            </p>
+            <p>
+              Both devices need croc 11 or newer. A phone running CrocApp and a computer running an
+              older croc command line cannot complete a transfer, and updating the older side fixes
+              it.
+            </p>
+
+            <h2 class="t-web-sub">Ask a question</h2>
+            <p>
+              Usage questions, setup help and ideas go to
+              <a href="https://github.com/bakirgdev/CrocApp/discussions" target="_blank" rel="noopener"
+                >GitHub Discussions<span class="u-visually-hidden"> (opens in a new tab)</span></a
+              >.
+            </p>
+
+            <h2 class="t-web-sub">Report a bug</h2>
+            <p>
+              Open an issue on the
+              <a href="https://github.com/bakirgdev/CrocApp/issues" target="_blank" rel="noopener"
+                >issue tracker<span class="u-visually-hidden"> (opens in a new tab)</span></a
+              >. Say which device and OS version you use, which CrocApp build you have (App Store or
+              direct download), what you expected, and what happened. Do not paste a live code
+              phrase or a stored-transfer link. If the same transfer fails with the croc command
+              line, the bug is in
+              <a href="https://github.com/schollz/croc/issues" target="_blank" rel="noopener"
+                >croc itself<span class="u-visually-hidden"> (opens in a new tab)</span></a
+              >.
+            </p>
+
+            <h2 class="t-web-sub">Report a security problem</h2>
+            <p>
+              Do not open a public issue. Report it privately through a
+              <a
+                href="https://github.com/bakirgdev/CrocApp/security/advisories/new"
+                target="_blank"
+                rel="noopener"
+                >GitHub security advisory<span class="u-visually-hidden"> (opens in a new tab)</span></a
+              >. If that form is not available to you, email
+              <a href="mailto:bakirgdev@gmail.com?subject=SECURITY">bakirgdev@gmail.com</a> with
+              SECURITY in the subject. The full process is in the
+              <a
+                href="https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md"
+                target="_blank"
+                rel="noopener"
+                >security policy<span class="u-visually-hidden"> (opens in a new tab)</span></a
+              >.
+            </p>
+
+            <h2 class="t-web-sub">Privacy</h2>
+            <p>
+              What CrocApp collects (nothing) and which servers it talks to are on the
+              <a href="/privacy/">privacy page</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <img
+          class="footer__mascot"
+          src="/assets/img/mascot-web.webp"
+          alt=""
+          width="128"
+          height="128"
+          loading="lazy"
+          decoding="async"
+        />
+        <div class="footer__text t-footnote">
+          <p>
+            CrocApp is MIT licensed and built on
+            <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a>
+            by Zack Scholl, also MIT licensed.
+          </p>
+          <p>
+            Unofficial and unaffiliated. Nothing here implies endorsement by croc's author. Apple,
+            iPhone, iPad, Mac and AirDrop are trademarks of Apple Inc.
+          </p>
+        </div>
+        <nav class="footer__links t-footnote" aria-label="Footer">
+          <a href="/">Home</a>
+          <a href="/docs/">Documentation</a>
+          <a href="/support/" aria-current="page">Help and contact</a>
+          <a href="/privacy/">Privacy</a>
+          <a href="https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md" target="_blank" rel="noopener">
+            Security policy
+            <span class="u-visually-hidden">(opens in a new tab)</span>
+          </a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

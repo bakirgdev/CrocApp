@@ -38,7 +38,7 @@ Whatever you paste, scan, or open, CrocApp reads the code out of it. These forms
 - `https://crocapp.dev/r/#<code>`, the link CrocApp itself shares
 - `crocapp://receive?code=<code>`
 - `https://getcroc.com/?code=<code>`, the link the croc CLI's `--qrcode` shows
-- `croc://<code>`, the form in the QR codes of CrocApp 0.9.9, which still scan
+- `croc://<code>`, the form in the QR codes of earlier CrocApp builds, which still scan
 
 ## Receiving a link
 

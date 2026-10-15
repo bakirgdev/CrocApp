@@ -26,21 +26,22 @@ It is a graphical front end for [croc](https://github.com/schollz/croc), the com
 > [!NOTE]
 > CrocApp is unofficial and unaffiliated. Nothing here implies endorsement by croc's author.
 
-## Status
-
 > [!IMPORTANT]
-> **Not released yet.** No download exists on any channel. The source is public and buildable today — see [Build from source](#build-from-source).
+> The other device needs **croc 11 or newer** (the CLI or CrocApp). croc 10 cannot complete a transfer with CrocApp.
 
-| Channel | State |
+## Download
+
+CrocApp 1.0 comes through three channels. There is no package-manager channel.
+
+| Channel | Where |
 |---|---|
-| iOS / iPadOS App Store | Planned |
-| Mac App Store | Planned |
-| macOS direct download (notarized DMG) | Planned |
-| TestFlight beta | Planned |
+| iPhone and iPad (App Store) | Linked from [crocapp.dev](https://crocapp.dev) when the listing is live |
+| Mac (Mac App Store) | Linked from [crocapp.dev](https://crocapp.dev) when the listing is live |
+| Mac (notarized disk image, Apple silicon) | `CrocApp-<version>-arm64.dmg` on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest), from version 1.0.0 |
 
-Four channels, no package managers.
+From version 1.0.0 the disk image is signed with a Developer ID certificate, notarized and stapled, and it updates itself through Sparkle (**Check for Updates…** in the app menu). The App Store builds update through the App Store. Verify a download with `gh attestation verify <file> --repo bakirgdev/CrocApp`; see [`SECURITY.md`](SECURITY.md).
 
-Every V1 feature is implemented. What stands between the app and a release is tracked in [`docs/known-issues.md`](docs/known-issues.md) under "Blocking release".
+Install details: [crocapp.dev/docs/getting-started/install](https://crocapp.dev/docs/getting-started/install/). Or build it yourself: [Build from source](#build-from-source).
 
 ## How it works
 
@@ -101,14 +102,14 @@ Transfers are end-to-end encrypted, the code phrase authenticates both sides, an
 > [!WARNING]
 > There has been **no formal third-party security audit** of croc, and CrocApp does not claim one. Do not describe CrocApp as audited, certified, or zero-knowledge-verified.
 
-- No telemetry, no analytics, no ads, no accounts.
+- No telemetry, no analytics, no ads, no accounts. See the [privacy policy](https://crocapp.dev/privacy/) for every server the app can contact.
 - Transfer history is local to the device.
 - You can point CrocApp at your own croc relay instead of the default public one.
 - Vulnerabilities: report privately via [GitHub Security Advisories](https://github.com/bakirgdev/CrocApp/security/advisories/new), never a public issue.
 
 ## Features
 
-Everything below is implemented and working in the app. Feature numbers (`F1`…) are stable identifiers used across the codebase and issues — see [`docs/knowledge/features.md`](docs/knowledge/features.md) for the full roadmap, including what is deferred.
+Everything below ships in 1.0. Feature numbers (`F1`…) are stable identifiers used across the codebase and issues, see [`docs/knowledge/features.md`](docs/knowledge/features.md) for the full list, including what is deferred.
 
 <details>
 <summary><strong>Core transfer</strong></summary>
@@ -122,7 +123,7 @@ Everything below is implemented and working in the app. Feature numbers (`F1`…
 | F5 | Custom code phrase | `--code` |
 | F6 | Show QR on send, scan QR on receive | `--qrcode` |
 | F7 | Choose output folder; Files-visible by default on iOS | `--out` |
-| F8 | Overwrite and resume handling via confirm sheets | `--overwrite` |
+| F8 | Keep Both or Replace when a file already exists; resume with Replace | `--rename`, `--overwrite` |
 | F9 | Preview the incoming file list, then accept or decline | interactive prompt |
 | F10 | Live progress, speed, cancel; Live Activity on iOS | — |
 | F11 | LAN and relay raced automatically | croc default |
@@ -142,6 +143,24 @@ Everything below is implemented and working in the app. Feature numbers (`F1`…
 | F17 | Exclude patterns, respect `.gitignore` | `--exclude --git` |
 | F18 | Auto-accept incoming, off by default | `--yes` |
 | F19 | Require confirmation on both sides | `--ask` |
+| F41 | Connection: Automatic or Relay only | `--transport auto\|relay` |
+
+</details>
+
+<details>
+<summary><strong>Advanced settings</strong></summary>
+
+| | Feature | croc equivalent |
+|---|---|---|
+| F20 | SOCKS5 proxy | `--socks5` |
+| F21 | HTTP proxy | `--connect` |
+| F22 | Upload speed limit | `--throttleUpload` |
+| F23 | Encryption curve | `--curve` |
+| F24 | File hash algorithm | `--hash` |
+| F25 | Sender IP, direct connect | `--ip` |
+| F26 | Multicast address (macOS) | `--multicast` |
+| F27 | Base port, parallel connections, multiplexing | `--port --transfers --no-multi` |
+| F28 | Built-in DNS resolver | `--internal-dns` |
 
 </details>
 
@@ -151,7 +170,13 @@ Everything below is implemented and working in the app. Feature numbers (`F1`…
 | | Feature |
 |---|---|
 | F30 | Share extension — send from any app (iOS) |
+| F31 | Menu bar quick send and Open at login (macOS) |
+| F32 | Receive links: `crocapp://`, `crocapp.dev/r/` and `getcroc.com/?code=` open Receive with the code filled in |
+| F34 | Shortcuts and Siri actions: Send Files, Send Text, Receive |
 | F36 | Trust UI: end-to-end badge, "how it works", active-relay indicator |
+| F42 | Share Link and a QR code that opens CrocApp or a page that explains how to receive |
+| F43 | Send as link: encrypted upload for a receiver who is not online, with expiry and revoke |
+| F44 | iPad menu bar: Show Receive Folder in Files |
 
 </details>
 
@@ -189,8 +214,8 @@ govulncheck ./...          # from crocmobile/
 A green build is **not** evidence that a transfer works. Real behaviour is checked by harnesses that run live transfers against the croc CLI over the public relay:
 
 ```bash
-scripts/verify-interop.sh     # 11 scenarios, engine <-> croc CLI, both directions, croc v10 peer
-scripts/verify-app-mac.sh     # macOS app, 6 transfer directions
+scripts/verify-interop.sh     # 15 scenarios, engine <-> croc CLI, both directions, croc v10 peer
+scripts/verify-app-mac.sh     # macOS app, 12 scenarios
 scripts/verify-app-sim.sh     # iOS simulator receive
 scripts/verify-share-sim.sh   # share-extension handoff
 ```
@@ -242,13 +267,14 @@ No. CrocApp is Apple-platform only by design. Use the [croc CLI](https://github.
 
 | Path | What lives there |
 |---|---|
-| `app/` | Xcode project: SwiftUI app (`CrocApp`) and share extension (`CrocShare`) |
+| `app/` | Xcode project: SwiftUI app (`CrocApp`), share extension (`CrocShare`) and the Developer ID build with Sparkle (`CrocApp Direct`) |
 | `CrocKit/` | Swift package wrapping the Go engine: `CrocEngine` actor, `AsyncStream<TransferEvent>` |
 | `crocmobile/` | Go wrapper around croc, bound into `Croc.xcframework` via gomobile |
 | `design/` | Design system: tokens, component specs, SF Symbols mapping |
 | `docs/` | Knowledge base, architecture decision records, known issues |
 | `scripts/` | Build and live-transfer verification harnesses |
 | `web/landing/` | The [crocapp.dev](https://crocapp.dev) landing page |
+| `web/docs/` | The [documentation site](https://crocapp.dev/docs/) (Docusaurus) |
 | `assets/` | Icon source, banner, mascot |
 
 ## Docs
