@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import AppKit
+import ServiceManagement
 import UniformTypeIdentifiers
 
 /// macOS Settings scene (⌘,): a General tab (receive folder plus the power
@@ -9,7 +10,9 @@ import UniformTypeIdentifiers
 /// get their own tab, the macOS convention for a long settings window.
 struct SettingsView: View {
     @Environment(OutputFolderStore.self) private var outputFolder
+    @Environment(AppSettings.self) private var settings
     @State private var showFolderPicker = false
+    @State private var loginItem = LoginItem()
 
     /// F.3: the Address field in PowerSettingsSections is the first
     /// focusable control in the Form, so macOS puts a blinking caret in it
@@ -52,9 +55,17 @@ struct SettingsView: View {
                 .focused($focusedControl, equals: .showInFinder)
             }
 
+            menuBarSection
+
             PowerSettingsSections()
         }
         .defaultFocus($focusedControl, .showInFinder)
+        .onAppear { loginItem.refresh() }
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+        ) { _ in
+            loginItem.refresh()
+        }
         .formStyle(.grouped)
         // minWidth, not a fixed width: the window is resizable now, and a
         // fixed-width form inside a wider window leaves dead margins on both
@@ -67,6 +78,32 @@ struct SettingsView: View {
             if case .success(let url) = result {
                 outputFolder.select(url)
             }
+        }
+    }
+}
+
+extension SettingsView {
+    @ViewBuilder fileprivate var menuBarSection: some View {
+        Section {
+            Toggle("Show in menu bar", isOn: Bindable(settings).showInMenuBar)
+            Toggle(
+                "Open at login",
+                isOn: Binding(
+                    get: { loginItem.isRegistered }, set: { loginItem.setRegistered($0) }))
+            if loginItem.needsApproval {
+                HStack {
+                    Text("Allow CrocApp in System Settings > General > Login Items.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Button("Open Settings") { SMAppService.openSystemSettingsLoginItems() }
+                }
+            }
+            if let message = loginItem.errorMessage {
+                StatusBanner(kind: .error, title: message)
+            }
+        } header: {
+            Text("Menu bar")
+        } footer: {
+            Text("Send files and text from the menu bar without opening the window.")
         }
     }
 }

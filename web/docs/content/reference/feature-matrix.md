@@ -56,6 +56,9 @@ Feature numbers (`F1`…) are stable identifiers used across the project. "Shipp
 | F36 | Trust UI: end-to-end badge, "how it works", active-relay indicator | shipped |
 | F42 | Share Link, a QR code that is a web link, and a `crocapp.dev/r/` page with an option to receive in a browser | shipped |
 | F43 | Send as link: encrypted upload of files to a stored-transfer server, a link with a chosen lifetime and download count, receive from the link, and revoke from History | shipped |
+| F31 | macOS menu bar quick send: drop or choose files, or send clipboard text, from a menu-bar window; Show in menu bar and Open at login settings (see [Menu bar](../guide/menu-bar.md)) | shipped, macOS only |
+| F34 | Shortcuts and Siri actions: Send Files, Send Text and Receive with CrocApp (see [Shortcuts](../guide/shortcuts.md)) | shipped |
+| F44 | iPad File menu: Show Receive Folder in Files | shipped, iPad only |
 
 ## Planned, not started (V1.x)
 
@@ -64,9 +67,7 @@ None of these are built yet.
 | # | Feature | croc flag / origin |
 |---|---|---|
 | F29 | Run own relay from Mac app (menu-bar relay server) | `croc relay` |
-| F31 | macOS menu bar quick-send (drag-drop) | GUI-native |
 | F33 | Saved codes / favorite peers | GUI-native |
-| F34 | App Intents / Shortcuts ("Send via croc") | GUI-native |
 | F35 | Relay health check + diagnostics screen | GUI-native |
 
 ## Later

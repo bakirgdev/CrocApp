@@ -21,6 +21,8 @@ description: User-facing terms used throughout the CrocApp documentation.
 | Tailcat | The direct, peer-to-peer path that Automatic can use for a send of 128 MB or more. It is set up through `tailcat.dev` and falls back to its own relays when the devices cannot reach each other. Still end-to-end encrypted. |
 | Local-only | A setting that forces a transfer to stay on the local network, refusing the relay if a direct path isn't available. |
 | Compression | File data is compressed by default in transit; it can be turned off. |
+| Menu bar quick send | The CrocApp icon in the Mac menu bar. Its window sends files or clipboard text and shows the code and progress. See [Menu bar](../guide/menu-bar.md). |
+| Shortcuts action | One of three CrocApp actions (Send Files, Send Text, Receive) for the Shortcuts app, Siri and Spotlight. See [Shortcuts](../guide/shortcuts.md). |
 | Trust badge | The on-screen indicator showing that a transfer is end-to-end encrypted and which relay path it's using. |
 | Transfer history | CrocApp's local, on-device-only log of past transfers. |
 

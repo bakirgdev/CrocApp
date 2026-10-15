@@ -48,6 +48,10 @@ final class TransferController {
 
     var lastOutputFolder: URL? { outDir }
 
+    /// Names (paths relative to the receive folder) the sender offered in the
+    /// current or last receive. Shortcuts uses them to hand the files back.
+    private(set) var offeredFileNames: [String] = []
+
     private let engine = CrocEngine()
     private let background = BackgroundCoordinator()
     private var backgroundExpired = false
@@ -353,6 +357,7 @@ final class TransferController {
         sawTransferBytes = false
         receivedText = nil
         storedReceipt = nil
+        offeredFileNames = []
         speedBytesPerSec = 0
         lastProgressDate = nil
         lastProgressBytes = 0
@@ -417,6 +422,7 @@ final class TransferController {
         case .fileList(let list):
             let names = list.files.map(\.name)
             if pendingRecord?.isSend == false {
+                offeredFileNames = names
                 pendingRecord?.names = Array(names.prefix(TransferRecord.maxNames))
                 pendingRecord?.fileCount = list.files.count
                 pendingRecord?.totalBytes = list.totalSize

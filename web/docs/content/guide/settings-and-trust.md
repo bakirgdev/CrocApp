@@ -35,6 +35,10 @@ The **Connection** picker under the [power options](power-options.md) chooses ho
 
 Proxies, ports, the encryption curve and similar options are under **Advanced**; see [Advanced settings](advanced-settings.md). The two proxy addresses can contain a password, so they are kept in the Keychain.
 
+## Menu bar (macOS)
+
+The **Menu bar** section of Settings has **Show in menu bar** and **Open at login**; see [Menu bar](menu-bar.md#settings).
+
 ## The trust badge
 
 During a waiting, confirming, or transferring screen, CrocApp shows a trust badge: an **End-to-end encrypted** label plus a line describing the relay path actually in use for that transfer:

@@ -54,6 +54,9 @@ final class AppSettings {
     /// on loopback.
     var storedServer: String { didSet { save(storedServer, "settings.storedServer") } }
     static let defaultStoredServer = StoredSendOptions().server
+    /// macOS menu-bar quick send (R26). On by default; the menu-bar scene is
+    /// inserted only while this is true.
+    var showInMenuBar: Bool { didSet { save(showInMenuBar, "settings.showInMenuBar") } }
 
     // Advanced (R25). Defaults are croc's, read from `EngineOptions`.
     static let advancedDefaults = EngineOptions()
@@ -126,6 +129,7 @@ final class AppSettings {
         transport =
             d.string(forKey: "settings.transport").flatMap(Transport.init(rawValue:)) ?? .auto
         storedServer = d.string(forKey: "settings.storedServer") ?? Self.defaultStoredServer
+        showInMenuBar = d.object(forKey: "settings.showInMenuBar") as? Bool ?? true
         let croc = Self.advancedDefaults
         curve =
             d.string(forKey: "settings.advanced.curve").flatMap(Curve.init(rawValue:)) ?? croc.curve
@@ -184,6 +188,7 @@ final class AppSettings {
         whenFileExists = .keepBoth
         transport = .auto
         storedServer = Self.defaultStoredServer
+        showInMenuBar = true
         resetAdvancedToDefaults()
     }
 

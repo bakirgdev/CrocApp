@@ -55,4 +55,6 @@ Auto-accept is **off by default**. When off, you always see the file-list previe
 
 ## After the transfer
 
-When it finishes, CrocApp shows **Transfer complete** (or a message if something went wrong) with a button to open the destination: **Open in Files** on iOS, **Show in Finder** on macOS.
+When it finishes, CrocApp shows **Transfer complete** (or a message if something went wrong) with a button to open the destination: **Open in Files** on iOS, **Show in Finder** on macOS. The File menu also has **Show Receive Folder in Finder** (macOS) and **Show Receive Folder in Files** (iPad), both ⇧⌘R; see [Menu bar](menu-bar.md#ipad-file-menu-commands).
+
+A [Shortcuts](shortcuts.md) action can receive for you with a code or link and return the files.
