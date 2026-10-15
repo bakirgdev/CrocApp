@@ -29,7 +29,7 @@ CrocApp requires **iOS 26**, **iPadOS 26**, or **macOS 26**, meaning `26.0` or a
 The other device needs **croc 11 or newer**, whether it runs CrocApp or the croc CLI. croc 10 cannot complete a transfer with CrocApp.
 :::
 
-CrocApp 1.0 is on the iOS and Mac App Stores and as a notarized disk image for Mac. See [Install](getting-started/install.md) for where to get each one.
+CrocApp 1.0 comes as an iOS app, a Mac App Store app and a notarized disk image for Mac. The store listings and the 1.0 disk image arrive at launch. See [Install](getting-started/install.md) for where to get each one.
 
 ## Where to go next
 

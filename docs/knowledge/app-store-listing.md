@@ -18,7 +18,7 @@ Limits come from Apple's App Store Connect Help (URLs in "Sources"). Two are byt
 | Description | 4000 characters | 2930 | Platform version information page |
 | Keywords | 100 **bytes** (each keyword more than two characters) | 98 | Platform version information page |
 | What's New | 4000 characters | 1495 | Platform version information page |
-| App Review notes | 4000 **bytes** | 3159 | Platform version information page |
+| App Review notes | 4000 **bytes** | 3289 | Platform version information page |
 | Support URL, Marketing URL, Privacy Policy URL | no limit stated; full URL with protocol | n/a | Platform version information page, App information page |
 | Copyright | no limit stated; year first, then the holder; Apple adds the copyright symbol | n/a | Platform version information page |
 
@@ -195,7 +195,7 @@ Sending arbitrary files to another person is not content the app hosts or shows.
 
 ## Review notes
 
-Paste into App Review Information, Notes (4000 bytes; this block is 3159). Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
+Paste into App Review Information, Notes (4000 bytes; this block is 3289). Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
 
 ```text
 CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end to end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email on 2026-10-14. Source: https://github.com/bakirgdev/CrocApp
@@ -218,7 +218,7 @@ TEST WITHOUT A SECOND DEVICE: use croc's own browser client at https://getcroc.c
    a. At https://getcroc.com choose Send, choose a file, and note the code the page shows.
    b. In CrocApp tap Receive, type the code (or paste the getcroc.com link; the app keeps only the code), and tap Receive.
    c. The incoming file list appears. Tap Accept. The file is saved to the receive folder (on iPhone and iPad, On My iPhone, CrocApp, in the Files app).
-3. Link flow: open https://crocapp.dev/r/#cape-junky-widow in a browser with CrocApp installed. CrocApp opens on Receive with the code filled in and does not connect until you tap Receive.
+3. Link flow: tap the link https://crocapp.dev/r/#cape-junky-widow in Notes or Messages with CrocApp installed (iOS does not open the app for a URL typed into Safari), or open that page in a browser and press Open in CrocApp. CrocApp opens on Receive with the code filled in and does not connect until you tap Receive.
 4. Optional, Send as link: in Send choose files, turn on "Send as link", tap Upload. A link and QR code appear. Open the link in a browser to download. In History, Revoke Link makes it stop working.
 
 The browser UI at getcroc.com is the croc project's and may change wording; the flow stays: one side shows a code, the other enters it.

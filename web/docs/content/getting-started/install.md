@@ -12,13 +12,13 @@ CrocApp 1.0 comes through three channels. Pick the one that matches your device.
 |---|---|---|
 | App Store | iPhone and iPad | The listing is linked from [crocapp.dev](https://crocapp.dev) when it is live |
 | Mac App Store | Mac | The listing is linked from [crocapp.dev](https://crocapp.dev) when it is live |
-| Disk image | Mac with Apple silicon | `CrocApp-<version>-arm64.dmg` on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest) |
+| Disk image | Mac with Apple silicon | `CrocApp-<version>-arm64.dmg` on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest), from version 1.0.0 |
 
 The store listings arrive at launch, so this page does not link them yet. There is no Intel build and no package-manager channel (Homebrew and the like).
 
 ## Disk image
 
-Open the disk image from GitHub Releases and drag **CrocApp** onto **Applications**. The app is signed with a Developer ID certificate, notarized by Apple and stapled, so macOS opens it with the standard first-launch confirmation and nothing else.
+Open the disk image from GitHub Releases and drag **CrocApp** onto **Applications**. Use version 1.0.0 or later: the 0.9.x disk images are not notarized and use croc 10. From 1.0.0 on, the app is signed with a Developer ID certificate, notarized by Apple and stapled, so macOS opens it with the standard first-launch confirmation and nothing else.
 
 To check that a download came from this project's release workflow, run:
 

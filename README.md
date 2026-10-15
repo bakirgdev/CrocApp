@@ -37,9 +37,9 @@ CrocApp 1.0 comes through three channels. There is no package-manager channel.
 |---|---|
 | iPhone and iPad (App Store) | Linked from [crocapp.dev](https://crocapp.dev) when the listing is live |
 | Mac (Mac App Store) | Linked from [crocapp.dev](https://crocapp.dev) when the listing is live |
-| Mac (notarized disk image, Apple silicon) | `CrocApp-<version>-arm64.dmg` on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest) |
+| Mac (notarized disk image, Apple silicon) | `CrocApp-<version>-arm64.dmg` on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest), from version 1.0.0 |
 
-The disk image is signed with a Developer ID certificate, notarized and stapled, and it updates itself through Sparkle (**Check for Updates…** in the app menu). The App Store builds update through the App Store. Verify a download with `gh attestation verify <file> --repo bakirgdev/CrocApp`; see [`SECURITY.md`](SECURITY.md).
+From version 1.0.0 the disk image is signed with a Developer ID certificate, notarized and stapled, and it updates itself through Sparkle (**Check for Updates…** in the app menu). The App Store builds update through the App Store. Verify a download with `gh attestation verify <file> --repo bakirgdev/CrocApp`; see [`SECURITY.md`](SECURITY.md).
 
 Install details: [crocapp.dev/docs/getting-started/install](https://crocapp.dev/docs/getting-started/install/). Or build it yourself: [Build from source](#build-from-source).
 
