@@ -100,6 +100,8 @@ struct TrustBadge: View {
         switch relay {
         case .localOnly:
             return "Local network only — nothing leaves your network"
+        case .directToSender:
+            return "Straight to the sender, no relay in between"
         case .custom(let address):
             return "Via custom relay \(address) — it sees only encrypted data"
         case .publicDefault:

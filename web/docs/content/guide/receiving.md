@@ -36,6 +36,8 @@ After you tap **Receive** and connect to the sender, CrocApp shows **Incoming tr
 
 If the sender has [Confirm on both sides](power-options.md) turned on, the sender must also confirm before the transfer proceeds.
 
+If you know the sender's address, you can connect to it directly with **Sender IP** under [Advanced settings](advanced-settings.md#network).
+
 ## Overwrite and conflicts (F8)
 
 CrocApp never overwrites an existing file unless you say so. If any incoming file already exists at the destination, the accept screen shows a banner ("N item(s) already exist. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files.") and replaces **Accept** with two choices, besides **Decline**:
@@ -53,4 +55,6 @@ Auto-accept is **off by default**. When off, you always see the file-list previe
 
 ## After the transfer
 
-When it finishes, CrocApp shows **Transfer complete** (or a message if something went wrong) with a button to open the destination: **Open in Files** on iOS, **Show in Finder** on macOS.
+When it finishes, CrocApp shows **Transfer complete** (or a message if something went wrong) with a button to open the destination: **Open in Files** on iOS, **Show in Finder** on macOS. The File menu also has **Show Receive Folder in Finder** (macOS) and **Show Receive Folder in Files** (iPad), both ⇧⌘R; see [Menu bar](menu-bar.md#ipad-file-menu-commands).
+
+A [Shortcuts](shortcuts.md) action can receive for you with a code or link and return the files.

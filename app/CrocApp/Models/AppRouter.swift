@@ -10,7 +10,9 @@ import Observation
 final class AppRouter {
     static let shared = AppRouter()
 
-    enum Route: Hashable { case send, receive, settings, howItWorks, history }
+    enum Route: Hashable {
+        case send, receive, settings, advancedSettings, howItWorks, history
+    }
 
     var path: [Route] = []
     /// URLs waiting for SendView to pick up into its staged list.

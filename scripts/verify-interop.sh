@@ -4,13 +4,14 @@
 # forced relay (LAN disabled), LAN-only, a croc v10 peer both directions, a
 # receive onto existing files with Keep Both and Replace (R24), a 130 MiB send
 # in each transport mode (R17), stored transfers against a local store server
-# (R18-R20), and every public pool relay (custom, wrapper-generated and
-# CLI-generated codes).
+# (R18-R20), the Advanced options that change the wire (R25: curve, hash, ports,
+# multicast group, proxies, internal DNS), and every public pool relay (custom,
+# wrapper-generated and CLI-generated codes).
 # Exits non-zero on first failure.
 #
 # RELAY=host:port runs every transfer through that relay instead of the public
-# pool, and skips the transport and pool scenarios (CI runs this against a local
-# `croc relay`).
+# pool, and skips the transport, proxy, internal DNS and pool scenarios (CI runs
+# this against a local `croc relay`).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
@@ -371,8 +372,172 @@ pass "store: existing file with Keep Both and Replace, decline keeps the transfe
 kill "$STORE_PID"
 wait "$STORE_PID" 2>/dev/null || true
 
+# 15. Advanced options that change the wire (R25), against the croc v11 CLI with
+# the matching flag. What each case pins down was observed with croc v11.5.4:
+#  - curve: the receiver chooses it and the sender adopts it ("using curve" in
+#    the CLI sender's --debug log); the sender's own curve is never used, so a
+#    mismatch is not an error in either direction.
+#  - hash: the sender chooses it and the receiver adopts it ("using hash
+#    algorithm" in the CLI receiver's --debug log); -hash imohash is sent as
+#    imohash-v2.
+#  - base port and transfers: the sender's local relay listens on the base port
+#    and the next `transfers` ports, so a receiver given the sender IP reaches
+#    it there, and the banner it reads lists those data ports.
+#  - multicast: croc's peer discovery drops packets from the host's own
+#    addresses, so two peers on one host never find each other. A listener on
+#    the group sees what each side announces instead.
+# The CLI runs with a throwaway config dir, because it remembers its flags.
+SCENARIO=15
+CFG15="$TMP/croc-config15"
+mkdir -p "$CFG15"
+# A pool relay admits 30 connections a minute from one address, and scenario 12
+# spends most of that; see scenario 11.
+[ -n "${RELAY:-}" ] || sleep 60
+
+free_port() {                                       # a base port with 3 free loopback ports from it
+  local p k i busy
+  for (( k = 0; k < 50; k++ )); do
+    p=$(( 20000 + RANDOM % 9000 ))
+    busy=0
+    for i in 0 1 2; do
+      ( exec 3<>"/dev/tcp/127.0.0.1/$((p + i))" ) 2>/dev/null && busy=1
+    done
+    [ "$busy" = 0 ] && { echo "$p"; return 0; }
+  done
+  return 1
+}
+
+adv_ws() {                                          # adv_ws NAME FILE CLI_FLAGS CT_FLAGS: wrapper sends, CLI receives
+  local name=$1 file=$2 cli_flags=$3 ct_flags=$4 dir="$TMP/15$1" C
+  C=$(code "$name")
+  mkdir -p "$dir"
+  # shellcheck disable=SC2086  # a flag string, split on purpose
+  timeout 90 "$CT" send ${CT_R:+"$CT_R"} -no-multi $ct_flags -code "$C" "$TMP/src/$file" > "$TMP/15$name.log" 2>&1 &
+  sleep 3
+  # shellcheck disable=SC2086
+  ( cd "$dir" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --debug --yes --overwrite $cli_flags ) > "$TMP/15$name.cli" 2>&1 || true
+  wait
+  cmp -s "$TMP/src/$file" "$dir/$file" || fail "$name: wrapper send, CLI receive: bytes differ"
+}
+
+adv_sw() {                                          # adv_sw NAME FILE CLI_GLOBAL CLI_SEND CT_FLAGS: CLI sends, wrapper receives
+  local name=$1 file=$2 cli_global=$3 cli_send=$4 ct_flags=$5 dir="$TMP/15$1" C
+  C=$(code "$name")
+  mkdir -p "$dir"
+  # shellcheck disable=SC2086
+  ( cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 90 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin $cli_global send --no-multi $cli_send "$file" ) > "$TMP/15$name.cli" 2>&1 &
+  sleep 3
+  # shellcheck disable=SC2086
+  timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$dir" -answer y $ct_flags "$C" > "$TMP/15$name.log" 2>&1 || true
+  wait
+  cmp -s "$TMP/src/$file" "$dir/$file" || fail "$name: CLI send, wrapper receive: bytes differ"
+}
+
+# 15 curve. Sender and receiver agree: the transfer succeeds. They disagree: it
+# still succeeds, in both directions, and the receiver's curve is the one used.
+adv_ws cv1 a.txt "--curve siec" "-curve siec"
+pass "curve: wrapper sends -curve siec, CLI receives --curve siec"
+adv_sw cv2 a.txt "--curve siec" "" "-curve siec"
+grep -q "using curve siec" "$TMP/15cv2.cli" || fail "curve: CLI sender did not use the wrapper receiver's siec"
+pass "curve: CLI sends --curve siec, wrapper receives -curve siec"
+adv_ws cv3 a.txt "--curve p384" "-curve siec"
+pass "curve mismatch: wrapper sends -curve siec, CLI receives --curve p384, still succeeds"
+adv_sw cv4 a.txt "--curve siec" "" "-curve p384"
+grep -q "using curve p384" "$TMP/15cv4.cli" || fail "curve mismatch: the receiver's curve was not the one used"
+pass "curve mismatch: CLI sends --curve siec, wrapper receives -curve p384, succeeds on the receiver's curve"
+
+# 15 hash. The receiver takes the sender's algorithm whatever it is set to.
+adv_ws hs1 big.bin "" "-hash imohash"
+grep -q "using hash algorithm: imohash-v2" "$TMP/15hs1.cli" || fail "hash: CLI receiver did not adopt the wrapper's imohash"
+pass "hash: wrapper sends -hash imohash, CLI receives it as imohash-v2"
+adv_ws hs2 big.bin "" "-hash md5"
+grep -q "using hash algorithm: md5" "$TMP/15hs2.cli" || fail "hash: CLI receiver did not adopt the wrapper's md5"
+pass "hash: wrapper sends -hash md5, CLI receives md5"
+adv_sw hs3 big.bin "" "--hash md5" ""
+pass "hash: CLI sends --hash md5, wrapper receives"
+adv_sw hs4 big.bin "" "--hash md5" "-hash highway"
+pass "hash mismatch: CLI sends --hash md5, wrapper receives with -hash highway, still succeeds"
+
+# 15 base port and transfers, with the sender IP. -only-local keeps the relay
+# out of it: the receiver can reach the sender only at the base port it was given.
+P=$(free_port) || fail "ports: no free port range"
+C=$(code pt1)
+mkdir -p "$TMP/dst15pt1"
+timeout 90 "$CT" send -only-local -port "$P" -transfers 2 -code "$C" "$TMP/src/big.bin" > "$TMP/15pt1.log" 2>&1 &
+sleep 3
+( cd "$TMP/dst15pt1" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 60 "$CROC" --debug --yes --overwrite --ip "127.0.0.1:$P" ) > "$TMP/15pt1.cli" 2>&1 || true
+wait
+cmp -s "$TMP/src/big.bin" "$TMP/dst15pt1/big.bin" || fail "ports: wrapper send -port $P, CLI receive --ip: bytes differ"
+grep -q "banner: $((P + 1)),$((P + 2))$" "$TMP/15pt1.cli" || fail "ports: banner is not the two data ports after $P"
+pass "ports: wrapper sends -port $P -transfers 2, CLI receives --ip 127.0.0.1:$P over those ports"
+
+P=$(free_port) || fail "ports: no free port range"
+C=$(code pt2)
+mkdir -p "$TMP/dst15pt2"
+( cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 90 "$CROC" --debug --disable-clipboard --ignore-stdin --local send --port "$P" --transfers 2 big.bin ) > "$TMP/15pt2.cli" 2>&1 &
+sleep 3
+timeout 60 "$CT" receive -ip "127.0.0.1:$P" -out "$TMP/dst15pt2" -answer y "$C" > "$TMP/15pt2.log" 2>&1 || true
+wait
+cmp -s "$TMP/src/big.bin" "$TMP/dst15pt2/big.bin" || fail "ports: CLI send --port $P, wrapper receive -ip: bytes differ"
+pass "ports: CLI sends --port $P --transfers 2, wrapper receives -ip 127.0.0.1:$P"
+
+# A sender IP with nothing listening fails at once, instead of falling back to a relay.
+P=$(free_port) || fail "ports: no free port range"
+timeout 30 "$CT" receive -ip "127.0.0.1:$P" -out "$TMP/dst15pt3" -answer y "$(code pt3)" > "$TMP/15pt3.log" 2>&1 && fail "ports: receive from a dead sender IP exited 0"
+grep -q 'EVENT error {"code":"relayUnreachable"' "$TMP/15pt3.log" || fail "ports: dead sender IP: not relayUnreachable"
+pass "ports: a sender IP with nothing listening fails with relayUnreachable"
+
+# 15 multicast. Each side announces on the group it was given: a sender
+# "croc<base port>", a receiver "ok". The CLI cases show the listener sees what
+# real croc sends, and the last case that another group stays unheard.
+MC_GROUP=239.255.42.99
+MC_OTHER=239.255.42.98
+mc_listen() {                                       # mc_listen GROUP LOG: join for 6 s in the background
+  "$CT" multicast-listen "$1" 6 > "$2" 2>&1 &
+  MC_PID=$!
+  sleep 1
+}
+mc_heard() {                                        # mc_heard LOG PAYLOAD LABEL
+  wait "$MC_PID" || fail "multicast: listener failed ($3)"
+  grep -qx "MULTICAST-PAYLOAD $2" "$1" || fail "multicast: $3: group did not carry '$2'"
+}
+if "$CT" multicast-listen "$MC_GROUP" 1 > "$TMP/15mcprobe.log" 2>&1; then
+  P=$(free_port) || fail "multicast: no free port range"
+  C=$(code mc1)
+  mc_listen "$MC_GROUP" "$TMP/15mc1.listen"
+  timeout 4 "$CT" send -only-local -port "$P" -multicast "$MC_GROUP" -code "$C" "$TMP/src/a.txt" > "$TMP/15mc1.log" 2>&1 || true
+  mc_heard "$TMP/15mc1.listen" "croc$P" "wrapper sender"
+  pass "multicast: wrapper -multicast $MC_GROUP announces croc$P on that group"
+
+  C=$(code mc2)
+  mc_listen "$MC_GROUP" "$TMP/15mc2.listen"
+  timeout 4 "$CT" receive -only-local -multicast "$MC_GROUP" -out "$TMP/dst15mc" -answer y "$C" > "$TMP/15mc2.log" 2>&1 || true
+  mc_heard "$TMP/15mc2.listen" "ok" "wrapper receiver"
+  pass "multicast: wrapper receive -multicast $MC_GROUP looks for senders on that group"
+
+  C=$(code mc3)
+  mc_listen "$MC_GROUP" "$TMP/15mc3.listen"
+  ( cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 4 "$CROC" --disable-clipboard --ignore-stdin --local --multicast "$MC_GROUP" send --port "$P" a.txt ) > "$TMP/15mc3.cli" 2>&1 || true
+  mc_heard "$TMP/15mc3.listen" "croc$P" "CLI sender"
+  C=$(code mc4)
+  mc_listen "$MC_GROUP" "$TMP/15mc4.listen"
+  CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 4 "$CROC" --disable-clipboard --local --multicast "$MC_GROUP" --yes --out "$TMP/dst15mc" > "$TMP/15mc4.cli" 2>&1 || true
+  mc_heard "$TMP/15mc4.listen" "ok" "CLI receiver"
+  pass "multicast: the CLI announces the same payloads on the same group"
+
+  C=$(code mc5)
+  mc_listen "$MC_GROUP" "$TMP/15mc5.listen"
+  timeout 4 "$CT" send -only-local -multicast "$MC_OTHER" -code "$C" "$TMP/src/a.txt" > "$TMP/15mc5.log" 2>&1 || true
+  wait "$MC_PID" || fail "multicast: listener failed (mismatch)"
+  ! grep -q '^MULTICAST-PAYLOAD' "$TMP/15mc5.listen" || fail "multicast mismatch: a sender on $MC_OTHER was heard on $MC_GROUP"
+  pass "multicast mismatch: a sender on $MC_OTHER is not heard on $MC_GROUP"
+else
+  echo "SKIP: multicast cases (15): this host has no multicast interface to join"
+fi
+
 if [ -n "${RELAY:-}" ]; then
-  echo "ALL INTEROP CHECKS PASSED (relay $RELAY; transport and public pool scenarios skipped)"
+  echo "SKIP: proxy and internal DNS cases (15): the relay at $RELAY is a local address, which croc's dialer reaches without the proxy"
+  echo "ALL INTEROP CHECKS PASSED (relay $RELAY; transport, proxy, internal DNS and public pool scenarios skipped)"
   exit 0
 fi
 
@@ -416,6 +581,73 @@ transport_receive relay
 ! grep -q "tailcat-offer" "$TMP/13r-relay.cli" || fail "transport relay: CLI offered Tailcat"
 pass "transport relay: wrapper receives 130 MiB, no Tailcat offer"
 rm -f "$TMP/huge.bin" "$TMP"/13[sr]-*/huge.bin
+
+# 15 proxies and internal DNS (R25). croc's dialer bypasses proxies for local
+# addresses, so these need the public pool: the transfer goes through a croctest
+# proxy that counts the connections it tunnels. -no-local keeps the data off the
+# LAN. Skipped under RELAY, whose address is local.
+SCENARIO=15
+start_proxy() {                                     # start_proxy KIND: sets PROXY_PID and PROXY_ADDR
+  "$CT" "$1-proxy" > "$TMP/15px-$1.log" 2>&1 &
+  PROXY_PID=$!
+  PROXY_ADDR=""
+  for _ in $(seq 1 50); do
+    PROXY_ADDR=$(sed -n 's/^PROXY-ADDR //p' "$TMP/15px-$1.log")
+    [ -n "$PROXY_ADDR" ] && break
+    sleep 0.2
+  done
+  [ -n "$PROXY_ADDR" ] || fail "$1 proxy did not start"
+}
+tunnels() { grep -c '^PROXY-TUNNEL' "$TMP/15px-$1.log" || true; }
+
+proxy_send() {                                      # proxy_send KIND FLAG: wrapper sends through the proxy, CLI receives
+  local kind=$1 flag=$2 L="$TMP/15px-$1-send" C job
+  C=$(code "px$kind")
+  mkdir -p "$L"
+  start_proxy "$kind"
+  timeout 100 "$CT" send -no-local -no-multi "$flag" "$PROXY_ADDR" -code "$C" "$TMP/src/a.txt" > "$L.log" 2>&1 &
+  job=$!
+  sleep 4
+  ( cd "$L" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 80 "$CROC" --debug --yes --overwrite ) > "$L.cli" 2>&1 || true
+  wait "$job" || true
+  kill "$PROXY_PID"
+  wait "$PROXY_PID" 2>/dev/null || true
+  cmp -s "$TMP/src/a.txt" "$L/a.txt" || fail "$kind proxy: wrapper send: bytes differ"
+  [ "$(tunnels "$kind")" -ge 1 ] || fail "$kind proxy: wrapper send tunnelled no connection"
+  pass "$kind proxy: wrapper $flag sends through $(tunnels "$kind") tunnelled connections"
+}
+proxy_receive() {                                   # proxy_receive KIND FLAG: CLI sends, wrapper receives through the proxy
+  local kind=$1 flag=$2 L="$TMP/15px-$1-recv" C job
+  C=$(code "py$kind")
+  mkdir -p "$L"
+  start_proxy "$kind"
+  ( cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 100 "$CROC" --debug --disable-clipboard --ignore-stdin send --no-local --no-multi a.txt ) > "$L.cli" 2>&1 &
+  job=$!
+  sleep 4
+  timeout 80 "$CT" receive -no-local "$flag" "$PROXY_ADDR" -out "$L" -answer y "$C" > "$L.log" 2>&1 || true
+  wait "$job" || true
+  kill "$PROXY_PID"
+  wait "$PROXY_PID" 2>/dev/null || true
+  cmp -s "$TMP/src/a.txt" "$L/a.txt" || fail "$kind proxy: wrapper receive: bytes differ"
+  [ "$(tunnels "$kind")" -ge 1 ] || fail "$kind proxy: wrapper receive tunnelled no connection"
+  pass "$kind proxy: wrapper $flag receives through $(tunnels "$kind") tunnelled connections"
+}
+proxy_send socks5 -socks5
+proxy_receive socks5 -socks5
+proxy_send http -connect
+proxy_receive http -connect
+
+# Internal DNS only swaps the resolver for the relay's name; the transfer
+# working is all the harness can see of it.
+C=$(code dns1)
+mkdir -p "$TMP/15dns"
+timeout 100 "$CT" send -no-local -no-multi -internal-dns -code "$C" "$TMP/src/a.txt" > "$TMP/15dns.log" 2>&1 &
+job=$!
+sleep 4
+( cd "$TMP/15dns" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 80 "$CROC" --debug --yes --overwrite ) > "$TMP/15dns.cli" 2>&1 || true
+wait "$job" || true
+cmp -s "$TMP/src/a.txt" "$TMP/15dns/a.txt" || fail "internal DNS: wrapper send over the public pool: bytes differ"
+pass "internal DNS: wrapper -internal-dns sends over the public pool"
 
 # 11. public relay pool: every pool relay, both directions, with custom codes
 # and with wrapper-generated codes forced to each relay, plus one CLI-generated

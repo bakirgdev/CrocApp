@@ -34,7 +34,7 @@ A line under the options names the server the files will go to. While it runs, t
 
 The **Send as link** switch is disabled, with a line saying why, when text is selected or a folder is staged. Switch to **Files**, remove the folders, or send them with a code instead. The custom code field is hidden while **Send as link** is on, since there is no code.
 
-The relay, **Connection** and **Local network only** settings do not apply to an upload. If the server address in [Settings](#the-server-setting) is invalid, the Send screen shows the problem and **Upload** stays disabled.
+The relay, **Connection** and **Local network only** settings do not apply to an upload. The SOCKS5 and HTTP proxies under [Advanced settings](advanced-settings.md#network) do apply, to uploads, downloads and revokes. If the server address in [Settings](#the-server-setting) is invalid, the Send screen shows the problem and **Upload** stays disabled.
 
 ## The result screen
 

@@ -55,7 +55,7 @@ func resolveRelay(code string, o *Options) (relayRoute, error) {
 
 func usesPublicRelay(o *Options) bool {
 	v4, v6 := customRelays(o)
-	return v4 == "" && v6 == "" && !o.OnlyLocal
+	return v4 == "" && v6 == "" && !o.OnlyLocal && strings.TrimSpace(o.PeerIP) == ""
 }
 
 // customRelays returns each relay address set to something other than croc's

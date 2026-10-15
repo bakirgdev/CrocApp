@@ -5,6 +5,7 @@
 //  Created by admin on 21.07.2026.
 //
 
+import AppIntents
 import SwiftData
 import SwiftUI
 
@@ -13,11 +14,14 @@ struct CrocAppApp: App {
     @State private var settings: AppSettings
     @State private var controller: TransferController
     @State private var history: HistoryStore
-    @State private var outputFolder = OutputFolderStore()
+    @State private var outputFolder: OutputFolderStore
     @State private var localNetwork = LocalNetworkChecker()
     @State private var router = AppRouter.shared
 
+    static let mainWindowID = "main"
+
     #if os(macOS)
+    @State private var quickSend: MenuBarQuickSend
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     #endif
 
@@ -33,13 +37,21 @@ struct CrocAppApp: App {
         let controller = TransferController(settings: settings, vault: vault)
         controller.history = history
         _controller = State(initialValue: controller)
+        let outputFolder = OutputFolderStore()
+        _outputFolder = State(initialValue: outputFolder)
+        // Shortcuts actions can run right after launch, before any window.
+        AppDependencyManager.shared.add(dependency: controller)
+        AppDependencyManager.shared.add(dependency: outputFolder)
+        #if os(macOS)
+        _quickSend = State(initialValue: MenuBarQuickSend(controller: controller))
+        #endif
         // AppRouter.shared is constructed before this init runs; attach the
         // controller now so AppRouter.isBusy can read isActive live.
         AppRouter.shared.attach(controller: controller)
     }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: Self.mainWindowID) {
             ContentView()
                 .environment(controller)
                 .environment(settings)
@@ -69,6 +81,16 @@ struct CrocAppApp: App {
         }
 
         #if os(macOS)
+        MenuBarExtra(
+            "CrocApp", systemImage: "arrow.up.arrow.down.circle",
+            isInserted: Binding(
+                get: { settings.showInMenuBar }, set: { settings.showInMenuBar = $0 })
+        ) {
+            MenuBarQuickSendView(quickSend: quickSend)
+                .environment(controller)
+        }
+        .menuBarExtraStyle(.window)
+
         Settings {
             SettingsView()
                 .environment(outputFolder)

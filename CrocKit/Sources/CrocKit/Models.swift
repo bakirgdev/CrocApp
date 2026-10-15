@@ -31,6 +31,39 @@ public enum Transport: String, Sendable, CaseIterable {
     case relay
 }
 
+/// The PAKE curve the key exchange runs on. Both sides must pick the same one.
+/// Raw values are croc's `--curve` names; `p256` is croc's default.
+public enum Curve: String, Sendable, CaseIterable {
+    case p256, p384, p521, siec, ed25519
+}
+
+/// How the sender hashes files to verify them. The receiver uses the sender's
+/// choice. Raw values are croc's `--hash` names; `xxhash` is croc's default.
+public enum HashAlgorithm: String, Sendable, CaseIterable {
+    case xxhash, imohash, md5, highway
+}
+
+/// The proxies a connection goes through. Either may carry credentials in a
+/// URL (`socks5://user:secret@host:1080`), so the description never shows them.
+/// Blank means none; SOCKS5 wins when both are set.
+public struct ProxySettings: Sendable, Equatable {
+    /// `host:port` or a `socks5://` / `socks5h://` URL.
+    public var socks5 = ""
+    /// `host:port` or an `http://` / `https://` URL.
+    public var http = ""
+    public init(socks5: String = "", http: String = "") {
+        self.socks5 = socks5
+        self.http = http
+    }
+}
+
+extension ProxySettings: CustomStringConvertible, CustomDebugStringConvertible {
+    public var description: String {
+        "ProxySettings(socks5: \(socks5.isEmpty ? "none" : "set"), http: \(http.isEmpty ? "none" : "set"))"
+    }
+    public var debugDescription: String { description }
+}
+
 public struct EngineOptions: Sendable {
     /// Blank relay fields mean croc's defaults (see `RelayDefaults`).
     public var relayAddress = ""
@@ -55,7 +88,45 @@ public struct EngineOptions: Sendable {
     /// Both-sides confirm (croc --ask). Sender prompt is bridged via the
     /// stdin pipe; respond(accept:policy:) answers it.
     public var ask = false
+
+    // Advanced options. The defaults are croc's own (`EngineOptionsDefaultsTests`
+    // checks them against the engine).
+
+    /// Receiving: the sender adopts the receiver's curve, so peers need not match.
+    public var curve = Curve.p256
+    /// Send only; the receiver uses the sender's choice.
+    public var hashAlgorithm = HashAlgorithm.xxhash
+    /// Send only: bytes per second, digits with an optional `k`, `m` or `g`
+    /// (`"500k"`). Blank means no limit.
+    public var throttleUpload = ""
+    /// Send only: one data connection instead of several.
+    public var noMultiplexing = false
+    /// Send only: the first port of this side's local relay.
+    public var basePort = Int(CrocmobileDefaultBasePort)
+    /// Send only: data ports after `basePort`. All ports must stay at or below 65535.
+    public var transfers = Int(CrocmobileDefaultTransfers)
+    /// IPv4 multicast group for finding peers on the local network. Both sides
+    /// must use the same one.
+    public var multicastAddress = CrocmobileDefaultMulticastAddress
+    /// Receive only: the sender's `ip:port` (IPv6 in brackets). Connects
+    /// straight to it and turns the public relay pool off.
+    public var peerIP = ""
+    /// May carry credentials; see `ProxySettings`.
+    public var socks5Proxy = ""
+    /// May carry credentials; see `ProxySettings`.
+    public var httpProxy = ""
+    /// Resolve relay names with croc's built-in resolver instead of the system's.
+    public var internalDNS = false
     public init() {}
+}
+
+extension EngineOptions: CustomStringConvertible, CustomDebugStringConvertible {
+    /// Names the options without their values: the relay password and the proxies are secrets.
+    public var description: String {
+        "EngineOptions(relay: \(relayAddress.isEmpty ? "default" : "custom"), "
+            + "proxy: \(socks5Proxy.isEmpty && httpProxy.isEmpty ? "none" : "set"))"
+    }
+    public var debugDescription: String { description }
 }
 
 public enum TransferEvent: Sendable {
@@ -119,6 +190,7 @@ public struct StoredSendOptions: Sendable {
     /// 1 to 100.
     public var downloads = 1
     public var lifetimeSeconds = 86_400
+    public var proxy = ProxySettings()
     public init() {}
 }
 
@@ -135,6 +207,8 @@ public struct EngineFailure: Error, Equatable, Sendable {
         case storeLimit
         /// Stored transfers: the server no longer has it (expired, revoked, used up).
         case storeExpired
+        /// An Advanced option (proxy, ports, multicast address, sender IP) failed the engine's check.
+        case invalidSetting
     }
 
     public let code: Code

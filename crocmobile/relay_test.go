@@ -86,6 +86,7 @@ func TestBuildCrocOptionsPoolOff(t *testing.T) {
 		{"custom v6, default v4", Options{RelayAddress: DefaultRelayAddress(), RelayAddress6: "[::1]:9009"}, "", "[::1]:9009"},
 		{"custom pair", Options{RelayAddress: "relay.example:9009", RelayAddress6: "[::1]:9009"}, "relay.example:9009", "[::1]:9009"},
 		{"custom pair, local only", Options{RelayAddress: "relay.example:9009", RelayAddress6: "[::1]:9009", OnlyLocal: true}, "relay.example:9009", "[::1]:9009"},
+		{"sender IP", Options{PeerIP: "10.0.0.1:9009"}, "croc.schollz.com:9009", "croc6.schollz.com:9009"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

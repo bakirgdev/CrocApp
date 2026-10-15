@@ -311,3 +311,96 @@ case "$got" in
 esac
 [ ! -e "$DOCS/storeme.bin" ] || fail "revoked upload wrote a file (app)"
 echo MAC-STORE-OK
+
+# --- 10: menu-bar quick send, files and clipboard text (R26) -----------------
+# --auto-menubar-send and --auto-menubar-clipboard start the send through
+# MenuBarQuickSend, the view model behind the menu-bar window. The code is
+# generated, so the app writes it to verify-code.txt for the CLI receiver.
+rm -f "$RESULT" "$HISTORY" "$DOCS/verify-code.txt"
+echo "mac menubar send $$" > "$DOCS/menubar.txt"
+run_app --auto-menubar-send "$DOCS/menubar.txt" > "$TMPROOT/mac-app-menubar.log" 2>&1
+await_ready
+C=$(cat "$DOCS/verify-code.txt")
+recv_from_app menubar "$DOCS/menubar.txt" "$TMP/d10"
+
+# The pasteboard is the user's: put it back afterwards.
+SAVED_PASTE="$TMP/pasteboard.txt"
+pbpaste > "$SAVED_PASTE"
+rm -f "$RESULT" "$HISTORY" "$DOCS/verify-code.txt"
+CLIP="mac menubar clipboard $$"
+printf '%s' "$CLIP" | pbcopy
+run_app --auto-menubar-clipboard > "$TMPROOT/mac-app-menubar-clip.log" 2>&1
+await_ready
+C=$(cat "$DOCS/verify-code.txt")
+mkdir -p "$TMP/d10t"
+( cd "$TMP/d10t" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes ) \
+    > "$TMPROOT/mac-cli-menubar-clip.log" 2>&1
+await_app 30
+pbcopy < "$SAVED_PASTE"
+check_result menubar-clipboard
+grep -qF "$CLIP" "$TMPROOT/mac-cli-menubar-clip.log" || fail "menu-bar clipboard text did not reach the CLI"
+rm -f "$DOCS/menubar.txt"
+echo MAC-MENUBAR-OK
+
+# --- 11: Open at login matches the system status (R26) -----------------------
+# The check registers the app's login item and unregisters it again, so a
+# stray item survives only if the run is killed between the two (a login item
+# already present before the run is left unregistered). The status
+# values are SMAppService.Status raw values: 0 notRegistered, 1 enabled,
+# 2 requiresApproval.
+rm -f "$RESULT"
+run_app --auto-login-item > "$TMPROOT/mac-app-login.log" 2>&1
+await_file "$RESULT" 30 || fail "login item check wrote no result"
+kill "$APP_PID" 2>/dev/null || true
+wait "$APP_PID" 2>/dev/null || true
+got=$(cat "$RESULT")
+echo "login item result: $got"
+case "$got" in
+  "ok before="?" registered=1 toggleOn=true after=0 toggleOff=true") ;;
+  "ok before="?" registered=2 toggleOn=true after=0 toggleOff=true") ;;
+  *) fail "login item: status did not follow register/unregister, got '$got'" ;;
+esac
+echo MAC-LOGIN-OK
+
+# --- 12: the Shortcuts actions against the CLI (R27) -------------------------
+# Shortcuts cannot be driven from a script, so --auto-intent calls each
+# action's perform() directly (the value rides behind --intent-arg: two bare
+# arguments in a row make AppKit skip the window). The send actions return their code, which the
+# app writes to verify-code.txt; Receive saves into the app's receive folder
+# (the real ~/Downloads/CrocApp), so the file gets a unique name and is
+# removed afterwards.
+rm -f "$RESULT" "$HISTORY" "$DOCS/verify-code.txt"
+echo "mac intent file $$" > "$DOCS/intentsend.txt"
+run_app --auto-intent send-files --intent-arg "$DOCS/intentsend.txt" > "$TMPROOT/mac-app-intent-files.log" 2>&1
+await_ready
+C=$(cat "$DOCS/verify-code.txt")
+recv_from_app intent-send-files "$DOCS/intentsend.txt" "$TMP/d12"
+
+rm -f "$RESULT" "$HISTORY" "$DOCS/verify-code.txt"
+INTENT_TEXT="mac intent text $$"
+run_app --auto-intent send-text --intent-arg "$INTENT_TEXT" > "$TMPROOT/mac-app-intent-text.log" 2>&1
+await_ready
+C=$(cat "$DOCS/verify-code.txt")
+mkdir -p "$TMP/d12t"
+( cd "$TMP/d12t" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes ) \
+    > "$TMPROOT/mac-cli-intent-text.log" 2>&1
+await_app 30
+check_result intent-send-text
+grep -qF "$INTENT_TEXT" "$TMPROOT/mac-cli-intent-text.log" || fail "Send Text action: text did not reach the CLI"
+
+C=$(code intr)
+RECV_NAME="intent-recv-$$.txt"
+RECV_DIR="$HOME/Downloads/CrocApp"
+rm -f "$RESULT" "$HISTORY"
+echo "mac intent receive $$" > "$TMP/$RECV_NAME"
+( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin send "$RECV_NAME" ) \
+    > "$TMPROOT/mac-cli-intent-send.log" 2>&1 &
+sleep 3
+run_app --auto-intent receive --intent-arg "$C" > "$TMPROOT/mac-app-intent-recv.log" 2>&1
+await_app 120
+got=$(cat "$RESULT" 2>/dev/null || echo missing)
+echo "intent receive result: $got"
+diff "$TMP/$RECV_NAME" "$RECV_DIR/$RECV_NAME" || fail "Receive action: file differs"
+rm -f "$RECV_DIR/$RECV_NAME" "$DOCS/intentsend.txt"
+[ "$got" = "ok success=true files=$RECV_NAME" ] || fail "Receive action: expected the file name back, got '$got'"
+echo MAC-INTENT-OK

@@ -33,6 +33,10 @@ Tap **Send**. CrocApp shows the generated (or custom) code phrase, a **Copy Code
 
 Instead of a code, **Send as link** (files only) uploads your files, encrypted, to a transfer server and gives you a link the receiver can open later, with no need to be online at the same time. You choose how long the link lasts and how many downloads it allows. See [Send as link](stored-transfers.md).
 
+## Menu bar and Shortcuts
+
+On a Mac, the [menu bar icon](menu-bar.md) sends files or clipboard text without opening the main window. On any device, [Shortcuts](shortcuts.md) can send files and text for you and hand back the code.
+
 ## One active transfer at a time
 
 CrocApp allows exactly one active transfer at a time, matching a limit in the underlying engine. You cannot start a second send or receive while one is in progress; finish or cancel the current transfer first.

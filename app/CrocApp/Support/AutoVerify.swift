@@ -1,6 +1,11 @@
+import AppIntents
 import CrocKit
 import Foundation
 import SwiftData
+
+#if os(macOS)
+import ServiceManagement
+#endif
 
 /// Launch-argument harness for scripted verification.
 ///   --auto-receive CODE            receive into Documents, auto-accept
@@ -9,6 +14,15 @@ import SwiftData
 ///                                  default 1), write the link to verify-store-link.txt, then wait for
 ///                                  verify-store-revoke.go in Documents and revoke the upload
 ///   --auto-store-receive LINK      receive a stored link into Documents, auto-accept
+///   --auto-intent send-files|send-text|receive --intent-arg ARG
+///                                  run that Shortcuts action's perform() with ARG (a path, the text, or
+///                                  a code); the sends write their code to verify-code.txt, receive
+///                                  auto-accepts and lists the returned file names in verify-result.txt
+///   --auto-menubar-send PATH      send PATH through the menu-bar view model (macOS); the generated
+///                                  code goes to verify-code.txt
+///   --auto-menubar-clipboard       send the pasteboard text through the menu-bar view model (macOS)
+///   --auto-login-item              register Open at login, record the system status, unregister,
+///                                  record it again (macOS)
 ///   --auto-share-send CODE         send whatever's staged in the ShareInbox with custom code CODE
 ///   --local                        force croc local-only mode (LAN/sandbox listener check)
 ///   --no-compress                  disable croc compression (F15)
@@ -17,7 +31,7 @@ import SwiftData
 ///   --hold                         park at the incoming prompt instead of auto-accepting
 ///   --when-exists keepBoth|replace answer the incoming prompt with this file policy
 ///                                  (the setting stays Keep Both, so the late answer must reach croc)
-///   --screen ROUTE                 navigate to home|send|receive|settings|howItWorks|history|
+///   --screen ROUTE                 navigate to home|send|receive|settings|advanced|howItWorks|history|
 ///                                  onboarding on launch; combines with the --auto-* modes
 ///   --stage PATH                   preload PATH into the Send screen's staged list (repeatable)
 ///   --seed-history                 fill the (in-memory) history store with sample records
@@ -46,6 +60,8 @@ enum AutoVerify {
         return args.contains("--auto-receive") || args.contains("--auto-send")
             || args.contains("--auto-share-send") || args.contains("--auto-store-send")
             || args.contains("--auto-store-receive") || args.contains("--screen")
+            || args.contains("--auto-menubar-send") || args.contains("--auto-menubar-clipboard")
+            || args.contains("--auto-login-item") || args.contains("--auto-intent")
         #else
         return false
         #endif
@@ -109,6 +125,11 @@ enum AutoVerify {
         if let route = requestedRoute() { applyRoute(route, args: args) }
         if args.contains("--seed-history") { seedHistory(controller.history) }
         let hold = args.contains("--hold")
+        #if os(macOS)
+        if await runMenuBarModes(args: args, controller: controller, resultURL: resultURL) {
+            return
+        }
+        #endif
 
         if let i = args.firstIndex(of: "--auto-receive"), i + 1 < args.count {
             controller.startReceive(code: args[i + 1], into: docs, folderIsScoped: false)
@@ -142,6 +163,11 @@ enum AutoVerify {
             controller.startStoreReceive(link: link, into: docs, folderIsScoped: false)
             await watch(
                 controller, resultURL: resultURL, autoAccept: !hold, sheetPolicy: sheetPolicy)
+        } else if let i = args.firstIndex(of: "--auto-intent"), i + 1 < args.count,
+            let ai = args.firstIndex(of: "--intent-arg"), ai + 1 < args.count
+        {
+            await runIntent(
+                args[i + 1], argument: args[ai + 1], controller: controller, resultURL: resultURL)
         } else if let i = args.firstIndex(of: "--auto-share-send"), i + 1 < args.count {
             let inbox = ShareInbox()
             inbox.refresh()
@@ -159,6 +185,110 @@ enum AutoVerify {
     }
 
     #if DEBUG
+    /// Calls an App Intent's `perform()` directly: Shortcuts cannot be driven
+    /// from a script, so this is the nearest proof that the actions work
+    /// against the CLI. The send actions return at the code, so the watch
+    /// that follows carries each to its end. The dependencies are set by hand:
+    /// outside Shortcuts' own flow, reading an unset one is a fatal error.
+    @MainActor
+    private static func runIntent(
+        _ name: String, argument: String, controller: TransferController, resultURL: URL
+    ) async {
+        func finish(_ result: String) {
+            try? result.write(to: resultURL, atomically: true, encoding: .utf8)
+        }
+        let codeURL = resultURL.deletingLastPathComponent().appendingPathComponent(
+            "verify-code.txt")
+        do {
+            switch name {
+            case "send-files":
+                let intent = SendFilesIntent()
+                intent.controller = controller
+                intent.files = [IntentFile(fileURL: URL(fileURLWithPath: argument))]
+                let code = try await intent.perform().value
+                try code?.write(to: codeURL, atomically: true, encoding: .utf8)
+                await watch(controller, resultURL: resultURL, autoAccept: false)
+            case "send-text":
+                let intent = SendTextIntent()
+                intent.controller = controller
+                intent.text = argument
+                let code = try await intent.perform().value
+                try code?.write(to: codeURL, atomically: true, encoding: .utf8)
+                await watch(controller, resultURL: resultURL, autoAccept: false)
+            case "receive":
+                controller.settings.autoAccept = true
+                let intent = ReceiveIntent()
+                intent.controller = controller
+                intent.outputFolder = OutputFolderStore()
+                intent.codeOrLink = argument
+                let files = try await intent.perform().value ?? []
+                let names = files.compactMap { $0.fileURL?.lastPathComponent }.joined(
+                    separator: ",")
+                finish("ok success=true files=\(names)")
+            default:
+                finish("error unknown intent \(name)")
+            }
+        } catch {
+            finish("error \(error)")
+        }
+    }
+    #endif
+
+    #if DEBUG && os(macOS)
+    /// The macOS-only modes. True when one of them ran.
+    @MainActor
+    private static func runMenuBarModes(
+        args: [String], controller: TransferController, resultURL: URL
+    ) async -> Bool {
+        func fail(_ message: String) {
+            try? "error \(message)".write(to: resultURL, atomically: true, encoding: .utf8)
+        }
+        let quickSend = MenuBarQuickSend(controller: controller)
+        if let i = args.firstIndex(of: "--auto-menubar-send"), i + 1 < args.count {
+            guard quickSend.send(urls: [URL(fileURLWithPath: args[i + 1])]) else {
+                fail("menu-bar send did not start")
+                return true
+            }
+            await watch(controller, resultURL: resultURL, autoAccept: false)
+        } else if args.contains("--auto-menubar-clipboard") {
+            guard quickSend.sendClipboardText() else {
+                fail("menu-bar clipboard send did not start")
+                return true
+            }
+            await watch(controller, resultURL: resultURL, autoAccept: false)
+        } else if args.contains("--auto-login-item") {
+            runLoginItemCheck(resultURL: resultURL)
+        } else {
+            return false
+        }
+        return true
+    }
+
+    /// Leaves the login item as it found it. The status reads come from the
+    /// system, so this proves the toggle's model matches `SMAppService`.
+    @MainActor
+    private static func runLoginItemCheck(resultURL: URL) {
+        let item = LoginItem()
+        let before = item.status
+        func finish(_ result: String) {
+            try? result.write(to: resultURL, atomically: true, encoding: .utf8)
+        }
+        item.setRegistered(true)
+        let registered = item.status
+        let toggleOn = item.isRegistered
+        item.setRegistered(false)
+        let after = item.status
+        if let message = item.errorMessage {
+            finish("error \(message)")
+        } else {
+            finish(
+                "ok before=\(before.rawValue) registered=\(registered.rawValue) toggleOn=\(toggleOn)"
+                    + " after=\(after.rawValue) toggleOff=\(!item.isRegistered)")
+        }
+    }
+    #endif
+
+    #if DEBUG
     @MainActor
     private static func applyRoute(_ route: String, args: [String]) {
         // --stage is repeatable, so collect every occurrence rather than the
@@ -170,6 +300,7 @@ enum AutoVerify {
         case "send": AppRouter.shared.openSend(with: staged)
         case "receive": AppRouter.shared.path = [.receive]
         case "settings": AppRouter.shared.path = [.settings]
+        case "advanced": AppRouter.shared.path = [.settings, .advancedSettings]
         case "howItWorks": AppRouter.shared.path = [.howItWorks]
         case "history": AppRouter.shared.path = [.history]
         default: break  // home and onboarding both start from an empty path
@@ -272,8 +403,12 @@ enum AutoVerify {
         while true {
             try? await Task.sleep(for: .milliseconds(200))
             switch controller.phase {
-            case .waiting where !codeReady:
+            case .waiting(let code) where !codeReady:
                 codeReady = true
+                try? code.write(
+                    to: resultURL.deletingLastPathComponent().appendingPathComponent(
+                        "verify-code.txt"),
+                    atomically: true, encoding: .utf8)
                 try? "ready".write(
                     to: resultURL.deletingLastPathComponent().appendingPathComponent(
                         "verify-code-ready.txt"),

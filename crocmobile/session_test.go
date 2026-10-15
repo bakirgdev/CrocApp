@@ -60,22 +60,25 @@ func mustBuildCrocOptions(t *testing.T, sender bool, secret string, o *Options) 
 
 func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 	o := &Options{
-		RelayAddress:   "relay4.example:9009",
-		RelayAddress6:  "relay6.example:9009",
-		RelayPassword:  "relaypass",
-		RelayPorts:     "9009, 9010,,9011",
-		Curve:          "siec",
-		HashAlgorithm:  "imohash",
-		ThrottleUpload: "500k",
-		Exclude:        "node_modules\n .git \n\nbuild",
-		DisableLocal:   true,
-		OnlyLocal:      true,
-		NoCompress:     true,
-		ZipFolder:      true,
-		GitIgnore:      true,
-		Overwrite:      true,
-		Ask:            true,
-		NoMultiplexing: true,
+		RelayAddress:     "relay4.example:9009",
+		RelayAddress6:    "relay6.example:9009",
+		RelayPassword:    "relaypass",
+		BasePort:         9100,
+		Transfers:        2,
+		PeerIP:           "10.0.0.1:9100",
+		MulticastAddress: " 239.1.2.3 ",
+		Curve:            "siec",
+		HashAlgorithm:    "imohash",
+		ThrottleUpload:   "500k",
+		Exclude:          "node_modules\n .git \n\nbuild",
+		DisableLocal:     true,
+		OnlyLocal:        true,
+		NoCompress:       true,
+		ZipFolder:        true,
+		GitIgnore:        true,
+		Overwrite:        true,
+		Ask:              true,
+		NoMultiplexing:   true,
 	}
 	got := mustBuildCrocOptions(t, false, "secret-code", o)
 
@@ -85,7 +88,9 @@ func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 		RelayAddress:     "relay4.example:9009",
 		RelayAddress6:    "relay6.example:9009",
 		RelayPassword:    "relaypass",
-		RelayPorts:       []string{"9009", "9010", "9011"},
+		RelayPorts:       []string{"9100", "9101", "9102"},
+		IP:               "10.0.0.1:9100",
+		MulticastAddress: "239.1.2.3",
 		Curve:            "siec",
 		HashAlgorithm:    "imohash",
 		ThrottleUpload:   "500k",
@@ -738,4 +743,25 @@ func TestSendSetupFailureRemovesZip(t *testing.T) {
 	}
 
 	assertNoZip(t, dir)
+}
+
+type fileListRecorder struct {
+	errorDelegate
+	lists []string
+}
+
+func (d *fileListRecorder) OnFileList(l string) { d.lists = append(d.lists, l) }
+
+// A receive that finishes before poll's first tick must still report its list.
+func TestPollReportsFileListOfTransferEndedWithinATick(t *testing.T) {
+	d := &fileListRecorder{}
+	s := &session{
+		client:   &croc.Client{FilesToTransfer: []croc.FileInfo{{Name: "a.txt", FolderRemote: ".", Size: 5}}},
+		delegate: d, done: make(chan struct{}), pollDone: make(chan struct{}),
+	}
+	close(s.done)
+	s.poll()
+	if len(d.lists) != 1 {
+		t.Fatalf("OnFileList called %d times, want 1", len(d.lists))
+	}
 }
