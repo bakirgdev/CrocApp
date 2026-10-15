@@ -226,11 +226,11 @@ pass "v10 receiver: peerVersion"
 # prompt and preset with -yes. Keep Both leaves the old file and adds
 # "a (1).txt"; Replace leaves one file with the new content. A zipped folder
 # received twice into one folder hits croc's per-member unzip prompt, which
-# reads the answers crocmobile queues: Keep Both skips the existing member,
-# Replace at the prompt overwrites it, and both finish without an error. Under
-# -yes the queued answers are always "n", so that a sender's --ask prompt,
-# which croc forces even under -yes, is still refused with Replace: the last
-# case checks that, and the zipped folder keeps its member.
+# reads the answers crocmobile queues. They are always "n", so every policy
+# keeps the existing member and finishes without an error: a queued "y" would
+# also answer the accept prompt croc re-runs after a reconnect, and the one
+# croc forces under -yes when the sender ran --ask. The last case checks that
+# --ask prompt is refused with Replace.
 SCENARIO=12
 collide() {                                         # collide NAME POLICY ACCEPT...
   local name=$1 policy=$2 dir="$TMP/dst12-$1" C
@@ -270,11 +270,7 @@ zip_twice() {                                       # zip_twice NAME POLICY ACCE
     [ ! -e "$dir/sub.zip" ] || fail "zipped folder $policy ($*), round $round: archive left behind"
     [ "$round" = 2 ] || echo "local edit" > "$dir/sub/b.txt"
   done
-  if [ "$policy" = keepBoth ] || [ "$1" = -yes ]; then
-    [ "$(cat "$dir/sub/b.txt")" = "local edit" ] || fail "zipped folder keepBoth ($*): existing member changed"
-  else
-    diff "$TMP/src/sub/b.txt" "$dir/sub/b.txt" > /dev/null || fail "zipped folder replace ($*): member not replaced"
-  fi
+  [ "$(cat "$dir/sub/b.txt")" = "local edit" ] || fail "zipped folder $policy ($*): existing member changed"
   pass "zipped folder received twice, $policy ($*)"
 }
 zip_twice kp keepBoth -answer y

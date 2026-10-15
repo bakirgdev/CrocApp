@@ -129,6 +129,14 @@ const (
 // which startReceiveSession relies on for AutoAccept.
 const promptPolicyAnswers = 4096
 
+// keptPromptAnswers is the only batch ever queued behind the accept answer,
+// whatever the policy: "n" keeps what exists (the unzip skips that member), so
+// Replace overwrites files through croc's Overwrite but never a zip member.
+// Never "y": croc v11 re-runs the accept prompt on the sender's new file list
+// after each reconnect, and that prompt would read a queued "y" as consent to
+// a list the user never saw.
+var keptPromptAnswers = strings.Repeat("n\n", promptPolicyAnswers)
+
 func parsePolicy(s string) filePolicy {
 	if s == PolicyReplace {
 		return replace
@@ -148,15 +156,31 @@ func (p filePolicy) apply(co *croc.Options) {
 	co.Overwrite = p == replace
 }
 
-// promptAnswers is the batch of answers croc's per-file prompts read: "y"
-// replaces, "n" keeps what exists (the unzip skips that member).
-func (p filePolicy) promptAnswers() string {
-	answer := "n\n"
-	if p == replace {
-		answer = "y\n"
-	}
-	return strings.Repeat(answer, promptPolicyAnswers)
+// maxReportedBytes caps every size and byte sum the delegate sees (1 PiB). A
+// file list's sizes are the sender's word, and unchecked sums of them overflow
+// int64 here and trap in the app's Int64 arithmetic.
+const maxReportedBytes = 1 << 50
+
+func addReported(total, size int64) int64 {
+	return min(total+min(max(size, 0), maxReportedBytes), maxReportedBytes)
 }
+
+// sendFilesInfo hands croc the picked paths as literal names. croc expands any
+// path holding '*' with filepath.Glob, so a picked file named "*.pdf" would
+// also send every PDF beside it; escaping the pattern makes it match only
+// itself.
+func sendFilesInfo(paths []string, o *Options) ([]croc.FileInfo, []croc.FileInfo, int, error) {
+	literal := make([]string, len(paths))
+	for i, p := range paths {
+		if strings.Contains(p, "*") {
+			p = globEscaper.Replace(p)
+		}
+		literal[i] = p
+	}
+	return croc.GetFilesInfoWithExactExclusions(literal, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"), nil)
+}
+
+var globEscaper = strings.NewReplacer(`\`, `\\`, `*`, `\*`, `?`, `\?`, `[`, `\[`)
 
 func splitNonEmpty(s, sep string) []string {
 	var out []string
@@ -250,8 +274,7 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			}
 			paths = []string{f.Name()}
 		}
-		filesInfo, emptyFolders, totalFolders, err := croc.GetFilesInfoWithExactExclusions(
-			paths, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"), nil)
+		filesInfo, emptyFolders, totalFolders, err := sendFilesInfo(paths, o)
 		if err != nil {
 			if tempPath != "" {
 				os.Remove(tempPath)
@@ -551,7 +574,7 @@ func (s *session) respond(accept bool, policy filePolicy) {
 			if s.client != nil {
 				policy.apply(&s.client.Options)
 			}
-			answers += policy.promptAnswers()
+			answers += keptPromptAnswers
 		}
 		_, _ = s.promptW.WriteString(answers)
 	} else {
@@ -564,18 +587,16 @@ func (s *session) respond(accept bool, policy filePolicy) {
 }
 
 // answerUngatedPrompts queues answers for an AutoAccept receive, which has no
-// accept prompt, and closes the pipe. Always Keep Both's "n", whatever the
-// policy: croc still forces the accept prompt when the remote sender ran
-// --ask, that prompt reads the first queued line, and "y" would accept a
-// transfer the sender wanted confirmed by hand. So under AutoAccept, Replace
-// overwrites files through croc's Overwrite but keeps existing zip members.
+// accept prompt, and closes the pipe. croc still forces the accept prompt when
+// the remote sender ran --ask, and that prompt reads the first queued line, so
+// it must be "n" here too.
 func (s *session) answerUngatedPrompts() {
 	s.promptM.Lock()
 	defer s.promptM.Unlock()
 	if s.promptW == nil {
 		return
 	}
-	_, _ = s.promptW.WriteString(keepBoth.promptAnswers())
+	_, _ = s.promptW.WriteString(keptPromptAnswers)
 	s.promptW.Close()
 	s.promptW = nil
 }
@@ -727,8 +748,8 @@ func (s *session) fileListJSON() string {
 	var total int64
 	for _, f := range c.FilesToTransfer {
 		name := filepath.Join(f.FolderRemote, f.Name)
-		files = append(files, fileEntry{Name: name, Size: f.Size})
-		total += f.Size
+		files = append(files, fileEntry{Name: name, Size: addReported(0, f.Size)})
+		total = addReported(total, f.Size)
 	}
 	b, _ := json.Marshal(map[string]any{
 		"files": files, "emptyFolders": len(c.EmptyFoldersToTransfer), "totalSize": total,
@@ -763,17 +784,17 @@ func (s *session) progressSnapshot(connected bool) progressState {
 	// goroutines, and a concurrent read here races it -- a fatal, unrecoverable
 	// runtime throw, not a panic recover() can catch.
 	for i, f := range c.FilesToTransfer {
-		totalSize += f.Size
+		totalSize = addReported(totalSize, f.Size)
 		if i < cur {
-			bytesFinished += f.Size
+			bytesFinished = addReported(bytesFinished, f.Size)
 		}
 	}
 	if cur >= 0 && cur < len(c.FilesToTransfer) {
 		f := c.FilesToTransfer[cur]
 		fileName = f.Name
-		fileSize = f.Size
+		fileSize = addReported(0, f.Size)
 	}
-	sent := c.TotalSent // per-current-file
+	sent := addReported(0, c.TotalSent) // per-current-file
 	if c.Step3RecipientRequestFile || sent > 0 {
 		step = "transferring"
 	}
@@ -788,7 +809,7 @@ func (s *session) summaryJSON() string {
 	c := s.client
 	var total int64
 	for _, f := range c.FilesToTransfer {
-		total += f.Size
+		total = addReported(total, f.Size)
 	}
 	b, _ := json.Marshal(map[string]any{
 		"success": c.SuccessfulTransfer, "files": len(c.FilesToTransfer), "totalSize": total,

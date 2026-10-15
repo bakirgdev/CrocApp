@@ -13,6 +13,7 @@ import Testing
 
     @Test(arguments: [
         "", "/etc/passwd", "..", "../x", "a/../b", "a/..", "a\\b", "..\\x", "a\0b",
+        "photo.jpg\n..", "a\rb", "a\tb", "a\u{7F}b", "a\u{85}b",
     ])
     func blocksUnsafeNames(name: String) {
         #expect(ReceivedName.isUnsafe(name))

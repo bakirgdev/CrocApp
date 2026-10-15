@@ -30,6 +30,13 @@ the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - A receive no longer overwrites existing files by default. A zipped folder received into a folder that already holds it no longer fails. Answers left over from one transfer can no longer answer the next transfer's accept prompt.
 
+### Security
+
+- Sending a file whose name contains `*` sends only that file. Before, croc read the name as a pattern and also sent every matching file next to it.
+- A file name containing a line break can no longer turn into extra send paths (a crafted name could send the app's whole data folder), and a name ending in a space is no longer sent as the file without the space (croc 11 receivers refuse such a name, so that send now fails). Received or shared names with control characters are treated as unsafe.
+- After you accept a receive, a sender that reconnects cannot get a different file list accepted without you seeing it: the receive ends instead. Replace still overwrites files, but no longer overwrites existing files inside a zipped folder; they are kept.
+- A sender declaring impossible file sizes can no longer crash the app during a receive.
+
 ## [0.9.9] - 2026-07-30
 
 First public build of CrocApp. It is a symbolic release: the app does everything V1 is meant to do, but it is not signed with an Apple Developer ID and it is not notarized, so macOS refuses to open it until you allow it by hand. Read "Opening it the first time" below before downloading.

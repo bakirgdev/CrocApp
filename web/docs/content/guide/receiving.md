@@ -47,11 +47,11 @@ CrocApp never overwrites an existing file unless you say so. If any incoming fil
 
 A file that already exists with identical content is left as it is under either choice. Files with unsafe names (for example, ones trying to escape the destination folder) block the accept buttons entirely, as a safety measure on top of croc's own name sanitization.
 
-A folder sent as a zip arrives as a single `.zip` name, so the preview cannot see which of its files already exist. The sheet then offers only **Accept**, which is Keep Both: it silently keeps the existing files and skips the matching ones in the archive. Auto-accept keeps them too, even when set to Replace. To get the sender's copies, move the old folder away before receiving.
+A folder sent as a zip arrives as a single `.zip` name, so the preview cannot see which of its files already exist. The sheet then offers only **Accept**, which is Keep Both: it silently keeps the existing files and skips the matching ones in the archive. Replace and auto-accept keep them too. To get the sender's copies, move the old folder away before receiving.
 
 ## Auto-accept (F18)
 
-Auto-accept is **off by default**. When off, you always see the file-list preview above before anything is saved. Turning it on (in [power options](power-options.md)) skips that preview — see that page for the exact warning CrocApp shows when it's enabled. Because there is no sheet to ask, a setting under it, **When a file already exists**, decides between Keep Both (the default) and Replace. Replace overwrites existing files, except inside a zipped folder: there the existing files are kept, because answering that unzip prompt with yes would also accept a transfer whose sender asked you to confirm it by hand.
+Auto-accept is **off by default**. When off, you always see the file-list preview above before anything is saved. Turning it on (in [power options](power-options.md)) skips that preview — see that page for the exact warning CrocApp shows when it's enabled. Because there is no sheet to ask, a setting under it, **When a file already exists**, decides between Keep Both (the default) and Replace. Replace overwrites existing files, except inside a zipped folder, where the existing files are kept (see above).
 
 ## After the transfer
 

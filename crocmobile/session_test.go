@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -269,6 +270,86 @@ func TestProgressSnapshot(t *testing.T) {
 	}
 }
 
+// Sizes in a file list are the sender's word: a peer can declare sizes whose
+// sums overflow int64, so every reported size and sum is capped.
+func TestProgressSnapshotCapsDeclaredSizes(t *testing.T) {
+	s := &session{client: &croc.Client{
+		FilesToTransfer: []croc.FileInfo{
+			{Name: "x", Size: math.MaxInt64 - 10},
+			{Name: "y", Size: math.MaxInt64 - 10},
+			{Name: "z", Size: -5},
+		},
+		FilesToTransferCurrentNum: 2,
+		TotalSent:                 math.MaxInt64,
+	}}
+	want := progressState{
+		CurrentFile: 2, TotalFiles: 3, FileName: "z", FileSent: maxReportedBytes,
+		BytesFinished: maxReportedBytes, TotalSize: maxReportedBytes, Step: "transferring",
+	}
+	if got := s.progressSnapshot(true); got != want {
+		t.Fatalf("progressSnapshot\n got: %+v\nwant: %+v", got, want)
+	}
+}
+
+func TestFileListJSONCapsDeclaredSizes(t *testing.T) {
+	s := &session{client: &croc.Client{FilesToTransfer: []croc.FileInfo{
+		{Name: "x", FolderRemote: ".", Size: math.MaxInt64},
+		{Name: "y", FolderRemote: ".", Size: math.MaxInt64},
+		{Name: "z", FolderRemote: ".", Size: -1},
+	}}}
+	var got struct {
+		Files     []fileEntry `json:"files"`
+		TotalSize int64       `json:"totalSize"`
+	}
+	if err := json.Unmarshal([]byte(s.fileListJSON()), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.TotalSize != maxReportedBytes {
+		t.Errorf("totalSize = %d, want %d", got.TotalSize, int64(maxReportedBytes))
+	}
+	for i, want := range []int64{maxReportedBytes, maxReportedBytes, 0} {
+		if got.Files[i].Size != want {
+			t.Errorf("files[%d].size = %d, want %d", i, got.Files[i].Size, want)
+		}
+	}
+}
+
+// A picked file whose name holds '*' is sent alone: croc globs any path with a
+// '*', which would add every matching file next to it.
+func TestSendFilesInfoTakesPathsLiterally(t *testing.T) {
+	dir := t.TempDir()
+	for _, name := range []string{"*.pdf", "a.pdf", "b.pdf", "[x]*", "[x]y", `a\*`} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(name), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, name := range []string{"*.pdf", "[x]*", `a\*`} {
+		files, _, _, err := sendFilesInfo([]string{filepath.Join(dir, name)}, &Options{})
+		if err != nil {
+			t.Fatalf("%q: %v", name, err)
+		}
+		if len(files) != 1 || files[0].Name != name {
+			var got []string
+			for _, f := range files {
+				got = append(got, f.Name)
+			}
+			t.Errorf("%q: sent %q, want only that file", name, got)
+		}
+	}
+}
+
+// Path lists cross the bridge joined by "\n". A picked name that ends in a
+// space must stay that name, or the send picks up the sibling without it.
+func TestSplitPathsKeepsNamesExact(t *testing.T) {
+	got := splitPaths("/d/report.pdf \n\n /d/x\n")
+	if want := []string{"/d/report.pdf ", " /d/x"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("splitPaths = %q, want %q", got, want)
+	}
+	if got := splitPaths(""); got != nil {
+		t.Fatalf("splitPaths(\"\") = %q, want nil", got)
+	}
+}
+
 func keysOf(m map[string]any) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -405,7 +486,6 @@ func TestSummaryJSON(t *testing.T) {
 
 func TestRespond(t *testing.T) {
 	keep := strings.Repeat("n\n", promptPolicyAnswers)
-	repl := strings.Repeat("y\n", promptPolicyAnswers)
 	tests := []struct {
 		name    string
 		sender  bool
@@ -415,7 +495,7 @@ func TestRespond(t *testing.T) {
 		want    string
 	}{
 		{"receive accept keeps both", false, true, keepBoth, 0, "y\n" + keep},
-		{"receive accept replaces", false, true, replace, 0, "y\n" + repl},
+		{"receive accept replace queues no y", false, true, replace, 0, "y\n" + keep},
 		{"receive decline", false, false, replace, 0, "n\n"},
 		{"send accept zero value counts as one", true, true, keepBoth, 0, "y\n"},
 		{"send accept negative counts as one", true, true, keepBoth, -2, "y\n"},
@@ -606,7 +686,7 @@ func TestPolicyAnswersFitPipeBuffer(t *testing.T) {
 	}
 	defer pr.Close()
 	defer pw.Close()
-	batch := "y\n" + replace.promptAnswers()
+	batch := "y\n" + keptPromptAnswers
 	if err := pw.SetWriteDeadline(time.Now().Add(time.Second)); err != nil {
 		t.Fatal(err)
 	}
@@ -623,7 +703,7 @@ func TestDrainPromptInputClearsLeftoverAnswers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _ = first.promptW.WriteString("y\n" + keepBoth.promptAnswers())
+	_, _ = first.promptW.WriteString("y\n" + keptPromptAnswers)
 	ctx := context.Background()
 	if got, err := utils.GetInputContext(ctx, ""); err != nil || got != "y" {
 		t.Fatalf("first prompt read %q, %v; want y", got, err)
