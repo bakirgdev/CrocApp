@@ -28,7 +28,7 @@ There has been **no formal third-party security audit** of croc, and CrocApp doe
 
 ## Receiving in a browser
 
-The link page offers **Receive in your browser**, which opens `https://getcroc.com/?code=<code>`. That is croc's own web app, not run by CrocApp, and the browser path trusts getcroc.com fully: getcroc.com serves the JavaScript that decrypts the file, so whoever controls that site could change the code that handles your data. It also reaches only croc's default relays. The CrocApp and croc CLI paths do not have this dependency. If that trust is more than you want to give, receive in CrocApp.
+The link page offers **Receive in your browser**, which opens `https://getcroc.com/?code=<code>`. That is croc's own web app, not run by CrocApp. The code travels in the query string there, so it reaches getcroc.com's server, and the browser path trusts getcroc.com fully: getcroc.com serves the JavaScript that decrypts the file, so whoever controls that site could change the code that handles your data. It also reaches only croc's default relays. The CrocApp and croc CLI paths do not have this dependency. If that trust is more than you want to give, receive in CrocApp.
 
 ## What CrocApp does not do
 
