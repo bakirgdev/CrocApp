@@ -217,7 +217,13 @@ func TestRunReportsFailurePayload(t *testing.T) {
 	close(pollDone)
 	s := &session{delegate: d, done: make(chan struct{}), pollDone: pollDone}
 
-	s.run(func() error { return errors.New("peer error: refusing files") }, t.TempDir(), func() {})
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// run restores the working directory; a throwaway dir here would leave the
+	// whole test binary in a deleted cwd.
+	s.run(func() error { return errors.New("peer error: refusing files") }, wd, func() {})
 
 	if len(d.errors) != 1 {
 		t.Fatalf("OnError calls = %v, want one", d.errors)
