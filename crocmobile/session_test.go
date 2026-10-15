@@ -744,3 +744,24 @@ func TestSendSetupFailureRemovesZip(t *testing.T) {
 
 	assertNoZip(t, dir)
 }
+
+type fileListRecorder struct {
+	errorDelegate
+	lists []string
+}
+
+func (d *fileListRecorder) OnFileList(l string) { d.lists = append(d.lists, l) }
+
+// A receive that finishes before poll's first tick must still report its list.
+func TestPollReportsFileListOfTransferEndedWithinATick(t *testing.T) {
+	d := &fileListRecorder{}
+	s := &session{
+		client:   &croc.Client{FilesToTransfer: []croc.FileInfo{{Name: "a.txt", FolderRemote: ".", Size: 5}}},
+		delegate: d, done: make(chan struct{}), pollDone: make(chan struct{}),
+	}
+	close(s.done)
+	s.poll()
+	if len(d.lists) != 1 {
+		t.Fatalf("OnFileList called %d times, want 1", len(d.lists))
+	}
+}

@@ -676,6 +676,14 @@ func (s *session) poll() {
 	for {
 		select {
 		case <-s.done:
+			// A transfer that ends inside one tick (a small file over a fast
+			// link, auto-accepted) would otherwise never report its list.
+			if !s.sender && !listSent && len(s.client.FilesToTransfer) > 0 {
+				func() {
+					defer func() { recover() }() //nolint:errcheck // a delegate panic must not skip close(pollDone)
+					s.delegate.OnFileList(s.fileListJSON())
+				}()
+			}
 			return
 		case <-t.C:
 		}
