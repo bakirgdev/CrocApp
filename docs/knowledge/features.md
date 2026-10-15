@@ -35,6 +35,15 @@ Status is verified against the code, not against intent. **Shipped** means the f
 | F18 | Auto-accept toggle (off by default, warning shown) | `--yes` | shipped |
 | F19 | Both-sides confirm | `--ask` | shipped |
 | F41 | Connection: Automatic or Relay only (sender-side; a receive follows) | `--transport auto\|relay` | shipped |
+| F20 | SOCKS5 proxy (Settings > Advanced) | `--socks5` | shipped |
+| F21 | HTTP proxy | `--connect` | shipped |
+| F22 | Upload speed limit (sender-side) | `--throttleUpload` | shipped |
+| F23 | Curve choice (the receiver's wins; the sender adopts it) | `--curve` | shipped |
+| F24 | Hash algorithm choice (sender-side) | `--hash` | shipped |
+| F25 | Sender IP, direct connect (receive-side) | `--ip` | shipped |
+| F26 | Custom multicast address (macOS only: iOS has no multicast entitlement) | `--multicast` | shipped |
+| F27 | Base port, parallel connections, multiplexing toggle (sender-side) | `--port --transfers --no-multi` | shipped |
+| F28 | Built-in DNS resolver | `--internal-dns` | shipped |
 
 ### GUI-native
 
@@ -50,19 +59,10 @@ The whole V1 set is implemented. What stands between it and release is in `../kn
 
 ## V1.x (approved, post-V1 fast follow)
 
-None started. The engine already exposes several of these from Go (`RelayPorts`, `Curve`, `HashAlgorithm`, `ThrottleUpload`, `NoMultiplexing`); wiring them means plumbing `EngineOptions` in CrocKit first (`crocmobile-bridge.md`).
+The Advanced options (F20-F28) are in the power options table above: `EngineOptions` carries them, `AppSettings` stores them (the proxies in the Keychain), `Views/AdvancedSettingsView.swift` edits them (`app-ui-architecture.md`, "Advanced settings (R25)"). Nothing else in this table has been started.
 
 | # | Feature | croc flag / origin |
 |---|---|---|
-| F20 | SOCKS5 / Tor proxy | `--socks5` |
-| F21 | HTTP proxy | `--connect` |
-| F22 | Upload throttle | `--throttleUpload` |
-| F23 | Curve choice | `--curve` |
-| F24 | Hash algorithm choice | `--hash` |
-| F25 | Direct IP connect | `--ip` |
-| F26 | Custom multicast address | `--multicast` |
-| F27 | Ports/transfers tuning, disable multiplexing | `--port --transfers --no-multi` |
-| F28 | Internal DNS resolver | `--internal-dns` |
 | F29 | Run own relay from Mac app (menu-bar relay server) | `croc relay` |
 | F31 | macOS menu bar quick-send (drag-drop) | GUI-native |
 | F33 | Saved codes / favorite peers | GUI-native |

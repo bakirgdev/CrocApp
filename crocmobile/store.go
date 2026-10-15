@@ -28,11 +28,14 @@ const (
 	storeRevokeWait         = 30 * time.Second
 )
 
-// StoreOptions configures StartStoreSend.
+// StoreOptions configures the stored-transfer calls. StartStoreReceive and
+// RevokeStored read only the proxies; nil means no proxy.
 type StoreOptions struct {
 	Server          string // stored-transfer origin; https, or http on loopback
 	Downloads       int    // verified downloads allowed, 1 to 100; 0 means 1
 	LifetimeSeconds int    // storage lifetime; 0 means one day, the server may cap it
+	Socks5Proxy     string // as Options.Socks5Proxy
+	HTTPProxy       string // as Options.HTTPProxy
 }
 
 // storedReceipt is the OnStored payload: everything the sender needs to share
@@ -124,9 +127,13 @@ func StartStoreSend(pathsJoined string, o *StoreOptions, d Delegate) (t *Transfe
 	if err := validateStoreOrigin(o.Server); err != nil {
 		return nil, startError(err)
 	}
+	client, err := storeClient(o)
+	if err != nil {
+		return nil, startError(err)
+	}
 	server, lifetime := o.Server, time.Duration(o.LifetimeSeconds)*time.Second
 	t, err = startStoreSession(d, func(ctx context.Context, s *session) (storeSummary, error) {
-		result, err := new(storeclient.Client).UploadWithOptions(ctx, server, paths,
+		result, err := client.UploadWithOptions(ctx, server, paths,
 			storeclient.UploadOptions{Downloads: downloads, Expiration: lifetime}, s.storeCallbacks())
 		if err != nil {
 			return storeSummary{}, err
@@ -156,7 +163,7 @@ func StartStoreSend(pathsJoined string, o *StoreOptions, d Delegate) (t *Transfe
 // Respond. On accept it downloads into outDir, applying Respond's policy to
 // names that already exist, then reports OnDone. Decline ends it with the
 // "refused" failure and leaves the transfer unclaimed.
-func StartStoreReceive(link, outDir string, d Delegate) (t *Transfer, err error) {
+func StartStoreReceive(link, outDir string, o *StoreOptions, d Delegate) (t *Transfer, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			t, err = nil, startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
@@ -172,8 +179,11 @@ func StartStoreReceive(link, outDir string, d Delegate) (t *Transfer, err error)
 	if err != nil {
 		return nil, startError(err)
 	}
+	client, err := storeClient(o)
+	if err != nil {
+		return nil, startError(err)
+	}
 	t, err = startStoreSession(d, func(ctx context.Context, s *session) (storeSummary, error) {
-		client := new(storeclient.Client)
 		manifest, _, err := client.Inspect(ctx, share)
 		if err != nil {
 			return storeSummary{}, err
@@ -209,7 +219,7 @@ func StartStoreReceive(link, outDir string, d Delegate) (t *Transfer, err error)
 // receipt. A transfer the server no longer has (404, 410) counts as revoked.
 // Blocking; it does not take the transfer lock, so a History row can revoke
 // while another transfer runs.
-func RevokeStored(origin, id, token string) (err error) {
+func RevokeStored(origin, id, token string, o *StoreOptions) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
@@ -219,9 +229,13 @@ func RevokeStored(origin, id, token string) (err error) {
 	// whole share first, so a zero key stands in for the one the receipt keeps
 	// in its link.
 	share := storecrypto.Share{Origin: origin, ID: id, MasterKey: make([]byte, storecrypto.KeySize)}
+	client, err := storeClient(o)
+	if err != nil {
+		return startError(err)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), storeRevokeWait)
 	defer cancel()
-	err = new(storeclient.Client).Revoke(ctx, share, token)
+	err = client.Revoke(ctx, share, token)
 	var httpErr *storeclient.HTTPError
 	if errors.As(err, &httpErr) && (httpErr.StatusCode == http.StatusNotFound || httpErr.StatusCode == http.StatusGone) {
 		return nil

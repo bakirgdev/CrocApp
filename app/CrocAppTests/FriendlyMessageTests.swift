@@ -41,6 +41,10 @@ import Testing
             "The transfer server refused this upload: it is over the server's size, file count or download limit, or too many uploads were made recently."
         ),
         (.storeExpired, "This link has expired, was revoked, or has no downloads left."),
+        (
+            .invalidSetting,
+            "An Advanced setting can't be used. Check the proxies, addresses, ports and upload speed limit in Settings > Advanced."
+        ),
         (.other, "Transfer failed. Try again, or check your connection."),
     ])
     func mapsEveryCode(code: EngineFailure.Code, expected: String) {

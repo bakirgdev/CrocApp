@@ -10,7 +10,7 @@ The app is driven by the DEBUG-only flags in `AutoVerify.swift`, not by clicking
 
 | Flag | Does |
 |---|---|
-| `--screen ROUTE` | pushes `AppRouter.shared.path` on launch. ROUTE is one of `home`, `send`, `receive`, `settings`, `howItWorks`, `history`, `onboarding`; `home` and `onboarding` push no path (`onboarding` forces the first-run sheet instead). Without the flag the harness runs the transfer while the UI sits on HomeView |
+| `--screen ROUTE` | pushes `AppRouter.shared.path` on launch. ROUTE is one of `home`, `send`, `receive`, `settings`, `advanced` (Settings with the Advanced page pushed, iOS), `howItWorks`, `history`, `onboarding`; `home` and `onboarding` push no path (`onboarding` forces the first-run sheet instead). Without the flag the harness runs the transfer while the UI sits on HomeView |
 | `--stage PATH` | preloads the Send screen's file list, repeatable. Only takes effect with `--screen send` |
 | `--seed-history` | writes sample `TransferRecord`s into the in-memory store |
 | `--hold` | parks at the incoming prompt instead of auto-accepting |

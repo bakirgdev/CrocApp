@@ -196,7 +196,7 @@ struct TransferStatusView: View {
     /// R23: croc's browser client only knows the default relays.
     private var browserReceiveNote: String? {
         switch controller.activeRelay {
-        case .publicDefault: nil
+        case .publicDefault, .directToSender: nil
         case .custom:
             "Receiving in a browser needs the default relays. This transfer uses a custom relay."
         case .localOnly:

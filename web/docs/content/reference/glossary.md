@@ -13,7 +13,8 @@ description: User-facing terms used throughout the CrocApp documentation.
 | Link | A `https://crocapp.dev/r/#<code>` address that carries a code phrase after the `#`. The QR code on the sender's screen and **Share Link** are this link. Opening one fills in **Receive** and never connects by itself. |
 | Relay | The server both sides connect to when a direct local-network path isn't available. Sees ciphertext only, never the key. |
 | Room | The rendezvous channel on the relay, derived from the first word of the code phrase. Two codes sharing that word can collide into the same room. |
-| Curve | The elliptic curve PAKE runs over. CrocApp uses croc's default. |
+| Curve | The elliptic curve PAKE runs over. CrocApp uses croc's default, P-256; the receiver's choice wins and the sender adopts it, so the devices never have to match (see [Advanced settings](../guide/advanced-settings.md)). |
+| Sender IP | The sender's address and port, entered on the receiving device to connect straight to it and skip relays. See [Advanced settings](../guide/advanced-settings.md#network). |
 | Hash algorithm | The integrity check used on transferred files. |
 | LAN peer discovery | The mechanism that lets same-network transfers skip the relay entirely; not guaranteed to work on every network. |
 | Connection | The setting that chooses how a send carries large files: Automatic (default) or Relay only. Only the sender's choice applies; a receive follows it. |

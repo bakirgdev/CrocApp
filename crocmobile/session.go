@@ -62,6 +62,10 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 	if err != nil {
 		return croc.Options{}, err
 	}
+	ports, err := relayPorts(o)
+	if err != nil {
+		return croc.Options{}, err
+	}
 	password := o.RelayPassword
 	if password == "" {
 		password = models.DEFAULT_PASSPHRASE
@@ -73,10 +77,10 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 		RelayAddress6:    route.v6,
 		PublicRelay:      route.public,
 		RelayPassword:    password,
-		RelayPorts:       splitNonEmpty(o.RelayPorts, ","),
+		RelayPorts:       ports,
 		Curve:            o.Curve,
 		HashAlgorithm:    o.HashAlgorithm,
-		ThrottleUpload:   o.ThrottleUpload,
+		ThrottleUpload:   strings.TrimSpace(o.ThrottleUpload),
 		DisableLocal:     o.DisableLocal,
 		OnlyLocal:        o.OnlyLocal,
 		NoCompress:       o.NoCompress,
@@ -90,6 +94,8 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 		DisableClipboard: true,
 		Quiet:            false, // Quiet=true nukes process stderr globally
 		Transport:        transport,
+		IP:               strings.TrimSpace(o.PeerIP),
+		MulticastAddress: strings.TrimSpace(o.MulticastAddress),
 	}
 	optionsPolicy(o).apply(&co)
 	return co, nil
@@ -171,11 +177,14 @@ func splitNonEmpty(s, sep string) []string {
 // from croc.GetFilesInfoWithExactExclusions/croc.NewCtx, and (because
 // `committed` is only set true right before the `go s.run(...)` call, after
 // d.OnCodeReady returns) any panic raised by the delegate's OnCodeReady
-// itself. This is what guarantees the lock, cwd, and temp file are never
-// leaked, even across a panic. The panic itself is left to propagate to
+// itself. This is what guarantees the lock, cwd, temp file and croc's network
+// globals (setNetworkGlobals) are never leaked, even across a panic. The panic itself is left to propagate to
 // StartSend/StartReceive's own recover, which converts it into a returned
 // error.
 func startSession(sender bool, code string, paths []string, text string, o *Options, d Delegate) (*session, error) {
+	if err := validateNetworkOptions(o); err != nil {
+		return nil, err
+	}
 	if !activeMu.TryLock() {
 		return nil, errors.New("another transfer is active")
 	}
@@ -184,12 +193,17 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		activeMu.Unlock()
 		return nil, fmt.Errorf("working directory: %w", err)
 	}
+	restoreNetwork := setNetworkGlobals(o)
+	release := func() {
+		restoreNetwork()
+		activeMu.Unlock()
+	}
 	committed := false
 	defer func() {
 		if !committed {
 			removeTempFiles()
 			restoreWD(origWD)
-			activeMu.Unlock()
+			release()
 		}
 	}()
 
@@ -289,22 +303,22 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 				forgetPublicRelay()
 			}
 			return err
-		}, origWD, func() { activeMu.Unlock() })
+		}, origWD, release)
 		go s.poll()
 		return s, nil
 	}
-	return startReceiveSession(code, o, d, origWD, &committed)
+	return startReceiveSession(code, o, d, origWD, release, &committed)
 }
 
 // startReceiveSession is startSession's receive-side counterpart, called as a
 // tail call from within startSession's own frame: the `committed` guard defer
 // declared there is still armed for every error path below, so on failure we
 // only need to unwind whatever this function itself set up (pipes, os.Stdin/
-// os.Stdout swaps, the croc ctx) — cwd restore and the activeMu unlock are
-// handled by that defer once we return. Only right before the async run
-// actually starts do we flip *committed to true, handing ownership of cwd
-// and the lock to s.run/release.
-func startReceiveSession(code string, o *Options, d Delegate, origWD string, committed *bool) (*session, error) {
+// os.Stdout swaps, the croc ctx) — cwd restore and release (network globals,
+// then the activeMu unlock) are handled by that defer once we return. Only
+// right before the async run actually starts do we flip *committed to true,
+// handing ownership of cwd and the lock to s.run/release.
+func startReceiveSession(code string, o *Options, d Delegate, origWD string, release func(), committed *bool) (*session, error) {
 	outDir := o.OutDir
 	if outDir == "" {
 		return nil, errors.New("OutDir required for receive")
@@ -407,7 +421,7 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, com
 	}
 
 	*committed = true
-	go s.run(func() error { return c.Receive() }, origWD, func() { activeMu.Unlock() })
+	go s.run(func() error { return c.Receive() }, origWD, release)
 	go s.poll()
 	return s, nil
 }

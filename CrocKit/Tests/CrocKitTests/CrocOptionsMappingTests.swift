@@ -63,6 +63,66 @@ import Testing
         #expect(o.ask)
     }
 
+    /// One non-default value per Advanced option, and one assert per field.
+    @Test func advancedFieldsMap() throws {
+        var e = EngineOptions()
+        e.curve = .ed25519
+        e.hashAlgorithm = .highway
+        e.throttleUpload = "500k"
+        e.noMultiplexing = true
+        e.basePort = 9100
+        e.transfers = 2
+        e.multicastAddress = "224.0.0.251"
+        e.peerIP = "10.0.0.1:9100"
+        e.socks5Proxy = "socks5://user:pw@proxy.example:1080"
+        e.httpProxy = "http://user:pw@proxy.example:3128"
+        e.internalDNS = true
+
+        let o = try CrocEngine.crocOptions(from: e)
+        #expect(o.curve == "ed25519")
+        #expect(o.hashAlgorithm == "highway")
+        #expect(o.throttleUpload == "500k")
+        #expect(o.noMultiplexing)
+        #expect(o.basePort == 9100)
+        #expect(o.transfers == 2)
+        #expect(o.multicastAddress == "224.0.0.251")
+        #expect(o.peerIP == "10.0.0.1:9100")
+        #expect(o.socks5Proxy == "socks5://user:pw@proxy.example:1080")
+        #expect(o.httpProxy == "http://user:pw@proxy.example:3128")
+        #expect(o.internalDNS)
+    }
+
+    @Test(arguments: Curve.allCases)
+    func everyCurveMapsByName(_ curve: Curve) throws {
+        var e = EngineOptions()
+        e.curve = curve
+        #expect(try CrocEngine.crocOptions(from: e).curve == curve.rawValue)
+    }
+
+    @Test(arguments: HashAlgorithm.allCases)
+    func everyHashMapsByName(_ hash: HashAlgorithm) throws {
+        var e = EngineOptions()
+        e.hashAlgorithm = hash
+        #expect(try CrocEngine.crocOptions(from: e).hashAlgorithm == hash.rawValue)
+    }
+
+    @Test func descriptionsHideSecrets() {
+        var e = EngineOptions()
+        e.relayPassword = "relay-secret"
+        e.socks5Proxy = "socks5://user:proxy-secret@proxy.example:1080"
+        e.httpProxy = "http://user:http-secret@proxy.example:3128"
+        var stored = StoredSendOptions()
+        stored.proxy = ProxySettings(socks5: e.socks5Proxy, http: e.httpProxy)
+        let texts = [
+            String(describing: e), String(reflecting: e), "\(e)",
+            String(describing: stored.proxy), String(reflecting: stored.proxy),
+        ]
+        for text in texts {
+            #expect(!text.contains("secret"))
+            #expect(!text.contains("proxy.example"))
+        }
+    }
+
     private struct Flag {
         let name: String
         let source: WritableKeyPath<EngineOptions, Bool>
@@ -79,6 +139,8 @@ import Testing
             Flag(name: "zipFolder", source: \.zipFolder, target: \.zipFolder),
             Flag(name: "gitIgnore", source: \.gitIgnore, target: \.gitIgnore),
             Flag(name: "ask", source: \.ask, target: \.ask),
+            Flag(name: "noMultiplexing", source: \.noMultiplexing, target: \.noMultiplexing),
+            Flag(name: "internalDNS", source: \.internalDNS, target: \.internalDNS),
         ]
         for flag in flags {
             var e = EngineOptions()
@@ -90,5 +152,35 @@ import Testing
                     "set \(flag.name), read \(other.name)")
             }
         }
+    }
+}
+
+/// The Swift defaults for the shared fields are the engine's, so a setting left
+/// alone behaves like the croc CLI.
+@Suite struct EngineOptionsDefaultsTests {
+    @Test func sharedFieldsEqualTheEnginesDefaults() throws {
+        let engine = try #require(CrocmobileNewOptionsDefault())
+        let mapped = try CrocEngine.crocOptions(from: EngineOptions())
+        #expect(mapped.curve == engine.curve)
+        #expect(mapped.hashAlgorithm == engine.hashAlgorithm)
+        #expect(mapped.throttleUpload == engine.throttleUpload)
+        #expect(mapped.noMultiplexing == engine.noMultiplexing)
+        #expect(mapped.basePort == engine.basePort)
+        #expect(mapped.transfers == engine.transfers)
+        #expect(mapped.multicastAddress == engine.multicastAddress)
+        #expect(mapped.peerIP == engine.peerIP)
+        #expect(mapped.socks5Proxy == engine.socks5Proxy)
+        #expect(mapped.httpProxy == engine.httpProxy)
+        #expect(mapped.internalDNS == engine.internalDNS)
+        #expect(mapped.transport == engine.transport || engine.transport.isEmpty)
+    }
+
+    @Test func defaultsAreCrocs() {
+        let e = EngineOptions()
+        #expect(e.curve == .p256)
+        #expect(e.hashAlgorithm == .xxhash)
+        #expect(e.basePort == 9009)
+        #expect(e.transfers == 4)
+        #expect(e.multicastAddress == "239.255.255.250")
     }
 }

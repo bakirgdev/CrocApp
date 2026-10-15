@@ -9,17 +9,23 @@ import Observation
 /// assignments in init. `relayPassword` is the one exception to "UserDefaults":
 /// it lives in the Keychain (see `KeychainStore`) and `persist` gates that
 /// write too, so a harness run's `resetToDefaults()` can't blank the real
-/// stored password.
+/// stored password. The Advanced proxies (R25) are the same: they can carry
+/// credentials, so they live in the Keychain and never in UserDefaults.
 @MainActor
 @Observable
 final class AppSettings {
     private static let relayPasswordAccount = "relayPassword"
     private static let legacyRelayPasswordKey = "settings.relayPassword"
 
+    private static let socks5ProxyAccount = "advanced.socks5Proxy"
+    private static let httpProxyAccount = "advanced.httpProxy"
+
     enum RelayKind: Equatable {
         case publicDefault
         case custom(String)
         case localOnly
+        /// A receive that connects straight to the sender's IP (R25); no relay.
+        case directToSender
     }
 
     @ObservationIgnored var persist = true
@@ -48,6 +54,37 @@ final class AppSettings {
     /// on loopback.
     var storedServer: String { didSet { save(storedServer, "settings.storedServer") } }
     static let defaultStoredServer = StoredSendOptions().server
+
+    // Advanced (R25). Defaults are croc's, read from `EngineOptions`.
+    static let advancedDefaults = EngineOptions()
+
+    var curve: Curve { didSet { save(curve.rawValue, "settings.advanced.curve") } }
+    var hashAlgorithm: HashAlgorithm {
+        didSet { save(hashAlgorithm.rawValue, "settings.advanced.hashAlgorithm") }
+    }
+    /// croc's format ("500k"); blank means no limit. Send only.
+    var throttleUpload: String {
+        didSet { save(throttleUpload, "settings.advanced.throttleUpload") }
+    }
+    /// Stored negated so the unset default is croc's: several connections.
+    var noMultiplexing: Bool { didSet { save(noMultiplexing, "settings.advanced.noMultiplexing") } }
+    var basePort: Int { didSet { save(basePort, "settings.advanced.basePort") } }
+    /// Parallel connections: the data ports after `basePort`.
+    var transfers: Int { didSet { save(transfers, "settings.advanced.transfers") } }
+    /// Blank means croc's default group. macOS only: iOS has no multicast entitlement.
+    var multicastAddress: String {
+        didSet { save(multicastAddress, "settings.advanced.multicastAddress") }
+    }
+    /// Receive only: the sender's ip:port.
+    var peerIP: String { didSet { save(peerIP, "settings.advanced.peerIP") } }
+    var internalDNS: Bool { didSet { save(internalDNS, "settings.advanced.internalDNS") } }
+    /// Proxies may carry credentials: Keychain only, see `persistProxy`.
+    var socks5Proxy: String {
+        didSet { persistProxy(socks5Proxy, account: Self.socks5ProxyAccount) }
+    }
+    var httpProxy: String {
+        didSet { persistProxy(httpProxy, account: Self.httpProxyAccount) }
+    }
 
     /// Why `text` cannot be a stored-transfer server, or nil when it can (R12e).
     /// Mirrors the engine: `https`, or `http` on loopback only, and nothing
@@ -89,6 +126,23 @@ final class AppSettings {
         transport =
             d.string(forKey: "settings.transport").flatMap(Transport.init(rawValue:)) ?? .auto
         storedServer = d.string(forKey: "settings.storedServer") ?? Self.defaultStoredServer
+        let croc = Self.advancedDefaults
+        curve =
+            d.string(forKey: "settings.advanced.curve").flatMap(Curve.init(rawValue:)) ?? croc.curve
+        hashAlgorithm =
+            d.string(forKey: "settings.advanced.hashAlgorithm").flatMap(
+                HashAlgorithm.init(rawValue:))
+            ?? croc.hashAlgorithm
+        throttleUpload = d.string(forKey: "settings.advanced.throttleUpload") ?? croc.throttleUpload
+        noMultiplexing = d.bool(forKey: "settings.advanced.noMultiplexing")
+        basePort = d.object(forKey: "settings.advanced.basePort") as? Int ?? croc.basePort
+        transfers = d.object(forKey: "settings.advanced.transfers") as? Int ?? croc.transfers
+        multicastAddress =
+            d.string(forKey: "settings.advanced.multicastAddress") ?? croc.multicastAddress
+        peerIP = d.string(forKey: "settings.advanced.peerIP") ?? croc.peerIP
+        internalDNS = d.bool(forKey: "settings.advanced.internalDNS")
+        socks5Proxy = secrets.get(account: Self.socks5ProxyAccount) ?? ""
+        httpProxy = secrets.get(account: Self.httpProxyAccount) ?? ""
     }
 
     var relayKind: RelayKind {
@@ -98,6 +152,12 @@ final class AppSettings {
         let addr6 = relayAddress6.trimmingCharacters(in: .whitespacesAndNewlines)
         if !addr6.isEmpty, addr6 != RelayDefaults.address6 { return .custom(addr6) }
         return .publicDefault
+    }
+
+    /// What a receive shows as its path: straight to the sender when a sender
+    /// IP is set (the engine turns the public relay pool off for it).
+    var receiveRelayKind: RelayKind {
+        peerIP.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? relayKind : .directToSender
     }
 
     var excludeList: [String] {
@@ -124,6 +184,35 @@ final class AppSettings {
         whenFileExists = .keepBoth
         transport = .auto
         storedServer = Self.defaultStoredServer
+        resetAdvancedToDefaults()
+    }
+
+    /// The Reset to Defaults button in Settings > Advanced: every Advanced
+    /// control back to croc's default. Persists like any edit, and clearing the
+    /// proxies deletes their Keychain items.
+    func resetAdvancedToDefaults() {
+        let croc = Self.advancedDefaults
+        curve = croc.curve
+        hashAlgorithm = croc.hashAlgorithm
+        throttleUpload = croc.throttleUpload
+        noMultiplexing = croc.noMultiplexing
+        basePort = croc.basePort
+        transfers = croc.transfers
+        multicastAddress = croc.multicastAddress
+        peerIP = croc.peerIP
+        internalDNS = croc.internalDNS
+        socks5Proxy = ""
+        httpProxy = ""
+    }
+
+    /// True when every Advanced control already holds its default.
+    var advancedIsDefault: Bool {
+        let croc = Self.advancedDefaults
+        return curve == croc.curve && hashAlgorithm == croc.hashAlgorithm
+            && throttleUpload.isEmpty && noMultiplexing == croc.noMultiplexing
+            && basePort == croc.basePort && transfers == croc.transfers
+            && multicastAddress == croc.multicastAddress && peerIP.isEmpty
+            && internalDNS == croc.internalDNS && socks5Proxy.isEmpty && httpProxy.isEmpty
     }
 
     /// One-time move of the relay password off UserDefaults (plaintext
@@ -159,5 +248,17 @@ final class AppSettings {
             ? secrets.delete(account: Self.relayPasswordAccount)
             : secrets.set(relayPassword, account: Self.relayPasswordAccount)
         if stored { defaults.removeObject(forKey: Self.legacyRelayPasswordKey) }
+    }
+
+    /// Same `persist` gate as the other writes, but Keychain-only: a proxy URL
+    /// can hold a user name and password. Deletes rather than stores a blank.
+    private func persistProxy(_ value: String, account: String) {
+        guard persist else { return }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            secrets.delete(account: account)
+        } else {
+            secrets.set(trimmed, account: account)
+        }
     }
 }

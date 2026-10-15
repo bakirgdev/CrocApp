@@ -53,6 +53,8 @@ public actor CrocEngine {
         opts.server = options.server
         opts.downloads = options.downloads
         opts.lifetimeSeconds = options.lifetimeSeconds
+        opts.socks5Proxy = options.proxy.socks5
+        opts.httpProxy = options.proxy.http
         let joined = paths.joined(separator: "\n")
         return try start { bridge, error in
             CrocmobileStartStoreSend(joined, opts, bridge, error)
@@ -61,17 +63,26 @@ public actor CrocEngine {
 
     /// Opens a stored-transfer link: `.fileList` first, then wait for
     /// `respond(accept:policy:)`; on accept the files land in `outDir`.
-    public func startStoreReceive(link: String, outDir: String) throws -> EngineTransfer {
-        try start { bridge, error in CrocmobileStartStoreReceive(link, outDir, bridge, error) }
+    public func startStoreReceive(
+        link: String, outDir: String, proxy: ProxySettings
+    ) throws -> EngineTransfer {
+        let opts = Self.storeOptions(proxy: proxy)
+        return try start { bridge, error in
+            CrocmobileStartStoreReceive(link, outDir, opts, bridge, error)
+        }
     }
 
     /// Deletes a stored upload from its server; a transfer the server no longer
     /// has counts as revoked. Throws `EngineFailure`. Blocks up to 30 seconds on
     /// the network, off the caller's actor, and needs no running transfer, so it
     /// works while another one is active.
-    public nonisolated func revokeStored(_ receipt: StoredReceipt) async throws {
+    public nonisolated func revokeStored(
+        _ receipt: StoredReceipt, proxy: ProxySettings
+    ) async throws {
         var error: NSError?
-        guard CrocmobileRevokeStored(receipt.origin, receipt.id, receipt.uploadToken, &error)
+        let opts = Self.storeOptions(proxy: proxy)
+        guard
+            CrocmobileRevokeStored(receipt.origin, receipt.id, receipt.uploadToken, opts, &error)
         else {
             throw EngineFailure(payload: error?.localizedDescription)
         }
@@ -134,6 +145,13 @@ public actor CrocEngine {
         bridge = nil
     }
 
+    private static func storeOptions(proxy: ProxySettings) -> CrocmobileStoreOptions {
+        let opts = CrocmobileStoreOptions()
+        opts.socks5Proxy = proxy.socks5
+        opts.httpProxy = proxy.http
+        return opts
+    }
+
     static func crocOptions(from o: EngineOptions) throws -> CrocmobileOptions {
         guard let opts = CrocmobileNewOptionsDefault() else {
             throw CrocEngineError.startFailed(
@@ -156,6 +174,17 @@ public actor CrocEngine {
         opts.gitIgnore = o.gitIgnore
         opts.exclude = o.exclude.joined(separator: "\n")
         opts.ask = o.ask
+        opts.curve = o.curve.rawValue
+        opts.hashAlgorithm = o.hashAlgorithm.rawValue
+        opts.throttleUpload = o.throttleUpload
+        opts.noMultiplexing = o.noMultiplexing
+        opts.basePort = o.basePort
+        opts.transfers = o.transfers
+        opts.multicastAddress = o.multicastAddress
+        opts.peerIP = o.peerIP
+        opts.socks5Proxy = o.socks5Proxy
+        opts.httpProxy = o.httpProxy
+        opts.internalDNS = o.internalDNS
         return opts
     }
 }

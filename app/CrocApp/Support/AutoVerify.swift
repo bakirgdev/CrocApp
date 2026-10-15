@@ -17,7 +17,7 @@ import SwiftData
 ///   --hold                         park at the incoming prompt instead of auto-accepting
 ///   --when-exists keepBoth|replace answer the incoming prompt with this file policy
 ///                                  (the setting stays Keep Both, so the late answer must reach croc)
-///   --screen ROUTE                 navigate to home|send|receive|settings|howItWorks|history|
+///   --screen ROUTE                 navigate to home|send|receive|settings|advanced|howItWorks|history|
 ///                                  onboarding on launch; combines with the --auto-* modes
 ///   --stage PATH                   preload PATH into the Send screen's staged list (repeatable)
 ///   --seed-history                 fill the (in-memory) history store with sample records
@@ -170,6 +170,7 @@ enum AutoVerify {
         case "send": AppRouter.shared.openSend(with: staged)
         case "receive": AppRouter.shared.path = [.receive]
         case "settings": AppRouter.shared.path = [.settings]
+        case "advanced": AppRouter.shared.path = [.settings, .advancedSettings]
         case "howItWorks": AppRouter.shared.path = [.howItWorks]
         case "history": AppRouter.shared.path = [.history]
         default: break  // home and onboarding both start from an empty path

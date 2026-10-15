@@ -17,7 +17,6 @@ type Options struct {
 	RelayAddress   string
 	RelayAddress6  string
 	RelayPassword  string
-	RelayPorts     string // comma-joined
 	Curve          string
 	HashAlgorithm  string
 	ThrottleUpload string
@@ -36,6 +35,15 @@ type Options struct {
 	Ask            bool
 	NoMultiplexing bool
 	Transport      string // send: TransportAuto (also when empty) or TransportRelay; a receive follows the sender
+
+	// Advanced options. Zero values mean croc's defaults.
+	BasePort         int    // send: first port of this side's local relay (croc --port)
+	Transfers        int    // send: data ports after BasePort (croc --transfers)
+	MulticastAddress string // IPv4 group for LAN discovery (croc --multicast)
+	PeerIP           string // receive: the sender's ip:port (croc --ip); skips relays, discovery and the public pool
+	Socks5Proxy      string // host:port or socks5:// URL (croc --socks5); wins over HTTPProxy; may carry credentials
+	HTTPProxy        string // host:port or http(s):// URL (croc --connect); may carry credentials
+	InternalDNS      bool   // resolve relay names with croc's built-in resolver (croc --internal-dns)
 }
 
 // NewOptionsDefault returns croc CLI defaults.
@@ -47,12 +55,14 @@ type Options struct {
 // every Swift build. The suffix makes the selector `initDefault` instead.
 func NewOptionsDefault() *Options {
 	return &Options{
-		RelayAddress:  models.DEFAULT_RELAY,
-		RelayAddress6: models.DEFAULT_RELAY6,
-		RelayPassword: models.DEFAULT_PASSPHRASE,
-		RelayPorts:    "9009,9010,9011,9012,9013",
-		Curve:         "p256",
-		HashAlgorithm: "xxhash",
+		RelayAddress:     models.DEFAULT_RELAY,
+		RelayAddress6:    models.DEFAULT_RELAY6,
+		RelayPassword:    models.DEFAULT_PASSPHRASE,
+		Curve:            "p256",
+		HashAlgorithm:    "xxhash",
+		BasePort:         DefaultBasePort,
+		Transfers:        DefaultTransfers,
+		MulticastAddress: DefaultMulticastAddress,
 	}
 }
 

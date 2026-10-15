@@ -36,6 +36,8 @@ After you tap **Receive** and connect to the sender, CrocApp shows **Incoming tr
 
 If the sender has [Confirm on both sides](power-options.md) turned on, the sender must also confirm before the transfer proceeds.
 
+If you know the sender's address, you can connect to it directly with **Sender IP** under [Advanced settings](advanced-settings.md#network).
+
 ## Overwrite and conflicts (F8)
 
 CrocApp never overwrites an existing file unless you say so. If any incoming file already exists at the destination, the accept screen shows a banner ("N item(s) already exist. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files.") and replaces **Accept** with two choices, besides **Decline**:

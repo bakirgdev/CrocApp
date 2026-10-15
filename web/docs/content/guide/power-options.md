@@ -8,7 +8,7 @@ description: The shipped power-user settings and the croc CLI flag each one maps
 
 ![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/ios-settings-light.png#gh-light-mode-only)![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/ios-settings-dark.png#gh-dark-mode-only)
 
-CrocApp exposes a set of power options with sane defaults. On macOS they live in the Settings scene (⌘,); on iOS they're under the settings screen from the home toolbar. All eight below are shipped.
+CrocApp exposes a set of power options with sane defaults. On macOS they live in the Settings scene (⌘,); on iOS they're under the settings screen from the home toolbar. All eight below are shipped. The croc options most people never need, such as proxies and ports, are on a separate page: [Advanced settings](advanced-settings.md).
 
 | # | Option | Control | croc equivalent |
 |---|---|---|---|
@@ -53,4 +53,4 @@ When on, the sender also has to approve the transfer (via a **Receiver connected
 
 ## Not yet built
 
-A further set of croc capabilities (SOCKS5/Tor proxy, HTTP proxy, upload throttling, curve and hash algorithm choice, direct IP connect, custom multicast address, port/transfer tuning, an internal DNS resolver, and running your own relay from the Mac app) is planned for a later release but has not been started.
+Running your own relay from the Mac app is planned for a later release but has not been started. The other croc options (proxies, upload throttling, curve and hash choice, sender IP, multicast address, ports and the internal DNS resolver) are under [Advanced settings](advanced-settings.md).

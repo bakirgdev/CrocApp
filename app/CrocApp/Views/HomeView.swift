@@ -82,6 +82,7 @@ struct HomeView: View {
                 case .send: SendView()
                 case .receive: ReceiveView()
                 case .settings: SettingsScreen()
+                case .advancedSettings: AdvancedSettingsView()
                 case .howItWorks: HowItWorksView()
                 case .history: HistoryView()
                 }
@@ -95,6 +96,11 @@ struct SettingsScreen: View {
     var body: some View {
         Form {
             PowerSettingsSections()
+            Section {
+                NavigationLink("Advanced", value: AppRouter.Route.advancedSettings)
+            } footer: {
+                Text("Proxies, ports, encryption curve and more. The defaults suit most people.")
+            }
         }
         .navigationTitle("Settings")
     }

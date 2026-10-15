@@ -1,11 +1,14 @@
 // croctest exercises crocmobile from the command line for interop verification.
 //
-//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [-transport auto|relay|derp] [PATH...]
-//	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-policy keepBoth|replace] [-cancel-after MS] CODE
-//	croctest store-send [-server URL] [-downloads N] [-lifetime SECONDS] PATH...
-//	croctest store-receive [-out DIR] [-answer y|n] [-policy keepBoth|replace] [-cancel-after MS] LINK
-//	croctest store-revoke ORIGIN ID TOKEN
+//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [-transport auto|relay|derp] [ADVANCED] [PATH...]
+//	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-policy keepBoth|replace] [-cancel-after MS] [ADVANCED] CODE
+//	croctest store-send [-server URL] [-downloads N] [-lifetime SECONDS] [-socks5 ADDR] [-connect ADDR] PATH...
+//	croctest store-receive [-out DIR] [-answer y|n] [-policy keepBoth|replace] [-cancel-after MS] [-socks5 ADDR] [-connect ADDR] LINK
+//	croctest store-revoke [-socks5 ADDR] [-connect ADDR] ORIGIN ID TOKEN
 //	croctest store-server DIR
+//	croctest socks5-proxy
+//	croctest http-proxy
+//	croctest multicast-listen GROUP SECONDS
 //	croctest relay CODE
 //	croctest relays
 //
@@ -18,6 +21,22 @@
 //
 // -transport is the sender's data transport; croc's "derp" forces Tailcat with
 // no relay fallback.
+//
+// ADVANCED are the Options of the app's Advanced settings, named like croc's
+// own flags: -curve, -hash, -port, -transfers, -multicast, -ip, -socks5,
+// -connect, -internal-dns.
+//
+// socks5-proxy and http-proxy run a CONNECT-only proxy without authentication
+// on a loopback port for the harness, and print "PROXY-ADDR <host:port>" once
+// it listens and "PROXY-TUNNEL <target>" for each connection it tunnels. croc's
+// dialer bypasses proxies for local addresses, so a tunnel appears only for a
+// non-local relay such as the public pool.
+//
+// multicast-listen joins the multicast GROUP on discovery's port for SECONDS
+// seconds and prints "MULTICAST-LISTEN <interfaces joined>", then one
+// "MULTICAST-PAYLOAD <text>" per datagram. A croc sender announces "croc<port>"
+// and a receiver "ok". croc drops discovery packets from the machine's own
+// addresses, so on one host this is the only way to see the group in use.
 //
 // -relay-index makes a generated code map to that public pool relay, as if the
 // latency probe had picked it. relay prints the pool relay a code maps to;
@@ -39,6 +58,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -115,7 +135,7 @@ func printRelay(code string) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: croctest send|receive|store-send|store-receive|store-revoke|store-server|relay|relays ...")
+		fmt.Fprintln(os.Stderr, "usage: croctest send|receive|store-send|store-receive|store-revoke|store-server|socks5-proxy|http-proxy|multicast-listen|relay|relays ...")
 		os.Exit(2)
 	}
 	mode := os.Args[1]
@@ -133,6 +153,20 @@ func main() {
 			os.Exit(2)
 		}
 		serveStore(os.Args[2])
+		return
+	case "socks5-proxy":
+		serveSocks5()
+		return
+	case "http-proxy":
+		serveHTTPProxy()
+		return
+	case "multicast-listen":
+		secs, err := strconv.Atoi(os.Args[len(os.Args)-1])
+		if len(os.Args) != 4 || err != nil {
+			fmt.Fprintln(os.Stderr, "multicast-listen needs GROUP SECONDS")
+			os.Exit(2)
+		}
+		listenMulticast(os.Args[2], time.Duration(secs)*time.Second)
 		return
 	case "relays":
 		for _, r := range publicrelay.Relays() {
@@ -158,6 +192,15 @@ func main() {
 	relayIndex := fs.Int("relay-index", -1, "public pool relay a generated code maps to (send)")
 	noMulti := fs.Bool("no-multi", false, "one data connection instead of one per relay port (send)")
 	transport := fs.String("transport", crocmobile.TransportAuto, "data transport: auto|relay|derp (send)")
+	curve := fs.String("curve", "p256", "PAKE curve")
+	hash := fs.String("hash", "xxhash", "file hash algorithm (send)")
+	port := fs.Int("port", crocmobile.DefaultBasePort, "base port of the local relay (send)")
+	transfers := fs.Int("transfers", crocmobile.DefaultTransfers, "data ports after the base port (send)")
+	multicast := fs.String("multicast", crocmobile.DefaultMulticastAddress, "multicast address for LAN discovery")
+	peerIP := fs.String("ip", "", "sender ip:port, skipping relays (receive)")
+	socks5 := fs.String("socks5", "", "SOCKS5 proxy")
+	connect := fs.String("connect", "", "HTTP proxy")
+	internalDNS := fs.Bool("internal-dns", false, "croc's built-in DNS resolver")
 	_ = fs.Parse(os.Args[2:])
 
 	if *policy != crocmobile.PolicyKeepBoth && *policy != crocmobile.PolicyReplace {
@@ -189,26 +232,36 @@ func main() {
 	opts.ThrottleUpload = *throttle
 	opts.NoMultiplexing = *noMulti
 	opts.Transport = *transport
+	opts.Curve = *curve
+	opts.HashAlgorithm = *hash
+	opts.BasePort = *port
+	opts.Transfers = *transfers
+	opts.MulticastAddress = *multicast
+	opts.PeerIP = *peerIP
+	opts.Socks5Proxy = *socks5
+	opts.HTTPProxy = *connect
+	opts.InternalDNS = *internalDNS
+	proxies := &crocmobile.StoreOptions{Socks5Proxy: *socks5, HTTPProxy: *connect}
 
 	var tr *crocmobile.Transfer
-	d := &printDelegate{answer: *answer, policy: *policy, pool: *relay == "" && !*onlyLocal, transfer: &tr, ready: make(chan struct{})}
+	d := &printDelegate{answer: *answer, policy: *policy, pool: *relay == "" && !*onlyLocal && *peerIP == "", transfer: &tr, ready: make(chan struct{})}
 	var err error
 	switch mode {
 	case "store-send":
 		tr, err = crocmobile.StartStoreSend(strings.Join(fs.Args(), "\n"),
-			&crocmobile.StoreOptions{Server: *server, Downloads: *downloads, LifetimeSeconds: *lifetime}, d)
+			&crocmobile.StoreOptions{Server: *server, Downloads: *downloads, LifetimeSeconds: *lifetime, Socks5Proxy: *socks5, HTTPProxy: *connect}, d)
 	case "store-receive":
 		if fs.NArg() != 1 {
 			fmt.Fprintln(os.Stderr, "store-receive needs LINK")
 			os.Exit(2)
 		}
-		tr, err = crocmobile.StartStoreReceive(fs.Arg(0), *out, d)
+		tr, err = crocmobile.StartStoreReceive(fs.Arg(0), *out, proxies, d)
 	case "store-revoke":
 		if fs.NArg() != 3 {
 			fmt.Fprintln(os.Stderr, "store-revoke needs ORIGIN ID TOKEN")
 			os.Exit(2)
 		}
-		if err := crocmobile.RevokeStored(fs.Arg(0), fs.Arg(1), fs.Arg(2)); err != nil {
+		if err := crocmobile.RevokeStored(fs.Arg(0), fs.Arg(1), fs.Arg(2), proxies); err != nil {
 			fmt.Fprintf(os.Stderr, "EVENT error %s\n", err)
 			os.Exit(1)
 		}

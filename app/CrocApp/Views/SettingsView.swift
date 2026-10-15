@@ -3,7 +3,10 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-/// macOS Settings scene (⌘,): receive folder plus the power options (F13-F19).
+/// macOS Settings scene (⌘,): a General tab (receive folder plus the power
+/// options, F13-F19) and an Advanced tab (R25). The Advanced controls with
+/// their footnotes would roughly double a form that already scrolls, so they
+/// get their own tab, the macOS convention for a long settings window.
 struct SettingsView: View {
     @Environment(OutputFolderStore.self) private var outputFolder
     @State private var showFolderPicker = false
@@ -20,6 +23,13 @@ struct SettingsView: View {
     @FocusState private var focusedControl: FocusTarget?
 
     var body: some View {
+        TabView {
+            Tab("General", systemImage: "gearshape") { general }
+            Tab("Advanced", systemImage: "slider.horizontal.3") { AdvancedSettingsView() }
+        }
+    }
+
+    private var general: some View {
         Form {
             Section("Receive") {
                 LabeledContent("Save received files to") {

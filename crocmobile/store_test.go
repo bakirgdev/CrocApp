@@ -150,7 +150,7 @@ func storeSend(t *testing.T, server string, o StoreOptions, paths []string) (*st
 func storeReceive(t *testing.T, link, out string, accept bool, policy string) *storeRecorder {
 	t.Helper()
 	rec := newStoreRecorder()
-	tr, err := StartStoreReceive(link, out, rec)
+	tr, err := StartStoreReceive(link, out, nil, rec)
 	if err != nil {
 		t.Fatalf("StartStoreReceive: %v", err)
 	}
@@ -219,7 +219,7 @@ func TestStoreSendReceiveRevoke(t *testing.T) {
 		t.Fatalf("file list = %q (%v)", got.fileList, err)
 	}
 
-	if err := RevokeStored(receipt.Origin, receipt.ID, receipt.UploadToken); err != nil {
+	if err := RevokeStored(receipt.Origin, receipt.ID, receipt.UploadToken, nil); err != nil {
 		t.Fatalf("RevokeStored: %v", err)
 	}
 	gone := storeReceive(t, receipt.Link, t.TempDir(), true, PolicyKeepBoth)
@@ -232,16 +232,16 @@ func TestStoreRevokeTreatsMissingAsSuccess(t *testing.T) {
 	server := startTestStore(t, store.Config{})
 	src := t.TempDir()
 	_, receipt := storeSend(t, server, StoreOptions{}, writeFiles(t, src, map[string]string{"a.txt": "x"}))
-	if err := RevokeStored(receipt.Origin, receipt.ID, receipt.UploadToken); err != nil {
+	if err := RevokeStored(receipt.Origin, receipt.ID, receipt.UploadToken, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := RevokeStored(receipt.Origin, receipt.ID, receipt.UploadToken); err != nil {
+	if err := RevokeStored(receipt.Origin, receipt.ID, receipt.UploadToken, nil); err != nil {
 		t.Fatalf("second revoke: %v", err)
 	}
 }
 
 func TestStoreRevokeFailureIsCoded(t *testing.T) {
-	err := RevokeStored("http://127.0.0.1:1", strings.Repeat("A", 22), "token")
+	err := RevokeStored("http://127.0.0.1:1", strings.Repeat("A", 22), "token", nil)
 	if err == nil {
 		t.Fatal("revoke against a closed port succeeded")
 	}
@@ -315,7 +315,7 @@ func TestStoreReceiveCancelWhileWaiting(t *testing.T) {
 	_, receipt := storeSend(t, server, StoreOptions{}, writeFiles(t, src, map[string]string{"a.txt": "x"}))
 
 	rec := newStoreRecorder()
-	tr, err := StartStoreReceive(receipt.Link, t.TempDir(), rec)
+	tr, err := StartStoreReceive(receipt.Link, t.TempDir(), nil, rec)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -414,11 +414,11 @@ func TestStoreReceiveRejectsBadLinks(t *testing.T) {
 		"http://example.com/s/AAAAAAAAAAAAAAAAAAAAAA#v1.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
 		"https://example.com/s/short#v1.key",
 	} {
-		if _, err := StartStoreReceive(link, t.TempDir(), newStoreRecorder()); err == nil {
+		if _, err := StartStoreReceive(link, t.TempDir(), nil, newStoreRecorder()); err == nil {
 			t.Errorf("link %q accepted", link)
 		}
 	}
-	if _, err := StartStoreReceive("https://example.com/s/x", "", newStoreRecorder()); err == nil {
+	if _, err := StartStoreReceive("https://example.com/s/x", "", nil, newStoreRecorder()); err == nil {
 		t.Error("empty output directory accepted")
 	}
 }
@@ -429,7 +429,7 @@ func TestStoreHoldsTheTransferLock(t *testing.T) {
 	_, receipt := storeSend(t, server, StoreOptions{}, writeFiles(t, src, map[string]string{"a.txt": "x"}))
 
 	rec := newStoreRecorder()
-	tr, err := StartStoreReceive(receipt.Link, t.TempDir(), rec)
+	tr, err := StartStoreReceive(receipt.Link, t.TempDir(), nil, rec)
 	if err != nil {
 		t.Fatal(err)
 	}

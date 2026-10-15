@@ -110,7 +110,30 @@ final class TransferController {
         o.noCompress = settings.noCompress
         o.transport = settings.transport
         o.ask = settings.bothSidesConfirm
+        o.curve = settings.curve
+        o.hashAlgorithm = settings.hashAlgorithm
+        o.throttleUpload = settings.throttleUpload.trimmingCharacters(in: .whitespacesAndNewlines)
+        o.noMultiplexing = settings.noMultiplexing
+        o.basePort = settings.basePort
+        o.transfers = settings.transfers
+        o.internalDNS = settings.internalDNS
+        o.socks5Proxy = proxies.socks5
+        o.httpProxy = proxies.http
+        #if os(macOS)
+        // iOS has no multicast entitlement (concern 8): the field is hidden
+        // there and the engine keeps croc's default group.
+        let multicast = settings.multicastAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !multicast.isEmpty { o.multicastAddress = multicast }
+        #endif
         return o
+    }
+
+    /// The Advanced proxies, trimmed. Credentials may be inside: pass them on,
+    /// never log or describe them.
+    private var proxies: ProxySettings {
+        ProxySettings(
+            socks5: settings.socks5Proxy.trimmingCharacters(in: .whitespacesAndNewlines),
+            http: settings.httpProxy.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     func startSend(urls: [URL], customCode: String) {
@@ -149,6 +172,7 @@ final class TransferController {
         options.server = server
         options.downloads = downloads
         options.lifetimeSeconds = lifetimeSeconds
+        options.proxy = proxies
         run { try await self.engine.startStoreSend(paths: paths, options: options) }
     }
 
@@ -200,9 +224,12 @@ final class TransferController {
         guard !isActive else { return }
         direction = .receive
         isStoredTransfer = false
-        beginReceive(into: folder, folderIsScoped: folderIsScoped, codeHint: Self.codeHint(code))
+        beginReceive(
+            into: folder, folderIsScoped: folderIsScoped, codeHint: Self.codeHint(code),
+            relay: settings.receiveRelayKind)
         var options = baseOptions()
         options.outDir = folder.path
+        options.peerIP = settings.peerIP.trimmingCharacters(in: .whitespacesAndNewlines)
         // Auto-accept uses the setting; otherwise the incoming sheet's answer
         // replaces it.
         options.whenFileExists = settings.whenFileExists
@@ -222,15 +249,19 @@ final class TransferController {
         direction = .receive
         isStoredTransfer = true
         beginReceive(
-            into: folder, folderIsScoped: folderIsScoped, codeHint: Self.codeHint(storedLink: link))
+            into: folder, folderIsScoped: folderIsScoped, codeHint: Self.codeHint(storedLink: link),
+            relay: settings.relayKind)
         autoAcceptActive = false
         let path = folder.path
         let link = link.absoluteString
-        run { try await self.engine.startStoreReceive(link: link, outDir: path) }
+        let proxy = proxies
+        run { try await self.engine.startStoreReceive(link: link, outDir: path, proxy: proxy) }
     }
 
-    private func beginReceive(into folder: URL, folderIsScoped: Bool, codeHint: String) {
-        activeRelay = settings.relayKind
+    private func beginReceive(
+        into folder: URL, folderIsScoped: Bool, codeHint: String, relay: AppSettings.RelayKind
+    ) {
+        activeRelay = relay
         sendConfirmArmed = false
         outDir = folder
         if folderIsScoped, folder.startAccessingSecurityScopedResource() {
@@ -258,7 +289,7 @@ final class TransferController {
         guard let id = record.storedID, let receipt = vault.receipt(id: id) else {
             throw EngineFailure(code: .other, message: "no receipt for this upload")
         }
-        try await engine.revokeStored(receipt)
+        try await engine.revokeStored(receipt, proxy: proxies)
         vault.remove(id: id)
         history?.markRevoked(record)
     }
@@ -627,6 +658,9 @@ final class TransferController {
                 "The transfer server refused this upload: it is over the server's size, file count or download limit, or too many uploads were made recently."
         case .storeExpired:
             return "This link has expired, was revoked, or has no downloads left."
+        case .invalidSetting:
+            return
+                "An Advanced setting can't be used. Check the proxies, addresses, ports and upload speed limit in Settings > Advanced."
         case .other:
             return "Transfer failed. Try again, or check your connection."
         }
