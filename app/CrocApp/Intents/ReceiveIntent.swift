@@ -25,7 +25,7 @@ struct ReceiveIntent: AppIntent {
         guard let link = TransferLink.parse(codeOrLink) else {
             throw TransferIntentError.notACodeOrLink
         }
-        guard !controller.isActive else { throw TransferIntentError.busy }
+        try controller.claimForIntent()
         let started = Date()
         let folder = outputFolder.url
         AppRouter.shared.openReceive()
@@ -38,6 +38,9 @@ struct ReceiveIntent: AppIntent {
                 link: url, into: folder, folderIsScoped: outputFolder.isUserSelected)
         }
         let text = try await controller.awaitReceive()
+        // The controller let go of a chosen folder when the transfer ended.
+        let scoped = outputFolder.isUserSelected && folder.startAccessingSecurityScopedResource()
+        defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
         var urls = ReceivedFileLocator.locate(
             names: controller.offeredFileNames, in: folder, since: started)
         if let text { urls.append(try IntentStaging.textFile(text)) }

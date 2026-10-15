@@ -24,7 +24,7 @@ struct SendFilesIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
         guard !files.isEmpty else { throw TransferIntentError.nothingToSend }
-        guard !controller.isActive else { throw TransferIntentError.busy }
+        try controller.claimForIntent()
         IntentStaging.sweep()
         let urls = try IntentStaging.urls(for: files)
         AppRouter.shared.path = [.send]
@@ -55,7 +55,7 @@ struct SendTextIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
         guard !text.isEmpty else { throw TransferIntentError.nothingToSend }
-        guard !controller.isActive else { throw TransferIntentError.busy }
+        try controller.claimForIntent()
         AppRouter.shared.path = [.send]
         controller.startSendText(text, customCode: "")
         let code = try await controller.awaitCode()

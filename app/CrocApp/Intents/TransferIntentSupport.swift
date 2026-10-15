@@ -1,6 +1,5 @@
 import AppIntents
 import Foundation
-import Observation
 
 /// Why a Shortcuts action could not finish; the text is what Shortcuts shows.
 enum TransferIntentError: Error, CustomLocalizedStringResourceConvertible {
@@ -20,45 +19,59 @@ enum TransferIntentError: Error, CustomLocalizedStringResourceConvertible {
 }
 
 extension TransferController {
-    /// Suspends until `transform` yields a value for the current phase. The
-    /// check and the observation registration happen in one main-actor turn,
-    /// so no phase change can slip between them.
-    func wait<T>(for transform: (Phase) -> T?) async -> T? {
+    /// Frees the controller for a Shortcuts action. A finished transfer keeps
+    /// its result on screen until someone taps Done, which nobody does on a
+    /// phone running a shortcut, so it is cleared here; one still in flight
+    /// refuses the action.
+    func claimForIntent() throws {
+        switch phase {
+        case .idle: return
+        case .done, .failed, .stored: reset()
+        default: throw TransferIntentError.busy
+        }
+    }
+
+    /// Looks at the controller every 100 ms until `check` yields a value, or
+    /// returns nil once the action is cancelled. Polling, not observation: it
+    /// ends on cancellation at once, and what it reads outlives the moment
+    /// it changed.
+    func wait<T>(for check: () -> T?) async -> T? {
         while !Task.isCancelled {
-            if let value = transform(phase) { return value }
-            await withCheckedContinuation { continuation in
-                withObservationTracking {
-                    _ = phase
-                } onChange: {
-                    continuation.resume()
-                }
-            }
+            if let value = check() { return value }
+            try? await Task.sleep(for: .milliseconds(100))
         }
         return nil
     }
 
     /// The code of a send just started, once croc has one.
     func awaitCode() async throws -> String {
-        let outcome = await wait { phase -> Result<String, TransferIntentError>? in
-            switch phase {
-            case .waiting(let code): .success(code)
-            case .failed(let message): .failure(.failed(message))
-            default: nil
-            }
+        let outcome = await wait { () -> Result<String, TransferIntentError>? in
+            if let code = currentCode { return .success(code) }
+            if case .failed(let message) = phase { return .failure(.failed(message)) }
+            return nil
         }
-        return try (outcome ?? .failure(.failed("Cancelled."))).get()
+        return try settle(outcome)
+    }
+
+    /// A cancelled action also stops the transfer it started.
+    private func settle<T>(_ outcome: Result<T, TransferIntentError>?) throws -> T {
+        guard let outcome else {
+            cancel()
+            throw TransferIntentError.failed("Cancelled.")
+        }
+        return try outcome.get()
     }
 
     /// The end of a receive just started: its received text, or a failure.
     func awaitReceive() async throws -> String? {
-        let outcome = await wait { phase -> Result<String?, TransferIntentError>? in
+        let outcome = await wait { () -> Result<String?, TransferIntentError>? in
             switch phase {
             case .done(_, let text): .success(text)
             case .failed(let message): .failure(.failed(message))
             default: nil
             }
         }
-        return try (outcome ?? .failure(.failed("Cancelled."))).get()
+        return try settle(outcome)
     }
 }
 
@@ -100,19 +113,26 @@ enum IntentStaging {
 /// ("name (1).ext") is new, while a Replace overwrites the file at its name.
 enum ReceivedFileLocator {
     static func locate(names: [String], in folder: URL, since: Date) -> [URL] {
-        names.compactMap { name in
+        let offered = Set(names)
+        return names.compactMap { name in
             let wanted = folder.appendingPathComponent(name)
             let parent = wanted.deletingLastPathComponent()
             let stem = wanted.deletingPathExtension().lastPathComponent
             let suffix = wanted.pathExtension.isEmpty ? "" : "." + wanted.pathExtension
+            let subfolder = (name as NSString).deletingLastPathComponent
+            func offeredName(_ file: String) -> String {
+                subfolder.isEmpty ? file : subfolder + "/" + file
+            }
             let entries =
                 (try? FileManager.default.contentsOfDirectory(
                     at: parent, includingPropertiesForKeys: [.creationDateKey])) ?? []
+            // A file the sender offered under its own name is not a copy of
+            // another one ("a.txt" and "a (1).txt" can both be offered).
             let created = entries.filter {
-                isCopy($0.lastPathComponent, stem: stem, suffix: suffix)
-                    && ((try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate)
-                        ?? .distantPast)
-                        >= since
+                let file = $0.lastPathComponent
+                return isCopy(file, stem: stem, suffix: suffix)
+                    && (offeredName(file) == name || !offered.contains(offeredName(file)))
+                    && creation($0) >= since
             }
             if let newest = created.max(by: { creation($0) < creation($1) }) { return newest }
             return FileManager.default.fileExists(atPath: wanted.path) ? wanted : nil

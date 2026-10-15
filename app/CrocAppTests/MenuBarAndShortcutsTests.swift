@@ -45,6 +45,19 @@ import ServiceManagement
         #expect(found.map(\.lastPathComponent) == ["a (1).txt"])
     }
 
+    @Test func aSecondOfferedNameIsNotTakenAsACopyOfTheFirst() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let started = Date()
+        try Data("1".utf8).write(to: dir.appendingPathComponent("a.txt"))
+        Thread.sleep(forTimeInterval: 0.05)
+        try Data("2".utf8).write(to: dir.appendingPathComponent("a (1).txt"))
+        let found = ReceivedFileLocator.locate(
+            names: ["a.txt", "a (1).txt"], in: dir, since: started)
+        #expect(found.map(\.lastPathComponent) == ["a.txt", "a (1).txt"])
+    }
+
     @Test func fallsBackToTheNamedFileAfterAReplace() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(

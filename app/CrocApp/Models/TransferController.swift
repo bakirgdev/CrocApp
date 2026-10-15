@@ -52,6 +52,11 @@ final class TransferController {
     /// current or last receive. Shortcuts uses them to hand the files back.
     private(set) var offeredFileNames: [String] = []
 
+    /// The code of the send in flight, once croc has made one. Unlike `phase`
+    /// it survives the move to `.connecting`, so a caller that looks late
+    /// cannot miss it.
+    private(set) var currentCode: String?
+
     private let engine = CrocEngine()
     private let background = BackgroundCoordinator()
     private var backgroundExpired = false
@@ -358,6 +363,7 @@ final class TransferController {
         receivedText = nil
         storedReceipt = nil
         offeredFileNames = []
+        currentCode = nil
         speedBytesPerSec = 0
         lastProgressDate = nil
         lastProgressBytes = 0
@@ -406,6 +412,7 @@ final class TransferController {
     private func handle(_ event: TransferEvent) {
         switch event {
         case .codeReady(let code):
+            currentCode = code
             if pendingRecord?.codeHint.isEmpty == true {
                 pendingRecord?.codeHint = Self.codeHint(code)
             }
