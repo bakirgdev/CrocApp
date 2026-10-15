@@ -20,5 +20,6 @@ What does not belong here: decisions and their rationale (commit messages and PR
 | `prior-art.md` | you are making a UX, positioning, or distribution call |
 | `docs-site.md` | **before touching** `web/docs/` |
 | `screenshots.md` | you need to re-capture, add, or move an app screenshot |
+| `app-store-listing.md` | you prepare a store submission: listing copy, review notes, export compliance |
 
 Anything visual — app views, landing page, docs site — starts at `design/CLAUDE.md` instead.
