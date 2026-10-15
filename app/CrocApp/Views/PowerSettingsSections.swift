@@ -7,6 +7,9 @@ import SwiftUI
 struct PowerSettingsSections: View {
     @Environment(AppSettings.self) private var settings
 
+    private static let connectionLockedReason =
+        "Unavailable while Local network only is on: those transfers never use a relay."
+
     var body: some View {
         @Bindable var settings = settings
 
@@ -41,6 +44,7 @@ struct PowerSettingsSections: View {
             .textInputAutocapitalization(.never)
             .keyboardType(.URL)
             #endif
+            .accessibilityHint(AppSettings.storedServerError(settings.storedServer) ?? "")
             if let error = AppSettings.storedServerError(settings.storedServer) {
                 StatusBanner(kind: .error, title: error)
             }
@@ -63,12 +67,17 @@ struct PowerSettingsSections: View {
                 Text("Relay only").tag(Transport.relay)
             }
             .disabled(settings.onlyLocal)
+            .accessibilityHint(settings.onlyLocal ? Self.connectionLockedReason : "")
         } header: {
             Text("Connection")
         } footer: {
-            Text(
-                "Automatic can carry files of 128 MB or more directly between devices. Only the sender's choice applies; a receive follows it."
-            )
+            if settings.onlyLocal {
+                Text(Self.connectionLockedReason)
+            } else {
+                Text(
+                    "Automatic can carry files of 128 MB or more directly between devices. Only the sender's choice applies; a receive follows it."
+                )
+            }
         }
 
         Section {

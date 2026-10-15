@@ -46,7 +46,7 @@ Opening a link, or pasting or scanning one, takes you to **Receive** with the co
 
 The page at `crocapp.dev/r/` reads the code from the part of the address after the `#`. Browsers never send that part to a server, and the page makes no network request. From the page you can open CrocApp, get it from the App Store or as a disk image, or receive in your browser.
 
-**Receive in your browser** opens `https://getcroc.com/?code=<code>`, which is croc's own web app, not part of CrocApp. That path trusts getcroc.com fully, because getcroc.com serves the JavaScript that decrypts the file. It also needs the default relays, so the sender's waiting screen shows a note when a custom relay or Local network only is active. For the strongest guarantee, receive in CrocApp or the croc CLI.
+**Receive in your browser** opens `https://getcroc.com/?code=<code>`, which is croc's own web app, not part of CrocApp. The code is in the query string there, so getcroc.com's server receives it. That path trusts getcroc.com fully, because getcroc.com serves the JavaScript that decrypts the file. It also needs the default relays, so the sender's waiting screen shows a note when a custom relay or Local network only is active. For the strongest guarantee, receive in CrocApp or the croc CLI.
 
 ## Custom codes
 

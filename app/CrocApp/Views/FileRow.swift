@@ -18,6 +18,8 @@ struct FileRow: View {
     /// line 114: "the last 8 characters ... are pinned").
     private static let pinnedTailLength = 8
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         HStack(spacing: Spacing.space3) {
             Image(systemName: typeSymbolName)
@@ -25,23 +27,37 @@ struct FileRow: View {
                 .foregroundStyle(Color.accentFill)
                 .accessibilityHidden(true)
 
-            filenameLabel
-                .font(.callout)  // typography.md: --type-callout is used for "file names"
-                .foregroundStyle(Color.textPrimary)
+            if dynamicTypeSize.isAccessibilitySize {
+                // The pinned-tail label keeps 8 characters unshrinkable, which
+                // is wider than the row at these sizes: wrap the name and put
+                // the size under it.
+                VStack(alignment: .leading, spacing: Spacing.space2) {
+                    Text(url.lastPathComponent)
+                        .font(.callout)
+                        .foregroundStyle(Color.textPrimary)
+                        .lineLimit(3)
+                        .truncationMode(.middle)
+                    sizeLabel
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                filenameLabel
+                    .font(.callout)  // typography.md: --type-callout is used for "file names"
+                    .foregroundStyle(Color.textPrimary)
 
-            Spacer(minLength: Spacing.space3)
+                Spacer(minLength: Spacing.space3)
 
-            if let sizeText {
-                Text(sizeText)
-                    .font(.footnote)
-                    .foregroundStyle(Color.textSecondary)
-                    .monospacedDigit()
+                sizeLabel
             }
 
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: Self.glyphSize))
                     .foregroundStyle(Color.textSecondary)
+                    #if os(iOS)
+                .frame(minWidth: ControlHeight.hitTargetMin, minHeight: ControlHeight.hitTargetMin)
+                .contentShape(Rectangle())
+                    #endif
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Remove \(url.lastPathComponent)")
@@ -60,6 +76,16 @@ struct FileRow: View {
             }
         }
         .clipShape(rowShape)
+    }
+
+    @ViewBuilder private var sizeLabel: some View {
+        if let sizeText {
+            Text(sizeText)
+                .font(.footnote)
+                .foregroundStyle(Color.textSecondary)
+                .monospacedDigit()
+                .lineLimit(1)
+        }
     }
 
     private var rowShape: some Shape {

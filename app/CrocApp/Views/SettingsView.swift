@@ -89,7 +89,9 @@ extension SettingsView {
             Toggle(
                 "Open at login",
                 isOn: Binding(
-                    get: { loginItem.isRegistered }, set: { loginItem.setRegistered($0) }))
+                    get: { loginItem.isRegistered }, set: { loginItem.setRegistered($0) })
+            )
+            .accessibilityHint(loginItem.errorMessage ?? "")
             if loginItem.needsApproval {
                 HStack {
                     Text("Allow CrocApp in System Settings > General > Login Items.")

@@ -133,38 +133,68 @@ struct HistoryView: View {
 
 private struct HistoryRow: View {
     let record: TransferRecord
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var isLargeText: Bool { dynamicTypeSize.isAccessibilitySize }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: record.isSend ? "arrow.up.circle" : "arrow.down.circle")
-                .font(.title3)
-                .foregroundStyle(record.status == .completed ? Color.accentColor : .secondary)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                HStack(spacing: 8) {
-                    Text(record.date, format: .relative(presentation: .named))
-                    if record.totalBytes > 0 {
-                        Text(record.totalBytes.formatted(.byteCount(style: .file)))
+        Group {
+            if isLargeText {
+                // The glyph and badge sit above the text so it keeps the
+                // full row width instead of a few characters per line.
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 12) {
+                        directionGlyph
+                        statusBadge
                     }
-                    if !record.codeHint.isEmpty {
-                        Text(record.codeHint).monospaced()
-                    }
+                    textColumn
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                if let linkState {
-                    Text(linkState)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            } else {
+                HStack(spacing: 12) {
+                    directionGlyph
+                    textColumn
+                    statusBadge
                 }
             }
-            Spacer()
-            statusBadge
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
+    }
+
+    private var directionGlyph: some View {
+        Image(systemName: record.isSend ? "arrow.up.circle" : "arrow.down.circle")
+            .font(.title3)
+            .accessibilityLabel(record.isSend ? "Sent" : "Received")
+            .foregroundStyle(record.status == .completed ? Color.accentColor : .secondary)
+    }
+
+    private var textColumn: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .lineLimit(isLargeText ? 3 : 1)
+                .truncationMode(.middle)
+            let layout =
+                isLargeText
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
+                : AnyLayout(HStackLayout(spacing: 8))
+            layout {
+                Text(record.date, format: .relative(presentation: .named))
+                if record.totalBytes > 0 {
+                    Text(record.totalBytes.formatted(.byteCount(style: .file)))
+                }
+                if !record.codeHint.isEmpty {
+                    Text(record.codeHint).monospaced()
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            if let linkState {
+                Text(linkState)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Where a stored upload's link stands. Revoked beats expired.
@@ -200,6 +230,17 @@ private struct HistoryRow: View {
                 Image(systemName: "hand.raised.fill").foregroundStyle(.orange)
             }
         }
-        .accessibilityLabel(record.statusRaw)
+        .accessibilityLabel(record.status.title)
+    }
+}
+
+extension TransferRecord.Status {
+    fileprivate var title: String {
+        switch self {
+        case .completed: "Completed"
+        case .failed: "Failed"
+        case .cancelled: "Cancelled"
+        case .declined: "Declined"
+        }
     }
 }

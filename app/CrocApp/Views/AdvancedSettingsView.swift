@@ -11,6 +11,11 @@ struct AdvancedSettingsView: View {
     @Environment(AppSettings.self) private var settings
     @State private var confirmReset = false
 
+    private enum NumberField: Hashable {
+        case basePort, transfers
+    }
+    @FocusState private var focusedNumberField: NumberField?
+
     var body: some View {
         @Bindable var settings = settings
 
@@ -126,6 +131,7 @@ struct AdvancedSettingsView: View {
                             format: .number.grouping(.never)
                         )
                         .numberEntry()
+                        .focused($focusedNumberField, equals: .basePort)
                     }
                 }
                 AdvancedRow(
@@ -139,6 +145,7 @@ struct AdvancedSettingsView: View {
                             format: .number.grouping(.never)
                         )
                         .numberEntry()
+                        .focused($focusedNumberField, equals: .transfers)
                     }
                 }
                 AdvancedRow(
@@ -162,6 +169,15 @@ struct AdvancedSettingsView: View {
         .navigationTitle("Advanced")
         #if os(iOS)
         .scrollDismissesKeyboard(.interactively)
+        // The number pad has no Return key to dismiss it.
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                if focusedNumberField != nil {
+                    Spacer()
+                    Button("Done") { focusedNumberField = nil }
+                }
+            }
+        }
         #endif
         .confirmationDialog(
             "Reset all Advanced settings?", isPresented: $confirmReset, titleVisibility: .visible
@@ -202,6 +218,7 @@ private struct AdvancedRow<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.space3) {
             content
+                .accessibilityHint(error ?? footnote)
             if let error {
                 StatusBanner(kind: .error, title: error)
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -110,7 +110,7 @@ func StartStoreSend(pathsJoined string, o *StoreOptions, d Delegate) (t *Transfe
 	if d == nil {
 		return nil, startError(errors.New("delegate required"))
 	}
-	paths := splitNonEmpty(pathsJoined, "\n")
+	paths := splitPaths(pathsJoined)
 	if err := checkStoreLimits(paths); err != nil {
 		return nil, startError(err)
 	}

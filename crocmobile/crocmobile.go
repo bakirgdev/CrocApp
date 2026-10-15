@@ -159,12 +159,7 @@ func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *T
 	if d == nil {
 		return nil, startError(errors.New("delegate required"))
 	}
-	var paths []string
-	for _, p := range strings.Split(pathsJoined, "\n") {
-		if p = strings.TrimSpace(p); p != "" {
-			paths = append(paths, p)
-		}
-	}
+	paths := splitPaths(pathsJoined)
 	if text == "" && len(paths) == 0 {
 		return nil, startError(errors.New("nothing to send"))
 	}
@@ -198,4 +193,16 @@ func StartReceive(code string, opts *Options, d Delegate) (t *Transfer, err erro
 		return nil, startError(err)
 	}
 	return &Transfer{s: s}, nil
+}
+
+// splitPaths splits a "\n"-joined path list without trimming: a file name may
+// begin or end with a space.
+func splitPaths(joined string) []string {
+	var paths []string
+	for _, p := range strings.Split(joined, "\n") {
+		if p != "" {
+			paths = append(paths, p)
+		}
+	}
+	return paths
 }

@@ -77,7 +77,10 @@ enum ShareStager {
                     return
                 }
                 var name = url.lastPathComponent
-                if name.isEmpty || name.hasPrefix(".") { name = "shared-file" }
+                let hasControl = name.unicodeScalars.contains {
+                    $0.properties.generalCategory == .control
+                }
+                if name.isEmpty || name.hasPrefix(".") || hasControl { name = "shared-file" }
                 var candidate = name
                 var counter = 2
                 while taken.contains(candidate)

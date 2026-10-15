@@ -1,4 +1,5 @@
 #if os(macOS)
+import Accessibility
 import AppKit
 import CrocKit
 import SwiftUI
@@ -28,7 +29,7 @@ struct MenuBarQuickSendView: View {
             idle
         case .starting, .connecting:
             VStack(spacing: Spacing.space3) {
-                ProgressView()
+                ProgressView().accessibilityHidden(true)
                 Text("Connecting…").foregroundStyle(.secondary)
                 cancelButton
             }
@@ -103,7 +104,13 @@ struct MenuBarQuickSendView: View {
 
             HStack {
                 Button("Choose Files…") { quickSend.chooseFiles() }
-                Button("Send Clipboard Text") { quickSend.sendClipboardText() }
+                Button("Send Clipboard Text") {
+                    // A repeat tap leaves the notice unchanged, so an
+                    // onChange would stay silent; announce per tap instead.
+                    if !quickSend.sendClipboardText(), let notice = quickSend.notice {
+                        AccessibilityNotification.Announcement(notice).post()
+                    }
+                }
             }
             if let notice = quickSend.notice {
                 Text(notice).font(.caption).foregroundStyle(.secondary)
@@ -138,12 +145,24 @@ struct MenuBarQuickSendView: View {
         return VStack(spacing: Spacing.space3) {
             Text(p.fileName).lineLimit(1).truncationMode(.middle)
             ProgressView(value: Double(done), total: Double(max(p.totalSize, 1)))
-                .accessibilityLabel("Transfer progress")
+                .accessibilityLabel(progressLabel)
+                .accessibilityValue(
+                    (Double(done) / Double(max(p.totalSize, 1))).formatted(
+                        .percent.precision(.fractionLength(0))))
             cancelButton
         }
     }
 
     private var direction: TransferController.Direction { controller.direction }
+
+    private var progressLabel: String {
+        switch (direction, controller.isStoredTransfer) {
+        case (.send, false): "Sending progress"
+        case (.send, true): "Uploading progress"
+        case (.receive, false): "Receiving progress"
+        case (.receive, true): "Downloading progress"
+        }
+    }
 
     private var cancelButton: some View {
         Button("Cancel", role: .destructive) { controller.cancel() }

@@ -31,7 +31,7 @@ public actor CrocEngine {
         paths: [String], text: String?, options: EngineOptions
     ) throws -> EngineTransfer {
         let opts = try Self.crocOptions(from: options)
-        let joined = paths.joined(separator: "\n")
+        let joined = try Self.joinedPaths(paths)
         return try start { bridge, error in
             CrocmobileStartSend(joined, text ?? "", opts, bridge, error)
         }
@@ -55,7 +55,7 @@ public actor CrocEngine {
         opts.lifetimeSeconds = options.lifetimeSeconds
         opts.socks5Proxy = options.proxy.socks5
         opts.httpProxy = options.proxy.http
-        let joined = paths.joined(separator: "\n")
+        let joined = try Self.joinedPaths(paths)
         return try start { bridge, error in
             CrocmobileStartStoreSend(joined, opts, bridge, error)
         }
@@ -143,6 +143,16 @@ public actor CrocEngine {
         activeTransfer = nil
         activeID = nil
         bridge = nil
+    }
+
+    /// The Go side splits the list on "\n", so a path holding a line break would
+    /// turn into several send paths (`a.jpg\n..` sends the parent folder).
+    private static func joinedPaths(_ paths: [String]) throws -> String {
+        if paths.contains(where: { $0.contains(where: \.isNewline) }) {
+            throw CrocEngineError.startFailed(
+                EngineFailure(code: .invalidSetting, message: "a file name contains a line break"))
+        }
+        return paths.joined(separator: "\n")
     }
 
     private static func storeOptions(proxy: ProxySettings) -> CrocmobileStoreOptions {

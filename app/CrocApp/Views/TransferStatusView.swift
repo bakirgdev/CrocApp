@@ -54,13 +54,13 @@ struct TransferStatusView: View {
             case .idle:
                 EmptyView()
             case .starting:
-                ProgressView()
+                ProgressView().accessibilityHidden(true)
                 Text("Starting…").foregroundStyle(.secondary)
                 if showsSlowPhaseHint {
                     slowPhaseHintText
                 }
             case .connecting:
-                ProgressView()
+                ProgressView().accessibilityHidden(true)
                 Text("Connecting…").foregroundStyle(.secondary)
                 if showsSlowPhaseHint {
                     slowPhaseHintText
@@ -188,7 +188,7 @@ struct TransferStatusView: View {
                     .multilineTextAlignment(.center)
             }
             TrustBadge(relay: controller.activeRelay)
-            ProgressView()
+            ProgressView().accessibilityHidden(true)
             Text("Waiting for the receiver…").font(.caption).foregroundStyle(.secondary)
         }
     }
@@ -214,6 +214,7 @@ struct TransferStatusView: View {
             Image(systemName: "person.crop.circle.badge.checkmark")
                 .font(.system(size: 40))
                 .foregroundStyle(.blue)
+                .accessibilityHidden(true)
             Text("Receiver connected").font(.headline)
             Text("Send the selected items to the connected device?")
                 .foregroundStyle(.secondary)
