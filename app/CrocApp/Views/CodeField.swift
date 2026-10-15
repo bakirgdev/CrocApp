@@ -15,6 +15,9 @@ struct CodeField: View {
     let placeholder: String
     @Binding var text: String
     var isInvalid: Bool = false
+    /// Says in words what is wrong, shown under the field and read by
+    /// VoiceOver with it; the red border alone is not enough.
+    var invalidMessage: String?
     var isDisabled: Bool = false
     /// Receives the pasted string on the main actor; the call site decides
     /// what counts as a valid paste (e.g. ReceiveView's deeplink parsing).
@@ -31,12 +34,24 @@ struct CodeField: View {
     private static let codeTracking: CGFloat = 0.5  // --tracking-code, typography.md
 
     var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.space2) {
+            field
+            if isInvalid, let invalidMessage {
+                Text(invalidMessage)
+                    .font(.caption)
+                    .foregroundStyle(Color.textSecondary)
+            }
+        }
+    }
+
+    private var field: some View {
         HStack(spacing: Spacing.space2) {
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
                 .font(.body.monospaced())  // --type-code-body, swiftui-mapping.md → Typography
                 .tracking(Self.codeTracking)
                 .focused($isFocused)
+                .accessibilityHint(isInvalid ? (invalidMessage ?? "") : "")
                 .autocorrectionDisabled()
                 #if os(iOS)
             .textInputAutocapitalization(.never)
@@ -54,7 +69,7 @@ struct CodeField: View {
         }
         .padding(.leading, Self.leadingPadding)
         .padding(.trailing, Self.trailingPadding)
-        .frame(height: ControlHeight.large)
+        .frame(minHeight: ControlHeight.large)
         .background(
             Color.surfaceBase, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
         )

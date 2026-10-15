@@ -1,3 +1,4 @@
+import Accessibility
 import SwiftUI
 
 /// Large centered result (transfer done / failed). design/components.md →
@@ -61,5 +62,11 @@ struct StatusBlock: View {
             }
         }
         .padding(Spacing.space6)
+        // Appears in place of the progress screen, so VoiceOver focus has
+        // nothing to land on; announce the outcome as StatusBanner does.
+        .onAppear {
+            let message = [title, detail].compactMap { $0 }.joined(separator: ". ")
+            AccessibilityNotification.Announcement(message).post()
+        }
     }
 }

@@ -47,7 +47,9 @@ struct ReceiveView: View {
                 CodeField(
                     placeholder: "Code phrase",
                     text: $code,
-                    isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength
+                    isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength,
+                    invalidMessage:
+                        "A code is at least \(EngineConstraints.minCodeLength) characters."
                 ) { pasted in
                     if let link = TransferLink.parse(pasted) { router.open(link) }
                 }
@@ -84,17 +86,25 @@ struct ReceiveView: View {
                     Image(systemName: "folder")
                 }
                 Spacer()
-                Button("Change") { showFolderPicker = true }
-                    .fileImporter(
-                        isPresented: $showFolderPicker,
-                        allowedContentTypes: [.folder]
-                    ) { result in
-                        if case .success(let url) = result {
-                            outputFolder.select(url)
-                        }
+                Button {
+                    showFolderPicker = true
+                } label: {
+                    Text("Change").hitTarget()
+                }
+                .fileImporter(
+                    isPresented: $showFolderPicker,
+                    allowedContentTypes: [.folder]
+                ) { result in
+                    if case .success(let url) = result {
+                        outputFolder.select(url)
                     }
+                }
                 if outputFolder.isUserSelected {
-                    Button("Reset") { outputFolder.resetToDefault() }
+                    Button {
+                        outputFolder.resetToDefault()
+                    } label: {
+                        Text("Reset").hitTarget()
+                    }
                 }
             }
             .font(.callout)
@@ -132,7 +142,12 @@ struct ReceiveView: View {
             Label("Download link from \(host)", systemImage: "link")
                 .lineLimit(2)
             Spacer()
-            Button("Clear") { storedLink = nil }
+            Button {
+                storedLink = nil
+            } label: {
+                Text("Clear").hitTarget()
+            }
+            .accessibilityLabel("Clear download link")
         }
         .padding(.horizontal, Spacing.space4)
         .frame(minHeight: ControlHeight.large)
@@ -143,5 +158,18 @@ struct ReceiveView: View {
             RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                 .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
         )
+    }
+}
+
+extension View {
+    /// design/accessibility.md → Hit targets: bare text buttons still get a
+    /// 44pt target on iOS. macOS keeps its own control sizing.
+    fileprivate func hitTarget() -> some View {
+        #if os(iOS)
+        frame(minWidth: ControlHeight.hitTargetMin, minHeight: ControlHeight.hitTargetMin)
+            .contentShape(Rectangle())
+        #else
+        self
+        #endif
     }
 }

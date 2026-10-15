@@ -6,6 +6,7 @@ struct SendView: View {
     @Environment(TransferController.self) private var controller
     @Environment(AppRouter.self) private var router
     @Environment(AppSettings.self) private var settings
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     enum Mode: String, CaseIterable {
         case files = "Files"
@@ -53,7 +54,24 @@ struct SendView: View {
         .onChange(of: router.pendingSendURLs) { _, _ in consumePendingURLs() }
     }
 
+    // At accessibility text sizes the form is taller than a phone screen, so it
+    // scrolls there. Not ViewThatFits (as TransferStatusView uses): the keyboard
+    // shrinks the space, which would swap the branch and drop the text field's
+    // focus mid-typing.
     private var form: some View {
+        Group {
+            // Padding inside the scroll view: outside it, the scroll view's
+            // clip cuts off the Toggle switch, which draws past its frame.
+            if dynamicTypeSize.isAccessibilitySize {
+                ScrollView { formContent.padding() }
+            } else {
+                formContent.padding()
+            }
+        }
+        .frame(maxWidth: LayoutCap.contentMaxWidth)
+    }
+
+    private var formContent: some View {
         VStack(spacing: Spacing.space5) {
             Picker("What to send", selection: $mode) {
                 ForEach(Mode.allCases, id: \.self) { Text($0.rawValue) }
@@ -105,8 +123,6 @@ struct SendView: View {
             .controlSize(.large)
             .disabled(!canStart)
         }
-        .padding()
-        .frame(maxWidth: LayoutCap.contentMaxWidth)
     }
 
     /// Why "Send as link" cannot be used for what is staged, or nil (R18).
@@ -116,6 +132,15 @@ struct SendView: View {
             return "Folders can't be sent as a link. Remove the folders, or send them with a code."
         }
         return nil
+    }
+
+    /// What the banner and caption below the toggle say, read with the toggle.
+    private var linkToggleHint: String {
+        if let reason = linkUnavailableReason { return reason }
+        if linkSelected, let error = AppSettings.storedServerError(settings.storedServer) {
+            return error + " Change it in Settings."
+        }
+        return ""
     }
 
     private var linkSelected: Bool { sendAsLink && linkUnavailableReason == nil }
@@ -129,6 +154,7 @@ struct SendView: View {
         VStack(alignment: .leading, spacing: Spacing.space3) {
             Toggle("Send as link", isOn: Binding(get: { linkSelected }, set: { sendAsLink = $0 }))
                 .disabled(linkUnavailableReason != nil)
+                .accessibilityHint(linkToggleHint)
             if let reason = linkUnavailableReason {
                 Text(reason).font(.caption).foregroundStyle(.secondary)
             } else if linkSelected {
@@ -230,28 +256,34 @@ struct SendView: View {
                 isDropTargeted = $0
             }
 
-            HStack {
-                Button("Add Files") { showFileImporter = true }
-                    .fileImporter(
-                        isPresented: $showFileImporter,
-                        allowedContentTypes: [.item],
-                        allowsMultipleSelection: true
-                    ) { result in
-                        if case .success(let urls) = result {
-                            pickedURLs.append(contentsOf: urls.filter { !pickedURLs.contains($0) })
-                        }
-                    }
-                Button("Add Folder") { showFolderImporter = true }
-                    .fileImporter(
-                        isPresented: $showFolderImporter,
-                        allowedContentTypes: [.folder]
-                    ) { result in
-                        if case .success(let url) = result, !pickedURLs.contains(url) {
-                            pickedURLs.append(url)
-                        }
-                    }
+            // Side by side until the labels no longer fit (accessibility sizes).
+            ViewThatFits(in: .horizontal) {
+                HStack { importButtons }
+                VStack { importButtons }
             }
         }
+    }
+
+    @ViewBuilder private var importButtons: some View {
+        Button("Add Files") { showFileImporter = true }
+            .fileImporter(
+                isPresented: $showFileImporter,
+                allowedContentTypes: [.item],
+                allowsMultipleSelection: true
+            ) { result in
+                if case .success(let urls) = result {
+                    pickedURLs.append(contentsOf: urls.filter { !pickedURLs.contains($0) })
+                }
+            }
+        Button("Add Folder") { showFolderImporter = true }
+            .fileImporter(
+                isPresented: $showFolderImporter,
+                allowedContentTypes: [.folder]
+            ) { result in
+                if case .success(let url) = result, !pickedURLs.contains(url) {
+                    pickedURLs.append(url)
+                }
+            }
     }
 
     // MARK: - Text
@@ -259,6 +291,7 @@ struct SendView: View {
     private var textSection: some View {
         VStack(spacing: Spacing.space4) {
             TextEditor(text: $text)
+                .accessibilityLabel("Text to send")
                 .font(.body.monospaced())
                 .frame(minHeight: 160, maxHeight: 280)
                 .overlay {
