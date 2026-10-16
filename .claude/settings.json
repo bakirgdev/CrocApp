@@ -7,7 +7,8 @@
   "permissions": {
     "allow": [
       "mcp__xcode",
-      "mcp__gopls"
+      "mcp__gopls",
+      "mcp__xcode__DocumentationSearch"
     ]
   }
 }

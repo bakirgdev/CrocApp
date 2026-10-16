@@ -10,6 +10,7 @@ Design source and marketing assets: app icon, banner, mascot, DMG background, sc
 | `croc-banner.webp` | 408x271. README header banner. From official croc repository |
 | `mascot.png` | 512x512 source. Never served as-is, only as a derivative |
 | `dmg-background.png` | 660x400 background for the macOS DMG's Finder window |
+| `social-preview.png` | 1280x640 GitHub social preview, uploaded by hand in repo Settings; not referenced by any file |
 | `screenshots/` | `<platform>-<screen>-{light,dark}.png` |
 
 ## Rules
