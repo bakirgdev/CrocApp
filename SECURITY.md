@@ -13,13 +13,9 @@ Useful in a report:
 - Version or commit, plus OS version and device.
 - Whether the same behavior reproduces with the upstream `croc` CLI.
 
-## Supported versions
-
-Security fixes go to the latest 1.0.x release. Older versions, including the 0.9.9 build, are not supported: update to 1.0.x first, then report anything that still reproduces.
-
 ## What to expect
 
-CrocApp has a single maintainer, so there is no guaranteed response time and no bug bounty. The aim is to acknowledge a report within 7 days, as a best effort. Reports are read and answered as soon as reasonably possible. You will be told whether the issue is accepted, and credited in the advisory when it is fixed, unless you ask not to be.
+For now, CrocApp has a single maintainer, so there is no guaranteed response time and no bug bounty. The aim is to acknowledge a report within 7 days, as a best effort. Reports are read and answered as soon as reasonably possible. You will be told whether the issue is accepted, and credited in the advisory when it is fixed, unless you ask not to be.
 
 Accepted issues get a GitHub Security Advisory, and a CVE is requested through it when the issue is eligible. Fixes are announced in the [advisories](https://github.com/bakirgdev/CrocApp/security/advisories) for this repository, and the release that carries the fix names it in [`CHANGELOG.md`](CHANGELOG.md) and in its release notes.
 
