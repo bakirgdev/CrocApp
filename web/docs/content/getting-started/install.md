@@ -46,7 +46,7 @@ The device you transfer with needs **croc 11 or newer**, whether it runs CrocApp
 Requires:
 
 - **macOS 26**
-- **Xcode 27.0**
+- **Xcode 27.1**
 - **Go 1.27.2** or newer (`gomobile` and `gobind` are rebuilt from the `go.mod` `tool` block on every run)
 
 ```bash

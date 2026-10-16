@@ -83,7 +83,7 @@ Not an option mismatch but easy to confuse: `NoMultiplexing` and `ThrottleUpload
 
 ## Toolchain
 
-- Go ≥1.27.2 (brew; `crocmobile/go.mod` pins `go 1.27.2`), gomobile+gobind built by the build script from the `tool` block in `crocmobile/go.mod`. Xcode 27.0 binds clean (no #53316-class friction). macOS slice arm64-only (golang/go#73119); iOS device App Store layout issue golang/go#66500 is closed, and the first App Store upload passed validation (2026-10-14; gomobile still writes `MinimumOSVersion = 100.0`, which App Store Connect accepted).
+- Go ≥1.27.2 (brew; `crocmobile/go.mod` pins `go 1.27.2`), gomobile+gobind built by the build script from the `tool` block in `crocmobile/go.mod`. Xcode 27.0 and 27.1 bind clean (no #53316-class friction). macOS slice arm64-only (golang/go#73119); iOS device App Store layout issue golang/go#66500 is closed, and the first App Store upload passed validation (2026-10-14; gomobile still writes `MinimumOSVersion = 100.0`, which App Store Connect accepted).
 - CI notes: verify scripts need outbound network (public relay) + `CROC`/`SIM` env; fresh clone must run `scripts/build-xcframework.sh` before any Swift build (binaryTarget points at gitignored artifact).
 
 Shell and build-tool traps that bite these harnesses live in `tooling.md`.

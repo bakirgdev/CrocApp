@@ -25,7 +25,7 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | GitHub Actions | `.github/workflows/github-pages.yml` | PRs build only; push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) also deploys |
 | GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes; `workflow_dispatch` is a rehearsal that publishes nothing |
 
-Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file. Jobs that need Xcode 27 run on the `xcode-27` runner label (a public preview; `macos-26` does not carry Xcode 27). Its image carries 27.0 (default), 27.1 and 27.2 beta, so the pin must name a version that image actually has.
+Xcode baseline lives in `.xcode-version` (plain text, one line). CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file. Jobs that need Xcode 27 run on the `xcode-27` runner label (a public preview; `macos-26` does not carry Xcode 27). Its image carries 27.0 (default), 27.1 and 27.2 beta, so the pin must name a version that image actually has. Only 27.0 gets simulator runtimes on that image (`install_runtimes` in `images/macos/toolsets/toolset-xcode-27.json` of `actions/runner-images`); CI builds the iOS leg for `generic/platform=iOS Simulator`, which needs the SDK, not a runtime.
 
 ## Build configuration you cannot casually change
 

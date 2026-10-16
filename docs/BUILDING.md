@@ -10,7 +10,7 @@ Deep reference for the exact toolchain and the exact steps from a fresh clone to
 | Xcode | `27.0` | `.xcode-version` | Apple Developer downloads, or `xcodes install 27.0` |
 | Go | `>= 1.27.2` | `crocmobile/go.mod` (`go 1.27.2`) | `brew install go` |
 | gomobile / gobind | pinned by the `tool` block in `crocmobile/go.mod` (`golang.org/x/mobile`) | `scripts/build-xcframework.sh` rebuilds both into `.tools/` on every run | nothing to install by hand |
-| swift-format | ships with the Xcode 27.0 toolchain (`docs/knowledge/tooling.md` records the bundled toolchain as Swift 6.4) | `.swift-format` (formatting rules; the binary itself is not separately versioned in this repo) | none, invoke via `scripts/format-swift.sh` |
+| swift-format | ships with the Xcode 27.1 toolchain (`docs/knowledge/tooling.md` records the bundled toolchain as Swift 6.4) | `.swift-format` (formatting rules; the binary itself is not separately versioned in this repo) | none, invoke via `scripts/format-swift.sh` |
 | golangci-lint | `2.x`; CI pins `v2.14.0` exactly | `.github/workflows/reusable-go.yml` (`golangci-lint-action`, `version: v2.14.0`); rule config in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
 | govulncheck | pinned by the `tool` block in `crocmobile/go.mod` (`golang.org/x/vuln`) | `.github/workflows/reusable-go.yml` (called by `ci.yml`, `release.yml`, `go-weekly.yml`) | `cd crocmobile && go tool govulncheck ./...` |
 | create-dmg | unpinned | `.github/workflows/release.yml` installs it with `brew` | `brew install create-dmg`. Needed only by `scripts/build-dmg.sh`, not for a plain build |
