@@ -11,7 +11,8 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 | `workflows/go-weekly.yml` | Monday scan on a clock, files or updates one `security` issue on failure |
 | `workflows/github-pages.yml` | builds `_site` on PR, also deploys on push to main |
 | `workflows/reusable-*.yml` | `workflow_call` only. Edit the check here, never in a caller |
-| `dependabot.yml` | github-actions `/`, gomod `/crocmobile`, npm `/web/docs`, weekly |
+| `workflows/scorecard.yml` | OpenSSF Scorecard on push to main, Wednesday cron, `branch_protection_rule`, and dispatch; publishes results and uploads SARIF to code scanning |
+| `dependabot.yml` | github-actions `/`, gomod `/crocmobile`, swift `/app` (Xcode project, SwiftPM), npm `/web/docs`, weekly |
 
 ## Rules
 
@@ -24,6 +25,8 @@ gh api repos/OWNER/REPO/git/ref/tags/TAG --jq '.object.type + " " + .object.sha'
 ```
 
 **Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block, the croc v10 test peer in `scripts/croc-v10.version`. Runners are pinned (`ubuntu-24.04`, `macos-26`, `xcode-27`) and are the one thing dependabot cannot see.
+
+**`ci pass` is an interface.** `main` requires a pull request (0 approvals) and the `ci pass` check, admins included, so renaming that job breaks merging.
 
 ## Gotchas
 
@@ -40,7 +43,3 @@ Each subsection describes a trap that will stop existing. **Delete a subsection 
 ### corepack
 
 `github-pages.yml` gets pnpm with `corepack enable pnpm`, reading the version from `packageManager` in `web/docs/package.json`. Node still bundles corepack at the pinned `.nvmrc` version, but Node is removing it. When a `.nvmrc` bump makes that step fail, replace it with a direct pnpm install at the `packageManager` version, or `pnpm/action-setup`. Delete this once swapped.
-
-### `main` branch protection
-
-`main` has no branch protection, only a `v*` tag ruleset, so renaming a job breaks no required check. Protection is planned, not forgotten, and will require only `ci pass`. Delete this once it is on, and treat that job name as an interface from then on.

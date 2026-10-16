@@ -23,10 +23,11 @@ Open the disk image from GitHub Releases and drag **CrocApp** onto **Application
 To check that a download came from this project's release workflow, run:
 
 ```bash
-gh attestation verify CrocApp-<version>-arm64.dmg --repo bakirgdev/CrocApp
+gh attestation verify CrocApp-<version>-arm64.dmg --repo bakirgdev/CrocApp \
+  --signer-workflow bakirgdev/CrocApp/.github/workflows/release.yml
 ```
 
-See [`SECURITY.md`](https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md) for what the attestation covers.
+See [Verify downloads](../verify-downloads.md) for what the attestation covers and the other checks.
 
 ## Updates
 

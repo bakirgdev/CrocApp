@@ -35,8 +35,8 @@ The link page offers **Receive in your browser**, which opens `https://getcroc.c
 - No telemetry, no analytics, no ads, no accounts.
 - Transfer history is local to the device — see [History](guide/history.md) for exactly what it records.
 - You can point CrocApp at your own croc relay instead of the default public one.
-- The disk image build checks github.com for updates through Sparkle and installs only updates whose signature matches the key built into the app; it sends no system profile. The App Store builds contain no updater.
-- Dependencies in the Go engine are scanned by `govulncheck` on every CI run and again on a weekly schedule.
+- The disk image build checks github.com for updates through Sparkle and installs only updates whose signature matches the key built into the app; it sends no system profile. See [Verify downloads](verify-downloads.md) for how to check a download. The App Store builds contain no updater.
+- Dependencies in the Go engine (`crocmobile/`) are scanned by `govulncheck` in CI when the Go code or the Go CI workflows change, and on a weekly schedule.
 
 ## Privacy policy
 
