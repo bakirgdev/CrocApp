@@ -72,7 +72,7 @@ jobs:
 
           if [ "$declared" != "$version" ]; then
             echo "error: tag says $version, Version.xcconfig says $declared."
-            echo "Bump MARKETING_VERSION in a pull request first, then tag the merge commit."
+            echo "Bump MARKETING_VERSION in a pull request first, then tag the squashed commit on main."
             exit 1
           fi
 
