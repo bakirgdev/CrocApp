@@ -17,14 +17,14 @@ For each finished or failed transfer:
 - Direction (sent or received) and whether it was a text transfer
 - Up to 20 file names
 - Total file count and total size
-- A **code hint**: only the first segment of the code phrase (for example, "7291-…"), never the full phrase
+- A **code hint**: the first word of a code shaped like a generated one (for example, "wiry-…"), or only the first two characters of any other code, never the full phrase. A Send as link transfer keeps the server's host instead (see [Stored uploads](#stored-uploads))
 - Date and status (completed, failed, cancelled, or declined)
 - For sends, a set of file bookmarks used to support **Send Again** — captured all-or-nothing, and only up to 200 items; a record with no bookmarks simply doesn't offer Send Again
 
 ## What's never recorded
 
 - File contents
-- The full code phrase — only that first-segment hint
+- The full code phrase — only that hint
 - Anything beyond the 20-name and 200-bookmark caps
 
 ## Stored uploads

@@ -34,7 +34,7 @@ gh api repos/OWNER/REPO/git/ref/tags/TAG --jq '.object.type + " " + .object.sha'
 - **A label named in config must already exist** in the repo. Dependabot silently drops missing ones, and a `labels:` filter on `listForRepo` silently matches nothing, which breaks issue dedup.
 - **Go jobs cross-target `darwin/arm64`** because the module only ships through gomobile. Tools have to be built for the runner (`env -u GOOS -u GOARCH go build -o ...`) and then run under the job's env.
 - **YAML anchors work** in workflows here (`paths: &site-paths` / `*site-paths` in `github-pages.yml`), despite the common claim that Actions rejects them.
-- **`release.yml` parses `CHANGELOG.md`.** It requires a Keep a Changelog heading, dated: `## [1.2.3] - YYYY-MM-DD`. Change the changelog's heading style and the tag stops releasing. Following practices from [Keep a Changelog](https://keepachangelog.com/).
+- **`release.yml` parses `CHANGELOG.md`.** It requires a Keep a Changelog heading, dated: `## [1.2.3] - YYYY-MM-DD`. Change the changelog's heading style and the tag stops releasing. The notes end at the next `## [` heading or at the first line starting `[label]: `, so a reference-style link definition inside a version section cuts its release notes short; use inline links there. Following practices from [Keep a Changelog](https://keepachangelog.com/).
 
 ## Expiring notes
 

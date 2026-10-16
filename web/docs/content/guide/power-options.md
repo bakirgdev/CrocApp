@@ -29,11 +29,11 @@ The **Address** and **IPv6 address** fields read "Public relay pool" as placehol
 
 The **Connection** picker has its own section after Relay. **Automatic** is the default. **Relay only** sends every transfer through croc's relays.
 
-With **Automatic**, a send of 128 MB or more also tries a direct path between the two devices. This path is called Tailcat. It is set up through `tailcat.dev`, and it uses its own relays (`*.ipn.dev`) when the devices cannot reach each other. CrocApp starts it next to croc's relay, and whichever path connects first carries the transfer. The data is still end-to-end encrypted on either path. Smaller sends never start it.
+With **Automatic**, a send of 128 MiB or more also tries a direct path between the two devices. This path is called Tailcat. It is set up through `tailcat.dev`, and it uses its own relays (`*.ipn.dev`) when the devices cannot reach each other. CrocApp starts it next to croc's relay, and whichever path connects first carries the transfer. The data is still end-to-end encrypted on either path. Smaller sends never start it.
 
 With **Relay only**, a send never contacts `tailcat.dev` or the `*.ipn.dev` servers. A receive can still use them when the sender chose Automatic (or the croc CLI's default, `auto`).
 
-Only the sender's choice applies. A receive follows whatever the sender uses, so the picker has no effect when you receive. The picker is disabled while **Local network only** is on, because local-only transfers always use **Automatic**. The footer under the picker reads: "Automatic can carry files of 128 MB or more directly between devices. Only the sender's choice applies; a receive follows it."
+Only the sender's choice applies. A receive follows whatever the sender uses, so the picker has no effect when you receive. The picker is disabled while **Local network only** is on, because local-only transfers always use **Automatic**. The footer under the picker reads: "Automatic can carry files of 128 MiB or more directly between devices. Only the sender's choice applies; a receive follows it."
 
 ## Local network only (F14)
 
