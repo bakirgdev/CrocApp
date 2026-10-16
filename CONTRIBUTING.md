@@ -90,7 +90,7 @@ govulncheck ./...
 
 ## Design rules
 
-Anything visual, in the app, the web or elsewhere, follows [`design/CLAUDE.md`](design/CLAUDE.md). In short, fixed design principles (brandbook), like: design tokens instead of raw hex, px, pt, or durations; SF Symbols only; system font only; a light and a dark value for every surface.
+Anything visual, in the app, the web or elsewhere, follows [`design/AGENTS.md`](design/AGENTS.md). In short, fixed design principles (brandbook), like: design tokens instead of raw hex, px, pt, or durations; SF Symbols only; system font only; a light and a dark value for every surface.
 
 UI pull requests need **before and after screenshots in both light and dark**, and on both platforms if both are affected.
 

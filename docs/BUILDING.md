@@ -36,7 +36,7 @@ open app/CrocApp.xcodeproj
 
 The shared schemes `CrocApp` (builds the app, tests `CrocAppTests`), `CrocApp Direct` (the Developer ID build, section 7, no test action) and `CrocShare` are committed under `app/CrocApp.xcodeproj/xcshareddata/xcschemes/`, so `xcodebuild -scheme CrocApp` works on a fresh clone without opening Xcode. A new target needs its scheme committed there too; per-user schemes in `xcuserdata/` stay gitignored.
 
-Command-line builds, exactly as CLAUDE.md and CI run them:
+Command-line builds, exactly as CI runs them:
 
 ```bash
 # from app/
@@ -44,7 +44,7 @@ xcodebuild -scheme CrocApp -destination 'platform=macOS' -derivedDataPath /tmp/d
 xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,name=$SIM" -derivedDataPath /tmp/dd-sim build
 ```
 
-`SIM` defaults to `iPhone 17 Pro` (used the same way in `scripts/verify-app-sim.sh`, `scripts/verify-share-sim.sh`, and CLAUDE.md). List installed runtimes with `xcrun simctl list devices`.
+`SIM` defaults to `iPhone 17 Pro` (used the same way in `scripts/verify-app-sim.sh` and `scripts/verify-share-sim.sh`). List installed runtimes with `xcrun simctl list devices`.
 
 ## 3. What build-xcframework.sh actually does
 
