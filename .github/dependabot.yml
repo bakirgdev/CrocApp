@@ -46,3 +46,17 @@ updates:
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
+
+  - package-ecosystem: "swift"
+    directory: "/app"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      swift-deps:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "deps"

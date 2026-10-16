@@ -51,7 +51,7 @@ The **Connection** setting maps to croc's `--transport` flag: **Automatic** is `
 croc send --transport relay file.txt
 ```
 
-For a send under 128 MB, the two settings behave the same. See [power options](../guide/power-options.md) for what **Automatic** does above that size.
+For a send under 128 MiB, the two settings behave the same. See [power options](../guide/power-options.md) for what **Automatic** does above that size.
 
 ## Feature-to-flag mapping
 

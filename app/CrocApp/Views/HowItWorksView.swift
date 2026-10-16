@@ -24,7 +24,7 @@ struct HowItWorksView: View {
                 )
                 item(
                     "point.3.connected.trianglepath.dotted", "Direct path for large files",
-                    "With Connection set to Automatic, a send of 128 MB or more also tries Tailcat: a peer-to-peer connection set up through tailcat.dev, with its own relays (*.ipn.dev) when the devices cannot reach each other. Whichever path is faster carries the transfer, still end-to-end encrypted. A send set to Relay only never contacts these servers; a receive follows the sender's choice."
+                    "With Connection set to Automatic, a send of 128 MiB or more also tries Tailcat: a peer-to-peer connection set up through tailcat.dev, with its own relays (*.ipn.dev) when the devices cannot reach each other. Whichever path is faster carries the transfer, still end-to-end encrypted. A send set to Relay only never contacts these servers; a receive follows the sender's choice."
                 )
                 item(
                     "wifi", "Local network when possible",

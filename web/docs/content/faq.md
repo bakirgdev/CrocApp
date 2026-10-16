@@ -32,7 +32,7 @@ Then the transfer goes straight between the two devices and skips the relay enti
 
 ## Can large files go directly between devices?
 
-Yes, with the default **Automatic** connection setting. A send of 128 MB or more also tries a direct path, set up through `tailcat.dev`, and whichever path connects first carries the transfer. It is end-to-end encrypted either way. Choose **Relay only** under [power options](guide/power-options.md) to keep your sends on croc's relays and away from those servers. A receive follows the sender's choice.
+Yes, with the default **Automatic** connection setting. A send of 128 MiB or more also tries a direct path, set up through `tailcat.dev`, and whichever path connects first carries the transfer. It is end-to-end encrypted either way. Choose **Relay only** under [power options](guide/power-options.md) to keep your sends on croc's relays and away from those servers. A receive follows the sender's choice.
 
 ## Can the receiver use a browser instead of the app?
 

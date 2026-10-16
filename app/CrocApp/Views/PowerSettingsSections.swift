@@ -75,7 +75,7 @@ struct PowerSettingsSections: View {
                 Text(Self.connectionLockedReason)
             } else {
                 Text(
-                    "Automatic can carry files of 128 MB or more directly between devices. Only the sender's choice applies; a receive follows it."
+                    "Automatic can carry files of 128 MiB or more directly between devices. Only the sender's choice applies; a receive follows it."
                 )
             }
         }

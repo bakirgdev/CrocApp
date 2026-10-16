@@ -152,7 +152,7 @@
               <h3 class="t-headline card__title">Tailcat and DERP servers</h3>
               <p class="t-callout card__body">
                 <strong>When:</strong> the Connection setting is Automatic by default. With it, a
-                send of about 128 MB or more also tries a direct device-to-device connection set up
+                send of 128 MiB or more also tries a direct device-to-device connection set up
                 through <code class="t-code">tailcat.dev</code>, with relay servers under
                 <code class="t-code">ipn.dev</code> when the devices cannot reach each other
                 directly. Whichever path connects first carries the transfer. A receive follows the
@@ -211,7 +211,8 @@
             <p>
               <strong>History.</strong> Transfer history stays on your device. There is no sync and
               no export. It records file names (up to 20 per transfer), counts, sizes, dates, status
-              and only the first segment of the code phrase, never file contents or the full phrase.
+              and a short hint of the code phrase (its first word, or only its first two characters
+              for most custom codes), never file contents or the full phrase.
               For a stored upload it keeps the server's host name, not the link or the upload token.
               Clear it any time from the history screen.
             </p>

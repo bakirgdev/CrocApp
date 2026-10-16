@@ -45,3 +45,6 @@ web/docs/src/css/tokens.css
 
 # SDLC pipeline artifacts (.claude/skills/sdlc-*)
 /sdlc/
+
+# sourcekit-lsp build server config (xcode-build-server, machine-specific paths)
+/buildServer.json

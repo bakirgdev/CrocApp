@@ -7,18 +7,16 @@ Two things make this repo different from a typical SwiftUI app, and most review 
 1. **A green build is not evidence a transfer works.** Real behavior is proven by live-transfer harnesses in `scripts/`, not by the compiler.
 2. **Anything visual is bound to `design/`.** Tokens only, SF Symbols only, system font only.
 
-Both are spelled out below.
-
 | | |
 |---|---|
-| [Code of Conduct](CODE_OF_CONDUCT.md) | How we behave here |
-| [Where to start](#where-to-start) | Issues, labels, feature numbers |
-| [Setup](#setup) | Toolchain, first build, croc CLI |
-| [Branches and commits](#branches-and-commits) | Conventional Branch + Conventional Commits |
-| [Code style](#code-style) | swift-format, golangci-lint, dependencies |
-| [Design rules](#design-rules) | Tokens, symbols, themes, screenshots |
+| [Code of Conduct](#code-of-conduct) | How we behave here |
+| [Where to start](#where-to-start) | Issues, discussions, upstream |
+| [Setup](#setup) | First build, repo layout |
+| [Commits](#commits) | Message conventions |
+| [Code style](#code-style) | Formatters, linters, scope |
+| [Design rules](#design-rules) | Tokens, symbols, screenshots |
 | [Verification](#verification) | What to run, and how to report it |
-| [Docs](#docs) | Knowledge, known issues |
+| [Docs](#docs) | Changelog, knowledge, known issues |
 | [AI-assisted contributions](#ai-assisted-contributions) | Allowed, with disclosure |
 | [Opening a pull request](#opening-a-pull-request) | Flow and expectations |
 | [Unlikely to be merged](#unlikely-to-be-merged) | Save yourself the work |
@@ -30,8 +28,6 @@ This project follows the [Contributor Covenant 3.0](CODE_OF_CONDUCT.md). Taking 
 
 ## Where to start
 
-Before filing anything, check [`docs/known-issues.md`](docs/known-issues.md). Every defect in there was found on purpose and consciously not fixed, so a bug report that repeats one is a duplicate on arrival.
-
 | You want to | Go to |
 |---|---|
 | Report a bug | [Bug report form](https://github.com/bakirgdev/CrocApp/issues/new?template=bug_report.yml) |
@@ -40,221 +36,84 @@ Before filing anything, check [`docs/known-issues.md`](docs/known-issues.md). Ev
 | Report a vulnerability | [Private advisory](https://github.com/bakirgdev/CrocApp/security/advisories/new), never a public issue. See [SECURITY.md](SECURITY.md) |
 | Report a transfer, relay, or crypto bug that also reproduces with the `croc` CLI | [Upstream croc](https://github.com/schollz/croc/issues) |
 
-Useful labels: `good first issue`, `help wanted`, `bug`, `enhancement`, `documentation`.
-
-Features carry stable numbers (`F1`, `F2`, …) used across code comments, issues, and the README. The roadmap, including what shipped and what is deferred, is [`docs/knowledge/features.md`](docs/knowledge/features.md). Reference the number when it exists.
+Issues labeled `help wanted` are open for anyone to pick up.
 
 > [!TIP]
-> Any PR is welcome, but for a large feature or a refactor that touches the transfer engine, open an issue or a discussion first. Not for approval, just so you do not spend a weekend on something that collides with work already in flight.
+> For a large feature or a refactor that touches the transfer engine, open an issue or a discussion first. Not for approval, just so you do not spend a weekend on something that collides with work already in flight.
 
 ## Setup
 
-Requires **macOS 26**, **Xcode 27.0** (the pin lives in [`.xcode-version`](.xcode-version)), and **Go 1.27.2 or newer**. `gomobile` and `gobind` are rebuilt from the `go.mod` `tool` block on every run.
+Requires **macOS 26**, **Xcode 27**, and **Go 1.27.2** (or newer).
 
 ```bash
 git clone https://github.com/bakirgdev/CrocApp.git
 cd CrocApp
-scripts/build-xcframework.sh   # Go engine -> CrocKit/Croc.xcframework
-open app/CrocApp.xcodeproj
 ```
 
-> [!IMPORTANT]
-> A fresh clone builds nothing until the xcframework exists. `CrocKit`'s binary target points at a gitignored build artifact, so `scripts/build-xcframework.sh` is not optional. Rerun it after any change under `crocmobile/`.
+Also needed: `croc` CLI (`brew install croc`) and outbound network access to the public relay.
 
-The verification harnesses also need the real `croc` CLI and outbound network access to the public relay:
+## Commits
 
-```bash
-brew install croc   # lands at $HOMEBREW_PREFIX/bin/croc, the default
-```
-
-Env: `CROC` overrides the CLI path (default `$HOMEBREW_PREFIX/bin/croc`), `SIM` picks the simulator (default `iPhone 17 Pro`; list them with `xcrun simctl list devices`).
-
-Deeper references: [`docs/BUILDING.md`](docs/BUILDING.md) for the exact toolchain and troubleshooting, [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the system map, [`docs/GLOSSARY.md`](docs/GLOSSARY.md) for unfamiliar terms.
-
-### What lives where
-
-| Path | What it is | Read first |
-|---|---|---|
-| `crocmobile/` | Go wrapper around croc v11.5.4, bound into `Croc.xcframework`. `session.go` is the engine | [`docs/knowledge/crocmobile-bridge.md`](docs/knowledge/crocmobile-bridge.md) |
-| `CrocKit/` | Swift package: `CrocEngine` actor, `AsyncStream<TransferEvent>` | same file |
-| `app/CrocApp/` | SwiftUI app, iOS + macOS | [`docs/knowledge/app-ui-architecture.md`](docs/knowledge/app-ui-architecture.md) |
-| `app/CrocShare/` | Share extension | same file |
-| `app/CrocAppDirect/` | Sources only the `CrocApp Direct` (Developer ID, Sparkle) target compiles | [`docs/BUILDING.md`](docs/BUILDING.md) section 7 |
-| `design/` | Canonical design system for app, landing, docs | [`design/CLAUDE.md`](design/CLAUDE.md) |
-| `web/landing/` | The crocapp.dev landing page | `design/CLAUDE.md` |
-| `docs/` | Knowledge base, known issues | [`docs/knowledge/README.md`](docs/knowledge/README.md) |
-| `scripts/` | Build and live-transfer verification harnesses | the script headers |
-
-> [!WARNING]
-> The bridge and UI knowledge files hold hard-won invariants: event ordering, fd0 prompt-pipe semantics, per-file sender answers, relay-address blanking, room collisions on shared code prefixes. Most "obvious" fixes in those areas re-break one of them. Read the relevant file before you edit.
-
-## Branches and commits
-
-Branch off `main`, using [Conventional Branch](https://conventional-branch.github.io/) naming:
-
-```
-feat/qr-scan-torch
-fix/relay-address-blanking
-docs/contributing-guide
-chore/bump-golangci-lint
-refactor/transfer-controller-state
-```
-
-Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
+Not enforced, but strongly advised: [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and the usual git message rules.
 
 ```
 <type>(<scope>): <subject>
-```
 
-| Type | Use for |
-|---|---|
-| `feat` | New user-visible capability |
-| `fix` | Bug fix |
-| `docs` | Docs, README, comments-only changes |
-| `style` | Formatting only, no behavior change |
-| `refactor` | Restructuring with no behavior change |
-| `perf` | Performance work |
-| `build` | Build scripts, gomobile, Xcode project settings, dependencies |
-| `ci` | Workflows under `.github/` |
-| `chore` | Everything else with no source impact |
-
-Scopes, one per commit, matching the repo layout: `app`, `share`, `crockit`, `crocmobile`, `design`, `landing`, `docs`, `ci`, `scripts`, `assets`. Omit the scope when a change genuinely spans everything.
-
-Rules for the subject line: imperative and present tense ("add", not "added" or "adds"), lowercase after the colon, no trailing period, roughly 72 characters or fewer. Put the why in the body when it is not obvious from the diff. Breaking changes get a `!` after the scope and a `BREAKING CHANGE:` footer.
-
-```
-fix(crocmobile): blank the relay address on LAN-only transfers
-
-The receiver rendered the relay host even when the connection never
-left the subnet, which reads as a privacy leak. Blank it at the event
-boundary rather than in the view, so both platforms inherit the fix.
+<body: why, when the diff does not make it obvious>
 
 Fixes #42
 ```
 
-Keep commits scoped. One logical change per commit beats one commit per file, and beats a single commit for an entire feature.
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`. The scope is optional and names the area, such as `crocmobile` or `app`.
+- Subject: imperative ("add", not "added"), lowercase after the colon, no trailing period, 72 characters or fewer.
+- Breaking change: `!` after the type or scope, plus a `BREAKING CHANGE:` footer.
+
+Pull requests are squash-merged, and the PR title becomes the commit subject on `main`. That makes the PR title the one place this convention matters most. Commits inside your branch can be as messy as you like.
 
 ## Code style
 
 Match the surrounding file. When in doubt, the formatter decides.
 
 ```bash
-# Swift, from the repo root
+# Swift
 scripts/format-swift.sh            # rewrite in place, then lint
 scripts/format-swift.sh --lint     # lint only, exactly what CI runs
 
-# Go, from crocmobile/
+# Go
 golangci-lint run ./...
 govulncheck ./...
 ```
 
-swift-format ships with the toolchain, so there is nothing to install. Config lives in [`.swift-format`](.swift-format): 4-space indent, non-indented `#if` bodies. The source set it covers lives in one place, [`scripts/format-swift.sh`](scripts/format-swift.sh) — add a new Swift target there, not to the command in your shell history. Go config is in [`crocmobile/.golangci.yml`](crocmobile/.golangci.yml).
-
-Other expectations:
-
 - **Comments explain why, never what.** Do not delete existing comments unless the code they describe is going away.
-- **Stay in scope.** No drive-by refactors, no renaming unrelated symbols, no reformatting files your change does not touch. A diff that is 90% noise gets sent back.
-- **No new third-party dependencies** without agreeing on them in an issue first. Every dependency in `crocmobile/` ends up inside a shipped binary that moves people's files.
-- Swift concurrency is used as designed: `CrocEngine` is an actor, UI state is main-actor. Do not add locks or dispatch queues to work around a warning.
+- **Stay in scope.** No drive-by refactors, no renaming unrelated symbols, no reformatting files your change does not touch.
+- **No new third-party dependencies** without agreeing on them in an issue first. New dependency may end up shipped somewhere that moves people's files!
 
 ## Design rules
 
-Anything visual, in the app or on the web, starts at [`design/CLAUDE.md`](design/CLAUDE.md). Its binding rules, in short:
-
-1. **Tokens, not literals.** No raw hex, px, pt, or duration in app or site code. If a value is missing, add the token to `design/` first (and mirror it into `design/tokens.css` for web).
-2. **SF Symbols only in the app.** Never bundle an icon font, never draw a custom glyph where a symbol exists.
-3. **System font only.** No bundled Apple font files, ever. They are not redistributable.
-4. **Both themes, always.** Every surface has a light and a dark value.
-5. **Accessibility floor is binding** (`design/accessibility.md`): 4.5:1 for body text, 3:1 for large text and UI boundaries, 44x44pt minimum hit target, `prefers-reduced-motion` and `prefers-reduced-transparency` respected, and never encode transfer direction in color alone.
+Anything visual, in the app, the web or elsewhere, follows [`design/AGENTS.md`](design/AGENTS.md). In short, fixed design principles (brandbook), like: design tokens instead of raw hex, px, pt, or durations; SF Symbols only; system font only; a light and a dark value for every surface.
 
 UI pull requests need **before and after screenshots in both light and dark**, and on both platforms if both are affected.
 
-## Verification
-
-This is the part reviewers actually check.
-
-A build that compiles proves nothing about a transfer. CI runs only `verify-interop.sh`, against a local relay. The other harnesses and the public-pool scenario need a public relay or a device and are flaky on shared runners, so that job falls on you.
-
-| What you changed | What to run |
-|---|---|
-| Any Swift under `app/` or `CrocKit/` | `scripts/format-swift.sh --lint`, `swift test --package-path CrocKit`, `xcodebuild test -scheme CrocApp -destination 'platform=macOS'` (from `app/`), plus a macOS and/or iOS Simulator build |
-| Anything in `crocmobile/` | `go test -race ./...`, `golangci-lint run ./...`, `govulncheck ./...`, then `scripts/build-xcframework.sh` |
-| `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController` | the matching harness below, no exceptions |
-| Share extension | `scripts/verify-share-sim.sh` |
-| `web/landing/` | Load it locally: `cp design/tokens.css web/landing/ && python3 -m http.server --directory web/landing` |
-| Docs, comments only | Nothing beyond reading it back |
-
-```bash
-scripts/verify-interop.sh     # 11 scenarios, engine <-> croc CLI, both directions, decline, cancel, relay, LAN, croc v10 peer, every pool relay
-scripts/verify-app-mac.sh     # macOS app, 6 directions: both ways, --local, custom relay, --no-compress, --ask
-scripts/verify-app-sim.sh     # iOS simulator, CLI -> app via --auto-receive
-scripts/verify-share-sim.sh   # share-extension handoff (App Group staging) -> CLI receive
-```
-
-Builds, if you prefer the command line to Xcode:
-
-```bash
-cd app
-xcodebuild -scheme CrocApp -destination 'platform=macOS' -derivedDataPath /tmp/dd-mac build
-xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,name=$SIM" -derivedDataPath /tmp/dd-sim build
-```
-
-A signed local macOS build of `CrocApp` needs a provisioning profile (the entitlements include Associated Domains), so it needs an Xcode account in team `HBSU359M33` and `-allowProvisioningUpdates` on `xcodebuild`; the macOS harness scripts pass it. Outside that team, build unsigned with `CODE_SIGNING_ALLOWED=NO`, as CI does. Details: [`docs/BUILDING.md`](docs/BUILDING.md), section 5.
-
-### Tests
-
-Non-UI logic gets unit tests, and CI runs them on every pull request that touches their code:
-
-- `crocmobile/`: Go's `testing`, run with `go test -race ./...` (from `crocmobile/`, with `GOOS`/`GOARCH` unset).
-- `CrocKit/`: Swift Testing in `CrocKit/Tests/CrocKitTests/`, run with `swift test --package-path CrocKit`.
-- The app: Swift Testing in `app/CrocAppTests/` (hosted in `CrocApp`, run on macOS) for models, parsing, error copy and settings. Tests that write settings or secrets use an injected store, never the real `UserDefaults` or Keychain.
-
-New or changed logic in those areas comes with tests. There is no XCUITest: gestures, camera and taps are checked by hand, and transfers by the harnesses above. Unit tests never replace a harness run.
-
-**Paste the harness output into the pull request.** Not a summary of it, the output.
-
-> [!IMPORTANT]
-> If you could not run something, write **"not verified"** and say why (no macOS 26 machine, no outbound network, no croc CLI). That is an honest, acceptable answer and the maintainer will run it before merge. A silent gap, or a claim that something passed when it was never run, is not. Unverified transfer-path changes are not merged, by anyone.
-
-## Docs
-
-Documentation is part of the change, not a follow-up. Before you open the PR:
-
-| What happened | Where it goes |
-|---|---|
-| You learned something durable about the project | Add or update a file in [`docs/knowledge/`](docs/knowledge/README.md), and `CLAUDE.md` if it changes how the repo is worked in |
-| You fixed a listed defect | Delete its line from [`docs/known-issues.md`](docs/known-issues.md) |
-| You found a defect and consciously left it | Add a line to `docs/known-issues.md` |
-| You noticed a stale or wrong doc | Fix or delete it in the same PR |
-
-Keep docs small, dense, direct. Never cite a `TODO.md` or `PLAN.md` from inside `docs/`; those are scratch files that get deleted, and a doc pointing at one rots immediately. Do not use "Phase N" as a fact anywhere. Say what the thing is, not when it was built.
-
-If nothing was doc-worthy, tick that box in the PR template and say so.
-
 ## AI-assisted contributions
 
-Allowed, and used heavily here. This repo carries a `CLAUDE.md` and a `.claude/` directory for exactly that reason.
+Allowed, and used heavily here. Two conditions:
 
-Two conditions:
+- **Disclose it.** Own the responsibility to report even if we live in the day and age where it may be considered as norm. Fill in the AI assistance line in the PR template. It tells the reviewer where to look harder, and nobody is judged for it.
+- **You own the code.** You understand every line, you can explain why each one is there, and you ran all verifications and checks yourself. "The model said it works" is not verification.
 
-- **Disclose it.** If a model wrote a substantial part of the change, say so in the pull request. One line is enough. It tells the reviewer where to look harder, and nobody is judged for it.
-- **You own the code.** You understand every line, you can explain why each one is there, and you ran the [verification](#verification) yourself. "The model said it works" is not verification.
-
-Bulk-generated pull requests that the author has not read, does not understand, or cannot verify get closed without review. That is a statement about unreviewed output, not about tooling.
+Bulk-generated pull requests that the author has not read, does not understand, or cannot verify get closed without review.
 
 ## Opening a pull request
 
-1. Fork, branch off `main`, commit as described above.
-2. Rebase on the current `main` so the diff is clean.
-3. Open the PR against `main` and fill in [the template](.github/pull_request_template.md): what and why, the verification commands with their output, the docs checklist, screenshots for UI.
+1. Fork the repo and branch off `main`.
+2. Rebase on the current `main` before opening, so the diff is clean.
+3. Open the PR against `main` with a Conventional Commits title, and fill in [the template](.github/pull_request_template.md).
 4. Link the issue with `Fixes #123` when one exists.
 5. Keep it focused. Two unrelated changes are two pull requests.
 
-Draft PRs are welcome for early feedback. Mark them as drafts so it is clear what you want.
+Draft PRs are welcome for early feedback.
 
-What to expect: CrocApp has one maintainer, so review time varies and there is no response-time promise. Comments will be direct and specific, and that is about the code, never about you. Merges are squashed, so your branch's intermediate commits do not need to be pretty, but the final PR title does (it becomes the commit subject, so give it the same Conventional Commits treatment).
-
-Things that get sent back rather than merged: unverified changes to the transfer path, raw hex or px in UI code, unrelated reformatting mixed into a fix, a new dependency nobody discussed, and PRs whose description does not say what was actually run.
+CrocApp has one maintainer, so review time varies and there is no response-time promise. Review comments are direct and about the code, never about you.
 
 ## Unlikely to be merged
 
@@ -262,14 +121,11 @@ Not a hard no, but open an issue first and expect a long conversation. These run
 
 | Change | Why |
 |---|---|
-| Windows, Linux, or Android support | Apple-platform only by design. The croc CLI covers everywhere else and interoperates with the app |
-| Support for iOS or macOS below 26 | Floor is `26.0`, never a minor. It is a minimum, so 26.0 and everything above it already runs |
+| Support for iOS or macOS below 26 | The floor is 26.0 |
 | Telemetry, analytics, crash reporting, ads | No data leaves the device. This is a product promise, not a technical gap |
 | A paid tier, license keys, or in-app purchases | MIT and free, permanently. Funding is optional sponsorship only |
-| Shelling out to the `croc` binary instead of the embedded library | The Go library binding is the whole architecture |
-| A new third-party dependency | Discuss it first. Everything in `crocmobile/` ships inside the binary |
 | A UIKit or AppKit rewrite of a SwiftUI surface | Native SwiftUI is the deliberate choice |
-| Bundled fonts or icon sets | Undistributable in Apple's case, and unnecessary in every other |
+| Bundled fonts or icon sets | Apple's fonts are not redistributable, and SF Symbols and the system font make the rest unnecessary |
 | Rewriting croc's protocol or crypto | Belongs [upstream](https://github.com/schollz/croc), where the whole ecosystem gets it |
 
 ## Licensing
@@ -277,7 +133,3 @@ Not a hard no, but open an issue first and expect a long conversation. These run
 CrocApp is [MIT](LICENSE). By opening a pull request you agree that your contribution is licensed under the same terms. There is no CLA and no sign-off requirement.
 
 Do not paste code you did not write and cannot license this way, including code from projects under a copyleft or proprietary license.
-
-## Contact
-
-Issues and [Discussions](https://github.com/bakirgdev/CrocApp/discussions) for anything public, <bakirgdev@gmail.com> for Code of Conduct matters, and a [private advisory](https://github.com/bakirgdev/CrocApp/security/advisories/new) for vulnerabilities.

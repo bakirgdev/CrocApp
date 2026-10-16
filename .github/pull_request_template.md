@@ -1,12 +1,13 @@
 <!-- Keep it short. Delete sections that do not apply. First time here? See CONTRIBUTING.md. -->
 
-<!-- Title follows Conventional Commits: type(scope): subject. It becomes the squashed commit subject. -->
-
-<!-- If a model wrote a substantial part of this change, say so in one line. You still own it: read it, understand it, verify it. -->
+<!-- Title: Conventional Commits advised, type(scope): subject. It becomes the squashed commit subject on main. -->
 
 ## What and why
 
 Fixes # because...
+
+AI assistance: none / partial / substantial
+<!-- If a model wrote part of this change, you still own it: read it, understand it, verify it. -->
 
 ## Verification
 
@@ -15,7 +16,7 @@ A green build is not evidence a transfer works. List the commands you actually r
 - [ ] `scripts/format-swift.sh --lint`
 - [ ] `golangci-lint run ./...` (only if `crocmobile/` changed)
 - [ ] macOS and/or iOS Simulator build
-- [ ] Matching `scripts/verify-*.sh` harness — required for changes to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController`
+- [ ] Matching `scripts/verify-*.sh` harness, required for changes to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController`
 
 ```
 paste harness output here (if long, paste the summary lines and any failures, not the whole log)
@@ -24,7 +25,7 @@ paste harness output here (if long, paste the summary lines and any failures, no
 ## Docs
 
 - [ ] Anything a user would notice → a line under `## [Unreleased]` in `CHANGELOG.md`. Write it for someone deciding whether to update, not as a summary of this diff. That section becomes the release notes verbatim
-- [ ] Durable knowledge → `docs/knowledge/` and/or `CLAUDE.md`
+- [ ] Durable knowledge → `docs/knowledge/` and/or `AGENTS.md`
 - [ ] Defect fixed or accepted → `docs/known-issues.md` line deleted or added
 - [ ] Nothing doc-worthy
 

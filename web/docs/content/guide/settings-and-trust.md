@@ -29,7 +29,7 @@ The **Send as link** section holds the **Server** field for [stored transfers](s
 
 ## Connection
 
-The **Connection** picker under the [power options](power-options.md) chooses how a send carries large files. **Automatic** (the default) can also use a direct path between the devices for a send of 128 MB or more, set up through `tailcat.dev`. A send set to **Relay only** never contacts those servers; a receive follows the sender's choice. The data is end-to-end encrypted either way.
+The **Connection** picker under the [power options](power-options.md) chooses how a send carries large files. **Automatic** (the default) can also use a direct path between the devices for a send of 128 MiB or more, set up through `tailcat.dev`. A send set to **Relay only** never contacts those servers; a receive follows the sender's choice. The data is end-to-end encrypted either way.
 
 ## Advanced
 

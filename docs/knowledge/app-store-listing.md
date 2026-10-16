@@ -70,7 +70,7 @@ WHAT YOU CAN DO
 - Receive with a code phrase, a scanned QR code, or a link. Opening a link only fills in the code; nothing connects until you tap Receive.
 - See the file list before you accept, and choose Keep Both or Replace when a name is already taken.
 - Watch progress and speed, cancel at any time, and resume an interrupted transfer.
-- Send as a link: upload encrypted files for the receiver to download later, with a lifetime of 1 hour, 1 day or 7 days and a limit on downloads (up to 100 files and 1 GB). You can revoke the link from History.
+- Send as a link: upload encrypted files for the receiver to download later, with a lifetime of 1 hour, 1 day or 7 days and a limit on downloads (up to 100 files and 1 GiB). You can revoke the link from History.
 - Use your own relay, force local-network-only transfers, or route through a proxy, from Settings.
 - iPhone and iPad: send from any app with the share sheet, follow a transfer in a Live Activity, find received files in the Files app, and use Shortcuts and Siri actions.
 - Mac: drag and drop, a menu bar window for quick sends, and Shortcuts actions.
@@ -111,7 +111,7 @@ New
 Changed
 - The transfer engine is now croc 11.5.4. A device running croc 10 can no longer transfer with CrocApp; it needs croc 11 or newer.
 - Errors say what went wrong: a wrong code, a refused transfer, a lost connection, a peer on an older croc, or no public relay available.
-- The relay password is kept in the Keychain, and History keeps only the first part of a code phrase.
+- History keeps less of a code than before, and never the whole code.
 - Every screen works at the largest text sizes and with VoiceOver.
 - The QR code on the sender's screen now opens CrocApp, or a page that explains what to do when the app is missing.
 

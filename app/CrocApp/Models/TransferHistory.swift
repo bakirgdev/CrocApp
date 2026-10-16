@@ -97,7 +97,6 @@ final class HistoryStore {
             // this throws, the environment itself is broken (e.g. out of
             // memory) and there is no fallback left that would leave the
             // app in a working state anyway.
-            // swift-format-ignore: NeverUseForceTry
             return try! ModelContainer(for: TransferRecord.self, configurations: config)
         }
     }

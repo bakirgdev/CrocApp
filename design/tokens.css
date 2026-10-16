@@ -1,5 +1,5 @@
 /* CrocApp design tokens — hand-written web mirror. Canonical values and the
-   rules behind them live in design/*.md; start at design/CLAUDE.md.
+   rules behind them live in design/*.md; start at design/AGENTS.md.
 
    Themed values are light-dark() pairs, so dark is not a second block: :root
    declares `light dark` and follows the OS, [data-theme] pins it.

@@ -18,7 +18,7 @@ description: User-facing terms used throughout the CrocApp documentation.
 | Hash algorithm | The integrity check used on transferred files. |
 | LAN peer discovery | The mechanism that lets same-network transfers skip the relay entirely; not guaranteed to work on every network. |
 | Connection | The setting that chooses how a send carries large files: Automatic (default) or Relay only. Only the sender's choice applies; a receive follows it. |
-| Tailcat | The direct, peer-to-peer path that Automatic can use for a send of 128 MB or more. It is set up through `tailcat.dev` and falls back to its own relays when the devices cannot reach each other. Still end-to-end encrypted. |
+| Tailcat | The direct, peer-to-peer path that Automatic can use for a send of 128 MiB or more. It is set up through `tailcat.dev` and falls back to its own relays when the devices cannot reach each other. Still end-to-end encrypted. |
 | Local-only | A setting that forces a transfer to stay on the local network, refusing the relay if a direct path isn't available. |
 | Compression | File data is compressed by default in transit; it can be turned off. |
 | Menu bar quick send | The CrocApp icon in the Mac menu bar. Its window sends files or clipboard text and shows the code and progress. See [Menu bar](../guide/menu-bar.md). |

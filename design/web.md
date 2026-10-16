@@ -6,7 +6,7 @@ How the tokens apply to the landing page and the docs site. `swiftui.md` is the 
 
 Web pages, not an app shell. Keep the Apple type scale, the colors and the 4pt grid; drop the device chrome. Both sites ship both themes and follow the OS preference by default.
 
-They consume `tokens.css`, which is why the marketing surface and the product look like one thing. Never edit a copy — `design/tokens.css` is the only committed one (`CLAUDE.md` → Three mirrors).
+They consume `tokens.css`, which is why the marketing surface and the product look like one thing. Never edit a copy — `design/tokens.css` is the only committed one (`AGENTS.md` → Three mirrors).
 
 ## Page fill
 

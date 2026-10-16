@@ -2,7 +2,7 @@
 
 Evergreen project knowledge: what this project is, what croc is and how it works, and the invariants that outlive any individual feature. Written dense, for AI-session consumption first and humans second.
 
-What does not belong here: decisions and their rationale (commit messages and PR descriptions carry those), open defects and deferred work (`../known-issues.md`), and anything that is a snapshot of work in progress. Stale facts get fixed or deleted in the session that notices them (root `CLAUDE.md`, "Session end report").
+What does not belong here: decisions and their rationale (commit messages and PR descriptions carry those), open defects and deferred work (`../known-issues.md`), and anything that is a snapshot of work in progress. Stale facts get fixed or deleted in the session that notices them (root `AGENTS.md`, "Session end report").
 
 ## Files
 
@@ -22,4 +22,4 @@ What does not belong here: decisions and their rationale (commit messages and PR
 | `screenshots.md` | you need to re-capture, add, or move an app screenshot |
 | `app-store-listing.md` | you prepare a store submission: listing copy, review notes, export compliance |
 
-Anything visual — app views, landing page, docs site — starts at `design/CLAUDE.md` instead.
+Anything visual — app views, landing page, docs site — starts at `design/AGENTS.md` instead.
