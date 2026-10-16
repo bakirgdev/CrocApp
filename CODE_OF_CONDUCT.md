@@ -43,9 +43,7 @@ We agree to restrict the following behaviors in our community. Instances, threat
 
 Tensions can occur between community members even when they are trying their best to collaborate. Not every conflict represents a code of conduct violation, and this Code of Conduct reinforces encouraged behaviors and norms that can help avoid conflicts and minimize harm.
 
-When an incident does occur, it is important to report it promptly. To report a possible violation, email **<bakirgdev@gmail.com>**. Reports are read only by the project maintainer, Bakir Gracic. Include what happened, where, when, and links or screenshots if you have them. If your report concerns the maintainer, you may instead report the account or content to GitHub through its [abuse reporting form](https://github.com/contact/report-abuse).
-
-This project applies the Code of Conduct across its GitHub issues, pull requests, discussions, code review, and commit history, as well as any other space where the project is officially represented.
+When an incident does occur, it is important to report it promptly. To report a possible violation, email **<bakirgdev@gmail.com>**. Reports are read only by the project maintainer, Bakir Gracic. Include what happened, where, when, and links or screenshots if you have them. If your report concerns the maintainer, you may instead report the account or content to GitHub ([how to report](https://docs.github.com/en/communities/maintaining-your-safety-on-github/reporting-abuse-or-spam)).
 
 Reports of violations are taken seriously and answered as promptly as one maintainer can manage. Every report is investigated, which may involve reviewing messages, logs, or the account history involved. Investigation and enforcement are kept as transparent as possible while prioritizing the safety and confidentiality of the person reporting. Enforcement actions are carried out in private with the involved parties, though communicating an outcome to the whole community may be part of a mutually agreed resolution.
 
@@ -74,12 +72,12 @@ This enforcement ladder is intended as a guideline. It does not limit the mainta
 
 ## Scope
 
-This Code of Conduct applies within all community spaces, and also applies when an individual is officially representing the community in public or other spaces. Examples of representing our community include using an official email address, posting via an official social media account, or acting as an appointed representative at an online or offline event.
+This Code of Conduct applies in all project spaces: GitHub issues, pull requests, discussions, code review, and commit history. It also applies when someone officially represents the project in public.
 
 ## Attribution
 
 This Code of Conduct is adapted from the Contributor Covenant, version 3.0, permanently available at [https://www.contributor-covenant.org/version/3/0/](https://www.contributor-covenant.org/version/3/0/).
 
-Contributor Covenant is stewarded by the Organization for Ethical Source and licensed under CC BY-SA 4.0. To view a copy of this license, visit [https://creativecommons.org/licenses/by-sa/4.0/](https://creativecommons.org/licenses/by-sa/4.0/)
+Contributor Covenant is stewarded by the Organization for Ethical Source and licensed under CC BY-SA 4.0. To view a copy of this license, visit [https://creativecommons.org/licenses/by-sa/4.0/](https://creativecommons.org/licenses/by-sa/4.0/).
 
-For answers to common questions about Contributor Covenant, see the FAQ at [https://www.contributor-covenant.org/faq](https://www.contributor-covenant.org/faq). Translations are provided at [https://www.contributor-covenant.org/translations](https://www.contributor-covenant.org/translations). Additional enforcement and community guideline resources can be found at [https://www.contributor-covenant.org/resources](https://www.contributor-covenant.org/resources). The enforcement ladder was inspired by the work of [Mozilla's code of conduct team](https://github.com/mozilla/inclusion).
+The enforcement ladder was inspired by the work of [Mozilla's code of conduct team](https://github.com/mozilla/inclusion).
