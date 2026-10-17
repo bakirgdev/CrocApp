@@ -8,7 +8,7 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 | --- | --- |
 | `workflows/ci.yml` | push-main + PR gate. A `changes` job diffs the base against the head and gates every other job by area; `ci pass` aggregates them |
 | `workflows/release.yml` | on `v*` tag: check the tag against `MARKETING_VERSION` and `CHANGELOG.md`, then (environment `release`) sign, notarize, write the Sparkle appcast, attest, publish. `workflow_dispatch` is a rehearsal that publishes nothing |
-| `workflows/go-weekly.yml` | Monday run of the Go checks, so new govulncheck findings surface without a code change; files or updates one `security` issue on failure |
+| `workflows/go-weekly.yml` | Monday run of the Go checks, so new govulncheck findings surface without a code change, plus `go test -fuzz` for 30 s per `Fuzz*` target (a failing input is uploaded as the `fuzz-failures` artifact); files or updates one `security` issue on failure |
 | `workflows/github-pages.yml` | builds `_site` on PR, also deploys on push to main |
 | `workflows/reusable-*.yml` | `workflow_call` only. Edit the check here, never in a caller |
 | `workflows/scorecard.yml` | OpenSSF Scorecard: Wednesday cron, `branch_protection_rule`, dispatch |

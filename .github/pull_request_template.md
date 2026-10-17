@@ -12,6 +12,7 @@ AI assistance: none / partial / substantial
 
 CI runs formatting, lint, the builds and the unit tests. List what you ran beyond that, with the result. Write "not verified" for anything you skipped.
 
+- [ ] New or changed behavior has an automated test (Go in `crocmobile/`, Swift in `CrocKit/Tests/` or `app/CrocAppTests/`)
 - [ ] Matching `scripts/verify-*.sh` harness, required for changes to `crocmobile/session.go`, `CrocKit/Sources/`, or `TransferController`
 - [ ] Tested by hand on: macOS / iOS / iPadOS (device or Simulator)
 
