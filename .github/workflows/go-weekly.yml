@@ -13,10 +13,48 @@ jobs:
   checks:
     uses: ./.github/workflows/reusable-go.yml
 
+  fuzz:
+    name: fuzz
+
+    runs-on: ubuntu-26.04
+
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: crocmobile
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: crocmobile/go.mod
+          cache-dependency-path: crocmobile/go.sum
+
+      # go test -fuzz takes one target per run, so list them instead of
+      # naming them here, and new targets join without a workflow edit.
+      - name: go test -fuzz
+        run: |
+          for target in $(go test -list '^Fuzz' . | grep '^Fuzz'); do
+            go test -run '^$' -fuzz "^${target}\$" -fuzztime 30s .
+          done
+
+      # A failure writes its input under testdata/fuzz/; keep it to reproduce
+      # with go test -run.
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fuzz-failures
+          path: crocmobile/testdata/fuzz/
+          if-no-files-found: ignore
+
   report:
     name: report
 
-    needs: checks
+    needs: [checks, fuzz]
 
     if: failure()
 
@@ -60,10 +98,11 @@ jobs:
               `**Commit:** \`${context.sha}\``,
               "",
               "### Next steps",
-              "1. Open the run log above and find which step failed: `go build`, `go vet`, golangci-lint, or govulncheck.",
-              "2. A govulncheck finding: bump the affected dependency in `crocmobile/go.mod`, re-run `go tool govulncheck ./...` locally to confirm clean, close this issue.",
-              "3. A lint or build failure with no source change behind it usually means a new golangci-lint or Go toolchain release changed the defaults. Pin or adapt, then close this issue.",
-              "4. If not fixable yet: record it in `docs/known-issues.md` per project convention, close this issue.",
+              "1. Open the run log above and find which step failed: `go build`, `go vet`, golangci-lint, govulncheck, or a fuzz target.",
+              "2. A fuzz failure: download the `fuzz-failures` artifact into `crocmobile/testdata/fuzz/`, reproduce with the `go test -run` line from the log, fix, and commit the input as a regression seed.",
+              "3. A govulncheck finding: bump the affected dependency in `crocmobile/go.mod`, re-run `go tool govulncheck ./...` locally to confirm clean, close this issue.",
+              "4. A lint or build failure with no source change behind it usually means a new golangci-lint or Go toolchain release changed the defaults. Pin or adapt, then close this issue.",
+              "5. If not fixable yet: record it in `docs/known-issues.md` per project convention, close this issue.",
             ].join("\n");
 
             await github.rest.issues.create({
