@@ -7,8 +7,7 @@ import AppKit
 #endif
 
 // This is the one file in the app that splits on `#if os()` for
-// UIKit/AppKit-backed colors — see design/swiftui-mapping.md, "That split
-// already exists in the app; keep it in one place."
+// UIKit/AppKit-backed colors (design/swiftui.md → Colors).
 
 /// 4pt spacing grid. design/spacing-layout.md → Spacing scale.
 enum Spacing {
@@ -26,8 +25,7 @@ enum Spacing {
 }
 
 /// Concentric radii. design/spacing-layout.md → Radii. Always pair with
-/// `style: .continuous` — "the default circular style visibly mismatches
-/// system chrome" (swiftui-mapping.md).
+/// `style: .continuous` (design/swiftui.md → Spacing, shape, layout).
 enum Radius {
     static let xs: CGFloat = 6
     static let sm: CGFloat = 10
@@ -60,27 +58,34 @@ enum IconSize {
     static let large: CGFloat = 28
 }
 
-/// design/spacing-layout.md → Layout caps.
+/// design/spacing-layout.md → Layout cap.
 enum LayoutCap {
     static let contentMaxWidth: CGFloat = 480
-    static let sheetMaxWidth: CGFloat = 540
 }
 
-/// Constants shared by more than one component. design/spacing-layout.md →
-/// "Row heights that are not tokenized (they are component constants, see
-/// components.md)". Anything used by only one component stays a private
-/// constant inside that component's file instead (components.md's own rule).
+/// design/components.md → States: `--opacity-disabled-container`.
+enum Opacity {
+    static let disabledContainer: Double = 0.5
+}
+
+/// design/typography.md → Tracking: `--tracking-code`, `--tracking-eyebrow`.
+enum Tracking {
+    static let code: CGFloat = 0.5
+    static let eyebrow: CGFloat = 0.6
+}
+
+/// Constants shared by more than one component (design/swiftui.md → Spacing,
+/// shape, layout). Anything used by only one component stays a private
+/// constant inside that component's file instead.
 enum ComponentMetrics {
-    static let settingsRowMinHeight: CGFloat = 52
     static let fileRowMinHeight: CGFloat = 48
-    static let sheetHeaderMinHeight: CGFloat = 52
-    static let switchSize = CGSize(width: 51, height: 31)
-    static let settingsRowIconTile: CGFloat = 29
-    static let settingsRowIconTileRadius: CGFloat = 7
     static let statusBlockCircle: CGFloat = 64
     static let statusBlockGlyph: CGFloat = 34
     static let trustBadgeFullCircle: CGFloat = 34
     static let qrFrameDefault: CGFloat = 168
+    /// Status border alpha for StatusBanner and TrustBadge `full`
+    /// (components.md → StatusBanner: 22% of the kind color).
+    static let statusBorderOpacity: Double = 0.22
 }
 
 /// design/motion.md → Motion. Durations in seconds for `Animation`.
@@ -88,7 +93,16 @@ enum Motion {
     static let durationFast: Double = 0.12
     static let durationBase: Double = 0.22
     static let durationSlow: Double = 0.36
-    static let pressScale: CGFloat = 0.97
+
+    /// `--ease-out` (motion.md): entrances, cross-fades, progress fills.
+    static func easeOut(_ duration: Double) -> Animation {
+        .timingCurve(0.16, 1, 0.3, 1, duration: duration)
+    }
+
+    /// `--ease-standard` (motion.md): color and background changes.
+    static func easeStandard(_ duration: Double) -> Animation {
+        .timingCurve(0.4, 0, 0.2, 1, duration: duration)
+    }
 }
 
 /// design/materials.md → Elevation. Geometry is theme-independent
@@ -134,16 +148,20 @@ extension View {
 }
 
 extension Color {
-    // MARK: - Accent (design/colors.md → Semantic aliases; design/swiftui-mapping.md → Colors)
+    // MARK: - Accent (design/colors.md → Semantic aliases; design/swiftui.md → Colors)
 
     /// Accent as a fill/icon/border/progress color — routes to the
     /// `AccentColor` asset set so `.tint()` / `Color.accentColor` pick it up
-    /// for free. "`Color.accentColor` is a fill, not a label color."
-    /// (swiftui-mapping.md) — never use this for a word, see `accentText`.
+    /// for free. A fill, not a label color (colors.md → Contrast, rule 1):
+    /// never use this for a word, see `accentText`.
     static var accentFill: Color { .accentColor }
 
     /// Pressed state for custom button styles built on the accent fill.
     static let accentPressed = Color("ColorAccentPressed")
+
+    /// `--color-accent-tint`: the drag-over and secondary-button fill. Alpha
+    /// is baked into the set (12% light / 16% dark).
+    static let accentTint = Color("ColorAccentTint")
 
     /// Accent as *text*. Accent-as-text is a different value from
     /// accent-as-fill: the brand green is 3.41:1 on white as a fill, which
@@ -159,20 +177,21 @@ extension Color {
     /// Label drawn on top of a solid accent fill (e.g. a prominent button).
     static let onAccent = Color("ColorOnAccent")
 
-    // MARK: - Text (design/swiftui-mapping.md → Colors)
+    /// `--color-on-status`: label on a solid status fill, white in both themes.
+    static let onStatus = Color.white
 
-    /// "prefer the system semantics over custom sets" for text
-    /// primary/secondary/tertiary.
+    // MARK: - Text (design/swiftui.md → Colors)
+
+    /// System semantics for text primary/secondary/tertiary.
     static var textPrimary: Color { .primary }
 
-    /// "`.secondary` is `--label-2` (0.60), not the web alias — that is
-    /// deliberate. The app stays visually native; only the web needs the
-    /// 0.75 correction." (swiftui-mapping.md, see colors.md rule 4.)
+    /// `.secondary` is `--label-2` (0.60), not the web alias: deliberate, the
+    /// app stays native and only the web needs the 0.75 correction
+    /// (colors.md → Contrast, rule 4).
     static var textSecondary: Color { .secondary }
 
-    /// Tertiary is decorative-only, never text: "`--color-text-tertiary` is
-    /// not a text color and not a UI-boundary color. 1.74:1. Decorative
-    /// fills only." (colors.md rule 5.)
+    /// Tertiary is decorative-only: not a text color and not a UI-boundary
+    /// color, 1.73:1 (colors.md → Contrast, rule 5).
     static var textTertiary: Color {
         #if os(iOS)
         Color(uiColor: .tertiaryLabel)
@@ -181,11 +200,11 @@ extension Color {
         #endif
     }
 
-    // MARK: - Status (design/swiftui-mapping.md → Colors)
+    // MARK: - Status (design/swiftui.md → Colors)
 
-    /// "system semantics already match the token values" for the four
-    /// status colors. A status color is a fill/glyph only, never a
-    /// foreground for text (colors.md rule 2) — see the `*Tint` colors below
+    /// System semantics match the token values for the four status colors.
+    /// A status color is a fill/glyph only, never a foreground for text
+    /// (colors.md → Contrast, rule 2); see the `*Tint` colors below
     /// for banner/badge backgrounds, and `Color.textPrimary` for their labels.
     static var statusSuccess: Color { .green }
     static var statusWarning: Color { .orange }
@@ -200,9 +219,9 @@ extension Color {
     static let statusErrorTint = Color("ColorStatusErrorTint")
     static let statusInfoTint = Color("ColorStatusInfoTint")
 
-    // MARK: - Surfaces (design/swiftui-mapping.md → Colors)
+    // MARK: - Surfaces (design/swiftui.md → Colors)
 
-    /// "`Color(.systemGroupedBackground)` (iOS); on macOS use `.windowBackground`".
+    /// `--color-surface-grouped`: iOS grouped background, macOS window background.
     static var surfaceGrouped: Color {
         #if os(iOS)
         Color(uiColor: .systemGroupedBackground)
@@ -212,13 +231,9 @@ extension Color {
     }
 
     /// `--color-surface-base` (colors.md → Semantic aliases): the plain,
-    /// unelevated page fill beneath grouped/card surfaces. Not in
-    /// swiftui-mapping.md's Colors table (a gap in that doc); iOS takes the
-    /// literal match, `.systemBackground`. macOS has no equivalent "base"
-    /// surface distinct from the window background, so this takes the
-    /// closest system semantic for a bordered control's own fill —
-    /// `.textBackgroundColor` — which is what CodeField (today's only
-    /// consumer) needs it for.
+    /// unelevated page fill. iOS takes `.systemBackground`; macOS has no
+    /// "base" surface distinct from the window background, so it takes
+    /// `.textBackgroundColor`, the fill of a bordered control (CodeField).
     static var surfaceBase: Color {
         #if os(iOS)
         Color(uiColor: .systemBackground)
@@ -227,12 +242,9 @@ extension Color {
         #endif
     }
 
-    /// "`Color(.secondarySystemGroupedBackground)` (iOS); macOS
-    /// `.background(.regularMaterial)` or a color set" — this file exposes a
-    /// plain `Color`, not a material, so macOS takes the closest solid
-    /// analog (`controlBackgroundColor`, content resting above the window
-    /// background); a view that wants the actual glass card uses
-    /// `.background(.regularMaterial)` directly instead of this token.
+    /// `--color-surface-card`: iOS `.secondarySystemGroupedBackground`; macOS
+    /// takes the closest solid analog, `controlBackgroundColor`. A view that
+    /// wants a glass card uses `.glassEffect()` instead of this token.
     static var surfaceCard: Color {
         #if os(iOS)
         Color(uiColor: .secondarySystemGroupedBackground)
@@ -241,7 +253,7 @@ extension Color {
         #endif
     }
 
-    /// "`Color(.separator)` / the `Divider` default".
+    /// `--color-separator`: the system separator.
     static var separatorToken: Color {
         #if os(iOS)
         Color(uiColor: .separator)
@@ -260,8 +272,7 @@ extension Color {
 }
 
 /// The sender's code-phrase display: the one documented literal font size
-/// in the type scale (design/swiftui-mapping.md → Typography, "the one
-/// place a literal size is acceptable, and it must still scale"). Wrapped in
+/// in the type scale (design/swiftui.md → Typography). Wrapped in
 /// `@ScaledMetric` so it keeps tracking Dynamic Type despite the literal.
 private struct CodeHeroTextStyle: ViewModifier {
     @ScaledMetric(relativeTo: .title) private var size: CGFloat = 30

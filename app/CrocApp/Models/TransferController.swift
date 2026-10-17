@@ -93,6 +93,10 @@ final class TransferController {
     private var scopedURLs: [URL] = []
     private var cancelRequested = false
     private var declineRequested = false
+    /// The current transfer ended because the user tapped Cancel or Decline.
+    /// A background-expiry cancel does not count. Haptics read this so a
+    /// button press never fires the failure haptic.
+    var endedByUser: Bool { (cancelRequested && !backgroundExpired) || declineRequested }
     private var receivedText: String?
     private var outDir: URL?
     private var lastProgressBytes: Int64 = 0
@@ -370,11 +374,9 @@ final class TransferController {
     private func run(_ start: @escaping () async throws -> EngineTransfer) {
         phase = .starting
         let title =
-            switch (direction, isStoredTransfer) {
-            case (.send, false): "Sending with CrocApp"
-            case (.send, true): "Uploading with CrocApp"
-            case (.receive, false): "Receiving with CrocApp"
-            case (.receive, true): "Downloading with CrocApp"
+            switch direction {
+            case .send: "Sending with CrocApp"
+            case .receive: "Receiving with CrocApp"
             }
         background.transferStarted(title: title) { [weak self] in
             guard let self else { return }
@@ -542,7 +544,7 @@ final class TransferController {
                 // declineRequested cannot be set, and the cancel paths are
                 // excluded above -- what is left can only be this.
                 phase = .failed(
-                    "The sender asked to confirm this transfer manually, which auto-accept can't answer. Turn off auto-accept in Settings and try again, or ask the sender to resend without their confirmation option."
+                    "The sender asked to confirm this transfer manually, which auto-accept can't answer. Turn off Auto-Accept Transfers in Settings and try again, or ask the sender to resend without their confirmation option."
                 )
             } else {
                 var copy = Self.friendlyMessage(
@@ -650,9 +652,9 @@ final class TransferController {
     private var backgroundExpiredCopy: String {
         switch (isStoredTransfer, direction) {
         case (false, _): "iOS paused the transfer in the background." + Self.resumeHint
-        case (true, .send): "Upload interrupted: iOS stopped it in the background. Try again."
+        case (true, .send): "Sending was interrupted: iOS stopped it in the background. Try again."
         case (true, .receive):
-            "Download interrupted: iOS stopped it in the background. Open the link again."
+            "Receiving was interrupted: iOS stopped it in the background. Open the link again."
         }
     }
 
@@ -671,7 +673,7 @@ final class TransferController {
         if declineRequested { return "You declined the transfer." }
         if stored, failure.code == .relayUnreachable || failure.code == .connectionLost {
             return
-                "Couldn't reach the transfer server. Check your internet connection and try again."
+                "Couldn't reach the link server. Check your internet connection and try again."
         }
         // Never echo failure.message: croc adds new error text every release,
         // and a recovered Go panic arrives with a full stack trace attached.
@@ -682,9 +684,9 @@ final class TransferController {
             return "Couldn't reach the relay. Check your internet connection."
         case .noPublicRelay:
             return
-                "No public relay answered. Check your internet connection, or turn on Local network only in Settings if both devices are on the same network."
+                "No public relay answered. Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network."
         case .declined:
-            return "The other side declined or cancelled the transfer."
+            return "The other device declined or cancelled the transfer."
         case .refused:
             return "You declined the transfer."
         case .roomFull:
@@ -699,12 +701,12 @@ final class TransferController {
             return "Lost connection to the other device."
         case .storeLimit:
             return
-                "The transfer server refused this upload: it is over the server's size, file count or download limit, or too many uploads were made recently."
+                "The link server refused this send: it is over the server's size, file count or download limit, or too many sends were made recently."
         case .storeExpired:
             return "This link has expired, was revoked, or has no downloads left."
         case .invalidSetting:
             return
-                "An Advanced setting can't be used. Check the proxies, addresses, ports and upload speed limit in Settings > Advanced."
+                "An Advanced setting can't be used. Check the proxies, addresses, ports and send speed limit in Settings > Advanced."
         case .other:
             return "Transfer failed. Try again, or check your connection."
         }

@@ -513,7 +513,7 @@ mac_titles() {                                      # the window title(s) a scre
     send-files|send-code|sending|stored-link) echo "Send" ;;
     receive-code|receive-incoming|receive-conflict|receiving|receive-done) echo "Receive" ;;
     history) echo "History" ;;
-    how-it-works) echo "How it works" ;;
+    how-it-works) echo "How It Works" ;;
     settings) echo "CrocApp Settings|General|Settings" ;;
     settings-advanced) echo "Advanced" ;;
   esac

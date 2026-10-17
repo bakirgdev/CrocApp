@@ -24,6 +24,12 @@ struct SendView: View {
     @State private var linkLifetime = LinkLifetime.day
     @State private var linkDownloads = 1
 
+    /// Cap on the staged-files list and the text editor; the floor is the
+    /// DropZone's, so the Files tab does not change height as files arrive.
+    private static let queueMaxHeight: CGFloat = 280
+    /// The accent border a drag draws over the staged list (DropZone: 2pt).
+    private let dropBorderWidth: CGFloat = 2
+
     /// How long a stored upload stays on the server (R18).
     private enum LinkLifetime: Int, CaseIterable {
         case hour = 3_600
@@ -63,9 +69,9 @@ struct SendView: View {
             // Padding inside the scroll view: outside it, the scroll view's
             // clip cuts off the Toggle switch, which draws past its frame.
             if dynamicTypeSize.isAccessibilitySize {
-                ScrollView { formContent.padding() }
+                ScrollView { formContent.padding(Spacing.space5) }
             } else {
-                formContent.padding()
+                formContent.padding(Spacing.space5)
             }
         }
         .frame(maxWidth: LayoutCap.contentMaxWidth)
@@ -73,7 +79,7 @@ struct SendView: View {
 
     private var formContent: some View {
         VStack(spacing: Spacing.space5) {
-            Picker("What to send", selection: $mode) {
+            Picker("What to Send", selection: $mode) {
                 ForEach(Mode.allCases, id: \.self) { Text($0.rawValue) }
             }
             .pickerStyle(.segmented)
@@ -88,15 +94,16 @@ struct SendView: View {
             linkOptions
 
             if !linkSelected {
-                TextField(
-                    "Custom code (optional, at least \(EngineConstraints.minCodeLength) characters)",
-                    text: $customCode
-                )
-                .textFieldStyle(.roundedBorder)
-                .autocorrectionDisabled()
-                #if os(iOS)
-                .textInputAutocapitalization(.never)
-                #endif
+                CodeField(
+                    placeholder: "Custom code (optional)",
+                    text: $customCode,
+                    isInvalid: !customCodeTrimmed.isEmpty
+                        && customCodeTrimmed.count < EngineConstraints.minCodeLength,
+                    invalidMessage:
+                        "A code is at least \(EngineConstraints.minCodeLength) characters."
+                ) { pasted in
+                    customCode = pasted
+                }
             }
 
             Button {
@@ -107,22 +114,25 @@ struct SendView: View {
                 } else if mode == .files {
                     controller.startSend(
                         urls: pickedURLs,
-                        customCode: customCode.trimmingCharacters(in: .whitespaces))
+                        customCode: customCodeTrimmed)
                 } else {
-                    controller.startSendText(
-                        text, customCode: customCode.trimmingCharacters(in: .whitespaces))
+                    controller.startSendText(text, customCode: customCodeTrimmed)
                 }
             } label: {
                 Label(
-                    linkSelected ? "Upload" : "Send",
+                    linkSelected ? "Send as Link" : "Send",
                     systemImage: linkSelected ? "link.circle.fill" : "arrow.up.circle.fill"
                 )
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonVariant(.prominent)
             .controlSize(.large)
             .disabled(!canStart)
         }
+    }
+
+    private var customCodeTrimmed: String {
+        customCode.trimmingCharacters(in: .whitespaces)
     }
 
     /// Why "Send as link" cannot be used for what is staged, or nil (R18).
@@ -152,13 +162,13 @@ struct SendView: View {
 
     @ViewBuilder private var linkOptions: some View {
         VStack(alignment: .leading, spacing: Spacing.space3) {
-            Toggle("Send as link", isOn: Binding(get: { linkSelected }, set: { sendAsLink = $0 }))
+            Toggle("Send as Link", isOn: Binding(get: { linkSelected }, set: { sendAsLink = $0 }))
                 .disabled(linkUnavailableReason != nil)
                 .accessibilityHint(linkToggleHint)
             if let reason = linkUnavailableReason {
                 Text(reason).font(.caption).foregroundStyle(.secondary)
             } else if linkSelected {
-                Picker("Link lasts", selection: $linkLifetime) {
+                Picker("Link Lasts", selection: $linkLifetime) {
                     ForEach(LinkLifetime.allCases, id: \.self) { Text($0.label) }
                 }
                 Stepper(value: $linkDownloads, in: 1...100) {
@@ -168,13 +178,13 @@ struct SendView: View {
                     StatusBanner(kind: .error, title: error + " Change it in Settings.")
                 } else {
                     Text(
-                        "Files are encrypted on this device and uploaded to \(serverHost). Anyone with the link can download them until it expires or runs out."
+                        "Files are encrypted on this device before they reach \(serverHost). Anyone with the link can receive them until it expires or runs out."
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
             } else {
-                Text("Upload encrypted files and share a link instead of a code.")
+                Text("Send encrypted files as a link instead of with a code.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -192,9 +202,7 @@ struct SendView: View {
                 && AppSettings.storedServerError(settings.storedServer) == nil
         }
         let codeOK =
-            customCode.isEmpty
-            || customCode.trimmingCharacters(in: .whitespaces).count
-                >= EngineConstraints.minCodeLength
+            customCode.isEmpty || customCodeTrimmed.count >= EngineConstraints.minCodeLength
         let payloadOK = mode == .files ? !pickedURLs.isEmpty : !text.isEmpty
         return codeOK && payloadOK
     }
@@ -212,10 +220,10 @@ struct SendView: View {
         VStack(spacing: Spacing.space4) {
             Group {
                 if pickedURLs.isEmpty {
-                    ContentUnavailableView(
-                        "Drop files or folders here",
-                        systemImage: "square.and.arrow.up.on.square",
-                        description: Text("or add them with the buttons below"))
+                    DropZone(
+                        title: "Drop files or folders here",
+                        hint: "or add them with the buttons below",
+                        isTargeted: isDropTargeted)
                 } else {
                     List {
                         ForEach(Array(pickedURLs.enumerated()), id: \.element) { index, url in
@@ -235,15 +243,15 @@ struct SendView: View {
                     // problem: without this the List paints the system
                     // grouped background behind FileRow's own card fill.
                     .scrollContentBackground(.hidden)
-                }
-            }
-            .frame(minHeight: 160, maxHeight: 280)
-            .overlay {
-                if isDropTargeted {
-                    // design/components.md → DropZone: drag-over border is
-                    // 2px solid accent at the same radius as idle (--radius-lg).
-                    RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                        .strokeBorder(Color.accentColor, lineWidth: 2)
+                    .frame(minHeight: DropZone.minHeight, maxHeight: Self.queueMaxHeight)
+                    .overlay {
+                        // The empty DropZone draws its own drag-over state;
+                        // a list in the way gets the same accent border.
+                        if isDropTargeted {
+                            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                                .strokeBorder(Color.accentFill, lineWidth: dropBorderWidth)
+                        }
+                    }
                 }
             }
             .dropDestination(for: URL.self) { urls, _ in
@@ -266,6 +274,7 @@ struct SendView: View {
 
     @ViewBuilder private var importButtons: some View {
         Button("Add Files") { showFileImporter = true }
+            .buttonVariant(.secondary)
             .fileImporter(
                 isPresented: $showFileImporter,
                 allowedContentTypes: [.item],
@@ -276,6 +285,7 @@ struct SendView: View {
                 }
             }
         Button("Add Folder") { showFolderImporter = true }
+            .buttonVariant(.secondary)
             .fileImporter(
                 isPresented: $showFolderImporter,
                 allowedContentTypes: [.folder]
@@ -293,12 +303,11 @@ struct SendView: View {
             TextEditor(text: $text)
                 .accessibilityLabel("Text to send")
                 .font(.body.monospaced())
-                .frame(minHeight: 160, maxHeight: 280)
+                .frame(minHeight: DropZone.minHeight, maxHeight: Self.queueMaxHeight)
                 .overlay {
-                    // Not a design/components.md named component; nearest
-                    // token to the prior 8px radius.
+                    // Not a named component; nearest token to the prior 8pt radius.
                     RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
-                        .strokeBorder(Color.secondary.opacity(0.3))
+                        .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
                 }
             PasteButton(payloadType: String.self) { strings in
                 if let pasted = strings.first {

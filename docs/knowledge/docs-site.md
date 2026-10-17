@@ -10,11 +10,19 @@ pnpm --dir web/docs start
 
 `start` runs the `tokens` script first (`cp ../../design/tokens.css src/css/tokens.css`), then `docusaurus start`. `tokens.css` is gitignored, same pattern as `web/landing/tokens.css`: edit `design/tokens.css`, never `web/docs/src/css/tokens.css` directly, the copy is overwritten on every `start` or `build`.
 
+The same `tokens` script copies `web/landing/assets/img/mascot-web.webp` to `static/img/mascot.webp` (gitignored), the navbar logo. It is the one web derivative of the mascot (`design/brand.md` → Mascot); never commit a second copy.
+
 To build the full Pages artifact (both surfaces, what CI publishes) locally:
 
 ```bash
 scripts/assemble-site.sh          # writes ./_site/, landing at /, docs at /docs/
 ```
+
+## Content and styling rules
+
+- Page copy is bound by `design/content.md` (terminology, capitalization, the approved security claims) and `design/brand.md`. Headings and sidebar titles are sentence case; app controls are quoted in bold, Title Case, exactly as the app spells them.
+- Theme styling lives in `web/docs/src/css/custom.css`, mapped onto `design/tokens.css` with no literals (`design/web.md` → Docs site). The code theme is `src/prismTheme.ts`, the same token mapping. The navbar collapses at Docusaurus's own 996px breakpoint, not ours, so do not set `display` on a `.navbar__item` outside a `min-width: 997px` media query.
+- Screenshots come from `scripts/capture-screenshots.sh --copy-web` and go in as a light and dark pair on one line, each with a `#gh-light-mode-only` or `#gh-dark-mode-only` fragment (`custom.css` shows the one that matches the theme toggle). Docusaurus rewrites the paths to hashed ones, so the phone-width cap in `custom.css` keys off the alt text: an iPhone shot's alt must say "on iOS".
 
 ## Adding a page
 

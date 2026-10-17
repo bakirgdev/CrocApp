@@ -10,6 +10,14 @@ extra sections where a release needs them, and the project follows
 
 ## [Unreleased]
 
+### Changed
+
+- Buttons are easier to read in light mode: text labels now use the darker green, and destructive labels are no longer drawn in red text.
+- The screen that asks you to accept a transfer shows a Receiving header, the encryption badge and the file list as rows. Its Cancel button is gone: Decline answers the other device, leaving the screen gives no answer, and Home shows a banner to return to a request that is still waiting.
+- Send as Link now says Sending and Receiving like every other transfer, and copying the code shows "Copied".
+- On iPhone, a light haptic marks a finished, failed or incoming transfer and a copied or scanned code. Cancelling or declining yourself stays silent.
+- Settings labels use title case, and "Auto-accept incoming files" is now "Auto-Accept Transfers".
+
 ## [1.0.0] - 2026-10-15
 
 CrocApp 1.0 is on three channels: the iOS and iPadOS App Store, the Mac App Store, and a notarized disk image for Mac. The App Store listings are linked from crocapp.dev. The other device needs croc 11 or newer.

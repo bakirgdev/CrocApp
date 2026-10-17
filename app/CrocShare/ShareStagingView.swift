@@ -28,7 +28,8 @@ struct ShareStagingView: View {
                     }
                 case .failed(let error):
                     ContentUnavailableView {
-                        Label("Couldn't prepare files", systemImage: "exclamationmark.triangle")
+                        Label(
+                            "Couldn't prepare files", systemImage: "exclamationmark.triangle.fill")
                     } description: {
                         Text(error.localizedDescription)
                     }

@@ -15,8 +15,8 @@
     <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon/favicon-96x96.png" />
     <link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png" />
 
-    <!-- --paper / --ink as literals: a <meta> attribute cannot read a custom
-         property. Keep in sync with design/colors.md and index.html. -->
+    <!-- --bg-base light and dark as literals: a <meta> attribute cannot read a
+         custom property. Keep in sync with design/colors.md and index.html. -->
     <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
@@ -28,12 +28,12 @@
     <script>
       try {
         var t = localStorage.getItem("theme");
-        if (t) document.documentElement.dataset.theme = t;
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
       } catch (e) {}
     </script>
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main">Skip to Content</a>
 
     <header class="nav">
       <div class="container nav__inner">
@@ -114,8 +114,8 @@
 
             <h2 class="t-web-sub">Privacy</h2>
             <p>
-              What CrocApp collects (nothing) and which servers it talks to are on the
-              <a href="/privacy/">privacy page</a>.
+              CrocApp has no accounts, analytics, ads or tracking, and history stays on the device. The
+              <a href="/privacy/">privacy page</a> lists every server it can contact.
             </p>
           </div>
         </div>
@@ -135,22 +135,17 @@
         />
         <div class="footer__text t-footnote">
           <p>
-            CrocApp is MIT licensed and built on
-            <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a>
-            by Zack Scholl, also MIT licensed.
-          </p>
-          <p>
-            Unofficial and unaffiliated. Nothing here implies endorsement by croc's author. Apple,
-            iPhone, iPad, Mac and AirDrop are trademarks of Apple Inc.
+            Built on <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a>
+            by Zack Scholl (MIT). CrocApp is unofficial and not affiliated with croc.
           </p>
         </div>
         <nav class="footer__links t-footnote" aria-label="Footer">
           <a href="/">Home</a>
           <a href="/docs/">Documentation</a>
-          <a href="/support/" aria-current="page">Help and contact</a>
+          <a href="/support/" aria-current="page">Help and Contact</a>
           <a href="/privacy/">Privacy</a>
           <a href="https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md" target="_blank" rel="noopener">
-            Security policy
+            Security Policy
             <span class="u-visually-hidden">(opens in a new tab)</span>
           </a>
         </nav>

@@ -15,10 +15,10 @@ Limits come from Apple's App Store Connect Help (URLs in "Sources"). Two are byt
 | Name | 30 characters (min 2) | 7 | App information page |
 | Subtitle | 30 characters | 29 | App information page |
 | Promotional text | 170 characters | 152 | Platform version information page |
-| Description | 4000 characters | 2930 | Platform version information page |
+| Description | 4000 characters | 2932 | Platform version information page |
 | Keywords | 100 **bytes** (each keyword more than two characters) | 98 | Platform version information page |
-| What's New | 4000 characters | 1495 | Platform version information page |
-| App Review notes | 4000 **bytes** | 3289 | Platform version information page |
+| What's New | 4000 characters | 1436 | Platform version information page |
+| App Review notes | 4000 **bytes** | 3318 | Platform version information page |
 | Support URL, Marketing URL, Privacy Policy URL | no limit stated; full URL with protocol | n/a | Platform version information page, App information page |
 | Copyright | no limit stated; year first, then the holder; Apple adds the copyright symbol | n/a | Platform version information page |
 
@@ -43,7 +43,7 @@ Send files with a code phrase
 Editable without a new build or review.
 
 ```text
-Free, open source, no account. Send files, folders or text to another device with a short code phrase, end to end encrypted. An unofficial app for croc.
+Free, open source, no account. Send files, folders or text to another device with a short code phrase, end-to-end encrypted. An unofficial app for croc.
 ```
 
 ## Description
@@ -54,10 +54,10 @@ CrocApp sends files, folders and text from one device to another with a short co
 HOW IT WORKS
 1. Choose what to send: files, a folder, or some text.
 2. CrocApp shows a code phrase and a QR code. Read it out, message it, or let the other person scan it.
-3. The other side enters the phrase, sees the list of files, and accepts. The transfer starts.
+3. The other device enters the phrase, sees the list of files, and accepts. The transfer starts.
 
 PRIVATE BY DESIGN
-Transfers are end to end encrypted. The code phrase authenticates both sides, and a relay that passes the data along only ever sees ciphertext. CrocApp has no accounts, no analytics, no ads and no tracking, and your transfer history stays on your device. CrocApp has not had a formal third-party security audit.
+Transfers are end-to-end encrypted. The code phrase authenticates both devices, and a relay that passes the data along only ever sees ciphertext. CrocApp has no accounts, no analytics, no ads and no tracking, and your transfer history stays on your device. CrocApp has not had a formal third-party security audit.
 
 FREE AND OPEN SOURCE
 CrocApp is free: no purchases, no subscription, no tiers. The source code is public under the MIT license at github.com/bakirgdev/CrocApp.
@@ -70,14 +70,14 @@ WHAT YOU CAN DO
 - Receive with a code phrase, a scanned QR code, or a link. Opening a link only fills in the code; nothing connects until you tap Receive.
 - See the file list before you accept, and choose Keep Both or Replace when a name is already taken.
 - Watch progress and speed, cancel at any time, and resume an interrupted transfer.
-- Send as a link: upload encrypted files for the receiver to download later, with a lifetime of 1 hour, 1 day or 7 days and a limit on downloads (up to 100 files and 1 GiB). You can revoke the link from History.
+- Send as Link: share encrypted files for someone who is not online, with a lifetime of 1 hour, 1 day or 7 days and a limit on downloads (up to 100 files and 1 GiB). You can revoke the link from History.
 - Use your own relay, force local-network-only transfers, or route through a proxy, from Settings.
 - iPhone and iPad: send from any app with the share sheet, follow a transfer in a Live Activity, find received files in the Files app, and use Shortcuts and Siri actions.
 - Mac: drag and drop, a menu bar window for quick sends, and Shortcuts actions.
 - Light and dark appearance, Dynamic Type and VoiceOver.
 
 WHAT TO KNOW
-By default CrocApp uses the public relays run by the croc project to connect two devices, and the croc project's server at getcroc.com for links. Your files are encrypted before they leave your device. You can point CrocApp at relays and a link server you run yourself. Nearby transfers over the local network depend on what your network and device allow.
+By default CrocApp uses the public relays run by the croc project to connect two devices, and the croc project's link server at getcroc.com for links. Your files are encrypted before they leave your device. You can point CrocApp at relays and a link server you run yourself. Nearby transfers over the local network depend on what your network and device allow.
 
 CrocApp is an independent project. It is unofficial and not affiliated with or endorsed by croc or its author. croc is MIT licensed. Apple, iPhone, iPad, Mac and Siri are trademarks of Apple Inc.
 
@@ -86,10 +86,10 @@ Free to use, with no account. Questions and bug reports: https://crocapp.dev/sup
 
 ## Keywords
 
-Comma separated, no spaces. Words already in the name or subtitle (`crocapp`, `send`, `files`, `code`, `phrase`) and the category (`utilities`) are left out because Apple already indexes them. `croc` is a deliberate keep: the name is one token, and the protocol name is what people search. `airdrop` is left out on purpose (another company's trademark).
+Comma separated, no spaces. Words already in the name or subtitle (`crocapp`, `send`, `files`, `code`, `phrase`) and the category (`utilities`) are left out because Apple already indexes them. `croc` is a deliberate keep: the name is one token, and the protocol name is what people search. `airdrop` is left out on purpose (another company's trademark). `secure`, `p2p` and `peer` are search terms people type; keywords are never shown, so `design/content.md` → Terminology, which binds displayed copy, does not apply to them.
 
 ```text
-croc,transfer,share,encrypted,private,qr,p2p,secure,wormhole,folder,lan,nearby,e2ee,drop,peer,text
+croc,transfer,share,encrypted,secure,private,qr,p2p,wormhole,folder,lan,nearby,e2ee,drop,peer,text
 ```
 
 ## What's New in 1.0.0
@@ -101,16 +101,16 @@ CrocApp 1.0 is the first App Store release.
 
 New
 - iPhone, iPad and Mac from one App Store listing.
-- Send as link: upload encrypted files to a server and share a link or QR code, so the receiver can download later. You choose the lifetime and the number of downloads, and can revoke the link from History.
+- Send as Link: share encrypted files by link or QR code with someone who is not online. You choose the lifetime and the number of downloads, and can revoke the link from History.
 - Links: opening a CrocApp link, a crocapp.dev/r/ link or a getcroc.com link fills in the code on the Receive screen. Nothing connects until you tap Receive.
 - A Keep Both or Replace choice when a received file has the same name as one you already have.
-- Advanced settings: proxies, encryption curve, file hash, upload speed limit, ports and more. The defaults suit most people.
+- Advanced settings: proxies, encryption curve, file hash, send speed limit, ports and more. The defaults suit most people.
 - Mac menu bar quick send, and Shortcuts and Siri actions for sending and receiving.
 - iPad File menu: Show Receive Folder in Files (Shift Command R).
 
 Changed
 - The transfer engine is now croc 11.5.4. A device running croc 10 can no longer transfer with CrocApp; it needs croc 11 or newer.
-- Errors say what went wrong: a wrong code, a refused transfer, a lost connection, a peer on an older croc, or no public relay available.
+- Errors say what went wrong: a wrong code, a refused transfer, a lost connection, a device on an older croc, or no public relay available.
 - History keeps less of a code than before, and never the whole code.
 - Every screen works at the largest text sizes and with VoiceOver.
 - The QR code on the sender's screen now opens CrocApp, or a page that explains what to do when the app is missing.
@@ -127,7 +127,7 @@ CrocApp is free and open source. It is unofficial and not affiliated with croc o
 | Privacy Policy URL | `https://crocapp.dev/privacy/` |
 | Primary category | Utilities (matches `LSApplicationCategoryType` `public.app-category.utilities` in the build settings, verified locally) |
 | Secondary category | Productivity (optional; a judgement call, drop it if unsure). Unknown whether the iOS and macOS platforms of one record share categories; check the App Information page shows both. |
-| Copyright | `2026 Bakir Gračić` (the holder in `LICENSE` is "Bakir Gračić", with the accent; Apple adds the symbol) |
+| Copyright | `2026 Bakir Gracić` (the holder in `LICENSE` is "Bakir Gracić", with the accent; Apple adds the symbol) |
 | Price | Free (USD 0), no In-App Purchases |
 | Version | 1.0.0 (`app/Config/Version.xcconfig`, `MARKETING_VERSION`); attach the iOS and macOS builds that processed in TestFlight |
 | Privacy choices URL | leave empty (optional per Apple) |
@@ -195,33 +195,33 @@ Sending arbitrary files to another person is not content the app hosts or shows.
 
 ## Review notes
 
-Paste into App Review Information, Notes (4000 bytes; this block is 3289). Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
+Paste into App Review Information, Notes (4000 bytes; this block is 3306). Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
 
 ```text
-CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end to end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email on 2026-10-14. Source: https://github.com/bakirgdev/CrocApp
+CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end-to-end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email on 2026-10-14. Source: https://github.com/bakirgdev/CrocApp
 
 ACCOUNT: none. There is no login, sign-up, purchase or subscription, so there is no demo account. Sign-in required is off.
 
-NETWORK: transfers connect two devices through croc's public relay pool (1.getcroc.com to 4.getcroc.com, TCP port 9009), which only forwards ciphertext. Links ("Send as link", optional) use https://getcroc.com. The croc maintainer runs both, not CrocApp. Settings lets a user pick their own relay and link server. No analytics, ads or developer-side servers. If your network blocks outbound port 9009 the app reports "No public relay answered"; please test on an open network.
+NETWORK: transfers connect two devices through croc's public relay pool (1.getcroc.com to 4.getcroc.com, TCP port 9009), which only forwards ciphertext. Links ("Send as Link", optional) use https://getcroc.com. The croc maintainer runs both, not CrocApp. Settings lets a user pick their own relay and link server. No analytics, ads or developer-side servers. If your network blocks outbound port 9009 the app reports "No public relay answered"; please test on an open network.
 
 PERMISSIONS (first use, both optional):
-- Local network: "CrocApp uses the local network to discover nearby devices for direct, faster transfers." Used only to find a peer on the same network. Denying it leaves relay transfers working.
-- Camera (iPhone and iPad only): "CrocApp uses the camera to scan QR transfer codes." Used only on Receive, Scan QR Code. Typing the code works without it.
+- Local network: "CrocApp uses the local network to discover nearby devices for direct, faster transfers." Used only to find another device on the same network. Denying it leaves relay transfers working.
+- Camera (iPhone and iPad only): "CrocApp uses the camera to scan the QR code for a code phrase." Used only on Receive, Scan QR Code. Typing the code works without it.
 
-TEST WITHOUT A SECOND DEVICE: use croc's own browser client at https://getcroc.com as the peer. Use a browser on your computer. For the macOS build, use a browser on the same Mac. Use the default settings.
+TEST WITHOUT A SECOND DEVICE: use croc's own browser client at https://getcroc.com as the other device. Use a browser on your computer. For the macOS build, use a browser on the same Mac. Use the default settings.
 
 1. App sends, browser receives.
    a. In CrocApp tap Send, Add Files (or type text), then tap Send. A code phrase like cape-junky-widow and a QR code appear.
-   b. In the browser open https://getcroc.com, choose Receive, enter the code, and accept. The file downloads in the browser.
+   b. In the browser open https://getcroc.com, choose Receive, enter the code, and accept. The browser saves the file.
    c. Or tap Share Link in CrocApp, open that https://crocapp.dev/r/ link in a browser, and tap "Receive in your browser".
 2. Browser sends, app receives.
    a. At https://getcroc.com choose Send, choose a file, and note the code the page shows.
    b. In CrocApp tap Receive, type the code (or paste the getcroc.com link; the app keeps only the code), and tap Receive.
-   c. The incoming file list appears. Tap Accept. The file is saved to the receive folder (on iPhone and iPad, On My iPhone, CrocApp, in the Files app).
+   c. The file list appears. Tap Accept. The file is saved to the receive folder (on iPhone and iPad, On My iPhone, CrocApp, in the Files app).
 3. Link flow: tap the link https://crocapp.dev/r/#cape-junky-widow in Notes or Messages with CrocApp installed (iOS does not open the app for a URL typed into Safari), or open that page in a browser and press Open in CrocApp. CrocApp opens on Receive with the code filled in and does not connect until you tap Receive.
-4. Optional, Send as link: in Send choose files, turn on "Send as link", tap Upload. A link and QR code appear. Open the link in a browser to download. In History, Revoke Link makes it stop working.
+4. Optional, Send as link: in Send choose files, turn on "Send as Link", then tap Send as Link. A link and QR code appear. Open the link in a browser to get the file. In History, Revoke Link makes it stop working.
 
-The browser UI at getcroc.com is the croc project's and may change wording; the flow stays: one side shows a code, the other enters it.
+The browser UI at getcroc.com is the croc project's and may change wording; the flow stays: one device shows a code, the other enters it.
 
 Please keep CrocApp in the foreground during a transfer on iPhone and iPad. A transfer can continue briefly in the background through a system Live Activity.
 

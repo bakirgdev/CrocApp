@@ -6,45 +6,42 @@ How the interface changes and how it answers back. What a surface is made of is 
 
 | Token | Value | Use |
 |---|---|---|
-| `--ease-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` | color/background changes |
-| `--ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` | entrances, position, progress fills |
-| `--dur-fast` | 120ms | press feedback, hover, focus |
-| `--dur-base` | 220ms | segment thumb, toggle, progress |
-| `--dur-slow` | 360ms | sheet / screen transitions |
-| `--press-scale` | 0.97 | buttons shrink slightly when pressed |
+| `--ease-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` | color and background changes, hover |
+| `--ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` | entrances, cross-fades, position, progress fills |
+| `--dur-fast` | 120ms | press feedback, hover, drag-over |
+| `--dur-base` | 220ms | phase cross-fade, progress |
+| `--dur-slow` | 360ms | the slow-connection hint |
+| `--press-scale-web` | 0.97 | web buttons shrink slightly when pressed |
 
-Progress bars animate width at `--dur-base` `--ease-out`. The indeterminate bar is a 40%-wide fill sliding left `-40% → 100%` over 1.2s on `--ease-standard`, infinite.
+The app takes press feedback from the system button styles and adds no scale of its own, which is why the press scale is web-only.
 
-Under `prefers-reduced-motion` / `.accessibilityReduceMotion`: drop `--press-scale`, drop the indeterminate slide (hold a static 40% fill or a pulsing opacity), keep every state change instant rather than removed. `tokens.css` zeroes the durations and the press scale; the looping animation is the component's own to gate.
+**No springs, no bounce, no overshoot.** Neither curve passes y = 1. Skills and samples that reach for `.spring` or a bouncy curve are overruled here: a transfer screen that performs is a transfer screen you do not trust.
+
+Under `prefers-reduced-motion` and `.accessibilityReduceMotion`: no press scale, no indeterminate slide (hold a static fill), and every state change stays, instant rather than removed. `tokens.css` zeroes the durations and the press scale; a looping animation is its component's own to gate. In SwiftUI, pass `nil` instead of an animation when reduce motion is on.
 
 ## Choreography
 
-A transfer is a phase machine, and the transitions between phases are the product. `idle → starting → waiting / connecting → confirmSend | incoming → transferring → done | failed`.
+A transfer is a phase machine, and the transitions between phases are the product: `idle → starting → waiting / connecting → confirmSend | incoming → transferring → done | failed | stored`.
 
-Three rules cover all of it:
+1. **The phase container cross-fades; its contents do not animate in separately.** One `--dur-base` `--ease-out` opacity transition on the block that swaps. No stagger, no cascade.
+2. **What persists must not move.** The direction header, the trust badge and the code phrase keep their position across every phase that shows them. A code phrase that jumps when the transfer starts is the worst thing this screen can do, because it is what the user is reading aloud.
+3. **Terminal phases arrive, they do not celebrate.** `done` and `failed` cross-fade in like any other phase. The StatusBlock glyph does not pop, spin or bounce, and there is no confetti (`brand.md` → Personality).
 
-1. **The phase container cross-fades; its contents do not animate in separately.** One `--dur-base` `--ease-out` opacity transition on the block that swaps. No stagger, no cascade, no springs. A transfer screen that performs is a transfer screen you do not trust.
-2. **What persists must not move.** The direction header, the trust badge and the code phrase keep their position across every phase that shows them. Only the block below them changes. A code phrase that jumps when the transfer starts is the single worst thing this screen can do, because it is the thing the user is reading aloud.
-3. **Terminal phases arrive, they do not celebrate.** `done` and `failed` cross-fade in at `--dur-base` like any other phase. The `StatusBlock` glyph does not pop, spin or bounce. There is no overshoot easing in this system, and `brand.md` already rules out confetti.
+Progress fills animate width at `--dur-base` `--ease-out` and **never move backwards**. If a total revises downward, snap and keep moving forward.
 
-Progress fills animate width at `--dur-base` `--ease-out` and **never animate backwards**. If a total revises downward, snap the value and keep the bar moving forward.
-
-Entering `waiting` is the one moment worth a beat: the code phrase appears with the container cross-fade, and nothing else on screen changes at the same time.
-
-The "taking longer than usual" hint fades in at `--dur-slow`, well after the delay that triggers it, so it reads as information rather than as an alarm.
+The "taking longer than usual" hint fades in at `--dur-slow`, after the delay that triggers it, so it reads as information rather than alarm.
 
 ## Haptics and sound
 
-**No sound, ever.** This app never plays audio. A file transfer that beeps in a meeting is a file transfer people turn off.
+**No sound, ever.** A file transfer that beeps in a meeting is a file transfer people turn off.
 
-Haptics are iPhone only. iPad's are inconsistent across models and macOS has none, so haptics are always additive: every event below is already visible and already announced.
+Haptics are iPhone only: iPad's are inconsistent across models and macOS has none. They are always additive: every event below is already visible and announced.
 
 | Event | Feedback |
 |---|---|
 | transfer completed | `.success` |
-| transfer failed, declined, or blocked | `.error` |
+| transfer failed, declined by the other device, or blocked | `.error` |
 | incoming request arrives (the accept gate) | `.warning` |
 | code phrase copied, code scanned | `.selection` |
-| everything else | none |
 
-Four events, and no more without a reason written down. Nothing fires on progress, on phase changes inside a running transfer, on button presses, or on navigation: the press scale is the button's feedback. Respect the system haptic setting rather than adding a switch of our own.
+Four events, and no more without a reason written down. Nothing fires on progress, phase changes inside a running transfer, button presses or navigation, so a Cancel or Decline the user tapped ends silently. The system haptic setting is respected; there is no switch of our own.

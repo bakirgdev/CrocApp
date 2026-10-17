@@ -1,7 +1,7 @@
 import Accessibility
 import SwiftUI
 
-/// Inline advisory banner. design/components.md → StatusBanner, lines 144-157.
+/// Inline advisory banner. design/components.md → StatusBanner.
 struct StatusBanner: View {
     enum Kind {
         case info
@@ -27,7 +27,7 @@ struct StatusBanner: View {
             }
         }
 
-        // iconography.md → Mapping: info/warning/error/success rows.
+        // design/iconography.md → Shared meanings: info/warning/error/success.
         var symbolName: String {
             switch self {
             case .info: "info.circle"
@@ -41,18 +41,23 @@ struct StatusBanner: View {
     let kind: Kind
     let title: String
     var detail: String?
+    /// Optional trailing `plain` action (components.md → StatusBanner).
+    var actionTitle: LocalizedStringKey?
+    var action: (() -> Void)?
+
+    // components.md → StatusBanner: glyph at 19, scaled with Dynamic Type.
+    @ScaledMetric(relativeTo: .subheadline) private var glyphSize: CGFloat = 19
 
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.space3) {
-            // iconography.md line 77: banner leading glyph 19, stroke 2.
-            // Decorative — the title carries the meaning (colors.md rule 2).
+            // Decorative: the title carries the meaning (colors.md → Contrast, rule 2).
             Image(systemName: kind.symbolName)
-                .font(.system(size: 19, weight: .semibold))
+                .font(.system(size: glyphSize, weight: .semibold))
                 .foregroundStyle(kind.color)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Spacing.space1) {
                 // Not drawn in the kind color: on its own tint that measures
-                // 1.96-2.95:1 in light (components.md line 157).
+                // 1.96-2.95:1 in light (components.md → StatusBanner).
                 Text(title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.textPrimary)
@@ -61,6 +66,10 @@ struct StatusBanner: View {
                         .font(.footnote)
                         .foregroundStyle(Color.textSecondary)
                 }
+                if let actionTitle, let action {
+                    Button(actionTitle, action: action)
+                        .buttonVariant(.plain)
+                }
             }
         }
         .padding(.horizontal, Spacing.space5)
@@ -68,9 +77,11 @@ struct StatusBanner: View {
         .background(kind.tint, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                .strokeBorder(kind.color.opacity(0.22), lineWidth: BorderWidth.hairline)
+                .strokeBorder(
+                    kind.color.opacity(ComponentMetrics.statusBorderOpacity),
+                    lineWidth: BorderWidth.hairline)
         )
-        // components.md line 152: error's `role` is `alert`. SwiftUI has no
+        // components.md → StatusBanner: error is announced. SwiftUI has no
         // live-region trait, so a VoiceOver announcement on appearance is
         // the closest native equivalent.
         .onAppear {

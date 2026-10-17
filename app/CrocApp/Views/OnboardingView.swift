@@ -6,18 +6,22 @@ import SwiftUI
 struct OnboardingView: View {
     let done: () -> Void
 
+    // components.md → OnboardingSheet: mark glyph 56, scaled with Dynamic Type.
+    @ScaledMetric(relativeTo: .largeTitle) private var markSize: CGFloat = 56
+
     var body: some View {
         VStack(spacing: Spacing.space7) {
             Image(systemName: "arrow.left.arrow.right.circle.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(Color.accentColor)
+                .font(.system(size: markSize))
+                .foregroundStyle(Color.accentFill)
+                .accessibilityHidden(true)
             Text("Welcome to CrocApp")
-                .font(.title.bold())
+                .font(.title2.bold())
             VStack(alignment: .leading, spacing: Spacing.space5) {
                 bullet(
                     "key.fill",
                     "One code phrase does everything",
-                    "Sending shows a short code. Enter it on the other device — that's the address and the password."
+                    "Sending shows a short code phrase. Enter it on the other device and the two connect."
                 )
                 bullet(
                     "lock.fill",
@@ -27,7 +31,7 @@ struct OnboardingView: View {
                 bullet(
                     "globe",
                     "Works anywhere",
-                    "Same Wi-Fi or different continents — transfers find the fastest path automatically."
+                    "Same Wi-Fi or different continents, transfers find the fastest path automatically."
                 )
             }
             .frame(maxWidth: LayoutCap.contentMaxWidth)
@@ -50,7 +54,7 @@ struct OnboardingView: View {
                 Text("Get Started")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonVariant(.prominent)
             .controlSize(.large)
             .frame(maxWidth: LayoutCap.contentMaxWidth)
         }
@@ -64,7 +68,7 @@ struct OnboardingView: View {
         HStack(alignment: .top, spacing: Spacing.space4) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(Color.accentFill)
                 // minWidth, not a fixed width: a fixed frame clips the glyph
                 // at accessibility text sizes.
                 .frame(minWidth: IconSize.large)

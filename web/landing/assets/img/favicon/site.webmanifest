@@ -2,7 +2,7 @@
   "id": "/",
   "name": "CrocApp",
   "short_name": "CrocApp",
-  "description": "Send files anywhere, encrypted end to end, with a spoken code phrase.",
+  "description": "Send files, folders and text to another device with a short code phrase. Free, open source and end-to-end encrypted.",
   "start_url": "/",
   "scope": "/",
   "icons": [

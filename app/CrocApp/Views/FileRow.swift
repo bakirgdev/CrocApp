@@ -1,29 +1,58 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Send queue / incoming preview row. design/components.md → FileRow, lines
-/// 108-114. `isFirst`/`isLast` drive the same first/last corner-rounding and
-/// inter-row separator rules as SettingsRow, for a card of rows in a `List`.
+/// Send queue and accept-gate row. design/components.md → FileRow. `isFirst` /
+/// `isLast` drive the first/last corner rounding and the inter-row separator
+/// for a card of rows in a `List`. A row with no `onRemove` (the accept gate)
+/// draws no remove control.
 struct FileRow: View {
-    let url: URL
+    let name: String
+    /// Nil when the size is unknown or the row is a folder.
+    let size: Int64?
+    let symbolName: String
     var isFirst: Bool = false
     var isLast: Bool = false
-    let onRemove: () -> Void
+    var onRemove: (() -> Void)?
 
-    // components.md lines 112/114, iconography.md "Sizes in use": type icon
-    // and remove control are both 20 — not one of IconSize's three steps, so
-    // this stays a private constant per DesignTokens.swift's own rule.
-    private static let glyphSize: CGFloat = 20
-    /// Pinned tail length for the middle-truncation rule (components.md
-    /// line 114: "the last 8 characters ... are pinned").
+    /// A staged local file: name, size and glyph come from the URL.
+    init(url: URL, isFirst: Bool = false, isLast: Bool = false, onRemove: @escaping () -> Void) {
+        let isFolder = url.hasDirectoryPath
+        self.name = url.lastPathComponent
+        self.size =
+            isFolder
+            ? nil
+            : (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init)
+        self.symbolName = Self.symbolName(extension: url.pathExtension, isFolder: isFolder)
+        self.isFirst = isFirst
+        self.isLast = isLast
+        self.onRemove = onRemove
+    }
+
+    /// A remote entry, as listed by the accept gate: name and size only.
+    init(name: String, size: Int64, isFirst: Bool = false, isLast: Bool = false) {
+        self.name = name
+        self.size = size
+        self.symbolName = Self.symbolName(
+            extension: URL(filePath: name).pathExtension, isFolder: false)
+        self.isFirst = isFirst
+        self.isLast = isLast
+        self.onRemove = nil
+    }
+
+    // components.md → FileRow: type glyph and remove control are both 20, not
+    // one of IconSize's three steps, so this stays a private constant scaled
+    // with Dynamic Type.
+    @ScaledMetric(relativeTo: .callout) private var glyphSize: CGFloat = 20
+    /// Pinned tail length for the middle-truncation rule (components.md →
+    /// FileRow: the last 8 characters stay visible).
     private static let pinnedTailLength = 8
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         HStack(spacing: Spacing.space3) {
-            Image(systemName: typeSymbolName)
-                .font(.system(size: Self.glyphSize))
+            Image(systemName: symbolName)
+                .font(.system(size: glyphSize))
                 .foregroundStyle(Color.accentFill)
                 .accessibilityHidden(true)
 
@@ -32,7 +61,7 @@ struct FileRow: View {
                 // is wider than the row at these sizes: wrap the name and put
                 // the size under it.
                 VStack(alignment: .leading, spacing: Spacing.space2) {
-                    Text(url.lastPathComponent)
+                    Text(name)
                         .font(.callout)
                         .foregroundStyle(Color.textPrimary)
                         .lineLimit(3)
@@ -42,7 +71,7 @@ struct FileRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 filenameLabel
-                    .font(.callout)  // typography.md: --type-callout is used for "file names"
+                    .font(.callout)
                     .foregroundStyle(Color.textPrimary)
 
                 Spacer(minLength: Spacing.space3)
@@ -50,17 +79,21 @@ struct FileRow: View {
                 sizeLabel
             }
 
-            Button(action: onRemove) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: Self.glyphSize))
-                    .foregroundStyle(Color.textSecondary)
-                    #if os(iOS)
-                .frame(minWidth: ControlHeight.hitTargetMin, minHeight: ControlHeight.hitTargetMin)
-                .contentShape(Rectangle())
-                    #endif
+            if let onRemove {
+                Button(action: onRemove) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: glyphSize))
+                        .foregroundStyle(Color.textSecondary)
+                        #if os(iOS)
+                    .frame(
+                        minWidth: ControlHeight.hitTargetMin, minHeight: ControlHeight.hitTargetMin
+                    )
+                    .contentShape(Rectangle())
+                        #endif
+                }
+                .buttonVariant(.plain)
+                .accessibilityLabel("Remove \(name)")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Remove \(url.lastPathComponent)")
         }
         .padding(.horizontal, Spacing.space4)
         .padding(.vertical, Spacing.space3)
@@ -98,30 +131,26 @@ struct FileRow: View {
         )
     }
 
-    // iconography.md → Mapping: folder/image/text/generic-doc rows.
-    private var typeSymbolName: String {
-        if url.hasDirectoryPath { return "folder" }
-        guard let type = UTType(filenameExtension: url.pathExtension) else { return "doc" }
+    // design/iconography.md → Shared meanings: folder, image, text, generic file.
+    private static func symbolName(extension ext: String, isFolder: Bool) -> String {
+        if isFolder { return "folder" }
+        guard let type = UTType(filenameExtension: ext) else { return "doc" }
         if type.conforms(to: .image) { return "photo" }
         if type.conforms(to: .text) { return "doc.text" }
         return "doc"
     }
 
     private var sizeText: String? {
-        guard !url.hasDirectoryPath,
-            let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
-        else { return nil }
-        return Int64(size).formatted(.byteCount(style: .file))
+        size?.formatted(.byteCount(style: .file))
     }
 
-    // components.md line 114: last `pinnedTailLength` characters (extension
+    // components.md → FileRow: last `pinnedTailLength` characters (extension
     // + tail) stay in a non-shrinking span so the extension is always
     // legible; only the head ellipsises. No native SwiftUI truncation mode
     // does this, so it's built from two `Text` views instead of relying on
     // `.truncationMode(.middle)`.
     @ViewBuilder
     private var filenameLabel: some View {
-        let name = url.lastPathComponent
         if name.count <= Self.pinnedTailLength {
             Text(name).lineLimit(1)
         } else {

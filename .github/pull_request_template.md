@@ -28,4 +28,9 @@ harness output: the summary lines and any failures, not the whole log
 
 ## UI changes
 
-Before and after screenshots, light and dark, on every affected platform. UI uses `design/` tokens, SF Symbols, and the system font only.
+Before and after screenshots, light and dark, on every affected platform.
+
+- [ ] Tokens, SF Symbols and the system font only
+- [ ] Both themes checked
+- [ ] `scripts/verify-contrast.sh` and `scripts/verify-design.sh` pass
+- [ ] Screenshots recaptured if the UI changed (`scripts/capture-screenshots.sh`)

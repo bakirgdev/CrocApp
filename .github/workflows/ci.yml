@@ -64,7 +64,7 @@ jobs:
             out swift '^(app|CrocKit)/|^\.swift-format$|^\.xcode-version$|^scripts/format-swift\.sh$|^\.github/workflows/(ci|reusable-swift-format)\.yml$'
             out go '^crocmobile/|^\.github/workflows/(ci|reusable-go)\.yml$'
             out build '^(app|CrocKit|crocmobile)/|^scripts/build-xcframework\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
-            out design '^design/|^scripts/(lib|verify-contrast)\.sh$|^\.github/workflows/ci\.yml$'
+            out design '^design/|^app/.*\.swift$|^app/CrocApp/Assets\.xcassets/|^web/landing/.*\.(css|html)$|^web/docs/src/css/|^scripts/(lib|verify-contrast|verify-design)\.sh$|^\.github/workflows/ci\.yml$'
             out interop '^(crocmobile|CrocKit)/|^scripts/(lib|verify-interop)\.sh$|^scripts/croc-v10\.version$|^\.github/workflows/ci\.yml$'
           } | tee -a "$GITHUB_OUTPUT"
 
@@ -83,7 +83,7 @@ jobs:
     uses: ./.github/workflows/reusable-go.yml
 
   contrast:
-    name: contrast
+    name: design checks
 
     needs: changes
 
@@ -99,6 +99,8 @@ jobs:
           persist-credentials: false
 
       - run: scripts/verify-contrast.sh
+
+      - run: scripts/verify-design.sh
 
   # The interop harness against a relay on localhost, never the public relays:
   # those rate-limit a shared runner address and make the run flaky. The

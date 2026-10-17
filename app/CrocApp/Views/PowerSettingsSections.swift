@@ -8,7 +8,7 @@ struct PowerSettingsSections: View {
     @Environment(AppSettings.self) private var settings
 
     private static let connectionLockedReason =
-        "Unavailable while Local network only is on: those transfers never use a relay."
+        "Unavailable while Local Network Only is on: those transfers never use a relay."
 
     var body: some View {
         @Bindable var settings = settings
@@ -20,7 +20,7 @@ struct PowerSettingsSections: View {
             )
             .autocorrectionDisabled()
             TextField(
-                "IPv6 address", text: $settings.relayAddress6,
+                "IPv6 Address", text: $settings.relayAddress6,
                 prompt: Text("Public relay pool")
             )
             .autocorrectionDisabled()
@@ -36,7 +36,7 @@ struct PowerSettingsSections: View {
 
         Section {
             TextField(
-                "Server", text: $settings.storedServer,
+                "Link Server", text: $settings.storedServer,
                 prompt: Text(AppSettings.defaultStoredServer)
             )
             .autocorrectionDisabled()
@@ -52,19 +52,20 @@ struct PowerSettingsSections: View {
                 Button("Reset to \(AppSettings.defaultStoredServer)") {
                     settings.storedServer = AppSettings.defaultStoredServer
                 }
+                .buttonVariant(.plain)
             }
         } header: {
             Text("Send as link")
         } footer: {
             Text(
-                "Send as link uploads encrypted files to this server. The server holds them until the link expires and cannot read them; the key is in the link."
+                "Send as Link uploads encrypted files to this server. The link server holds them until the link expires and cannot read them; the key is in the link."
             )
         }
 
         Section {
             Picker("Connection", selection: $settings.transport) {
                 Text("Automatic").tag(Transport.auto)
-                Text("Relay only").tag(Transport.relay)
+                Text("Relay Only").tag(Transport.relay)
             }
             .disabled(settings.onlyLocal)
             .accessibilityHint(settings.onlyLocal ? Self.connectionLockedReason : "")
@@ -81,9 +82,9 @@ struct PowerSettingsSections: View {
         }
 
         Section {
-            Toggle("Local network only", isOn: $settings.onlyLocal)
-            Toggle("Disable compression", isOn: $settings.noCompress)
-            Toggle("Zip folders before sending", isOn: $settings.zipFolder)
+            Toggle("Local Network Only", isOn: $settings.onlyLocal)
+            Toggle("Disable Compression", isOn: $settings.noCompress)
+            Toggle("Zip Folders Before Sending", isOn: $settings.zipFolder)
         } header: {
             Text("Transfer")
         } footer: {
@@ -100,10 +101,10 @@ struct PowerSettingsSections: View {
         }
 
         Section {
-            Toggle("Confirm on both sides", isOn: $settings.bothSidesConfirm)
-            Toggle("Auto-accept incoming files", isOn: $settings.autoAccept)
+            Toggle("Confirm on Both Sides", isOn: $settings.bothSidesConfirm)
+            Toggle("Auto-Accept Transfers", isOn: $settings.autoAccept)
             if settings.autoAccept {
-                Picker("When a file already exists", selection: $settings.whenFileExists) {
+                Picker("When a File Already Exists", selection: $settings.whenFileExists) {
                     Text("Keep Both").tag(FilePolicy.keepBoth)
                     Text("Replace").tag(FilePolicy.replace)
                 }
@@ -114,13 +115,13 @@ struct PowerSettingsSections: View {
             if settings.autoAccept {
                 // A Section footer is not a StatusBanner surface; Section
                 // already styles footers as secondary, so a status color
-                // here would tint body text (colors.md rule 2 violation).
+                // here would tint body text (colors.md → Contrast, rule 2).
                 Text(
-                    "Files from anyone who has your code are saved without preview or confirmation. Keep Both saves a new copy next to an existing file; Replace overwrites it. Unsafe file names still cancel the transfer. Both-sides confirm overrides auto-accept."
+                    "Files from anyone who has your code are saved without preview or confirmation. Keep Both saves a new copy next to an existing file; Replace overwrites it. Unsafe file names still cancel the transfer. Confirm on Both Sides overrides Auto-Accept Transfers."
                 )
             } else {
                 Text(
-                    "Auto-accept skips the incoming-files preview. Leave it off unless you fully trust the sender."
+                    "Auto-Accept Transfers skips the file preview. Leave it off unless you fully trust the sender."
                 )
             }
         }

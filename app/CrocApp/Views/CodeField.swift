@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Monospaced entry for the `word-word-word` transfer code.
-/// design/components.md → CodeField, lines 82-91.
+/// Monospaced entry for the `word-word-word` code phrase.
+/// design/components.md → CodeField.
 ///
 /// The paste affordance is part of this component's own spec (the wrapper's
 /// asymmetric padding — 14 leading for text, 6 trailing — exists to seat a
@@ -26,19 +26,17 @@ struct CodeField: View {
 
     @FocusState private var isFocused: Bool
 
-    // components.md line 86: wrapper padding is `0 6px 0 14px`, not a
-    // Spacing step — single-component constant per DesignTokens.swift's own
-    // rule ("Anything used by only one component stays a private constant").
+    // components.md → CodeField: wrapper padding is `0 6px 0 14px`, not a
+    // Spacing step, so it is a private constant of this component.
     private static let leadingPadding: CGFloat = 14
     private static let trailingPadding: CGFloat = 6
-    private static let codeTracking: CGFloat = 0.5  // --tracking-code, typography.md
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.space2) {
             field
             if isInvalid, let invalidMessage {
                 Text(invalidMessage)
-                    .font(.caption)
+                    .font(.footnote)
                     .foregroundStyle(Color.textSecondary)
             }
         }
@@ -48,8 +46,8 @@ struct CodeField: View {
         HStack(spacing: Spacing.space2) {
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
-                .font(.body.monospaced())  // --type-code-body, swiftui-mapping.md → Typography
-                .tracking(Self.codeTracking)
+                .font(.subheadline.monospaced())
+                .tracking(Tracking.code)
                 .focused($isFocused)
                 .accessibilityHint(isInvalid ? (invalidMessage ?? "") : "")
                 .autocorrectionDisabled()
@@ -78,10 +76,10 @@ struct CodeField: View {
                 .strokeBorder(borderColor, lineWidth: BorderWidth.hairline)
         )
         .disabled(isDisabled)
-        .opacity(isDisabled ? 0.5 : 1)
+        .opacity(isDisabled ? Opacity.disabledContainer : 1)
     }
 
-    // components.md line 86: separator idle → accent focused → error invalid.
+    // components.md → CodeField: separator idle, accent focused, error invalid.
     private var borderColor: Color {
         if isInvalid { return .statusError }
         if isFocused { return .accentFill }

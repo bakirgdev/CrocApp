@@ -1,10 +1,10 @@
 ---
 sidebar_position: 5.5
-title: Verify Downloads
-description: What each CrocApp release asset is, and how to check a download is notarized, built by the release workflow, and unmodified.
+title: Verify a release
+description: What each CrocApp release asset is, and how to check one is notarized, built by the release workflow and unmodified.
 ---
 
-# Verify downloads
+# Verify a release
 
 Each release on the [releases page](https://github.com/bakirgdev/CrocApp/releases) carries four assets:
 
@@ -15,11 +15,11 @@ Each release on the [releases page](https://github.com/bakirgdev/CrocApp/release
 | `Croc.xcframework-<version>.zip` | The prebuilt Go engine, for building from source |
 | `SHA256SUMS.txt` | Checksums for the disk image and the engine archive |
 
-No app zip is published. The disk image is the only download of the app.
+No app zip is published. The disk image is the only file of the app.
 
 ## Notarized and stapled
 
-The app inside the disk image is signed with a Developer ID certificate with the hardened runtime and a timestamp. The app and the disk image are each notarized by Apple and stapled, so macOS verifies them without a network connection. Check a download yourself:
+The app inside the disk image is signed with a Developer ID certificate with the hardened runtime and a timestamp. The app and the disk image are each notarized by Apple and stapled, so macOS verifies them without a network connection. Check the disk image yourself:
 
 ```bash
 xcrun stapler validate CrocApp-<version>-arm64.dmg

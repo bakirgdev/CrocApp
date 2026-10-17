@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CrocApp — send files anywhere, encrypted end to end</title>
+    <title>CrocApp | Send files with a code phrase</title>
     <meta
       name="description"
-      content="Free, open-source native app for iPhone, iPad and Mac. Pick a file, read out a code phrase, done. No account, no cloud upload, no same-network requirement."
+      content="Send files, folders and text to another device with a short code phrase. Free, open source and end-to-end encrypted."
     />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <link rel="canonical" href="https://crocapp.dev/" />
@@ -15,10 +15,10 @@
     <meta property="og:site_name" content="CrocApp" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://crocapp.dev/" />
-    <meta property="og:title" content="CrocApp — send files anywhere, encrypted end to end" />
+    <meta property="og:title" content="CrocApp | Send files with a code phrase" />
     <meta
       property="og:description"
-      content="A free, open-source native app for iPhone, iPad and Mac. Pick a file, read out a code phrase, done. No account, no cloud upload, no same-network requirement."
+      content="Send files, folders and text to another device with a short code phrase. Free, open source and end-to-end encrypted."
     />
     <meta property="og:image" content="https://crocapp.dev/assets/img/og.jpg" />
     <meta property="og:image:type" content="image/jpeg" />
@@ -26,7 +26,7 @@
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="CrocApp — send files anywhere, encrypted end to end. crocapp.dev"
+      content="CrocApp: send files with a code phrase. crocapp.dev"
     />
     <meta name="twitter:card" content="summary_large_image" />
 
@@ -35,8 +35,9 @@
     <link rel="apple-touch-icon" href="assets/img/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="assets/img/favicon/site.webmanifest" />
 
-    <!-- --paper / --ink as literals: a <meta> attribute cannot read a custom
-         property. Keep in sync with design/colors.md and site.webmanifest. -->
+    <!-- --bg-base light and dark as literals: a <meta> attribute cannot read a
+         custom property. Keep in sync with design/colors.md and site.webmanifest.
+         app.js rewrites both when the theme toggle pins a theme. -->
     <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
@@ -44,17 +45,18 @@
     <link rel="stylesheet" href="tokens.css" />
     <link rel="stylesheet" href="styles.css" />
 
-    <!-- Runs before first paint so a stored preference cannot flash. -->
+    <!-- Runs before first paint so a stored preference cannot flash. Only the two
+         valid values pin a theme; anything else follows the OS. -->
     <script>
       try {
         var t = localStorage.getItem("theme");
-        if (t) document.documentElement.dataset.theme = t;
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
       } catch (e) {}
     </script>
   </head>
   <body>
     <!-- Lucide 1.26.0 (ISC), inlined per design/iconography.md; the package is
-         never bundled. Stroke, fill and size are in styles.css — a <use> shadow
+         never bundled. Stroke, fill and size are in styles.css: a <use> shadow
          tree does not inherit presentation attributes from the symbol. -->
     <svg class="sprite" aria-hidden="true">
       <defs>
@@ -76,7 +78,7 @@
       </defs>
     </svg>
 
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main">Skip to Content</a>
 
     <header class="nav">
       <div class="container nav__inner">
@@ -84,7 +86,7 @@
 
         <nav class="nav__links" aria-label="Sections">
           <a class="nav__link" href="#why">Why</a>
-          <a class="nav__link" href="#how">How it works</a>
+          <a class="nav__link" href="#how">How It Works</a>
           <a class="nav__link" href="#features">Features</a>
           <a class="nav__link" href="/docs/">Docs</a>
           <!-- The one link that survives the phone breakpoint. -->
@@ -116,11 +118,10 @@
       <section class="section hero" id="top" aria-labelledby="hero-title">
         <div class="container container--wide hero__inner">
           <div class="hero__copy">
-            <h1 class="t-web-hero" id="hero-title">Send files anywhere. Encrypted end to end.</h1>
+            <h1 class="t-web-hero" id="hero-title">Send files anywhere, end-to-end encrypted</h1>
             <p class="t-web-lead hero__deck">
-              CrocApp is a free, open-source app for iPhone, iPad and Mac. Pick a file, read out a
-              code phrase, done. No account, no upload to anyone's cloud, no same-network
-              requirement.
+              Send files, folders and text to another device with a short code phrase. Free, open
+              source and end-to-end encrypted.
             </p>
 
             <div class="actions">
@@ -129,7 +130,7 @@
                 Download
               </a>
               <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener">
-                View source
+                View Source
                 <span class="u-visually-hidden">(opens in a new tab)</span>
               </a>
             </div>
@@ -150,8 +151,8 @@
           <!-- Captured by scripts/capture-screenshots.sh. -->
           <figure class="hero__mockup">
             <figcaption class="u-visually-hidden">
-              The CrocApp send screen on macOS: a code phrase, a Copy code button,
-              a QR code for the receiver to scan, and an end-to-end encrypted badge.
+              The CrocApp send screen on macOS: a code phrase, a <strong>Copy Code</strong> button,
+              a QR code for the other device to scan, and an end-to-end encrypted badge.
             </figcaption>
 
             <!-- Two elements rather than <picture>: the theme toggle pins
@@ -181,7 +182,7 @@
               <svg class="card__icon" aria-hidden="true"><use href="#i-share" /></svg>
               <h3 class="t-headline card__title">AirDrop</h3>
               <p class="t-callout card__body">
-                Apple to Apple, and you both need to be in the same room.
+                It works Apple to Apple, and you both need to be in the same room.
               </p>
             </article>
 
@@ -189,7 +190,7 @@
               <svg class="card__icon" aria-hidden="true"><use href="#i-wifi" /></svg>
               <h3 class="t-headline card__title">LAN tools</h3>
               <p class="t-callout card__body">
-                Same Wi-Fi only. Guest networks and client isolation break them silently.
+                It works on the same Wi-Fi only. Guest networks and client isolation break it silently.
               </p>
             </article>
 
@@ -205,24 +206,28 @@
               <svg class="card__icon" aria-hidden="true"><use href="#i-shield-check" /></svg>
               <h3 class="t-headline card__title">CrocApp</h3>
               <p class="t-callout card__body">
-                A code phrase. Same room or different continents. The relay only ever sees
-                ciphertext.
+                Use a code phrase, in the same room or on different continents. The relay only
+                ever sees ciphertext.
               </p>
             </article>
           </div>
 
-          <div class="compare">
+          <div
+            class="compare"
+            tabindex="0"
+            role="region"
+            aria-label="Comparison of CrocApp with AirDrop, LAN transfer tools and cloud drop services"
+          >
             <table>
               <caption class="u-visually-hidden">
                 How CrocApp compares to AirDrop, LAN transfer tools and cloud drop services on
-                three constraints.
+                two constraints.
               </caption>
               <thead>
                 <tr>
                   <th scope="col"><span class="u-visually-hidden">Method</span></th>
                   <th scope="col">Works across networks</th>
                   <th scope="col">No account needed</th>
-                  <th scope="col">Nobody else holds the file</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,23 +235,19 @@
                   <th scope="row">AirDrop</th>
                   <td>No</td>
                   <td>Yes</td>
-                  <td>Yes</td>
                 </tr>
                 <tr>
                   <th scope="row">LAN transfer tools</th>
                   <td>No</td>
-                  <td>Yes</td>
                   <td>Yes</td>
                 </tr>
                 <tr>
                   <th scope="row">Cloud drop services</th>
                   <td>Yes</td>
                   <td>Usually not</td>
-                  <td>No</td>
                 </tr>
                 <tr>
                   <th scope="row">CrocApp</th>
-                  <td>Yes</td>
                   <td>Yes</td>
                   <td>Yes</td>
                 </tr>
@@ -284,7 +285,7 @@
             <li class="step">
               <span class="step__num" aria-hidden="true">3</span>
               <div class="step__body">
-                <h3 class="t-headline">The other side types it in</h3>
+                <h3 class="t-headline">Enter it on the other device</h3>
                 <p class="t-callout">
                   They see what is coming and accept it. The transfer starts.
                 </p>
@@ -300,14 +301,14 @@
               </summary>
               <div class="disclosure__body t-callout">
                 <p>
-                  The code phrase never crosses the network in the clear. Both sides run PAKE over it
-                  to derive a session key the relay never learns.
+                  The code phrase authenticates both devices through PAKE, a password-authenticated
+                  key exchange.
                 </p>
-                <p>Files are encrypted before they leave your device.</p>
-                <p>The relay is untrusted by design. It forwards ciphertext and nothing else.</p>
+                <p>Transfers are end-to-end encrypted.</p>
+                <p>The relay only ever sees ciphertext.</p>
                 <p>
-                  On the same network, CrocApp connects to the other device directly and skips the
-                  relay entirely.
+                  When the two devices connect over the local network, the data stays on that
+                  network.
                 </p>
               </div>
             </details>
@@ -344,7 +345,7 @@
               <h3 class="t-headline card__title">Receive</h3>
               <ul class="featlist t-callout" role="list">
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Receive with a code phrase</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Set your own phrase, six characters or more</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Set your own code phrase, six characters or more</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Scan a QR code</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>See the file list before you accept</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Resume interrupted transfers, confirm overwrites</li>
@@ -358,9 +359,9 @@
               <ul class="featlist t-callout" role="list">
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Encryption badge and a plain-language explanation</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Your own relay, with password and IPv6</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Local-only mode</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg><strong>Local Network Only</strong> setting</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Auto-accept off by default, and marked when on</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Ask both sides to confirm</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Ask both devices to confirm</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Turn compression off</li>
               </ul>
             </article>
@@ -370,7 +371,7 @@
               <h3 class="t-headline card__title">Native</h3>
               <ul class="featlist t-callout" role="list">
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Progress, speed and cancel, with a Live Activity on iPhone</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Transfer history, stored only on your device</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Transfer history that stays on your device</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Automatic race between local network and relay</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Files app integration</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Drag and drop on Mac</li>
@@ -397,7 +398,7 @@
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">iPhone &amp; iPad</h3>
-              <p class="t-callout card__body">App Store. Available at launch.</p>
+              <p class="t-callout card__body">Available on the App Store at launch.</p>
               <img
                 class="dlcard__action dlcard__badge"
                 src="assets/img/app-store.svg"
@@ -412,7 +413,7 @@
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">Mac</h3>
-              <p class="t-callout card__body">Mac App Store. Available at launch.</p>
+              <p class="t-callout card__body">Available on the Mac App Store at launch.</p>
               <img
                 class="dlcard__action dlcard__badge"
                 src="assets/img/mac-app-store.svg"
@@ -427,13 +428,13 @@
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">Mac, direct</h3>
-              <p class="t-callout card__body">Disk image, Apple silicon</p>
+              <p class="t-callout card__body">Get the disk image for Apple silicon.</p>
               <a
                 class="btn btn--md btn--secondary dlcard__action"
                 href="https://github.com/bakirgdev/CrocApp/releases/latest" target="_blank" rel="noopener"
               >
                 <svg class="btn__icon" aria-hidden="true"><use href="#i-download" /></svg>
-                Latest release
+                Latest Release
                 <span class="u-visually-hidden">(opens in a new tab)</span>
               </a>
             </div>
@@ -459,7 +460,7 @@
             <h2 class="t-web-sub card__title" id="croc-title">Powered by croc</h2>
             <p class="t-body card__body">
               CrocApp is the interface.
-              <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a> is the engine — by Zack Scholl, MIT
+              <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a> is the engine, by Zack Scholl, MIT
               licensed. CrocApp embeds croc's Go library. It is unofficial and unaffiliated; nothing
               here implies endorsement by croc's author.
             </p>
@@ -476,7 +477,7 @@
           <div class="prose t-body">
             <p>
               croc's Go library is compiled to an XCFramework with gomobile and driven from a Swift
-              actor. It is not a subprocess — iOS does not allow those, which is why the Android
+              actor. It is not a subprocess, because iOS does not allow those. That is why the Android
               clients' architecture does not port to Apple platforms.
             </p>
             <p>SwiftUI throughout, targeting iOS 26 and macOS 26.</p>
@@ -561,18 +562,18 @@
 
           <details class="disclosure">
             <summary class="disclosure__summary">
-              Is it actually secure?
+              What does the encryption cover?
               <svg class="disclosure__chevron" aria-hidden="true"><use href="#i-chevron-right" /></svg>
             </summary>
             <div class="disclosure__body t-callout">
               <p>
-                Transfers are end-to-end encrypted, the code phrase authenticates both sides, and
+                Transfers are end-to-end encrypted, the code phrase authenticates both devices, and
                 the relay only ever sees ciphertext. That is the whole claim, and it is croc's
                 design rather than anything CrocApp adds.
               </p>
               <p>
-                There has been no formal third-party audit of croc, and CrocApp does not claim one.
-                The code on both sides is open if you want to look.
+                CrocApp has not had a formal third-party security audit. The code is open if you
+                want to look.
               </p>
             </div>
           </details>
@@ -583,20 +584,24 @@
               <svg class="disclosure__chevron" aria-hidden="true"><use href="#i-chevron-right" /></svg>
             </summary>
             <div class="disclosure__body t-callout">
-              <p>No. There is nothing to sign up for and no identity attached to a transfer.</p>
+              <p>No. There is nothing to sign up for.</p>
             </div>
           </details>
 
           <details class="disclosure">
             <summary class="disclosure__summary">
-              Does my file go through a server?
+              Does my file go through a relay?
               <svg class="disclosure__chevron" aria-hidden="true"><use href="#i-chevron-right" /></svg>
             </summary>
             <div class="disclosure__body t-callout">
               <p>
-                Usually yes — a relay, which forwards traffic between two devices that cannot reach
-                each other directly. It sees ciphertext and nothing else, and it does not store your
-                file. Send as link is the exception: it uploads the encrypted file to getcroc.com, or the server you choose, until the link expires. You can point CrocApp at your own relay instead.
+                Usually yes. A relay forwards traffic between two devices that cannot reach each
+                other directly, and it only ever sees ciphertext. <strong>Send as Link</strong> is
+                the exception: files are encrypted on your device before they reach the link server
+                (getcroc.com, or the one you choose), and the key travels in the link's
+                <code class="t-code">#</code> fragment, which browsers never send to a server. The
+                link server holds the encrypted file until the link expires. You can point CrocApp
+                at your own relay instead.
               </p>
             </div>
           </details>
@@ -608,8 +613,8 @@
             </summary>
             <div class="disclosure__body t-callout">
               <p>
-                Then the transfer goes straight between the two devices and skips the relay
-                entirely. CrocApp tries both paths at once and uses whichever connects first.
+                When the two devices connect over the local network, the data stays on that
+                network. CrocApp tries both paths at once and uses whichever connects first.
               </p>
             </div>
           </details>
@@ -634,7 +639,7 @@
             </summary>
             <div class="disclosure__body t-callout">
               <p>
-                Not from CrocApp — it is an Apple-platform app. Use the croc CLI, which runs
+                Not from CrocApp, which is an Apple-platform app. Use the croc CLI, which runs
                 everywhere, or one of the other clients listed under Inspirations. They all speak
                 the same protocol.
               </p>
@@ -683,15 +688,15 @@
                3.41:1 only while its label stays 17px semibold. -->
           <div class="actions contribute__actions">
             <a class="btn btn--prominent" href="https://github.com/bakirgdev/CrocApp/issues" target="_blank" rel="noopener">
-              Open an issue
+              Open an Issue
               <span class="u-visually-hidden">(opens in a new tab)</span>
             </a>
             <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">
-              Contributing guide
+              Contributing Guide
               <span class="u-visually-hidden">(opens in a new tab)</span>
             </a>
             <a class="btn btn--secondary" href="https://github.com/bakirgdev/CrocApp/blob/main/README.md#build-from-source" target="_blank" rel="noopener">
-              How to build
+              How to Build
               <span class="u-visually-hidden">(opens in a new tab)</span>
             </a>
           </div>
@@ -700,7 +705,7 @@
 
       <section class="section" id="support" aria-labelledby="support-title">
         <div class="container container--prose">
-          <div class="card card--tinted support">
+          <div class="card support">
             <svg class="card__icon" aria-hidden="true"><use href="#i-heart" /></svg>
             <h2 class="t-web-sub card__title" id="support-title">Support the project</h2>
             <p class="t-body card__body">
@@ -725,7 +730,7 @@
                 target="_blank"
                 rel="noopener"
               >
-                Buy me a coffee
+                Buy Me a Coffee
                 <span class="u-visually-hidden">(opens in a new tab)</span>
               </a>
             </div>
@@ -748,29 +753,29 @@
         />
         <div class="footer__text t-footnote">
           <p>
-            CrocApp is MIT licensed and built on
-            <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a> by Zack Scholl, also MIT licensed.
+            Built on <a href="https://github.com/schollz/croc" target="_blank" rel="noopener">croc</a>
+            by Zack Scholl (MIT). CrocApp is unofficial and not affiliated with croc.
           </p>
           <p>
-            Unofficial and unaffiliated. Nothing here implies endorsement by croc's author. Apple,
-            iPhone, iPad, Mac and AirDrop are trademarks of Apple Inc.
+            Apple, the Apple logo, iPhone, iPad, Mac and App Store are trademarks of Apple Inc.,
+            registered in the U.S. and other countries and regions.
           </p>
         </div>
         <nav class="footer__links t-footnote" aria-label="Footer">
           <!-- The only docs entry point below 48rem, where the nav drops it. -->
           <a href="/docs/">Documentation</a>
-          <a href="/support/">Help and contact</a>
+          <a href="/support/">Help and Contact</a>
           <a href="/privacy/">Privacy</a>
           <a href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener">
             Source
             <span class="u-visually-hidden">(opens in a new tab)</span>
           </a>
           <a href="https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md" target="_blank" rel="noopener">
-            Security policy
+            Security Policy
             <span class="u-visually-hidden">(opens in a new tab)</span>
           </a>
           <a href="https://github.com/bakirgdev/CrocApp/blob/main/CODE_OF_CONDUCT.md" target="_blank" rel="noopener">
-            Code of conduct
+            Code of Conduct
             <span class="u-visually-hidden">(opens in a new tab)</span>
           </a>
         </nav>
@@ -779,7 +784,7 @@
 
     <!-- No aggregateRating: there are no ratings. downloadUrl is the direct
          download; add the store listings to it once they exist. FAQPage mirrors the Questions section
-         verbatim — the two move together or the markup starts lying. -->
+         verbatim: the two move together or the markup starts lying. -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -791,7 +796,7 @@
             "url": "https://crocapp.dev/",
             "applicationCategory": "UtilitiesApplication",
             "operatingSystem": "iOS 26, iPadOS 26, macOS 26",
-            "description": "A free, open-source native app for iPhone, iPad and Mac that sends files anywhere, encrypted end to end, using a spoken code phrase.",
+            "description": "Send files, folders and text to another device with a short code phrase. Free, open source and end-to-end encrypted.",
             "image": "https://crocapp.dev/assets/img/og.jpg",
             "license": "https://opensource.org/licenses/MIT",
             "isAccessibleForFree": true,
@@ -830,10 +835,10 @@
               },
               {
                 "@type": "Question",
-                "name": "Is it actually secure?",
+                "name": "What does the encryption cover?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Transfers are end-to-end encrypted, the code phrase authenticates both sides, and the relay only ever sees ciphertext. That is the whole claim, and it is croc's design rather than anything CrocApp adds. There has been no formal third-party audit of croc, and CrocApp does not claim one. The code on both sides is open if you want to look."
+                  "text": "Transfers are end-to-end encrypted, the code phrase authenticates both devices, and the relay only ever sees ciphertext. That is the whole claim, and it is croc's design rather than anything CrocApp adds. CrocApp has not had a formal third-party security audit. The code is open if you want to look."
                 }
               },
               {
@@ -841,15 +846,15 @@
                 "name": "Do I need an account?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "No. There is nothing to sign up for and no identity attached to a transfer."
+                  "text": "No. There is nothing to sign up for."
                 }
               },
               {
                 "@type": "Question",
-                "name": "Does my file go through a server?",
+                "name": "Does my file go through a relay?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Usually yes — a relay, which forwards traffic between two devices that cannot reach each other directly. It sees ciphertext and nothing else, and it does not store your file. Send as link is the exception: it uploads the encrypted file to getcroc.com, or the server you choose, until the link expires. You can point CrocApp at your own relay instead."
+                  "text": "Usually yes. A relay forwards traffic between two devices that cannot reach each other directly, and it only ever sees ciphertext. Send as Link is the exception: files are encrypted on your device before they reach the link server (getcroc.com, or the one you choose), and the key travels in the link's # fragment, which browsers never send to a server. The link server holds the encrypted file until the link expires. You can point CrocApp at your own relay instead."
                 }
               },
               {
@@ -857,7 +862,7 @@
                 "name": "What if we are on the same Wi-Fi?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Then the transfer goes straight between the two devices and skips the relay entirely. CrocApp tries both paths at once and uses whichever connects first."
+                  "text": "When the two devices connect over the local network, the data stays on that network. CrocApp tries both paths at once and uses whichever connects first."
                 }
               },
               {
@@ -873,7 +878,7 @@
                 "name": "Windows, Linux, Android?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Not from CrocApp — it is an Apple-platform app. Use the croc CLI, which runs everywhere, or one of the other clients listed under Inspirations. They all speak the same protocol."
+                  "text": "Not from CrocApp, which is an Apple-platform app. Use the croc CLI, which runs everywhere, or one of the other clients listed under Inspirations. They all speak the same protocol."
                 }
               },
               {

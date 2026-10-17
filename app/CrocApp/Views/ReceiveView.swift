@@ -12,6 +12,8 @@ struct ReceiveView: View {
     @State private var storedLink: URL?
     @State private var showScanner = false
     @State private var showFolderPicker = false
+    /// Bumped per scanned code; drives the `.selection` haptic.
+    @State private var scanCount = 0
 
     var body: some View {
         Group {
@@ -40,7 +42,7 @@ struct ReceiveView: View {
     }
 
     private var form: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Spacing.space5) {
             if let storedLink {
                 storedLinkRow(storedLink)
             } else {
@@ -66,8 +68,10 @@ struct ReceiveView: View {
             } label: {
                 Label("Scan QR Code", systemImage: "qrcode.viewfinder")
             }
+            .buttonVariant(.secondary)
             .sheet(isPresented: $showScanner) {
                 QRScannerSheet { payload in
+                    scanCount += 1
                     if let link = TransferLink.parse(payload) { router.open(link) }
                     showScanner = false
                 }
@@ -89,8 +93,9 @@ struct ReceiveView: View {
                 Button {
                     showFolderPicker = true
                 } label: {
-                    Text("Change").hitTarget()
+                    Text("Change…").hitTarget()
                 }
+                .buttonVariant(.plain)
                 .fileImporter(
                     isPresented: $showFolderPicker,
                     allowedContentTypes: [.folder]
@@ -105,6 +110,7 @@ struct ReceiveView: View {
                     } label: {
                         Text("Reset").hitTarget()
                     }
+                    .buttonVariant(.plain)
                 }
             }
             .font(.callout)
@@ -124,7 +130,7 @@ struct ReceiveView: View {
                 Label("Receive", systemImage: "arrow.down.circle.fill")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonVariant(.prominent)
             .controlSize(.large)
             .disabled(
                 storedLink == nil
@@ -132,22 +138,34 @@ struct ReceiveView: View {
                         < EngineConstraints.minCodeLength
             )
         }
-        .padding()
-        .frame(maxWidth: 480)
+        .padding(Spacing.space5)
+        .frame(maxWidth: LayoutCap.contentMaxWidth)
+        .phoneHaptic(trigger: scanCount) { _, _ in .selection }
     }
 
     private func storedLinkRow(_ url: URL) -> some View {
         let host = TransferController.codeHint(storedLink: url)
         return HStack(spacing: Spacing.space3) {
-            Label("Download link from \(host)", systemImage: "link")
-                .lineLimit(2)
+            Label {
+                VStack(alignment: .leading, spacing: Spacing.space1) {
+                    Text("Receive from Link")
+                    Text(host)
+                        .font(.footnote)
+                        .foregroundStyle(Color.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            } icon: {
+                Image(systemName: "link")
+            }
             Spacer()
             Button {
                 storedLink = nil
             } label: {
                 Text("Clear").hitTarget()
             }
-            .accessibilityLabel("Clear download link")
+            .buttonVariant(.plain)
+            .accessibilityLabel("Clear link")
         }
         .padding(.horizontal, Spacing.space4)
         .frame(minHeight: ControlHeight.large)

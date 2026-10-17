@@ -8,15 +8,15 @@
 
 <p align="center">
   <a href="https://github.com/bakirgdev/CrocApp/actions/workflows/ci.yml"><img src="https://github.com/bakirgdev/CrocApp/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/bakirgdev/CrocApp/releases/latest"><img src="https://img.shields.io/github/v/release/bakirgdev/CrocApp" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/platform-iOS%2026%20%7C%20iPadOS%2026%20%7C%20macOS%2026-blue" alt="Platforms">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+  <a href="https://github.com/bakirgdev/CrocApp/releases/latest"><img src="https://img.shields.io/github/v/release/bakirgdev/CrocApp?color=555" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/platform-iOS%2026%20%7C%20iPadOS%2026%20%7C%20macOS%2026-555" alt="Platforms">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1E9E6A" alt="MIT License"></a>
   <a href="https://crocapp.dev"><img src="https://img.shields.io/badge/site-crocapp.dev-1E9E6A" alt="Website"></a>
 </p>
 
 ## What it is
 
-CrocApp sends files, folders, and text between two devices anywhere in the world, encrypted end to end, using a short code phrase like `apple-house-car`. No account, no cloud upload, no shared network needed.
+CrocApp sends files, folders, and text between two devices anywhere in the world, end-to-end encrypted, using a short code phrase like `apple-house-car`. No account and no shared network needed.
 
 It is a graphical front end for [croc](https://github.com/schollz/croc), the command-line file-transfer tool by [Zack Scholl](https://github.com/schollz). CrocApp embeds croc's Go library rather than shelling out to the binary, so **a code phrase from the croc CLI works in the app, and the reverse**.
 
@@ -38,7 +38,7 @@ The disk image is Developer ID signed, notarized, and updates itself through Spa
 ```mermaid
 flowchart LR
     S["Sender<br/>CrocApp or croc CLI"]
-    R["Receiver<br/>CrocApp or croc CLI"]
+    R["Other device<br/>CrocApp or croc CLI"]
     L(["Direct path<br/>same network"])
     X(["Relay<br/>ciphertext only"])
 
@@ -51,9 +51,9 @@ flowchart LR
 
 1. The sender picks files, a folder, or text.
 2. CrocApp shows a code phrase. Say it, message it, or show it as a QR code.
-3. The receiver enters the phrase, previews the file list, and accepts.
+3. The other device enters the phrase, previews the file list, and accepts.
 
-Both sides run PAKE over the code phrase to derive a session key, so the phrase never crosses the network in the clear and the relay never learns the key. CrocApp tries the local network and the relay at once; on the same network the transfer goes direct.
+Both devices run PAKE over the code phrase to derive a session key, so the phrase never crosses the network in the clear and the relay never learns the key. CrocApp tries the local network and the relay at once; on the same network the transfer goes direct.
 
 ## Screenshots
 
@@ -87,12 +87,12 @@ Both sides run PAKE over the code phrase to derive a session key, so the phrase 
 
 ## Security and privacy
 
-Transfers are end-to-end encrypted, the code phrase authenticates both sides, and the relay only ever sees ciphertext.
+Transfers are end-to-end encrypted, the code phrase authenticates both devices (PAKE), and the relay only ever sees ciphertext.
 
 > [!WARNING]
 > Neither croc nor CrocApp has had a formal third-party security audit.
 
-- No telemetry, analytics, ads, or accounts. The [privacy policy](https://crocapp.dev/privacy/) lists every server the app can contact.
+- No accounts, analytics, ads, or tracking. The [privacy policy](https://crocapp.dev/privacy/) lists every server the app can contact.
 - Transfer history stays on the device.
 - You can use your own croc relay instead of the default public ones.
 - Report vulnerabilities privately through [GitHub Security Advisories](https://github.com/bakirgdev/CrocApp/security/advisories/new), never in a public issue. See [`SECURITY.md`](SECURITY.md).
@@ -112,9 +112,9 @@ Transfers are end-to-end encrypted, the code phrase authenticates both sides, an
 | Show QR on send, scan QR on receive | `--qrcode` |
 | Choose output folder; Files-visible by default on iOS | `--out` |
 | Keep Both or Replace when a file already exists; resume with Replace | `--rename`, `--overwrite` |
-| Preview the incoming file list, then accept or decline | interactive prompt |
+| Preview the file list, then accept or decline | interactive prompt |
 | Live progress, speed, cancel; Live Activity on iOS | |
-| LAN and relay raced automatically | croc default |
+| Local network and relay raced automatically | croc default |
 | Local transfer history | |
 
 </details>
@@ -129,7 +129,7 @@ Transfers are end-to-end encrypted, the code phrase authenticates both sides, an
 | Disable compression | `--no-compress` |
 | Zip a folder before sending | `--zip` |
 | Exclude patterns, respect `.gitignore` | `--exclude --git` |
-| Auto-accept incoming, off by default | `--yes` |
+| Auto-accept transfers, off by default | `--yes` |
 | Require confirmation on both sides | `--ask` |
 | Connection: Automatic or Relay only | `--transport auto\|relay` |
 
@@ -142,7 +142,7 @@ Transfers are end-to-end encrypted, the code phrase authenticates both sides, an
 |---|---|
 | SOCKS5 proxy | `--socks5` |
 | HTTP proxy | `--connect` |
-| Upload speed limit | `--throttleUpload` |
+| Send speed limit | `--throttleUpload` |
 | Encryption curve | `--curve` |
 | File hash algorithm | `--hash` |
 | Sender IP, direct connect | `--ip` |
@@ -161,9 +161,9 @@ Transfers are end-to-end encrypted, the code phrase authenticates both sides, an
 | Menu bar quick send and Open at login (macOS) |
 | Receive links: `crocapp://`, `crocapp.dev/r/` and `getcroc.com/?code=` open Receive with the code filled in |
 | Shortcuts and Siri actions: Send Files, Send Text, Receive |
-| Trust UI: end-to-end badge, "how it works", active-relay indicator |
+| Trust UI: end-to-end badge, **How It Works**, active-relay indicator |
 | Share Link and a QR code that opens CrocApp or a page that explains how to receive |
-| Send as link: encrypted upload for a receiver who is not online, with expiry and revoke |
+| Send as Link: files encrypted on your device, for someone who is not online, with expiry and revoke |
 | iPad File menu: Show Receive Folder in Files |
 
 </details>
@@ -201,7 +201,7 @@ Free and MIT-licensed, and it stays that way. Donations are welcome but optional
 <details>
 <summary><strong>Will there be a Windows, Linux, or Android version?</strong></summary>
 
-Not plannet, yet. If you really want to se CrocApp be born on other platforms, you can show your interest via [issues](https://github.com/bakirgdev/CrocApp/issues)
+Not planned yet. If you want to see CrocApp on other platforms, show your interest in an [issue](https://github.com/bakirgdev/CrocApp/issues).
 
 </details>
 
@@ -221,4 +221,4 @@ Starring the repo, reporting bugs, and telling others about CrocApp help just as
 ## Credits and license
 
 - [croc](https://github.com/schollz/croc) by [Zack Scholl](https://github.com/schollz), the transfer engine that makes this possible. MIT.
-- CrocApp by [Bakir Gracic](https://github.com/bakirgdev). [MIT](LICENSE).
+- CrocApp by [Bakir Gracić](https://github.com/bakirgdev). [MIT](LICENSE).

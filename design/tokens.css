@@ -1,15 +1,15 @@
-/* CrocApp design tokens — hand-written web mirror. Canonical values and the
+/* CrocApp design tokens: hand-written web mirror. Canonical values and the
    rules behind them live in design/*.md; start at design/AGENTS.md.
 
    Themed values are light-dark() pairs, so dark is not a second block: :root
    declares `light dark` and follows the OS, [data-theme] pins it.
 
-   No @font-face — Apple's system fonts are not redistributable. */
+   No @font-face: Apple's system fonts are not redistributable. */
 
 :root {
   color-scheme: light dark;
 
-  /* Brand: croc green. Theme-independent literals — the aliases pick a step. */
+  /* Brand: croc green. Theme-independent literals; the aliases pick a step. */
   --green-200: #97DBBD;
   --green-300: #57C598;
   --green-400: #2DC585;
@@ -26,7 +26,6 @@
   --sys-blue:   light-dark(#007AFF, #0A84FF);
 
   /* Labels, fills, separators */
-  --ink:              light-dark(#000000, #FFFFFF);
   --paper:            light-dark(#FFFFFF, #000000);
   --label-1:          light-dark(rgba(0,0,0,1),         rgba(255,255,255,1));
   --label-2:          light-dark(rgba(60,60,67,0.60),   rgba(235,235,245,0.60));
@@ -56,7 +55,7 @@
   --glass-border:      light-dark(rgba(255,255,255,0.60), rgba(255,255,255,0.14));
   --glass-highlight:   light-dark(rgba(255,255,255,0.75), rgba(255,255,255,0.10));
 
-  /* Semantic aliases — consume these */
+  /* Semantic aliases: consume these */
   --color-accent:         light-dark(var(--green-600), var(--green-400));
   --color-accent-pressed: light-dark(var(--green-700), var(--green-500));
   --color-accent-tint:    var(--glass-tint-accent);
@@ -71,7 +70,7 @@
   --color-text-secondary:  var(--label-2-web);
   --color-text-tertiary:   var(--label-3);
   --color-text-quaternary: var(--label-4);
-  --color-text-link:       light-dark(var(--green-700), var(--green-400));
+  --color-text-link:       var(--color-accent-text);
 
   --color-status-success: var(--sys-green);
   --color-status-warning: var(--sys-orange);
@@ -122,7 +121,7 @@
   --type-code-hero-size: 30px;    --type-code-hero-lh: 38px;
   --type-code-body-size: 15px;    --type-code-body-lh: 22px;
 
-  /* Web display scale (landing + docs) — never used by the app. Unitless
+  /* Web display scale (landing + docs), never used by the app. Unitless
      line-heights. typography.md → Web display scale. */
   --type-web-hero-size:      clamp(40px, 6.2vw, 68px);
   --type-web-hero-lh:        1.06;
@@ -169,14 +168,13 @@
   --radius-2xl: 36px;
   --radius-capsule: 999px;
 
-  /* Layout — app */
+  /* Layout: app */
   --content-max-width: 480px;
-  --sheet-max-width: 540px;
 
-  /* Layout — web only (landing + docs). Both clamp() ends sit on the 4pt grid. */
-  --content-max-width-wide:  1280px;
+  /* Layout: web only (landing + docs). Both clamp() ends sit on the 4pt grid. */
+  --content-max-width-wide-web:  1280px;
   --content-max-width-web:   1080px;
-  --content-max-width-prose:  680px;
+  --content-max-width-prose-web:  680px;
   --gutter-web:      clamp(20px, 5vw, 48px);
   --section-pad-web: clamp(64px, 9vw, 112px);
   --stack-web:       clamp(32px, 4vw, 48px);
@@ -190,7 +188,7 @@
   --icon-size-md: 22px;
   --icon-size-lg: 28px;
 
-  /* Lucide stroke weights. Unitless on purpose — a unit here breaks every
+  /* Lucide stroke weights. Unitless on purpose: a unit here breaks every
      glyph, since stroke-width scales with the viewBox. iconography.md. */
   --icon-stroke-light:    1.5;
   --icon-stroke:          1.8;
@@ -199,46 +197,42 @@
   --icon-stroke-heaviest: 2.4;
 
   /* Stacking order. Two layers is the whole scale. spacing-layout.md. */
-  --z-nav: 2;
-  --z-skip-link: 3;
+  --z-nav-web: 2;
+  --z-skip-link-web: 3;
 
   --border-hairline: 1px;
   --border-hairline-half: 0.5px;
 
-  /* Two disabled opacities: a control is one object, a row is a composite whose
-     subtitle would vanish before its title. components.md -> States. */
-  --opacity-disabled: 0.4;
+  /* A row or field dims as one composite; controls use the platform's own
+     disabled look. components.md -> States. */
   --opacity-disabled-container: 0.5;
 
-  /* Component metrics, tokenized for web only — styles.css cannot hold a raw
-     px the way a SwiftUI component can. Do not use these in the app. */
-  --btn-pad-x-lg: 22px;
-  --btn-pad-x-md: var(--space-5);
-  --btn-pad-x-sm: var(--space-4);
-  --btn-gap-lg:   var(--space-3);
-  --btn-gap-md:   6px;
-  --btn-gap-sm:   5px;
-  --btn-icon-lg:  20px;
-  --btn-icon-md:  18px;
-  --btn-icon-sm:  15px;
+  /* Component metrics, web only: styles.css cannot hold a raw px the way a
+     SwiftUI component can. components.md is the source of each number. */
+  --btn-pad-x-lg-web: 22px;
+  --btn-pad-x-md-web: var(--space-5);
+  --btn-pad-x-sm-web: var(--space-4);
+  --btn-gap-lg-web:   var(--space-3);
+  --btn-gap-md-web:   6px;
+  --btn-gap-sm-web:   5px;
+  --btn-icon-lg-web:  20px;
+  --btn-icon-md-web:  18px;
+  --btn-icon-sm-web:  15px;
 
-  --row-min-file:    48px;
-  --progress-height:  6px;
+  --pill-pad-block-web:        5px;
+  --pill-pad-inline-start-web: 9px;
+  --pill-pad-inline-end-web:   11px;
+  --pill-icon-size-web:        14px;
 
-  --pill-pad-block:        5px;
-  --pill-pad-inline-start: 9px;
-  --pill-pad-inline-end:   11px;
-  --pill-icon-size:        14px;
+  /* Apple's minimum onscreen App Store badge height. brand.md. */
+  --store-badge-height-web: 40px;
 
-  /* Apple's stated minimum for the supplied App Store badge, not a control height. */
-  --store-badge-height: 40px;
-
-  --step-marker-size: 32px;
+  --step-marker-size-web: 32px;
   --mascot-size-web:  64px;
   --phone-shot-max-width-web: 260px;
   --nav-height-web: 56px;
   /* auto-fit column floor: 4-up at 1080, 2-up at 768. spacing-layout.md. */
-  --grid-min-card:  232px;
+  --grid-min-card-web:  232px;
 
   /* Glass blur */
   --blur-thin: 12px;
@@ -246,7 +240,7 @@
   --blur-thick: 40px;
   --glass-saturate: 180%;
 
-  /* Elevation. Geometry is theme-independent so only the colours flip. */
+  /* Elevation. Geometry is theme-independent so only the colors flip. */
   --shadow-sm: 0 1px 2px light-dark(rgba(0,0,0,0.06), rgba(0,0,0,0.40)),
                0 1px 1px light-dark(rgba(0,0,0,0.04), rgba(0,0,0,0.30));
   --shadow-md: 0 4px 16px light-dark(rgba(0,0,0,0.08), rgba(0,0,0,0.50)),
@@ -256,8 +250,6 @@
   /* The inset highlight is the top edge-light that sells the material. Keep it. */
   --shadow-glass: 0 8px 32px light-dark(rgba(0,0,0,0.12), rgba(0,0,0,0.55)),
                   inset 0 1px 0 var(--glass-highlight);
-  --shadow-knob: 0 3px 8px light-dark(rgba(0,0,0,0.15), rgba(0,0,0,0.50)),
-                 0 1px 1px light-dark(rgba(0,0,0,0.16), rgba(0,0,0,0.40));
   /* Two solid bands, never a tint: whatever the ring lands on, one band has a
      3.41:1 edge against it. Do not collapse it. colors.md rule 7. */
   --shadow-focus-ring: 0 0 0 2px var(--color-surface-base),
@@ -269,7 +261,7 @@
   --dur-fast: 120ms;
   --dur-base: 220ms;
   --dur-slow: 360ms;
-  --press-scale: 0.97;
+  --press-scale-web: 0.97;
 }
 
 [data-theme="light"] { color-scheme: light; }
@@ -288,7 +280,7 @@ body {
   line-height: var(--type-body-lh);
   letter-spacing: var(--tracking-body);
   color: var(--color-text-primary);
-  background: var(--color-surface-grouped);
+  background: var(--color-surface-base);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -296,30 +288,28 @@ body {
 code, kbd, pre, samp { font-family: var(--font-mono); }
 
 a { color: var(--color-text-link); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: var(--space-1); }
-a:active { opacity: 0.7; }
+@media (hover: hover) {
+  a:hover { text-decoration: underline; text-underline-offset: var(--space-1); }
+}
 
-:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
+/* The transparent outline is what forced-colors mode draws, since it drops box-shadow. */
+:focus-visible { outline: 2px solid transparent; box-shadow: var(--shadow-focus-ring); }
 
 ::selection { background: var(--color-accent-tint); }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar { width: var(--space-3); height: var(--space-3); }
 ::-webkit-scrollbar-thumb { background: var(--color-fill); border-radius: var(--radius-capsule); }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* Type helpers — the tokens above stay the source of truth */
+/* Type helpers: the tokens above stay the source of truth */
 
-.t-large-title { font: var(--type-large-title-weight) var(--type-large-title-size)/var(--type-large-title-lh) var(--font-sans); letter-spacing: var(--tracking-large-title); }
-.t-title2      { font: var(--type-title2-weight) var(--type-title2-size)/var(--type-title2-lh) var(--font-sans); letter-spacing: var(--tracking-title2); }
-.t-title3      { font: var(--type-title3-weight) var(--type-title3-size)/var(--type-title3-lh) var(--font-sans); }
 .t-headline    { font: var(--type-headline-weight) var(--type-headline-size)/var(--type-headline-lh) var(--font-sans); letter-spacing: var(--tracking-headline); }
 .t-body        { font: var(--type-body-weight) var(--type-body-size)/var(--type-body-lh) var(--font-sans); letter-spacing: var(--tracking-body); }
 .t-callout     { font: var(--type-callout-weight) var(--type-callout-size)/var(--type-callout-lh) var(--font-sans); }
 .t-footnote    { font: var(--type-footnote-weight) var(--type-footnote-size)/var(--type-footnote-lh) var(--font-sans); }
-.t-caption     { font: var(--type-caption1-weight) var(--type-caption1-size)/var(--type-caption1-lh) var(--font-sans); }
 .t-code        { font: var(--weight-medium) var(--type-code-body-size)/var(--type-code-body-lh) var(--font-mono); letter-spacing: var(--tracking-code); }
 
-/* Longhand, not `font:` — its size/line-height slot does not reliably survive
+/* Longhand, not `font:`: its size/line-height slot does not reliably survive
    a clamp() substituted through var(). */
 .t-web-hero    { font-family: var(--font-sans); font-size: var(--type-web-hero-size);    line-height: var(--type-web-hero-lh);    font-weight: var(--type-web-hero-weight);    letter-spacing: var(--tracking-web-hero); }
 .t-web-section { font-family: var(--font-sans); font-size: var(--type-web-section-size); line-height: var(--type-web-section-lh); font-weight: var(--type-web-section-weight); letter-spacing: var(--tracking-web-section); }
@@ -327,7 +317,7 @@ a:active { opacity: 0.7; }
 .t-web-lead    { font-family: var(--font-sans); font-size: var(--type-web-lead-size);    line-height: var(--type-web-lead-lh);    font-weight: var(--type-web-lead-weight);    letter-spacing: var(--tracking-web-lead); }
 
 @media (prefers-reduced-motion: reduce) {
-  :root { --press-scale: 1; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
+  :root { --press-scale-web: 1; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
 }
 
 /* Glass is decoration; legibility never depends on it. materials.md. */
