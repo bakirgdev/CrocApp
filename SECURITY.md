@@ -52,9 +52,9 @@ Steps to check a release (notarization, build attestation, checksums, update sig
 
 ## What CrocApp claims
 
-Transfers are end-to-end encrypted, the code phrase authenticates both sides, and the relay only ever sees ciphertext. That is the whole claim.
+Transfers are end-to-end encrypted, the code phrase authenticates both devices (PAKE), and the relay only ever sees ciphertext. CrocApp makes no stronger claim.
 
 > [!WARNING]
 > There has been **no formal third-party security audit** of croc, and CrocApp does not claim one. Do not describe CrocApp as audited, certified, or zero-knowledge-verified.
 
-Supporting facts (no telemetry, no accounts, local history, your own relay, dependency scanning) are on the [security and privacy page](https://crocapp.dev/docs/security-and-privacy/).
+Supporting facts (no accounts, analytics, ads or tracking, history that stays on the device, your own relay, dependency scanning) are on the [security and privacy page](https://crocapp.dev/docs/security-and-privacy/).

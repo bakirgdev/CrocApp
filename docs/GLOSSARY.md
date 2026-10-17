@@ -8,7 +8,7 @@ Terms a new contributor or a fresh AI session hits in this repo and cannot infer
 |---|---|
 | `--ask` | croc flag requiring confirmation on both sides before a transfer starts, not just the receiver's normal accept prompt; bridged into the engine via the same fd0 pipe trick as receive (`docs/knowledge/crocmobile-bridge.md`). |
 | classic mode | croc's `--classic` flag, the only mode where `--code` accepts a custom secret directly; insecure by design and deliberately unsupported here (F39, `docs/knowledge/features.md`). |
-| code phrase / secret | the `word-word-word` string (three random words from the EFF short wordlist) both sides use to find each other and derive the session key; custom via `CROC_SECRET`, min 6 chars (`docs/knowledge/what-is-croc.md`). |
+| code phrase / secret | the `word-word-word` string (three random words from the EFF short wordlist) both devices use to find each other and derive the session key; custom via `CROC_SECRET`, min 6 chars (`docs/knowledge/what-is-croc.md`). "Secret" is croc's internal term for it: the UI never says it, only "code phrase" (`design/content.md` → Terminology). |
 | compression | croc DEFLATE-compresses (HuffmanOnly) file data by default; `--no-compress` disables it (F15). |
 | `CROC_SECRET` | env var for a custom code phrase; the only way non-classic croc accepts one, on both send and receive (`docs/knowledge/what-is-croc.md`). |
 | curve | the elliptic curve PAKE runs over, default P-256 (`--curve`, `crocmobile.Options.Curve`). |
