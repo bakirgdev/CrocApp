@@ -10,7 +10,7 @@
           "image-name" : "1.png",
           "name" : "1",
           "position" : {
-            "scale" : 1.5,
+            "scale" : 0.75,
             "translation-in-points" : [
               0,
               0
