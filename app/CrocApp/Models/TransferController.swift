@@ -41,6 +41,28 @@ final class TransferController {
     /// names, so a run through a local relay photographs like a default one.
     var harnessShownRelay: AppSettings.RelayKind?
 
+    #if DEBUG
+    /// Harness-only (AutoVerify --shown-link-origin): scheme and host the
+    /// stored link shows and encodes, so a local store server photographs
+    /// like a real one. The upload itself still goes to the configured server.
+    var harnessShownLinkOrigin: URL?
+
+    /// Swaps scheme, host and port of the link; path and fragment (the key)
+    /// stay. A link that fails to parse is left alone.
+    private static func relinked(_ receipt: StoredReceipt, origin: URL) -> StoredReceipt {
+        guard var parts = URLComponents(string: receipt.link),
+            let shown = URLComponents(url: origin, resolvingAgainstBaseURL: false)
+        else { return receipt }
+        parts.scheme = shown.scheme
+        parts.host = shown.host
+        parts.port = shown.port
+        guard let link = parts.string else { return receipt }
+        return StoredReceipt(
+            id: receipt.id, origin: receipt.origin, uploadToken: receipt.uploadToken,
+            link: link, expiresAt: receipt.expiresAt, downloads: receipt.downloads)
+    }
+    #endif
+
     /// Harness-only (AutoVerify --relay): kills the LAN race so the custom
     /// relay path is provably exercised. Not a user setting.
     var harnessDisableLocal = false
@@ -477,7 +499,12 @@ final class TransferController {
             phase = .transferring(p)
         case .text(let t):
             receivedText = t
-        case .stored(let receipt):
+        case .stored(var receipt):
+            #if DEBUG
+            if let shown = harnessShownLinkOrigin {
+                receipt = Self.relinked(receipt, origin: shown)
+            }
+            #endif
             storedReceipt = receipt
             // A failed write is logged by the vault; the link still works,
             // only a revoke after relaunch is lost.

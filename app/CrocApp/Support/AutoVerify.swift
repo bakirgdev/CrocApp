@@ -30,6 +30,9 @@ import ServiceManagement
 ///   --relay ADDR                   use a custom relay address (F13); also disables local-only race
 ///   --relay-password PW            the custom relay's password (croc's default applies without it)
 ///   --shown-relay default          make the trust UI name the public relay whatever --relay says
+///   --shown-link-origin ORIGIN     make a stored link show and encode ORIGIN (scheme and host, e.g.
+///                                  https://crocapp.dev) instead of the --store-server's; the upload
+///                                  still goes to --store-server
 ///   --throttle RATE                cap the upload rate for a send, e.g. 4m (croc's --throttleUpload)
 ///   --hold                         park at the incoming prompt instead of auto-accepting
 ///   --when-exists keepBoth|replace answer the incoming prompt with this file policy
@@ -131,6 +134,9 @@ enum AutoVerify {
             args[i + 1] == "default"
         {
             controller.harnessShownRelay = .publicDefault
+        }
+        if let i = args.firstIndex(of: "--shown-link-origin"), i + 1 < args.count {
+            controller.harnessShownLinkOrigin = URL(string: args[i + 1])
         }
         if let i = args.firstIndex(of: "--throttle"), i + 1 < args.count {
             controller.settings.throttleUpload = args[i + 1]
@@ -366,7 +372,7 @@ enum AutoVerify {
                 (true, .completed, true, 148, [], 1, "7305", 2 * hour, false),
                 (
                     true, .completed, false, 55_000, ["Design-Assets.zip"], 1,
-                    "store.example.org", 5 * hour, true
+                    "crocapp.dev", 5 * hour, true
                 ),
                 (
                     false, .completed, false, 24_100_000, ["Soundtrack.wav"], 1, "6142", 1.2 * day,
@@ -465,7 +471,7 @@ enum AutoVerify {
             "transferring percent=\(p.totalSize > 0 ? Int(100 * (p.bytesFinished + p.fileSent) / p.totalSize) : 0)"
         case .done: "done"
         case .stored: "stored"
-        case .failed: "failed"
+        case .failed(let message): "failed \(message)"
         }
     }
 

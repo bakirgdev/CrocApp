@@ -52,9 +52,10 @@ case "flatten" where args.count == 4:  // flatten IN OUT
     context.fill(rect)
     context.draw(image, in: rect)
     save(context, args[3])
-case "compose" where args.count > 5:  // compose OUT WIDTH HEIGHT IMG...
+case "compose" where args.count > 6:  // compose OUT WIDTH HEIGHT light|dark IMG...
     guard let width = Int(args[3]), let height = Int(args[4]) else { fail("bad canvas size") }
-    let images = args[5...].map(load)
+    let dark = args[5] == "dark"
+    let images = args[6...].map(load)
     let gap = 120
     let total = images.reduce(0) { $0 + $1.width } + gap * (images.count - 1)
     guard total <= width, images.allSatisfy({ $0.height <= height }) else {
@@ -65,8 +66,12 @@ case "compose" where args.count > 5:  // compose OUT WIDTH HEIGHT IMG...
     let gradient = CGGradient(
         colorsSpace: space,
         colors: [
-            CGColor(red: 0.89, green: 0.92, blue: 0.97, alpha: 1),
-            CGColor(red: 0.74, green: 0.80, blue: 0.91, alpha: 1),
+            dark
+                ? CGColor(red: 0.17, green: 0.19, blue: 0.26, alpha: 1)
+                : CGColor(red: 0.89, green: 0.92, blue: 0.97, alpha: 1),
+            dark
+                ? CGColor(red: 0.07, green: 0.08, blue: 0.12, alpha: 1)
+                : CGColor(red: 0.74, green: 0.80, blue: 0.91, alpha: 1),
         ] as CFArray,
         locations: [0, 1])!
     context.drawLinearGradient(
@@ -85,5 +90,5 @@ case "compose" where args.count > 5:  // compose OUT WIDTH HEIGHT IMG...
     }
     save(context, args[2])
 default:
-    fail("usage: imgtool flatten IN OUT | compose OUT WIDTH HEIGHT IMG...")
+    fail("usage: imgtool flatten IN OUT | compose OUT WIDTH HEIGHT light|dark IMG...")
 }

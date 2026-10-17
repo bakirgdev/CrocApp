@@ -9,9 +9,9 @@ Source-of-truth design and marketing files. Mostly binary and committed as-is; n
 | `mascot.png` | 1024×1024 mascot, the root image every other mascot asset derives from | Icon layer, `web/landing/assets/img/mascot-web.webp`, favicons, social cards |
 | `CrocAppIcon.icon/` | Icon Composer package: `icon.json` plus one layer, `Assets/1.png` (a copy of `mascot.png`) | Mirrored to `app/CrocApp/AppIcon.icon`, which is the copy Xcode builds |
 | `dmg-background.tiff` | DMG Finder window background, dark, 660×400 at 1x and 2x | `scripts/build-dmg.sh`. Spec: `design/components.md` → DiskImage |
-| `github-social-preview.png` | 1280×640 | Only the repository's GitHub Settings → Social preview, uploaded by hand. No file references it |
+| `github-social-preview.png` | 1280×640, dark | Only the repository's GitHub Settings → Social preview, uploaded by hand. No file references it |
 | `screenshots/{mac,iphone,ipad}/<screen>-{light,dark}.png` | Full-resolution app screenshots, one pair per screen | README, docs site, landing hero (through the web copies) |
-| `screenshots/app-store/{iphone,ipad,mac}/NN-<screen>.png` | App Store Connect upload set: light, no alpha, Apple's exact sizes, `NN` is the upload order | Uploaded by hand in App Store Connect |
+| `screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` | App Store Connect upload set, one folder per size class (`iphone-6.9`, `iphone-6.3`, `iphone-duo-outer`, `ipad-13`, `mac`): ten per class, odd `NN` light and even dark, no alpha, Apple's exact sizes, `NN` is the upload order | Uploaded by hand in App Store Connect. `iphone-duo-outer` is not upload-ready yet (see `docs/knowledge/screenshots.md` → iPhone Duo) |
 
 ## Rules
 

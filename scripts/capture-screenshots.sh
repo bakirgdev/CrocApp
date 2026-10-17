@@ -7,8 +7,11 @@
 #   assets/screenshots/mac/SCREEN-{light,dark}.png      per-window capture, 2x, real window shape
 #   assets/screenshots/iphone/SCREEN-{light,dark}.png   iPhone 17 Pro Max, 1320x2868, 9:41 status bar
 #   assets/screenshots/ipad/SCREEN-{light,dark}.png     iPad Pro 13-inch (M5), 2064x2752, 9:41 status bar
-#   assets/screenshots/app-store/DEVICE/NN-SCREEN.png   light only, Apple's exact sizes, no alpha,
-#                                                       numbered in upload order (STORE_SCREENS)
+#   assets/screenshots/app-store/CLASS/NN-SCREEN-{light,dark}.png
+#       Apple's exact sizes, no alpha, numbered in upload order (STORE_SCREENS),
+#       odd numbers light and even numbers dark. iphone-6.9, ipad-13 and mac
+#       come from the main captures; iphone-6.3 (iPhone 17 Pro) and
+#       iphone-duo-outer (iPhone Duo outer display) get their own simulator.
 #
 # Staging rides on the DEBUG-only harness in app/CrocApp/Support/AutoVerify.swift.
 # Launch flags navigate (--screen), preload (--stage), seed history, hold at
@@ -27,12 +30,13 @@
 #
 # Usage: capture-screenshots.sh [DEVICE...] [SCREEN...]
 #   no arguments    everything, after emptying assets/screenshots/
-#   DEVICE          mac, iphone or ipad: only those devices
+#   DEVICE          mac, iphone, ipad, iphone63 or duo: only those devices
 #   SCREEN          only those screens, both appearances, plus the store file
 #   --list          print the manifest and exit
 #   --copy-web      refresh the web copies from assets/screenshots/ and exit
 # Environment: CROC (default: the Homebrew croc, v11 like crocmobile),
-# PHONE_TYPE and PAD_TYPE (simulator device type ids), RUNTIME (simulator
+# PHONE_TYPE, PHONE63_TYPE, PAD_TYPE and DUO_TYPE (simulator device type ids),
+# DUO_OUTER_DISPLAY (simctl display id of the Duo's outer screen), RUNTIME (simulator
 # runtime id, default the newest installed one that supports the device type).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -42,11 +46,18 @@ BUNDLE=com.bakirgdev.CrocApp
 OUT=assets/screenshots
 TOOLS=scripts/screenshots
 PHONE_TYPE="${PHONE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max}"
+PHONE63_TYPE="${PHONE63_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro}"
 PAD_TYPE="${PAD_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-16GB}"
+DUO_TYPE="${DUO_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-Duo}"
+# `simctl io DEVICE enumerate` lists the Duo's two panels as screens 1 (outer,
+# 1398x2034) and 3 (inner, 2007x2853).
+DUO_OUTER_DISPLAY="${DUO_OUTER_DISPLAY:-1}"
 SIM_NAME="CrocApp Shots"
 MAC_DOCS="$HOME/Library/Containers/$BUNDLE/Data/Documents"
 
-DEVICES="mac iphone ipad"
+# The first three get the main set; the last two exist for the store set only.
+DEVICES="mac iphone ipad iphone63 duo"
+MAIN_DEVICES="mac iphone ipad"
 SCREENS="onboarding home send-files send-code sending receive-code receive-incoming \
 receive-conflict receiving receive-done stored-link history how-it-works settings \
 settings-advanced"
@@ -61,23 +72,40 @@ Project-Archive.zip Field-Recordings.zip"
 
 in_list() { case " $1 " in *" $2 "*) return 0 ;; *) return 1 ;; esac; }
 
-store_name() {                                      # store_name SCREEN -> NN-SCREEN
+store_index() {                                     # store_index SCREEN -> its position, from 1
   local i=1 n
   for n in $STORE_SCREENS; do
-    [ "$n" = "$1" ] && { printf '%02d-%s' "$i" "$1"; return 0; }
+    [ "$n" = "$1" ] && { echo "$i"; return 0; }
     i=$((i + 1))
   done
   return 1
 }
 
+# Light and dark alternate through the upload order, so each class is half of each.
+store_mode() { [ $(($(store_index "$1") % 2)) = 1 ] && echo light || echo dark; }
+store_name() { printf '%02d-%s-%s' "$(store_index "$1")" "$1" "$(store_mode "$1")"; }
+
+store_class() {                                     # store_class DEVICE -> App Store class dir
+  case "$1" in
+    mac) echo mac ;;
+    iphone) echo iphone-6.9 ;;
+    ipad) echo ipad-13 ;;
+    iphone63) echo iphone-6.3 ;;
+    duo) echo iphone-duo-outer ;;
+  esac
+}
+
 store_dims() {                                      # store_dims DEVICE -> "WIDTH HEIGHT"
   case "$1" in
     iphone) echo "1320 2868" ;;
+    iphone63) echo "1206 2622" ;;
+    duo) echo "1398 2034" ;;
     ipad) echo "2064 2752" ;;
     mac) echo "2880 1800" ;;
-    *) return 1 ;;
   esac
 }
+
+is_main() { in_list "$MAIN_DEVICES" "$1"; }
 
 # --- arguments --------------------------------------------------------------
 
@@ -87,10 +115,12 @@ case "${1:-}" in
   --list)
     for d in $DEVICES; do
       echo "$d ($(store_dims "$d" | tr ' ' x) in the store set):"
-      for s in $SCREENS; do
-        [ "$d $s" = "mac onboarding" ] || echo "  $OUT/$d/$s-{light,dark}.png"
-      done
-      for s in $STORE_SCREENS; do echo "  $OUT/app-store/$d/$(store_name "$s").png"; done
+      if is_main "$d"; then
+        for s in $SCREENS; do
+          [ "$d $s" = "mac onboarding" ] || echo "  $OUT/$d/$s-{light,dark}.png"
+        done
+      fi
+      for s in $STORE_SCREENS; do echo "  $OUT/app-store/$(store_class "$d")/$(store_name "$s").png"; done
     done
     exit 0
     ;;
@@ -119,7 +149,9 @@ RUN_SCREENS="${PICK_SCREENS:-$SCREENS}"
 uses_mac=0
 uses_sim=0
 if in_list "$RUN_DEVICES" mac; then uses_mac=1; fi
-if in_list "$RUN_DEVICES" iphone || in_list "$RUN_DEVICES" ipad; then uses_sim=1; fi
+for d in $RUN_DEVICES; do
+  if [ "$d" != mac ]; then uses_sim=1; fi
+done
 
 # --- state and cleanup ------------------------------------------------------
 
@@ -130,6 +162,7 @@ RELAY_PID=""
 STORE_PID=""
 STORE_URL=""
 SIM_IDS=""                                          # UDIDs of the simulators this run created
+SIM_APP=""
 ORIG_DARK=""
 DEV=""
 DOCS=""
@@ -183,9 +216,9 @@ require_croc
 if in_list "$RUN_SCREENS" stored-link; then
   command -v go >/dev/null || fail "go is needed to build the local store server for stored-link"
 fi
-for type in "$PHONE_TYPE" "$PAD_TYPE"; do
+for type in "$PHONE_TYPE" "$PHONE63_TYPE" "$PAD_TYPE" "$DUO_TYPE"; do
   xcrun simctl list -j devicetypes | grep -q "\"$type\"" \
-    || fail "simulator device type $type is not installed (set PHONE_TYPE/PAD_TYPE)"
+    || fail "simulator device type $type is not installed (set PHONE_TYPE, PHONE63_TYPE, PAD_TYPE, DUO_TYPE)"
 done
 
 mkdir -p "$TMP/bin"
@@ -348,7 +381,7 @@ set_system_appearance() {                           # set_system_appearance ligh
 }
 
 # simctl takes the time as an ISO instant in UTC with fractional seconds (the
-# plain "9:41" form renders as 09:41:00), shown in the host's zone.
+# plain "9:41" form is not accepted by every runtime), shown in the host's zone.
 clock_941() {
   date -u -j -f '%Y-%m-%dT%H:%M:%S%z' "$(date +%Y-%m-%d)T09:41:00$(date +%z)" +%Y-%m-%dT%H:%M:%S.000Z
 }
@@ -358,6 +391,16 @@ clock_941() {
 # to reach the shell that runs cleanup. The newest runtime that supports the
 # device type wins: a newer runtime can lack older device types, and without a
 # runtime argument simctl picks the oldest.
+#
+# Prepared so the shots do not depend on the host: a simulator inherits the
+# host's global preferences, and a host with a 24-hour time format
+# (AppleICUTimeFormatStrings "HH:mm:ss") shows the status bar clock as
+# "09:41:00" whatever --time says. The preferences are written to a booted
+# device and only take effect after a reboot. An iPad also opens in
+# windowed multitasking, which adds an app-name label to the status bar and a
+# resize glyph in the corner; the two SpringBoard keys switch that off.
+# Restarting SpringBoard with launchctl instead of rebooting leaves the status
+# bar blank.
 create_sim() {                                      # create_sim VAR NAME TYPE
   local udid="" runtime
   xcrun simctl delete "$2" 2>/dev/null || true
@@ -367,6 +410,16 @@ create_sim() {                                      # create_sim VAR NAME TYPE
   done
   [ -n "$udid" ] || fail "no installed iOS runtime supports $3"
   SIM_IDS="$SIM_IDS $udid"
+  xcrun simctl bootstatus "$udid" -b > /dev/null
+  xcrun simctl spawn "$udid" defaults write -g AppleICUTimeFormatStrings -dict 1 "h:mm"
+  xcrun simctl spawn "$udid" defaults write -g AppleLocale en_US
+  xcrun simctl spawn "$udid" defaults write -g AppleLanguages -array en
+  case "$3" in
+    *iPad*)
+      xcrun simctl spawn "$udid" defaults write com.apple.springboard SBMedusaMultitaskingEnabled -bool NO
+      xcrun simctl spawn "$udid" defaults write com.apple.springboard SBChamoisWindowingEnabled -bool NO ;;
+  esac
+  xcrun simctl shutdown "$udid"
   xcrun simctl bootstatus "$udid" -b > /dev/null
   xcrun simctl status_bar "$udid" override --time "$(clock_941)" --dataNetwork wifi \
     --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 \
@@ -381,13 +434,37 @@ stage_payloads() {                                  # stage_payloads DOCS
   cp "$TMP/payload"/* "$TMP/big/Project-Archive.zip" "$1/shots/"
 }
 
-use_device() {                                      # use_device DEVICE
-  DEV=$1
+sim_type() {                                        # sim_type DEVICE
   case "$1" in
-    mac) DOCS=$MAC_DOCS ;;
-    iphone) SIM=$IPHONE_ID; DOCS=$IPHONE_DOCS ;;
-    ipad) SIM=$IPAD_ID; DOCS=$IPAD_DOCS ;;
+    iphone) echo "$PHONE_TYPE" ;;
+    iphone63) echo "$PHONE63_TYPE" ;;
+    ipad) echo "$PAD_TYPE" ;;
+    duo) echo "$DUO_TYPE" ;;
   esac
+}
+
+# A prepared simulator with the app and the payloads on it. Its UDID and
+# Documents folder go to ID_DEVICE and DOCS_DEVICE.
+bring_up() {                                        # bring_up DEVICE
+  local id
+  create_sim id "$SIM_NAME $1" "$(sim_type "$1")"
+  xcrun simctl install "$id" "$SIM_APP"
+  printf -v "ID_$1" '%s' "$id"
+  printf -v "DOCS_$1" '%s' "$(xcrun simctl get_app_container "$id" "$BUNDLE" data)/Documents"
+  stage_payloads "$(xcrun simctl get_app_container "$id" "$BUNDLE" data)/Documents"
+}
+
+# Not just shutdown: a deleted simulator frees its disk right away.
+drop_sim() {                                        # drop_sim DEVICE
+  local var="ID_$1"
+  xcrun simctl shutdown "${!var}" 2>/dev/null || true
+  xcrun simctl delete "${!var}"
+}
+
+use_device() {                                      # use_device DEVICE
+  local id="ID_$1" docs="DOCS_$1"
+  DEV=$1
+  if [ "$1" = mac ]; then DOCS=$MAC_DOCS; else SIM=${!id}; DOCS=${!docs}; fi
 }
 
 clean_docs() {
@@ -469,32 +546,41 @@ quit_app() {
 await_ready() { await_docs_file verify-ready.txt 30; }
 
 store_file() {                                      # store_file RAW
-  local out
-  out="$OUT/app-store/$DEV/$(store_name "$SCREEN").png"
-  mkdir -p "$(dirname "$out")"
+  local out dir
+  dir="$OUT/app-store/$(store_class "$DEV")"
+  out="$dir/$(store_name "$SCREEN").png"
+  mkdir -p "$dir"
   if [ "$DEV" = mac ]; then
-    "$TMP/bin/imgtool" compose "$out" 2880 1800 "$1"
+    "$TMP/bin/imgtool" compose "$out" 2880 1800 "$MODE" "$1"
   else
     "$TMP/bin/imgtool" flatten "$1" "$out"
   fi
   echo "  $out"
 }
 
-# Photographs the current state as SCREEN-MODE, and for a light shot in the
-# store subset writes the store file too.
+# Photographs the current state. A main device keeps it as SCREEN-MODE; the
+# store file is written when the screen's slot in the upload order has this
+# appearance. A store-only device keeps nothing else.
 snap() {
-  local out="$OUT/$DEV/$SCREEN-$MODE.png" wid
-  mkdir -p "$OUT/$DEV"
+  local out wid
+  if is_main "$DEV"; then
+    mkdir -p "$OUT/$DEV"
+    out="$OUT/$DEV/$SCREEN-$MODE.png"
+  else
+    out="$TMP/raw.png"
+  fi
   if [ "$DEV" = mac ]; then
     wid=$(mac_window_id "$(mac_titles)")
     [ -n "$wid" ] || die "no on-screen CrocApp window titled '$(mac_titles)'"
     screencapture -x -o -l "$wid" "$out"
+  elif [ "$DEV" = duo ]; then
+    xcrun simctl io "$SIM" screenshot --type=png --display="$DUO_OUTER_DISPLAY" "$out" 2>/dev/null
   else
     xcrun simctl io "$SIM" screenshot --type=png "$out" 2>/dev/null
   fi
   [ -s "$out" ] || die "nothing was captured to $out"
-  echo "  $out"
-  if [ "$MODE" = light ] && in_list "$STORE_SCREENS" "$SCREEN"; then store_file "$out"; fi
+  is_main "$DEV" && echo "  $out"
+  if in_list "$STORE_SCREENS" "$SCREEN" && [ "$(store_mode "$SCREEN")" = "$MODE" ]; then store_file "$out"; fi
 }
 
 # A screen that needs no transfer: park on it, wait for the harness, photograph.
@@ -595,7 +681,7 @@ capture_screen() {
     stored-link)
       start_store_server
       launch --auto-store-send "$DOCS/shots/Quarterly-Report.pdf" --store-server "$STORE_URL" \
-        --store-downloads 3 --screen send
+        --shown-link-origin https://crocapp.dev --store-downloads 3 --screen send
       await_docs_file verify-store-link.txt 60
       settle
       snap
@@ -604,7 +690,7 @@ capture_screen() {
 }
 
 # A local croc store server, as in verify-app-mac.sh, so "Send as link" never
-# uploads to a real server. The link on screen therefore names 127.0.0.1.
+# uploads to a real server. The link on screen is rewritten to crocapp.dev.
 start_store_server() {
   [ -z "$STORE_URL" ] || return 0
   ( cd crocmobile && go build -o "$TMP/bin/croctest" ./cmd/croctest )
@@ -654,19 +740,21 @@ check_png() {                                       # check_png FILE WIDTH HEIGH
     || fail "$1 is ${w}x${h} hasAlpha=$a, App Store Connect wants $2x$3 with no alpha"
 }
 
-# Every store file has Apple's size and no alpha, at most ten per device, and
-# a run of a whole device has written every one of them.
+# Every store file has Apple's size and no alpha, a class holds exactly its
+# slots (at most ten), and a run of a whole device has written every file.
 verify_outputs() {
-  local d s width height file
+  local d s width height file n
   for d in $RUN_DEVICES; do
     read -r width height <<< "$(store_dims "$d")"
     for s in $RUN_SCREENS; do
       in_list "$STORE_SCREENS" "$s" || continue
-      file="$OUT/app-store/$d/$(store_name "$s").png"
+      file="$OUT/app-store/$(store_class "$d")/$(store_name "$s").png"
       [ -e "$file" ] || fail "missing store file $file"
       check_png "$file" "$width" "$height"
     done
-    [ ! -d "$OUT/app-store/$d" ] || [ "$(find "$OUT/app-store/$d" -name '*.png' | wc -l)" -le 10 ] || fail "more than ten store files for $d"
+    n=$(find "$OUT/app-store/$(store_class "$d")" -name '*.png' | wc -l)
+    [ "$n" -le 10 ] || fail "$n store files for $d, Apple allows ten"
+    is_main "$d" || continue
     for s in $RUN_SCREENS; do
       [ "$d $s" = "mac onboarding" ] && continue
       for MODE in light dark; do
@@ -692,22 +780,12 @@ if [ "$uses_mac" = 1 ]; then
   stage_payloads "$MAC_DOCS"
 fi
 
-IPHONE_ID=""; IPAD_ID=""; IPHONE_DOCS=""; IPAD_DOCS=""
 if [ "$uses_sim" = 1 ]; then
-  if in_list "$RUN_DEVICES" iphone; then create_sim IPHONE_ID "$SIM_NAME iPhone" "$PHONE_TYPE"; fi
-  if in_list "$RUN_DEVICES" ipad; then create_sim IPAD_ID "$SIM_NAME iPad" "$PAD_TYPE"; fi
-  build_id=${IPHONE_ID:-$IPAD_ID}
-  ( cd app && xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,id=$build_id" \
+  ( cd app && xcodebuild -scheme CrocApp -destination 'generic/platform=iOS Simulator' \
       -derivedDataPath "$TMPROOT/dd-sim" build ) > "$TMPROOT/shots-sim-build.log" 2>&1 \
     || fail "iOS build failed (see $TMPROOT/shots-sim-build.log)"
   SIM_APP=$(find "$TMPROOT/dd-sim/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
   [ -n "$SIM_APP" ] || fail "no CrocApp.app in $TMPROOT/dd-sim (see $TMPROOT/shots-sim-build.log)"
-  for id in $IPHONE_ID $IPAD_ID; do
-    xcrun simctl install "$id" "$SIM_APP"
-    stage_payloads "$(xcrun simctl get_app_container "$id" "$BUNDLE" data)/Documents"
-  done
-  [ -z "$IPHONE_ID" ] || IPHONE_DOCS="$(xcrun simctl get_app_container "$IPHONE_ID" "$BUNDLE" data)/Documents"
-  [ -z "$IPAD_ID" ] || IPAD_DOCS="$(xcrun simctl get_app_container "$IPAD_ID" "$BUNDLE" data)/Documents"
 fi
 
 start_relay
@@ -719,24 +797,61 @@ if [ -z "$PICK_SCREENS" ]; then
   if [ -z "$PICK_DEVICES" ]; then
     find "$OUT" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
   else
-    for d in $RUN_DEVICES; do rm -rf "${OUT:?}/$d" "${OUT:?}/app-store/$d"; done
+    for d in $RUN_DEVICES; do
+      rm -rf "${OUT:?}/app-store/$(store_class "$d")"
+      is_main "$d" && rm -rf "${OUT:?}/$d"
+    done
   fi
 fi
 
-for MODE in light dark; do
-  echo "$MODE..."
-  [ "$uses_mac" = 0 ] || set_system_appearance "$MODE"
-  for id in $IPHONE_ID $IPAD_ID; do xcrun simctl ui "$id" appearance "$MODE" > /dev/null; done
-  for d in $RUN_DEVICES; do
+# One pass per appearance over the devices that have a main set.
+shoot_devices() {                                   # shoot_devices DEVICE...
+  local d
+  for d in "$@"; do
     use_device "$d"
     for SCREEN in $RUN_SCREENS; do
       # On macOS the first-run welcome is a sheet over a window that then
       # photographs with grey traffic lights.
       [ "$DEV $SCREEN" = "mac onboarding" ] && continue
+      # A store-only device takes just the screens that are in the store set,
+      # in the one appearance their slot calls for.
+      if ! is_main "$DEV"; then
+        in_list "$STORE_SCREENS" "$SCREEN" && [ "$(store_mode "$SCREEN")" = "$MODE" ] || continue
+      fi
       echo "$DEV $SCREEN"
       capture_screen
     done
   done
+}
+
+main_run=""
+store_run=""
+for d in $RUN_DEVICES; do
+  if is_main "$d"; then main_run="$main_run $d"; else store_run="$store_run $d"; fi
+  if is_main "$d" && [ "$d" != mac ]; then bring_up "$d"; fi
+done
+
+for MODE in light dark; do
+  echo "$MODE..."
+  [ "$uses_mac" = 0 ] || set_system_appearance "$MODE"
+  for d in $main_run; do
+    [ "$d" = mac ] || { id="ID_$d"; xcrun simctl ui "${!id}" appearance "$MODE" > /dev/null; }
+  done
+  # shellcheck disable=SC2086  # deliberate split: one word per device
+  [ -z "$main_run" ] || shoot_devices $main_run
+done
+for d in $main_run; do [ "$d" = mac ] || drop_sim "$d"; done
+
+# The store-only simulators come up one at a time, after the main ones are gone.
+for d in $store_run; do
+  bring_up "$d"
+  for MODE in light dark; do
+    id="ID_$d"
+    xcrun simctl ui "${!id}" appearance "$MODE" > /dev/null
+    echo "$d $MODE..."
+    shoot_devices "$d"
+  done
+  drop_sim "$d"
 done
 
 verify_outputs
