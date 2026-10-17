@@ -1,6 +1,6 @@
 /* CrocApp landing page. Loaded after tokens.css, which supplies every value
    here. No raw hex, px or duration below the reset: a missing value is a
-   missing token — add it to design/*.md and design/tokens.css first. */
+   missing token: add it to design/*.md and design/tokens.css first. */
 
 /* Reset and utilities */
 
@@ -62,11 +62,14 @@ button {
 }
 
 /* The 1px clip box is the one literal the reset allows; it is repeated in the
-   < 30rem nav rule, because a media query cannot borrow a class. */
-.u-visually-hidden {
+   < 30rem nav rule, because a media query cannot borrow a class. The skip link
+   uses the same pattern until it takes focus. */
+.u-visually-hidden,
+.skip-link:not(:focus) {
   position: absolute;
   width: 1px;
   height: 1px;
+  min-block-size: 0;
   padding: 0;
   overflow: hidden;
   clip-path: inset(50%);
@@ -77,14 +80,16 @@ button {
 
 /* Both on the scroll container: scroll-padding keeps the sticky nav off every
    fragment target including the skip link, and scoping scroll-behavior here
-   leaves nested scrollers instant. */
+   leaves nested scrollers instant. Smooth scrolling is opt-in because the
+   duration tokens cannot zero it. */
 html {
   scroll-padding-block-start: calc(var(--nav-height-web) + var(--space-5));
-  scroll-behavior: smooth;
 }
 
-body {
-  background: var(--color-surface-base);
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 .container {
@@ -95,13 +100,13 @@ body {
 }
 
 .container--wide {
-  max-width: var(--content-max-width-wide);
+  max-width: var(--content-max-width-wide-web);
 }
 
 /* Caps the content, not the container: max-width on the container itself
    re-centres it and gives the page a third left edge. */
 .container--prose > * {
-  max-width: var(--content-max-width-prose);
+  max-width: var(--content-max-width-prose-web);
 }
 
 .section {
@@ -118,7 +123,7 @@ body {
 .steps,
 .inspo {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min-card), 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min-card-web), 100%), 1fr));
 }
 
 .grid,
@@ -130,7 +135,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: var(--content-max-width-prose);
+  max-width: var(--content-max-width-prose-web);
   margin-block-end: var(--stack-web);
 }
 
@@ -154,30 +159,24 @@ body {
 
 .skip-link {
   position: fixed;
-  z-index: var(--z-skip-link);
+  z-index: var(--z-skip-link-web);
   inset-block-start: var(--space-3);
   inset-inline-start: var(--space-3);
-  padding: var(--space-3) var(--space-5);
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--hit-target-min);
+  padding-inline: var(--space-5);
+  font-weight: var(--weight-semibold);
   color: var(--color-on-accent);
   background: var(--color-accent);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-200%);
-  transition: transform var(--dur-fast) var(--ease-out);
-}
-
-/* Ring restated: this rule's own box-shadow would beat tokens.css's
-   :focus-visible on source order at equal specificity. */
-.skip-link:focus-visible {
-  transform: translateY(0);
-  box-shadow: var(--shadow-md), var(--shadow-focus-ring);
 }
 
 /* Sticky nav */
 
 .nav {
   position: sticky;
-  z-index: var(--z-nav);
+  z-index: var(--z-nav-web);
   inset-block-start: 0;
   background: var(--color-surface-card);
   border-block-end: var(--border-hairline) solid var(--color-separator);
@@ -200,6 +199,9 @@ body {
 }
 
 .nav__brand {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--hit-target-min);
   margin-inline-end: auto;
   font-weight: var(--weight-bold);
   color: var(--color-text-primary);
@@ -210,19 +212,28 @@ body {
 .nav__links {
   display: flex;
   align-items: center;
-  gap: var(--space-5);
 }
 
+/* The padding is the hit area, and the hover fill needs somewhere to draw. */
 .nav__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--hit-target-min);
+  min-inline-size: var(--hit-target-min);
+  padding-inline: var(--space-3);
   color: var(--color-text-secondary);
   text-decoration: none;
   white-space: nowrap;
-  transition: color var(--dur-fast) var(--ease-standard);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease-standard);
 }
 
-.nav__link:hover {
-  color: var(--color-text-primary);
-  text-decoration: none;
+@media (hover: hover) {
+  .nav__link:hover {
+    background: var(--color-fill-tertiary);
+    text-decoration: none;
+  }
 }
 
 /* WCAG 1.4.1: the current section cannot be colour alone. Underline rather than
@@ -233,7 +244,7 @@ body {
   text-underline-offset: var(--space-2);
 }
 
-/* Breakpoints are literals by necessity — a custom property does not resolve
+/* Breakpoints are literals by necessity: a custom property does not resolve
    inside a media condition. design/spacing-layout.md → Breakpoints is the only
    place these numbers are defined.
 
@@ -245,15 +256,15 @@ body {
   }
 }
 
-/* Buttons — components.md measurements */
+/* Buttons: components.md measurements */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--btn-gap-lg);
+  gap: var(--btn-gap-lg-web);
   height: var(--control-height-lg);
-  padding-inline: var(--btn-pad-x-lg);
+  padding-inline: var(--btn-pad-x-lg-web);
   font-size: var(--type-headline-size);
   font-weight: var(--weight-semibold);
   line-height: 1;
@@ -266,44 +277,69 @@ body {
     transform var(--dur-fast) var(--ease-out);
 }
 
-.btn:hover {
-  text-decoration: none;
+@media (hover: hover) {
+  .btn:hover {
+    text-decoration: none;
+  }
 }
 
-/* revert, not 1: this only undoes tokens.css's a:active dim. */
 .btn:active {
-  opacity: revert;
-  transform: scale(var(--press-scale));
+  transform: scale(var(--press-scale-web));
 }
 
 .btn__icon {
   flex: none;
-  width: var(--btn-icon-lg);
-  height: var(--btn-icon-lg);
+  width: var(--btn-icon-lg-web);
+  height: var(--btn-icon-lg-web);
 }
 
 .btn--md {
-  gap: var(--btn-gap-md);
+  gap: var(--btn-gap-md-web);
   height: var(--control-height-md);
-  padding-inline: var(--btn-pad-x-md);
+  padding-inline: var(--btn-pad-x-md-web);
   font-size: var(--type-callout-size);
 }
 
 .btn--md .btn__icon {
-  width: var(--btn-icon-md);
-  height: var(--btn-icon-md);
+  width: var(--btn-icon-md-web);
+  height: var(--btn-icon-md-web);
+  stroke-width: var(--icon-stroke-medium);
 }
 
 .btn--sm {
-  gap: var(--btn-gap-sm);
+  gap: var(--btn-gap-sm-web);
   height: var(--control-height-sm);
-  padding-inline: var(--btn-pad-x-sm);
+  padding-inline: var(--btn-pad-x-sm-web);
   font-size: var(--type-footnote-size);
 }
 
 .btn--sm .btn__icon {
-  width: var(--btn-icon-sm);
-  height: var(--btn-icon-sm);
+  width: var(--btn-icon-sm-web);
+  height: var(--btn-icon-sm-web);
+  stroke-width: var(--icon-stroke-heavy);
+}
+
+/* components.md → Button: a bare small button still gets a --hit-target-min hit
+   area. The pseudo-element grows the target without growing the capsule. */
+.btn--md,
+.btn--sm {
+  position: relative;
+  min-inline-size: var(--hit-target-min);
+}
+
+.btn--md::after,
+.btn--sm::after {
+  position: absolute;
+  inset-inline: 0;
+  content: "";
+}
+
+.btn--md::after {
+  inset-block: calc((var(--control-height-md) - var(--hit-target-min)) / 2);
+}
+
+.btn--sm::after {
+  inset-block: calc((var(--control-height-sm) - var(--hit-target-min)) / 2);
 }
 
 .btn--prominent {
@@ -312,9 +348,14 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.btn--prominent:hover {
-  color: var(--color-on-accent);
+.btn--prominent:active {
   background: var(--color-accent-pressed);
+}
+
+@media (hover: hover) {
+  .btn--prominent:hover {
+    background: var(--color-accent-pressed);
+  }
 }
 
 .btn--secondary {
@@ -323,8 +364,14 @@ body {
   background: var(--color-accent-tint);
 }
 
-.btn--secondary:hover {
-  color: var(--color-accent-text-on-tint);
+.btn--secondary:active {
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-accent-tint));
+}
+
+@media (hover: hover) {
+  .btn--secondary:hover {
+    background: color-mix(in srgb, var(--color-accent) 12%, var(--color-accent-tint));
+  }
 }
 
 /* Focus swaps the variant shadow for the ring rather than stacking both. */
@@ -343,18 +390,19 @@ body {
   color: var(--color-text-secondary);
   border-radius: var(--radius-capsule);
   transition:
-    color var(--dur-fast) var(--ease-standard),
     background-color var(--dur-fast) var(--ease-standard),
     transform var(--dur-fast) var(--ease-out);
 }
 
-.icon-btn:hover {
-  color: var(--color-text-primary);
+.icon-btn:active {
   background: var(--color-fill-tertiary);
+  transform: scale(var(--press-scale-web));
 }
 
-.icon-btn:active {
-  transform: scale(var(--press-scale));
+@media (hover: hover) {
+  .icon-btn:hover {
+    background: var(--color-fill-tertiary);
+  }
 }
 
 .icon-btn svg {
@@ -372,15 +420,13 @@ body {
 }
 
 .card--elevated {
-  border-color: transparent;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
 /* The one card that reads as "this is the answer", per components.md.
    Decoration is not a reason to use it. */
 .card--tinted {
   background: var(--color-accent-tint);
-  border-color: transparent;
 }
 
 .card__title {
@@ -398,7 +444,7 @@ body {
   color: var(--color-accent);
 }
 
-/* Pills — TrustBadge geometry */
+/* Pills: TrustBadge geometry */
 
 .pills {
   display: flex;
@@ -410,8 +456,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding-block: var(--pill-pad-block);
-  padding-inline: var(--pill-pad-inline-start) var(--pill-pad-inline-end);
+  padding-block: var(--pill-pad-block-web);
+  padding-inline: var(--pill-pad-inline-start-web) var(--pill-pad-inline-end-web);
   font-size: var(--type-footnote-size);
   font-weight: var(--weight-semibold);
   line-height: var(--type-footnote-lh);
@@ -423,21 +469,21 @@ body {
 }
 
 /* Success-on-success-tint is 1.98:1, so the tint carries the signal and the
-   label stays primary — colors.md rule 2. */
+   label stays primary: colors.md rule 2. */
 .pill--trust {
   background: var(--color-status-success-tint);
 }
 
 .pill__icon {
   flex: none;
-  width: var(--pill-icon-size);
-  height: var(--pill-icon-size);
+  width: var(--pill-icon-size-web);
+  height: var(--pill-icon-size-web);
 }
 
-/* Disclosure — <details>, works with JS off */
+/* Disclosure: <details>, works with JS off */
 
 .disclosure {
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-2) var(--space-6);
   background: var(--color-surface-card);
   border: var(--border-hairline) solid var(--color-separator);
   border-radius: var(--radius-md);
@@ -447,10 +493,15 @@ body {
   margin-block-start: var(--space-3);
 }
 
+.disclosure[open] {
+  padding-block-end: var(--space-5);
+}
+
 .disclosure__summary {
   display: flex;
   gap: var(--space-4);
   align-items: center;
+  min-block-size: var(--hit-target-min);
   font-size: var(--type-headline-size);
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-headline);
@@ -531,7 +582,7 @@ body {
   }
 }
 
-/* Clipped, not font-size: 0 — the accessible name has to survive. */
+/* Clipped, not font-size: 0, the accessible name has to survive. */
 @media (width < 30rem) {
   .nav__inner {
     gap: var(--space-3);
@@ -560,7 +611,7 @@ body {
 }
 
 /* A grid item's automatic minimum size is its min-content, so one nowrap string
-   widens the track past the container and the page scrolls sideways —
+   widens the track past the container and the page scrolls sideways:
    WCAG 2.2 SC 1.4.10. */
 .hero__inner > * {
   min-width: 0;
@@ -578,7 +629,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
-  max-width: var(--content-max-width-prose);
+  max-width: var(--content-max-width-prose-web);
 }
 
 .hero__deck {
@@ -653,8 +704,8 @@ body {
 
 .compare {
   margin-block-start: var(--stack-web);
-  /* Four nowrap columns do not fit a phone; scrolling the table beats scrolling
-     the page sideways. */
+  /* Nowrap columns do not fit a phone; scrolling the table beats scrolling
+     the page sideways. It is focusable so a keyboard can scroll it. */
   overflow-x: auto;
   background: var(--color-surface-card);
   border: var(--border-hairline) solid var(--color-separator);
@@ -696,7 +747,7 @@ body {
 }
 
 /* The cells still say Yes three times, so the tint adds nothing a reader
-   needs — colors.md rule 2. */
+   needs: colors.md rule 2. */
 .compare tbody tr:last-child {
   background: var(--color-accent-tint);
 }
@@ -722,8 +773,8 @@ body {
   flex: none;
   align-items: center;
   justify-content: center;
-  width: var(--step-marker-size);
-  height: var(--step-marker-size);
+  width: var(--step-marker-size-web);
+  height: var(--step-marker-size-web);
   font-size: var(--type-footnote-size);
   font-weight: var(--weight-semibold);
   color: var(--color-accent-text-on-tint);
@@ -744,7 +795,7 @@ body {
 
 .how__more {
   margin-block-start: var(--stack-web);
-  max-width: var(--content-max-width-prose);
+  max-width: var(--content-max-width-prose-web);
 }
 
 /* Feature groups */
@@ -769,8 +820,8 @@ body {
 
 .featlist svg {
   flex: none;
-  width: var(--btn-icon-sm);
-  height: var(--btn-icon-sm);
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
   /* Optical alignment: half the difference between line box and glyph. */
   margin-block-start: var(--space-1);
   color: var(--color-accent);
@@ -781,7 +832,9 @@ body {
 .dlcard {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  /* Clear space around a badge is a quarter of its height, 10px: the first
+     grid step above that. */
+  gap: var(--space-4);
 }
 
 .dlcard .card__title {
@@ -795,22 +848,12 @@ body {
   margin-block-start: auto;
 }
 
-/* Apple's badge, at Apple's minimum height, aspect ratio from the file. */
+/* Apple's black badge in both themes, at Apple's minimum height, aspect ratio
+   from the file. Never filtered: the gray border is part of the artwork.
+   brand.md → App Store badges. */
 .dlcard__badge {
   width: auto;
-  height: var(--store-badge-height);
-}
-
-/* Apple ships this badge in black and in white; the repo carries the black one,
-   and inverting black-on-transparent produces the white variant. */
-[data-theme="dark"] .dlcard__badge {
-  filter: invert(1);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .dlcard__badge {
-    filter: invert(1);
-  }
+  height: var(--store-badge-height-web);
 }
 
 .download__req {
@@ -891,7 +934,7 @@ body {
   margin-block-start: var(--space-2);
 }
 
-/* /r/ — the receive-link page. Same column as the 404. */
+/* /r/: the receive-link page. Same column as the 404. */
 .receive__inner {
   display: flex;
   flex-direction: column;
@@ -907,6 +950,7 @@ body {
   padding: var(--space-4) var(--space-6);
   overflow-wrap: anywhere;
   background: var(--color-surface-card);
+  border: var(--border-hairline) solid var(--color-separator);
   border-radius: var(--radius-md);
 }
 
@@ -945,7 +989,7 @@ body {
 }
 
 .footer__text {
-  flex: 1 1 var(--content-max-width-prose);
+  flex: 1 1 var(--content-max-width-prose-web);
   color: var(--color-text-secondary);
 }
 
@@ -956,20 +1000,15 @@ body {
 .footer__links {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-5);
+  gap: 0 var(--space-3);
   margin-inline-start: auto;
 }
 
-/* Reduced motion. tokens.css already zeroes the duration tokens; this is the
-   backstop for anything not token-driven. */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition-duration: var(--dur-fast) !important;
-    animation-duration: var(--dur-fast) !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-  }
+.footer__links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--hit-target-min);
+  min-inline-size: var(--hit-target-min);
+  padding-inline: var(--space-2);
 }
