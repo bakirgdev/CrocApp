@@ -1,34 +1,119 @@
 {
-  "fill" : "automatic",
-  "groups" : [
+  "fill-specializations": [
     {
-      "layers" : [
+      "value": {
+        "linear-gradient": [
+          "extended-srgb:0.96471,0.98824,0.97647,1.00000",
+          "extended-srgb:0.80392,0.93333,0.86667,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 1
+          }
+        }
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
+          "extended-srgb:0.11765,0.22745,0.17255,1.00000",
+          "extended-srgb:0.04314,0.09020,0.06667,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 1
+          }
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "Ink",
+      "layers": [
         {
-          "blend-mode" : "normal",
-          "fill" : "automatic",
-          "glass" : true,
-          "image-name" : "1.png",
-          "name" : "1",
-          "position" : {
-            "scale" : 0.75,
-            "translation-in-points" : [
+          "name": "Outline",
+          "image-name": "2_outline.png",
+          "glass": false,
+          "position": {
+            "scale": 0.75,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "fill-specializations": [
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "extended-gray:1.00000,1.00000"
+              }
+            }
+          ]
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.25
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    },
+    {
+      "name": "Croc",
+      "layers": [
+        {
+          "name": "Belly",
+          "image-name": "1_belly.png",
+          "glass": true,
+          "position": {
+            "scale": 0.75,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "name": "Body",
+          "image-name": "0_body.png",
+          "glass": true,
+          "position": {
+            "scale": 0.75,
+            "translation-in-points": [
               0,
               0
             ]
           }
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "lighting": "combined",
+      "shadow": {
+        "kind": "layer-color",
+        "opacity": 0.5
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.2
       }
     }
   ],
-  "supported-platforms" : {
-    "squares" : "shared"
+  "supported-platforms": {
+    "squares": "shared"
   }
 }

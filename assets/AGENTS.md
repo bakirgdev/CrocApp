@@ -7,7 +7,7 @@ Source-of-truth design and marketing files. Mostly binary and committed as-is; n
 | Path | What it is | Used by |
 | --- | --- | --- |
 | `mascot.png` | 1024×1024 mascot, the root image every other mascot asset derives from | Icon layer, `web/landing/assets/img/mascot-web.webp`, favicons, social cards |
-| `CrocAppIcon.icon/` | Icon Composer package: `icon.json` plus one layer, `Assets/1.png` (a copy of `mascot.png`) | Mirrored to `app/CrocApp/AppIcon.icon`, which is the copy Xcode builds |
+| `CrocAppIcon.icon/` | Icon Composer package: `icon.json` (mint gradient background, dark variant, two glass groups) plus three layers cut from `mascot.png` at full size: `0_body.png` (whole silhouette), `1_belly.png`, `2_outline.png` (ink, white when tinted) | Mirrored to `app/CrocApp/AppIcon.icon`, which is the copy Xcode builds |
 | `dmg-background.tiff` | DMG Finder window background, dark, 660×400 at 1x and 2x | `scripts/build-dmg.sh`. Spec: `design/components.md` → DiskImage |
 | `github-social-preview.png` | 1280×640, dark | Only the repository's GitHub Settings → Social preview, uploaded by hand. No file references it |
 | `screenshots/{mac,iphone,ipad}/<screen>-{light,dark}.png` | Full-resolution app screenshots, one pair per screen | README, docs site, landing hero (through the web copies) |
