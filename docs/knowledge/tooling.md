@@ -7,7 +7,7 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | Tool | Config | Where it runs |
 |---|---|---|
 | swift-format (Xcode 27 toolchain, Swift 6.4) | `.swift-format` (rules) + `scripts/format-swift.sh` (source set) | local + CI |
-| golangci-lint 2.x (CI pins v2.14.0 in `reusable-go.yml`) | `crocmobile/.golangci.yml` | local + CI |
+| golangci-lint 2.x (CI pins v2.15.0 in `reusable-go.yml`) | `crocmobile/.golangci.yml` | local + CI |
 | govulncheck (`tool` block in `crocmobile/go.mod`) | none | CI go job + weekly schedule |
 | `go build ./...` + `go vet ./...` | none | CI (go job, alongside lint/vuln) |
 | `go test -race ./...` (Go `testing`) | `crocmobile/*_test.go` | local + CI (go job, `GOOS`/`GOARCH` unset) |

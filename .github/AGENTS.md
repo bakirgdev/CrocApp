@@ -24,7 +24,7 @@ gh api repos/OWNER/REPO/git/ref/tags/TAG --jq '.object.type + " " + .object.sha'
 # type "tag" is annotated: deref with git/tags/SHA --jq .object.sha
 ```
 
-**Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, pnpm in `packageManager` in `web/docs/package.json`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block, the croc v10 test peer in `scripts/croc-v10.version`. Runners are pinned (`ubuntu-24.04`, `macos-26`, `xcode-27`) and are the one thing dependabot cannot see.
+**Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, pnpm in `packageManager` in `web/docs/package.json`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block, the croc v10 test peer in `scripts/croc-v10.version`. Runners are pinned (`ubuntu-26.04`, `macos-26`, `xcode-27`) and are the one thing dependabot cannot see.
 
 **`ci pass` is an interface.** `main` requires a pull request (0 approvals) and the `ci pass` check (admins can bypass both), so renaming that job breaks merging. Merging is squash-only (title = PR title, body = PR body) and `main` requires linear history.
 
