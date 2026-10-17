@@ -29,7 +29,10 @@ TOKENS=design/tokens.css
 # theme|foreground|background stack|expected. The stack composites front to
 # back, so a translucent tint names the opaque surface under it — keep it and
 # the markdown table in step. Below the marker: rules that must hold whatever
-# the values are, as label|theme|foreground|stack|min or max|threshold.
+# the values are, as label|theme|foreground|stack|min or max|threshold. Below
+# the second marker: alias rules, label|theme|token|target, true when the token
+# resolves to the same color as the target in that theme. The focus ring bands
+# (rule 7) are parsed from --shadow-focus-ring in the END block.
 TABLES='
 light|--color-accent|--color-surface-base|3.41
 light|--color-accent|--color-surface-grouped|3.06
@@ -37,12 +40,14 @@ light|--color-accent|--color-accent-tint>--color-surface-base|2.99
 light|--color-accent-text|--color-surface-base|4.94
 light|--color-accent-text|--color-surface-grouped|4.42
 light|--color-accent-text|--color-accent-tint>--color-surface-base|4.32
+light|--color-accent-text|--color-surface-card|4.94
 light|--color-accent-text-on-tint|--color-surface-base|7.36
 light|--color-accent-text-on-tint|--color-surface-grouped|6.60
 light|--color-accent-text-on-tint|--color-accent-tint>--color-surface-base|6.45
 light|--label-2|--color-surface-base|3.44
 light|--label-2-web|--color-surface-base|5.16
 light|--label-2-web|--color-surface-grouped|4.85
+light|--color-text-secondary|--color-accent-tint>--color-surface-base|4.78
 light|--label-3|--color-surface-base|1.73
 light|--color-on-accent|--color-accent|3.41
 light|--color-on-status|--color-status-error|3.55
@@ -53,12 +58,17 @@ light|--color-status-success|--color-surface-base|2.22
 light|--color-status-warning|--color-surface-base|2.20
 light|--color-status-error|--color-surface-base|3.55
 light|--color-status-info|--color-surface-base|4.02
+light|--glass-tint-accent|--color-surface-base|1.14
 dark|--color-accent|--color-surface-base|9.44
 dark|--color-accent|--color-surface-card|7.65
 dark|--color-accent|--color-accent-tint>--color-surface-base|7.72
 dark|--color-on-accent|--color-accent|7.19
 dark|--color-on-status|--color-status-error|3.41
 dark|--label-2|--color-surface-base|6.36
+dark|--color-status-success|--color-status-success-tint>--color-surface-base|8.05
+dark|--color-status-warning|--color-status-warning-tint>--color-surface-base|7.93
+dark|--color-status-error|--color-status-error-tint>--color-surface-base|5.25
+dark|--color-status-info|--color-status-info-tint>--color-surface-base|4.92
 == invariants ==
 accent fill clears 3:1 on base|light|--color-accent|--color-surface-base|min|3.0
 accent-text clears AA on base|light|--color-accent-text|--color-surface-base|min|4.5
@@ -71,6 +81,21 @@ filled destructive clears 3:1, dark|dark|--color-on-status|--color-status-error|
 focus ring outer band clears 3:1 on base|light|--color-accent|--color-surface-base|min|3.0
 focus ring inner band clears 3:1 on the accent fill|light|--color-surface-base|--color-accent|min|3.0
 tertiary is NOT a usable text color|light|--label-3|--color-surface-base|max|3.0
+secondary text clears AA on the accent tint (rule 4)|light|--color-text-secondary|--color-accent-tint>--color-surface-base|min|4.5
+accent-text clears AA on a card|light|--color-accent-text|--color-surface-card|min|4.5
+the accent tint is NOT a visible focus indicator (rule 7)|light|--glass-tint-accent|--color-surface-base|max|1.5
+dark status success clears AA on its own tint|dark|--color-status-success|--color-status-success-tint>--color-surface-base|min|4.5
+dark status warning clears AA on its own tint|dark|--color-status-warning|--color-status-warning-tint>--color-surface-base|min|4.5
+dark status error clears AA on its own tint|dark|--color-status-error|--color-status-error-tint>--color-surface-base|min|4.5
+dark status info clears AA on its own tint|dark|--color-status-info|--color-status-info-tint>--color-surface-base|min|4.5
+== aliases ==
+rule 4: secondary text is label-2-web, light|light|--color-text-secondary|--label-2-web
+rule 4: secondary text is label-2-web, dark|dark|--color-text-secondary|--label-2-web
+rule 6: link is accent-text, light|light|--color-text-link|--color-accent-text
+rule 6: link is accent-text, dark|dark|--color-text-link|--color-accent-text
+dark accent collapses to green-400|dark|--color-accent|--green-400
+dark accent-text collapses to green-400|dark|--color-accent-text|--green-400
+dark accent-text-on-tint collapses to green-400|dark|--color-accent-text-on-tint|--green-400
 '
 
 printf '%s\n' "$TABLES" | awk -v quiet="$QUIET" -v tokens="$TOKENS" '
@@ -186,6 +211,24 @@ function measure(theme, fg_name, stack,   bg, fg, f, la, lb, hi, lo) {
   return (hi + 0.05) / (lo + 0.05)
 }
 
+# Rule 7: --shadow-focus-ring is two bands, the base surface inside (2px) and
+# the accent outside (4px). The contrast rows prove each band reads against the
+# other and the accent; this proves the token still is that ring.
+function check_ring(   ring, n, bands, k, parts, np, spread, color, want_spread, want_color) {
+  if (!("--shadow-focus-ring" in VAL)) { failures[++nfail] = "--shadow-focus-ring is not defined in design/tokens.css"; return }
+  ring = VAL["--shadow-focus-ring"]
+  n = split_top(ring, bands)
+  if (n != 2) { failures[++nfail] = "--shadow-focus-ring must have exactly two bands, has " n; return }
+  for (k = 1; k <= 2; k++) {
+    want_spread = (k == 1) ? "2px" : "4px"
+    want_color = (k == 1) ? "var(--color-surface-base)" : "var(--color-accent)"
+    np = split(bands[k], parts, " ")
+    spread = parts[4]; color = parts[np]
+    if (np != 5 || parts[1] != "0" || parts[2] != "0" || parts[3] != "0" || spread != want_spread || color != want_color)
+      failures[++nfail] = "--shadow-focus-ring band " k " is \"" bands[k] "\", rule 7 needs \"0 0 0 " want_spread " " want_color "\""
+  }
+}
+
 BEGIN {
   TOLERANCE = 0.01
   section = "cases"
@@ -201,7 +244,11 @@ BEGIN {
     if (!match(rest, /\*\//)) { body = head; break }
     body = head substr(rest, RSTART + 2)
   }
-  n = split(body, decls, ";")
+  # Hand-rolled split: BSD awk also breaks split(s, a, ";") on newlines, which
+  # truncates multi-line values such as --shadow-focus-ring.
+  n = 0
+  while ((p = index(body, ";")) > 0) { decls[++n] = substr(body, 1, p - 1); body = substr(body, p + 1) }
+  decls[++n] = body
   for (i = 1; i <= n; i++) {
     d = trim(decls[i])
     if (d !~ /^--[a-z0-9-]+[ \t]*:/) continue
@@ -213,12 +260,20 @@ BEGIN {
 
 trim($0) == "" { next }
 trim($0) == "== invariants ==" { section = "invariants"; next }
+trim($0) == "== aliases ==" { section = "aliases"; next }
 
 section == "cases" {
   split($0, f, "|")
   ncase++
   ctheme[ncase] = f[1]; cfg[ncase] = f[2]; cstack[ncase] = f[3]; cwant[ncase] = f[4] + 0
   if (length(f[2]) > width) width = length(f[2])
+  next
+}
+
+section == "aliases" {
+  split($0, f, "|")
+  nalias++
+  alabel[nalias] = f[1]; atheme[nalias] = f[2]; atoken[nalias] = f[3]; atarget[nalias] = f[4]
   next
 }
 
@@ -246,7 +301,14 @@ END {
     if (!ok) failures[++nfail] = "invariant broken: " ilabel[i] " (" sprintf("%.2f", got) " is " (ikind[i] == "min" ? "below " : "above ") sprintf("%.2f", ithreshold[i]) ")"
   }
 
-  if (!quiet) printf "\n%d documented ratios, %d invariants\n", ncase, ninvariant
+  for (i = 1; i <= nalias; i++) {
+    if (resolve(atoken[i], atheme[i], 0) != resolve(atarget[i], atheme[i], 0))
+      failures[++nfail] = "alias rule broken: " alabel[i] " (" atoken[i] " no longer resolves to " atarget[i] ")"
+  }
+
+  check_ring()
+
+  if (!quiet) printf "\n%d documented ratios, %d invariants, %d alias rules, %d focus-ring bands\n", ncase, ninvariant, nalias, 2
 
   if (nfail) {
     print "\nFAIL"
@@ -255,6 +317,6 @@ END {
     exit 1
   }
 
-  if (!quiet) print "OK: design/colors.md matches design/tokens.css"
+  if (!quiet) print "OK: the " ncase " ratios equal the values recorded here (the colors.md Contrast table), and the " ninvariant " invariants, " nalias " alias rules and focus-ring bands hold for design/tokens.css"
 }
 '
