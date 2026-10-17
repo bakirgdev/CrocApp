@@ -6,7 +6,7 @@ description: The shipped power-user settings and the croc CLI flag each one maps
 
 # Power options
 
-![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/ios-settings-light.png#gh-light-mode-only)![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/ios-settings-dark.png#gh-dark-mode-only)
+![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/iphone/settings-light.png#gh-light-mode-only)![CrocApp Settings on iOS showing the power options under the settings screen](/img/screenshots/iphone/settings-dark.png#gh-dark-mode-only)
 
 CrocApp exposes a set of power options with sane defaults. On macOS they live in the Settings scene (⌘,); on iOS they're under the settings screen from the home toolbar. All eight below are shipped. The croc options most people never need, such as proxies and ports, are on a separate page: [Advanced settings](advanced-settings.md).
 

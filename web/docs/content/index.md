@@ -7,7 +7,7 @@ description: CrocApp is a free, open-source native SwiftUI app for iPhone, iPad,
 
 # CrocApp documentation
 
-![CrocApp's first-run welcome screen on iOS, explaining the code phrase in three lines](/img/screenshots/ios-onboarding-light.png#gh-light-mode-only)![CrocApp's first-run welcome screen on iOS, explaining the code phrase in three lines](/img/screenshots/ios-onboarding-dark.png#gh-dark-mode-only)
+![CrocApp's first-run welcome screen on iOS, explaining the code phrase in three lines](/img/screenshots/iphone/onboarding-light.png#gh-light-mode-only)![CrocApp's first-run welcome screen on iOS, explaining the code phrase in three lines](/img/screenshots/iphone/onboarding-dark.png#gh-dark-mode-only)
 
 CrocApp sends files, folders, and text between two devices anywhere in the world, encrypted end to end, using a short code phrase like `cape-junky-widow`. No account, no upload to someone else's cloud, no requirement that both devices share a network.
 

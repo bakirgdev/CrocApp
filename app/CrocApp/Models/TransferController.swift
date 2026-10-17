@@ -37,6 +37,10 @@ final class TransferController {
     /// settings edits don't lie in the trust UI.
     private(set) var activeRelay: AppSettings.RelayKind = .publicDefault
 
+    /// Harness-only (AutoVerify --shown-relay): the relay the trust UI
+    /// names, so a run through a local relay photographs like a default one.
+    var harnessShownRelay: AppSettings.RelayKind?
+
     /// Harness-only (AutoVerify --relay): kills the LAN race so the custom
     /// relay path is provably exercised. Not a user setting.
     var harnessDisableLocal = false
@@ -149,7 +153,7 @@ final class TransferController {
         guard !isActive else { return }
         direction = .send
         isStoredTransfer = false
-        activeRelay = settings.relayKind
+        activeRelay = harnessShownRelay ?? settings.relayKind
         sendConfirmArmed = settings.bothSidesConfirm
         autoAcceptActive = false
         beginFileSend(urls: urls, codeHint: Self.codeHint(customCode))
@@ -170,7 +174,7 @@ final class TransferController {
         guard !isActive else { return }
         direction = .send
         isStoredTransfer = true
-        activeRelay = settings.relayKind
+        activeRelay = harnessShownRelay ?? settings.relayKind
         sendConfirmArmed = false
         autoAcceptActive = false
         let server = settings.storedServer.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -217,7 +221,7 @@ final class TransferController {
         guard !isActive else { return }
         direction = .send
         isStoredTransfer = false
-        activeRelay = settings.relayKind
+        activeRelay = harnessShownRelay ?? settings.relayKind
         sendConfirmArmed = settings.bothSidesConfirm
         autoAcceptActive = false
         pendingRecord = PendingRecord(
@@ -270,7 +274,7 @@ final class TransferController {
     private func beginReceive(
         into folder: URL, folderIsScoped: Bool, codeHint: String, relay: AppSettings.RelayKind
     ) {
-        activeRelay = relay
+        activeRelay = harnessShownRelay ?? relay
         sendConfirmArmed = false
         outDir = folder
         if folderIsScoped, folder.startAccessingSecurityScopedResource() {

@@ -28,26 +28,37 @@ import ServiceManagement
 ///   --no-compress                  disable croc compression (F15)
 ///   --ask                          require sender-side confirm before send (F19)
 ///   --relay ADDR                   use a custom relay address (F13); also disables local-only race
+///   --relay-password PW            the custom relay's password (croc's default applies without it)
+///   --shown-relay default          make the trust UI name the public relay whatever --relay says
+///   --throttle RATE                cap the upload rate for a send, e.g. 4m (croc's --throttleUpload)
 ///   --hold                         park at the incoming prompt instead of auto-accepting
 ///   --when-exists keepBoth|replace answer the incoming prompt with this file policy
 ///                                  (the setting stays Keep Both, so the late answer must reach croc)
 ///   --screen ROUTE                 navigate to home|send|receive|settings|advanced|howItWorks|history|
 ///                                  onboarding on launch; combines with the --auto-* modes
 ///   --stage PATH                   preload PATH into the Send screen's staged list (repeatable)
-///   --seed-history                 fill the (in-memory) history store with sample records
+///   --seed-history                 fill the (in-memory) history store with showcase records
 /// --auto-send takes its two values non-adjacently (separated by the --code
 /// flag, not `--auto-send PATH CODE`): two bare positional arguments in a row
 /// makes AppKit treat the launch as a file-open request and it never creates
 /// the default window, so ContentView's .task (and this whole harness) never
 /// runs -- confirmed via `sample` on the hung process (idle in NSApplication's
 /// event loop, no window ever attached). Splitting them with a flag avoids it.
+/// On macOS, AppKit reads `--flag value` pairs as defaults and a bare leftover token as a file to
+/// open, so a flag without a value (--hold, --seed-history) must come last.
 /// Writes verify-result.txt ("ok success=<bool>" | "error <msg>") to Documents,
 /// and verify-code-ready.txt once a send has its code, so a script can start
-/// the receiver only after the app is in the room.
-/// --hold, --screen, --stage and --seed-history exist for
-/// scripts/capture-screenshots.sh rather than the verify-*.sh runs: the harness
-/// drives the controller directly, so without them the UI sits on HomeView
-/// while the transfer runs behind it, and no screen holds still to photograph.
+/// the receiver only after the app is in the room. For scripts that need to
+/// know when a screen holds still: verify-ready.txt appears once --screen,
+/// --stage and --seed-history are applied and the push animation has settled,
+/// and verify-phase.txt always holds the transfer's current phase (waiting,
+/// incoming conflicts=N, transferring percent=N, done, ...).
+/// --hold, --screen, --stage, --seed-history, --relay-password, --shown-relay
+/// and --throttle
+/// exist for scripts/capture-screenshots.sh rather than the verify-*.sh runs:
+/// the harness drives the controller directly, so without them the UI sits on
+/// HomeView while the transfer runs behind it, and no screen holds still to
+/// photograph.
 // The type itself must exist in Release too (CrocAppApp.swift and ContentView.swift
 // call it unconditionally), but the harness it drives -- real transfers, settings
 // overrides, writes into Documents -- must not ship. Only the bodies are #if DEBUG;
@@ -113,6 +124,17 @@ enum AutoVerify {
             // Kill the LAN race so success provably went through the relay.
             controller.harnessDisableLocal = true
         }
+        if let i = args.firstIndex(of: "--relay-password"), i + 1 < args.count {
+            controller.settings.relayPassword = args[i + 1]
+        }
+        if let i = args.firstIndex(of: "--shown-relay"), i + 1 < args.count,
+            args[i + 1] == "default"
+        {
+            controller.harnessShownRelay = .publicDefault
+        }
+        if let i = args.firstIndex(of: "--throttle"), i + 1 < args.count {
+            controller.settings.throttleUpload = args[i + 1]
+        }
         // Harness contract: verify-result.txt + received files live in the
         // container Documents folder (verify-app-mac.sh reads it there),
         // independent of the app's user-facing default output folder.
@@ -124,6 +146,7 @@ enum AutoVerify {
         // pixels, while the capture script combines them freely.
         if let route = requestedRoute() { applyRoute(route, args: args) }
         if args.contains("--seed-history") { seedHistory(controller.history) }
+        announceReady(docs: docs)
         let hold = args.contains("--hold")
         #if os(macOS)
         if await runMenuBarModes(args: args, controller: controller, resultURL: resultURL) {
@@ -307,36 +330,79 @@ enum AutoVerify {
         }
     }
 
-    /// Sample records for the history screenshot. Safe because every harness
-    /// run gets an in-memory container (CrocAppApp.init), so this can never
-    /// reach the user's real store.
+    /// Writes verify-ready.txt once the requested screen has been on display
+    /// long enough for its push animation to finish. Does not wait, so a
+    /// transfer mode starts at once.
+    @MainActor
+    private static func announceReady(docs: URL) {
+        guard requestedRoute() != nil else { return }
+        let readyURL = docs.appendingPathComponent("verify-ready.txt")
+        Task {
+            try? await Task.sleep(for: .seconds(1))
+            try? "ready".write(to: readyURL, atomically: true, encoding: .utf8)
+        }
+    }
+
+    /// Showcase records for the history screenshot: sends and receives,
+    /// every status, a text snippet and a stored link, from minutes to weeks
+    /// old. Names and sizes match the payloads capture-screenshots.sh builds.
+    /// Safe because every harness run gets an in-memory container
+    /// (CrocAppApp.init), so this can never reach the user's real store.
     @MainActor
     private static func seedHistory(_ history: HistoryStore?) {
         guard let history else { return }
+        let hour = 3600.0
+        let day = 24 * hour
         let samples:
             [(
-                send: Bool, status: TransferRecord.Status, files: Int, bytes: Int64,
-                names: [String],
-                hint: String, agoHours: Double
+                send: Bool, status: TransferRecord.Status, text: Bool, bytes: Int64,
+                names: [String], count: Int, hint: String, ago: Double, stored: Bool
             )] = [
                 (
-                    true, .completed, 3, 12_163_000,
-                    ["Presentation.pdf", "Budget.numbers", "Cover-Art.png"], "4821", 0.4
+                    false, .completed, false, 177_000,
+                    ["Quarterly-Report.pdf", "Ridge-Sunrise.jpg", "Meeting-Notes.md"], 3, "4821",
+                    12 * 60, false
                 ),
-                (false, .completed, 1, 8_800_000, ["Design-Assets.zip"], "6142", 5),
-                (true, .completed, 1, 1_240_000, ["Notes.md"], "9134", 27),
+                (true, .completed, true, 148, [], 1, "7305", 2 * hour, false),
                 (
-                    false, .declined, 2, 47_300_000, ["raw-scan-01.tiff", "raw-scan-02.tiff"],
-                    "3057", 51
+                    true, .completed, false, 55_000, ["Design-Assets.zip"], 1,
+                    "store.example.org", 5 * hour, true
                 ),
-                (true, .failed, 1, 96_000_000, ["Archive.tar.gz"], "7253", 74),
+                (
+                    false, .completed, false, 24_100_000, ["Soundtrack.wav"], 1, "6142", 1.2 * day,
+                    false
+                ),
+                (
+                    true, .declined, false, 184_000, ["Contract-Draft.pdf"], 1, "3057", 2 * day,
+                    false
+                ),
+                (
+                    false, .failed, false, 96_000_000, ["Field-Recordings.zip"], 1, "9134", 4 * day,
+                    false
+                ),
+                (
+                    true, .completed, false, 18_600_000,
+                    ["Slides.pdf", "Cover-Art.png", "Speaker-Notes.md", "Demo-Reel.mov"], 4, "2290",
+                    6 * day, false
+                ),
+                (
+                    false, .cancelled, false, 412_000_000,
+                    ["Raw-Scans.zip"], 1, "8816", 9 * day, false
+                ),
+                (
+                    true, .completed, false, 7_800_000, ["Project-Archive.zip"], 1, "5503",
+                    21 * day, false
+                ),
+                (false, .completed, false, 1_200_000, ["Receipts.pdf"], 1, "1948", 35 * day, false),
             ]
         for sample in samples {
             let record = TransferRecord(
-                isSend: sample.send, status: sample.status, isText: false,
-                fileCount: sample.files, totalBytes: sample.bytes, names: sample.names,
-                codeHint: sample.hint, bookmarks: [])
-            record.date = Date(timeIntervalSinceNow: -sample.agoHours * 3600)
+                isSend: sample.send, status: sample.status, isText: sample.text,
+                fileCount: sample.count, totalBytes: sample.bytes, names: sample.names,
+                codeHint: sample.hint, bookmarks: [],
+                storedID: sample.stored ? "showcase-link" : nil,
+                expiresAt: sample.stored ? Date(timeIntervalSinceNow: 2 * day) : nil)
+            record.date = Date(timeIntervalSinceNow: -sample.ago)
             history.add(record)
         }
     }
@@ -387,12 +453,31 @@ enum AutoVerify {
         }
     }
 
+    private static func phaseLabel(_ phase: TransferController.Phase) -> String {
+        switch phase {
+        case .idle: "idle"
+        case .starting: "starting"
+        case .waiting: "waiting"
+        case .connecting: "connecting"
+        case .confirmSend: "confirmSend"
+        case .incoming(_, let conflicts, _): "incoming conflicts=\(conflicts.count)"
+        case .transferring(let p):
+            "transferring percent=\(p.totalSize > 0 ? Int(100 * (p.bytesFinished + p.fileSent) / p.totalSize) : 0)"
+        case .done: "done"
+        case .stored: "stored"
+        case .failed: "failed"
+        }
+    }
+
     @MainActor
     private static func watch(
         _ controller: TransferController, resultURL: URL, autoAccept: Bool,
         sheetPolicy: FilePolicy = .keepBoth
     ) async {
         var codeReady = false
+        var lastLabel = ""
+        let phaseURL = resultURL.deletingLastPathComponent().appendingPathComponent(
+            "verify-phase.txt")
         func finish(_ result: String) {
             try? result.write(to: resultURL, atomically: true, encoding: .utf8)
             let historyURL = resultURL.deletingLastPathComponent().appendingPathComponent(
@@ -402,6 +487,11 @@ enum AutoVerify {
         }
         while true {
             try? await Task.sleep(for: .milliseconds(200))
+            let label = phaseLabel(controller.phase)
+            if label != lastLabel {
+                lastLabel = label
+                try? label.write(to: phaseURL, atomically: true, encoding: .utf8)
+            }
             switch controller.phase {
             case .waiting(let code) where !codeReady:
                 codeReady = true

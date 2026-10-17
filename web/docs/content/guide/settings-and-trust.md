@@ -6,7 +6,7 @@ description: Where CrocApp's settings live, why you might run your own relay, an
 
 # Settings and trust
 
-![CrocApp Settings on macOS showing the receive folder and the relay address fields](/img/screenshots/mac-settings-light.png#gh-light-mode-only)![CrocApp Settings on macOS showing the receive folder and the relay address fields](/img/screenshots/mac-settings-dark.png#gh-dark-mode-only)
+![CrocApp Settings on macOS showing the receive folder and the relay address fields](/img/screenshots/mac/settings-light.png#gh-light-mode-only)![CrocApp Settings on macOS showing the receive folder and the relay address fields](/img/screenshots/mac/settings-dark.png#gh-dark-mode-only)
 
 ## Where settings live
 
