@@ -1,51 +1,49 @@
 ---
 sidebar_position: 5
-title: Security and Privacy
-description: The exact security claim CrocApp makes, stated precisely, plus what data it collects (none) and how to report a vulnerability.
+title: Security and privacy
+description: What CrocApp guarantees, what it does and does not collect, and how to report a vulnerability.
 ---
 
 # Security and privacy
 
-## The claim, stated precisely
+## What CrocApp guarantees
 
-Transfers are end-to-end encrypted, the code phrase authenticates both sides, and the relay only ever sees ciphertext. That is the entire claim.
+Transfers are end-to-end encrypted, the code phrase authenticates both devices (PAKE), and the relay only ever sees ciphertext. That is the whole claim.
 
 :::warning
-There has been **no formal third-party security audit** of croc, and CrocApp does not claim one. Do not treat CrocApp as audited, certified, or zero-knowledge-verified.
+CrocApp has **not had a formal third-party security audit**. Do not treat it as audited or certified.
 :::
 
 ## How it works
 
-- **One code, one transfer.** Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner; share it over a channel you trust, and it expires with the transfer.
-- **Strong keys from short codes.** Both devices run PAKE (password-authenticated key exchange) to turn the code phrase into a strong encryption key. The code itself never crosses the network, and a wrong code fails immediately.
-- **End-to-end encrypted.** Everything is encrypted on your device and decrypted only on the other one. Nothing in between can read it.
-- **The relay is just a pipe.** When devices can't connect directly, an internet relay forwards the encrypted stream. The relay never has the key — it sees only ciphertext. You can also run your own relay and set it in settings.
-- **A direct path for large files.** With the default **Automatic** connection setting, a send of 128 MiB or more also tries a peer-to-peer connection, set up through `tailcat.dev`, with its own relays (`*.ipn.dev`) when the devices cannot reach each other. Whichever path connects first carries the transfer, and it is end-to-end encrypted on either path. Those servers are contacted only for such a send. Choose **Relay only** under [power options](guide/power-options.md) and your sends never contact them. A receive follows the sender's choice, so receiving a large file from a sender on Automatic (or the croc CLI's default) can use them.
-- **Local network when possible.** Devices on the same network transfer directly; the data never leaves your network. The local path and the relay race, and the faster one wins.
-- **Stored uploads talk to one server.** [Send as link](guide/stored-transfers.md) encrypts the files on your device and uploads them to the server named in Settings (by default `https://getcroc.com`, run by croc's author, not by CrocApp). The key is in the part of the link after the `#`, which is never sent to the server, so the server holds ciphertext it cannot read. A stored upload contacts that server and nothing else. Anyone with the whole link can decrypt, and you can revoke an upload from [History](guide/history.md).
+- **One code, one transfer.** Every transfer uses a fresh code phrase. Whoever has the code can join the transfer, so share it over a channel you trust.
+- **The code phrase authenticates both devices.** Both devices run PAKE (password-authenticated key exchange) with the code phrase. A wrong code fails immediately.
+- **End-to-end encrypted.** Everything is encrypted on your device and decrypted on the other one.
+- **The relay only ever sees ciphertext.** When the two devices cannot connect directly, an internet relay forwards the encrypted stream. You can also run your own relay and set it in Settings.
+- **A direct connection for large files.** With the default **Automatic** connection setting, a send of 128 MiB or more also tries a direct connection, set up through `tailcat.dev`, with its own relays (`*.ipn.dev`) when the devices cannot reach each other. Whichever path connects first carries the transfer, and it is end-to-end encrypted on either path. Those servers are contacted only for such a send. Choose **Relay Only** under [power options](guide/power-options.md) and your sends never contact them. A receive follows the sender's choice, so receiving a large file from a sender on Automatic (or the croc CLI's default) can use them.
+- **The local network.** When the two devices connect over the local network, the data stays on that network. The local connection and the relay race, and the faster one wins.
+- **Send as link.** [Send as link](guide/stored-transfers.md) encrypts the files on your device before they reach the link server, and the key travels in the link's `#` fragment, which browsers never send to a server. The link server is the one named in Settings, by default `https://getcroc.com`, run by croc's author and not by CrocApp. A link send contacts that server and nothing else. Anyone with the whole link can decrypt the files, and you can revoke the link from [History](guide/history.md).
 - **Links carry the code in the fragment.** A `https://crocapp.dev/r/#<code>` link keeps the code after the `#`, which browsers never send to a server. The page at that address makes no network request and sets a `no-referrer` policy. Anyone who sees the link still has the code, so share it the way you would share the code.
-- **You stay in control.** Nothing is saved without your OK: incoming transfers show a file preview you accept or decline. Auto-accept is off unless you turn it on.
+- **You stay in control.** A receive shows the file list and waits for you to accept or decline. Auto-accept is off unless you turn it on.
 
 ## Receiving in a browser
 
-The link page offers **Receive in your browser**, which opens `https://getcroc.com/?code=<code>`. That is croc's own web app, not run by CrocApp. The code travels in the query string there, so it reaches getcroc.com's server, and the browser path trusts getcroc.com fully: getcroc.com serves the JavaScript that decrypts the file, so whoever controls that site could change the code that handles your data. It also reaches only croc's default relays. The CrocApp and croc CLI paths do not have this dependency. If that trust is more than you want to give, receive in CrocApp.
+The link page offers **Receive in Your Browser**, which opens `https://getcroc.com/?code=<code>`. That is croc's own web app, not run by CrocApp. The code travels in the query string there, so it reaches getcroc.com's server. The browser path also depends on getcroc.com fully, because getcroc.com serves the JavaScript that decrypts the file. It reaches only croc's default relays. The CrocApp and croc CLI paths do not have this dependency. If that is more than you want to depend on, receive in CrocApp.
 
-## What CrocApp does not do
+## Privacy
 
-- No telemetry, no analytics, no ads, no accounts.
-- Transfer history is local to the device — see [History](guide/history.md) for exactly what it records.
+- CrocApp has no accounts, analytics, ads or tracking.
+- History stays on the device. See [History](guide/history.md) for exactly what it records.
 - You can point CrocApp at your own croc relay instead of the default public one.
-- The disk image build checks github.com for updates through Sparkle and installs only updates whose signature matches the key built into the app; it sends no system profile. See [Verify downloads](verify-downloads.md) for how to check a download. The App Store builds contain no updater.
+- The disk image build checks github.com for updates through Sparkle and installs only updates whose signature matches the key built into the app. It sends no system profile. See [Verify a release](verify-downloads.md) for how to check a release. The App Store builds contain no updater.
 - Dependencies in the Go engine (`crocmobile/`) are scanned by `govulncheck` in CI when the Go code or the Go CI workflows change, and on a weekly schedule.
 
-## Privacy policy
-
-The [privacy policy](https://crocapp.dev/privacy/) lists every server CrocApp can contact, what each one can see, and how long a stored transfer is kept. CrocApp has no accounts and the developer collects no data.
+The [privacy policy](https://crocapp.dev/privacy/) lists every server CrocApp can contact, what each one can see, and how long a link send is kept.
 
 ## Reporting a vulnerability
 
-Report privately through [GitHub Security Advisories](https://github.com/bakirgdev/CrocApp/security/advisories/new). Never open a public issue, discussion, or pull request for a suspected vulnerability.
+Report privately through [GitHub Security Advisories](https://github.com/bakirgdev/CrocApp/security/advisories/new). Never open a public issue, discussion or pull request for a suspected vulnerability.
 
-Useful to include: what an attacker gains and what access they'd need, reproduction steps (code phrase flow, relay, platform), the CrocApp version or commit plus OS version and device, and whether the same behavior reproduces with the upstream `croc` CLI.
+Useful to include: what an attacker gains and what access they would need, reproduction steps (code phrase flow, relay, platform), the CrocApp version or commit plus OS version and device, and whether the same behavior reproduces with the upstream `croc` CLI.
 
-Full policy, scope, and what's out of scope (the transfer protocol itself belongs to croc upstream): [`SECURITY.md`](https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md) on GitHub.
+Full policy, scope, and what is out of scope (the transfer protocol itself belongs to croc upstream): [`SECURITY.md`](https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md) on GitHub.

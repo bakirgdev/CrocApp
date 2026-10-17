@@ -18,9 +18,9 @@ The actions also show up in the Shortcuts app as ready-made shortcuts, so you ca
 
 ## Sending
 
-Both send actions use a generated code. They finish as soon as croc has a code, not when the transfer ends, and show "The code is X. Keep CrocApp open until the transfer ends." Pass the returned code to a Message, a Copy to Clipboard action or anything else that can reach the receiver.
+Both send actions use a generated code. They finish as soon as croc has a code, not when the transfer ends, and show "The code is X. Keep CrocApp open until the transfer ends." Pass the returned code to a Message, a Copy to Clipboard action or anything else that can reach the other device.
 
-**Keep CrocApp open until the receiver finishes.** The sender has to stay online for the whole transfer, and closing CrocApp early ends it. For this reason the actions open CrocApp in the foreground: a transfer can last longer than the 30 seconds iOS gives a background action.
+**Keep CrocApp open until the other device finishes.** The sender has to stay online for the whole transfer, and closing CrocApp early ends it. For this reason the actions open CrocApp in the foreground: a transfer can last longer than the 30 seconds iOS gives a background action.
 
 ## Receiving
 
@@ -28,7 +28,7 @@ Both send actions use a generated code. They finish as soon as croc has a code, 
 
 Received text comes back as a file named `Received text.txt`.
 
-The action does not answer the incoming-files prompt. The prompt appears in CrocApp unless **Auto-accept** is on in [Settings](power-options.md). If a received file has the same name as an existing one, the **When a file already exists** setting decides (Keep Both or Replace), and the action returns the new copies.
+The action does not accept or decline for you. The prompt appears in CrocApp unless **Auto-Accept Transfers** is on in [Settings](power-options.md). If a received file has the same name as an existing one, the **When a File Already Exists** setting decides (Keep Both or Replace), and the action returns the new copies.
 
 ## One transfer at a time
 

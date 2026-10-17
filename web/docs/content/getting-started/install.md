@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 title: Install
-description: "The three ways to get CrocApp 1.0: the iOS and Mac App Stores and a notarized disk image for Mac, plus how updates work and how to build from source."
+description: "The three ways to get CrocApp 1.0: the App Store, the Mac App Store and a notarized disk image for Mac, plus how updates work and how to build from source."
 ---
 
 # Install
@@ -20,14 +20,14 @@ The store listings arrive at launch, so this page does not link them yet. There 
 
 Open the disk image from GitHub Releases and drag **CrocApp** onto **Applications**. Use version 1.0.0 or later: the 0.9.x disk images are not notarized and use croc 10. From 1.0.0 on, the app is signed with a Developer ID certificate, notarized by Apple and stapled, so macOS opens it with the standard first-launch confirmation and nothing else.
 
-To check that a download came from this project's release workflow, run:
+To check that a disk image came from this project's release workflow, run:
 
 ```bash
 gh attestation verify CrocApp-<version>-arm64.dmg --repo bakirgdev/CrocApp \
   --signer-workflow bakirgdev/CrocApp/.github/workflows/release.yml
 ```
 
-See [Verify downloads](../verify-downloads.md) for what the attestation covers and the other checks.
+See [Verify a release](../verify-downloads.md) for what the attestation covers and the other checks.
 
 ## Updates
 

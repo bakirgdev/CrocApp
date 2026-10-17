@@ -5,21 +5,41 @@
  * same attribute Docusaurus toggles, so every light-dark() pair resolves and
  * dark needs no second block.
  *
- * Map Infima variables to tokens here. No raw hex or px in this file. */
+ * Map Infima variables to tokens here. No raw hex, px or rem in this file
+ * (design/web.md → The only literals web may write).
+ *
+ * future.v4 puts Infima and the classic theme in cascade layers and this file
+ * is unlayered, so a declaration here beats theirs whatever its specificity,
+ * and Infima's own [data-theme='dark'] palette never shows through. */
 
 @import './tokens.css';
 
 :root {
   /* Accent as a fill. --color-accent is 3.41:1 on white, fine for fills,
-     icons and borders, never for a word: link color takes --color-text-link
-     and inline code takes --color-accent-text. See design/colors.md. */
+     icons and borders, never for a word: link color takes --color-text-link.
+     The ladder is the aliases, which already flip per theme. Infima asks for
+     three darker steps and three lighter ones; the tokens define one pressed
+     step and one tint, so steps repeat rather than invent a shade. */
   --ifm-color-primary: var(--color-accent);
-  --ifm-color-primary-dark: var(--green-700);
-  --ifm-color-primary-darker: var(--green-800);
-  --ifm-color-primary-darkest: var(--green-900);
-  --ifm-color-primary-light: var(--green-400);
-  --ifm-color-primary-lighter: var(--green-300);
-  --ifm-color-primary-lightest: var(--green-200);
+  --ifm-color-primary-dark: var(--color-accent-pressed);
+  --ifm-color-primary-darker: var(--color-accent-pressed);
+  --ifm-color-primary-darkest: var(--color-accent-pressed);
+  --ifm-color-primary-light: var(--color-accent);
+  --ifm-color-primary-lighter: var(--color-accent-tint);
+  --ifm-color-primary-lightest: var(--color-accent-tint);
+
+  /* Infima's gray ladder, as fills and separators below 500 and text above. */
+  --ifm-color-emphasis-0: var(--color-surface-card);
+  --ifm-color-emphasis-100: var(--color-fill-tertiary);
+  --ifm-color-emphasis-200: var(--color-fill-secondary);
+  --ifm-color-emphasis-300: var(--color-separator);
+  --ifm-color-emphasis-400: var(--color-separator);
+  --ifm-color-emphasis-500: var(--color-text-secondary);
+  --ifm-color-emphasis-600: var(--color-text-secondary);
+  --ifm-color-emphasis-700: var(--color-text-secondary);
+  --ifm-color-emphasis-800: var(--color-text-primary);
+  --ifm-color-emphasis-900: var(--color-text-primary);
+  --ifm-color-emphasis-1000: var(--color-text-primary);
 
   --ifm-font-family-base: var(--font-sans);
   --ifm-font-family-monospace: var(--font-mono);
@@ -31,25 +51,41 @@
   --ifm-font-color-base: var(--color-text-primary);
   --ifm-heading-color: var(--color-text-primary);
   --ifm-link-color: var(--color-text-link);
-  --ifm-link-hover-color: var(--color-accent-text);
+  --ifm-link-hover-color: var(--color-text-link);
 
+  --ifm-color-content: var(--color-text-primary);
   --ifm-color-content-secondary: var(--color-text-secondary);
   --ifm-toc-border-color: var(--color-separator);
+  --ifm-toc-padding-vertical: var(--space-1);
   --ifm-hr-border-color: var(--color-separator);
+  --ifm-hr-background-color: var(--color-separator);
   --ifm-table-border-color: var(--color-separator);
+  --ifm-table-stripe-background: var(--color-fill-tertiary);
+  --ifm-table-head-background: var(--color-fill-secondary);
   --ifm-blockquote-border-color: var(--color-separator);
   --ifm-blockquote-color: var(--color-text-secondary);
 
+  /* The overlay is also the active background of pagination, tabs and
+     breadcrumbs, so it is a fill. Hover itself is gated below. */
+  --ifm-hover-overlay: var(--color-fill-tertiary);
+  --ifm-menu-color: var(--color-text-secondary);
+  --ifm-menu-color-active: var(--color-accent-text-on-tint);
+  --ifm-menu-color-background-active: var(--color-accent-tint);
+  --ifm-menu-color-background-hover: transparent;
+  --ifm-pagination-nav-color-hover: var(--color-text-primary);
+
   --ifm-global-radius: var(--radius-md);
+  --ifm-container-width: var(--content-max-width-web);
   --ifm-container-width-xl: var(--content-max-width-web);
-  --ifm-global-shadow-lw: var(--shadow-sm);
+  --ifm-global-shadow-lw: none;
   --ifm-global-shadow-md: var(--shadow-md);
   --ifm-global-shadow-tl: var(--shadow-lg);
   --ifm-transition-fast: var(--dur-fast);
   --ifm-transition-slow: var(--dur-base);
   --ifm-transition-timing-default: var(--ease-standard);
+  --ifm-z-index-fixed: var(--z-nav-web);
 
-  --ifm-navbar-background-color: var(--color-surface-base);
+  --ifm-navbar-background-color: var(--color-surface-card);
   --ifm-navbar-height: var(--nav-height-web);
   --ifm-navbar-shadow: none;
   --ifm-footer-background-color: var(--color-surface-card);
@@ -57,35 +93,93 @@
   --ifm-footer-link-color: var(--color-text-secondary);
   --ifm-footer-title-color: var(--color-text-primary);
 
-  --ifm-code-font-size: 92%;
+  --ifm-code-font-size: var(--type-code-body-size);
   --ifm-code-background: var(--color-fill-tertiary);
   --ifm-code-border-radius: var(--radius-xs);
   --ifm-pre-background: var(--color-surface-card);
+  --ifm-pre-line-height: var(--type-code-body-lh);
 
   --docusaurus-highlighted-code-line-bg: var(--color-fill-tertiary);
 }
 
+/* Hover is the pressed background only, and only where a pointer exists
+   (design/components.md → States). Without the gate a touch screen keeps the
+   last tapped row filled. */
+@media (hover: hover) {
+  :root {
+    --ifm-menu-color-background-hover: var(--color-fill-tertiary);
+  }
+
+  .navbar__link:hover,
+  .footer__link-item:hover,
+  .breadcrumbs__link:hover,
+  .table-of-contents__link:hover {
+    background: var(--color-fill-tertiary);
+  }
+}
+
 /* tokens.css defaults body to the app's grouped fill. Both web surfaces take
-   the base surface instead — design/web.md → Page fill. */
+   the base surface instead (design/web.md → Page fill). */
 body {
   background: var(--ifm-background-color);
 }
 
+/* Headings: the web display scale. h1 takes section, not hero, to keep a docs
+   page calm; h3 drops to the app's headline so the three stay distinct at
+   phone width, where section and sub clamp close together. The longhand
+   properties win over Infima's `.markdown h1:first-child` size override. */
+h1 {
+  font-size: var(--type-web-section-size);
+  line-height: var(--type-web-section-lh);
+  font-weight: var(--type-web-section-weight);
+  letter-spacing: var(--tracking-web-section);
+}
+
+h2 {
+  font-size: var(--type-web-sub-size);
+  line-height: var(--type-web-sub-lh);
+  font-weight: var(--type-web-sub-weight);
+  letter-spacing: var(--tracking-web-section);
+}
+
+h3 {
+  font-size: var(--type-headline-size);
+  line-height: var(--type-headline-lh);
+  font-weight: var(--type-headline-weight);
+  letter-spacing: var(--tracking-headline);
+}
+
+/* The sticky nav is the one glass surface (design/web.md → Glass). Solid card
+   fill first, glass only where the browser can blur. Unprefixed only: the
+   Lightning CSS minifier drops the unprefixed twin when both are written and
+   leaves Chromium without a blur; it adds the Safari prefix itself. */
 .navbar {
-  border-bottom: var(--border-hairline) solid var(--color-separator);
+  border-block-end: var(--border-hairline) solid var(--color-separator);
+}
+
+@supports (backdrop-filter: none) or (-webkit-backdrop-filter: none) {
+  .navbar {
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(var(--blur-regular)) saturate(var(--glass-saturate));
+    border-block-end-color: var(--color-glass-border);
+  }
 }
 
 .footer {
-  border-top: var(--border-hairline) solid var(--color-separator);
+  border-block-start: var(--border-hairline) solid var(--color-separator);
+}
+
+[class*='skipToContent'] {
+  z-index: var(--z-skip-link-web);
 }
 
 /* Measure. Long lines of body text are the one thing a docs theme reliably
-   gets wrong; design/spacing-layout.md caps prose at --content-max-width-prose. */
+   gets wrong; design/spacing-layout.md caps prose at --content-max-width-prose-web. */
 .markdown > p,
 .markdown > ul,
 .markdown > ol,
 .markdown > blockquote {
-  max-width: var(--content-max-width-prose);
+  max-inline-size: var(--content-max-width-prose-web);
 }
 
 /* Code phrases and CLI flags carry meaning character by character. */
@@ -100,11 +194,10 @@ body {
   text-underline-offset: var(--space-1);
 }
 
-/* future.v4 puts Infima and the classic theme in cascade layers, so tokens.css's
-   unlayered `a { color: var(--color-text-link) }` beats every --ifm-*-link-color
-   above and paints the whole chrome accent green. Navigation is not prose: it
-   takes the same secondary-to-primary treatment as the landing page's nav, and
-   accent as text is --color-accent-text, never --color-accent (colors.md rule 1). */
+/* future.v4 layering means tokens.css's unlayered `a { color: ... }` beats
+   every --ifm-*-link-color above and would paint the whole chrome accent.
+   Navigation is not prose: it takes the landing page's secondary text, with
+   no underline, and hover is a fill (above), never a color change. */
 
 .navbar__brand,
 .pagination-nav__link {
@@ -117,33 +210,107 @@ body {
 .breadcrumbs__link,
 .footer__link-item {
   color: var(--color-text-secondary);
+  text-decoration: none;
 }
 
-.navbar__link:hover,
-.menu__link:hover,
-.table-of-contents__link:hover,
-.breadcrumbs__link:hover,
-.footer__link-item:hover,
 .navbar__link--active,
 .breadcrumbs__item--active .breadcrumbs__link {
   color: var(--color-text-primary);
 }
 
-/* The current page and the current heading, the two places accent earns its
-   keep. Both keep the theme's background tint, so colour is not the only cue. */
-.menu__link--active,
+/* The current page sits on an accent tint, so its label takes the on-tint step
+   (colors.md rules 1 and 6). The current heading in the TOC sits on the page,
+   where the plain accent-text step is enough. */
+.menu__link--active {
+  color: var(--color-accent-text-on-tint);
+}
+
 .table-of-contents__link--active {
   color: var(--color-accent-text);
 }
 
-/* --shadow-focus-ring is defined against --color-surface-base; the theme's own
-   outline is redundant once tokens.css has set :focus-visible. */
-.navbar__link:focus-visible,
-.menu__link:focus-visible,
-.pagination-nav__link:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus-ring);
-  border-radius: var(--radius-sm);
+/* Hit targets (design/accessibility.md). */
+.menu__link,
+.table-of-contents__link,
+.footer__link-item {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--hit-target-min);
+}
+
+/* Not a bare display rule: Infima hides .navbar__item below the theme's own
+   996px navbar breakpoint, and an unlayered display here would win and keep
+   the links in the collapsed bar. */
+@media (min-width: 997px) {
+  .navbar__link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--hit-target-min);
+  }
+}
+
+.navbar__toggle {
+  min-inline-size: var(--hit-target-min);
+  min-block-size: var(--hit-target-min);
+}
+
+/* Admonitions: the status tint carries the kind, the text stays primary
+   (colors.md rule 2), and a link on a tint takes the on-tint accent step
+   (rules 1 and 6). Docusaurus maps note to secondary, tip to success. */
+.alert--secondary,
+.alert--info {
+  --ifm-alert-background-color: var(--color-status-info-tint);
+  --ifm-alert-border-color: var(--color-status-info);
+}
+
+.alert--success {
+  --ifm-alert-background-color: var(--color-status-success-tint);
+  --ifm-alert-border-color: var(--color-status-success);
+}
+
+.alert--warning {
+  --ifm-alert-background-color: var(--color-status-warning-tint);
+  --ifm-alert-border-color: var(--color-status-warning);
+}
+
+.alert--danger {
+  --ifm-alert-background-color: var(--color-status-error-tint);
+  --ifm-alert-border-color: var(--color-status-error);
+}
+
+.alert {
+  --ifm-alert-foreground-color: var(--color-text-primary);
+  --ifm-alert-background-color-highlight: var(--color-fill-tertiary);
+  --ifm-alert-shadow: none;
+}
+
+.alert a {
+  color: var(--color-accent-text-on-tint);
+}
+
+/* The theme upper-cases admonition titles; the eyebrow is the only uppercase
+   label in the system (design/content.md → Capitalization). The titles are
+   single words (Note, Tip, Warning), so capitalize is enough. */
+.alert [class*='admonitionHeading'] {
+  text-transform: capitalize;
+}
+
+/* Code blocks: a card with a hairline, like every other contained surface, and
+   a copy button that is there before the pointer arrives. */
+.theme-code-block {
+  border: var(--border-hairline) solid var(--color-separator);
+  box-shadow: none;
+}
+
+[class*='buttonGroup'] button {
+  opacity: 1;
+}
+
+/* Hash links are the only way to copy a section's address, so they stay
+   visible instead of appearing on hover. */
+.hash-link {
+  opacity: 1;
+  color: var(--color-text-secondary);
 }
 
 /* Screenshot pairs. `.md` here is CommonMark (docusaurus.config.ts sets
@@ -157,7 +324,11 @@ body {
 }
 
 /* Portrait phone shots are more than twice as tall as they are wide; at full
-   content width they push the surrounding prose off the screen. */
-.markdown img[src*='/ios-'] {
-  max-width: var(--phone-shot-max-width-web);
+   content width they push the surrounding prose off the screen. Docusaurus
+   rewrites every /img/screenshots/ path to a hashed /assets/images/ one, so
+   neither the folder nor the filename survives to the DOM (the Mac and iPhone
+   sets share filenames). The alt text does: every iPhone shot's alt says "on iOS". */
+.markdown img[alt*='on iOS'] {
+  max-inline-size: var(--phone-shot-max-width-web);
+  block-size: auto;
 }

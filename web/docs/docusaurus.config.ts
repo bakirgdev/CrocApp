@@ -1,13 +1,13 @@
-import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import prismTheme from './src/prismTheme';
 
 // crocapp.dev is the landing page. GitHub Pages serves one site per repo, so
 // the docs live under /docs/ of that same artifact and both surfaces are
 // published together by scripts/assemble-site.sh.
 const config: Config = {
   title: 'CrocApp',
-  tagline: 'Encrypted file transfer for iOS and macOS',
+  tagline: 'End-to-end encrypted file transfer for iPhone, iPad and Mac',
   favicon: 'img/favicon.ico',
 
   // `faster` is what makes @docusaurus/faster a real dependency: Rspack, SWC
@@ -16,6 +16,34 @@ const config: Config = {
     v4: true,
     faster: true,
   },
+
+  // The theme-color values are the two literals web may write (design/web.md):
+  // browser chrome cannot take a custom property. They are --bg-base light and dark.
+  headTags: [
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'theme-color',
+        content: '#FFFFFF',
+        media: '(prefers-color-scheme: light)',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'theme-color',
+        content: '#000000',
+        media: '(prefers-color-scheme: dark)',
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'apple-touch-icon',
+        href: '/docs/img/apple-touch-icon.png',
+      },
+    },
+  ],
 
   url: 'https://crocapp.dev',
   baseUrl: '/docs/',
@@ -116,8 +144,8 @@ const config: Config = {
           title: 'Docs',
           items: [
             {label: 'Install', to: '/getting-started/install'},
-            {label: 'First transfer', to: '/getting-started/first-transfer'},
-            {label: 'Security and privacy', to: '/security-and-privacy'},
+            {label: 'First Transfer', to: '/getting-started/first-transfer'},
+            {label: 'Security and Privacy', to: '/security-and-privacy'},
             {label: 'Troubleshooting', to: '/troubleshooting'},
           ],
         },
@@ -144,7 +172,7 @@ const config: Config = {
               href: 'https://github.com/bakirgdev/CrocApp/blob/main/CONTRIBUTING.md',
             },
             {
-              label: 'Security policy',
+              label: 'Security Policy',
               href: 'https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md',
             },
             {
@@ -159,11 +187,11 @@ const config: Config = {
         },
       ],
       copyright:
-        'CrocApp is MIT licensed and unaffiliated with croc. Built with Docusaurus.',
+        'Built on croc by Zack Scholl (MIT). CrocApp is unofficial and not affiliated with croc.',
     },
     prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      theme: prismTheme,
+      darkTheme: prismTheme,
       additionalLanguages: ['bash', 'json', 'swift', 'go'],
     },
   } satisfies Preset.ThemeConfig,

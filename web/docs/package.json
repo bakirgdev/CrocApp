@@ -5,7 +5,7 @@
   "packageManager": "pnpm@12.11.2",
   "scripts": {
     "docusaurus": "docusaurus",
-    "tokens": "cp ../../design/tokens.css src/css/tokens.css",
+    "tokens": "cp ../../design/tokens.css src/css/tokens.css && cp ../landing/assets/img/mascot-web.webp static/img/mascot.webp",
     "start": "pnpm run tokens && docusaurus start",
     "build": "pnpm run tokens && docusaurus build",
     "swizzle": "docusaurus swizzle",
