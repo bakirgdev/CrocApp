@@ -1,6 +1,6 @@
 # Typography
 
-SF Pro for everything; SF Mono for code phrases and text payloads. Names mirror `UIFont.TextStyle` so the app can use `Font.system(.headline)` etc. directly and inherit Dynamic Type.
+SF Pro for everything; SF Mono for code phrases and text payloads. The app scale is `Font.TextStyle`, so the app uses the styles directly and inherits Dynamic Type (`swiftui.md` → Typography).
 
 ## Families
 
@@ -49,7 +49,7 @@ Each has three custom properties: `--type-<name>-size`, `-lh`, `-weight`.
 | Token | Size | Line-height | Used for |
 |---|---|---|---|
 | `--type-code-hero` | 30 | 38 | the sender's code phrase (bold, `user-select: all`) |
-| `--type-code-body` | 15 | 22 | code input field, text payloads |
+| `--type-code-body` | 15 | 22 | code input field, text payloads (app: `.subheadline.monospaced()`, which is 15pt and scales) |
 
 ## Web display scale (landing + docs only)
 
@@ -62,7 +62,7 @@ Never used by the app. The app scale stops at 34px because that is a phone scree
 | `--type-web-sub` | `clamp(20px, 2.4vw, 26px)` | 1.3 | 600 | `--tracking-web-section` | H3 / card title |
 | `--type-web-lead` | `clamp(17px, 1.6vw, 21px)` | 1.5 | 400 | `--tracking-web-lead` `-0.2px` | hero deck, section intro |
 
-Body copy below lead size stays on the app scale (`--type-body` and down) — the two scales meet there deliberately, so a web page and an app screen read as the same voice.
+Body copy below lead size stays on the app scale (`--type-body` and down). The two scales meet there deliberately, so a web page and an app screen read as the same voice.
 
 Helper classes: `.t-web-hero` `.t-web-section` `.t-web-sub` `.t-web-lead`. These are written longhand in `tokens.css` rather than with the `font:` shorthand, because the shorthand's `size/line-height` slot does not reliably survive a `clamp()` substituted through `var()`.
 
@@ -83,7 +83,7 @@ SF tightens optically at large sizes; these mirror Apple's metrics.
 
 Caption sizes and below take no tracking at all, which is why there is no token for it.
 
-`--tracking-eyebrow` is the uppercase footnote label above a code phrase ("READY TO SEND", `components.md` → CodePhraseDisplay). Uppercase needs the extra letter-spacing that lowercase does not.
+`--tracking-eyebrow` is for the uppercase footnote label above a code phrase ("READY TO SEND", `components.md` → CodePhraseDisplay). Uppercase needs the extra letter-spacing that lowercase does not.
 
 Positive tracking on the code phrase is deliberate: it separates the `word-word-word` groups so a phrase can be read aloud or transcribed without ambiguity.
 
@@ -91,13 +91,13 @@ Positive tracking on the code phrase is deliberate: it separates the `word-word-
 
 Tokens are the source of truth; these are shorthands defined in `tokens.css`:
 
-`.t-large-title` `.t-title2` `.t-title3` `.t-headline` `.t-body` `.t-callout` `.t-footnote` `.t-caption` `.t-code`
+`.t-headline` `.t-body` `.t-callout` `.t-footnote` `.t-code`
 
-`--type-title1` and `--type-caption2` have no helper: neither has a web call site. The tokens exist because the app scale is `Font.TextStyle` and must stay complete.
+`--type-large-title`, `--type-title1`, `--type-title2`, `--type-title3`, `--type-caption1` and `--type-caption2` have no helper: none has a web call site. The tokens exist because the app scale is `Font.TextStyle` and must stay complete.
 
 ## Rules
 
-- Uppercase only for the small eyebrow label above the code phrase (`--type-footnote`, weight 600, `letter-spacing: 0.6px`). Nowhere else.
+- Uppercase only for the eyebrow label above the code phrase (`--type-footnote`, `--weight-semibold`, `--tracking-eyebrow`). Nowhere else.
 - No serif, anywhere. A serif headline is the usual first sign that a generated mockup has left this system.
-- Line length capped by `--content-max-width` (480px) in the app, `--content-max-width-prose` (680px) on web — not by a character count.
+- Line length is capped by `--content-max-width` (480px) in the app and `--content-max-width-prose-web` (680px) on web, not by a character count.
 - In the app, respect Dynamic Type. See `accessibility.md` → Dynamic Type.

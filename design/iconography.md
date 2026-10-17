@@ -1,78 +1,87 @@
 # Iconography
 
-**In the app: SF Symbols only.** No bundled icon font, no custom vector where a symbol exists. SF Symbols are Apple system glyphs and cannot ship to the web, so the design system and the web properties substitute [Lucide](https://lucide.dev) (MIT) — the closest rounded-outline match. The table below is the contract between the two.
+**In the app: SF Symbols only.** No icon font, no custom vector where a symbol exists. SF Symbols cannot ship to the web, so the web substitutes [Lucide](https://lucide.dev) (ISC license), the closest rounded-outline match. The tables below are the contract between the two. A glyph not in a table gets its row before it gets its code.
 
-## Mapping
+## Shared meanings
 
-| Meaning | Lucide key (web / design system) | SF Symbol (app) |
+| Meaning | Lucide (web) | SF Symbol (app) |
 |---|---|---|
-| Send / outbound | `circle-arrow-up` | `arrow.up.circle` |
-| Receive / inbound | `circle-arrow-down` | `arrow.down.circle` |
-| Sending (progress header) | `arrow-up` | `arrow.up` |
-| Receiving (progress header) | `arrow-down` | `arrow.down` |
+| Send | `circle-arrow-up` | `arrow.up.circle` (`.fill` on the Home buttons) |
+| Receive | `circle-arrow-down` | `arrow.down.circle` (`.fill` on the Home buttons) |
+| Sending (direction header) | `arrow-up` | `arrow.up` |
+| Receiving (direction header) | `arrow-down` | `arrow.down` |
 | Folder | `folder` | `folder` |
 | Generic file | `file` | `doc` |
 | Text payload | `file-text` | `doc.text` |
 | Image | `image` | `photo` |
-| Remove item | `circle-x` | `xmark.circle.fill` |
 | Success | `circle-check` | `checkmark.circle` |
-| Download / install (web only) | `download` | — |
-| Confirm / copied | `check` | `checkmark` |
-| Close / decline | `x` | `xmark` |
-| Add files | `plus` | `plus` |
-| QR code | `qr-code` | `qrcode` (scanner sheet: `qrcode.viewfinder`) |
+| Confirm, copied, feature-list bullet | `check` | `checkmark` |
 | Copy | `copy` | `doc.on.doc` |
-| Paste | `clipboard` | `doc.on.clipboard` |
 | Encrypted (pill) | `lock` | `lock.fill` |
-| Verified / trust (full badge) | `shield-check` | `checkmark.shield.fill` |
+| Verified (full trust badge) | `shield-check` | `checkmark.shield.fill` |
 | Local network | `wifi` | `wifi` |
 | Warning | `triangle-alert` | `exclamationmark.triangle.fill` |
 | Error | `circle-alert` | `exclamationmark.circle.fill` |
 | Info | `info` | `info.circle` |
-| Disclosure | `chevron-right` | `chevron.right` |
-| Share sheet | `share` | `square.and.arrow.up` |
-| Drop zone / upload | `upload` | `square.and.arrow.up` |
-| Drag-here hint (DMG background only) | `arrow-right` | — |
-| Speed / relay | `zap` | `bolt.fill` |
+| Disclosure | `chevron-right` | `chevron.right` (system-drawn in lists) |
+| Share | `share` | `square.and.arrow.up` |
+| Drop zone | `upload` | `square.and.arrow.up` |
 | Settings | `settings` | `gearshape` |
-| Star / GitHub count (web only) | `star` | — |
-| Theme: to dark (web only) | `moon` | — |
-| Theme: to light (web only) | `sun` | — |
-| Sponsor / support (web only) | `heart` | — |
 
-App-only screens have no web call site yet, so the Lucide column stays empty until one appears. Pick the match then, in this table, before writing the markup.
+## Web only
 
-| Meaning | Lucide key (web / design system) | SF Symbol (app) |
-|---|---|---|
-| History | — | `clock.arrow.circlepath` |
-| Transfer completed (history status) | — | `checkmark.circle.fill` |
-| Transfer failed (history status) | — | `xmark.circle.fill` |
-| Transfer cancelled (history status) | — | `slash.circle` |
-| Transfer declined (history status) | — | `hand.raised.fill` |
-| Code phrase (concept) | — | `key.fill` |
-| PAKE / strong key from short code | — | `lock.shield.fill` |
-| Relay | — | `antenna.radiowaves.left.and.right` |
-| Works anywhere | — | `globe` |
-| App mark in the onboarding sheet | — | `arrow.left.arrow.right.circle.fill` |
-| Camera unavailable / denied / restricted | — | `video.slash` |
+| Meaning | Lucide |
+|---|---|
+| Download, install | `download` |
+| Speed, native performance | `zap` |
+| Star, GitHub count | `star` |
+| Theme: to dark | `moon` |
+| Theme: to light | `sun` |
+| Sponsor, support | `heart` |
+| Drag-here hint (DMG background) | `arrow-right` |
 
-`xmark.circle.fill` does double duty: Remove item, and the failed history status. That is deliberate. It is never both on one screen, and the history use carries an accessibility label naming the status (`components.md` → HistoryRow).
+## App only
 
-**Lucide 1.x has no brand icons** — `github.svg` was removed. The landing page's GitHub link uses `star` plus the word "GitHub" rather than the Octocat mark, which also sidesteps the trademark question. Do not reintroduce a brand glyph from an older Lucide version.
+| Meaning | SF Symbol |
+|---|---|
+| Remove item | `xmark.circle.fill` |
+| Scan a QR code | `qrcode.viewfinder` |
+| Send as link | `link.circle.fill` |
+| Receive from a link | `link` |
+| The other device connected | `person.crop.circle.badge.checkmark` |
+| How It Works (toolbar) | `lock.shield` |
+| PAKE: a strong key from a short code | `lock.shield.fill` |
+| Code phrase (concept) | `key.fill` |
+| Relay | `antenna.radiowaves.left.and.right` |
+| Direct path | `point.3.connected.trianglepath.dotted` |
+| Works anywhere | `globe` |
+| History | `clock.arrow.circlepath` |
+| Transfer completed (history status) | `checkmark.circle.fill` |
+| Transfer failed (history status) | `xmark.circle.fill` |
+| Transfer cancelled (history status) | `slash.circle` |
+| Transfer declined (history status) | `hand.raised.fill` |
+| Advanced settings | `slider.horizontal.3` |
+| App mark (onboarding) | `arrow.left.arrow.right.circle.fill` |
+| Menu bar extra | `arrow.up.arrow.down.circle` |
+| Camera denied, restricted or unavailable | `video.slash` |
 
-**Use the canonical `circle-*` names above, not the legacy `*-circle` spellings.** `alert-circle`, `x-circle`, `arrow-up-circle` and `arrow-down-circle` still ship as byte-identical aliases, so either name renders correctly today — but `check-circle` is **not** an alias. It is a distinct glyph: an open arc (`M21.801 10A10 10 0 1 1 17 3.335`) with an oversized check breaking out of it. Reaching for it when you want the closed circle-with-tick silently draws the wrong mark. `circle-check` is the true match for `checkmark.circle`.
+`xmark.circle.fill` is both Remove item and the failed status on purpose: never on one screen together, and the history use carries an accessibility label naming the status.
 
-Verified against lucide-static 1.27.0 (2007 icons), 2026-07-26.
+`lock.shield` and `lock.shield.fill` differ on purpose: the outline is a toolbar button, the fill sits in a How It Works row.
 
-On the web the page inlines one `<symbol>` sprite and references it with `<use>`, rather than repeating path data at every call site. Same glyphs, same rules; it just stops ~30 copies of the same `<path>` from shipping.
+## Lucide rules
 
-Check each name in the SF Symbols app before first use, and prefer `.fill` variants inside colored tiles / circles, outline variants standalone. If a screen needs a glyph that is not here, add the row before adding the code.
+- **No brand icons.** Lucide 1.x removed them (`github.svg` is gone). The GitHub link uses `star` plus the word "GitHub", never the Octocat mark.
+- **Canonical `circle-*` names, never the legacy `*-circle` spellings.** Most legacy names are byte-identical aliases, but `check-circle` is a different glyph (an open arc with an oversized tick). `circle-check` is the match for `checkmark.circle`.
+- The page inlines one `<symbol>` sprite and references it with `<use>`; the package is never bundled. The sprite comment names the Lucide version it was copied from.
+
+Names verified against lucide-static 1.59.0 on 2026-10-17. SF Symbol names are checked in the SF Symbols app before first use.
 
 ## Rendering
 
-**Web (Lucide):** 24×24 viewBox, `fill: none`, `stroke: currentColor`, `stroke-linecap`/`linejoin: round`. Default size 22, default stroke width 1.8; use 2 – 2.4 for glyphs under 20px so they keep weight. Always `aria-hidden="true"` — the adjacent label carries the meaning.
+**Web (Lucide):** 24×24 viewBox, `fill: none`, `stroke: currentColor`, round caps and joins. Always `aria-hidden="true"`: the adjacent label carries the meaning. Glyphs under 20px take stroke 2 or more so they keep weight.
 
-Stroke weights are tokens, and unitless: `stroke-width` scales with the viewBox, so a unit on any of these breaks every glyph that uses it.
+Stroke weights are unitless tokens: `stroke-width` scales with the viewBox, so a unit breaks every glyph.
 
 | Token | Value |
 |---|---|
@@ -82,20 +91,17 @@ Stroke weights are tokens, and unitless: `stroke-width` scales with the viewBox,
 | `--icon-stroke-heavy` | 2.2 |
 | `--icon-stroke-heaviest` | 2.4 |
 
-**App (SF Symbols):** size by text style so glyphs track Dynamic Type (`.imageScale`, or `Image(systemName:).font(.headline)`), `.symbolRenderingMode(.hierarchical)` for tinted tiles, `.monochrome` inline. Tint with `--color-accent`'s Swift equivalent, never a hardcoded green.
+**App (SF Symbols):** size by text style so glyphs track Dynamic Type (`.font(.headline)`, `.imageScale`), or with `@ScaledMetric` where a component specifies a point size. Never a fixed `.font(.system(size:))`. `.symbolRenderingMode(.hierarchical)` in tinted tiles, monochrome inline. `.fill` variants inside colored circles, outlines standalone. Tint through the color aliases, never a raw color.
 
 ## Sizes in use
 
-| Context | Size | Stroke (web) |
+| Context | Size | Web stroke |
 |---|---|---|
-| Button large / medium / small | 20 / 18 / 15 | default |
-| Row leading icon (settings tile) | 17 | 2 |
-| File row type icon | 20 | default |
-| Remove control | 20 | default |
-| Banner leading glyph | 19 | 2 |
-| TrustBadge pill | 14 | 2.2 |
-| TrustBadge full circle | 19 | 2 |
-| StatusBlock circle | 34 | 2 |
-| Direction header | 18 | 2.4 |
-| Disclosure chevron | 18 | 2.4 |
-| EmptyState | 44 (34 compact) | 1.5 |
+| Button large / medium / small | 20 / 18 / 15 | `--icon-stroke` / `-medium` / `-heavy` |
+| FileRow type glyph, remove control | 20 | `--icon-stroke` |
+| StatusBanner glyph | 19 | `--icon-stroke-medium` |
+| TrustBadge pill / full | 14 / 19 | `--icon-stroke-heavy` / `-medium` |
+| StatusBlock | 34 | `--icon-stroke-medium` |
+| Direction header | 17 | `--icon-stroke-heaviest` |
+| Disclosure chevron | 17 | `--icon-stroke-heaviest` |
+| DropZone, EmptyState | 44 (34 compact) | `--icon-stroke-light` |

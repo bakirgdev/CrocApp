@@ -1,55 +1,53 @@
 # Platforms
 
-iPhone, iPad and macOS run the same tokens and the same components. This file is the short list of what legitimately differs. `swiftui.md` says which API to reach for; this says which layout and which input model to design against.
+iPhone, iPad, macOS and the two websites run the same tokens and components. This is the short list of what legitimately differs. `swiftui.md` and `web.md` say which API; this says which layout and input model.
 
-Rule of thumb: **density, chrome and input change. Nothing else does.** A screen that needs a different component on macOS is a screen that was designed wrong on iPhone.
+Rule of thumb: **density, chrome and input change. Nothing else does.** A screen that needs a different component on macOS was designed wrong on iPhone.
 
 ## The column
 
-`--content-max-width` (480px) is the content column on every platform, including macOS and iPad. Extra width becomes margin, never wider text. A 480px column on a 13" display looks deliberate; a 900px settings row does not.
-
-Sheets cap at `--sheet-max-width` (540px).
+`--content-max-width` (480px) is the app's content column on every device. Extra width becomes margin, never wider text. The websites use the web caps instead (`spacing-layout.md` → Web layout).
 
 ## iPhone
 
-The baseline every screen is designed at. Compact width, touch only, no hover, no pointer, system sheets full-height with detents.
+The baseline every screen is designed at: compact width, touch only, no hover, sheets full height with detents. The only device with haptics (`motion.md`).
 
 ## iPad
 
-Same layout as iPhone, centred, with the column cap doing the work. Three differences:
+The iPhone layout, centered, with the column cap doing the work.
 
-- **Menu bar.** `AppCommands` reaches iPad through the hardware-keyboard menu bar, so every File-menu action must have a keyboard-reachable equivalent.
-- **Pointer.** A trackpad or a Magic Keyboard gives iPad a pointer, so hover applies (below) and pointer effects are allowed on bare icon buttons.
-- **Sheets present as form sheets** in regular width rather than full height. The content inside does not change.
-
-Nothing in the app may require a pointer, because most iPads do not have one.
+- **Menu bar.** `AppCommands` reaches iPad through the hardware-keyboard menu bar, so every menu action has a keyboard-reachable equivalent.
+- **Pointer.** A trackpad gives iPad hover (below) and pointer effects on bare icon buttons. Nothing may require a pointer, because most iPads have none.
+- **Sheets** present as form sheets in regular width. Their content does not change.
 
 ## macOS
 
-- **Window.** Main window opens at 480×780 and is resizable from its content minimum. Settings opens at 560×700 with a 480×420 floor. No sidebar, no split view, no tab bar: this app has one job and one column.
-- **Settings is a `Form`**, `.formStyle(.grouped)`, in the standard Settings scene (⌘,). It is not a screen inside the window.
-- **Drop is window-wide.** The whole window is a drop target, with the full-window "Drop to send" overlay (`components.md` → DropZone). The Send list's own drop target wins while the pointer is over it.
-- **No camera, no QR scan, no local-network prompt.** Those iOS affordances are absent, not disabled, and no macOS screen shows a placeholder for them.
-- **Menu bar is a real surface.** Anything the toolbar can do, the menu can do, with a shortcut.
-- **Right-click exists.** Context menus are additive shortcuts, never the only path to an action.
+- **Windows.** Main window opens at 560×700, minimum 480×560. Settings opens at 480×780, minimum 480×420. No sidebar, split view or tab bar: one job, one column.
+- **Settings** is the Settings scene (⌘,), a grouped `Form` (`components.md` → System controls).
+- **Menu bar extra.** A 300-wide window for quick sends (`components.md` → MenuBarQuickSend).
+- **Drop is window-wide**, with the overlay (`components.md` → DropZone).
+- **No camera, no QR scan, no local-network prompt.** Absent, not disabled, and no placeholder.
+- **Menu bar is a real surface.** Anything the toolbar can do, the menu can do, with a shortcut. Right-click menus are additive shortcuts.
+
+## Web
+
+Landing page and docs site: a pointer and a keyboard, both themes following the OS, page-width layout (`web.md`). No haptics, no glass by default.
 
 ## Hover
 
-Hover exists on macOS, on iPad with a pointer, and on both websites. It never exists on touch.
+Hover exists on macOS, iPad with a pointer, and the web. Never on touch.
 
-**Hover applies the element's pressed background, and nothing else.** No scale, no lift, no shadow change, no movement. Pressed is then hover plus `--press-scale`. Transition `--dur-fast` `--ease-standard`.
+**Hover applies the element's pressed background and nothing else**: no scale, lift, color or shadow change. On web, wrap hover styles in `@media (hover: hover)` so a tap never leaves one stuck.
 
-Two hard rules:
-
-1. **Nothing is only discoverable on hover.** No hover-only buttons, no hover-only labels, no hover-to-reveal remove controls. Touch users and keyboard users get the same affordances at rest.
-2. **Hover is not focus.** A hovered element does not take `--shadow-focus-ring`; that belongs to `:focus-visible` alone.
+1. **Nothing is only discoverable on hover.** Touch and keyboard users get the same affordances at rest.
+2. **Hover is not focus.** A hovered element does not take the focus ring.
 
 ## What must not diverge
 
 | Never platform-specific |
 |---|
-| The accept gate. Auto-accept stays off on every platform unless the user turns it on |
-| Direction wording. "Sending" / "Receiving" as words, everywhere |
+| The accept gate. Auto-accept is off by default everywhere and only the user turns it on |
+| Direction wording: "Sending" and "Receiving" as words |
 | The code phrase format and its mono treatment |
 | Contrast rules and the accessibility floor |
 | Token values. A platform may pick a different API, never a different number |
