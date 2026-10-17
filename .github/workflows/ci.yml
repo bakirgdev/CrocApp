@@ -212,6 +212,7 @@ jobs:
             -destination "$DESTINATION" \
             -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGNING_ALLOWED=NO \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES \
             build \
             | xcbeautify --renderer github-actions
 
@@ -219,7 +220,7 @@ jobs:
       - name: Test CrocKit
         if: matrix.platform == 'macOS'
         shell: bash
-        run: set -o pipefail && swift test --package-path CrocKit 2>&1 | xcbeautify --renderer github-actions
+        run: set -o pipefail && swift test --package-path CrocKit -Xswiftc -warnings-as-errors 2>&1 | xcbeautify --renderer github-actions
 
       - name: Test CrocApp
         if: matrix.platform == 'macOS'
@@ -231,6 +232,7 @@ jobs:
             -destination 'platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGNING_ALLOWED=NO \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES \
             test \
             | xcbeautify --renderer github-actions
 
@@ -245,6 +247,7 @@ jobs:
             -destination 'platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/dd" \
             CODE_SIGNING_ALLOWED=NO \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES \
             build \
             | xcbeautify --renderer github-actions
 
