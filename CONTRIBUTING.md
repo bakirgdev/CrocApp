@@ -115,10 +115,11 @@ Bulk-generated pull requests that the author has not read, does not understand, 
 ## Opening a pull request
 
 1. Fork the repo and branch off `main`.
-2. Rebase on the current `main` before opening, so the diff is clean.
-3. Open the PR against `main` with a Conventional Commits title, and fill in [the template](.github/pull_request_template.md).
-4. Link the issue with `Fixes #123` when one exists.
-5. Keep it focused. Two unrelated changes are two pull requests.
+2. Add or update automated tests for new or changed behavior: Go tests in `crocmobile/`, Swift tests in `CrocKit/Tests/` or `app/CrocAppTests/`. A bug fix comes with a test that fails without it, where one is practical.
+3. Rebase on the current `main` before opening, so the diff is clean.
+4. Open the PR against `main` with a Conventional Commits title, and fill in [the template](.github/pull_request_template.md).
+5. Link the issue with `Fixes #123` when one exists.
+6. Keep it focused. Two unrelated changes are two pull requests.
 
 Draft PRs are welcome for early feedback.
 
