@@ -2,24 +2,13 @@
   "mcpServers": {
     "xcode": {
       "type": "stdio",
-      "command": "pnpx",
-      "args": [
-        "-y",
-        "caveman-shrink",
-        "xcrun",
-        "mcpbridge"
-      ]
+      "command": "xcrun",
+      "args": ["mcpbridge"]
     },
     "gopls": {
       "type": "stdio",
-      "command": "pnpx",
-      "args": [
-        "-y",
-        "caveman-shrink",
-        "sh",
-        "-c",
-        "exec \"$(go env GOPATH)/bin/gopls\" mcp"
-      ]
+      "command": "sh",
+      "args": ["-c", "cd \"${CLAUDE_PROJECT_DIR:-.}/crocmobile\" && exec \"$(go env GOPATH)/bin/gopls\" mcp"]
     }
   }
 }

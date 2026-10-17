@@ -1,301 +1,734 @@
 #!/usr/bin/env bash
-# Writes every screenshot in assets/screenshots/ from real builds -- no mockups,
-# no device frames, no real transfer codes. This file is the manifest: each
-# `want <name>` block below is one shot, captured light and dark, at 2x, and
-# SHOTS lists them all (`--list` prints them with their output files).
+# Writes every screenshot in assets/screenshots/ from real Debug builds: no
+# mockups, no device frames, no real transfer codes, nothing sent over the
+# internet. SCREENS below is the manifest; `--list` prints it with every output
+# file and its expected size.
 #
-# Staging rides on the DEBUG-only harness flags in AutoVerify.swift: --screen
-# navigates, --stage preloads the Send list, --seed-history fills the
-# (in-memory) history store, --hold parks at the incoming prompt. The macOS
-# shots are per-window captures (screencapture -l), so they keep the real
-# window shape with no desktop behind them; the iOS shots are whole-device
-# captures, which is what a phone screenshot is.
+#   assets/screenshots/mac/SCREEN-{light,dark}.png      per-window capture, 2x, real window shape
+#   assets/screenshots/iphone/SCREEN-{light,dark}.png   iPhone 17 Pro Max, 1320x2868, 9:41 status bar
+#   assets/screenshots/ipad/SCREEN-{light,dark}.png     iPad Pro 13-inch (M5), 2064x2752, 9:41 status bar
+#   assets/screenshots/app-store/CLASS/NN-SCREEN-{light,dark}.png
+#       Apple's exact sizes, no alpha, numbered in upload order (STORE_SCREENS),
+#       odd numbers light and even numbers dark. iphone-6.9, ipad-13 and mac
+#       come from the main captures; iphone-6.3 (iPhone 17 Pro) and
+#       iphone-duo-outer (iPhone Duo outer display) get their own simulator.
 #
-# The same run also writes the App Store set to assets/screenshots/store/, light
-# only, PNG with no alpha channel, numbered in upload order (01-..., 02-...).
-# Apple's current sizes (developer.apple.com/help/app-store-connect/reference/
-# app-information/screenshot-specifications):
-#   iphone-6.3  1206x2622  iPhone 17 Pro, the same shots as the main set
-#   iphone-6.9  1320x2868  iPhone 17 Pro Max, a throwaway simulator
-#   ipad-13     2064x2752  iPad Pro 13-inch (M5), a throwaway simulator
-#   mac         2880x1800  the window composed on a canvas (see imgtool below)
-# Every store file is checked with sips at the end; a wrong size or an alpha
-# channel fails the run.
+# Staging rides on the DEBUG-only harness in app/CrocApp/Support/AutoVerify.swift.
+# Launch flags navigate (--screen), preload (--stage), seed history, hold at
+# the incoming prompt, throttle a send and point the app at a relay; the
+# harness answers with files in the app's Documents folder (verify-ready.txt,
+# verify-phase.txt, verify-code-ready.txt, verify-result.txt), which this script
+# polls instead of sleeping. Every transfer goes through a croc relay started
+# here on 127.0.0.1 with a random port block and password, so the run is
+# repeatable and nothing leaves the machine (the croc CLI peers still make
+# their own update check). Codes are random per run.
 #
-# Takes over the display for roughly forty minutes and flips the system
-# appearance twice. The original appearance is restored on exit, including on
-# failure. Pass a shot name (e.g. `capture-screenshots.sh mac-home`) to
-# re-capture just that one in both appearances (and its store file, if it has
-# one). `--list` prints the manifest and exits; `--copy-web` copies the main set
-# to the two web surfaces and exits. Neither touches the display.
+# Takes over the display for a while and flips the system appearance twice; the
+# original appearance is restored on exit, also on failure. Needs, for the
+# terminal that runs it: Screen Recording, Accessibility, and Automation of
+# System Events (the preflight names what is missing).
+#
+# Usage: capture-screenshots.sh [DEVICE...] [SCREEN...]
+#   no arguments    everything, after emptying assets/screenshots/
+#   DEVICE          mac, iphone, ipad, iphone63 or duo: only those devices
+#   SCREEN          only those screens, both appearances, plus the store file
+#   --list          print the manifest and exit
+#   --copy-web      refresh the web copies from assets/screenshots/ and exit
+# Environment: CROC (default: the Homebrew croc, v11 like crocmobile),
+# PHONE_TYPE, PHONE63_TYPE, PAD_TYPE and DUO_TYPE (simulator device type ids),
+# DUO_OUTER_DISPLAY (simctl display id of the Duo's outer screen), RUNTIME (simulator
+# runtime id, default the newest installed one that supports the device type).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
 
-SIM="${SIM:-iPhone 17 Pro}"
 BUNDLE=com.bakirgdev.CrocApp
 OUT=assets/screenshots
-STORE_DIR="$OUT/store"
-DOCS="$HOME/Library/Containers/$BUNDLE/Data/Documents"
-# Simulator device types for the two store-only passes. Override if Xcode
-# ships neither (see `xcrun simctl list devicetypes`); the pixel size is
-# asserted right after boot, so a wrong type fails before any capture.
+TOOLS=scripts/screenshots
 PHONE_TYPE="${PHONE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max}"
+PHONE63_TYPE="${PHONE63_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro}"
 PAD_TYPE="${PAD_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-16GB}"
+DUO_TYPE="${DUO_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-Duo}"
+# `simctl io DEVICE enumerate` lists the Duo's two panels as screens 1 (outer,
+# 1398x2034) and 3 (inner, 2007x2853).
+DUO_OUTER_DISPLAY="${DUO_OUTER_DISPLAY:-1}"
+SIM_NAME="CrocApp Shots"
+MAC_DOCS="$HOME/Library/Containers/$BUNDLE/Data/Documents"
 
-SHOTS="mac-home mac-send-files mac-send mac-receive mac-transferring mac-done \
-mac-history mac-howitworks mac-settings mac-advanced mac-stored mac-conflict \
-ios-home ios-onboarding ios-send ios-send-code ios-receive-code \
-ios-receive ios-history ios-settings ios-advanced ios-transferring ios-stored \
-ios-conflict ios-done"
-# The store sets, in upload order. The number in a file name is the position.
-STORE_IOS="ios-send ios-send-code ios-transferring ios-receive ios-stored ios-history \
-ios-conflict ios-advanced"
-STORE_MAC="mac-send-files mac-send mac-transferring mac-done mac-stored mac-history \
-mac-conflict mac-advanced"
-STORE_CLASSES="iphone-6.3 iphone-6.9 ipad-13 mac"
+# The first three get the main set; the last two exist for the store set only.
+DEVICES="mac iphone ipad iphone63 duo"
+MAIN_DEVICES="mac iphone ipad"
+SCREENS="onboarding home send-files send-code sending receive-code receive-incoming \
+receive-conflict receiving receive-done stored-link history how-it-works settings \
+settings-advanced"
+# The App Store subset, in upload order. The number in a file name is the position.
+STORE_SCREENS="send-files send-code sending receive-incoming receiving receive-done \
+stored-link history settings how-it-works"
+# Everything a run puts into the app's Documents folder, which is the receive
+# folder too: removed before each shot, or leftovers would turn up as
+# "already exists" warnings in the incoming preview.
+PAYLOAD_NAMES="Quarterly-Report.pdf Ridge-Sunrise.jpg Meeting-Notes.md Design-Assets.zip \
+Project-Archive.zip Field-Recordings.zip"
 
 in_list() { case " $1 " in *" $2 "*) return 0 ;; *) return 1 ;; esac; }
 
-store_name() {                                      # store_name LIST SHOT -> NN-name
+store_index() {                                     # store_index SCREEN -> its position, from 1
   local i=1 n
-  for n in $1; do
-    [ "$n" = "$2" ] && { printf '%02d-%s' "$i" "${n#*-}"; return 0; }
+  for n in $STORE_SCREENS; do
+    [ "$n" = "$1" ] && { echo "$i"; return 0; }
     i=$((i + 1))
   done
   return 1
 }
 
-store_dims() {                                      # store_dims CLASS -> "WIDTH HEIGHT"
+# Light and dark alternate through the upload order, so each class is half of each.
+store_mode() { [ $(($(store_index "$1") % 2)) = 1 ] && echo light || echo dark; }
+store_name() { printf '%02d-%s-%s' "$(store_index "$1")" "$1" "$(store_mode "$1")"; }
+
+store_class() {                                     # store_class DEVICE -> App Store class dir
   case "$1" in
-    iphone-6.3) echo "1206 2622" ;;
-    iphone-6.9) echo "1320 2868" ;;
-    ipad-13) echo "2064 2752" ;;
-    mac) echo "2880 1800" ;;
-    *) return 1 ;;
+    mac) echo mac ;;
+    iphone) echo iphone-6.9 ;;
+    ipad) echo ipad-13 ;;
+    iphone63) echo iphone-6.3 ;;
+    duo) echo iphone-duo-outer ;;
   esac
 }
 
-store_list_for() { [ "$1" = mac ] && echo "$STORE_MAC" || echo "$STORE_IOS"; }
+store_dims() {                                      # store_dims DEVICE -> "WIDTH HEIGHT"
+  case "$1" in
+    iphone) echo "1320 2868" ;;
+    iphone63) echo "1206 2622" ;;
+    duo) echo "1398 2034" ;;
+    ipad) echo "2064 2752" ;;
+    mac) echo "2880 1800" ;;
+  esac
+}
 
+is_main() { in_list "$MAIN_DEVICES" "$1"; }
+
+# --- arguments --------------------------------------------------------------
+
+PICK_DEVICES=""
+PICK_SCREENS=""
 case "${1:-}" in
   --list)
-    echo "main set, light and dark ($OUT/NAME-light.png, NAME-dark.png):"
-    for n in $SHOTS; do echo "  $n"; done
-    echo "store set, light only ($STORE_DIR/CLASS/NN-name.png):"
-    for c in $STORE_CLASSES; do
-      echo "  $c ($(store_dims "$c" | tr ' ' x)):"
-      for n in $(store_list_for "$c"); do echo "    $c/$(store_name "$(store_list_for "$c")" "$n").png  <- $n"; done
+    for d in $DEVICES; do
+      echo "$d ($(store_dims "$d" | tr ' ' x) in the store set):"
+      if is_main "$d"; then
+        for s in $SCREENS; do
+          [ "$d $s" = "mac onboarding" ] || echo "  $OUT/$d/$s-{light,dark}.png"
+        done
+      fi
+      for s in $STORE_SCREENS; do echo "  $OUT/app-store/$(store_class "$d")/$(store_name "$s").png"; done
     done
     exit 0
     ;;
   --copy-web)
-    # Refreshes the copies a web surface already uses; a new shot goes in by
-    # adding its file to the folder first. The store set stays in
-    # assets/screenshots/store/.
+    # Refreshes the files a web surface already uses, keeping their device
+    # subfolder; a new shot goes in by adding its file to the folder first.
     for dir in web/docs/static/img/screenshots web/landing/assets/img/screenshots; do
       n=0
-      for f in "$dir"/*.png; do
-        [ -e "$f" ] || continue
-        cp "$OUT/$(basename "$f")" "$f"
+      while IFS= read -r f; do
+        cp "$OUT/${f#"$dir"/}" "$f"
         n=$((n + 1))
-      done
+      done < <(find "$dir" -name '*.png')
       echo "refreshed $n files in $dir"
     done
     exit 0
     ;;
 esac
+for arg in "$@"; do
+  if in_list "$DEVICES" "$arg"; then PICK_DEVICES="$PICK_DEVICES $arg"
+  elif in_list "$SCREENS" "$arg"; then PICK_SCREENS="$PICK_SCREENS $arg"
+  else fail "unknown argument '$arg'. Devices: $DEVICES. Screens: $SCREENS"
+  fi
+done
+RUN_DEVICES="${PICK_DEVICES:-$DEVICES}"
+RUN_SCREENS="${PICK_SCREENS:-$SCREENS}"
+uses_mac=0
+uses_sim=0
+if in_list "$RUN_DEVICES" mac; then uses_mac=1; fi
+for d in $RUN_DEVICES; do
+  if [ "$d" != mac ]; then uses_sim=1; fi
+done
 
-CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
-require_croc
-
-ONLY="${1:-}"
-if [ -n "$ONLY" ]; then
-  case " $SHOTS " in
-    *" $ONLY "*) ;;
-    *) fail "unknown shot '$ONLY'. One of: $SHOTS" ;;
-  esac
-fi
-
-# The store-only simulator passes run for a full run, or for a single shot
-# that belongs to the iOS store set.
-if [ -z "$ONLY" ] || in_list "$STORE_IOS" "$ONLY"; then
-  RUN_STORE_SIMS=1
-  for type in "$PHONE_TYPE" "$PAD_TYPE"; do
-    xcrun simctl list -j devicetypes | grep -q "\"$type\"" \
-      || fail "simulator device type $type is not installed (set PHONE_TYPE/PAD_TYPE)"
-  done
-else
-  RUN_STORE_SIMS=0
-fi
+# --- state and cleanup ------------------------------------------------------
 
 TMP=$(mktemp -d)
 APP_PID=""
-JOB_PID=""
+PEER_PID=""
+RELAY_PID=""
 STORE_PID=""
 STORE_URL=""
-PRIMARY_SIM="$SIM"
-EXTRA_SIM=""
-STORE_PASS=""
+SIM_IDS=""                                          # UDIDs of the simulators this run created
+SIM_APP=""
+ORIG_DARK=""
+DEV=""
+DOCS=""
+SIM=""
+SCREEN=""
 MODE=""
-ORIG_DARK=$(osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode')
+CODE_PREFIXES=" "
+
+stop_peer() {
+  [ -n "$PEER_PID" ] || return 0
+  # A stopped process holds a pending TERM until it is continued.
+  kill -CONT "$PEER_PID" 2>/dev/null || true
+  kill "$PEER_PID" 2>/dev/null || true
+  wait "$PEER_PID" 2>/dev/null || true
+  PEER_PID=""
+}
 
 cleanup() {
+  local udid name
+  stop_peer
   [ -n "$APP_PID" ] && kill "$APP_PID" 2>/dev/null || true
-  [ -n "$JOB_PID" ] && kill "$JOB_PID" 2>/dev/null || true
-  [ -n "$STORE_PID" ] && kill "$STORE_PID" 2>/dev/null || true
+  [ -n "$RELAY_PID" ] && kill "$RELAY_PID" 2>/dev/null && wait "$RELAY_PID" 2>/dev/null || true
+  [ -n "$STORE_PID" ] && kill "$STORE_PID" 2>/dev/null && wait "$STORE_PID" 2>/dev/null || true
   kill_jobs
-  xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
-  xcrun simctl status_bar "$PRIMARY_SIM" clear 2>/dev/null || true
-  if [ -n "$EXTRA_SIM" ]; then
-    xcrun simctl shutdown "$EXTRA_SIM" 2>/dev/null || true
-    xcrun simctl delete "$EXTRA_SIM" 2>/dev/null || true
+  for udid in $SIM_IDS; do
+    xcrun simctl shutdown "$udid" 2>/dev/null || true
+    xcrun simctl delete "$udid" 2>/dev/null || true
+  done
+  if [ -n "$ORIG_DARK" ]; then
+    osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $ORIG_DARK" >/dev/null 2>&1 || true
   fi
-  osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $ORIG_DARK" >/dev/null 2>&1 || true
-  rm -rf "$DOCS/shots" "$TMP"
+  if [ "$uses_mac" = 1 ]; then
+    rm -rf "$MAC_DOCS/shots"
+    rm -f "$MAC_DOCS"/verify-*.txt
+    for name in $PAYLOAD_NAMES; do rm -f "$MAC_DOCS/$name"; done
+  fi
+  rm -rf "$TMP"
   return 0
 }
 trap cleanup EXIT
 
-# Inside a store-only simulator pass a shot is wanted only if the store set
-# includes it.
-want() {
-  [ -z "$ONLY" ] || [ "$ONLY" = "$1" ] || return 1
-  [ -z "$STORE_PASS" ] || in_list "$STORE_IOS" "$1"
+# --- preflight --------------------------------------------------------------
+
+for tool in xcodebuild xcrun swiftc sips; do
+  command -v "$tool" >/dev/null || fail "$tool not found (needs Xcode and its command line tools)"
+done
+CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
+require_croc
+"$CROC" --version | grep -q 'version v\?11\.' \
+  || fail "croc 11 expected (crocmobile pins v11.5.4), '$CROC' says: $("$CROC" --version)"
+if in_list "$RUN_SCREENS" stored-link; then
+  command -v go >/dev/null || fail "go is needed to build the local store server for stored-link"
+fi
+for type in "$PHONE_TYPE" "$PHONE63_TYPE" "$PAD_TYPE" "$DUO_TYPE"; do
+  xcrun simctl list -j devicetypes | grep -q "\"$type\"" \
+    || fail "simulator device type $type is not installed (set PHONE_TYPE, PHONE63_TYPE, PAD_TYPE, DUO_TYPE)"
+done
+
+mkdir -p "$TMP/bin"
+for tool in window imgtool payload; do
+  xcrun swiftc -O "$TOOLS/$tool.swift" -o "$TMP/bin/$tool"
+done
+
+if [ "$uses_mac" = 1 ]; then
+  missing=$("$TMP/bin/window" preflight 2>&1) || fail "$missing. Grant it to the terminal running this script in System Settings > Privacy & Security, then restart the terminal."
+  ORIG_DARK=$(osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode' 2>&1) \
+    || fail "Automation: allow the terminal running this script to control System Events (System Settings > Privacy & Security > Automation). osascript said: $ORIG_DARK"
+fi
+
+# --- helpers ----------------------------------------------------------------
+
+# Polls CMD... every 0.2 s for up to SECONDS seconds.
+poll() {                                            # poll SECONDS CMD...
+  local deadline=$((SECONDS + $1))
+  shift
+  until "$@"; do
+    [ "$SECONDS" -lt "$deadline" ] || return 1
+    sleep 0.2
+  done
 }
 
-# The relay hashes a code's first 4 characters into a room name, so those four
-# have to be unique -- not just within a run, but against any recent run still
-# holding the room. Hardcoded prefixes made a re-capture of the same shot fail
-# against its own leftovers. Random base, then one per code; each $(code ...)
-# runs in a subshell, so an incrementing counter would not survive between
-# calls and every code takes an explicit offset instead. Each capture pass
-# gets its own block of offsets.
-CODE_BASE=$((RANDOM % 8000 + 1000))
-code() {                                            # code OFFSET WORDS
-  printf '%d-%s' "$((CODE_BASE + $1))" "$2"
+# What a failed wait leaves behind is the only clue, so show it.
+die() {
+  echo "--- peer log ---" >&2;  tail -n 8 "$TMP/peer.log" 2>/dev/null >&2 || true
+  echo "--- app log ---" >&2;   tail -n 8 "$TMP/app.log" 2>/dev/null >&2 || true
+  echo "--- relay log ---" >&2; tail -n 8 "$TMP/relay.log" 2>/dev/null >&2 || true
+  fail "$DEV $SCREEN $MODE: $*"
 }
 
-# screencapture wants a CGWindowID and nothing in the shell hands one out.
-# AppleScript's window ids are AX ids, not CGWindowIDs, so System Events
-# cannot supply this even though it sees the same windows. Width and height
-# are there so a caller can tell windows of one app apart.
-cat > "$TMP/windowid.swift" <<'SWIFT'
-import CoreGraphics
-import Foundation
+rand_int() { od -An -N4 -tu4 /dev/urandom | tr -d ' '; }
+rand_hex() { od -An -N12 -tx1 /dev/urandom | tr -d ' \n'; }
 
-let owner = CommandLine.arguments[1]
-guard
-    let list = CGWindowListCopyWindowInfo(
-        [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]
-else { exit(1) }
-for window in list where window[kCGWindowOwnerName as String] as? String == owner {
-    let number = window[kCGWindowNumber as String] as? Int ?? 0
-    let layer = window[kCGWindowLayer as String] as? Int ?? -1
-    let name = window[kCGWindowName as String] as? String ?? ""
-    let bounds = window[kCGWindowBounds as String] as? [String: Any]
-    let width = (bounds?["Width"] as? NSNumber)?.intValue ?? 0
-    let height = (bounds?["Height"] as? NSNumber)?.intValue ?? 0
-    print("\(number)\t\(layer)\t\(name)\t\(width)\t\(height)")
-}
-SWIFT
-xcrun swiftc -O "$TMP/windowid.swift" -o "$TMP/windowid"
+WORDS=(amber willow signal copper lantern summit quiet meadow anchor violet harbor drift
+  golden cedar morrow silver thicket crimson pillar indigo marsh russet canyon)
 
-# The store files need pixel work the shell has no tool for (no ImageMagick
-# here): `flatten` redraws a simulator screenshot into a context with no alpha
-# channel; `compose` centres window captures, 1x and side by side if several,
-# on a flat gradient canvas, which is how the Mac store size (16:10) is reached
-# without stretching a 560x700 window. Both write PNGs without alpha, because
-# App Store Connect rejects an alpha channel and flattening over a colour alone
-# would keep one.
-cat > "$TMP/imgtool.swift" <<'SWIFT'
-import CoreGraphics
-import Foundation
-import ImageIO
-import UniformTypeIdentifiers
-
-func load(_ path: String) -> CGImage {
-    guard let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil),
-        let image = CGImageSourceCreateImageAtIndex(src, 0, nil)
-    else {
-        FileHandle.standardError.write(Data("cannot read \(path)\n".utf8))
-        exit(1)
-    }
-    return image
+# Sets the variable named by $1 to a fresh code, NNNN-word-word-word. The relay
+# hashes a code's first 4 characters into a room name, so those must not repeat
+# within a run; a fresh relay per run covers the runs before this one.
+new_code() {                                        # new_code VAR
+  local prefix words="" i w
+  while :; do
+    prefix=$((1000 + $(rand_int) % 9000))
+    in_list "$CODE_PREFIXES" "$prefix" || break
+  done
+  CODE_PREFIXES="$CODE_PREFIXES$prefix "
+  for i in 1 2 3; do
+    while :; do
+      w=${WORDS[$(($(rand_int) % ${#WORDS[@]}))]}
+      case "$words-" in *"-$w-"*) ;; *) break ;; esac
+    done
+    words="$words-$w"
+  done
+  printf -v "$1" '%s' "$prefix$words"
 }
 
-func save(_ context: CGContext, _ path: String) {
-    guard let image = context.makeImage(),
-        let dest = CGImageDestinationCreateWithURL(
-            URL(fileURLWithPath: path) as CFURL, UTType.png.identifier as CFString, 1, nil)
-    else { exit(1) }
-    CGImageDestinationAddImage(dest, image, nil)
-    guard CGImageDestinationFinalize(dest) else { exit(1) }
+port_up() { nc -z 127.0.0.1 "$1" > /dev/null 2>&1; }
+port_free() { ! port_up "$1"; }
+
+# croc takes a base port plus transfer ports, five in all.
+start_relay() {
+  local base i p ok
+  for _ in $(seq 1 20); do
+    base=$((20000 + $(rand_int) % 20000))
+    ok=1
+    for i in 0 1 2 3 4; do port_free $((base + i)) || ok=0; done
+    [ "$ok" = 1 ] && break
+  done
+  [ "$ok" = 1 ] || fail "no free block of five ports found"
+  RELAY_ADDR="127.0.0.1:$base"
+  RELAY_PASS=$(rand_hex)
+  p="$base,$((base + 1)),$((base + 2)),$((base + 3)),$((base + 4))"
+  # --debug is what makes the relay log "room has first peer", the signal that
+  # a sender is registered and a receiver may join. The join limits default to
+  # 30 a minute per address, and every peer here is 127.0.0.1.
+  CROC_PASS="$RELAY_PASS" "$CROC" --debug relay --host 127.0.0.1 --ports "$p" \
+    --source-join-limit 1000 --room-join-limit 1000 > "$TMP/relay.log" 2>&1 &
+  RELAY_PID=$!
+  poll 10 port_up "$base" || die "the relay did not start"
+  kill -0 "$RELAY_PID" 2>/dev/null || die "the relay exited at startup"
 }
 
-// noneSkipLast is what leaves the PNG with no alpha channel.
-func opaqueContext(_ width: Int, _ height: Int, _ space: CGColorSpace) -> CGContext {
-    guard
-        let context = CGContext(
-            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
-            space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)
-    else { exit(1) }
-    context.interpolationQuality = .none
-    return context
+# A croc CLI peer against the local relay. exec, so $! is croc itself and a
+# signal reaches it.
+croc_peer() {                                       # croc_peer DIR CODE CROC_ARGS...
+  local dir=$1 code=$2
+  shift 2
+  ( cd "$dir" && CROC_SECRET="$code" CROC_PASS="$RELAY_PASS" exec "$CROC" --disable-clipboard \
+      --relay "$RELAY_ADDR" --ignore-stdin "$@" ) > "$TMP/peer.log" 2>&1 &
+  PEER_PID=$!
 }
 
-let args = CommandLine.arguments
-switch args.count > 1 ? args[1] : "" {
-case "flatten":                                     // flatten IN OUT
-    let image = load(args[2])
-    let context = opaqueContext(
-        image.width, image.height, image.colorSpace ?? CGColorSpaceCreateDeviceRGB())
-    let rect = CGRect(x: 0, y: 0, width: image.width, height: image.height)
-    context.setFillColor(CGColor(gray: 0, alpha: 1))
-    context.fill(rect)
-    context.draw(image, in: rect)
-    save(context, args[3])
-case "compose":                                     // compose OUT WIDTH HEIGHT IMG...
-    let width = Int(args[3])!, height = Int(args[4])!
-    let images = args[5...].map(load)
-    let gap = 120
-    let total = images.reduce(0) { $0 + $1.width } + gap * (images.count - 1)
-    guard total <= width, images.allSatisfy({ $0.height <= height }) else {
-        FileHandle.standardError.write(
-            Data("images do not fit a \(width)x\(height) canvas\n".utf8))
-        exit(1)
-    }
-    let space = CGColorSpace(name: CGColorSpace.sRGB)!
-    let context = opaqueContext(width, height, space)
-    let gradient = CGGradient(
-        colorsSpace: space,
-        colors: [
-            CGColor(red: 0.89, green: 0.92, blue: 0.97, alpha: 1),
-            CGColor(red: 0.74, green: 0.80, blue: 0.91, alpha: 1),
-        ] as CFArray,
-        locations: [0, 1])!
-    context.drawLinearGradient(
-        gradient, start: CGPoint(x: 0, y: height), end: CGPoint(x: 0, y: 0), options: [])
-    var x = (width - total) / 2
-    for image in images {
-        let rect = CGRect(
-            x: x, y: (height - image.height) / 2, width: image.width, height: image.height)
-        context.saveGState()
-        context.setShadow(
-            offset: CGSize(width: 0, height: -24), blur: 70,
-            color: CGColor(gray: 0, alpha: 0.35))
-        context.draw(image, in: rect)
-        context.restoreGState()
-        x += image.width + gap
-    }
-    save(context, args[2])
-default:
-    FileHandle.standardError.write(
-        Data("usage: imgtool flatten IN OUT | compose OUT WIDTH HEIGHT IMG...\n".utf8))
-    exit(2)
+# The app's receive must start after the sender is in the relay's room: a
+# receiver that arrives first corrupts the PAKE handshake.
+start_sender() {                                    # start_sender CODE DIR THROTTLE FILE...
+  local code=$1 dir=$2 throttle=$3 before
+  shift 3
+  before=$(grep -c 'room has first peer' "$TMP/relay.log" || true)
+  if [ -n "$throttle" ]; then
+    croc_peer "$dir" "$code" --throttleUpload "$throttle" send --no-local "$@"
+  else
+    croc_peer "$dir" "$code" send --no-local "$@"
+  fi
+  sender_registered() { [ "$(grep -c 'room has first peer' "$TMP/relay.log" || true)" -gt "$before" ]; }
+  poll 30 sender_registered || die "the croc sender never reached the relay"
 }
-SWIFT
-xcrun swiftc -O "$TMP/imgtool.swift" -o "$TMP/imgtool"
+
+# A fresh directory every time: croc skips a file the receiver already holds in
+# full, and the transfer would end before it could be photographed.
+start_receiver() {                                  # start_receiver CODE
+  rm -rf "$TMP/recv"
+  mkdir -p "$TMP/recv"
+  croc_peer "$TMP/recv" "$1" --yes --overwrite
+}
+
+RELAY_ARGS=()                                       # set once the relay runs
+
+phase_is() { grep -Eq "$1" "$DOCS/verify-phase.txt" 2>/dev/null; }
+await_phase() {                                     # await_phase REGEX SECONDS
+  poll "$2" phase_is "$1" || die "the app never reported a phase matching '$1' (last: $(cat "$DOCS/verify-phase.txt" 2>/dev/null || echo none))"
+}
+
+percent_reached() {
+  local p
+  p=$(sed -n 's/^transferring percent=//p' "$DOCS/verify-phase.txt" 2>/dev/null || true)
+  [ -n "$p" ] && [ "$p" -ge "$1" ]
+}
+
+file_exists() { [ -e "$DOCS/$1" ]; }
+await_docs_file() {                                 # await_docs_file NAME SECONDS
+  poll "$2" file_exists "$1" || die "the app never wrote $1"
+}
+
+# Freezes a transfer part-way. Both ends stand still, so the progress bar and
+# the rate stay exactly as they are for as long as the shot takes. The throttle
+# makes the climb slow enough to catch: unthrottled, localhost moves 150 MB in
+# under a second.
+freeze_transfer() {
+  poll 90 percent_reached 40 || die "the transfer never reached 40% (phase: $(cat "$DOCS/verify-phase.txt" 2>/dev/null || echo none))"
+  kill -STOP "$PEER_PID"
+  # The progress callback may still be in flight; one render pass.
+  settle
+}
+
+# No signal exists for "the last frame has been drawn", so this is the one
+# fixed wait: a view takes a frame or two to show a state it was just given.
+settle() { sleep 1; }
+
+# --- devices ----------------------------------------------------------------
+
+set_system_appearance() {                           # set_system_appearance light|dark
+  local dark=false
+  [ "$1" = dark ] && dark=true
+  osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $dark" >/dev/null
+  dark_is() { [ "$(osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode')" = "$dark" ]; }
+  poll 10 dark_is || fail "the system appearance did not switch to $1"
+}
+
+# simctl takes the time as an ISO instant in UTC with fractional seconds (the
+# plain "9:41" form is not accepted by every runtime), shown in the host's zone.
+clock_941() {
+  date -u -j -f '%Y-%m-%dT%H:%M:%S%z' "$(date +%Y-%m-%d)T09:41:00$(date +%z)" +%Y-%m-%dT%H:%M:%S.000Z
+}
+
+# Sets the variable named by $1 to the new simulator's UDID. A name left over
+# from an aborted run is deleted first. No $(...) around the call: SIM_IDS has
+# to reach the shell that runs cleanup. The newest runtime that supports the
+# device type wins: a newer runtime can lack older device types, and without a
+# runtime argument simctl picks the oldest.
+#
+# Prepared so the shots do not depend on the host: a simulator inherits the
+# host's global preferences, and a host with a 24-hour time format
+# (AppleICUTimeFormatStrings "HH:mm:ss") shows the status bar clock as
+# "09:41:00" whatever --time says. The preferences are written to a booted
+# device and only take effect after a reboot. An iPad also opens in
+# windowed multitasking, which adds an app-name label to the status bar and a
+# resize glyph in the corner; the two SpringBoard keys switch that off.
+# Restarting SpringBoard with launchctl instead of rebooting leaves the status
+# bar blank.
+create_sim() {                                      # create_sim VAR NAME TYPE
+  local udid="" runtime
+  xcrun simctl delete "$2" 2>/dev/null || true
+  for runtime in ${RUNTIME:-$(xcrun simctl list runtimes available | awk '/^iOS / { print $NF }' | sort -r)}; do
+    udid=$(xcrun simctl create "$2" "$3" "$runtime" 2>/dev/null) && break
+    udid=""
+  done
+  [ -n "$udid" ] || fail "no installed iOS runtime supports $3"
+  SIM_IDS="$SIM_IDS $udid"
+  xcrun simctl bootstatus "$udid" -b > /dev/null
+  xcrun simctl spawn "$udid" defaults write -g AppleICUTimeFormatStrings -dict 1 "h:mm"
+  xcrun simctl spawn "$udid" defaults write -g AppleLocale en_US
+  xcrun simctl spawn "$udid" defaults write -g AppleLanguages -array en
+  case "$3" in
+    *iPad*)
+      xcrun simctl spawn "$udid" defaults write com.apple.springboard SBMedusaMultitaskingEnabled -bool NO
+      xcrun simctl spawn "$udid" defaults write com.apple.springboard SBChamoisWindowingEnabled -bool NO ;;
+  esac
+  xcrun simctl shutdown "$udid"
+  xcrun simctl bootstatus "$udid" -b > /dev/null
+  xcrun simctl status_bar "$udid" override --time "$(clock_941)" --dataNetwork wifi \
+    --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 \
+    --batteryState charged --batteryLevel 100
+  printf -v "$1" '%s' "$udid"
+}
+
+# Puts the payloads where the device's app can read them: both macOS and the
+# simulator sandbox the app, so $TMP is out of reach from inside.
+stage_payloads() {                                  # stage_payloads DOCS
+  mkdir -p "$1/shots"
+  cp "$TMP/payload"/* "$TMP/big/Project-Archive.zip" "$1/shots/"
+}
+
+sim_type() {                                        # sim_type DEVICE
+  case "$1" in
+    iphone) echo "$PHONE_TYPE" ;;
+    iphone63) echo "$PHONE63_TYPE" ;;
+    ipad) echo "$PAD_TYPE" ;;
+    duo) echo "$DUO_TYPE" ;;
+  esac
+}
+
+# A prepared simulator with the app and the payloads on it. Its UDID and
+# Documents folder go to ID_DEVICE and DOCS_DEVICE.
+bring_up() {                                        # bring_up DEVICE
+  local id
+  create_sim id "$SIM_NAME $1" "$(sim_type "$1")"
+  xcrun simctl install "$id" "$SIM_APP"
+  printf -v "ID_$1" '%s' "$id"
+  printf -v "DOCS_$1" '%s' "$(xcrun simctl get_app_container "$id" "$BUNDLE" data)/Documents"
+  stage_payloads "$(xcrun simctl get_app_container "$id" "$BUNDLE" data)/Documents"
+}
+
+# Not just shutdown: a deleted simulator frees its disk right away.
+drop_sim() {                                        # drop_sim DEVICE
+  local var="ID_$1"
+  xcrun simctl shutdown "${!var}" 2>/dev/null || true
+  xcrun simctl delete "${!var}"
+}
+
+use_device() {                                      # use_device DEVICE
+  local id="ID_$1" docs="DOCS_$1"
+  DEV=$1
+  if [ "$1" = mac ]; then DOCS=$MAC_DOCS; else SIM=${!id}; DOCS=${!docs}; fi
+}
+
+clean_docs() {
+  local name
+  for name in $PAYLOAD_NAMES; do rm -f "$DOCS/$name"; done
+  rm -f "$DOCS"/verify-*.txt
+}
+
+# --- launching and photographing --------------------------------------------
+
+# -AppleLocale and -AppleLanguages because byte counts and relative dates
+# otherwise follow the host locale ("8,8 MB").
+# On macOS every launch argument has to come in pairs: AppKit reads "--flag
+# value" as a defaults pair and any bare token left over as a file to open,
+# which suppresses the window. A flag with no value (--hold, --seed-history)
+# therefore goes last.
+LOCALE_ARGS=(-AppleLocale en_US -AppleLanguages '(en)')
+
+mac_windows() { "$TMP/bin/window" list CrocApp; }
+
+# The first on-screen window (layer 0) whose title is one of TITLES, a
+# |-separated list (titles contain spaces).
+mac_window_id() {                                   # mac_window_id TITLES
+  mac_windows | awk -F'\t' -v t="$1" '
+    BEGIN { n = split(t, want, "|") }
+    $2 == 0 { for (i = 1; i <= n; i++) if ($3 == want[i]) { print $1; exit } }'
+}
+
+mac_window_shown() { [ -n "$(mac_window_id "$1")" ]; }
+mac_has_window() { mac_windows | awk -F'\t' '$2 == 0 { found = 1 } END { exit !found }'; }
+
+# An unfocused window photographs with grey traffic lights and a dimmed title.
+# By pid, because the process name races the launch. The pause is a title bar
+# repaint, which has no signal.
+activate_app() {
+  activated() {
+    osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $APP_PID) to true" >/dev/null 2>&1
+  }
+  poll 15 activated || die "System Events never found the app (pid $APP_PID)"
+  sleep 1
+}
+
+mac_titles() {                                      # the window title(s) a screen shows
+  case "$SCREEN" in
+    home|onboarding) echo "CrocApp" ;;
+    send-files|send-code|sending|stored-link) echo "Send" ;;
+    receive-code|receive-incoming|receive-conflict|receiving|receive-done) echo "Receive" ;;
+    history) echo "History" ;;
+    how-it-works) echo "How it works" ;;
+    settings) echo "CrocApp Settings|General|Settings" ;;
+    settings-advanced) echo "Advanced" ;;
+  esac
+}
+
+launch() {                                          # launch ARGS...
+  rm -f "$DOCS"/verify-*.txt
+  if [ "$DEV" = mac ]; then
+    "$BIN" -ApplePersistenceIgnoreState YES "${LOCALE_ARGS[@]}" "$@" > "$TMP/app.log" 2>&1 &
+    APP_PID=$!
+    poll 30 mac_has_window || die "the app opened no window"
+    activate_app
+  else
+    xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
+    xcrun simctl launch "$SIM" "$BUNDLE" "${LOCALE_ARGS[@]}" "$@" > /dev/null
+  fi
+}
+
+quit_app() {
+  if [ "$DEV" = mac ]; then
+    [ -n "$APP_PID" ] && kill "$APP_PID" 2>/dev/null || true
+    wait "$APP_PID" 2>/dev/null || true
+    APP_PID=""
+  else
+    xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
+  fi
+  stop_peer
+}
+
+await_ready() { await_docs_file verify-ready.txt 30; }
+
+store_file() {                                      # store_file RAW
+  local out dir
+  dir="$OUT/app-store/$(store_class "$DEV")"
+  out="$dir/$(store_name "$SCREEN").png"
+  mkdir -p "$dir"
+  if [ "$DEV" = mac ]; then
+    "$TMP/bin/imgtool" compose "$out" 2880 1800 "$MODE" "$1"
+  else
+    "$TMP/bin/imgtool" flatten "$1" "$out"
+  fi
+  echo "  $out"
+}
+
+# Photographs the current state. A main device keeps it as SCREEN-MODE; the
+# store file is written when the screen's slot in the upload order has this
+# appearance. A store-only device keeps nothing else.
+snap() {
+  local out wid
+  if is_main "$DEV"; then
+    mkdir -p "$OUT/$DEV"
+    out="$OUT/$DEV/$SCREEN-$MODE.png"
+  else
+    out="$TMP/raw.png"
+  fi
+  if [ "$DEV" = mac ]; then
+    wid=$(mac_window_id "$(mac_titles)")
+    [ -n "$wid" ] || die "no on-screen CrocApp window titled '$(mac_titles)'"
+    screencapture -x -o -l "$wid" "$out"
+  elif [ "$DEV" = duo ]; then
+    xcrun simctl io "$SIM" screenshot --type=png --display="$DUO_OUTER_DISPLAY" "$out" 2>/dev/null
+  else
+    xcrun simctl io "$SIM" screenshot --type=png "$out" 2>/dev/null
+  fi
+  [ -s "$out" ] || die "nothing was captured to $out"
+  is_main "$DEV" && echo "  $out"
+  if in_list "$STORE_SCREENS" "$SCREEN" && [ "$(store_mode "$SCREEN")" = "$MODE" ]; then store_file "$out"; fi
+}
+
+# A screen that needs no transfer: park on it, wait for the harness, photograph.
+still() {                                           # still ARGS...
+  launch "$@"
+  await_ready
+  snap
+  quit_app
+}
+
+# macOS Settings is a separate window opened with Cmd-comma; the keystroke goes
+# to whatever is frontmost, so the app is raised first. TAB is General or Advanced.
+mac_settings() {                                    # mac_settings TAB
+  local i
+  launch --screen home
+  for i in 1 2 3; do
+    activate_app
+    osascript -e 'tell application "System Events" to keystroke "," using command down'
+    poll 5 mac_window_shown "General|Advanced|Settings|CrocApp Settings" && break
+    [ "$i" -lt 3 ] || die "the Settings window did not open"
+  done
+  osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID) to click button \"$1\" of toolbar 1 of window 1" >/dev/null
+  poll 5 mac_window_shown "$(mac_titles)" || die "the Settings window never showed the $1 tab"
+  settle
+  snap
+  quit_app
+}
+
+capture_screen() {
+  local code
+  clean_docs
+  case "$SCREEN" in
+    onboarding) still --screen onboarding ;;
+    home) still --screen home ;;
+    send-files)
+      still --screen send --stage "$DOCS/shots/Quarterly-Report.pdf" \
+        --stage "$DOCS/shots/Ridge-Sunrise.jpg" --stage "$DOCS/shots/Meeting-Notes.md" ;;
+    receive-code) still --screen receive ;;
+    history) still --screen history --seed-history ;;
+    how-it-works) still --screen howItWorks ;;
+    settings)
+      if [ "$DEV" = mac ]; then mac_settings General; else still --screen settings; fi ;;
+    settings-advanced)
+      if [ "$DEV" = mac ]; then mac_settings Advanced; else still --screen advanced; fi ;;
+    send-code)
+      # Parks on "Ready to send", the one state that shows the code and the QR.
+      new_code code
+      launch --auto-send "$DOCS/shots/Design-Assets.zip" --code "$code" "${RELAY_ARGS[@]}" --screen send
+      await_docs_file verify-code-ready.txt 60
+      settle
+      snap
+      quit_app ;;
+    sending)
+      new_code code
+      launch --auto-send "$DOCS/shots/Project-Archive.zip" --code "$code" "${RELAY_ARGS[@]}" \
+        --throttle 6m --screen send
+      await_docs_file verify-code-ready.txt 60
+      start_receiver "$code"
+      freeze_transfer
+      snap
+      quit_app
+      rm -rf "$TMP/recv" ;;
+    receive-incoming | receive-conflict)
+      new_code code
+      local conflicts=0
+      if [ "$SCREEN" = receive-conflict ]; then
+        # Files already in the receive folder are what make the preview offer
+        # Keep Both / Replace.
+        cp "$TMP/payload/Quarterly-Report.pdf" "$TMP/payload/Ridge-Sunrise.jpg" "$DOCS/"
+        conflicts=2
+      fi
+      start_sender "$code" "$TMP/payload" "" Quarterly-Report.pdf Ridge-Sunrise.jpg Meeting-Notes.md
+      launch --auto-receive "$code" "${RELAY_ARGS[@]}" --screen receive --hold
+      await_phase "^incoming conflicts=$conflicts\$" 60
+      settle
+      snap
+      quit_app
+      clean_docs ;;
+    receiving)
+      new_code code
+      start_sender "$code" "$TMP/big" 6m Field-Recordings.zip
+      launch --auto-receive "$code" "${RELAY_ARGS[@]}" --screen receive
+      freeze_transfer
+      snap
+      quit_app
+      clean_docs ;;
+    receive-done)
+      new_code code
+      start_sender "$code" "$TMP/payload" "" Quarterly-Report.pdf Ridge-Sunrise.jpg Meeting-Notes.md
+      launch --auto-receive "$code" "${RELAY_ARGS[@]}" --screen receive
+      await_docs_file verify-result.txt 60
+      [ "$(cat "$DOCS/verify-result.txt")" = "ok success=true" ] \
+        || die "the receive ended with: $(cat "$DOCS/verify-result.txt")"
+      settle
+      snap
+      quit_app
+      clean_docs ;;
+    stored-link)
+      start_store_server
+      launch --auto-store-send "$DOCS/shots/Quarterly-Report.pdf" --store-server "$STORE_URL" \
+        --shown-link-origin https://crocapp.dev --store-downloads 3 --screen send
+      await_docs_file verify-store-link.txt 60
+      settle
+      snap
+      quit_app ;;
+  esac
+}
+
+# A local croc store server, as in verify-app-mac.sh, so "Send as link" never
+# uploads to a real server. The link on screen is rewritten to crocapp.dev.
+start_store_server() {
+  [ -z "$STORE_URL" ] || return 0
+  ( cd crocmobile && go build -o "$TMP/bin/croctest" ./cmd/croctest )
+  mkdir -p "$TMP/store"
+  "$TMP/bin/croctest" store-server "$TMP/store" > "$TMP/store-srv.log" 2>&1 &
+  STORE_PID=$!
+  store_up() { STORE_URL=$(sed -n 's/^STORE-URL //p' "$TMP/store-srv.log"); [ -n "$STORE_URL" ]; }
+  poll 10 store_up || die "the store server did not start (see $TMP/store-srv.log)"
+}
+
+# --- payloads ---------------------------------------------------------------
+
+make_payloads() {
+  mkdir -p "$TMP/payload" "$TMP/big" "$TMP/assets"
+  "$TMP/bin/payload" pdf "$TMP/payload/Quarterly-Report.pdf"
+  "$TMP/bin/payload" jpg "$TMP/payload/Ridge-Sunrise.jpg"
+  cat > "$TMP/payload/Meeting-Notes.md" <<'EOF'
+# Planning sync
+
+- Ship the iPad layout before the next release.
+- Move the history view to a shared list.
+- Review the relay setup guide for new users.
+
+## Actions
+
+1. Draft the release notes.
+2. Update the screenshots.
+3. Book the review for Thursday.
+EOF
+  cp "$TMP/payload/Ridge-Sunrise.jpg" "$TMP/payload/Meeting-Notes.md" "$TMP/assets/"
+  ditto -c -k --sequesterRsrc "$TMP/assets" "$TMP/payload/Design-Assets.zip"
+  # Large enough that a throttled transfer outlasts the shot. Random bytes:
+  # only the name is ever shown.
+  head -c 150000000 /dev/urandom > "$TMP/big/Project-Archive.zip"
+  head -c 150000000 /dev/urandom > "$TMP/big/Field-Recordings.zip"
+}
+
+# --- verification -----------------------------------------------------------
 
 check_png() {                                       # check_png FILE WIDTH HEIGHT
   local info w h a
@@ -307,545 +740,119 @@ check_png() {                                       # check_png FILE WIDTH HEIGH
     || fail "$1 is ${w}x${h} hasAlpha=$a, App Store Connect wants $2x$3 with no alpha"
 }
 
-activate_croc() {
-  # An unfocused window photographs with grey traffic lights and a dimmed
-  # title, so every capture has to raise the app first.
-  osascript -e 'tell application "System Events" to set frontmost of (first process whose name is "CrocApp") to true' >/dev/null
-  sleep 1
-}
-
-# The keystroke goes to whatever app is frontmost, and a terminal that holds
-# focus swallows it, so raise CrocApp and retry until the window shows up.
-open_settings() {
-  local i
-  for i in 1 2 3; do
-    activate_croc
-    osascript -e 'tell application "System Events" to keystroke "," using command down'
-    sleep 3
-    "$TMP/windowid" CrocApp | awk -F'\t' '$3 == "General" || $3 == "Advanced" || $3 == "Settings" || $3 == "CrocApp Settings" { f = 1 } END { exit !f }' && return 0
-  done
-  fail "the Settings window did not open"
-}
-
-shoot_window() {                                    # shoot_window OUTFILE TITLE...
-  local out=$1 wid titles
-  shift
-  titles=$(IFS='|'; echo "$*")
-  wid=$("$TMP/windowid" CrocApp | awk -F'\t' -v t="$titles" '
-    BEGIN { n = split(t, want, "|") }
-    $2 == 0 { for (i = 1; i <= n; i++) if ($3 == want[i]) { print $1; exit } }')
-  [ -n "$wid" ] || fail "no on-screen CrocApp window titled '$titles'"
-  screencapture -x -o -l "$wid" "$out"
-  [ -s "$out" ] || fail "screencapture wrote nothing to $out"
-  echo "  $out"
-}
-
-store_mac() {                                       # store_mac SHOT FILE...
-  local shot=$1 out
-  shift
-  [ "$MODE" = light ] || return 0
-  in_list "$STORE_MAC" "$shot" || return 0
-  mkdir -p "$STORE_DIR/mac"
-  out="$STORE_DIR/mac/$(store_name "$STORE_MAC" "$shot").png"
-  "$TMP/imgtool" compose "$out" 2880 1800 "$@"
-  echo "  $out"
-}
-
-shoot_mac() {                                       # shoot_mac SHOT TITLE...
-  local shot=$1
-  shift
-  shoot_window "$OUT/$shot-$MODE.png" "$@"
-  store_mac "$shot" "$OUT/$shot-$MODE.png"
-}
-
-mac_launch() {                                      # mac_launch ARGS...
-  # -AppleLocale/-AppleLanguages for the same reason as the iOS launch: byte
-  # counts and relative dates otherwise follow the host locale.
-  "$BIN" -ApplePersistenceIgnoreState YES \
-    -AppleLocale en_US -AppleLanguages '(en)' "$@" > "$TMP/mac.log" 2>&1 &
-  APP_PID=$!
-  sleep 5
-  activate_croc
-}
-
-mac_quit() {
-  [ -n "$APP_PID" ] && kill "$APP_PID" 2>/dev/null || true
-  wait "$APP_PID" 2>/dev/null || true
-  APP_PID=""
-  sleep 1
-}
-
-ios_launch() {                                      # ios_launch ARGS...
-  xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
-  # Byte sizes and dates are locale-formatted; pin en_US so the shots read
-  # "8.8 MB" and not the host locale's decimal comma.
-  xcrun simctl launch "$SIM" "$BUNDLE" -AppleLocale en_US -AppleLanguages '(en)' "$@" > /dev/null
-}
-
-store_flat() {                                      # store_flat CLASS SHOT RAWFILE
-  local out
-  in_list "$STORE_IOS" "$2" || return 0
-  mkdir -p "$STORE_DIR/$1"
-  out="$STORE_DIR/$1/$(store_name "$STORE_IOS" "$2").png"
-  "$TMP/imgtool" flatten "$3" "$out"
-  echo "  $out"
-}
-
-# The primary simulator already produces the 6.3-inch size, so its light shots
-# double as that store set. A store-only pass writes nothing to the main set.
-ios_shoot() {                                       # ios_shoot SHOT
-  local raw="$OUT/$1-$MODE.png"
-  [ -z "$STORE_PASS" ] || raw="$TMP/store-raw.png"
-  xcrun simctl io "$SIM" screenshot --type=png "$raw" 2>/dev/null
-  [ -s "$raw" ] || fail "simctl wrote nothing to $raw"
-  echo "  $raw"
-  if [ -n "$STORE_PASS" ]; then
-    store_flat "$STORE_PASS" "$1" "$raw"
-  elif [ "$MODE" = light ]; then
-    store_flat iphone-6.3 "$1" "$raw"
-  fi
-}
-
-set_appearance() {                                  # set_appearance light|dark
-  local dark=false
-  [ "$1" = dark ] && dark=true
-  osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $dark" >/dev/null
-  xcrun simctl ui "$SIM" appearance "$1" >/dev/null
-  sleep 3
-}
-
-# Boots and fills one simulator the way the primary one is prepared: the app,
-# the staged payloads, a 9:41 status bar. Waits for the boot, because a
-# freshly created device takes a while.
-prepare_sim() {                                     # prepare_sim DEVICE
-  local docs
-  xcrun simctl bootstatus "$1" -b > /dev/null
-  xcrun simctl install "$1" "$SIM_APP"
-  docs=$(xcrun simctl get_app_container "$1" "$BUNDLE" data)/Documents
-  mkdir -p "$docs/shots"
-  cp "$TMP/payload"/* "$docs/shots/"
-  xcrun simctl status_bar "$1" override --time "9:41" \
-    --batteryState charged --batteryLevel 100 \
-    --cellularMode active --cellularBars 4 --wifiMode active --wifiBars 3
-}
-
-# A local croc store server, as in verify-app-mac.sh, so "Send as link" never
-# uploads to a real server. The link on screen therefore names 127.0.0.1.
-start_store_server() {
-  [ -z "$STORE_URL" ] || return 0
-  command -v go > /dev/null || fail "go is needed to build the local store server"
-  ( cd crocmobile && go build -o "$TMP/croctest" ./cmd/croctest )
-  mkdir -p "$TMP/store"
-  "$TMP/croctest" store-server "$TMP/store" > "$TMP/store-srv.log" 2>&1 &
-  STORE_PID=$!
-  local _
-  for _ in $(seq 1 50); do
-    STORE_URL=$(sed -n 's/^STORE-URL //p' "$TMP/store-srv.log")
-    [ -z "$STORE_URL" ] || return 0
-    sleep 0.2
-  done
-  fail "store server did not start (see $TMP/store-srv.log)"
-}
-
-stop_job() {
-  [ -n "$JOB_PID" ] && kill "$JOB_PID" 2>/dev/null || true
-  wait "$JOB_PID" 2>/dev/null || true
-  JOB_PID=""
-}
-
-# --- macOS ------------------------------------------------------------------
-
-capture_mac() {                                     # capture_mac MODE CODE_OFFSET
-  MODE=$1
-  local code_a code_b code_c code_d
-  code_a=$(code "$2" amber-willow-signal)
-  code_b=$(code "$(($2 + 1))" copper-lantern-summit)
-  code_c=$(code "$(($2 + 2))" quiet-meadow-anchor)
-  code_d=$(code "$(($2 + 3))" violet-harbor-drift)
-  # Same reason as the iOS side: leftovers from an earlier run would show up
-  # as a conflict warning on the next incoming preview.
-  rm -f "$DOCS/Presentation.pdf" "$DOCS/Budget.numbers" "$DOCS/Cover-Art.png" \
-    "$DOCS/Field-Recordings.zip" "$DOCS/verify-result.txt" "$DOCS/verify-store-link.txt"
-
-  if want mac-home || want mac-settings || want mac-advanced; then
-    mac_launch --screen home
-    if want mac-home; then shoot_mac mac-home CrocApp; fi
-    if want mac-settings || want mac-advanced; then
-      open_settings
-      # The selected tab survives a relaunch, so a run after mac-advanced
-      # would open on Advanced.
-      osascript -e 'tell application "System Events" to tell process "CrocApp" to click button "General" of toolbar 1 of window 1'
-      sleep 2
-      # A freshly opened Settings scene is scrolled to the top. It opens at
-      # its .defaultSize (480x780) and is user-resizable, which is
-      # why this catches the whole form rather than stopping mid-row. With
-      # the General/Advanced tabs the window title follows the selected tab.
-      if want mac-settings; then shoot_mac mac-settings "CrocApp Settings" General Settings; fi
-      if want mac-advanced; then
-        osascript -e 'tell application "System Events" to tell process "CrocApp" to click button "Advanced" of toolbar 1 of window 1'
-        sleep 2
-        shoot_mac mac-advanced Advanced
-      fi
-    fi
-    mac_quit
-  fi
-
-  if want mac-send-files; then
-    mac_launch --screen send \
-      --stage "$DOCS/shots/Presentation.pdf" \
-      --stage "$DOCS/shots/Budget.numbers" \
-      --stage "$DOCS/shots/Cover-Art.png"
-    shoot_mac mac-send-files Send
-    mac_quit
-  fi
-
-  if want mac-receive; then
-    mac_launch --screen receive
-    shoot_mac mac-receive Receive
-    mac_quit
-  fi
-
-  if want mac-conflict; then
-    # The files are already in the receive folder, which is what makes the
-    # incoming preview offer Keep Both / Replace.
-    cp "$TMP/payload/Presentation.pdf" "$TMP/payload/Cover-Art.png" "$DOCS/"
-    ( cd "$TMP/payload" && CROC_SECRET="$code_d" "$CROC" --ignore-stdin send \
-        Presentation.pdf Budget.numbers Cover-Art.png ) > "$TMP/send-d.log" 2>&1 &
-    JOB_PID=$!
-    sleep 5
-    mac_launch --auto-receive "$code_d" --screen receive --hold
-    sleep 20
-    activate_croc
-    shoot_mac mac-conflict Receive
-    stop_job
-    mac_quit
-    rm -f "$DOCS/Presentation.pdf" "$DOCS/Cover-Art.png"
-  fi
-
-  if want mac-history; then
-    mac_launch --screen history --seed-history
-    shoot_mac mac-history History
-    mac_quit
-  fi
-
-  if want mac-howitworks; then
-    mac_launch --screen howItWorks
-    shoot_mac mac-howitworks "How it works"
-    mac_quit
-  fi
-
-  if want mac-stored; then
-    start_store_server
-    mac_launch --auto-store-send "$DOCS/shots/Presentation.pdf" \
-      --store-server "$STORE_URL" --store-downloads 3 --screen send
-    await_file "$DOCS/verify-store-link.txt" 60 || fail "mac-stored: the upload never produced a link"
-    sleep 3
-    activate_croc
-    shoot_mac mac-stored Send
-    rm -f "$DOCS/verify-store-link.txt"
-    mac_quit
-  fi
-
-  if want mac-send; then
-    # No receiver ever shows up, so this parks in "Ready to send" -- the only
-    # state that displays the code phrase and the QR.
-    mac_launch --auto-send "$DOCS/shots/Design-Assets.zip" --code "$code_a" --screen send
-    # croc hashes the payload before the relay publishes the code.
-    sleep 9
-    activate_croc
-    shoot_mac mac-send Send
-    mac_quit
-  fi
-
-  if want mac-transferring; then
-    # --relay pins the relay AND sets harnessDisableLocal, which is the whole
-    # point: both ends of this transfer are this machine, so croc's local path
-    # wins the race and moves 400 MB at ~390 MB/s -- there is no payload big
-    # enough to photograph mid-flight. Forced through the relay it runs at
-    # internet speed and the progress bar actually sits still long enough.
-    # The app is the sender, so croc's --throttleUpload is not available here.
-    mac_launch --auto-send "$DOCS/shots/Field-Recordings.zip" --code "$code_b" \
-      --relay croc.schollz.com:9009 --screen send
-    sleep 10
-    # A fresh directory, not $TMP: croc resumes against a same-named file of
-    # the same size, and $TMP holds the very file being sent.
-    mkdir -p "$TMP/recv-b"
-    ( cd "$TMP/recv-b" && CROC_SECRET="$code_b" "$CROC" --ignore-stdin --yes ) \
-      > "$TMP/recv-b.log" 2>&1 &
-    JOB_PID=$!
-    sleep 14
-    activate_croc
-    shoot_mac mac-transferring Send
-    stop_job
-    mac_quit
-  fi
-
-  if want mac-done; then
-    # Receiving, not sending: the finished-receive state is the richer one
-    # (it offers "Show in Finder").
-    rm -f "$DOCS/verify-result.txt"
-    ( cd "$TMP/payload" && CROC_SECRET="$code_c" "$CROC" --ignore-stdin send \
-        Presentation.pdf Budget.numbers Cover-Art.png ) > "$TMP/send-c.log" 2>&1 &
-    JOB_PID=$!
-    sleep 5
-    mac_launch --auto-receive "$code_c" --screen receive
-    await_file "$DOCS/verify-result.txt" 90 || fail "mac-done: transfer never finished"
-    sleep 2
-    activate_croc
-    shoot_mac mac-done Receive
-    stop_job
-    mac_quit
-  fi
-}
-
-# --- iOS --------------------------------------------------------------------
-
-capture_ios() {                                     # capture_ios MODE CODE_OFFSET
-  MODE=$1
-  local code_a code_b code_c code_d code_e
-  code_a=$(code "$2" golden-cedar-morrow)
-  code_b=$(code "$(($2 + 1))" silver-thicket-bay)
-  code_c=$(code "$(($2 + 2))" crimson-pillar-notch)
-  code_d=$(code "$(($2 + 3))" indigo-marsh-relay)
-  code_e=$(code "$(($2 + 4))" russet-canyon-vale)
-  local simdocs
-  simdocs=$(xcrun simctl get_app_container "$SIM" "$BUNDLE" data)/Documents
-  # Documents is the iOS receive folder, so files left by an earlier run make
-  # the next incoming preview sprout an "already exist and will be replaced"
-  # warning. True, but an artifact of re-running rather than anything a reader
-  # should see. Named explicitly: shots/ next door holds the staged payloads.
-  rm -f "$simdocs/Presentation.pdf" "$simdocs/Budget.numbers" "$simdocs/Cover-Art.png" \
-    "$simdocs/Live-Set.wav" "$simdocs/verify-result.txt" "$simdocs/verify-store-link.txt"
-
-  if want ios-home; then
-    ios_launch --screen home
-    sleep 4
-    ios_shoot ios-home
-  fi
-
-  if want ios-onboarding; then
-    ios_launch --screen onboarding
-    sleep 5
-    ios_shoot ios-onboarding
-  fi
-
-  if want ios-send; then
-    ios_launch --screen send \
-      --stage "$simdocs/shots/Presentation.pdf" \
-      --stage "$simdocs/shots/Budget.numbers" \
-      --stage "$simdocs/shots/Cover-Art.png"
-    sleep 4
-    ios_shoot ios-send
-  fi
-
-  if want ios-send-code; then
-    # Same parked "Ready to send" state as mac-send.
-    ios_launch --auto-send "$simdocs/shots/Design-Assets.zip" --code "$code_d" --screen send
-    sleep 12
-    ios_shoot ios-send-code
-  fi
-
-  if want ios-receive-code; then
-    ios_launch --screen receive
-    sleep 4
-    ios_shoot ios-receive-code
-  fi
-
-  if want ios-history; then
-    ios_launch --screen history --seed-history
-    sleep 4
-    ios_shoot ios-history
-  fi
-
-  if want ios-settings; then
-    ios_launch --screen settings
-    sleep 4
-    ios_shoot ios-settings
-  fi
-
-  if want ios-advanced; then
-    ios_launch --screen advanced
-    sleep 4
-    ios_shoot ios-advanced
-  fi
-
-  if want ios-receive; then
-    ( cd "$TMP/payload" && CROC_SECRET="$code_a" "$CROC" --ignore-stdin send \
-        Presentation.pdf Budget.numbers Cover-Art.png ) > "$TMP/ios-a.log" 2>&1 &
-    JOB_PID=$!
-    # Sender first: starting the receiver into an unregistered code races the
-    # PAKE handshake (same ordering constraint as verify-app-sim.sh).
-    sleep 5
-    ios_launch --auto-receive "$code_a" --screen receive --hold
-    # Long enough to cover a slow relay handshake: at 18s this sometimes
-    # photographed "Starting..." instead of the file list.
-    sleep 30
-    ios_shoot ios-receive
-    ios_stop_job
-  fi
-
-  if want ios-conflict; then
-    # As ios-receive, with two of the three files already in Documents: the
-    # preview then offers Keep Both / Replace.
-    cp "$TMP/payload/Presentation.pdf" "$TMP/payload/Cover-Art.png" "$simdocs/"
-    ( cd "$TMP/payload" && CROC_SECRET="$code_e" "$CROC" --ignore-stdin send \
-        Presentation.pdf Budget.numbers Cover-Art.png ) > "$TMP/ios-e.log" 2>&1 &
-    JOB_PID=$!
-    sleep 5
-    ios_launch --auto-receive "$code_e" --screen receive --hold
-    sleep 12
-    ios_shoot ios-conflict
-    ios_stop_job
-    rm -f "$simdocs/Presentation.pdf" "$simdocs/Cover-Art.png"
-  fi
-
-  if want ios-stored; then
-    start_store_server
-    ios_launch --auto-store-send "$simdocs/shots/Presentation.pdf" \
-      --store-server "$STORE_URL" --store-downloads 3 --screen send
-    await_file "$simdocs/verify-store-link.txt" 60 || fail "ios-stored: the upload never produced a link"
-    sleep 3
-    ios_shoot ios-stored
-    rm -f "$simdocs/verify-store-link.txt"
-  fi
-
-  if want ios-transferring; then
-    # Here the CLI is the sender, so the rate can be pinned instead of guessed:
-    # unthrottled, 150 MB finished before the shutter fell. 41 MB at 400k/s
-    # cannot finish inside the wait below, and that wait is long enough that
-    # the handshake -- which eats most of the first half minute -- is well
-    # behind us by the time the progress bar is photographed.
-    ( cd "$TMP/big" && CROC_SECRET="$code_b" "$CROC" --throttleUpload 400k \
-        --ignore-stdin send Live-Set.wav ) > "$TMP/ios-b.log" 2>&1 &
-    JOB_PID=$!
-    sleep 5
-    ios_launch --auto-receive "$code_b" --screen receive
-    sleep 70
-    ios_shoot ios-transferring
-    ios_stop_job
-  fi
-
-  if want ios-done; then
-    # Its own small transfer rather than a tail on the big one, so this waits
-    # seconds instead of minutes for a state that looks identical either way.
-    rm -f "$simdocs/verify-result.txt"
-    ( cd "$TMP/payload" && CROC_SECRET="$code_c" "$CROC" --ignore-stdin send \
-        Presentation.pdf Budget.numbers Cover-Art.png ) > "$TMP/ios-c.log" 2>&1 &
-    JOB_PID=$!
-    sleep 5
-    ios_launch --auto-receive "$code_c" --screen receive
-    if ! await_file "$simdocs/verify-result.txt" 120; then
-      echo "--- croc sender log ---" >&2
-      tail -5 "$TMP/ios-c.log" >&2
-      fail "ios-done: transfer never finished"
-    fi
-    sleep 2
-    ios_shoot ios-done
-    rm -f "$simdocs/verify-result.txt"
-    ios_stop_job
-  fi
-
-  xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
-}
-
-ios_stop_job() {
-  stop_job
-  xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
-}
-
-# One store-only pass on a throwaway simulator of the given device type, light
-# only. The size is asserted before any capture, so a device type that does not
-# produce Apple's pixels fails in a minute, not at the end of the run.
-store_sim_pass() {                                  # store_sim_pass CLASS TYPE CODE_OFFSET
-  local class=$1 name="CrocApp Shots $1" width height
-  read -r width height <<< "$(store_dims "$class")"
-  xcrun simctl delete "$name" 2>/dev/null || true
-  EXTRA_SIM=$(xcrun simctl create "$name" "$2")
-  prepare_sim "$EXTRA_SIM"
-  xcrun simctl ui "$EXTRA_SIM" appearance light > /dev/null
-  sleep 3
-  xcrun simctl io "$EXTRA_SIM" screenshot --type=png "$TMP/size.png" 2>/dev/null
-  "$TMP/imgtool" flatten "$TMP/size.png" "$TMP/size-flat.png"
-  check_png "$TMP/size-flat.png" "$width" "$height"
-  echo "$class: $name is ${width}x${height}"
-  SIM=$EXTRA_SIM
-  STORE_PASS=$class
-  capture_ios light "$3"
-  SIM=$PRIMARY_SIM
-  STORE_PASS=""
-  xcrun simctl shutdown "$EXTRA_SIM" 2>/dev/null || true
-  xcrun simctl delete "$EXTRA_SIM"
-  EXTRA_SIM=""
-}
-
-# Every file under store/ has Apple's size and no alpha; after a full run,
-# every file in the lists is there too.
-verify_store() {
-  local class width height shot file listed
-  for class in $STORE_CLASSES; do
-    read -r width height <<< "$(store_dims "$class")"
-    listed=$(store_list_for "$class")
-    for shot in $listed; do
-      file="$STORE_DIR/$class/$(store_name "$listed" "$shot").png"
-      if [ -e "$file" ]; then
-        check_png "$file" "$width" "$height"
-      elif [ -z "$ONLY" ]; then
-        fail "missing store file $file"
-      fi
+# Every store file has Apple's size and no alpha, a class holds exactly its
+# slots (at most ten), and a run of a whole device has written every file.
+verify_outputs() {
+  local d s width height file n
+  for d in $RUN_DEVICES; do
+    read -r width height <<< "$(store_dims "$d")"
+    for s in $RUN_SCREENS; do
+      in_list "$STORE_SCREENS" "$s" || continue
+      file="$OUT/app-store/$(store_class "$d")/$(store_name "$s").png"
+      [ -e "$file" ] || fail "missing store file $file"
+      check_png "$file" "$width" "$height"
+    done
+    n=$(find "$OUT/app-store/$(store_class "$d")" -name '*.png' | wc -l)
+    [ "$n" -le 10 ] || fail "$n store files for $d, Apple allows ten"
+    is_main "$d" || continue
+    for s in $RUN_SCREENS; do
+      [ "$d $s" = "mac onboarding" ] && continue
+      for MODE in light dark; do
+        [ -s "$OUT/$d/$s-$MODE.png" ] || fail "missing $OUT/$d/$s-$MODE.png"
+      done
     done
   done
-  echo "store files OK (sizes and no alpha)"
+  echo "outputs OK (every file present, store files sized and without alpha)"
 }
 
-# --- payloads ---------------------------------------------------------------
+# --- run --------------------------------------------------------------------
 
-mkdir -p "$OUT" "$DOCS/shots" "$TMP/payload" "$TMP/big"
-# A full run rebuilds the store set from nothing, so a renumbered shot cannot
-# leave its old file behind.
-[ -n "$ONLY" ] || rm -rf "$STORE_DIR"
-# Placeholder payloads. The names show up in the staged and incoming file
-# lists, the byte counts show up as their sizes; nothing here is a real
-# document. Design-Assets.zip is the send payload nobody ever receives;
-# Field-Recordings.zip is large on purpose so a transfer stays photographable.
-head -c 8800000 /dev/urandom > "$TMP/payload/Presentation.pdf"
-head -c 627000 /dev/urandom > "$TMP/payload/Budget.numbers"
-head -c 2200000 /dev/urandom > "$TMP/payload/Cover-Art.png"
-head -c 4194304 /dev/urandom > "$TMP/payload/Design-Assets.zip"
-head -c 41000000 /dev/urandom > "$TMP/big/Live-Set.wav"
-head -c 200000000 /dev/urandom > "$TMP/Field-Recordings.zip"
-# The macOS app is sandboxed, so anything it sends has to live inside its
-# container -- $TMP is not readable from in there.
-cp "$TMP/payload"/* "$TMP/Field-Recordings.zip" "$DOCS/shots/"
+make_payloads
 
-echo "building macOS..."
-( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
-    -derivedDataPath "$TMPROOT/dd-mac" -allowProvisioningUpdates build ) > "$TMPROOT/shots-mac-build.log" 2>&1
-BIN=$(find "$TMPROOT/dd-mac/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)/Contents/MacOS/CrocApp
-[ -x "$BIN" ] || fail "no CrocApp.app in $TMPROOT/dd-mac (see $TMPROOT/shots-mac-build.log)"
-
-echo "building iOS..."
-xcrun simctl boot "$SIM" 2>/dev/null || true
-( cd app && xcodebuild -scheme CrocApp -destination "platform=iOS Simulator,name=$SIM" \
-    -derivedDataPath "$TMPROOT/dd-sim" build ) > "$TMPROOT/shots-sim-build.log" 2>&1
-SIM_APP=$(find "$TMPROOT/dd-sim/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
-[ -n "$SIM_APP" ] || fail "no CrocApp.app in $TMPROOT/dd-sim (see $TMPROOT/shots-sim-build.log)"
-prepare_sim "$SIM"
-
-echo "light..."
-set_appearance light
-capture_mac light 0
-capture_ios light 5
-if [ "$RUN_STORE_SIMS" = 1 ]; then
-  echo "store: iPhone 6.9-inch..."
-  store_sim_pass iphone-6.9 "$PHONE_TYPE" 10
-  echo "store: iPad 13-inch..."
-  store_sim_pass ipad-13 "$PAD_TYPE" 15
+echo "building..."
+BIN=""
+if [ "$uses_mac" = 1 ]; then
+  ( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
+      -derivedDataPath "$TMPROOT/dd-mac" -allowProvisioningUpdates build ) > "$TMPROOT/shots-mac-build.log" 2>&1 \
+    || fail "macOS build failed (see $TMPROOT/shots-mac-build.log)"
+  BIN=$(find "$TMPROOT/dd-mac/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)/Contents/MacOS/CrocApp
+  [ -x "$BIN" ] || fail "no CrocApp.app in $TMPROOT/dd-mac (see $TMPROOT/shots-mac-build.log)"
+  stage_payloads "$MAC_DOCS"
 fi
 
-echo "dark..."
-set_appearance dark
-capture_mac dark 20
-capture_ios dark 25
+if [ "$uses_sim" = 1 ]; then
+  ( cd app && xcodebuild -scheme CrocApp -destination 'generic/platform=iOS Simulator' \
+      -derivedDataPath "$TMPROOT/dd-sim" build ) > "$TMPROOT/shots-sim-build.log" 2>&1 \
+    || fail "iOS build failed (see $TMPROOT/shots-sim-build.log)"
+  SIM_APP=$(find "$TMPROOT/dd-sim/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
+  [ -n "$SIM_APP" ] || fail "no CrocApp.app in $TMPROOT/dd-sim (see $TMPROOT/shots-sim-build.log)"
+fi
 
-verify_store
+start_relay
+RELAY_ARGS=(--relay "$RELAY_ADDR" --relay-password "$RELAY_PASS" --shown-relay default)
+
+# A full run rebuilds the set from nothing, so a renamed shot cannot leave its
+# old file behind. Late, so a failed build or preflight wipes nothing.
+if [ -z "$PICK_SCREENS" ]; then
+  if [ -z "$PICK_DEVICES" ]; then
+    find "$OUT" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+  else
+    for d in $RUN_DEVICES; do
+      rm -rf "${OUT:?}/app-store/$(store_class "$d")"
+      is_main "$d" && rm -rf "${OUT:?}/$d"
+    done
+  fi
+fi
+
+# One pass per appearance over the devices that have a main set.
+shoot_devices() {                                   # shoot_devices DEVICE...
+  local d
+  for d in "$@"; do
+    use_device "$d"
+    for SCREEN in $RUN_SCREENS; do
+      # On macOS the first-run welcome is a sheet over a window that then
+      # photographs with grey traffic lights.
+      [ "$DEV $SCREEN" = "mac onboarding" ] && continue
+      # A store-only device takes just the screens that are in the store set,
+      # in the one appearance their slot calls for.
+      if ! is_main "$DEV"; then
+        in_list "$STORE_SCREENS" "$SCREEN" && [ "$(store_mode "$SCREEN")" = "$MODE" ] || continue
+      fi
+      echo "$DEV $SCREEN"
+      capture_screen
+    done
+  done
+}
+
+main_run=""
+store_run=""
+for d in $RUN_DEVICES; do
+  if is_main "$d"; then main_run="$main_run $d"; else store_run="$store_run $d"; fi
+  if is_main "$d" && [ "$d" != mac ]; then bring_up "$d"; fi
+done
+
+for MODE in light dark; do
+  echo "$MODE..."
+  [ "$uses_mac" = 0 ] || set_system_appearance "$MODE"
+  for d in $main_run; do
+    [ "$d" = mac ] || { id="ID_$d"; xcrun simctl ui "${!id}" appearance "$MODE" > /dev/null; }
+  done
+  # shellcheck disable=SC2086  # deliberate split: one word per device
+  [ -z "$main_run" ] || shoot_devices $main_run
+done
+for d in $main_run; do [ "$d" = mac ] || drop_sim "$d"; done
+
+# The store-only simulators come up one at a time, after the main ones are gone.
+for d in $store_run; do
+  bring_up "$d"
+  for MODE in light dark; do
+    id="ID_$d"
+    xcrun simctl ui "${!id}" appearance "$MODE" > /dev/null
+    echo "$d $MODE..."
+    shoot_devices "$d"
+  done
+  drop_sim "$d"
+done
+
+verify_outputs
 echo SHOTS-OK

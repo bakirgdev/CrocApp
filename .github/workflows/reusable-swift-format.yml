@@ -27,4 +27,4 @@ jobs:
           xcode-version: ${{ steps.xcode.outputs.version }}
 
       - name: Lint formatting
-        run: scripts/format-swift.sh --lint
+        run: scripts/format-swift.sh --lint || { echo "::error::Formatting check failed. Run scripts/format-swift.sh locally, then commit and push."; exit 1; }

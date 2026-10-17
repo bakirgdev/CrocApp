@@ -2,7 +2,8 @@ name: Weekly Go checks
 
 on:
   schedule:
-    - cron: "0 6 * * 1"
+    # Off the hour: GitHub delays or drops scheduled runs at :00 under load.
+    - cron: "17 6 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -19,7 +20,7 @@ jobs:
 
     if: failure()
 
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     timeout-minutes: 5
 

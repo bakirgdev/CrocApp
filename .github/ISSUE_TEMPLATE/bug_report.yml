@@ -2,8 +2,6 @@ name: Bug report
 
 description: Something in the app is broken or behaves wrong
 
-title: "[Bug]: "
-
 labels: ["bug"]
 
 body:
@@ -14,9 +12,9 @@ body:
       options:
         - label: I searched existing issues and this is not a duplicate.
           required: true
-        - label: I checked [docs/known-issues.md](https://github.com/bakirgdev/CrocApp/blob/main/docs/known-issues.md) and it is not listed there.
+        - label: It is not covered by [Troubleshooting](https://crocapp.dev/docs/troubleshooting/) or listed in [known issues](https://github.com/bakirgdev/CrocApp/blob/main/docs/known-issues.md).
           required: true
-        - label: The bug is in CrocApp, not in the [croc CLI](https://github.com/schollz/croc) itself.
+        - label: It does not also happen with the [croc CLI](https://github.com/schollz/croc). If it does, it belongs upstream.
           required: true
 
   - type: textarea
@@ -43,7 +41,7 @@ body:
     id: platform
     attributes:
       label: Platform
-      description: Select every platform where you saw the problem, or think it is.
+      description: Select every platform where you saw the problem.
       multiple: true
       options:
         - macOS
@@ -52,12 +50,23 @@ body:
     validations:
       required: true
 
+  - type: dropdown
+    id: channel
+    attributes:
+      label: Installed from
+      options:
+        - App Store
+        - Direct download (macOS disk image)
+        - Built from source
+    validations:
+      required: true
+
   - type: input
     id: versions
     attributes:
       label: App and OS version
-      description: App version or commit SHA, plus the OS build.
-      placeholder: "1.0 (a1b2c3d), macOS 26.1"
+      description: The app version and build from Settings, under About (or the commit SHA for a source build), plus the OS version.
+      placeholder: "1.0.0 (2), macOS 27.0.1"
     validations:
       required: true
 
@@ -65,7 +74,6 @@ body:
     id: peer
     attributes:
       label: Other side of the transfer
-      description: Select what's on the other side of the transfer, if applicable.
       options:
         - croc CLI
         - CrocApp
@@ -78,7 +86,7 @@ body:
     id: relay
     attributes:
       label: Relay
-      description: Select the relay used when error occured, if applicable.
+      description: The relay in use when the problem happened.
       options:
         - Default public relay
         - Custom relay
@@ -91,5 +99,5 @@ body:
   - type: textarea
     id: extra
     attributes:
-      label: Logs, screenshots, transfer code output
-      description: Paste console output or attach screenshots. Never paste a live transfer code you still intend to use.
+      label: Logs and screenshots
+      description: Paste console output or attach screenshots. Never paste a transfer code you still intend to use.

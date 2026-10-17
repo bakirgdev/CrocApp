@@ -43,7 +43,7 @@ Change a value in a markdown file and change it in both mirrors in the same comm
 1. **Tokens, not literals.** No raw hex, px, pt or duration in app or site code. If a value is missing, add the token here first.
 2. **SF Symbols only in SwiftUI apps.** Lucide exists purely because SF Symbols cannot ship to the web. Never bundle Lucide, never draw a custom glyph where a symbol exists. See `iconography.md`.
 3. **System font only.** SF Pro / SF Mono through the system font APIs. Apple's font files are not redistributable — never ship one.
-4. **Both themes, always.** Every surface has a light and a dark value: `light-dark()` on web, the asset catalog in SwiftUI. One exception, `components.md` → DiskImage, because Finder cannot swap a DMG background.
+4. **Both themes, always.** Every surface has a light and a dark value: `light-dark()` on web, the asset catalog in SwiftUI. One exception, `components.md` → DiskImage, which is dark only because Finder cannot swap a DMG background.
 5. **Liquid Glass is native.** `.glassEffect()` is the target; the CSS `backdrop-filter` recipe approximates it, never the reverse.
 6. **Light is the constrained theme.** Check contrast there first — dark clears everything. The seven rules in `colors.md` → Contrast bind all three surfaces, and `components.md` is written to them.
 

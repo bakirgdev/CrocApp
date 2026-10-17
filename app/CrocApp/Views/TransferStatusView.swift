@@ -24,11 +24,20 @@ struct TransferStatusView: View {
     }
 
     var body: some View {
-        // At accessibility text sizes the phase content is taller than a phone
-        // screen: it scrolls there, and stays centred when it fits.
-        ViewThatFits(in: .vertical) {
-            content
-            ScrollView { content }
+        // The phase content scrolls when taller than the screen (accessibility
+        // text sizes) and stays centred when it fits. Not ViewThatFits: it
+        // measures the unwrapped ideal height, so wrapping text (link, callout)
+        // made it pick the plain branch and clip the bottom of the screen.
+        GeometryReader { proxy in
+            ScrollView {
+                // fixedSize: minHeight proposes the screen height down to the
+                // content, which would squeeze wrapping text into ellipses.
+                content
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollClipDisabled()
         }
         .padding()
         .frame(maxWidth: LayoutCap.contentMaxWidth)

@@ -32,13 +32,13 @@ cp -R "$APP" "$STAGE/CrocApp.app"
 # a number here without changing it there leaves the spec lying.
 create-dmg \
   --volname "CrocApp $VERSION" \
-  --background assets/dmg-background.png \
+  --background assets/dmg-background.tiff \
   --window-pos 200 120 \
   --window-size 660 400 \
   --icon-size 128 \
-  --icon CrocApp.app 165 195 \
+  --icon CrocApp.app 165 170 \
   --hide-extension CrocApp.app \
-  --app-drop-link 495 195 \
+  --app-drop-link 495 170 \
   --no-internet-enable \
   "$DMG" "$STAGE"
 

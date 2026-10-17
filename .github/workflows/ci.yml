@@ -18,7 +18,7 @@ jobs:
   changes:
     name: changes
 
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     timeout-minutes: 5
 
@@ -89,7 +89,7 @@ jobs:
 
     if: needs.changes.outputs.design == 'true'
 
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     timeout-minutes: 5
 
@@ -119,7 +119,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: crocmobile/go.mod
           cache-dependency-path: crocmobile/go.sum
@@ -148,46 +148,6 @@ jobs:
           for _ in $(seq 50); do nc -z 127.0.0.1 9309 && break; sleep 0.2; done
           CROC="$croc" CROC_V10="$(go env GOPATH)/bin/croc" RELAY=127.0.0.1:9309 scripts/verify-interop.sh
 
-  format-comment:
-    name: format comment
-
-    needs: swift-format
-
-    if: ${{ !cancelled() && needs.swift-format.result != 'skipped' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
-
-    runs-on: ubuntu-24.04
-
-    timeout-minutes: 5
-
-    permissions:
-      contents: read
-      pull-requests: write
-
-    steps:
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          LINT_RESULT: ${{ needs.swift-format.result }}
-        with:
-          script: |
-            const marker = "<!-- swift-format-lint -->";
-            const failed = process.env.LINT_RESULT !== "success";
-            const body = failed
-              ? `${marker}\n### Formatting check failed\n\nFormat the code and push a new commit to fix this.`
-              : `${marker}\n### Formatting check passed\n\nPreviously flagged formatting is fixed.`;
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find((c) => c.body.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
-            } else if (failed) {
-              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
-            }
-
   build:
     name: build (${{ matrix.platform }})
 
@@ -214,7 +174,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: crocmobile/go.mod
           cache-dependency-path: crocmobile/go.sum
@@ -239,10 +199,6 @@ jobs:
       - name: Build Croc.xcframework
         run: scripts/build-xcframework.sh
 
-      - name: Build CrocKit package
-        shell: bash
-        run: set -o pipefail && swift build --package-path CrocKit 2>&1 | xcbeautify --renderer github-actions
-
       - name: Build CrocApp
         shell: bash
         working-directory: app
@@ -257,6 +213,7 @@ jobs:
             build \
             | xcbeautify --renderer github-actions
 
+      # Also builds every CrocKit target, crockit-verify included, for the host.
       - name: Test CrocKit
         if: matrix.platform == 'macOS'
         shell: bash
@@ -306,7 +263,7 @@ jobs:
 
     if: ${{ always() }}
 
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     timeout-minutes: 5
 

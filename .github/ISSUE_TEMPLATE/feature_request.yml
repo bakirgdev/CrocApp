@@ -2,8 +2,6 @@ name: Feature request
 
 description: Suggest a capability or improvement
 
-title: "[Feature]: "
-
 labels: ["enhancement"]
 
 body:
@@ -14,7 +12,7 @@ body:
       options:
         - label: I searched existing issues and this is not a duplicate.
           required: true
-        - label: This is a GUI feature, not a change to croc itself (CrocApp wraps croc, it does not fork it).
+        - label: It is not on the [Unlikely to be merged](https://github.com/bakirgdev/CrocApp/blob/main/CONTRIBUTING.md#unlikely-to-be-merged) list, and it is an app feature, not a change to croc itself (that goes [upstream](https://github.com/schollz/croc)).
           required: true
 
   - type: textarea

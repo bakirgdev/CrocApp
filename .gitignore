@@ -1,11 +1,10 @@
+# macOS
 .DS_Store
 ._*
 
-*.log
-
+# Secrets and signing material
 .env*
-
-# Signing material
+*.p8
 *.p12
 *.cer
 *.certSigningRequest
@@ -20,31 +19,27 @@ xcuserdata/
 .build/
 .swiftpm/
 
-# In-tree croctest binary
-crocmobile/cmd/croctest/croctest
-
-# gomobile toolchain and its output (scripts/build-xcframework.sh)
+# gomobile toolchain and its output
 /.tools/
 CrocKit/Croc.xcframework/
 
+# croctest built in place
+crocmobile/cmd/croctest/croctest
+
 # Node / Docusaurus
 node_modules/
-.docusaurus
+.docusaurus/
 
-# Build output (scripts/assemble-site.sh, scripts/build-dmg.sh)
+# Build output
 build/
-/_site
-/dist
+/_site/
+/dist/
 
 # Copied from design/tokens.css at build time
 web/landing/tokens.css
 web/docs/src/css/tokens.css
 
-# Agent scratch
+# Local tooling
+*.log
 .claude/settings.local.json
-
-# SDLC pipeline artifacts (.claude/skills/sdlc-*)
-/sdlc/
-
-# sourcekit-lsp build server config (xcode-build-server, machine-specific paths)
 /buildServer.json

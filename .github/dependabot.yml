@@ -15,6 +15,7 @@ updates:
       - "github-actions"
     commit-message:
       prefix: "ci"
+      include: "scope"
 
   - package-ecosystem: "gomod"
     directory: "/crocmobile"
@@ -29,23 +30,8 @@ updates:
       - "dependencies"
       - "go"
     commit-message:
-      prefix: "deps"
-
-  - package-ecosystem: "npm"
-    directory: "/web/docs"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    groups:
-      docs-site-deps:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-    labels:
-      - "dependencies"
-      - "documentation"
-    commit-message:
-      prefix: "deps"
-      prefix-development: "deps-dev"
+      prefix: "build"
+      include: "scope"
 
   - package-ecosystem: "swift"
     directory: "/app"
@@ -59,4 +45,21 @@ updates:
     labels:
       - "dependencies"
     commit-message:
-      prefix: "deps"
+      prefix: "build"
+      include: "scope"
+
+  # Monthly: the docs site churns weekly and none of it ships in the app.
+  - package-ecosystem: "npm"
+    directory: "/web/docs"
+    schedule:
+      interval: "monthly"
+    groups:
+      docs-site-deps:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    labels:
+      - "dependencies"
+      - "documentation"
+    commit-message:
+      prefix: "build"
+      include: "scope"

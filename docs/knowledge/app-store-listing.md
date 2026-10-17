@@ -343,4 +343,4 @@ Fetched 2026-10-15.
 - Third party, ASC question wording 2019 to 2026 (not Apple): https://developer.apple.com/forums/thread/127505 and https://github.com/straff2002/OpenGlasses/pull/472
 - Third party, French filing practice: https://developer.apple.com/forums/thread/741830 and https://gist.github.com/safaiyeh/f6ee55b19eeaa81354275046803e69af
 - getcroc.com page and bundled script (labels, Umami and AdSense): https://getcroc.com
-- Local: `app/Config/*.plist`, `app/CrocApp/PrivacyInfo.xcprivacy`, `app/CrocApp.xcodeproj/project.pbxproj` (purpose strings, category), `LICENSE`, croc v11.5.4 and pake v3.2.0 in the Go module cache, `sdlc/2026-10-12-publish-polished-1-0/spec.md` (R38, R40, R41, concern 3, concern 9, Q3, Q4), `plan.md` step 58 and O5/O9, `docs/known-issues.md`, `docs/BUILDING.md` section 7.
+- Local: `app/Config/*.plist`, `app/CrocApp/PrivacyInfo.xcprivacy`, `app/CrocApp.xcodeproj/project.pbxproj` (purpose strings, category), `LICENSE`, croc v11.5.4 and pake v3.2.0 in the Go module cache, `docs/known-issues.md`, `docs/BUILDING.md` section 7.
