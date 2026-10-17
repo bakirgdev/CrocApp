@@ -1,0 +1,23 @@
+name: Docs or website
+
+description: Something on crocapp.dev or in the repository docs is wrong, missing, or unclear
+
+labels: ["documentation"]
+
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Page
+      description: URL or file path.
+      placeholder: "https://crocapp.dev/docs/guide/sending/"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong
+      description: Quote the text if it helps. If you know the fix, say what it should say.
+    validations:
+      required: true

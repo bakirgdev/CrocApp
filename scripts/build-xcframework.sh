@@ -3,7 +3,9 @@
 #
 # Requires: Go >= 1.27.2 (go.mod pin; brew install go), Xcode 26+.
 # gomobile and gobind come from the `tool` directives in crocmobile/go.mod, so
-# there is one x/mobile version in the repo and dependabot can see it.
+# there is one x/mobile version in the repo. Dependabot does not bump it (tool
+# requirements are `// indirect`): bump by hand with
+# `go get tool` in crocmobile/.
 #
 # macOS slice is arm64-only: golang/go#73119 (multi-arch macos bind broken).
 # The framework Info.plist keeps gomobile's MinimumOSVersion = 100.0 (an SPM

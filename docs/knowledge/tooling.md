@@ -16,12 +16,12 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | create-dmg 1.3.0 (Homebrew; CI installs it unpinned with `brew install create-dmg`) | none; called by `scripts/build-dmg.sh` | local + `release.yml` |
 | croc v10 CLI (the v10 peer of `verify-interop.sh` scenario 10) | `scripts/croc-v10.version` (read by the script and the `interop` job) | local + CI |
 | Node 24 (latest LTS) | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
-| pnpm 12 | `packageManager` in `web/docs/package.json` (CI: `corepack enable pnpm` reads it) | docs site, local + CI |
+| pnpm 12 | `packageManager` in `web/docs/package.json` (CI: `pnpm/action-setup` reads it) | docs site, local + CI |
 | Docusaurus 3.10, React 19.3, TypeScript 7 | `web/docs/package.json`, `pnpm-lock.yaml`; `pnpm-workspace.yaml` holds `overrides` for transitive advisories | docs site, local + CI (`pnpm run typecheck` in `github-pages.yml`) |
-| Sparkle 2.10.0 (SwiftPM, `CrocApp Direct` only; auto-update for the direct-download build) | `Package.resolved` under `app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/`, minimum in the `XCRemoteSwiftPackageReference` in `project.pbxproj`; Dependabot does not cover Xcode-project pins, so bump by hand | `CrocApp Direct` build, local + CI (unsigned build step) |
+| Sparkle 2.10.0 (SwiftPM, `CrocApp Direct` only; auto-update for the direct-download build) | `Package.resolved` under `app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/`, minimum in the `XCRemoteSwiftPackageReference` in `project.pbxproj`; Dependabot (`swift`, `/app`) reads the Xcode project's `Package.resolved` and opens the bump | `CrocApp Direct` build, local + CI (unsigned build step) |
 | MCP servers `xcode` (`xcrun mcpbridge`) and `gopls` (`gopls mcp`) for AI sessions | `.mcp.json` (Claude Code asks each user to approve them); `gopls` starts in `crocmobile/` because the Go module lives there, not at the repo root | local AI sessions |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched; `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26` against a local `croc relay` |
-| GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:00 UTC + manual |
+| GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:17 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | PRs build only; push to main (`web/landing/**`, `web/docs/**`, `design/tokens.css`) also deploys |
 | GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes; `workflow_dispatch` is a rehearsal that publishes nothing |
 
