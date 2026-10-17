@@ -1,0 +1,5 @@
+# Read by OpenSSF Scorecard's Vulnerabilities check. Keep in step with docs/known-issues.md.
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+reason = "braces <= 3.0.3 has no patched release. Reached only at docs build time through chokidar, micromatch and fast-glob over our own paths, never from user input."

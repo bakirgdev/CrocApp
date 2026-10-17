@@ -32,7 +32,7 @@ func relayPorts(o *Options) ([]string, error) {
 	if n == 0 {
 		n = DefaultTransfers
 	}
-	if base < 1 || n < 1 || base+n > 65535 {
+	if base < 1 || n < 1 || base > 65535-n {
 		return nil, invalidSetting("ports %d to %d are out of range", base, base+n)
 	}
 	ports := make([]string, n+1)

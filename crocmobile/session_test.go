@@ -845,3 +845,29 @@ func TestPollReportsFileListOfTransferEndedWithinATick(t *testing.T) {
 		t.Fatalf("OnFileList called %d times, want 1", len(d.lists))
 	}
 }
+
+func FuzzSplitPaths(f *testing.F) {
+	for _, s := range []string{"", "/d/report.pdf \n\n /d/x\n", "a\nb\nc", "\n\n", " a \n b"} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, joined string) {
+		got := splitPaths(joined)
+		var want []string
+		for _, line := range strings.Split(joined, "\n") {
+			if line != "" {
+				want = append(want, line)
+			}
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("splitPaths(%q) = %q, want every non-empty line verbatim: %q", joined, got, want)
+		}
+		for _, p := range got {
+			if p == "" || strings.Contains(p, "\n") {
+				t.Fatalf("splitPaths(%q) returned entry %q", joined, p)
+			}
+		}
+		if again := splitPaths(strings.Join(got, "\n")); !reflect.DeepEqual(again, got) {
+			t.Fatalf("splitPaths does not round-trip: %q then %q", got, again)
+		}
+	})
+}
