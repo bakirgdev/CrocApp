@@ -12,15 +12,18 @@ struct MenuBarQuickSendView: View {
     let quickSend: MenuBarQuickSend
     @State private var isDropTargeted = false
 
+    // components.md → MenuBarQuickSend: the window is 300 wide.
+    private static let windowWidth: CGFloat = 300
+
     var body: some View {
         VStack(spacing: Spacing.space4) {
             content
             Divider()
             Button("Open CrocApp") { openMainWindow() }
-                .buttonStyle(.link)
+                .buttonVariant(.plain)
         }
         .padding(Spacing.space5)
-        .frame(width: 300)
+        .frame(width: Self.windowWidth)
     }
 
     @ViewBuilder private var content: some View {
@@ -37,19 +40,18 @@ struct MenuBarQuickSendView: View {
             waiting(code: code)
         case .confirmSend:
             VStack(spacing: Spacing.space3) {
-                Text("The receiver is connected. Send now?").multilineTextAlignment(.center)
+                Text("The other device is connected. Send now?").multilineTextAlignment(.center)
                 HStack {
-                    Button("Cancel", role: .destructive) { controller.cancel() }
+                    cancelButton
                     Button("Send") { controller.respond(accept: true) }
-                        .buttonStyle(.borderedProminent)
+                        .buttonVariant(.prominent)
                 }
             }
         case .incoming:
             VStack(spacing: Spacing.space3) {
                 Label("Files are waiting for your answer", systemImage: "arrow.down.circle")
-                Text("Open CrocApp to review and accept them.")
-                    .font(.callout).foregroundStyle(.secondary)
-                cancelButton
+                Text("Open CrocApp to accept or decline them.")
+                    .font(.callout).foregroundStyle(Color.textSecondary)
             }
         case .transferring(let p):
             transferring(p)
@@ -58,16 +60,18 @@ struct MenuBarQuickSendView: View {
                 Label(
                     summary.success ? "Transfer complete" : "Transfer finished with errors",
                     systemImage: summary.success
-                        ? "checkmark.circle.fill" : "exclamationmark.circle")
+                        ? "checkmark.circle" : "exclamationmark.circle.fill")
                 if let receivedText {
                     Button("Copy Received Text") { Clipboard.copy(receivedText) }
+                        .buttonVariant(.secondary)
                 }
                 doneButton
             }
         case .stored(let receipt):
             VStack(spacing: Spacing.space3) {
-                Label("Upload ready", systemImage: "checkmark.circle.fill")
+                Label("Link ready", systemImage: "checkmark.circle")
                 Button("Copy Link") { Clipboard.copy(receipt.link, thisDeviceOnly: true) }
+                    .buttonVariant(.secondary)
                 doneButton
             }
         case .failed(let message):
@@ -80,30 +84,17 @@ struct MenuBarQuickSendView: View {
 
     private var idle: some View {
         VStack(spacing: Spacing.space3) {
-            VStack(spacing: Spacing.space3) {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.title)
-                    .accessibilityHidden(true)
-                Text("Drop files to send")
-            }
-            .frame(maxWidth: .infinity, minHeight: 96)
-            .background(
-                RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                    .strokeBorder(
-                        isDropTargeted ? Color.accentColor : Color.separatorToken,
-                        style: StrokeStyle(
-                            lineWidth: isDropTargeted ? 2 : BorderWidth.hairline, dash: [6, 4]))
-            )
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Drop files here to send")
-            .dropDestination(for: URL.self) { urls, _ in
-                quickSend.send(urls: urls)
-            } isTargeted: {
-                isDropTargeted = $0
-            }
+            DropZone(title: "Drop files to send", size: .compact, isTargeted: isDropTargeted)
+                .accessibilityLabel("Drop files here to send")
+                .dropDestination(for: URL.self) { urls, _ in
+                    quickSend.send(urls: urls)
+                } isTargeted: {
+                    isDropTargeted = $0
+                }
 
             HStack {
                 Button("Choose Files…") { quickSend.chooseFiles() }
+                    .buttonVariant(.secondary)
                 Button("Send Clipboard Text") {
                     // A repeat tap leaves the notice unchanged, so an
                     // onChange would stay silent; announce per tap instead.
@@ -111,30 +102,21 @@ struct MenuBarQuickSendView: View {
                         AccessibilityNotification.Announcement(notice).post()
                     }
                 }
+                .buttonVariant(.secondary)
             }
             if let notice = quickSend.notice {
-                Text(notice).font(.caption).foregroundStyle(.secondary)
+                Text(notice).font(.caption).foregroundStyle(Color.textSecondary)
             }
         }
     }
 
     private func waiting(code: String) -> some View {
         VStack(spacing: Spacing.space3) {
-            Text(direction == .send ? "Ready to send" : "Waiting for the sender…")
-                .font(.headline)
             if direction == .send {
-                Text(code)
-                    .font(.title3.monospaced().weight(.semibold))
-                    .textSelection(.enabled)
-                    .multilineTextAlignment(.center)
-                    .accessibilityLabel("Transfer code")
-                    .accessibilityValue(code.replacingOccurrences(of: "-", with: ", "))
-                Button {
-                    Clipboard.copy(code)
-                } label: {
-                    Label("Copy Code", systemImage: "doc.on.doc")
-                }
+                CodePhraseDisplay(code: code, compact: true)
                 QRCodeView(content: TransferLink.webURL(forCode: code)?.absoluteString ?? code)
+            } else {
+                Text("Waiting for the sender…").font(.headline)
             }
             cancelButton
         }
@@ -142,13 +124,20 @@ struct MenuBarQuickSendView: View {
 
     private func transferring(_ p: TransferProgress) -> some View {
         let done = p.bytesFinished + p.fileSent
+        let total = max(p.totalSize, 1)
+        let fraction = min(1, Double(done) / Double(total))
         return VStack(spacing: Spacing.space3) {
+            DirectionHeader(direction: direction)
             Text(p.fileName).lineLimit(1).truncationMode(.middle)
-            ProgressView(value: Double(done), total: Double(max(p.totalSize, 1)))
+            ForwardProgressBar(fraction: fraction, resetKey: p.totalSize)
                 .accessibilityLabel(progressLabel)
-                .accessibilityValue(
-                    (Double(done) / Double(max(p.totalSize, 1))).formatted(
-                        .percent.precision(.fractionLength(0))))
+                .accessibilityValue(fraction.formatted(.percent.precision(.fractionLength(0))))
+            Text(
+                "\(done.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
+            )
+            .font(.caption)
+            .foregroundStyle(Color.textSecondary)
+            .monospacedDigit()
             cancelButton
         }
     }
@@ -156,21 +145,17 @@ struct MenuBarQuickSendView: View {
     private var direction: TransferController.Direction { controller.direction }
 
     private var progressLabel: String {
-        switch (direction, controller.isStoredTransfer) {
-        case (.send, false): "Sending progress"
-        case (.send, true): "Uploading progress"
-        case (.receive, false): "Receiving progress"
-        case (.receive, true): "Downloading progress"
-        }
+        direction == .send ? "Sending progress" : "Receiving progress"
     }
 
     private var cancelButton: some View {
         Button("Cancel", role: .destructive) { controller.cancel() }
+            .buttonVariant(.destructiveTinted)
     }
 
     private var doneButton: some View {
         Button("Done") { controller.reset() }
-            .buttonStyle(.borderedProminent)
+            .buttonVariant(.prominent)
     }
 
     private func openMainWindow() {

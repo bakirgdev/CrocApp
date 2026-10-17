@@ -35,7 +35,7 @@ struct AdvancedSettingsView: View {
                     footnote:
                         "Applies when sending. The receiving device uses the sender's choice, so the other device does not need to match. Default: xxHash."
                 ) {
-                    Picker("File hash", selection: $settings.hashAlgorithm) {
+                    Picker("File Hash", selection: $settings.hashAlgorithm) {
                         ForEach(HashAlgorithm.allCases, id: \.self) { hash in
                             Text(hash.title).tag(hash)
                         }
@@ -46,12 +46,12 @@ struct AdvancedSettingsView: View {
             Section("Network") {
                 AdvancedRow(
                     footnote:
-                        "Applies to this device only. Takes priority over the HTTP proxy if both are set. Connections on your local network skip the proxy. Also used for Send as link. Saved in the Keychain.",
+                        "Applies to this device only. Takes priority over the HTTP proxy if both are set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain.",
                     error: AppSettings.socks5ProxyError(settings.socks5Proxy)
                 ) {
-                    LabeledField("SOCKS5 proxy") {
+                    LabeledField("SOCKS5 Proxy") {
                         TextField(
-                            "SOCKS5 proxy", text: $settings.socks5Proxy,
+                            "SOCKS5 Proxy", text: $settings.socks5Proxy,
                             prompt: Text("None, or host:port")
                         )
                         .urlEntry()
@@ -59,12 +59,12 @@ struct AdvancedSettingsView: View {
                 }
                 AdvancedRow(
                     footnote:
-                        "Applies to this device only. Ignored when a SOCKS5 proxy is set. Connections on your local network skip the proxy. Also used for Send as link. Saved in the Keychain.",
+                        "Applies to this device only. Ignored when a SOCKS5 proxy is set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain.",
                     error: AppSettings.httpProxyError(settings.httpProxy)
                 ) {
-                    LabeledField("HTTP proxy") {
+                    LabeledField("HTTP Proxy") {
                         TextField(
-                            "HTTP proxy", text: $settings.httpProxy,
+                            "HTTP Proxy", text: $settings.httpProxy,
                             prompt: Text("None, or host:port")
                         )
                         .urlEntry()
@@ -74,7 +74,7 @@ struct AdvancedSettingsView: View {
                     footnote:
                         "Looks up relay names with croc's own resolver instead of the system's. Off by default. Applies to this device only."
                 ) {
-                    Toggle("Built-in DNS resolver", isOn: $settings.internalDNS)
+                    Toggle("Built-in DNS Resolver", isOn: $settings.internalDNS)
                 }
                 #if os(macOS)
                 AdvancedRow(
@@ -82,9 +82,9 @@ struct AdvancedSettingsView: View {
                         "Applies to both devices. They find each other on the local network only if both use the same address. Blank uses \(AppSettings.advancedDefaults.multicastAddress).",
                     error: AppSettings.multicastAddressError(settings.multicastAddress)
                 ) {
-                    LabeledField("Multicast address") {
+                    LabeledField("Multicast Address") {
                         TextField(
-                            "Multicast address", text: $settings.multicastAddress,
+                            "Multicast Address", text: $settings.multicastAddress,
                             prompt: Text(AppSettings.advancedDefaults.multicastAddress)
                         )
                         .addressEntry()
@@ -112,9 +112,9 @@ struct AdvancedSettingsView: View {
                         "Applies when sending. The most this device sends per second, such as 500k, 2m or 1g. The other device is not affected.",
                     error: AppSettings.throttleError(settings.throttleUpload)
                 ) {
-                    LabeledField("Upload speed limit") {
+                    LabeledField("Send Speed Limit") {
                         TextField(
-                            "Upload speed limit", text: $settings.throttleUpload,
+                            "Send Speed Limit", text: $settings.throttleUpload,
                             prompt: Text("No limit")
                         )
                         .addressEntry()
@@ -125,9 +125,9 @@ struct AdvancedSettingsView: View {
                         "Applies when sending. The first port of this device's local relay. A device that receives by sender IP must use this port. Default \(AppSettings.advancedDefaults.basePort).",
                     error: basePortError
                 ) {
-                    LabeledField("Base port") {
+                    LabeledField("Base Port") {
                         TextField(
-                            "Base port", value: $settings.basePort,
+                            "Base Port", value: $settings.basePort,
                             format: .number.grouping(.never)
                         )
                         .numberEntry()
@@ -139,9 +139,9 @@ struct AdvancedSettingsView: View {
                         "Applies when sending. How many extra ports follow the base port, one per connection. Default \(AppSettings.advancedDefaults.transfers).",
                     error: transfersError
                 ) {
-                    LabeledField("Parallel connections") {
+                    LabeledField("Parallel Connections") {
                         TextField(
-                            "Parallel connections", value: $settings.transfers,
+                            "Parallel Connections", value: $settings.transfers,
                             format: .number.grouping(.never)
                         )
                         .numberEntry()
@@ -158,6 +158,7 @@ struct AdvancedSettingsView: View {
 
             Section {
                 Button("Reset to Defaults") { confirmReset = true }
+                    .buttonVariant(.plain)
                     .disabled(settings.advancedIsDefault)
             } footer: {
                 Text(

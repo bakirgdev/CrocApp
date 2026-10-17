@@ -3,12 +3,15 @@ import SwiftUI
 /// F36: explains the code-phrase / PAKE / untrusted-relay model.
 /// Facts: docs/knowledge/what-is-croc.md.
 struct HowItWorksView: View {
+    @Environment(AppSettings.self) private var settings
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.space6) {
+                TrustBadge(relay: settings.relayKind, variant: .full)
                 item(
                     "key.fill", "One code, one transfer",
-                    "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner — share it over a channel you trust, then it expires with the transfer."
+                    "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner. Share it over a channel you trust; it expires with the transfer."
                 )
                 item(
                     "lock.shield.fill", "Strong keys from short codes",
@@ -24,21 +27,21 @@ struct HowItWorksView: View {
                 )
                 item(
                     "point.3.connected.trianglepath.dotted", "Direct path for large files",
-                    "With Connection set to Automatic, a send of 128 MiB or more also tries Tailcat: a peer-to-peer connection set up through tailcat.dev, with its own relays (*.ipn.dev) when the devices cannot reach each other. Whichever path is faster carries the transfer, still end-to-end encrypted. A send set to Relay only never contacts these servers; a receive follows the sender's choice."
+                    "With Connection set to Automatic, a send of 128 MiB or more also tries Tailcat: a direct connection set up through tailcat.dev, with its own relays (*.ipn.dev) when the devices cannot reach each other. Whichever path is faster carries the transfer, still end-to-end encrypted. A send set to Relay only never contacts these servers; a receive follows the sender's choice."
                 )
                 item(
                     "wifi", "Local network when possible",
-                    "Devices on the same network transfer directly — the data never leaves your network. The local path and the relay race; the faster one wins."
+                    "Devices on the same network transfer directly, and the data never leaves your network. The local path and the relay race; the faster one wins."
                 )
                 item(
                     "checkmark.shield.fill", "You stay in control",
-                    "Nothing is saved without your OK: incoming transfers show a file preview you accept or decline. Auto-accept is off unless you turn it on."
+                    "Nothing is saved without your OK: a transfer you receive shows a file preview you accept or decline. Auto-Accept Transfers is off unless you turn it on."
                 )
             }
-            .padding()
+            .padding(Spacing.space5)
             .frame(maxWidth: LayoutCap.contentMaxWidth)
         }
-        .navigationTitle("How it works")
+        .navigationTitle("How It Works")
     }
 
     private func item(_ icon: String, _ title: String, _ text: String) -> some View {

@@ -1,13 +1,20 @@
 import CoreImage.CIFilterBuiltins
 import SwiftUI
 
-/// Crisp QR rendering of a transfer code (F6). Content is the deeplink form
-/// "croc://<code>" so future F32 deeplinks and other croc GUIs can read it;
-/// the scanner side accepts both the bare code and the prefixed form.
+/// Crisp QR rendering of what the sender shows on screen. The payload is the
+/// receive link from `TransferLink.webURL(forCode:)` (`https://crocapp.dev/r/#<code>`),
+/// which opens the app through the universal link or the browser receive page;
+/// it is not a `croc://` URL. The scanner side accepts the link, the legacy
+/// `croc://` form and the bare code (`TransferLink.parse`).
+/// design/components.md → CodePhraseDisplay and QRFrame.
 struct QRCodeView: View {
     let content: String
-    var label = "QR code for the transfer code"
+    var label = "QR code for the code phrase"
     @State private var image: CGImage?
+
+    // White in both themes: scanners need the contrast whatever the appearance
+    // (design/swiftui.md → Allowed literals).
+    private let frameFill = Color.white
 
     var body: some View {
         Group {
@@ -21,19 +28,15 @@ struct QRCodeView: View {
                         height: ComponentMetrics.qrFrameDefault
                     )
                     .padding(Spacing.space4)
-                    // design/components.md → CodePhraseDisplay + QRFrame:
-                    // white background in BOTH themes — scanners need
-                    // contrast regardless of appearance. Deliberate hardcode,
-                    // not a token violation.
                     .background(
-                        Color.white,
+                        frameFill,
                         in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                             .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
                     )
-                    // components.md → QRFrame: --shadow-md. SwiftUI's
+                    // components.md → CodePhraseDisplay and QRFrame: --shadow-md. SwiftUI's
                     // .shadow() is single-layer where the token is two CSS
                     // layers; .shadowMd() stacks two .shadow() calls to
                     // reproduce both rather than approximate with one.
@@ -59,7 +62,7 @@ struct QRCodeView: View {
             )
             .padding(Spacing.space4)
             .background(
-                Color.white,
+                frameFill,
                 in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
             )
             .overlay(
@@ -83,4 +86,4 @@ struct QRCodeView: View {
     }
 }
 
-#Preview { QRCodeView(content: "croc://1234-example-code-phrase") }
+#Preview { QRCodeView(content: "https://crocapp.dev/r/#1234-example-code-phrase") }

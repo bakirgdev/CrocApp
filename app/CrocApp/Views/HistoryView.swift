@@ -27,9 +27,9 @@ struct HistoryView: View {
                 } actions: {
                     HStack(spacing: Spacing.space4) {
                         Button("Send") { router.openSend(with: []) }
-                            .buttonStyle(.borderedProminent)
+                            .buttonVariant(.prominent)
                         Button("Receive") { router.openReceive() }
-                            .buttonStyle(.bordered)
+                            .buttonVariant(.secondary)
                     }
                 }
             } else {
@@ -51,12 +51,13 @@ struct HistoryView: View {
                         .swipeActions(edge: .trailing) {
                             Button("Delete", role: .destructive) { history.delete(record) }
                             if controller.canRevoke(record) {
-                                Button("Revoke") { revokeCandidate = record }.tint(.orange)
+                                Button("Revoke") { revokeCandidate = record }
+                                .tint(Color.statusError)
                             }
                         }
                         .swipeActions(edge: .leading) {
                             if record.canResend {
-                                Button("Send Again") { resend(record) }.tint(.accentColor)
+                                Button("Send Again") { resend(record) }.tint(Color.accentFill)
                             }
                         }
                             #endif
@@ -74,14 +75,16 @@ struct HistoryView: View {
         .confirmationDialog("Clear all history?", isPresented: $confirmClear) {
             Button("Clear All", role: .destructive) { history.clear() }
         } message: {
-            Text("Removes the list only — received files stay where they are.")
+            Text("Removes the list only. Received files stay where they are.")
         }
         .confirmationDialog(
             "Revoke this link?", isPresented: revokeDialogShown, presenting: revokeCandidate
         ) { record in
             Button("Revoke Link", role: .destructive) { revoke(record) }
         } message: { _ in
-            Text("The files are deleted from the server and the link stops working for everyone.")
+            Text(
+                "The files are deleted from the link server and the link stops working for everyone."
+            )
         }
         .alert("Couldn't revoke the link", isPresented: revokeFailureShown) {
             Button("OK", role: .cancel) {}
@@ -134,6 +137,8 @@ struct HistoryView: View {
 private struct HistoryRow: View {
     let record: TransferRecord
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    // components.md → HistoryRow: direction glyph at --icon-size-md, scaled.
+    @ScaledMetric(relativeTo: .title3) private var glyphSize: CGFloat = IconSize.medium
 
     private var isLargeText: Bool { dynamicTypeSize.isAccessibilitySize }
 
@@ -142,41 +147,41 @@ private struct HistoryRow: View {
             if isLargeText {
                 // The glyph and badge sit above the text so it keeps the
                 // full row width instead of a few characters per line.
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: Spacing.space3) {
+                    HStack(spacing: Spacing.space4) {
                         directionGlyph
                         statusBadge
                     }
                     textColumn
                 }
             } else {
-                HStack(spacing: 12) {
+                HStack(spacing: Spacing.space4) {
                     directionGlyph
                     textColumn
                     statusBadge
                 }
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, Spacing.space1)
         .accessibilityElement(children: .combine)
     }
 
     private var directionGlyph: some View {
         Image(systemName: record.isSend ? "arrow.up.circle" : "arrow.down.circle")
-            .font(.title3)
+            .font(.system(size: glyphSize))
             .accessibilityLabel(record.isSend ? "Sent" : "Received")
-            .foregroundStyle(record.status == .completed ? Color.accentColor : .secondary)
+            .foregroundStyle(record.status == .completed ? Color.accentFill : Color.textSecondary)
     }
 
     private var textColumn: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Spacing.space1) {
             Text(title)
                 .lineLimit(isLargeText ? 3 : 1)
                 .truncationMode(.middle)
             let layout =
                 isLargeText
-                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
-                : AnyLayout(HStackLayout(spacing: 8))
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space1))
+                : AnyLayout(HStackLayout(spacing: Spacing.space3))
             layout {
                 Text(record.date, format: .relative(presentation: .named))
                 if record.totalBytes > 0 {
@@ -221,13 +226,13 @@ private struct HistoryRow: View {
         Group {
             switch record.status {
             case .completed:
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.statusSuccess)
             case .failed:
-                Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
+                Image(systemName: "xmark.circle.fill").foregroundStyle(Color.statusError)
             case .cancelled:
-                Image(systemName: "slash.circle").foregroundStyle(.secondary)
+                Image(systemName: "slash.circle").foregroundStyle(Color.textSecondary)
             case .declined:
-                Image(systemName: "hand.raised.fill").foregroundStyle(.orange)
+                Image(systemName: "hand.raised.fill").foregroundStyle(Color.statusError)
             }
         }
         .accessibilityLabel(record.status.title)

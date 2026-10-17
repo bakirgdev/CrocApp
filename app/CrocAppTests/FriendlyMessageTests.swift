@@ -27,9 +27,9 @@ import Testing
         (.relayUnreachable, "Couldn't reach the relay. Check your internet connection."),
         (
             .noPublicRelay,
-            "No public relay answered. Check your internet connection, or turn on Local network only in Settings if both devices are on the same network."
+            "No public relay answered. Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network."
         ),
-        (.declined, "The other side declined or cancelled the transfer."),
+        (.declined, "The other device declined or cancelled the transfer."),
         (.refused, "You declined the transfer."),
         (.roomFull, "That code is already in use. Try a different code."),
         (.badPassword, "The relay rejected its password. Check the relay password in Settings."),
@@ -38,12 +38,12 @@ import Testing
         (.connectionLost, "Lost connection to the other device."),
         (
             .storeLimit,
-            "The transfer server refused this upload: it is over the server's size, file count or download limit, or too many uploads were made recently."
+            "The link server refused this send: it is over the server's size, file count or download limit, or too many sends were made recently."
         ),
         (.storeExpired, "This link has expired, was revoked, or has no downloads left."),
         (
             .invalidSetting,
-            "An Advanced setting can't be used. Check the proxies, addresses, ports and upload speed limit in Settings > Advanced."
+            "An Advanced setting can't be used. Check the proxies, addresses, ports and send speed limit in Settings > Advanced."
         ),
         (.other, "Transfer failed. Try again, or check your connection."),
     ])
@@ -59,7 +59,7 @@ import Testing
             declineRequested: false, stored: true)
         #expect(
             copy
-                == "Couldn't reach the transfer server. Check your internet connection and try again."
+                == "Couldn't reach the link server. Check your internet connection and try again."
         )
     }
 

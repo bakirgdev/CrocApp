@@ -51,21 +51,22 @@ struct QRScannerSheet: View {
                 ContentUnavailableView(
                     "Camera unavailable",
                     systemImage: "video.slash",
-                    description: Text("Check camera permission in Settings."))
+                    description: Text("The camera couldn't start. Close this and try again."))
             } else {
                 QRScannerView(onScan: onScan) { startFailed = true }
             }
         } else {
             ContentUnavailableView(
                 "Camera scanning isn't available on this device",
-                systemImage: "qrcode.viewfinder")
+                systemImage: "video.slash",
+                description: Text("Enter the code phrase instead."))
         }
     }
 
     // Settings can fix a denial, so offer the shortcut there -- mirrors the
     // local-network denied banner in TransferStatusView.
     private var deniedView: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.space4) {
             ContentUnavailableView(
                 "Camera access denied",
                 systemImage: "video.slash",
@@ -76,6 +77,7 @@ struct QRScannerSheet: View {
                     UIApplication.shared.open(url)
                 }
             }
+            .buttonVariant(.secondary)
         }
     }
 

@@ -11,6 +11,9 @@ struct ContentView: View {
     @State private var showOnboarding = false
     #if os(macOS)
     @State private var isDropTargeted = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // components.md → DropZone: overlay glyph at 44, scaled with Dynamic Type.
+    @ScaledMetric(relativeTo: .largeTitle) private var dropGlyphSize: CGFloat = 44
     #endif
 
     var body: some View {
@@ -33,7 +36,14 @@ struct ContentView: View {
                 dropOverlay
             }
         }
+        // The overlay is inserted and removed, so its `.transition` needs an
+        // animation context on the container that stays.
+        .animation(
+            reduceMotion ? nil : Motion.easeOut(Motion.durationFast), value: isDropTargeted)
             #endif
+            .phoneHaptic(
+                trigger: TransferHaptic(controller.phase, endedByUser: controller.endedByUser)
+            ) { _, new in new?.feedback }
             .task {
                 if AutoVerify.forcesOnboarding || (!onboardingSeen && !AutoVerify.isHarnessRun) {
                     showOnboarding = true
@@ -118,26 +128,24 @@ struct ContentView: View {
     }
 
     #if os(macOS)
-    // design/components.md → DropZone: macOS full-window "Drop to send"
-    // overlay, scrim background, --radius-2xl (the one place that radius is
-    // used) and a glass surface. Not itself a drop target — the window-level
-    // dropDestination above owns hover tracking and the actual file filter.
+    // design/components.md → DropZone: macOS full-window overlay, scrim
+    // background and a glass card at --radius-2xl. Not itself a drop target:
+    // the window-level dropDestination above owns hover tracking and the
+    // actual file filter.
     private var dropOverlay: some View {
         ZStack {
             Color.scrim
             VStack(spacing: Spacing.space4) {
                 Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 44))
+                    .font(.system(size: dropGlyphSize))
                     .foregroundStyle(Color.accentTextOnTint)
                     .accessibilityHidden(true)
-                Text("Drop to send")
+                Text("Drop to Send")
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(Color.accentTextOnTint)
             }
             .padding(Spacing.space9)
-            .glassEffect(
-                .regular, in: RoundedRectangle(cornerRadius: Radius.xxl, style: .continuous)
-            )
+            .glassEffect(.regular, in: .rect(cornerRadius: Radius.xxl, style: .continuous))
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)

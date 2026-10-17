@@ -35,8 +35,8 @@ struct SettingsView: View {
     private var general: some View {
         Form {
             Section("Receive") {
-                LabeledContent("Save received files to") {
-                    HStack(spacing: 8) {
+                LabeledContent("Save Received Files To") {
+                    HStack(spacing: Spacing.space3) {
                         Text(
                             outputFolder.isUserSelected
                                 ? outputFolder.url.path : outputFolder.defaultDisplayName
@@ -44,14 +44,17 @@ struct SettingsView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                         Button("Change…") { showFolderPicker = true }
+                            .buttonVariant(.plain)
                         if outputFolder.isUserSelected {
                             Button("Reset") { outputFolder.resetToDefault() }
+                                .buttonVariant(.plain)
                         }
                     }
                 }
                 Button("Show in Finder") {
                     NSWorkspace.shared.activateFileViewerSelecting([outputFolder.url])
                 }
+                .buttonVariant(.plain)
                 .focused($focusedControl, equals: .showInFinder)
             }
 
@@ -87,9 +90,9 @@ struct SettingsView: View {
 extension SettingsView {
     @ViewBuilder fileprivate var menuBarSection: some View {
         Section {
-            Toggle("Show in menu bar", isOn: Bindable(settings).showInMenuBar)
+            Toggle("Show in Menu Bar", isOn: Bindable(settings).showInMenuBar)
             Toggle(
-                "Open at login",
+                "Open at Login",
                 isOn: Binding(
                     get: { loginItem.isRegistered }, set: { loginItem.setRegistered($0) })
             )
@@ -99,6 +102,7 @@ extension SettingsView {
                     Text("Allow CrocApp in System Settings > General > Login Items.")
                         .font(.caption).foregroundStyle(.secondary)
                     Button("Open Settings") { SMAppService.openSystemSettingsLoginItems() }
+                        .buttonVariant(.plain)
                 }
             }
             if let message = loginItem.errorMessage {

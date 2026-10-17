@@ -11,6 +11,9 @@ struct TransferStatusView: View {
     @Environment(LocalNetworkChecker.self) private var localNetwork
     @Environment(OutputFolderStore.self) private var outputFolder
     @State private var showsSlowPhaseHint = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // components.md → StatusBlock/EmptyState: decorative glyph at 44, scaled.
+    @ScaledMetric(relativeTo: .largeTitle) private var confirmGlyphSize: CGFloat = 44
 
     // Long enough that ordinary relay/handshake latency doesn't false-positive,
     // short enough to reassure before the user assumes the app is hung.
@@ -20,6 +23,28 @@ struct TransferStatusView: View {
         switch controller.phase {
         case .starting, .connecting: true
         default: false
+        }
+    }
+
+    /// The phase case without its payload: the cross-fade keys on this, not on
+    /// every progress tick (design/motion.md → Choreography).
+    private enum PhaseKind: Hashable {
+        case idle, starting, waiting, connecting, confirmSend, incoming
+        case transferring, done, stored, failed
+    }
+
+    private var phaseKind: PhaseKind {
+        switch controller.phase {
+        case .idle: .idle
+        case .starting: .starting
+        case .waiting: .waiting
+        case .connecting: .connecting
+        case .confirmSend: .confirmSend
+        case .incoming: .incoming
+        case .transferring: .transferring
+        case .done: .done
+        case .stored: .stored
+        case .failed: .failed
         }
     }
 
@@ -39,7 +64,7 @@ struct TransferStatusView: View {
             .scrollBounceBehavior(.basedOnSize)
             .scrollClipDisabled()
         }
-        .padding()
+        .padding(Spacing.space5)
         .frame(maxWidth: LayoutCap.contentMaxWidth)
         // Resets and restarts whenever isInEarlyPhase flips, so the hint
         // never keeps counting into transferring/done/failed, but survives
@@ -59,40 +84,61 @@ struct TransferStatusView: View {
                 localNetworkDeniedBanner
             }
 
-            switch controller.phase {
-            case .idle:
-                EmptyView()
-            case .starting:
-                ProgressView().accessibilityHidden(true)
-                Text("Starting…").foregroundStyle(.secondary)
-                if showsSlowPhaseHint {
-                    slowPhaseHintText
-                }
-            case .connecting:
-                ProgressView().accessibilityHidden(true)
-                Text("Connecting…").foregroundStyle(.secondary)
-                if showsSlowPhaseHint {
-                    slowPhaseHintText
-                }
-            case .confirmSend:
-                confirmSendView
-            case .waiting(let code):
-                waitingView(code: code)
-            case .incoming(let list, let conflicts, let blocked):
-                IncomingRequestView(list: list, conflicts: conflicts, blocked: blocked)
-            case .transferring(let progress):
-                transferringView(progress)
-            case .done(let summary, let receivedText):
-                doneView(summary, receivedText: receivedText)
-            case .stored(let receipt):
-                storedView(receipt)
-            case .failed(let message):
-                failedView(message)
+            // One cross-fade on the block that swaps; its contents do not
+            // animate in separately. The ZStack lets old and new overlap
+            // instead of stacking while both are in the tree.
+            ZStack {
+                phaseContent
+                    .id(phaseKind)
+                    .transition(.opacity)
             }
+            .animation(
+                reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: phaseKind)
 
             if showsCancel {
                 Button("Cancel", role: .destructive) { controller.cancel() }
+                    .buttonVariant(.destructiveTinted)
             }
+        }
+    }
+
+    @ViewBuilder private var phaseContent: some View {
+        switch controller.phase {
+        case .idle:
+            EmptyView()
+        case .starting:
+            earlyPhase("Starting…")
+        case .connecting:
+            earlyPhase("Connecting…")
+        case .confirmSend:
+            confirmSendView
+        case .waiting(let code):
+            waitingView(code: code)
+        case .incoming(let list, let conflicts, let blocked):
+            IncomingRequestView(list: list, conflicts: conflicts, blocked: blocked)
+        case .transferring(let progress):
+            transferringView(progress)
+        case .done(let summary, let receivedText):
+            doneView(summary, receivedText: receivedText)
+        case .stored(let receipt):
+            storedView(receipt)
+        case .failed(let message):
+            failedView(message)
+        }
+    }
+
+    private func earlyPhase(_ title: LocalizedStringKey) -> some View {
+        VStack(spacing: Spacing.space7) {
+            ProgressView().accessibilityHidden(true)
+            Text(title).foregroundStyle(Color.textSecondary)
+            // Fades in at --dur-slow so it reads as information, not alarm.
+            ZStack {
+                if showsSlowPhaseHint {
+                    slowPhaseHintText.transition(.opacity)
+                }
+            }
+            .animation(
+                reduceMotion ? nil : Motion.easeOut(Motion.durationSlow), value: showsSlowPhaseHint)
         }
     }
 
@@ -101,13 +147,15 @@ struct TransferStatusView: View {
             "This is taking longer than usual. Double-check the code, or the other device may not be ready."
         )
         .font(.footnote)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color.textSecondary)
         .multilineTextAlignment(.center)
     }
 
+    /// Cancel is not offered at the accept gate: it would answer the sender on
+    /// the user's behalf. Decline is the way to say no (components.md → AcceptGate).
     private var showsCancel: Bool {
         switch controller.phase {
-        case .starting, .waiting, .connecting, .transferring, .incoming: return true
+        case .starting, .waiting, .connecting, .transferring: return true
         default: return false
         }
     }
@@ -124,61 +172,46 @@ struct TransferStatusView: View {
         "Transfers use the relay only. Enable it in System Settings › Privacy & Security › Local Network for faster direct transfers."
     #endif
 
-    // design/colors.md line 107: local-network-denied is `info` (blue), not
-    // a warning — the relay path still works, this is a "could be faster"
+    // components.md → StatusBanner: local-network-denied is `info` (blue), not
+    // a warning. The relay path still works, this is a "could be faster"
     // notice, not a problem.
     private var localNetworkDeniedBanner: some View {
-        VStack(spacing: Spacing.space3) {
-            StatusBanner(
-                kind: .info,
-                title: "Local network access is off",
-                detail: Self.localNetworkDeniedDetail
-            )
-            Button("Open Settings") {
-                #if os(iOS)
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(url)
-                }
-                #else
-                // Community-standard deep link, not a documented Apple API --
-                // same category as shareddocuments:// on the receive side.
-                // Measured on macOS 26: this opens Privacy & Security at the
-                // top; the ?Privacy_LocalNetwork anchor does not select the
-                // Local Network row (nor does the .PrivacySecurity.extension
-                // spelling). The banner names the rest of the path, so the
-                // user finishes the last hop. Recheck if Apple ever honours it.
-                if let url = URL(
-                    string:
-                        "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork"
-                ) {
-                    NSWorkspace.shared.open(url)
-                }
-                #endif
-            }
-            .font(.footnote)
+        StatusBanner(
+            kind: .info,
+            title: "Local network access is off",
+            detail: Self.localNetworkDeniedDetail,
+            actionTitle: "Open Settings",
+            action: openLocalNetworkSettings
+        )
+    }
+
+    private func openLocalNetworkSettings() {
+        #if os(iOS)
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
         }
+        #else
+        // Community-standard deep link, not a documented Apple API --
+        // same category as shareddocuments:// on the receive side.
+        // Measured on macOS 26: this opens Privacy & Security at the
+        // top; the ?Privacy_LocalNetwork anchor does not select the
+        // Local Network row (nor does the .PrivacySecurity.extension
+        // spelling). The banner names the rest of the path, so the
+        // user finishes the last hop. Recheck if Apple ever honours it.
+        if let url = URL(
+            string:
+                "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork"
+        ) {
+            NSWorkspace.shared.open(url)
+        }
+        #endif
     }
 
     // MARK: - Waiting (sender: code ready)
 
     private func waitingView(code: String) -> some View {
         VStack(spacing: Spacing.space5) {
-            Text("Ready to send").font(.headline)
-            Text(code)
-                .codeHeroTextStyle()
-                .textSelection(.enabled)
-                .accessibilityLabel("Transfer code")
-                .accessibilityValue(code.replacingOccurrences(of: "-", with: ", "))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Spacing.space6)
-                .padding(.vertical, Spacing.space4)
-                // A capsule clips the code once it wraps at large text sizes.
-                .glassEffect(in: .rect(cornerRadius: Radius.xl))
-            Button {
-                Clipboard.copy(code)
-            } label: {
-                Label("Copy Code", systemImage: "doc.on.doc")
-            }
+            CodePhraseDisplay(code: code)
             let webURL = TransferLink.webURL(forCode: code)
             QRCodeView(content: webURL?.absoluteString ?? code)
             if let webURL {
@@ -188,17 +221,18 @@ struct TransferStatusView: View {
             }
             Text("On the other device, enter this code or scan the QR.")
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
                 .multilineTextAlignment(.center)
             if let note = browserReceiveNote {
                 Text(note)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
             }
             TrustBadge(relay: controller.activeRelay)
             ProgressView().accessibilityHidden(true)
-            Text("Waiting for the receiver…").font(.caption).foregroundStyle(.secondary)
+            Text("Waiting for the other device…").font(.caption).foregroundStyle(
+                Color.textSecondary)
         }
     }
 
@@ -217,22 +251,23 @@ struct TransferStatusView: View {
 
     private var confirmSendView: some View {
         VStack(spacing: Spacing.space5) {
-            // Decorative icon, size and status-tint both from the component's
-            // own judgment (not a speced component) — colors.md rule 2 allows
-            // a status color as an icon fill, just never as a label.
+            // Decorative glyph in a status color: allowed as a fill, never as
+            // a label (colors.md → Contrast, rule 2).
             Image(systemName: "person.crop.circle.badge.checkmark")
-                .font(.system(size: 40))
-                .foregroundStyle(.blue)
+                .font(.system(size: confirmGlyphSize))
+                .foregroundStyle(Color.statusInfo)
                 .accessibilityHidden(true)
-            Text("Receiver connected").font(.headline)
+            Text("The other device is connected").font(.headline)
             Text("Send the selected items to the connected device?")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
                 .multilineTextAlignment(.center)
             TrustBadge(relay: controller.activeRelay)
             HStack(spacing: Spacing.space5) {
                 Button("Cancel", role: .destructive) { controller.cancel() }
+                    .buttonVariant(.destructiveTinted)
                 Button("Send") { controller.respond(accept: true) }
-                    .buttonStyle(.borderedProminent)
+                    .buttonVariant(.prominent)
+                    .controlSize(.large)
             }
         }
     }
@@ -240,24 +275,21 @@ struct TransferStatusView: View {
     // MARK: - Transferring
 
     private func transferringView(_ p: TransferProgress) -> some View {
-        VStack(spacing: Spacing.space5) {
-            // components.md → TransferProgress: direction header carries the
-            // arrow glyph AND the word — neither is optional.
-            HStack(spacing: Spacing.space3) {
-                Image(systemName: controller.direction == .send ? "arrow.up" : "arrow.down")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Color.accentFill)
-                    .accessibilityHidden(true)
-                Text(transferHeading)
-                    .font(.headline)
-            }
+        let fileFraction = fraction(p.fileSent, of: p.fileSize)
+        let totalDone = p.bytesFinished + p.fileSent
+        let totalFraction = fraction(totalDone, of: p.totalSize)
+        return VStack(spacing: Spacing.space5) {
+            DirectionHeader(direction: controller.direction)
             VStack(alignment: .leading, spacing: Spacing.space3) {
                 Text(p.fileName)
                     .font(.callout)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                ProgressView(value: fraction(p.fileSent, of: p.fileSize))
-                    .accessibilityLabel("Current file progress")
+                ForwardProgressBar(
+                    fraction: fileFraction,
+                    resetKey: ProgressScope(file: p.currentFile, size: p.fileSize)
+                )
+                .accessibilityLabel("Current file progress")
                 HStack {
                     Text("File \(min(p.currentFile + 1, p.totalFiles)) of \(p.totalFiles)")
                     Spacer()
@@ -268,35 +300,37 @@ struct TransferStatusView: View {
                     )
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
+                .monospacedDigit()
             }
             .accessibilityElement(children: .combine)
-            .accessibilityValue(percent(fraction(p.fileSent, of: p.fileSize)))
+            .accessibilityValue(percent(fileFraction))
             VStack(alignment: .leading, spacing: Spacing.space3) {
-                ProgressView(value: fraction(p.bytesFinished + p.fileSent, of: p.totalSize))
-                    .accessibilityLabel("Overall progress")
+                ForwardProgressBar(
+                    fraction: totalFraction, resetKey: ProgressScope(file: -1, size: p.totalSize)
+                )
+                .accessibilityLabel("Overall progress")
                 HStack {
                     Text(
-                        "Total \((p.bytesFinished + p.fileSent).formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
+                        "Total \(totalDone.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
                     )
+                    .foregroundStyle(Color.textSecondary)
                     Spacer()
-                    if controller.speedBytesPerSec > 0 {
-                        Text(
-                            "\(Int64(controller.speedBytesPerSec).formatted(.byteCount(style: .file)))/s"
-                        )
-                    }
+                    Text(speedText)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.textPrimary)
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .monospacedDigit()
             }
             .accessibilityElement(children: .combine)
-            .accessibilityValue(percent(fraction(p.bytesFinished + p.fileSent, of: p.totalSize)))
+            .accessibilityValue(percent(totalFraction))
             if controller.isStoredTransfer {
                 // A stored transfer meets no relay, so the relay badge would
                 // describe a path it does not take.
-                Text("Encrypted on this device. The server only holds the encrypted files.")
+                Text("Encrypted on this device. The link server only holds the encrypted files.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
             } else {
                 TrustBadge(relay: controller.activeRelay)
@@ -304,13 +338,18 @@ struct TransferStatusView: View {
         }
     }
 
-    private var transferHeading: String {
-        switch (controller.direction, controller.isStoredTransfer) {
-        case (.send, false): "Sending"
-        case (.send, true): "Uploading"
-        case (.receive, false): "Receiving"
-        case (.receive, true): "Downloading"
-        }
+    /// What a progress bar measures. A new scope snaps the bar instead of
+    /// letting it run backwards.
+    private struct ProgressScope: Hashable {
+        let file: Int
+        let size: Int64
+    }
+
+    /// An unknown or zero speed is an em dash, never "0 B/s": a zero reads as
+    /// a stall (content.md → Numbers).
+    private var speedText: String {
+        guard controller.speedBytesPerSec > 0 else { return "—" }
+        return "\(Int64(controller.speedBytesPerSec).formatted(.byteCount(style: .file)))/s"
     }
 
     private func fraction(_ part: Int64, of whole: Int64) -> Double {
@@ -345,7 +384,11 @@ struct TransferStatusView: View {
                     ? "Received text"
                     : (summary.success ? "Transfer complete" : "Transfer finished with problems"),
                 detail: receivedText == nil
-                    ? "\(summary.files) file(s) • \(summary.totalSize.formatted(.byteCount(style: .file)))"
+                    ? inflected(
+                        AttributedString(
+                            localized:
+                                "^[\(summary.files) file](inflect: true) • \(summary.totalSize.formatted(.byteCount(style: .file)))"
+                        ))
                     : nil
             )
             if let receivedText {
@@ -355,12 +398,13 @@ struct TransferStatusView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
                 }
-                .frame(maxHeight: 200)
+                .frame(maxHeight: Self.receivedTextMaxHeight)
                 Button {
                     Clipboard.copy(receivedText)
                 } label: {
                     Label("Copy Text", systemImage: "doc.on.doc")
                 }
+                .buttonVariant(.secondary)
             }
             if controller.direction == .receive, let folder = controller.lastOutputFolder {
                 #if os(iOS)
@@ -377,6 +421,7 @@ struct TransferStatusView: View {
                     } label: {
                         Label("Open in Files", systemImage: "folder")
                     }
+                    .buttonVariant(.secondary)
                 }
                 #else
                 Button {
@@ -384,33 +429,41 @@ struct TransferStatusView: View {
                 } label: {
                     Label("Show in Finder", systemImage: "folder")
                 }
+                .buttonVariant(.secondary)
                 #endif
             }
             Button("Done") { controller.reset() }
-                .buttonStyle(.borderedProminent)
+                .buttonVariant(.prominent)
+                .controlSize(.large)
         }
     }
+
+    private static let receivedTextMaxHeight: CGFloat = 200
 
     private func storedView(_ receipt: StoredReceipt) -> some View {
         VStack(spacing: Spacing.space5) {
             StatusBlock(
                 kind: .success, title: "Link ready",
-                detail:
-                    "Works until \(receipt.expiresAt.formatted(date: .abbreviated, time: .shortened)), for \(receipt.downloads) download(s)"
+                detail: inflected(
+                    AttributedString(
+                        localized:
+                            "Works until \(receipt.expiresAt.formatted(date: .abbreviated, time: .shortened)), for ^[\(receipt.downloads) download](inflect: true)"
+                    ))
             )
-            QRCodeView(content: receipt.link, label: "QR code for the download link")
+            QRCodeView(content: receipt.link, label: "QR code for the link")
             Text(receipt.link)
                 .font(.caption.monospaced())
                 .lineLimit(3)
                 .truncationMode(.middle)
                 .textSelection(.enabled)
-                .accessibilityLabel("Download link")
+                .accessibilityLabel("Link")
             HStack(spacing: Spacing.space5) {
                 Button {
                     Clipboard.copy(receipt.link, thisDeviceOnly: true)
                 } label: {
                     Label("Copy Link", systemImage: "doc.on.doc")
                 }
+                .buttonVariant(.secondary)
                 if let url = URL(string: receipt.link) {
                     ShareLink(item: url) {
                         Label("Share Link", systemImage: "square.and.arrow.up")
@@ -421,10 +474,11 @@ struct TransferStatusView: View {
                 "Anyone who gets this link can download the files until it expires or runs out. Revoke it any time in History."
             )
             .font(.callout)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.textSecondary)
             .multilineTextAlignment(.center)
             Button("Done") { controller.reset() }
-                .buttonStyle(.borderedProminent)
+                .buttonVariant(.prominent)
+                .controlSize(.large)
         }
     }
 
@@ -432,50 +486,57 @@ struct TransferStatusView: View {
         VStack(spacing: Spacing.space5) {
             StatusBlock(kind: .error, title: message)
             Button("OK") { controller.reset() }
-                .buttonStyle(.borderedProminent)
+                .buttonVariant(.prominent)
+                .controlSize(.large)
         }
     }
 }
 
-/// Incoming file list preview with accept/decline (F9), Keep Both / Replace
-/// when files already exist (F8, R24), and unsafe-name blocking.
+/// The accept gate. design/components.md → AcceptGate: a phase of the transfer
+/// screen, not a sheet or an alert. Decline says no to the other device, Accept
+/// (or Keep Both and Replace when a name is taken) says yes. Leaving answers
+/// nothing, and there is no Cancel here.
 struct IncomingRequestView: View {
     @Environment(TransferController.self) private var controller
     let list: FileList
     let conflicts: [String]
     let blocked: [String]
-    @ScaledMetric private var listMinHeight: CGFloat = 120
     @ScaledMetric private var listMaxHeight: CGFloat = 240
 
     var body: some View {
         VStack(spacing: Spacing.space5) {
-            Text("Incoming transfer").font(.headline)
-            List(list.files, id: \.name) { entry in
-                HStack {
-                    Text(entry.name).lineLimit(1).truncationMode(.middle)
-                    Spacer()
-                    Text(entry.size.formatted(.byteCount(style: .file)))
-                        .foregroundStyle(.secondary)
+            DirectionHeader(direction: .receive)
+            TrustBadge(relay: controller.activeRelay)
+            ScrollView {
+                // A card of rows: FileRow draws the first/last corner rounding
+                // and the separators.
+                VStack(spacing: 0) {
+                    ForEach(Array(list.files.enumerated()), id: \.element.name) { index, entry in
+                        FileRow(
+                            name: entry.name, size: entry.size,
+                            isFirst: index == 0, isLast: index == list.files.count - 1)
+                    }
                 }
             }
-            // Without this the List paints the system grouped background
-            // behind the rows, which reads as a stray grey slab under the
-            // file card whenever the list is shorter than its own frame.
-            .scrollContentBackground(.hidden)
-            .frame(minHeight: listMinHeight, maxHeight: listMaxHeight)
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(maxHeight: listMaxHeight)
             Text(
-                "\(list.files.count) file(s) • \(list.totalSize.formatted(.byteCount(style: .file)))"
+                "^[\(list.files.count) file](inflect: true) • \(list.totalSize.formatted(.byteCount(style: .file)))"
             )
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.textSecondary)
+            .monospacedDigit()
             if !blocked.isEmpty {
                 StatusBanner(kind: .error, title: "Blocked: unsafe file names in this transfer.")
             } else if !conflicts.isEmpty {
                 StatusBanner(
                     kind: .warning,
-                    title:
-                        "\(conflicts.count) item(s) already exist. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files."
-                )
+                    title: "Some names are already taken",
+                    detail: inflected(
+                        AttributedString(
+                            localized:
+                                "^[\(conflicts.count) item](inflect: true) in this transfer share a name with a file here. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files."
+                        )))
             }
             // Three labels do not fit side by side at accessibility text sizes
             // on a phone, so they stack there.
@@ -488,15 +549,21 @@ struct IncomingRequestView: View {
 
     @ViewBuilder private var actions: some View {
         Button("Decline", role: .destructive) { controller.respond(accept: false) }
+            .buttonVariant(.destructive)
+            .controlSize(.large)
         if blocked.isEmpty, !conflicts.isEmpty {
             Button("Replace") { controller.respond(accept: true, policy: .replace) }
+                .buttonVariant(.secondary)
+                .controlSize(.large)
             Button("Keep Both") { controller.respond(accept: true, policy: .keepBoth) }
-                .buttonStyle(.borderedProminent)
+                .buttonVariant(.prominent)
+                .controlSize(.large)
         } else {
             // Until the conflict scan reports, Accept keeps both: it
             // never overwrites a file the scan has not shown yet.
             Button("Accept") { controller.respond(accept: true, policy: .keepBoth) }
-                .buttonStyle(.borderedProminent)
+                .buttonVariant(.prominent)
+                .controlSize(.large)
                 .disabled(!blocked.isEmpty)
         }
     }

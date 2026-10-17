@@ -3,17 +3,47 @@ import SwiftUI
 /// Two-verb home (prior-art pattern): giant Send / Receive, nothing else.
 struct HomeView: View {
     @Environment(AppRouter.self) private var router
+    @Environment(AppSettings.self) private var settings
+    @Environment(TransferController.self) private var controller
+
+    // The two verbs are the page's whole job, so they are tall: 100 is a
+    // component constant (it is not a control size).
+    private static let verbMinHeight: CGFloat = 100
+
+    private var hasPendingRequest: Bool {
+        if case .incoming = controller.phase { return true }
+        return false
+    }
 
     var body: some View {
         @Bindable var router = router
         NavigationStack(path: $router.path) {
-            VStack(spacing: 20) {
-                NavigationLink(value: AppRouter.Route.send) {
+            VStack(spacing: Spacing.space6) {
+                TrustBadge(relay: settings.relayKind)
+
+                if hasPendingRequest {
+                    // components.md → AcceptGate: a live request is never lost.
+                    // Backing out of the transfer screen answers nothing, so the
+                    // way back stays on Home until the sender gives up or the
+                    // user answers.
+                    StatusBanner(
+                        kind: .info,
+                        title: "Files are waiting for your answer",
+                        detail: "The other device is waiting for you to accept or decline.",
+                        actionTitle: "Review"
+                    ) {
+                        router.path = [.receive]
+                    }
+                }
+
+                Button {
+                    router.path.append(.send)
+                } label: {
                     Label("Send", systemImage: "arrow.up.circle.fill")
                         .font(.title2.bold())
-                        .frame(maxWidth: .infinity, minHeight: 100)
+                        .frame(maxWidth: .infinity, minHeight: Self.verbMinHeight)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonVariant(.prominent)
                 .overlay(alignment: .topTrailing) {
                     // Dock/window/share drops queue into pendingSendURLs
                     // without navigating while a transfer is active (queue-
@@ -34,15 +64,17 @@ struct HomeView: View {
                     }
                 }
 
-                NavigationLink(value: AppRouter.Route.receive) {
+                Button {
+                    router.path.append(.receive)
+                } label: {
                     Label("Receive", systemImage: "arrow.down.circle.fill")
                         .font(.title2.bold())
-                        .frame(maxWidth: .infinity, minHeight: 100)
+                        .frame(maxWidth: .infinity, minHeight: Self.verbMinHeight)
                 }
-                .buttonStyle(.bordered)
+                .buttonVariant(.secondary)
             }
-            .padding()
-            .frame(maxWidth: 480)
+            .padding(Spacing.space5)
+            .frame(maxWidth: LayoutCap.contentMaxWidth)
             .navigationTitle("CrocApp")
             .toolbar {
                 #if os(iOS)
@@ -107,4 +139,11 @@ struct SettingsScreen: View {
     }
 }
 
-#Preview { HomeView().environment(AppRouter.shared) }
+#Preview {
+    HomeView()
+        .environment(AppRouter.shared)
+        .environment(AppSettings())
+        .environment(
+            TransferController(
+                settings: AppSettings(), vault: StoredTransferVault(secrets: MemorySecretStore())))
+}
