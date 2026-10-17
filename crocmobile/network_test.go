@@ -3,10 +3,14 @@ package crocmobile
 import (
 	"encoding/json"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"path/filepath"
 	"reflect"
+	"regexp"
+	"slices"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -282,4 +286,104 @@ func codeOf(err error) string {
 		return ""
 	}
 	return classify(err)
+}
+
+func FuzzRelayPorts(f *testing.F) {
+	f.Add(0, 0)
+	f.Add(9100, 2)
+	f.Add(50000, 1)
+	f.Add(65533, 2)
+	f.Add(65535, 0)
+	f.Add(-1, 0)
+	f.Add(0, -1)
+	f.Add(math.MaxInt, 1)
+	f.Add(1, math.MaxInt)
+	f.Fuzz(func(t *testing.T, base, transfers int) {
+		o := Options{BasePort: base, Transfers: transfers}
+		ports, err := relayPorts(&o)
+		if err != nil {
+			if codeOf(err) != codeInvalidSetting {
+				t.Fatalf("relayPorts(%+v) err = %v, want %s", o, err, codeInvalidSetting)
+			}
+			return
+		}
+		if base == 0 {
+			base = DefaultBasePort
+		}
+		if transfers == 0 {
+			transfers = DefaultTransfers
+		}
+		if len(ports) != transfers+1 {
+			t.Fatalf("relayPorts(%+v) gave %d ports, want %d", o, len(ports), transfers+1)
+		}
+		for i, p := range ports {
+			n, err := strconv.Atoi(p)
+			if err != nil || n != base+i || n < 1 || n > 65535 {
+				t.Fatalf("relayPorts(%+v)[%d] = %q, want %d within 1-65535", o, i, p, base+i)
+			}
+		}
+	})
+}
+
+var throttleSpeed = regexp.MustCompile(`^[0-9]+[kKmMgG]?$`)
+
+func FuzzValidateThrottle(f *testing.F) {
+	for _, s := range []string{"", "500k", " 2M ", "1g", "12", "5", "0k", "k", "kk", "-5k", "+5k", "5kb", "1.5m"} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, value string) {
+		err := validateThrottle(value)
+		if err != nil {
+			if codeOf(err) != codeInvalidSetting {
+				t.Fatalf("validateThrottle(%q) err = %v, want %s", value, err, codeInvalidSetting)
+			}
+			return
+		}
+		v := strings.TrimSpace(value)
+		if v == "" {
+			return
+		}
+		// croc panics on anything but digits plus one optional unit letter, on
+		// zero, and ignores a one-character value.
+		if len(v) < 2 || !throttleSpeed.MatchString(v) || strings.Trim(v, "0kKmMgG") == "" {
+			t.Fatalf("validateThrottle(%q) accepted a value croc cannot parse", value)
+		}
+	})
+}
+
+func FuzzProxyURL(f *testing.F) {
+	for _, s := range []string{
+		"", "127.0.0.1:1080", "proxy.example:3128", "socks5://user:secret@proxy.example:1080",
+		"socks5h://proxy.example:1080", "http://user:secret@proxy.example:3128", " https://proxy.example:443 ",
+		"proxy.example", "socks5://:1080", "user:secret@proxy.example", "proxy.example:0", "proxy.example:70000",
+	} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, value string) {
+		for _, c := range []struct {
+			scheme  string
+			allowed []string
+		}{
+			{"socks5", []string{"socks5", "socks5h"}},
+			{"http", []string{"http", "https"}},
+		} {
+			u, err := proxyURL(value, c.scheme, c.allowed...)
+			if err != nil {
+				if u != nil || codeOf(err) != codeInvalidSetting {
+					t.Fatalf("proxyURL(%q, %s) = %v, %v; want nil and %s", value, c.scheme, u, err, codeInvalidSetting)
+				}
+				continue
+			}
+			if u == nil {
+				if strings.TrimSpace(value) != "" {
+					t.Fatalf("proxyURL(%q, %s) = nil, nil for a non-empty value", value, c.scheme)
+				}
+				continue
+			}
+			port, perr := strconv.Atoi(u.Port())
+			if !slices.Contains(c.allowed, u.Scheme) || u.Hostname() == "" || perr != nil || port < 1 || port > 65535 {
+				t.Fatalf("proxyURL(%q, %s) accepted %q: scheme, host or port invalid", value, c.scheme, u)
+			}
+		}
+	})
 }

@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -255,4 +256,43 @@ func TestStartErrorsCarryPayload(t *testing.T) {
 	if startError(nil) != nil {
 		t.Error("startError(nil) != nil")
 	}
+}
+
+func FuzzClassify(f *testing.F) {
+	for _, s := range []string{
+		"pake not successful: peer uses unsupported PAKE protocol version 0",
+		"peer error: refusing files", "refused files", "room full", "bad password",
+		"could not connect to relay", "transfer disconnected", "unexpected EOF", "",
+	} {
+		f.Add(s)
+	}
+	codes := []string{
+		codePeerVersion, codeRelayUnreachable, codeNoPublicRelay, codeDeclined, codeRefused,
+		codeRoomFull, codeBadPassword, codeWrongCode, codeCancelled, codeConnectionLost,
+		codeStoreLimit, codeStoreExpired, codeInvalidSetting, codeOther,
+	}
+	f.Fuzz(func(t *testing.T, msg string) {
+		err := errors.New(msg)
+		got := classify(err)
+		if !slices.Contains(codes, got) {
+			t.Fatalf("classify(%q) = %q, not a known failure code", msg, got)
+		}
+		if classify(err) != got {
+			t.Fatalf("classify(%q) is not deterministic", msg)
+		}
+		// Wrapping must not change the code: the app relies on errors.As/Is and
+		// on text matching seeing through croc's own wrapping.
+		if w := classify(fmt.Errorf("wrapped: %w", err)); w != got && w != codeCancelled {
+			t.Fatalf("classify(wrapped %q) = %s, want %s", msg, w, got)
+		}
+		// A coded error carries its code regardless of its text.
+		if c := classify(&codedError{codeInvalidSetting, err}); c != codeInvalidSetting {
+			t.Fatalf("classify(coded, %q) = %s, want %s", msg, c, codeInvalidSetting)
+		}
+		// The failure payload must round-trip through JSON for any message.
+		var f failure
+		if jerr := json.Unmarshal([]byte(errorJSON(err)), &f); jerr != nil || f.Code != got {
+			t.Fatalf("errorJSON(%q) decoded to %+v, %v; want code %s", msg, f, jerr, got)
+		}
+	})
 }
