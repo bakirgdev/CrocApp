@@ -339,10 +339,19 @@ Rendering, sizes and stroke weights are `iconography.md`'s — this file only na
 
 The macOS download's Finder window. Not an app surface, but it is the first CrocApp anyone sees, so it is specified here rather than improvised in a build script.
 
-Window 660×400, icons 128, app at (165, 195), Applications alias at (495, 195). `scripts/build-dmg.sh` passes exactly these numbers to `create-dmg`; changing one without changing the other leaves this file lying.
+Window 660×400, icons 128, app at (165, 170), Applications alias at (495, 170). `scripts/build-dmg.sh` passes exactly these numbers to `create-dmg`; changing one without changing the other leaves this file lying.
 
-Background `assets/dmg-background.png`, 660×400, `--color-surface-base`. Title "CrocApp" at `--type-title3` semibold, `--color-text-primary`, 44 from the top. Lucide `arrow-right` between the two icon slots at 44×44, stroke 1.5, `--color-separator`. Hint "Drag CrocApp onto Applications" at `--type-footnote`, `--color-text-secondary`, 38 from the bottom.
+Background `assets/dmg-background.tiff`, 660×400, a multi-representation TIFF holding a 1x and a 2x image (`tiffutil -cathidpicheck bg.png bg@2x.png -out dmg-background.tiff`), so it stays sharp on Retina. Fill `--bg-secondary` dark. All positions below are centers, measured from the top of the image, which Finder draws directly under the 32pt title bar:
 
-**Light values only.** Finder shows one fixed image and does not swap it with the system appearance, so the usual both-themes rule cannot apply. It is also 1x: `create-dmg` documents png, gif and jpg backgrounds, so there is no HiDPI representation and the image is soft on a Retina display (`docs/known-issues.md`).
+| Element | Spec | Center y |
+|---|---|---|
+| Title "CrocApp" | `--type-title3` semibold, `--label-1` dark | 44 |
+| Lucide `arrow-right`, midway between the icon slots | 44×44, stroke 1.5, `--label-2-web` dark | 170 |
+| Label plates, one under each icon | 140×26, radius 13, `rgba(235,235,245,0.85)` | 254 |
+| Hint "Drag CrocApp onto Applications" | `--type-footnote`, `--label-2-web` dark | 316 |
+
+**Dark values only, with label plates.** Finder shows one fixed image and does not swap it with the system appearance, so the usual both-themes rule cannot apply. With a background picture set, Finder draws icon labels black in both appearances (verified on macOS 27 in dark mode), and neither `create-dmg` nor Finder can change that color. The light plates exist only to keep those black labels readable on the dark fill. The plate center sits 84pt below the icon center, which is where Finder puts a 128pt icon's label.
+
+Keep everything inside the top 340pt. Finder clips the window content to about 368pt under the title bar, and about 340pt when the user has the path bar turned on.
 
 No accent, no gradient, no mascot: `brand.md` keeps the accent off large background surfaces, and a first-run install window is the calmest thing in the product.

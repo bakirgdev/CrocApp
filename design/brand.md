@@ -26,18 +26,18 @@ Accent is for: primary action fills, active/selected state, links, file-type gly
 
 | Asset | Path | Use |
 |---|---|---|
-| App icon source | `assets/CrocAppIcon.icon` | Xcode icon composer source; export for App Store, docs favicon, README |
-| Banner | `assets/croc-banner.webp` | README header |
-| Screenshots | `assets/screenshots/<platform>-<screen>-{light,dark}.png` | landing hero, README, docs pages. Regenerated only by `scripts/capture-screenshots.sh` — never hand-edited or hand-cropped |
+| App icon source | `assets/CrocAppIcon.icon` | Icon Composer source. `app/CrocApp/AppIcon.icon` is the copy Xcode builds; keep the two identical |
+| Screenshots | `assets/screenshots/{mac,iphone,ipad}/<screen>-{light,dark}.png` | landing hero, README, docs pages. Regenerated only by `scripts/capture-screenshots.sh` — never hand-edited or hand-cropped |
+| App Store screenshots | `assets/screenshots/app-store/{iphone,ipad,mac}/NN-<screen>.png` | App Store Connect uploads, written by the same script |
 | Social card | `web/landing/assets/img/og.jpg` | Open Graph / link previews. Hand-made on purpose, not derived from the tokens |
-| GitHub social preview | `assets/social-preview.png` | 1280×640, uploaded by hand in the repo's Settings → Social preview. Same layout and mascot as the social card, with the repo URL instead of the site |
-| Mascot | `assets/mascot.png` | source, 512px. Never served |
+| GitHub social preview | `assets/github-social-preview.png` | 1280×640, uploaded by hand in the repo's Settings → Social preview. Same layout and mascot as the social card, with the repo URL instead of the site |
+| Mascot | `assets/mascot.png` | source, 1024px. Never served |
 | Mascot, web | `web/landing/assets/img/mascot-web.webp` | 128px derivative — landing page, empty states on web, docs 404 |
-| Disk image background | `assets/dmg-background.png` | 660×400, the macOS DMG's Finder window. Spec in `components.md` → DiskImage |
+| Disk image background | `assets/dmg-background.tiff` | 660×400 at 1x and 2x, dark, the macOS DMG's Finder window. Spec in `components.md` → DiskImage |
 
 The mascot is a personality accent, not a UI element — it never appears inside the app's transfer flows.
 
-The web derivative exists because the 512px source is 51 KB to draw a 64px mark. Re-cut it from the source rather than editing it: `sips -Z 128` then `cwebp -q 88 -alpha_q 100 -m 6`.
+The web derivative exists because the 1024px source is far too heavy to draw a 64px mark. Re-cut it from the source rather than editing it: `sips -Z 128` then `cwebp -q 88 -alpha_q 100 -m 6`.
 
 ## Naming
 
