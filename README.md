@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/bakirgdev/CrocApp/actions/workflows/ci.yml"><img src="https://github.com/bakirgdev/CrocApp/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.bestpractices.dev/projects/15633"><img src="https://www.bestpractices.dev/projects/15633/badge" alt="OpenSSF Best Practices"></a>
   <a href="https://github.com/bakirgdev/CrocApp/releases/latest"><img src="https://img.shields.io/github/v/release/bakirgdev/CrocApp?color=555" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/platform-iOS%2026%20%7C%20iPadOS%2026%20%7C%20macOS%2026-555" alt="Platforms">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1E9E6A" alt="MIT License"></a>
@@ -95,7 +96,7 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 - No accounts, analytics, ads, or tracking. The [privacy policy](https://crocapp.dev/privacy/) lists every server the app can contact.
 - Transfer history stays on the device.
 - You can use your own croc relay instead of the default public ones.
-- Report vulnerabilities privately through [GitHub Security Advisories](https://github.com/bakirgdev/CrocApp/security/advisories/new), never in a public issue. See [`SECURITY.md`](SECURITY.md).
+- Report vulnerabilities privately through [GitHub Security Advisories](https://github.com/bakirgdev/CrocApp/security/advisories/new), never in a public issue. See [`SECURITY.md`](SECURITY.md). The threat model and trust boundaries are in [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md).
 
 ## Features
 
@@ -207,7 +208,7 @@ Not planned yet. If you want to see CrocApp on other platforms, show your intere
 
 ## Contributing
 
-Pull requests are welcome: bugs, features, docs, design, landing page. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, commit conventions, design rules, etc. Questions and ideas go to [Discussions](https://github.com/bakirgdev/CrocApp/discussions). Everyone follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+Pull requests are welcome: bugs, features, docs, design, landing page. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, commit conventions, design rules, etc. Questions and ideas go to [Discussions](https://github.com/bakirgdev/CrocApp/discussions). Everyone follows the [Code of Conduct](CODE_OF_CONDUCT.md). How decisions are made: [`GOVERNANCE.md`](GOVERNANCE.md). Where the project is headed: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Support the project
 
