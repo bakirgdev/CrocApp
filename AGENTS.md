@@ -2,6 +2,10 @@
 
 Native SwiftUI GUI for the croc file-transfer CLI.
 
+## Workflow
+
+Do every change on a new branch and land it through a pull request (merge rules: `.github/AGENTS.md`). GitHub deletes the remote branch when the PR merges. Then delete the local branch: `git switch main && git pull --ff-only && git branch -D BRANCH`. Use `-D`, because a squash merge leaves the branch's commits out of `main`, so `-d` refuses.
+
 ## Design
 
 Anything a user sees (app views, the landing page, the docs site, release artwork, store copy, UI strings) follows `design/`. Start at `design/AGENTS.md`. Run `scripts/verify-design.sh` after touching any of it; CI runs it.
