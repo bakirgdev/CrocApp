@@ -38,14 +38,13 @@ The markdown is canonical. Two hand-written mirrors carry it into code:
 
 Change a value in a markdown file and in both mirrors in the same commit. `design/tokens.css` is the only committed CSS copy: `scripts/assemble-site.sh` copies it for the landing page and `web/docs`'s `tokens` npm script for the docs site. Never edit a copy.
 
-Two scripts enforce this directory, and CI runs both on any change to `design/`, `app/` Swift or color sets, or web CSS:
+One script enforces this directory, and CI runs it on any change to `design/`, `app/` Swift or color sets, or web CSS:
 
 ```bash
-scripts/verify-contrast.sh   # every ratio colors.md claims, recomputed from tokens.css, plus the seven rules
-scripts/verify-design.sh     # mirror parity (tokens.css = DesignTokens.swift = color sets) and the no-literals lint
+scripts/verify-design.sh   # mirror parity (tokens.css = DesignTokens.swift = color sets), contrast (every ratio colors.md claims plus the seven rules) and the no-literals lint
 ```
 
-Run them after touching any value. A failure means the change or this directory is wrong; fix one of them, never the check.
+Run it after touching any value. A failure means the change or this directory is wrong; fix one of them, never the check.
 
 ## Rules
 
@@ -76,7 +75,7 @@ Never encode a value in a name (`--green-600`, not `--green-dark`).
 2. Add it to the topic file that owns it, with the role it plays.
 3. Add it to `tokens.css` in the matching group.
 4. If it is shared, add it to `DesignTokens.swift` or a color set and to the parity table in `scripts/verify-design.sh`. If the app deliberately does not mirror it, add it to `swiftui.md` → Not mirrored instead.
-5. If it is a color, run `scripts/verify-contrast.sh` and add a row to `colors.md` → Contrast for anything that reads on top of it.
+5. If it is a color, run `scripts/verify-design.sh` and add a row to `colors.md` → Contrast for anything that reads on top of it.
 6. A component measurement used by one component is a component constant in `components.md`, not a token.
 
 A token is live when the app or a site consumes it, or when it is a step in a scale. **Scales stay whole** (spacing, radius, type, weight, tracking, control height, icon size, icon stroke, glass, Apple's label/fill/background ladders) so nobody reaches for the wrong rung. Any other token with no consumer is dead: delete it from every file in the same commit.

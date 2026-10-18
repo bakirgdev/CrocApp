@@ -92,11 +92,10 @@ govulncheck ./...
 
 Anything visual, in the app, the web or elsewhere, follows [`design/AGENTS.md`](design/AGENTS.md). In short, fixed design principles (brandbook), like: design tokens instead of raw hex, px, pt, or durations; SF Symbols only; system font only; a light and a dark value for every surface.
 
-Two scripts enforce it, and CI runs both on any change to `design/`, app Swift or color sets, or web CSS. Run them yourself after touching a value:
+One script enforces it, and CI runs it on any change to `design/`, app Swift or color sets, or web CSS. Run it yourself after touching a value:
 
 ```bash
-scripts/verify-contrast.sh   # every contrast ratio in design/colors.md, recomputed from tokens.css
-scripts/verify-design.sh     # tokens.css = DesignTokens.swift = color sets, and no hex, px or raw system colors in app or web code
+scripts/verify-design.sh   # tokens.css = DesignTokens.swift = color sets, every contrast ratio in design/colors.md, and no hex, px or raw system colors in app or web code
 ```
 
 A failure means your change or `design/` is wrong. Fix one of them, never the check.

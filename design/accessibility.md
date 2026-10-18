@@ -4,7 +4,7 @@ The binding floor for the app, the landing page and the docs site. Nothing in `c
 
 ## Contrast
 
-WCAG 2.2 AA: body text 4.5:1, large text and UI boundaries 3:1. **Light is the constrained theme:** check it first. Ratios and the seven rules are in `colors.md` → Contrast and are enforced by `scripts/verify-contrast.sh`. Two decide most work:
+WCAG 2.2 AA: body text 4.5:1, large text and UI boundaries 3:1. **Light is the constrained theme:** check it first. Ratios and the seven rules are in `colors.md` → Contrast and are enforced by `scripts/verify-design.sh`. Two decide most work:
 
 - **Accent is a fill, not a label.** Accent text is `--color-accent-text`, or `--color-accent-text-on-tint` on grouped and tinted surfaces. In the app that includes every bordered and plain button label.
 - **A status color is a fill, never a foreground.** Status text is `--color-text-primary`.

@@ -24,10 +24,10 @@
 # generate_appcast ends up under $DEVID_WORK/dd/SourcePackages/artifacts.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib.sh
 
 OUT=${1:-dist}
-TMPROOT="${TMPDIR:-/tmp}"
-WORK="${DEVID_WORK:-${TMPROOT%/}/crocapp-devid}"
+WORK="${DEVID_WORK:-$TMPROOT/crocapp-devid}"
 ARCHIVE="$WORK/CrocApp.xcarchive"
 EXPORT="$WORK/export"
 IDENTITY="Developer ID Application"
@@ -44,40 +44,27 @@ fi
 # picked instead.
 SIGNER=$(security find-identity -v -p codesigning \
   | awk -v id="\"$IDENTITY: " -v team="($TEAM)\"" 'index($0, id) && index($0, team) { print $2; exit }')
-if [ -z "$SIGNER" ]; then
-  echo "error: no \"$IDENTITY\" identity for team $TEAM in the keychain search list." >&2
-  echo "Create one at developer.apple.com (Certificates > Developer ID Application) and install it." >&2
-  exit 1
-fi
+[ -n "$SIGNER" ] || fail "no \"$IDENTITY\" identity for team $TEAM in the keychain search list. Create one at developer.apple.com (Certificates > Developer ID Application) and install it."
 
 VERSION=$(sed -nE 's/^MARKETING_VERSION = ([^ ]+)$/\1/p' app/Config/Version.xcconfig)
-[ -n "$VERSION" ] || { echo "error: no MARKETING_VERSION in app/Config/Version.xcconfig" >&2; exit 1; }
+[ -n "$VERSION" ] || fail "no MARKETING_VERSION in app/Config/Version.xcconfig"
 
 rm -rf "$WORK"
 mkdir -p "$WORK" "$OUT"
 
 # Only the app target signs here: Sparkle is a binary package, so the manual
 # settings below reach no other target. The export re-signs everything nested.
-if ! ( cd app && xcodebuild -scheme 'CrocApp Direct' -configuration Release \
-    -destination 'generic/platform=macOS' -derivedDataPath "$WORK/dd" \
-    -archivePath "$ARCHIVE" archive ARCHS=arm64 \
-    CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$SIGNER" DEVELOPMENT_TEAM="$TEAM" \
-    PROVISIONING_PROFILE_SPECIFIER="$PROFILE" ) > "$WORK/archive.log" 2>&1; then
-  tail -n 40 "$WORK/archive.log" >&2
-  echo "error: archive failed, full log: $WORK/archive.log" >&2
-  exit 1
-fi
+logged "$WORK/archive.log" xcodebuild -project app/CrocApp.xcodeproj -scheme 'CrocApp Direct' \
+  -configuration Release -destination 'generic/platform=macOS' -derivedDataPath "$WORK/dd" \
+  -archivePath "$ARCHIVE" archive ARCHS=arm64 \
+  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$SIGNER" DEVELOPMENT_TEAM="$TEAM" \
+  PROVISIONING_PROFILE_SPECIFIER="$PROFILE"
 echo "archive: OK"
 
-if ! ( cd app && xcodebuild -exportArchive -archivePath "$ARCHIVE" \
-    -exportOptionsPlist Config/ExportOptions-DevID.plist \
-    -exportPath "$EXPORT" ) > "$WORK/export.log" 2>&1; then
-  tail -n 40 "$WORK/export.log" >&2
-  echo "error: export failed, full log: $WORK/export.log" >&2
-  exit 1
-fi
+logged "$WORK/export.log" xcodebuild -exportArchive -archivePath "$ARCHIVE" \
+  -exportOptionsPlist app/Config/ExportOptions-DevID.plist -exportPath "$EXPORT"
 APP="$EXPORT/CrocApp.app"
-[ -d "$APP" ] || { echo "error: no CrocApp.app in $EXPORT (see $WORK/export.log)" >&2; exit 1; }
+[ -d "$APP" ] || fail "no CrocApp.app in $EXPORT (see $WORK/export.log)"
 codesign --verify --strict --deep "$APP"
 echo DEVID-EXPORT-OK
 
@@ -85,7 +72,7 @@ echo DEVID-EXPORT-OK
 # not-yet-notarized app ("Gatekeeper rejected this file", spctl source
 # "Unnotarized Developer ID"). The notary log names any real problem.
 notarize() {
-  local file=$1 json status
+  local file=$1 json status id
   json="$WORK/notary-$(basename "$file").json"
   # Status is checked from the JSON, not the exit code alone, and a failed
   # submit still reaches the log fetch below.
@@ -97,8 +84,7 @@ notarize() {
     if id=$(plutil -extract id raw "$json" 2>/dev/null); then
       xcrun notarytool log "$id" "${NOTARY_AUTH[@]}" >&2 || echo "warning: could not fetch the notary log for $id" >&2
     fi
-    echo "error: notarization of $file: status '$status'" >&2
-    exit 1
+    fail "notarization of $file: status '$status'"
   fi
 }
 

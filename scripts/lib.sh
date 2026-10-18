@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers for the verify and capture harnesses. Source it; do not run it.
+# Shared helpers for the scripts in this directory. Source it; do not run it.
 
 # Per-user private dir on macOS, /tmp elsewhere. Build products and logs stay
 # out of the world-writable /tmp, where another local user could pre-create or
@@ -9,6 +9,14 @@ TMPROOT="${TMPROOT%/}"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 pass() { echo "PASS: $*"; }
+
+# Runs CMD with its output in LOG. A failure shows the log's tail and names the
+# log, where a bare redirect under `set -e` would exit without a word.
+logged() {                                          # logged LOG CMD...
+  local log=$1
+  shift
+  "$@" > "$log" 2>&1 || { tail -n 40 "$log" >&2; fail "$1 failed, full log: $log"; }
+}
 
 require_croc() {
   command -v "$CROC" >/dev/null 2>&1 || fail "croc not found at '$CROC' (set CROC=/path/to/croc)"

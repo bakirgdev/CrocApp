@@ -106,7 +106,7 @@ Status → meaning in CrocApp: **success** = transfer complete, E2E trust badge.
 
 ## Contrast (verified, WCAG 2.2)
 
-Every row is recomputed from `tokens.css` by `scripts/verify-contrast.sh`, which also asserts the rules below as invariants, the alias rules (4 and 6, the dark accent collapse) and the two bands of `--shadow-focus-ring` (7). Run it after touching any color. **Light is the constrained theme: check it first.**
+Every row is recomputed from `tokens.css` by `scripts/verify-design.sh` (contrast phase), which also asserts the rules below as invariants, the alias rules (4 and 6, the dark accent collapse) and the two bands of `--shadow-focus-ring` (7). Run it after touching any color. **Light is the constrained theme: check it first.**
 
 | Pair | Ratio | Verdict |
 |---|---|---|
