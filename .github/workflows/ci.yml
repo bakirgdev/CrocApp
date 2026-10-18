@@ -28,6 +28,7 @@ jobs:
       build: ${{ steps.filter.outputs.build }}
       design: ${{ steps.filter.outputs.design }}
       interop: ${{ steps.filter.outputs.interop }}
+      scripts: ${{ steps.filter.outputs.scripts }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -61,11 +62,12 @@ jobs:
           }
 
           {
-            out swift '^(app|CrocKit)/|^\.swift-format$|^\.xcode-version$|^scripts/format-swift\.sh$|^\.github/workflows/(ci|reusable-swift-format)\.yml$'
+            out swift '^(app|CrocKit)/|^scripts/screenshots/|^\.swift-format$|^\.xcode-version$|^scripts/format-swift\.sh$|^\.github/workflows/(ci|reusable-swift-format)\.yml$'
             out go '^crocmobile/|^\.github/workflows/(ci|reusable-go)\.yml$'
             out build '^(app|CrocKit|crocmobile)/|^scripts/build-xcframework\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
-            out design '^design/|^app/.*\.swift$|^app/CrocApp/Assets\.xcassets/|^web/landing/.*\.(css|html)$|^web/docs/src/css/|^scripts/(lib|verify-contrast|verify-design)\.sh$|^\.github/workflows/ci\.yml$'
+            out design '^design/|^app/.*\.swift$|^app/CrocApp/Assets\.xcassets/|^web/landing/.*\.(css|html)$|^web/docs/src/css/|^scripts/(lib|verify-design)\.sh$|^\.github/workflows/ci\.yml$'
             out interop '^(crocmobile|CrocKit)/|^scripts/(lib|verify-interop)\.sh$|^scripts/croc-v10\.version$|^\.github/workflows/ci\.yml$'
+            out scripts '^scripts/.*\.sh$|^\.github/workflows/ci\.yml$'
           } | tee -a "$GITHUB_OUTPUT"
 
   swift-format:
@@ -98,9 +100,24 @@ jobs:
         with:
           persist-credentials: false
 
-      - run: scripts/verify-contrast.sh
-
       - run: scripts/verify-design.sh
+
+  # The runner image ships shellcheck, so there is nothing to install or pin.
+  shellcheck:
+    needs: changes
+
+    if: needs.changes.outputs.scripts == 'true'
+
+    runs-on: ubuntu-26.04
+
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - run: shellcheck --version && shellcheck -x scripts/*.sh
 
   # The interop harness against a relay on localhost, never the public relays:
   # those rate-limit a shared runner address and make the run flaky. The
@@ -264,7 +281,7 @@ jobs:
   pass:
     name: ci pass
 
-    needs: [changes, swift-format, go, contrast, interop, build]
+    needs: [changes, swift-format, go, contrast, shellcheck, interop, build]
 
     if: ${{ always() }}
 

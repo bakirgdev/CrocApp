@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Verifies the macOS app's UI state machine end-to-end via launch arguments.
-# Six directions: CLI -> app receive (+ history), app -> CLI send, local-only
-# send, custom-relay send, no-compress send, both-sides-confirm send, then a
-# receive onto an existing file with Keep Both and with Replace, then a 130 MiB
-# transfer in each direction under Connection Automatic and Relay only (needs
-# the public internet: Tailcat bootstraps from tailcat.dev). Every one gates on
-# a byte-identical diff AND the app's verify-result.txt.
+# Verifies the macOS app's UI state machine end-to-end via launch arguments,
+# in 12 scenarios: CLI -> app receive (+ history), app -> CLI send, local-only
+# send, custom-relay send, no-compress send, both-sides-confirm send, a receive
+# onto an existing file with Keep Both and with Replace, a 130 MiB transfer in
+# each direction under Connection Automatic and Relay only (needs the public
+# internet: Tailcat bootstraps from tailcat.dev), stored transfers against a
+# local store server, menu-bar quick send, Open at login and the Shortcuts
+# actions. Every transfer gates on a byte-identical diff AND the app's
+# verify-result.txt.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
@@ -20,11 +22,27 @@ HISTORY="$DOCS/verify-history.txt"
 READY="$DOCS/verify-code-ready.txt"
 DD="$TMPROOT/dd-mac"
 
-TMP=$(mktemp -d)
-trap 'kill_jobs; rm -rf "$TMP"; rm -rf "$DOCS"/bigsend.bin "$DOCS"/bigrecv.bin "$DOCS"/store-src "$DOCS"/storeme.bin "$DOCS"/verify-store-*' EXIT
+RECV_DIR="$HOME/Downloads/CrocApp"                 # the Receive action's real folder
+RECV_NAME="intent-recv-$$.txt"
 
-( cd app && xcodebuild -scheme CrocApp -destination 'platform=macOS' \
-    -derivedDataPath "$DD" -allowProvisioningUpdates build ) > "$TMPROOT/mac-build.log" 2>&1
+TMP=$(mktemp -d)
+SAVED_PASTE=""
+# Everything a run writes outside $TMP, so a failed run leaves none of it: the
+# app's Documents (also its receive folder), the Receive action's file, and the
+# user's pasteboard, which step 10 overwrites.
+cleanup() {
+  kill_jobs
+  if [ -n "$SAVED_PASTE" ]; then pbcopy < "$SAVED_PASTE"; fi
+  rm -rf "$DOCS"/{macfile,sendme,localme,relayme,nocompme,collide,menubar,intentsend}.txt \
+    "$DOCS/collide (1).txt" "$DOCS"/{bigsend,bigrecv,storeme}.bin "$DOCS"/{askdir,store-src} \
+    "$DOCS"/verify-*
+  rm -f "$RECV_DIR/$RECV_NAME"
+  rm -rf "$TMP"
+}
+trap cleanup EXIT
+
+logged "$TMPROOT/mac-build.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
+  -destination 'platform=macOS' -derivedDataPath "$DD" -allowProvisioningUpdates build
 APP=$(find "$DD/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
 [ -n "$APP" ] || fail "no CrocApp.app in $DD (see $TMPROOT/mac-build.log)"
 BIN="$APP/Contents/MacOS/CrocApp"
@@ -68,10 +86,10 @@ recv_from_app() {                                   # recv_from_app LABEL SRC DS
   shift 3
   mkdir -p "$dst"
   ( cd "$dst" && CROC_SECRET="$C" timeout "${RECV_TIMEOUT:-120}" "$CROC" --ignore-stdin --yes "$@" ) \
-      > "$TMPROOT/mac-cli-$label.log" 2>&1
+      > "$TMPROOT/mac-cli-$label.log" 2>&1 || fail "$label: croc receive exited $? (log: $TMPROOT/mac-cli-$label.log)"
   await_app 30
   check_result "$label"
-  diff "$src" "$dst/${src##*/}"
+  cmp -s "$src" "$dst/${src##*/}" || fail "$label: received bytes differ"
 }
 
 # Every code's first 4 characters must be unique: the relay hashes that prefix
@@ -81,13 +99,13 @@ code() { echo "$1$$-mac"; }
 # --- 1: CLI -> app, plus SwiftData history isolation -------------------------
 C=$(code recv)
 echo "mac transfer $$" > "$TMP/macfile.txt"
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin send macfile.txt ) \
+( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --disable-clipboard --ignore-stdin send macfile.txt ) \
     > "$TMPROOT/mac-cli-send.log" 2>&1 &
 sleep 3
 run_app --auto-receive "$C" > "$TMPROOT/mac-app-recv.log" 2>&1
 await_app 120
 check_result receive
-diff "$TMP/macfile.txt" "$DOCS/macfile.txt"
+cmp -s "$TMP/macfile.txt" "$DOCS/macfile.txt" || fail "receive: received bytes differ"
 # --auto-* launches get an in-memory ModelContainer, so records=1 proves the
 # transfer was recorded and that the harness isolation still holds.
 got=$(cat "$HISTORY" 2>/dev/null || echo missing)
@@ -168,10 +186,11 @@ run_app --auto-send "$DOCS/askdir" --code "$C" --ask > "$TMPROOT/mac-app-ask.log
 await_ready
 DST="$TMP/d6"; mkdir -p "$DST"
 printf 'y\ny\n' > "$TMP/ask-answers"
-( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" --yes < "$TMP/ask-answers" ) > "$TMPROOT/mac-cli-ask.log" 2>&1
+( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" --yes < "$TMP/ask-answers" ) > "$TMPROOT/mac-cli-ask.log" 2>&1 \
+  || fail "ask send: croc receive exited $? (log: $TMPROOT/mac-cli-ask.log)"
 await_app 30
 check_result "ask send"
-diff -r "$DOCS/askdir" "$DST/askdir"
+diff -r "$DOCS/askdir" "$DST/askdir" > /dev/null || fail "ask send: received folder differs"
 echo MAC-ASK-OK
 
 # --- 7: CLI -> app onto an existing file, Keep Both and Replace (R24) --------
@@ -184,7 +203,7 @@ collide() {                                         # collide POLICY
   rm -f "$RESULT" "$DOCS/collide.txt" "$DOCS/collide (1).txt"
   echo "existing file" > "$DOCS/collide.txt"
   echo "mac collide $policy $$" > "$TMP/collide.txt"
-  ( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin send collide.txt ) \
+  ( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --disable-clipboard --ignore-stdin send collide.txt ) \
       > "$TMPROOT/mac-cli-collide-$policy.log" 2>&1 &
   sleep 3
   run_app --auto-receive "$C" --when-exists "$policy" > "$TMPROOT/mac-app-collide-$policy.log" 2>&1
@@ -192,9 +211,9 @@ collide() {                                         # collide POLICY
   check_result "collide $policy"
   if [ "$policy" = keepBoth ]; then
     [ "$(cat "$DOCS/collide.txt")" = "existing file" ] || fail "keepBoth: existing file changed"
-    diff "$TMP/collide.txt" "$DOCS/collide (1).txt"
+    cmp -s "$TMP/collide.txt" "$DOCS/collide (1).txt" || fail "keepBoth: no collide (1).txt with the new content"
   else
-    diff "$TMP/collide.txt" "$DOCS/collide.txt"
+    cmp -s "$TMP/collide.txt" "$DOCS/collide.txt" || fail "replace: file not replaced"
     [ ! -e "$DOCS/collide (1).txt" ] || fail "replace: renamed copy written"
   fi
 }
@@ -224,7 +243,7 @@ transport_app_receive() {                           # transport_app_receive MODE
   local mode=$1 log="$TMPROOT/mac-cli-xr$1.log" cli_pid
   C=$(code "xr$mode")
   rm -f "$RESULT" "$DOCS/bigrecv.bin"
-  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" --debug --ignore-stdin send --transport "$mode" bigrecv.bin ) \
+  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" --debug --disable-clipboard --ignore-stdin send --transport "$mode" bigrecv.bin ) \
       > "$log" 2>&1 &
   cli_pid=$!
   sleep 3
@@ -323,9 +342,9 @@ await_ready
 C=$(cat "$DOCS/verify-code.txt")
 recv_from_app menubar "$DOCS/menubar.txt" "$TMP/d10"
 
-# The pasteboard is the user's: put it back afterwards.
+# The pasteboard is the user's: cleanup puts it back.
+pbpaste > "$TMP/pasteboard.txt"
 SAVED_PASTE="$TMP/pasteboard.txt"
-pbpaste > "$SAVED_PASTE"
 rm -f "$RESULT" "$HISTORY" "$DOCS/verify-code.txt"
 CLIP="mac menubar clipboard $$"
 printf '%s' "$CLIP" | pbcopy
@@ -334,12 +353,10 @@ await_ready
 C=$(cat "$DOCS/verify-code.txt")
 mkdir -p "$TMP/d10t"
 ( cd "$TMP/d10t" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes ) \
-    > "$TMPROOT/mac-cli-menubar-clip.log" 2>&1
+    > "$TMPROOT/mac-cli-menubar-clip.log" 2>&1 || fail "menubar-clipboard: croc receive exited $? (log: $TMPROOT/mac-cli-menubar-clip.log)"
 await_app 30
-pbcopy < "$SAVED_PASTE"
 check_result menubar-clipboard
 grep -qF "$CLIP" "$TMPROOT/mac-cli-menubar-clip.log" || fail "menu-bar clipboard text did not reach the CLI"
-rm -f "$DOCS/menubar.txt"
 echo MAC-MENUBAR-OK
 
 # --- 11: Open at login matches the system status (R26) -----------------------
@@ -365,8 +382,8 @@ echo MAC-LOGIN-OK
 # --- 12: the Shortcuts actions against the CLI (R27) -------------------------
 # Shortcuts cannot be driven from a script, so --auto-intent calls each
 # action's perform() directly (the value rides behind --intent-arg: two bare
-# arguments in a row make AppKit skip the window). The send actions return their code, which the
-# app writes to verify-code.txt; Receive saves into the app's receive folder
+# arguments in a row make AppKit skip the window). The send actions return
+# their code, which the app writes to verify-code.txt; Receive saves into the app's receive folder
 # (the real ~/Downloads/CrocApp), so the file gets a unique name and is
 # removed afterwards.
 rm -f "$RESULT" "$HISTORY" "$DOCS/verify-code.txt"
@@ -383,24 +400,21 @@ await_ready
 C=$(cat "$DOCS/verify-code.txt")
 mkdir -p "$TMP/d12t"
 ( cd "$TMP/d12t" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes ) \
-    > "$TMPROOT/mac-cli-intent-text.log" 2>&1
+    > "$TMPROOT/mac-cli-intent-text.log" 2>&1 || fail "intent-send-text: croc receive exited $? (log: $TMPROOT/mac-cli-intent-text.log)"
 await_app 30
 check_result intent-send-text
 grep -qF "$INTENT_TEXT" "$TMPROOT/mac-cli-intent-text.log" || fail "Send Text action: text did not reach the CLI"
 
 C=$(code intr)
-RECV_NAME="intent-recv-$$.txt"
-RECV_DIR="$HOME/Downloads/CrocApp"
 rm -f "$RESULT" "$HISTORY"
 echo "mac intent receive $$" > "$TMP/$RECV_NAME"
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin send "$RECV_NAME" ) \
+( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --disable-clipboard --ignore-stdin send "$RECV_NAME" ) \
     > "$TMPROOT/mac-cli-intent-send.log" 2>&1 &
 sleep 3
 run_app --auto-intent receive --intent-arg "$C" > "$TMPROOT/mac-app-intent-recv.log" 2>&1
 await_app 120
 got=$(cat "$RESULT" 2>/dev/null || echo missing)
 echo "intent receive result: $got"
-diff "$TMP/$RECV_NAME" "$RECV_DIR/$RECV_NAME" || fail "Receive action: file differs"
-rm -f "$RECV_DIR/$RECV_NAME" "$DOCS/intentsend.txt"
+cmp -s "$TMP/$RECV_NAME" "$RECV_DIR/$RECV_NAME" || fail "Receive action: file differs"
 [ "$got" = "ok success=true files=$RECV_NAME" ] || fail "Receive action: expected the file name back, got '$got'"
 echo MAC-INTENT-OK

@@ -202,7 +202,7 @@ Settings overrides apply in any harness run (`isHarnessRun` is true for `--auto-
 
 The screenshot flags (`--screen`, `--stage`, `--seed-history`, `--hold`) are documented in `docs/knowledge/screenshots.md`.
 
-The harness writes `verify-result.txt` (`ok success=<bool>` or `error <msg>`) to Documents. It also writes `verify-code-ready.txt` (contents `ready`, written once, when the phase first reaches `.waiting`, i.e. a send has its code; `verify-share-sim.sh` and `verify-app-mac.sh` wait for it) and `verify-history.txt` (`records=N`, written when the transfer is done or failed; `verify-app-mac.sh` reads it). The result contract is shared by `scripts/verify-app-sim.sh`, `verify-app-mac.sh`, and `verify-share-sim.sh`. AutoVerify's Documents path is hardcoded, decoupled from `OutputFolderStore.defaultFolder`.
+The harness writes `verify-result.txt` (`ok success=<bool>` or `error <msg>`) to Documents. It also writes `verify-code-ready.txt` (contents `ready`, written once, when the phase first reaches `.waiting`, i.e. a send has its code; `verify-app-sim.sh` and `verify-app-mac.sh` wait for it) and `verify-history.txt` (`records=N`, written when the transfer is done or failed; `verify-app-mac.sh` reads it). The result contract is shared by `scripts/verify-app-sim.sh` and `verify-app-mac.sh`. AutoVerify's Documents path is hardcoded, decoupled from `OutputFolderStore.defaultFolder`.
 
 Launch gotchas, both macOS:
 

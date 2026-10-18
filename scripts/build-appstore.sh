@@ -18,6 +18,7 @@
 # APPSTORE_WORK sets the scratch directory (archives, DerivedData, logs).
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib.sh
 
 UPLOAD=0
 PLATFORMS=()
@@ -30,8 +31,7 @@ for arg in "$@"; do
 done
 [ ${#PLATFORMS[@]} -gt 0 ] || PLATFORMS=(ios macos)
 
-TMPROOT="${TMPDIR:-/tmp}"
-WORK="${APPSTORE_WORK:-${TMPROOT%/}/crocapp-appstore}"
+WORK="${APPSTORE_WORK:-$TMPROOT/crocapp-appstore}"
 rm -rf "$WORK"
 mkdir -p "$WORK"
 
@@ -43,25 +43,17 @@ for platform in "${PLATFORMS[@]}"; do
   ARCHIVE="$WORK/CrocApp-$platform.xcarchive"
   EXPORT="$WORK/export-$platform"
 
-  if ! ( cd app && xcodebuild -scheme CrocApp -configuration Release \
-      -destination "$DEST" -derivedDataPath "$WORK/dd" \
-      -archivePath "$ARCHIVE" -allowProvisioningUpdates archive ) > "$WORK/archive-$platform.log" 2>&1; then
-    tail -n 40 "$WORK/archive-$platform.log" >&2
-    echo "error: $platform archive failed, full log: $WORK/archive-$platform.log" >&2
-    exit 1
-  fi
+  logged "$WORK/archive-$platform.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
+    -configuration Release -destination "$DEST" -derivedDataPath "$WORK/dd" \
+    -archivePath "$ARCHIVE" -allowProvisioningUpdates archive
   echo "$platform archive: OK"
 
   cp "$OPTIONS" "$WORK/options-$platform.plist"
-  [ "$UPLOAD" = 1 ] && plutil -replace destination -string upload "$WORK/options-$platform.plist"
+  if [ "$UPLOAD" = 1 ]; then plutil -replace destination -string upload "$WORK/options-$platform.plist"; fi
 
-  if ! xcodebuild -exportArchive -archivePath "$ARCHIVE" \
-      -exportOptionsPlist "$WORK/options-$platform.plist" \
-      -exportPath "$EXPORT" -allowProvisioningUpdates > "$WORK/export-$platform.log" 2>&1; then
-    tail -n 40 "$WORK/export-$platform.log" >&2
-    echo "error: $platform export failed, full log: $WORK/export-$platform.log" >&2
-    exit 1
-  fi
+  logged "$WORK/export-$platform.log" xcodebuild -exportArchive -archivePath "$ARCHIVE" \
+    -exportOptionsPlist "$WORK/options-$platform.plist" \
+    -exportPath "$EXPORT" -allowProvisioningUpdates
   if [ "$UPLOAD" = 1 ]; then
     echo "APPSTORE-UPLOAD-OK $platform"
   else

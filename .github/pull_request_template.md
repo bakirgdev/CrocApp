@@ -33,5 +33,5 @@ Before and after screenshots, light and dark, on every affected platform.
 
 - [ ] Tokens, SF Symbols and the system font only
 - [ ] Both themes checked
-- [ ] `scripts/verify-contrast.sh` and `scripts/verify-design.sh` pass
+- [ ] `scripts/verify-design.sh` passes
 - [ ] Screenshots recaptured if the UI changed (`scripts/capture-screenshots.sh`)

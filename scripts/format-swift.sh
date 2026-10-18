@@ -11,7 +11,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-PATHS=(app/CrocApp app/CrocAppDirect app/CrocShare app/CrocAppTests CrocKit/Sources CrocKit/Tests CrocKit/Package.swift)
+PATHS=(app/CrocApp app/CrocAppDirect app/CrocShare app/CrocAppTests CrocKit/Sources CrocKit/Tests CrocKit/Package.swift
+  scripts/screenshots)
 
 LINT_ONLY=0
 case "${1-}" in

@@ -1,20 +1,25 @@
 #!/usr/bin/env bash
-# Enforces the two rules design/AGENTS.md leaves to a machine.
+# shellcheck disable=SC2016  # awk programs and tables in single quotes: awk expands them, not the shell
+# Enforces the three rules design/AGENTS.md leaves to a machine.
 #
 #   1. Mirror parity. design/tokens.css is canonical; DesignTokens.swift and the
 #      asset catalog color sets are hand-written mirrors. Every shared value
 #      must be equal in all three, every token must either be mirrored or
 #      listed as deliberately not mirrored.
-#   2. No literals. Web CSS and the app write tokens, not hex, px, ms, raw
+#   2. Contrast. Every ratio design/colors.md claims is recomputed from
+#      tokens.css (WCAG 2.x relative luminance, alpha composited onto the
+#      surface underneath), and the seven rules under the table hold as
+#      invariants. Edit a green step and this names the rule you just broke.
+#   3. No literals. Web CSS and the app write tokens, not hex, px, ms, raw
 #      system colors or spring presets (design/web.md -> The only literals web
 #      may write, design/swiftui.md -> Allowed literals).
 #
 #   scripts/verify-design.sh           # findings as path:line: message, exit 1 on any
 #   scripts/verify-design.sh --quiet   # findings and FAIL lines only, no OK lines
 #
-# Pure bash and awk on purpose, like verify-contrast.sh: no toolchain, so CI
-# runs it on a bare runner. Only POSIX awk features are used (BSD awk on macOS,
-# mawk on the Ubuntu runner): no interval expressions, no gawk extensions.
+# Pure bash and awk on purpose: no toolchain, so CI runs it on a bare runner.
+# Only POSIX awk features are used (BSD awk on macOS, mawk on the Ubuntu
+# runner): no interval expressions, no gawk extensions.
 # Exit 0 clean, 1 findings, 2 usage or unreadable input.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -30,8 +35,10 @@ export LC_ALL=C
 TOKENS=design/tokens.css
 SWIFT_TOKENS=app/CrocApp/Support/DesignTokens.swift
 COLORSETS=app/CrocApp/Assets.xcassets
+COLORS_MD=design/colors.md
 [ -r "$TOKENS" ] || { echo "FAIL: $TOKENS not readable" >&2; exit 2; }
 [ -r "$SWIFT_TOKENS" ] || { echo "FAIL: $SWIFT_TOKENS not readable" >&2; exit 2; }
+[ -r "$COLORS_MD" ] || { echo "FAIL: $COLORS_MD not readable" >&2; exit 2; }
 [ -d "$COLORSETS" ] || { echo "FAIL: $COLORSETS not a directory" >&2; exit 2; }
 
 # ---------------------------------------------------------------------------
@@ -135,6 +142,82 @@ NOT_MIRRORED='
 '
 
 # ---------------------------------------------------------------------------
+# Contrast table. Above the first marker: every row design/colors.md asserts,
+# as theme|foreground|background stack|expected. The stack composites front to
+# back, so a translucent tint names the opaque surface under it. Each expected
+# ratio must also appear in the Contrast section of design/colors.md: keep the
+# two in step. Below the first marker: rules that must hold whatever the values
+# are, as label|theme|foreground|stack|min or max|threshold. Below the second
+# marker: alias rules, label|theme|token|target, true when the token resolves
+# to the same color as the target in that theme. The focus ring bands (rule 7)
+# are parsed from --shadow-focus-ring, not listed here.
+# ---------------------------------------------------------------------------
+CONTRAST_TABLE='
+light|--color-accent|--color-surface-base|3.41
+light|--color-accent|--color-surface-grouped|3.06
+light|--color-accent|--color-accent-tint>--color-surface-base|2.99
+light|--color-accent-text|--color-surface-base|4.94
+light|--color-accent-text|--color-surface-grouped|4.42
+light|--color-accent-text|--color-accent-tint>--color-surface-base|4.32
+light|--color-accent-text|--color-surface-card|4.94
+light|--color-accent-text-on-tint|--color-surface-base|7.36
+light|--color-accent-text-on-tint|--color-surface-grouped|6.60
+light|--color-accent-text-on-tint|--color-accent-tint>--color-surface-base|6.45
+light|--label-2|--color-surface-base|3.44
+light|--label-2-web|--color-surface-base|5.16
+light|--label-2-web|--color-surface-grouped|4.85
+light|--color-text-secondary|--color-accent-tint>--color-surface-base|4.78
+light|--label-3|--color-surface-base|1.73
+light|--color-on-accent|--color-accent|3.41
+light|--color-on-status|--color-status-error|3.55
+light|--color-status-success|--color-status-success-tint>--color-surface-base|1.98
+light|--color-status-warning|--color-status-warning-tint>--color-surface-base|1.96
+light|--color-status-error|--color-status-error-tint>--color-surface-base|2.94
+light|--color-status-success|--color-surface-base|2.22
+light|--color-status-warning|--color-surface-base|2.20
+light|--color-status-error|--color-surface-base|3.55
+light|--color-status-info|--color-surface-base|4.02
+light|--glass-tint-accent|--color-surface-base|1.14
+dark|--color-accent|--color-surface-base|9.44
+dark|--color-accent|--color-surface-card|7.65
+dark|--color-accent|--color-accent-tint>--color-surface-base|7.72
+dark|--color-on-accent|--color-accent|7.19
+dark|--color-on-status|--color-status-error|3.41
+dark|--label-2|--color-surface-base|6.36
+dark|--color-status-success|--color-status-success-tint>--color-surface-base|8.05
+dark|--color-status-warning|--color-status-warning-tint>--color-surface-base|7.93
+dark|--color-status-error|--color-status-error-tint>--color-surface-base|5.25
+dark|--color-status-info|--color-status-info-tint>--color-surface-base|4.92
+== invariants ==
+accent fill clears 3:1 on base|light|--color-accent|--color-surface-base|min|3.0
+accent-text clears AA on base|light|--color-accent-text|--color-surface-base|min|4.5
+accent-text-on-tint clears AA on grouped|light|--color-accent-text-on-tint|--color-surface-grouped|min|4.5
+accent-text-on-tint clears AA on tint|light|--color-accent-text-on-tint|--color-accent-tint>--color-surface-base|min|4.5
+web secondary clears AA on grouped|light|--label-2-web|--color-surface-grouped|min|4.5
+filled prominent clears 3:1|light|--color-on-accent|--color-accent|min|3.0
+filled destructive clears 3:1, light|light|--color-on-status|--color-status-error|min|3.0
+filled destructive clears 3:1, dark|dark|--color-on-status|--color-status-error|min|3.0
+focus ring outer band clears 3:1 on base|light|--color-accent|--color-surface-base|min|3.0
+focus ring inner band clears 3:1 on the accent fill|light|--color-surface-base|--color-accent|min|3.0
+tertiary is NOT a usable text color|light|--label-3|--color-surface-base|max|3.0
+secondary text clears AA on the accent tint (rule 4)|light|--color-text-secondary|--color-accent-tint>--color-surface-base|min|4.5
+accent-text clears AA on a card|light|--color-accent-text|--color-surface-card|min|4.5
+the accent tint is NOT a visible focus indicator (rule 7)|light|--glass-tint-accent|--color-surface-base|max|1.5
+dark status success clears AA on its own tint|dark|--color-status-success|--color-status-success-tint>--color-surface-base|min|4.5
+dark status warning clears AA on its own tint|dark|--color-status-warning|--color-status-warning-tint>--color-surface-base|min|4.5
+dark status error clears AA on its own tint|dark|--color-status-error|--color-status-error-tint>--color-surface-base|min|4.5
+dark status info clears AA on its own tint|dark|--color-status-info|--color-status-info-tint>--color-surface-base|min|4.5
+== aliases ==
+rule 4: secondary text is label-2-web, light|light|--color-text-secondary|--label-2-web
+rule 4: secondary text is label-2-web, dark|dark|--color-text-secondary|--label-2-web
+rule 6: link is accent-text, light|light|--color-text-link|--color-accent-text
+rule 6: link is accent-text, dark|dark|--color-text-link|--color-accent-text
+dark accent collapses to green-400|dark|--color-accent|--green-400
+dark accent-text collapses to green-400|dark|--color-accent-text|--green-400
+dark accent-text-on-tint collapses to green-400|dark|--color-accent-text-on-tint|--green-400
+'
+
+# ---------------------------------------------------------------------------
 # No-literals allowlists. path ERE @@ source-line ERE @@ reason. A finding is
 # suppressed only when both match, so an allowance cannot silently widen to a
 # whole file. Never suppress with a comment in Swift or CSS: add a row here.
@@ -229,7 +312,7 @@ function swift_clean(path,   n, raw, out, i, j, len, c, c2, c3, d, in_block, in_
 
 function count_of(line, ch,   t) { t = line; return gsub(ch, "", t) }
 
-# rgba of a token or literal: "r g b a", channels 0-255, alpha 0-1.
+# Split on top-level commas only, so a nested rgba(...) survives intact.
 function split_top(s, out,   i, ch, depth, cur, n) {
   depth = 0; cur = ""; n = 0
   for (i = 1; i <= length(s); i++) {
@@ -254,15 +337,9 @@ function hex2dec(h,   i, c, d, n) {
   return n
 }
 
-function die(msg) { print "FAIL: " msg > "/dev/stderr"; internal = 1; exit 2 }
-'
+function die(msg) { print "FAIL: " msg > "/dev/stderr"; exit 2 }
 
-# ---------------------------------------------------------------------------
-# Phase 1: mirror parity
-# ---------------------------------------------------------------------------
-AWK_PARITY='
-function finding(path, line, msg) { print path ":" line ": " msg; nfind++ }
-
+# Returns "r g b a": channels 0-255, alpha 0-1.
 function parse_color(v, theme, depth,   args, n, inner, hex, parts, cnt, a) {
   v = trim(v)
   if (depth > 16) die("token recursion too deep at " v)
@@ -325,9 +402,16 @@ function load_tokens(path,   body, n, pieces, i, d, p, name, cum, lead, k) {
     cum += nl_count(pieces[i])
   }
 }
+'
+
+# ---------------------------------------------------------------------------
+# Phase 1: mirror parity
+# ---------------------------------------------------------------------------
+AWK_PARITY='
+function finding(path, line, msg) { print path ":" line ": " msg; nfind++ }
 
 # DesignTokens.swift -> SW[Enum.name] (whole statement), SWLINE[...]
-function load_swift(path,   n, i, line, depth, sp, STK, c, k, stmt, j, pd, bd, name, pend, key) {
+function load_swift(path,   n, i, line, depth, sp, c, k, stmt, j, pd, bd, name, pend, key) {
   n = swift_clean(path)
   if (n < 0) die(path " not readable")
   depth = 0; sp = 0; pend = ""
@@ -421,7 +505,7 @@ function comp(v, is_alpha) {
   return v + 0
 }
 
-function load_colorset(set,   path, line, rc, mode, skip, r, g, b, a, rline, val, have) {
+function load_colorset(set,   path, line, rc, mode, skip, r, g, b, a, rline, have) {
   path = colorsets "/" set ".colorset/Contents.json"
   mode = "any"; skip = 0; have = 0
   while ((rc = (getline line < path)) > 0) {
@@ -501,7 +585,168 @@ BEGIN {
 '
 
 # ---------------------------------------------------------------------------
-# Phase 2a: web no-literals lint
+# Phase 2: contrast
+# ---------------------------------------------------------------------------
+AWK_CONTRAST='
+function fail(msg) { failures[++nfail] = msg }
+
+# Source-over. bg is opaque by the time this runs.
+function composite(fg, bg,   f, b, a, i, out) {
+  split(fg, f, " "); split(bg, b, " ")
+  a = f[4]
+  out = ""
+  for (i = 1; i <= 3; i++) out = out (f[i] * a + b[i] * (1 - a)) " "
+  return out "1"
+}
+
+# Resolve a background stack (front to back, ">"-separated) to one opaque color.
+function flatten(stack, theme,   names, n, i, result, layer, c) {
+  n = split(stack, names, ">")
+  result = resolve(names[n], theme, 0)
+  split(result, c, " ")
+  if (c[4] + 0 < 1) die("bottom of stack " names[n] " is not opaque")
+  for (i = n - 1; i >= 1; i--) {
+    layer = resolve(names[i], theme, 0)
+    result = composite(layer, result)
+  }
+  return result
+}
+
+function channel(v) {
+  v /= 255
+  return (v <= 0.03928) ? v / 12.92 : ((v + 0.055) / 1.055) ^ 2.4
+}
+
+function luminance(col,   c) {
+  split(col, c, " ")
+  return 0.2126 * channel(c[1]) + 0.7152 * channel(c[2]) + 0.0722 * channel(c[3])
+}
+
+function measure(theme, fg_name, stack,   bg, fg, f, la, lb, hi, lo) {
+  bg = flatten(stack, theme)
+  fg = resolve(fg_name, theme, 0)
+  split(fg, f, " ")
+  if (f[4] + 0 < 1) fg = composite(fg, bg)
+  la = luminance(fg); lb = luminance(bg)
+  hi = (la > lb) ? la : lb
+  lo = (la > lb) ? lb : la
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+# Rule 7: --shadow-focus-ring is two bands, the base surface inside (2px) and
+# the accent outside (4px). The contrast rows prove each band reads against the
+# other and the accent; this proves the token still is that ring.
+function check_ring(   ring, n, bands, k, parts, np, spread, color, want_spread, want_color) {
+  if (!("--shadow-focus-ring" in VAL)) { fail("--shadow-focus-ring is not defined in " tokens); return }
+  ring = VAL["--shadow-focus-ring"]
+  n = split_top(ring, bands)
+  if (n != 2) { fail("--shadow-focus-ring must have exactly two bands, has " n); return }
+  for (k = 1; k <= 2; k++) {
+    want_spread = (k == 1) ? "2px" : "4px"
+    want_color = (k == 1) ? "var(--color-surface-base)" : "var(--color-accent)"
+    np = split(bands[k], parts, " ")
+    spread = parts[4]; color = parts[np]
+    if (np != 5 || parts[1] != "0" || parts[2] != "0" || parts[3] != "0" || spread != want_spread || color != want_color)
+      fail("--shadow-focus-ring band " k " is \"" bands[k] "\", rule 7 needs \"0 0 0 " want_spread " " want_color "\"")
+  }
+}
+
+# The Contrast section of colors.md: from its heading to the next `## ` line.
+function contrast_section(path,   lines, n, i, in_sec, out) {
+  n = split(read_file(path), lines, "\n")
+  if (lines[1] == "\001unreadable") die(path " not readable")
+  in_sec = 0; out = ""
+  for (i = 1; i <= n; i++) {
+    if (lines[i] ~ /^## Contrast/) in_sec = 1
+    else if (lines[i] ~ /^## /) in_sec = 0
+    if (in_sec) out = out lines[i] "\n"
+  }
+  return out
+}
+
+# True when num appears in text as a whole number: no digit or "." before it
+# (so 3.41 is not found in 13.41), no digit after it.
+function has_number(text, num,   rest, p, off, before, after) {
+  rest = text; off = 0
+  while ((p = index(rest, num)) > 0) {
+    before = (off + p > 1) ? substr(text, off + p - 1, 1) : ""
+    after = substr(text, off + p + length(num), 1)
+    if (before !~ /[0-9.]/ && after !~ /[0-9]/) return 1
+    off += p
+    rest = substr(rest, p + 1)
+  }
+  return 0
+}
+
+BEGIN {
+  TOLERANCE = 0.01
+  tokens = ENVIRON["TOKENS"]; quiet = (ENVIRON["QUIET"] == "1")
+  width = 10
+
+  load_tokens(tokens)
+
+  section = "cases"
+  n = split(ENVIRON["CONTRAST_TABLE"], rows, "\n")
+  for (i = 1; i <= n; i++) {
+    if (trim(rows[i]) == "") continue
+    if (trim(rows[i]) == "== invariants ==") { section = "invariants"; continue }
+    if (trim(rows[i]) == "== aliases ==") { section = "aliases"; continue }
+    split(rows[i], f, "|")
+    if (section == "cases") {
+      ncase++
+      ctheme[ncase] = f[1]; cfg[ncase] = f[2]; cstack[ncase] = f[3]; cwant[ncase] = f[4] + 0
+      if (length(f[2]) > width) width = length(f[2])
+    } else if (section == "aliases") {
+      nalias++
+      alabel[nalias] = f[1]; atheme[nalias] = f[2]; atoken[nalias] = f[3]; atarget[nalias] = f[4]
+    } else {
+      ninvariant++
+      ilabel[ninvariant] = f[1]; itheme[ninvariant] = f[2]; ifg[ninvariant] = f[3]
+      istack[ninvariant] = f[4]; ikind[ninvariant] = f[5]; ithreshold[ninvariant] = f[6] + 0
+    }
+  }
+
+  doc = contrast_section(ENVIRON["COLORS_MD"])
+  if (doc == "") fail(ENVIRON["COLORS_MD"] ": has no Contrast section")
+
+  if (!quiet) printf "%-6s %-*s %-46s %6s %6s\n", "theme", width, "foreground", "on", "got", "doc"
+
+  for (i = 1; i <= ncase; i++) {
+    got = measure(ctheme[i], cfg[i], cstack[i])
+    on = cstack[i]; gsub(/>/, " over ", on)
+    drift = (got - cwant[i] < -TOLERANCE || got - cwant[i] > TOLERANCE)
+    if (drift) fail(ctheme[i] ": " cfg[i] " on " on " is " sprintf("%.2f", got) ", colors.md says " sprintf("%.2f", cwant[i]))
+    if (!quiet) printf "%-6s %-*s %-46s %6.2f %6.2f%s\n", ctheme[i], width, cfg[i], on, got, cwant[i], drift ? "  <-- drift" : ""
+    if (doc != "" && !has_number(doc, sprintf("%.2f", cwant[i])))
+      fail(ENVIRON["COLORS_MD"] ": " sprintf("%.2f", cwant[i]) " (" ctheme[i] " " cfg[i] " on " cstack[i] ") is in the verify-design.sh contrast table but not in the Contrast section: keep the two in step")
+  }
+
+  for (i = 1; i <= ninvariant; i++) {
+    got = measure(itheme[i], ifg[i], istack[i])
+    ok = (ikind[i] == "min") ? (got >= ithreshold[i]) : (got <= ithreshold[i])
+    if (!ok) fail("invariant broken: " ilabel[i] " (" sprintf("%.2f", got) " is " (ikind[i] == "min" ? "below " : "above ") sprintf("%.2f", ithreshold[i]) ")")
+  }
+
+  for (i = 1; i <= nalias; i++) {
+    if (resolve(atoken[i], atheme[i], 0) != resolve(atarget[i], atheme[i], 0))
+      fail("alias rule broken: " alabel[i] " (" atoken[i] " no longer resolves to " atarget[i] ")")
+  }
+
+  check_ring()
+
+  if (nfail) {
+    for (i = 1; i <= nfail; i++) print failures[i]
+    printf "contrast: FAIL (%d finding%s)\n", nfail, (nfail == 1 ? "" : "s")
+    print "Update design/colors.md, or revert the token change."
+    exit 1
+  }
+  if (!quiet)
+    printf "contrast: OK (%d documented ratios, %d invariants, %d alias rules, 2 focus-ring bands)\n", ncase, ninvariant, nalias
+}
+'
+
+# ---------------------------------------------------------------------------
+# Phase 3a: web no-literals lint
 # ---------------------------------------------------------------------------
 AWK_WEB='
 function allowed(path, text,   n, i, parts, rows) {
@@ -553,7 +798,7 @@ function blank_preludes(s,   i, c, len, seg, out) {
 # CM[line, col] = 1 for every character inside a color-mix( ... ) call, across
 # lines: the only place web.md lets a percentage and `black` appear (components.md
 # -> Button specs).
-function mark_color_mix(text,   i, c, len, line, col, depth, want_open, k) {
+function mark_color_mix(text,   i, c, len, line, col, depth) {
   delete CM
   line = 1; col = 0; depth = 0; len = length(text)
   for (i = 1; i <= len; i++) {
@@ -574,7 +819,7 @@ function is_named_color(w) {
   return index(" " NAMED " ", " " tolower(w) " ") > 0
 }
 
-function lint_text(path, text, line0, use_ex,   n, T, ln, t, rest, tok, prev, nextc, v, hexlen, pos, col, W, nw, k, off, before) {
+function lint_text(path, text, line0, use_ex,   n, T, ln, t, rest, tok, prev, nextc, v, hexlen, col, off, before) {
   if (NAMED == "") NAMED = "aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen"
   mark_color_mix(text)
   n = split(text, T, "\n")
@@ -666,7 +911,7 @@ function lint_style_attrs(path, text, re, q,   rest, base, pre, m, qi, body, pre
 }
 
 # Every <style> element body, linted as CSS.
-function lint_style_elements(path, text,   low, rest, lrest, base, pre, tagend, close_at, body, tag) {
+function lint_style_elements(path, text,   rest, lrest, base, pre, close_at, body, tag) {
   rest = text; base = 0
   while (1) {
     lrest = tolower(rest)
@@ -707,7 +952,7 @@ BEGIN {
 '
 
 # ---------------------------------------------------------------------------
-# Phase 2b: Swift no-literals lint
+# Phase 3b: Swift no-literals lint
 # ---------------------------------------------------------------------------
 AWK_SWIFT='
 function allowed(path, text,   n, i, parts, rows) {
@@ -859,7 +1104,7 @@ BEGIN {
 }
 '
 
-export TOKENS SWIFT_TOKENS COLORSETS NUMERIC_TABLE COLOR_TABLE NOT_MIRRORED \
+export TOKENS SWIFT_TOKENS COLORSETS COLORS_MD NUMERIC_TABLE COLOR_TABLE CONTRAST_TABLE NOT_MIRRORED \
   ALLOW_WEB ALLOW_SWIFT SWIFT_FILES WEB_FILES
 export QUIET
 
@@ -872,6 +1117,7 @@ run_phase() {
 }
 
 run_phase "$AWK_PARITY"
+run_phase "$AWK_CONTRAST"
 run_phase "$AWK_WEB"
 run_phase "$AWK_SWIFT"
 
@@ -880,4 +1126,4 @@ if [ "$status" -ne 0 ]; then
   echo "FAIL: fix the code, or update design/ and its mirrors together. Never weaken the check."
   exit 1
 fi
-if [ "$QUIET" -eq 0 ]; then echo "OK: mirrors match design/tokens.css and no literals found"; fi
+if [ "$QUIET" -eq 0 ]; then echo "OK: mirrors match design/tokens.css, every contrast ratio holds and no literals found"; fi

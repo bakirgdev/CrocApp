@@ -4,7 +4,7 @@ Native SwiftUI GUI for the croc file-transfer CLI.
 
 ## Design
 
-Anything a user sees (app views, the landing page, the docs site, release artwork, store copy, UI strings) follows `design/`. Start at `design/AGENTS.md`. Run `scripts/verify-contrast.sh` and `scripts/verify-design.sh` after touching any of it; CI runs both.
+Anything a user sees (app views, the landing page, the docs site, release artwork, store copy, UI strings) follows `design/`. Start at `design/AGENTS.md`. Run `scripts/verify-design.sh` after touching any of it; CI runs it.
 
 ## Skills
 

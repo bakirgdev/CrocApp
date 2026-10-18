@@ -17,10 +17,9 @@ How to bump the pinned croc version (go.mod). Run this as one session whenever u
 4. **Build**: `go build ./... && go vet ./...`, then `./scripts/build-xcframework.sh`, then `cd CrocKit && swift build`, then app build both platforms.
 5. **Verify**, in this order — each one covers ground the previous does not:
    - `crockit-verify twice` — Swift layer, and the two-transfer case proves fd0/stdout/cwd/mutex restoration still composes
-   - `./scripts/verify-interop.sh` — all 10 crocmobile↔CLI scenarios
-   - `./scripts/verify-app-mac.sh` — both directions plus local-only, custom relay, no-compress, and both-sides-confirm; the widest coverage of the option surface
-   - `./scripts/verify-app-sim.sh` — iOS simulator receive
-   - `./scripts/verify-share-sim.sh` — share-extension handoff
+   - `./scripts/verify-interop.sh` — all 15 crocmobile↔CLI scenarios
+   - `./scripts/verify-app-mac.sh` — the 12 macOS app scenarios; the widest coverage of the option surface
+   - `./scripts/verify-app-sim.sh` — iOS simulator receive and share-extension handoff
    
    Any failure → root-cause it against the upstream delta before touching wrapper semantics.
 6. **Docs self-heal**: update `crocmobile-bridge.md`, `what-is-croc.md` (version header + changed facts), and this file's pinned-version line.
