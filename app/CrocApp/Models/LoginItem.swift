@@ -12,7 +12,7 @@ protocol LoginItemService {
 
 extension SMAppService: LoginItemService {}
 
-/// Open at login (R26): the toggle shows what the system reports, never a
+/// Open at login: the toggle shows what the system reports, never a
 /// stored copy of what we asked for, because the user can change it in System
 /// Settings > General > Login Items at any time.
 @MainActor

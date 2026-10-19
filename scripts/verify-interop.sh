@@ -2,9 +2,9 @@
 # Interop verification: crocmobile (via croctest) <-> croc CLI v11.
 # Covers: file/folder/text both directions, decline, cancel both directions,
 # forced relay (LAN disabled), LAN-only, a croc v10 peer both directions, a
-# receive onto existing files with Keep Both and Replace (R24), a 130 MiB send
-# in each transport mode (R17), stored transfers against a local store server
-# (R18-R20), the Advanced options that change the wire (R25: curve, hash, ports,
+# receive onto existing files with Keep Both and Replace, a 130 MiB send
+# in each transport mode, stored transfers against a local store server,
+# the Advanced options that change the wire (curve, hash, ports,
 # multicast group, proxies, internal DNS), and every public pool relay (custom,
 # wrapper-generated and CLI-generated codes).
 # Exits non-zero on first failure.
@@ -214,7 +214,7 @@ mkdir -p "$TMP/dst9"
 diff "$TMP/src/a.txt" "$TMP/dst9/a.txt" > /dev/null || fail "LAN only"
 wait; pass "LAN only"
 
-# 10. croc v10 peer, both directions (R8): crocmobile reports peerVersion.
+# 10. croc v10 peer, both directions: crocmobile reports peerVersion.
 # Both sides must reach the same relay room. A v10 CLI defaults to
 # croc.schollz.com, which is only one of the pool relays, so outside RELAY mode
 # it is pointed at the pool relay the code maps to. LAN is off on both sides:
@@ -241,7 +241,7 @@ grep -q 'EVENT error {"code":"peerVersion"' "$TMP/10r.log" || fail "v10 receiver
 [ ! -e "$TMP/dst10/a.txt" ] || fail "v10 receiver: file arrived"
 pass "v10 receiver: peerVersion"
 
-# 12. receive onto existing files (R24): Keep Both and Replace, answered at the
+# 12. receive onto existing files: Keep Both and Replace, answered at the
 # prompt and preset with -yes. Keep Both leaves the old file and adds
 # "a (1).txt"; Replace leaves one file with the new content. A zipped folder
 # received twice into one folder hits croc's per-member unzip prompt, which
@@ -307,7 +307,7 @@ grep -q 'EVENT error {"code":"refused"' "$TMP/12ask.log" || fail "sender --ask u
 [ ! -e "$TMP/dst12-ask/a.txt" ] || fail "sender --ask under -yes with replace: file arrived"
 pass "sender --ask under -yes with replace: refused"
 
-# 14. stored transfers (R18-R20) against a local croc store server, no relay and
+# 14. stored transfers against a local croc store server, no relay and
 # no internet: crocmobile uploads and the CLI downloads, the CLI uploads and
 # crocmobile downloads, and a revoked transfer no longer downloads. Every upload
 # lasts an hour, allows the downloads the case needs, and is revoked at the end.
@@ -387,7 +387,7 @@ pass "store: existing file with Keep Both and Replace, decline keeps the transfe
 kill "$STORE_PID"
 wait "$STORE_PID" 2>/dev/null || true
 
-# 15. Advanced options that change the wire (R25), against the croc v11 CLI with
+# 15. Advanced options that change the wire, against the croc v11 CLI with
 # the matching flag. What each case pins down was observed with croc v11.5.4:
 #  - curve: the receiver chooses it and the sender adopts it ("using curve" in
 #    the CLI sender's --debug log); the sender's own curve is never used, so a
@@ -556,7 +556,7 @@ if [ -n "${RELAY:-}" ]; then
   exit 0
 fi
 
-# 13. transport (R17): a send over croc's 128 MiB Tailcat threshold in each
+# 13. transport: a send over croc's 128 MiB Tailcat threshold in each
 # mode, both directions. Under auto the sender offers Tailcat and races it
 # against the relay; either may carry the data. Under relay no Tailcat offer is
 # made. The --debug CLI logs show the offer ("tailcat-offer") on either side.
@@ -597,7 +597,7 @@ transport_receive relay
 pass "transport relay: wrapper receives 130 MiB, no Tailcat offer"
 rm -f "$TMP/huge.bin" "$TMP"/13[sr]-*/huge.bin
 
-# 15 proxies and internal DNS (R25). croc's dialer bypasses proxies for local
+# 15 proxies and internal DNS. croc's dialer bypasses proxies for local
 # addresses, so these need the public pool: the transfer goes through a croctest
 # proxy that counts the connections it tunnels. -no-local keeps the data off the
 # LAN. Skipped under RELAY, whose address is local.

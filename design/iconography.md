@@ -75,7 +75,7 @@
 - **Canonical `circle-*` names, never the legacy `*-circle` spellings.** Most legacy names are byte-identical aliases, but `check-circle` is a different glyph (an open arc with an oversized tick). `circle-check` is the match for `checkmark.circle`.
 - The page inlines one `<symbol>` sprite and references it with `<use>`; the package is never bundled. The sprite comment names the Lucide version it was copied from.
 
-Names verified against lucide-static 1.59.0 on 2026-10-17. SF Symbol names are checked in the SF Symbols app before first use.
+Names verified against lucide-static 1.59.0. SF Symbol names are checked in the SF Symbols app before first use.
 
 ## Rendering
 

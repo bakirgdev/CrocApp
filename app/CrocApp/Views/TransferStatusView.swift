@@ -236,7 +236,7 @@ struct TransferStatusView: View {
         }
     }
 
-    /// R23: croc's browser client only knows the default relays.
+    /// croc's browser client only knows the default relays.
     private var browserReceiveNote: String? {
         switch controller.activeRelay {
         case .publicDefault, .directToSender: nil
@@ -247,7 +247,7 @@ struct TransferStatusView: View {
         }
     }
 
-    // MARK: - Confirm send (F19 both-sides confirm)
+    // MARK: - Confirm send (both-sides confirm)
 
     private var confirmSendView: some View {
         VStack(spacing: Spacing.space5) {

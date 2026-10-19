@@ -162,6 +162,9 @@ func TestNetworkGlobalsRestoredAfterPanic(t *testing.T) {
 		t.Fatalf("StartSend err = %v, want the delegate panic", err)
 	}
 	assertGlobalsRestored(t, before)
+	if left, _ := filepath.Glob(filepath.Join(o.WorkDir, "croc-stdin-*")); len(left) != 0 {
+		t.Errorf("text temp file left behind after the panic: %v", left)
+	}
 }
 
 // A transfer holds its proxy and DNS settings for its whole run, and puts the

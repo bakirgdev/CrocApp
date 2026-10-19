@@ -2,4 +2,4 @@
 
 [[IgnoredVulns]]
 id = "GO-2026-5932"
-reason = "golang.org/x/crypto/openpgp is never imported: croc only uses x/crypto/argon2, and govulncheck reports the vulnerability as not called. No fixed x/crypto version exists."
+reason = "golang.org/x/crypto/openpgp is never imported: croc imports only x/crypto's argon2, chacha20poly1305, hkdf, pbkdf2 and ssh packages, and govulncheck reports the vulnerability as not called. No fixed x/crypto version exists."

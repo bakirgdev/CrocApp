@@ -1,30 +1,34 @@
-# Project Overview
+# Project overview
 
 ## What
 
-CrocApp: free, open-source, native SwiftUI GUI wrapper for [croc](https://github.com/schollz/croc), the file-transfer CLI. Targets Apple devices: iOS and macOS. Covers all/most croc features behind a simple GUI.
+CrocApp is a free, open-source, native SwiftUI app for [croc](https://github.com/schollz/croc), the file-transfer command line tool. It runs on iOS, iPadOS and macOS, and covers most of croc's features behind a simple interface.
+
+## Status
+
+Version 1.0.0 is out as a notarized direct download for the Mac (Sparkle updates). The iOS, iPadOS and Mac App Store builds exist in TestFlight only and are not submitted. The first App Store release will be 1.1.0. `../ROADMAP.md` lists what comes next, and `../RELEASING.md` covers the channels.
 
 ## Why
 
-- croc has clever architecture (PAKE-secured, relay-assisted, end-to-end encrypted transfers) but is CLI-only — inaccessible to basic users.
-- A polished native GUI brings croc's design to a broader audience.
-- No official or well-maintained native Apple GUI exists.
+- croc has a strong design (PAKE-secured, relay-assisted, end-to-end encrypted transfers), but it is command line only, so most people cannot use it.
+- A native app brings that design to a wider audience.
+- No official, maintained native Apple app for croc exists (see `prior-art.md`).
 
 ## Goals
 
-1. Real, working, shippable app — not a demo.
-2. Successful OSS project: stars, users, contributors, healthy repo hygiene.
-3. Author learns Apple development (Swift, SwiftUI, Xcode) and adjacent tech along the way.
+1. A real, working, shippable app, not a demo.
+2. A healthy open-source project: users, contributors, good repo hygiene.
+3. The author learns Apple development (Swift, SwiftUI, Xcode) along the way.
 
-## Constraints & context
+## Constraints and context
 
-- Sole developer: Bakir Gracic. Public repo at `github.com/bakirgdev/CrocApp`.
-- AI-first development: built almost entirely with Claude Code (Claude Max plan), minimal manual coding. Tooling and docs are token-optimized.
-- Toolchain: macOS 26, Xcode 27, iOS 26. Minimum OS = iOS 26 / macOS 26.
+- One developer: Bakir Gracic. The repo is public at `github.com/bakirgdev/CrocApp`.
+- Built almost entirely with Claude Code, with minimal manual coding. Tooling and docs are written to keep AI sessions cheap and accurate.
+- Minimum OS: iOS 26.0, iPadOS 26.0 and macOS 26.0. Toolchain: Xcode 27 (`tooling.md`).
 - License: MIT.
 
-## Non-goals (for now)
+## Non-goals
 
-- Windows/Linux/Android clients.
-- Reimplementing or forking croc itself — CrocApp wraps it.
-- Paid features. App stays free; monetization limited to optional sponsorship.
+- Windows, Linux or Android clients.
+- Reimplementing or forking croc. CrocApp wraps it.
+- Paid features. The app stays free; the only money is optional donations.

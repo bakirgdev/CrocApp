@@ -2,14 +2,14 @@ import CrocKit
 import Foundation
 import Observation
 
-/// Persisted power options (F13-F19). String relay fields store "" for
+/// Persisted power options. String relay fields store "" for
 /// "use croc default" and go to the engine as stored; the engine resolves
 /// defaults and the public relay pool. `persist` gates UserDefaults writes so AutoVerify can override per-run
 /// without contaminating real settings. didSet does not fire for the
 /// assignments in init. `relayPassword` is the one exception to "UserDefaults":
 /// it lives in the Keychain (see `KeychainStore`) and `persist` gates that
 /// write too, so a harness run's `resetToDefaults()` can't blank the real
-/// stored password. The Advanced proxies (R25) are the same: they can carry
+/// stored password. The Advanced proxies are the same: they can carry
 /// credentials, so they live in the Keychain and never in UserDefaults.
 @MainActor
 @Observable
@@ -24,7 +24,7 @@ final class AppSettings {
         case publicDefault
         case custom(String)
         case localOnly
-        /// A receive that connects straight to the sender's IP (R25); no relay.
+        /// A receive that connects straight to the sender's IP; no relay.
         case directToSender
     }
 
@@ -50,15 +50,15 @@ final class AppSettings {
     var transport: Transport {
         didSet { save(transport.rawValue, "settings.transport") }
     }
-    /// Where "Send as link" uploads (R21). The engine refuses `http` except
+    /// Where "Send as link" uploads. The engine refuses `http` except
     /// on loopback.
     var storedServer: String { didSet { save(storedServer, "settings.storedServer") } }
     static let defaultStoredServer = StoredSendOptions().server
-    /// macOS menu-bar quick send (R26). On by default; the menu-bar scene is
+    /// macOS menu-bar quick send. On by default; the menu-bar scene is
     /// inserted only while this is true.
     var showInMenuBar: Bool { didSet { save(showInMenuBar, "settings.showInMenuBar") } }
 
-    // Advanced (R25). Defaults are croc's, read from `EngineOptions`.
+    // Advanced. Defaults are croc's, read from `EngineOptions`.
     static let advancedDefaults = EngineOptions()
 
     var curve: Curve { didSet { save(curve.rawValue, "settings.advanced.curve") } }
@@ -89,7 +89,7 @@ final class AppSettings {
         didSet { persistProxy(httpProxy, account: Self.httpProxyAccount) }
     }
 
-    /// Why `text` cannot be a stored-transfer server, or nil when it can (R12e).
+    /// Why `text` cannot be a stored-transfer server, or nil when it can.
     /// Mirrors the engine: `https`, or `http` on loopback only, and nothing
     /// after the host.
     static func storedServerError(_ text: String) -> String? {

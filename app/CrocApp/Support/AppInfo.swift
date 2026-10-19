@@ -1,6 +1,6 @@
 import Foundation
 
-/// R38: where the app points people for privacy and support, and the version
+/// Where the app points people for privacy and support, and the version
 /// shown in Settings and the About panel.
 enum AppInfo {
     // Literals checked by AppInfoTests, so there is no fallback to write.

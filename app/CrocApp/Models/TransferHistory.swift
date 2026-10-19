@@ -3,7 +3,7 @@ import OSLog
 import Observation
 import SwiftData
 
-/// One finished (or failed) transfer (F12). Local only — never synced.
+/// One finished (or failed) transfer. Local only — never synced.
 /// Privacy: stores at most `maxNames` file names, a code *hint*
 /// (`TransferController.codeHint`; only the server host for a stored link),
 /// and, for sends, bookmarks so history can re-stage the same files. Never
@@ -35,7 +35,7 @@ final class TransferRecord {
     var names: [String]
     var codeHint: String
     var bookmarks: [Data]
-    /// Stored uploads only (R19): the server's id for the upload, which keys
+    /// Stored uploads only: the server's id for the upload, which keys
     /// its receipt in `StoredTransferVault`. These three are optional so
     /// stores written before stored transfers migrate without a schema step.
     var storedID: String?

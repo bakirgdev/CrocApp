@@ -2,7 +2,7 @@ import CrocKit
 import Foundation
 import OSLog
 
-/// Receipts of this device's stored uploads (R19). Each carries the upload
+/// Receipts of this device's stored uploads. Each carries the upload
 /// token (the right to revoke) and the link (whose fragment is the decryption
 /// key), so they live only in the Keychain. All receipts share one item as a
 /// JSON array, because `SecretStore` cannot list accounts. A receipt leaves

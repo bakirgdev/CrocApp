@@ -119,6 +119,22 @@ jobs:
 
       - run: shellcheck --version && shellcheck -x scripts/*.sh
 
+  # Unconditional: renaming or deleting any file can break a path a doc names,
+  # and the check takes under a second.
+  docs:
+    name: docs checks
+
+    runs-on: ubuntu-26.04
+
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - run: scripts/verify-docs.sh
+
   # The interop harness against a relay on localhost, never the public relays:
   # those rate-limit a shared runner address and make the run flaky. The
   # public-pool scenario stays a local run (docs/BUILDING.md).
@@ -152,7 +168,7 @@ jobs:
           v=$(cd crocmobile && go list -m -f '{{.Version}}' github.com/schollz/croc/v11)
           GOBIN="$RUNNER_TEMP/croc11" go install "github.com/schollz/croc/v11@$v"
 
-      # The R8 scenario's croc v10 peer.
+      # The croc v10 peer.
       - run: go install "github.com/schollz/croc/v10@$(cat scripts/croc-v10.version)"
 
       # Admission limits raised as a margin: every connection comes from
@@ -281,7 +297,7 @@ jobs:
   pass:
     name: ci pass
 
-    needs: [changes, swift-format, go, contrast, shellcheck, interop, build]
+    needs: [changes, swift-format, go, contrast, shellcheck, docs, interop, build]
 
     if: ${{ always() }}
 

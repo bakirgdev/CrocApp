@@ -1,14 +1,14 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Receive flow (F4 code entry, F6 QR scan + paste, F7 output folder).
+/// Receive flow (code entry, QR scan + paste, output folder).
 struct ReceiveView: View {
     @Environment(TransferController.self) private var controller
     @Environment(OutputFolderStore.self) private var outputFolder
     @Environment(AppRouter.self) private var router
 
     @State private var code = ""
-    /// A stored link (R20) replaces the code field until cleared.
+    /// A stored link replaces the code field until cleared.
     @State private var storedLink: URL?
     @State private var showScanner = false
     @State private var showFolderPicker = false

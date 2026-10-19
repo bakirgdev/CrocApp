@@ -2,9 +2,9 @@ import CrocKit
 import SwiftData
 import SwiftUI
 
-/// F12: local transfer history. Re-send re-stages a past send's files via
+/// Local transfer history. Re-send re-stages a past send's files via
 /// AppRouter (same path as dock drops); records whose files vanished get an
-/// explanatory alert instead of a silent no-op. Stored uploads (R19) show when
+/// explanatory alert instead of a silent no-op. Stored uploads show when
 /// their link expires and can be revoked here.
 struct HistoryView: View {
     @Environment(TransferController.self) private var controller

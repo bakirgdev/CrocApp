@@ -30,12 +30,12 @@ test -s "$OUT/404.html"        || { echo "error: no landing 404.html in $OUT" >&
 # A dot-path, so it only survives to production while github-pages.yml keeps
 # include-hidden-files: true. SECURITY.md hands this address out.
 test -s "$OUT/.well-known/security.txt" || { echo "error: no security.txt in $OUT" >&2; exit 1; }
-# Same dot-path rule. Universal links (R23) need both app IDs served from here.
+# Same dot-path rule. Universal links need both app IDs served from here.
 test -s "$OUT/.well-known/apple-app-site-association" || { echo "error: no apple-app-site-association in $OUT" >&2; exit 1; }
 for id in HBSU359M33.com.bakirgdev.CrocApp HBSU359M33.com.bakirgdev.CrocApp.direct; do
   grep -q "\"$id\"" "$OUT/.well-known/apple-app-site-association" || { echo "error: AASA lacks $id" >&2; exit 1; }
 done
-# R23: the code stays in the fragment, so the page must not leak it by referrer
+# The code stays in the fragment, so the page must not leak it by referrer
 # or load anything remote.
 test -s "$OUT/r/index.html" || { echo "error: no /r/ page in $OUT" >&2; exit 1; }
 grep -q '<meta name="referrer" content="no-referrer"' "$OUT/r/index.html" || { echo "error: /r/ lacks the no-referrer policy" >&2; exit 1; }

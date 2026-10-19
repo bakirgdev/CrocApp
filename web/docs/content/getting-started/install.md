@@ -1,12 +1,12 @@
 ---
 sidebar_position: 1
 title: Install
-description: "The three ways to get CrocApp 1.0: the App Store, the Mac App Store and a notarized disk image for Mac, plus how updates work and how to build from source."
+description: "How to get CrocApp: a notarized disk image for Mac today, the App Store and the Mac App Store soon, plus how updates work and how to build from source."
 ---
 
 # Install
 
-CrocApp 1.0 comes through three channels. Pick the one that matches your device. All of them need **iOS 26**, **iPadOS 26** or **macOS 26** (`26.0` or any later version).
+CrocApp has three channels. The disk image is available now; the two App Store channels are coming. Pick the one that matches your device. All of them need **iOS 26**, **iPadOS 26** or **macOS 26** (`26.0` or any later version).
 
 | Channel | For | Where |
 |---|---|---|

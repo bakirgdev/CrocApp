@@ -1,8 +1,12 @@
 # Roadmap
 
-What CrocApp intends to do and not do, through 2027. This is intent, not a promise: priorities change, and one maintainer sets the pace (see [`GOVERNANCE.md`](../GOVERNANCE.md)). The plan changes by pull request to this file. To propose something, open a [discussion](https://github.com/bakirgdev/CrocApp/discussions) or a [feature request](https://github.com/bakirgdev/CrocApp/issues/new?template=feature_request.yml).
+What CrocApp intends to do and not do. This is intent, not a promise: priorities change, and one maintainer sets the pace (see [`GOVERNANCE.md`](../GOVERNANCE.md)). The plan changes by pull request to this file. To propose something, open a [discussion](https://github.com/bakirgdev/CrocApp/discussions) or a [feature request](https://github.com/bakirgdev/CrocApp/issues/new?template=feature_request.yml).
 
-Last reviewed: 2026-10-18. Shipped work is in [`CHANGELOG.md`](../CHANGELOG.md); CrocApp 1.0.0 shipped 2026-10-15.
+Shipped work is in [`CHANGELOG.md`](../CHANGELOG.md). Release status is in [`knowledge/project-overview.md`](knowledge/project-overview.md), "Status".
+
+## Next milestone
+
+**1.1.0 is the first App Store release**, for iPhone, iPad and Mac. What gates Submit for Review is listed in [`known-issues.md`](known-issues.md), "Release", and the steps are in [`RELEASING.md`](RELEASING.md), "App Store builds".
 
 ## Ongoing
 
@@ -16,26 +20,35 @@ Last reviewed: 2026-10-18. Shipped work is in [`CHANGELOG.md`](../CHANGELOG.md);
 
 ## Planned
 
-All of these are deferred until after 1.0 and carry the [`future` label](https://github.com/bakirgdev/CrocApp/issues?q=is%3Aissue+is%3Aopen+label%3Afuture).
+Everything here is deferred until after the App Store release and carries the [`future` label](https://github.com/bakirgdev/CrocApp/issues?q=is%3Aissue+is%3Aopen+label%3Afuture).
 
 | Area | Item |
 |---|---|
-| Distribution | [#10](https://github.com/bakirgdev/CrocApp/issues/10) Homebrew cask, once the repo meets homebrew/cask's acceptance policy (see the README Download table) |
-| Languages | [#11](https://github.com/bakirgdev/CrocApp/issues/11) Localize the app and docs, starting with Bosnian, with Crowdin for community translations |
-| System integration | [#22](https://github.com/bakirgdev/CrocApp/issues/22) macOS Finder Share extension |
-| | [#23](https://github.com/bakirgdev/CrocApp/issues/23) Control Center control for sending and receiving |
-| | [#24](https://github.com/bakirgdev/CrocApp/issues/24) Spotlight indexing of transfer history (never code phrases or link keys) |
-| | [#25](https://github.com/bakirgdev/CrocApp/issues/25) Widgets for recent transfers and quick actions |
-| Web and upstream | [#9](https://github.com/bakirgdev/CrocApp/issues/9) Talk to the croc maintainer about infrastructure and a web version |
-| | [#8](https://github.com/bakirgdev/CrocApp/issues/8) Web app for sending and receiving from a browser (to be reviewed; may be closed) |
+| Distribution | [Publish a Homebrew cask once the repo meets homebrew/cask requirements](https://github.com/bakirgdev/CrocApp/issues/10) (see the README Download table) |
+| Languages | [Localize the app and docs, with Crowdin for community translations](https://github.com/bakirgdev/CrocApp/issues/11), starting with Bosnian. The app uses plain string literals today (`knowledge/app-ui-architecture.md`, "Structure") |
+| System integration | [macOS Finder Share extension](https://github.com/bakirgdev/CrocApp/issues/22) |
+| | [Control Center control for sending and receiving](https://github.com/bakirgdev/CrocApp/issues/23) |
+| | [Spotlight indexing of transfer history](https://github.com/bakirgdev/CrocApp/issues/24) (never code phrases or link keys) |
+| | [Widgets for recent transfers and quick actions](https://github.com/bakirgdev/CrocApp/issues/25) |
+| Web and upstream | [Talk to the croc maintainer about infrastructure and a web version](https://github.com/bakirgdev/CrocApp/issues/9) |
+| | [Web app: send and receive files with croc from a browser](https://github.com/bakirgdev/CrocApp/issues/8) (to be reviewed; may be closed) |
 
-Also approved in [`knowledge/features.md`](knowledge/features.md) but not yet started: running your own relay from the Mac app (F29), saved codes and favorite peers (F33), a relay health check and diagnostics screen (F35). A Wi-Fi Aware direct path (F37) is listed as "Later".
+## Approved, not started
+
+No issue tracks these yet.
+
+| Item | Note |
+|---|---|
+| Run your own relay from the Mac app | A menu bar relay server (`croc relay`) |
+| Saved codes and favorite peers | App-native |
+| Relay health check and diagnostics screen | App-native |
+| Wi-Fi Aware direct path | Waits on Apple: available on iOS and iPadOS 26, absent on macOS 26. A fast path between two CrocApp devices |
 
 ## Not planned
 
 | Not planned | Why |
 |---|---|
 | Anything in the [Unlikely to be merged](../CONTRIBUTING.md#unlikely-to-be-merged) table: iOS or macOS below 26, telemetry, a paid tier, a UIKit or AppKit rewrite, bundled fonts or icon sets, changes to croc's protocol or crypto | Recorded decisions, with the reason for each in that table |
-| Windows, Linux or Android clients | Non-goal for now ([project overview](knowledge/project-overview.md)). Interest can be shown in an [issue](https://github.com/bakirgdev/CrocApp/issues) |
+| Windows, Linux or Android clients | Non-goal ([project overview](knowledge/project-overview.md)). Interest can be shown in an [issue](https://github.com/bakirgdev/CrocApp/issues) |
 | Forking or reimplementing croc | CrocApp wraps croc |
-| `--stdout` piping, `--classic` mode, `--remember` | Skipped in [`knowledge/features.md`](knowledge/features.md): CLI-only, insecure by design, and redundant with persistent settings |
+| `--stdout` piping, `--classic` mode, `--remember` | Skipped in [`knowledge/features.md`](knowledge/features.md), "Skipped": CLI-only, insecure by design, and redundant with persistent settings |

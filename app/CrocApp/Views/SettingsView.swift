@@ -5,7 +5,7 @@ import ServiceManagement
 import UniformTypeIdentifiers
 
 /// macOS Settings scene (⌘,): a General tab (receive folder plus the power
-/// options, F13-F19) and an Advanced tab (R25). The Advanced controls with
+/// options) and an Advanced tab. The Advanced controls with
 /// their footnotes would roughly double a form that already scrolls, so they
 /// get their own tab, the macOS convention for a long settings window.
 struct SettingsView: View {

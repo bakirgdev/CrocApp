@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// R38: version and the privacy and support links, last section of Settings
+/// Version and the privacy and support links, last section of Settings
 /// on both platforms.
 struct AboutSection: View {
     var body: some View {

@@ -4,7 +4,7 @@ import Testing
 
 @testable import CrocApp
 
-/// R19: a history written by 0.9.9 must open under the current schema with
+/// A history written by 0.9.9 must open under the current schema with
 /// every record intact. `V099` is 0.9.9's `TransferRecord` verbatim (git tag
 /// `v0.9.9`, `TransferHistory.swift`); the three fields added since are
 /// optional, so SwiftData migrates the store by itself.

@@ -17,7 +17,7 @@ Every interactive element shows a visible focus indicator that owes 3:1 (SC 1.4.
 
 ## Hit targets
 
-44×44pt (`--hit-target-min`) for anything interactive, including small buttons, icon buttons and inline links in nav bars and footers.
+44×44pt (`--hit-target-min`) for anything interactive, including small buttons, icon buttons and inline links in nav bars and footers. A system control that sets its own size (`PasteButton`) is checked with Accessibility Inspector instead.
 
 ## Never color alone
 

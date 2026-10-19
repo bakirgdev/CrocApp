@@ -26,7 +26,7 @@ final class TransferController {
     private(set) var phase: Phase = .idle
     private(set) var direction: Direction = .send
     private(set) var speedBytesPerSec: Double = 0
-    /// The transfer goes through a stored-transfer server (R18-R20) rather
+    /// The transfer goes through a stored-transfer server rather
     /// than a croc peer.
     private(set) var isStoredTransfer = false
 
@@ -194,7 +194,7 @@ final class TransferController {
     }
 
     /// Uploads `urls` (regular files only) encrypted to the stored-transfer
-    /// server in Settings (R18). Ends in `.stored(receipt)`; the receipt also
+    /// server in Settings. Ends in `.stored(receipt)`; the receipt also
     /// goes to the vault so History can revoke it.
     func startStoreSend(urls: [URL], downloads: Int, lifetimeSeconds: Int) {
         guard !isActive else { return }
@@ -280,7 +280,7 @@ final class TransferController {
         run { try await self.engine.startReceive(code: code, options: options) }
     }
 
-    /// Opens a stored link (R20): the incoming preview, then the same accept
+    /// Opens a stored link: the incoming preview, then the same accept
     /// and Keep Both / Replace answer as a live receive. Auto-accept does not
     /// apply; the engine always waits for `respond`.
     func startStoreReceive(link: URL, into folder: URL, folderIsScoped: Bool) {
@@ -320,7 +320,7 @@ final class TransferController {
         return vault.receipt(id: id) != nil
     }
 
-    /// Deletes a stored upload from its server and marks its record (R19). A
+    /// Deletes a stored upload from its server and marks its record. A
     /// server that no longer has it counts as revoked. Runs alongside any
     /// active transfer. Throws `EngineFailure`; show
     /// `friendlyMessage(for:…, stored: true)`.
@@ -446,7 +446,7 @@ final class TransferController {
             }
             phase = .waiting(code: code)
         case .connected:
-            // F19: gate the send behind an explicit confirm. The pipe write
+            // Both-sides confirm: gate the send behind an explicit confirm. The pipe write
             // buffers, so confirming before croc reaches its prompt is safe.
             if direction == .send, sendConfirmArmed {
                 sendConfirmArmed = false

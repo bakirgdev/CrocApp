@@ -94,7 +94,7 @@ Apple product names follow Apple's rules: singular, never possessive, never all 
 
 ## App Store badges
 
-From Apple's [marketing guidelines](https://developer.apple.com/app-store/marketing/guidelines/) (checked 2026-10-17):
+From Apple's [marketing guidelines](https://developer.apple.com/app-store/marketing/guidelines/) (re-check before shipping new artwork):
 
 - Use only Apple's badge artwork. Never modify, recolor, invert, angle or animate it; the gray border of the black badge is part of the artwork.
 - The black badge is preferred, in both themes. Use Apple's white badge only where the black one is visually heavy, and never when another platform's badge sits beside it.

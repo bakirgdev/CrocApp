@@ -10,7 +10,7 @@ CrocApp is a graphical front end for [croc](https://github.com/schollz/croc), th
 - Price: free. No paid tier, no subscription, no ads, no analytics, no tracking.
 - Version: 1.0.
 - Platforms: iOS 26 or later, iPadOS 26 or later, macOS 26 or later. Apple platforms only, with no Windows, Linux or Android client. The Mac build is for Apple silicon.
-- Channels: the App Store (iPhone, iPad) and the Mac App Store, both available at launch, and a notarized disk image for Mac (version 1.0.0 or later) at https://github.com/bakirgdev/CrocApp/releases/latest. Only the disk image build contains an updater (Sparkle).
+- Channels: the App Store (iPhone, iPad) and the Mac App Store, both coming soon, and a notarized disk image for Mac (version 1.0.0 or later) at https://github.com/bakirgdev/CrocApp/releases/latest. Only the disk image build contains an updater (Sparkle).
 - Requires croc 11 or newer on the other device, whether it runs CrocApp or the croc command line. An older croc, such as croc 10, cannot complete a transfer with CrocApp.
 - Documentation language: English only.
 - Privacy: no accounts, analytics, ads or tracking, and history stays on the device. The developer collects no data. See https://crocapp.dev/privacy/.

@@ -222,10 +222,14 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		restoreNetwork()
 		activeMu.Unlock()
 	}
+	var tempPath string
 	committed := false
 	defer func() {
 		if !committed {
 			removeTempFiles()
+			if tempPath != "" {
+				os.Remove(tempPath)
+			}
 			restoreWD(origWD)
 			release()
 		}
@@ -253,7 +257,6 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 				return nil, fmt.Errorf("workdir: %w", err)
 			}
 		}
-		var tempPath string
 		if text != "" {
 			f, err := os.CreateTemp(".", "croc-stdin-*")
 			if err != nil {

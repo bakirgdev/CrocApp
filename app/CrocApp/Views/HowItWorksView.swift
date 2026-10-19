@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// F36: explains the code-phrase / PAKE / untrusted-relay model.
+/// Explains the code-phrase / PAKE / untrusted-relay model.
 /// Facts: docs/knowledge/what-is-croc.md.
 struct HowItWorksView: View {
     @Environment(AppSettings.self) private var settings

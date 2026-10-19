@@ -2,7 +2,7 @@
 import AppKit
 import Observation
 
-/// What the menu-bar window (R26) does on the user's behalf. A thin layer over
+/// What the menu-bar window does on the user's behalf. A thin layer over
 /// the one `TransferController`: it never holds transfer state of its own, so
 /// the window shows a transfer started anywhere in the app.
 @MainActor

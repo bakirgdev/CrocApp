@@ -20,15 +20,15 @@ extra sections where a release needs them, and the project follows
 
 ## [1.0.0] - 2026-10-15
 
-CrocApp 1.0 is on three channels: the iOS and iPadOS App Store, the Mac App Store, and a notarized disk image for Mac. The App Store listings are linked from crocapp.dev. The other device needs croc 11 or newer.
+CrocApp 1.0 is a notarized disk image for Mac. The iPhone, iPad and Mac App Store builds are in TestFlight and follow with the first App Store release, so the iPhone and iPad items below reach users then. The other device needs croc 11 or newer.
 
-**iOS 26, iPadOS 26 or macOS 26 or later. The disk image is Apple silicon only.**
+**macOS 26 or later, Apple silicon only.**
 
 Verify a download with `gh attestation verify <file> --repo bakirgdev/CrocApp`: the release workflow attests the disk image, the update feed and the engine archive after stapling, so the attestation covers the bytes you download. `SHA256SUMS.txt` lists the SHA-256 checksums of the disk image and the engine archive.
 
 ### Added
 
-- iPhone and iPad apps through the App Store, and a Mac App Store build. 0.9.9 was macOS only.
+- iPhone and iPad apps and a Mac App Store build, in TestFlight until the first App Store release. 0.9.9 was macOS only.
 - The macOS direct download is now signed with a Developer ID certificate, notarized and stapled, so it opens with only the standard first-launch confirmation.
 - The direct download updates itself with Sparkle: choose "Check for Updates…" in the app menu. Sparkle installs an update only when its EdDSA signature matches the key built into the app, and the update check sends no system profile. Only this build has Sparkle; the App Store builds update through the App Store.
 - Receiving a file whose name is already taken now offers Keep Both (saves the new one as `name (1).ext`) or Replace. With auto-accept on, the setting "When a file already exists" under Confirmation chooses; it defaults to Keep Both.
@@ -45,7 +45,7 @@ Verify a download with `gh attestation verify <file> --repo bakirgdev/CrocApp`: 
 - The transfer engine is croc v11.5.4. A croc 10 device can no longer complete a transfer with CrocApp, in either direction: the other device needs croc 11 or newer. Relays are picked from croc's public relay pool the way the croc 11 command line does, and a send fails with a clear message when no public relay answers.
 - Failures say what went wrong: a wrong code, a refused transfer, a lost connection, a peer on an older croc, or no public relay available, instead of one generic message.
 - History keeps less of a code: the first word of a code shaped like a generated one, only the first two characters of any other code, and only the server's host for Send as link. It never keeps the whole code.
-- Every 1.0 screen works at the largest text sizes and with VoiceOver, including the transfer percentage.
+- Every 1.0 screen works at the largest text sizes, including the transfer percentage.
 - The QR code on the sender's waiting screen now encodes a `https://crocapp.dev/r/` link instead of `croc://<code>`, so a phone camera opens CrocApp, or a page that explains what to do when the app is missing. QR codes from 0.9.9 still scan in the app.
 
 ### Removed

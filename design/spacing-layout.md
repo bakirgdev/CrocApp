@@ -49,7 +49,7 @@ What legitimately differs per device is `platforms.md`.
 | Token | Value | Meaning |
 |---|---|---|
 | `--control-height-lg` | 50px | `.controlSize(.large)` buttons, the code field |
-| `--control-height-md` | 38px | medium buttons, the paste button |
+| `--control-height-md` | 38px | medium buttons |
 | `--control-height-sm` | 30px | small buttons |
 | `--hit-target-min` | 44px | HIG minimum target: the floor for anything interactive |
 | `--icon-size-sm` | 17px | inline and row icons |
