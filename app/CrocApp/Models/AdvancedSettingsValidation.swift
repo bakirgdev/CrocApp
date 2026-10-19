@@ -1,7 +1,7 @@
 import Foundation
 import Network
 
-/// Checks for the Advanced fields (R25). Each mirrors what the engine accepts
+/// Checks for the Advanced fields. Each mirrors what the engine accepts
 /// (`crocmobile/network.go`, and croc's own parsing for the upload limit) and
 /// returns plain-words text, or nil when the value is fine. Blank is always
 /// fine: it means croc's default. Proxy texts never repeat the value, which can

@@ -18,7 +18,7 @@ final class AppRouter {
     /// URLs waiting for SendView to pick up into its staged list.
     var pendingSendURLs: [URL] = []
     /// A receive link waiting for ReceiveView to prefill from it. Opening a
-    /// link never connects (R22): the user taps Receive.
+    /// link never connects: the user taps Receive.
     var pendingReceive: TransferLink?
 
     /// Weak: AppRouter.shared is constructed before TransferController

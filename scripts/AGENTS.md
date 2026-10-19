@@ -11,6 +11,6 @@ Build, release, verification and screenshot scripts. Each script's header is its
 - A harness undoes in its EXIT trap everything it writes outside its temp dir (the app's Documents, `~/Downloads/CrocApp`, the pasteboard), so a failed run leaves nothing behind. Every croc CLI send takes `--disable-clipboard`: croc otherwise copies its code over the user's pasteboard.
 - A transfer passes on the app's `verify-result.txt` (or croctest's `EVENT done`) and a byte comparison, never on an exit code alone. Every failure prints a `FAIL:` line naming the scenario.
 - The sender goes first: a receiver joins only after the sender's code marker (`verify-code-ready.txt`, croctest's `EVENT code`) plus 3 s. A receiver that arrives first fails with `flate: corrupt input`.
-- Custom codes differ in their first 4 characters within a run: the relay hashes that prefix into the room name.
+- Custom codes (the legacy `NNNN-word` shape) differ in their first 4 characters within a run: the relay derives the room from that prefix (`docs/knowledge/what-is-croc.md`, "Rendezvous").
 - `shellcheck -x scripts/*.sh` passes on default checks (CI `shellcheck` job). Disable a rule only on the line that needs it, with the reason beside it.
 - A script or file CI reads goes into the `changes` regex in `.github/workflows/ci.yml` (`.github/AGENTS.md`).

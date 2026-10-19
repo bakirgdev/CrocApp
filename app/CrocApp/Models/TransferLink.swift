@@ -1,12 +1,12 @@
 import Foundation
 
-/// R22: the one grammar for everything that can start a receive (QR scan,
+/// The one grammar for everything that can start a receive (QR scan,
 /// paste, URL open, App Intents). Parsing only classifies; nothing here
 /// connects, and the key of a stored link never leaves the URL.
 enum TransferLink: Equatable {
     case code(String)
     /// A stored-transfer link. The Go engine checks id and key lengths; this
-    /// validates the shape and, per R12e, the scheme (ATS does not cover Go).
+    /// validates the shape and the scheme (ATS does not cover Go).
     case stored(URL)
 
     static let webHost = "crocapp.dev"
@@ -51,7 +51,7 @@ enum TransferLink: Equatable {
         }
     }
 
-    /// What the waiting screen's QR and Share encode (R23). The code sits in
+    /// What the waiting screen's QR and Share encode. The code sits in
     /// the fragment, which browsers never send to a server.
     static func webURL(forCode code: String) -> URL? {
         var parts = URLComponents()

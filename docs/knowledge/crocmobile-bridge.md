@@ -1,6 +1,6 @@
 # crocmobile / CrocKit engine bridge
 
-The engine contract between Go and Swift, and the croc behaviours it has to work around. UI side: `app-ui-architecture.md`.
+The engine contract between Go and Swift, and the croc behaviours it has to work around. UI side: `app-ui-architecture.md`. Terms: `../GLOSSARY.md`.
 
 ## Layers
 
@@ -12,78 +12,366 @@ CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 
 ## gobind surface (naming)
 
-- xcframework: `Croc.xcframework`; framework MODULE is `Croc` (from `-o` basename) → `import Croc`. ObjC symbol prefix is `Crocmobile` (from package name): `CrocmobileOptions`, `CrocmobileTransfer`, `CrocmobileStartSend/StartReceive` (NSError**), protocol `CrocmobileDelegate` → Swift `CrocmobileDelegateProtocol`. Don't use `initWithRef:`.
-- gobind type rules: no `[]string`/unsigned/struct slices. Paths newline-joined, ports comma-joined, structured payloads as JSON strings.
-- Delegate callbacks arrive on Go threads; DelegateBridge only yields into AsyncStream; consumers hop to MainActor.
+- The xcframework is `Croc.xcframework`. The framework module is `Croc` (from the `-o` basename), so Swift writes `import Croc`.
+- The ObjC symbol prefix is `Crocmobile` (from the Go package name): `CrocmobileOptions`, `CrocmobileTransfer`, `CrocmobileStartSend` and `CrocmobileStartReceive` (both take an `NSError**`). The protocol `CrocmobileDelegate` becomes `CrocmobileDelegateProtocol` in Swift.
+- gobind type rules: no `[]string`, no unsigned types, no struct slices. Paths are newline-joined, ports are comma-joined, structured payloads are JSON strings.
+- Delegate callbacks arrive on Go threads. `DelegateBridge` only yields into the `AsyncStream`; consumers hop to the main actor.
 
-## Event/JSON contract (Go session.go ↔ Swift Models.swift)
+## Event and JSON contract
 
-- fileList `{"files":[{"name","size"}],"emptyFolders","totalSize"}`
-- progress `{"currentFile","totalFiles","fileName","fileSent","fileSize","bytesFinished","totalSize","step"}`, step ∈ waiting|connected|transferring; `fileSent` is per-current-file (croc `TotalSent` resets per file)
-- summary `{"success","files","totalSize"}`; a malformed/undecodable `done` summary yields `.failed` (code `other`, message `malformed done payload`) and finishes the stream. Malformed `progress` payloads are dropped silently (advisory; next 10 Hz tick retries).
-- Sub-100ms transfers may deliver `done` with no `connected`/`progress`/`fileList` events — UI keys off `done`/`failed` only.
-- `progress` ticks are deduplicated: `poll()` samples at 10 Hz but only emits when a field actually changed, so idle and plateau stretches (notably the unanswered accept prompt, where nothing moves) go quiet instead of repeating. Cadence only — the JSON schema is unchanged, and no consumer may treat a tick as a heartbeat. Consumers must still not let a tick clobber their prompt state (croc blocks in GetInput until `Respond`).
-- `Respond(accept bool, policy string)` returns immediately and answers on its own goroutine. `policy` is `PolicyKeepBoth` (`"keepBoth"`) or `PolicyReplace` (`"replace"`), only read on a receive accept; Swift mirrors the strings as `FilePolicy` and `CrocEngine.respond(accept:policy:)`. An accept writes one `y\n` per file for a sender-side Ask, which can outgrow the pipe buffer and block until croc drains it; the caller is CrocKit's `CrocEngine` actor, so a synchronous write would queue a following `Cancel` behind it. Do not make it synchronous again for "ordering": `session.respond` serialises on `promptM` and `closePrompt` is idempotent.
-- error `{"code","message"}` (`crocmobile/errors.go`): `OnError` gets this JSON, and `StartSend`/`StartReceive` errors carry the same JSON as their text (gobind exposes only the text, as `NSError.localizedDescription`), which CrocKit decodes into `EngineFailure`. `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `other`; an unknown code or a non-JSON payload decodes as `other` with the raw text. `message` is croc's text for logs only. A recovered panic reports `other`.
-- `.failed` semantics: classification uses croc's sentinels (`croc.ErrRelayConnection`, `croc.ErrDERPConnection`, `tcp.ErrAdmissionLimited`) via `errors.Is`, a `codedError` for this package's own errors (`noPublicRelay`, from `generatePublicCode`), and croc v11.5.4 text otherwise (`errors_test.go` pins the live ones against real croc clients and an in-process relay). `declined` is the peer's `peer error: refusing files`, and a peer's cancel is indistinguishable from a peer's decline on the wire. `refused` is this side's `refused files` (prompt answered no, or EOF). `roomFull` also covers the control connection's `relay admission rejected`. `badPassword` is the relay password rejected (`bad password`), not the code. `wrongCode` is peers that met with different codes (`password mismatch` on the sender, `could not secure channel` on the receiver, also `pake not successful`, `message authentication failed`). `cancelled` is `errors.Is(err, context.Canceled)`; croc returns the context error unwrapped, which `errors_test.go` checks with a live cancel. A local `Cancel()` in the accept-prompt window cancels the context before it closes the prompt pipe, and `GetInputContext` returns the context error whenever the context is done, so by source reading that failure is `cancelled`, not `refused` (not re-tested live). Map wording in the UI layer, off the code.
-- Stored transfers (`store.go`): `StartStoreSend(paths, *StoreOptions, Delegate)`, `StartStoreReceive(link, outDir, Delegate)` and the blocking `RevokeStored(origin, id, token)` wrap croc v11's `storeclient`. A send ends with `OnStored(receiptJSON)` then `OnDone`; the receipt (`id`, `origin`, `uploadToken`, `link`, `expiresAt` RFC 3339 UTC, `downloads`) is the only copy of the revoke token and of the key in `link`, so the app must keep it in the Keychain. A receive reads the manifest without claiming it, raises `OnFileList` (same payload as a live receive), and waits for `Respond`; decline ends with `refused` and leaves the transfer unclaimed. Both use the same `Transfer` handle and `activeMu` as live transfers, but no cwd, stdin or stdout. `RevokeStored` takes no lock and treats 404/410 as success; it passes a zero key because storeclient validates a whole share and revoke authenticates by token only (the croc CLI does the same). Progress `step` is `preparing` (hashing) then `transferring`; storeclient's callbacks run on its worker goroutines, so each is recovered.
-- Stored receive conflicts: storeclient installs each file with a rename that replaces whatever exists, so Replace needs nothing and Keep Both is settled before the download by renaming manifest entries to `name (1).ext` (`keepBothNames`; the names are local, the server and chunk encryption never see them). A failed or cancelled receive leaves storeclient's resume state (`.croc-store-<id>.json`, `.<name>.croc-<id>.part`) in `outDir`, which is the only way back in within the server's 30-minute claim lock; resuming after Keep Both renamed an installed file starts a fresh state and a new claim, which the lock refuses until it expires.
-- Stored limits: `StartStoreSend` refuses more than 100 files, more than 1 GiB or more than 100 downloads before hashing (`storeLimit`; croc's store defaults, so a server with lower limits still refuses at upload time). The server's HTTP refusals map in `storeHTTPCode`: 404/410 `storeExpired`; 413, 429, 507 and 400 "declaration" `storeLimit`. Network failures reuse `relayUnreachable`, so the app words that copy by context.
-- `os.Chdir` restore failures are logged (`restoreWD` in `session.go`), and an `os.Getwd` failure fails the start instead of being ignored.
+Go side: `crocmobile/session.go`. Swift side: `CrocKit/Sources/CrocKit/Models.swift`.
+
+| Event | Payload |
+|---|---|
+| fileList | `{"files":[{"name","size"}],"emptyFolders","totalSize"}` |
+| progress | `{"currentFile","totalFiles","fileName","fileSent","fileSize","bytesFinished","totalSize","step"}` |
+| summary (`done`) | `{"success","files","totalSize"}` |
+| error | `{"code","message"}` (see "Failure codes") |
+| stored receipt | `{"id","origin","uploadToken","link","expiresAt","downloads"}` (see "Stored transfers") |
+
+Rules that follow from the payloads:
+
+- `step` is `waiting`, `connected` or `transferring`. A stored upload also reports `preparing` while it hashes files.
+- `fileSent` counts bytes of the current file only, because croc resets `TotalSent` for each file.
+- An undecodable `done` summary becomes a `.failed` event (code `other`, message `malformed done payload`) and finishes the stream.
+- An undecodable `progress` payload is dropped silently. Progress is advisory and the next tick retries.
+- A transfer under about 100 ms can deliver `done` with no `connected`, `progress` or `fileList` event. The UI keys off `done` and `failed` only.
+
+### Progress cadence
+
+- `poll()` samples at 10 Hz but emits only when a field changed. Idle stretches stay quiet, notably an unanswered accept prompt where nothing moves.
+- The schema is unchanged, and no consumer may treat a tick as a heartbeat.
+- A tick must never overwrite a consumer's prompt state: croc blocks in `GetInput` until `Respond`.
+
+### Respond
+
+`Respond(accept bool, policy string)` returns at once and answers on its own goroutine.
+
+- `policy` is `PolicyKeepBoth` (`"keepBoth"`) or `PolicyReplace` (`"replace"`). It is read only on a receive accept. Swift mirrors the strings as `FilePolicy` and `CrocEngine.respond(accept:policy:)`.
+- A sender-side Ask accept writes one `y\n` per file. A large batch can fill the pipe buffer and block until croc drains it over the network.
+- The caller is the `CrocEngine` actor, which runs queued work to completion. A synchronous write would hold up a following `Cancel`.
+- Do not make it synchronous for "ordering": `session.respond` serialises on `promptM`, and `closePrompt` is idempotent.
+
+## Failure codes
+
+`OnError` receives `{"code","message"}` JSON (`crocmobile/errors.go`). `StartSend` and `StartReceive` errors carry the same JSON as their text, because gobind exposes only the text (as `NSError.localizedDescription`). CrocKit decodes both into `EngineFailure`.
+
+- `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `other`.
+- An unknown code, or a payload that is not JSON, decodes as `other` with the raw text.
+- `message` is croc's text and is for logs only. The UI maps wording from the code.
+- A recovered panic reports `other`.
+
+How `classify` picks a code:
+
+| Code | Trigger |
+|---|---|
+| `peerVersion` | text `unsupported PAKE protocol version` |
+| `declined` | the peer's `peer error: refusing files`. A peer's cancel looks the same on the wire. |
+| `refused` | this side's `refused files` (prompt answered no, or EOF) |
+| `cancelled` | `errors.Is(err, context.Canceled)`. croc returns the context error unwrapped. |
+| `roomFull` | `room full`, and the control connection's `relay admission rejected` |
+| `badPassword` | the relay rejected the relay password (`bad password`), not the code phrase |
+| `wrongCode` | peers met with different codes: `password mismatch` (sender), `could not secure channel` (receiver), `pake not successful`, `message authentication failed` |
+| `relayUnreachable` | `croc.ErrRelayConnection`, `croc.ErrDERPConnection`, `tcp.ErrAdmissionLimited`, rate limiting, dial and DNS failures |
+| `connectionLost` | unexpected EOF, reset, broken pipe, `transfer disconnected` |
+| `noPublicRelay` | this package's own `codedError`, raised by `generatePublicCode` |
+| `storeLimit`, `storeExpired` | stored-transfer HTTP refusals (see "Stored transfers") |
+| `invalidSetting` | an Advanced option failed validation |
+
+Notes:
+
+- Order matters in `classify`: a peer's refusal also cancels croc's context, and a bad relay password is reported as `could not connect to`.
+- croc exports sentinels for relay failures only, so the rest is matched on croc v11.5.4 text. `errors_test.go` pins the live ones against real croc clients and an in-process relay.
+- A local `Cancel()` during the accept prompt cancels the context before it closes the prompt pipe, and `GetInputContext` returns the context error whenever the context is done. By reading the source that failure is `cancelled`, not `refused`. Not verified live.
+
+## Stored transfers
+
+Code: `crocmobile/store.go`. They wrap croc v11's `storeclient`.
+
+- API: `StartStoreSend(paths, *StoreOptions, Delegate)`, `StartStoreReceive(link, outDir, *StoreOptions, Delegate)` and the blocking `RevokeStored(origin, id, token, *StoreOptions)`. For receive and revoke, `StoreOptions` carries only the proxies.
+- A stored transfer uses the same `Transfer` handle and `activeMu` as a live one, but no cwd, stdin or stdout.
+- A send ends with `OnStored(receiptJSON)` then `OnDone`. The receipt is the only copy of the revoke token and of the key inside `link`, so the app keeps it in the Keychain. `expiresAt` is RFC 3339 UTC.
+- A receive reads the manifest without claiming it, raises `OnFileList` (same payload as a live receive) and waits for `Respond`. A decline ends with `refused` and leaves the transfer unclaimed.
+- `RevokeStored` takes no lock and treats HTTP 404 and 410 as success. It passes a zero key: `storeclient` validates a whole share, and revoke authenticates by token only (the croc CLI does the same).
+- `storeclient`'s callbacks run on its worker goroutines, so each is wrapped in a recover.
+
+Conflicts on receive:
+
+- `storeclient` installs each file with a rename that replaces whatever exists, so Replace needs no work.
+- Keep Both is settled before the download, by renaming manifest entries to `name (1).ext` (`keepBothNames`). The names are local: the server and the chunk encryption never see them.
+- A failed or cancelled receive leaves `storeclient`'s resume state (`.croc-store-<id>.json` and `.<name>.croc-<id>.part`) in `outDir`. That is the only way back in within the server's 30-minute claim lock.
+- Resuming after Keep Both renamed an installed file starts fresh state and a new claim. The lock refuses it until it expires.
+
+Limits and error mapping:
+
+- `StartStoreSend` refuses more than 100 files or more than 1 GiB before hashing (`storeLimit`). These match croc's store defaults, so a server with lower limits still refuses at upload time.
+- It also refuses more than 100 downloads. That cap is crocmobile's own: the croc store default is 1 download.
+- Server refusals map in `storeHTTPCode`: 404 and 410 give `storeExpired`; 413, 429, 507 and 400 with "declaration" in the message give `storeLimit`.
+- Network failures reuse `relayUnreachable`, so the app words that copy by context.
 
 ## Engine behavior invariants
 
-- One transfer at a time; second start → `CrocEngineError.transferActive`. Brief window after `done` where the next start can still throw — retry once.
-- Receiver MUST set `outDir`; sender sets `workDir` (writable, for text/zip temp files; iOS cwd is `/`).
-- Abandoning the event stream cancels the Go session (`onTermination`); `Cancel()` cancels the context and also closes the prompt pipe: after a context cancel, `GetInputContext` returns but its read goroutine stays blocked until the pipe closes, so skipping the close would leave it hanging.
-- `Options.Ask` is exposed: sender sessions with Ask install the same dup2 fd0 pipe as receive (sender-only helper), and `Respond(true)` writes one `y\n` PER FILE (`promptAnswers = len(filesInfo)`) — croc's sender prompt fires per `TypeRecipientReady`, once per file; a single answer starves multi-file sends at file 2 (EOF ⇒ "refusing files"). Decline/cancel close the pipe; EOF at the Ask prompt refuses safely (croc checks the input error before its default-yes).
-- File policy (`filePolicy`, `session.go`): `keepBoth` or `replace`, what a receive does with a file whose name is taken. `buildCrocOptions` always hands croc exactly one of `Rename` and `Overwrite`: neither set, or both set, means keep both (Rename wins); an unknown policy string also means keep both. croc's third state (both false) is never passed: it prompts `Overwrite ...? (y/N)` on stdin, which on our closed pipe skips the file, and on a zipped-folder unzip aborts the transfer. On accept, `respond` sets the policy on the live `croc.Client` before writing `y` (croc reads `Rename`/`Overwrite` only once the accept prompt is answered), then queues 4096 more answers (`promptPolicyAnswers`) for the stdin prompts that ignore both flags: the empty-folder prompt and the per-member unzip prompt `Overwrite '<path>'? (y/N)`. Every queued answer is `n` under either policy (`keptPromptAnswers`), which makes the unzip skip an existing member and keep the local copy, so Replace overwrites files through `Overwrite` but never a zip member. Never `y`: croc v11 re-runs the accept prompt on the sender's new file list after each reconnect, and a queued `y` would accept a list the user never saw (security scan F2, 2026-10-15). The same `n` therefore refuses any reconnect after a manual accept (`docs/known-issues.md`, Accepted). 4096 two-byte lines fit a fresh pipe buffer on Darwin and Linux, so the write never blocks. With `AutoAccept` there is no accept prompt: the batch is written at session start and the pipe is closed (`answerUngatedPrompts`). That batch is the same `n` batch: croc still forces the accept prompt when the remote sender ran `--ask`, the prompt reads the first queued line, and `y` would accept a transfer the sender wanted confirmed by hand (no line means "no" to the accept prompt and "yes" to the unzip prompt). Past 4096 colliding members an unzip hits EOF and fails, leaving the received zip (`docs/known-issues.md`, Accepted). A file that already exists with identical content is left as is under either policy (croc counts it unchanged). Keep Both names come from `utils.UnusedFilename`: `name (1).ext`, `name (2).ext`.
-- `Quiet` stays false (true replaces `os.Stderr` process-wide with /dev/null); croc progress bar noise on stderr is accepted.
-- Go `crocmobile.Options` exports more knobs than Swift wires: `RelayPorts`, `Curve`, `HashAlgorithm`, `ThrottleUpload`, `NoMultiplexing` are settable from Go/`croctest` only — `EngineOptions`/`crocOptions(from:)` never set them. Exposing them in the GUI means plumbing CrocKit first. `Options.Rename` exists next to `Overwrite` but Swift never sets either: `EngineOptions.whenFileExists` (`FilePolicy`, default `.keepBoth`) is the one knob, see the file policy item under Engine behavior invariants.
-- Transport: `Options.Transport` is croc v11's sender-only `Transport`. `TransportAuto` (`"auto"`, also the empty string) and `TransportRelay` (`"relay"`) are the values the app uses; Swift mirrors them as the `Transport` enum (`auto`, `relay`) on `EngineOptions.transport`, stored as `AppSettings.transport` (`settings.transport`, an unknown stored value reads as auto). `sessionTransport` (`session.go`) forces auto on a receive and on a local-only send, because croc rejects anything else there (`transport selection is sender-only`, and `--transport` with `--local` unless auto), and passes any other value through croc's `ParseTransportMode`, so an unknown value is a start error. croc's `derp` (Tailcat only, no relay fallback) parses and reaches croc, but only `croctest -transport auto|relay|derp` and Go callers can set it; the app never offers it. The Settings picker is disabled while Local network only is on. See "croc v11.5.4 gotchas" for what auto does.
-- Relay values: Swift passes the settings as stored; `crocmobile/relay.go` resolves them for send and receive alike, mirroring the v11 CLI (`cli.go` `usesPublicRelay`, `assignPublicRelayForCode`, `selectPublicRelay`). A relay setting equal to `models.DEFAULT_RELAY` / `DEFAULT_RELAY6` (`croc.schollz.com:9009`, `croc6.schollz.com:9009`) counts as not custom, and `models` no longer resolves relay DNS at import, so those are plain strings. With no custom relay and `OnlyLocal` off, the relay is `publicrelay.Relays()[codephrase.RelayIndex(code, 4)]` with v6 blanked and `PublicRelay` set; a generated code is drawn with `codephrase.GenerateForRelay` for the first relay to answer a ping, cached in memory and forgotten after a send fails with `croc.ErrRelayConnection`. If no relay answers the ping, the send fails like the CLI with code `noPublicRelay` (the app shows its own copy pointing to Local network only; a draw-anyway fallback was removed: croc waits only about 10 s for a LAN peer after the relay dial fails, `defaultAlternateSenderRouteTimeout`, so a code shown offline would expire before the receiver could type it). `relayKind` and `resolveRelay` both treat `croc.schollz.com:9009` as not custom (the CLI uses that host when `--relay` names it explicitly). A custom relay is passed as set and the other side blanked; a custom pair keeps both (known-issues, Accepted). Blank password means croc's default. `RelayForCode` exposes the code's pool relay.
+- One transfer at a time. A second start throws `CrocEngineError.transferActive`. A start right after `done` can still throw for a moment, because the lock is released after the final delegate call. Retry once.
+- A receiver must set `outDir`. A sender sets `workDir` (writable, for text and zip temp files; the iOS cwd is `/`).
+- `os.Chdir` restore failures are logged (`restoreWD` in `session.go`), and an `os.Getwd` failure fails the start.
+- `Quiet` stays false, because `Quiet = true` replaces `os.Stderr` process-wide with `/dev/null`. croc's progress bar noise on stderr is accepted.
+
+### Cancel and teardown
+
+- Abandoning the event stream cancels the Go session (`onTermination`).
+- `Cancel()` cancels the context and also closes the prompt pipe. After a context cancel, `GetInputContext` returns, but its read goroutine stays blocked until the pipe closes.
+
+### Ask (both sides confirm)
+
+- `Options.Ask` is exposed. A sender session with Ask installs the same `dup2` fd 0 pipe as a receive.
+- `Respond(true)` writes one `y\n` per file (`promptAnswers = len(filesInfo)`), because croc's sender prompt fires once per file. A single answer starves a multi-file send at file 2: EOF reads as "refusing files".
+- Decline and cancel close the pipe. EOF at the Ask prompt refuses safely, because croc checks the input error before its default of yes.
+
+### File policy
+
+What a receive does with a file whose name is taken: `keepBoth` or `replace` (`filePolicy`, `session.go`).
+
+- `buildCrocOptions` always hands croc exactly one of `Rename` and `Overwrite`. Neither set, both set, or an unknown policy string all mean keep both (Rename wins).
+- croc's third state (both false) is never passed. It prompts `Overwrite ...? (y/N)` on stdin, which on a closed pipe skips the file and, during a zipped-folder unzip, aborts the transfer.
+- A file that already exists with identical content is left as is under either policy (croc counts it unchanged).
+- Keep Both names come from `utils.UnusedFilename`: `name (1).ext`, `name (2).ext`.
+
+Answers queued for croc's stdin prompts:
+
+- On accept, `respond` sets the policy on the live `croc.Client` before writing `y`, because croc reads `Rename` and `Overwrite` only once the accept prompt is answered.
+- It then queues 4096 more answers (`promptPolicyAnswers`) for the prompts that ignore both flags: the empty-folder prompt and the per-member unzip prompt `Overwrite '<path>'? (y/N)`.
+- Every queued answer is `n`, under either policy (`keptPromptAnswers`). The unzip then skips an existing member and keeps the local copy. So Replace overwrites files through `Overwrite` but never a zip member.
+- Never `y`: croc v11 re-runs the accept prompt on the sender's new file list after each reconnect, and a queued `y` would accept a list the user never saw. As a result, a reconnect after a manual accept is refused (`../known-issues.md`, "Accepted").
+- 4096 two-byte lines fit a fresh pipe buffer on Darwin and Linux, so the write never blocks.
+- With `AutoAccept` there is no accept prompt. The same `n` batch is written at session start and the pipe is closed (`answerUngatedPrompts`). It must be `n` because croc still forces the accept prompt when the remote sender ran `--ask`. That prompt reads the first queued line, and `y` would accept a transfer the sender wanted confirmed by hand.
+- Past 4096 colliding zip members an unzip hits EOF and fails, leaving the received zip (`../known-issues.md`, "Accepted").
+
+### Options that Swift wires
+
+- `crocOptions(from:)` sets every `crocmobile.Options` field. `Rename` and `Overwrite` both come from the one knob `EngineOptions.whenFileExists` (`FilePolicy`, default `.keepBoth`).
+- Advanced options (curve, hash, throttle, no-multiplexing, ports, multicast group, sender IP, proxies, internal DNS) are all settable from the app. See "Advanced options on the wire".
+- `croctest` can set the same fields from the command line, plus `-transport derp`.
+
+### Transport
+
+`Options.Transport` is croc v11's sender-only `Transport`. "croc v11.5.4 gotchas" explains what `auto` does.
+
+- The app uses `TransportAuto` (`"auto"`, also the empty string) and `TransportRelay` (`"relay"`). Swift mirrors them as the `Transport` enum on `EngineOptions.transport`, stored as `AppSettings.transport` (an unknown stored value reads as auto).
+- `sessionTransport` (`session.go`) forces auto on a receive and on a local-only send, because croc rejects anything else there (`transport selection is sender-only`, and `--transport` with `--local` unless auto).
+- Any other value goes through croc's `ParseTransportMode`, so an unknown value is a start error.
+- croc's `derp` (Tailcat only, no relay fallback) parses and reaches croc, but only `croctest -transport auto|relay|derp` and Go callers can set it. The app never offers it.
+- The **Connection** picker is disabled while **Local Network Only** is on.
+
+### Relay values
+
+Swift passes the relay settings as stored. `crocmobile/relay.go` resolves them for send and receive alike, mirroring the v11 CLI (`cli.go`: `usesPublicRelay`, `assignPublicRelayForCode`, `selectPublicRelay`).
+
+- A relay setting that is blank or equals `models.DEFAULT_RELAY` or `DEFAULT_RELAY6` (`croc.schollz.com:9009`, `croc6.schollz.com:9009`) is not custom (`customRelays`). `models` no longer resolves relay DNS at import, so those are plain strings.
+- With no custom relay and **Local Network Only** off, the relay is `publicrelay.Relays()[codephrase.RelayIndex(code, len(relays))]`, with v6 blanked and `PublicRelay` set.
+- A custom relay is passed as set and the other side is blanked. A custom pair keeps both (`../known-issues.md`, "Accepted").
+- A blank password means croc's default.
+- `RelayForCode` exposes the code's pool relay.
+
+Generated codes on the public pool:
+
+- The code is drawn with `codephrase.GenerateForRelay` for the first relay to answer a ping. The choice is cached in memory and forgotten after a send fails with `croc.ErrRelayConnection`.
+- If no relay answers, the send fails like the CLI, with `noPublicRelay`. The app shows its own copy pointing to **Local Network Only**.
+- There is deliberately no "draw a code anyway" fallback. After the relay dial fails, croc waits only about 10 s for a LAN peer (`defaultAlternateSenderRouteTimeout`), so a code shown offline would expire before the receiver could type it.
 
 ## croc v11.5.4 gotchas (verified against source)
 
-- Relay room = `SHA-256(room selector + "croc")`, where the selector is the first word of a three-word code (`codephrase.Parse`). Two codes with the same first word collide into one room ("room full"). A generated code is three random words from a 1296-word list, so two concurrent codes share a first word about once in 1296, and only collide if they also map to the same pool relay. Four lowercase words select on the first two; any other code (for example `NNNN-word`) takes the legacy split: first 4 chars as the selector, `code[5:]` as the PAKE passphrase. Custom codes and test scripts must vary the selector.
-- Transport `auto` uses Tailcat only for a big send. When the total send size is at least 128 MiB (`autoTailcatThresholdBytes`), the sender prepares Tailcat (it fetches the DERP map from `https://tailcat.dev/derpmap.json`, which today lists `tc301a.ipn.dev` to `tc304a.ipn.dev`), sends a `tailcat-offer`, and races Tailcat against the relay, which starts 350 ms later. Whichever connects first carries the data; if Tailcat fails, the relay carries it. Below 128 MiB, or with `relay`, the sender never starts Tailcat and neither side contacts those servers. A receiver handed a `tailcat-offer` joins Tailcat whatever its own setting. Every data chunk is encrypted with the session key (AEAD) on either path. A receiver follows the sender and does not choose. Tailcat's own data path has not been seen working on the development Mac (`docs/known-issues.md`, Harnesses), and whether it stays in the build is decided on a physical iPhone (`device-test-checklist.md`, "Transport and Tailcat gate"). If it goes, the engine is built with `-tags croc_no_tailcat` in `scripts/build-xcframework.sh`, croc then downgrades `derp` to `relay`, and the Connection setting is removed.
-- CLI: custom codes need `CROC_SECRET=...` env on BOTH send and receive. On Unix, `send --code X` without it prints instructions and exits 0 without sending, and a receive code given as an argument without it prints a message and returns; `croc --classic` mode lifts both. Non-tty CLI runs need global `--ignore-stdin` before the subcommand, otherwise a piped stdin is read as the thing to send.
-- UDP multicast peer discovery can be dead on a LAN (returns zero peers). Seen once on one AP-isolated network with the previous croc pin, not re-tested on v11. Fallbacks: relay (automatic, the receiver races discovery against the relay dial) or `--ip` direct. iOS physical devices additionally need the restricted multicast entitlement (constraints doc §2).
-- croc retries a dropped transfer up to 10 times (backoff from 100 ms, doubling, capped at 5 s) and only then fails with `transfer disconnected after 10 reconnect attempts`, so peer death surfaces slowly; scripts must bound with timeouts.
-- Sender-first start ordering matters. On joining the room the receiver sends a `pake1` local probe and waits 500 ms for the reply (`localProbeResponseTimeout`). If the sender is not there yet, the probe times out, the receiver carries on with its main PAKE and enters the transfer loop; when the sender arrives it answers the old `pake1`, the receiver decodes that frame as a transfer message and fails with `problem with decoding: decompress message: decompress data: flate: corrupt input before offset 6`. Reproduced 3/3 with the receiver started about 0.8 s before the app sender, 11/11 pass with the sender first. Generated-code GUI flows are sender-first, but custom codes are not: a receiver who types an agreed code before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it (`docs/known-issues.md`, Engine). Harnesses start the receiver only after the sender reported its code (the app-as-sender scenarios of `verify-app-sim.sh` and `verify-app-mac.sh` wait for the `verify-code-ready.txt` marker that `AutoVerify` writes when a send reaches its code, plus 3 s; `verify-interop.sh` waits for croctest's `EVENT code` line, plus 3 s, before a CLI receiver joins, and a fixed 3 s when the CLI sends).
-- Prompts beyond the accept prompt: the empty-folder overwrite prompt and the unzip overwrite prompt (zipped-folder receive, one `Overwrite '<path>'? (y/N)` per archive member that already exists) ignore `Rename`/`Overwrite` and read stdin, so crocmobile answers them from the policy batch (file policy item above). Without an answer, the empty-folder prompt takes EOF as "no" and the existing-file prompt skips that file, but the unzip prompt returns the read error, and croc v11 treats that as an extraction error (v10 skipped the member): the transfer ends `received archive failed validation or extraction` with the received `.zip` left in the out dir. That was the failure before the batch existed; tested live 2026-10-12 with `croctest` receiving a CLI `send --zip` twice into one out dir. Now covered by `verify-interop.sh` scenario 12.
-- `utils.GetInputContext` reads from a package-level `bufio.Reader` built over fd 0 at init (`stdinReader`), so replacing `os.Stdin` later changes nothing: the fd 0 `dup2` stays required.
-- That reader is process-wide and buffers ahead, so answers croc never asked for (the policy batch, extra sender-Ask `y` lines) would sit in it and answer the next transfer's accept prompt: a Go unit test showed the next transfer reading `n`, a decline. `drainPromptInput` (`session.go`) therefore reads `stdinReader` to EOF through `utils.GetInputContext`, with a 2 s timeout, at session end after the prompt pipe closes and before fd 0 is restored. This also covers the older sender-Ask path, where leftover `y` lines were once judged harmless.
-- A zipped-folder send writes `<folder>.zip` into the send cwd (`Options.WorkDir`) and marks it with `utils.MarkFileForRemoval`. The library deletes it itself only after a successful send; the CLI's `main.go` sweeps the rest with `utils.RemoveMarkedFiles()` on exit. crocmobile calls `RemoveMarkedFiles` after every send (success, failure, cancel) and when session setup fails after the zip was made.
+### Rooms and codes
+
+- How a code selects the room, and when two codes collide: `what-is-croc.md`, "Rendezvous". In the bridge, `codephrase.Parse` does the split, and the legacy split makes `code[5:]` the PAKE passphrase.
+- Custom codes and test scripts must vary the selector.
+
+### Transport and Tailcat
+
+How Tailcat works, its 128 MiB threshold and the servers it contacts: `what-is-croc.md`, "Transport". What matters in the bridge:
+
+- The sender sends a `tailcat-offer` when it races Tailcat. If Tailcat fails, the relay carries the data.
+- A receiver handed a `tailcat-offer` joins Tailcat whatever its own setting. The receiver follows the sender and does not choose.
+- Every data chunk is encrypted with the session key (AEAD) on either path.
+- Tailcat's data path has been seen working on a physical iPhone. On the development Mac, `croc --transport derp` CLI to CLI does not complete, cause unknown (`../known-issues.md`, "Harnesses").
+- croc has a `croc_no_tailcat` build tag that removes Tailcat and downgrades `derp` to `relay`. The app build does not use it. Passing it through `gomobile bind -tags` is inferred, not verified.
+
+### CLI behaviour that bites scripts
+
+- Custom codes need `CROC_SECRET=...` in the environment on both send and receive. On Unix, `send --code X` without it prints instructions and exits 0 without sending. A receive code given as an argument without it prints a message and returns. `croc --classic` lifts both.
+- A non-tty CLI run needs the global `--ignore-stdin` before the subcommand. Otherwise a piped stdin is read as the thing to send.
+
+### LAN discovery
+
+- UDP multicast peer discovery can be dead on a LAN and return zero peers. It was seen on one AP-isolated network, with the previous croc pin, and not re-tested on v11. Root cause not isolated.
+- Fallbacks: the relay (automatic: the receiver races discovery against the relay dial) or `--ip` for a direct connection.
+- Physical iOS devices also need the restricted multicast entitlement (`apple-platform-constraints.md`, "Hard constraints", item on multicast).
+
+### Reconnects
+
+croc retries a dropped transfer up to 10 times (backoff from 100 ms, doubling, capped at 5 s). Only then it fails with `transfer disconnected after 10 reconnect attempts`. Peer death therefore surfaces slowly, and scripts must bound their waits with timeouts.
+
+### Start order: sender first
+
+- On joining the room, the receiver sends a `pake1` local probe and waits 500 ms for the reply (`localProbeResponseTimeout`).
+- If the sender is not there yet, the probe times out and the receiver carries on with its main PAKE and enters the transfer loop.
+- When the sender arrives, it answers the old `pake1`. The receiver decodes that frame as a transfer message and fails with `problem with decoding: decompress message: decompress data: flate: corrupt input before offset 6`.
+- The failure was observed with the receiver started about 0.8 s before the app sender. The chain from the probe timeout to the decode error is inferred from reading the source.
+- Generated-code GUI flows are sender-first. Custom codes are not: a receiver who types an agreed code before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it (`../known-issues.md`, "Accepted").
+- Harnesses start the receiver only after the sender reported its code: see "Verification harnesses".
+
+### Prompts beyond the accept prompt
+
+The empty-folder overwrite prompt and the unzip overwrite prompt ignore `Rename` and `Overwrite` and read stdin. The unzip prompt appears once per archive member that already exists, in a zipped-folder receive. crocmobile answers both from the policy batch (see "File policy").
+
+Without an answer:
+
+- The empty-folder prompt takes EOF as "no".
+- The existing-file prompt skips that file.
+- The unzip prompt returns the read error, and croc v11 treats that as an extraction error. The transfer ends `received archive failed validation or extraction`, with the received `.zip` left in the out dir. croc v10 skipped the member instead.
+
+The batch fixes this. `verify-interop.sh` scenario 12 covers it.
+
+### Stdin plumbing
+
+- `utils.GetInputContext` reads from a package-level `bufio.Reader` built over fd 0 at init (`stdinReader`). Replacing `os.Stdin` later changes nothing, so the fd 0 `dup2` stays required.
+- That reader is process-wide and buffers ahead. Answers croc never asked for (the policy batch, extra sender-Ask `y` lines) would sit in it and answer the next transfer's accept prompt. A Go unit test showed the next transfer reading `n`, a decline.
+- `drainPromptInput` (`session.go`) therefore reads `stdinReader` to EOF through `utils.GetInputContext`, with a 2 s timeout. It runs at session end, after the prompt pipe closes and before fd 0 is restored.
+
+### Zipped-folder sends
+
+- A zipped-folder send writes `<folder>.zip` into the send cwd (`Options.WorkDir`) and marks it with `utils.MarkFileForRemoval`.
+- The library deletes it itself only after a successful send. The CLI's `main.go` sweeps the rest with `utils.RemoveMarkedFiles()` on exit.
+- crocmobile calls `RemoveMarkedFiles` after every send (success, failure, cancel) and when session setup fails after the zip was made.
 
 ## Advanced options on the wire
 
-`Options.Curve`, `HashAlgorithm`, `BasePort`/`Transfers`, `MulticastAddress`, `PeerIP`, `Socks5Proxy`, `HTTPProxy` and `InternalDNS` map one to one onto croc's flags of the same name (`buildCrocOptions`, `network.go`; `croctest` takes `-curve -hash -port -transfers -multicast -ip -socks5 -connect -internal-dns`). `verify-interop.sh` scenario 15 runs each against the croc v11.5.4 CLI. Observed there, with the croc source (`src/croc/croc.go`, `comm/comm.go`) read for the reason:
+`Options.Curve`, `HashAlgorithm`, `BasePort` and `Transfers`, `MulticastAddress`, `PeerIP`, `Socks5Proxy`, `HTTPProxy` and `InternalDNS` map one to one onto croc's flags of the same name (`buildCrocOptions` and `network.go`). `croctest` takes `-curve -hash -port -transfers -multicast -ip -socks5 -connect -internal-dns`.
+
+`verify-interop.sh` scenario 15 runs each against the croc v11.5.4 CLI. The table records what that scenario observed, with the croc source (`src/croc/croc.go`, `comm/comm.go`) read for the reason.
 
 | Option | Which side it matters on | Peer must match? | Mismatch |
 |---|---|---|---|
-| Curve | The **receiver** chooses it: its PAKE message carries the curve name and the sender adopts it (sender `--debug`: `using curve p384`). A sender's own curve is never read. | No | Never an error, either direction. wrapper send `siec` / CLI receive `p384` and CLI send `siec` / wrapper receive `p384` both complete, on the receiver's curve. A name croc does not know fails at the receiver start: `EVENT error {"code":"other","message":"no such curve"}` (the app picks from a list, so it cannot happen there) |
-| Hash | The **sender** chooses it and the receiver adopts it (receiver `--debug`: `using hash algorithm: md5`). `imohash` goes out as `imohash-v2`. | No | Never an error: a receiver set to `highway` takes the sender's `md5`. An unknown name fails at the sender start: `{"code":"other","message":"unsupported algorithm: bogus"}` |
-| Base port, Transfers | **Sender** only: its local relay listens on the base port and the next `Transfers` ports (the CLI's `--port`/`--transfers`). The announced banner lists the data ports, e.g. `banner: 26993,26994`. | The receiver needs the base port, through discovery (which announces it) or `PeerIP` | A receiver pointed at the wrong port fails, see PeerIP. If a port is busy, croc moves to the next open ones (`utils.FindOpenPorts`, read from source, not observed), so the announced port can differ from the setting |
-| PeerIP | **Receiver** only (`--ip host:port`): connect straight to the sender's local relay and skip public relay and discovery, so it works only with a sender whose local relay is on (not `NoLocal`) and reachable | The sender must listen there | Nothing listening: fails at once, `EVENT error {"code":"relayUnreachable","message":"could not connect to 127.0.0.1:<port>: ... connection refused"}`, no fallback to a relay |
-| Multicast address | Both sides of **LAN discovery**: a sender announces `croc<base port>` on the group, a receiver announces `ok` and listens (default `239.255.255.250`, UDP port 9999). | Yes, for discovery: peers on different groups never hear each other (a listener on another group heard nothing from the sender). The relay path still works | Silent: discovery finds nobody, then the relay or `PeerIP` path carries the transfer. A transfer across two hosts on a shared group is not covered by the harness: croc drops discovery packets from the host's own addresses (`peerdiscovery` `AllowSelf` false), so two peers on one host never find each other, not even two CLIs |
-| SOCKS5, HTTP proxy | The local side's own dials only (CONNECT, SOCKS5 before HTTP). Invisible to the peer | No | croc bypasses the proxy for local addresses (`utils.IsLocalIP`: loopback, link-local, private ranges), so a proxy affects only a public relay or Tailcat dial. With a local relay or a LAN transfer it is never used, with no error. Verified: with the public pool, 2 (send) to 9 (receive) connections went through a `croctest` proxy per transfer |
-| Internal DNS | The local side's lookup of the relay name (built-in resolver against public DNS servers instead of the system's) | No | A transfer over the public pool works with it on. The harness cannot observe which resolver ran; `network_test.go` pins that the option reaches `models.INTERNAL_DNS` |
+| Curve | The **receiver** chooses it. Its PAKE message carries the curve name and the sender adopts it (sender `--debug`: `using curve p384`). A sender's own curve is never read. | No | Never an error, in either direction: the transfer runs on the receiver's curve. A name croc does not know fails at the receiver start with `{"code":"other","message":"no such curve"}`. The app picks from a list, so that cannot happen there. |
+| Hash | The **sender** chooses it and the receiver adopts it (receiver `--debug`: `using hash algorithm: md5`). `imohash` goes out as `imohash-v2`. | No | Never an error: a receiver set to `highway` takes the sender's `md5`. An unknown name fails at the sender start: `{"code":"other","message":"unsupported algorithm: bogus"}`. |
+| Base port, Transfers | **Sender** only. Its local relay listens on the base port and the next `Transfers` ports (the CLI's `--port` and `--transfers`). The banner lists the data ports, for example `banner: 26993,26994`. | The receiver needs the base port, through discovery (which announces it) or `PeerIP`. | A receiver pointed at the wrong port fails (see PeerIP). If a port is busy, croc moves to the next open ones (`utils.FindOpenPorts`, read from source, not observed), so the announced port can differ from the setting. |
+| PeerIP | **Receiver** only (`--ip host:port`). It connects straight to the sender's local relay and skips the public relay and discovery. It works only with a sender whose local relay is on (not `NoLocal`) and reachable. | The sender must listen there. | Nothing listening: it fails at once with `relayUnreachable` (`could not connect to 127.0.0.1:<port>: ... connection refused`), with no fallback to a relay. |
+| Multicast address | Both sides of **LAN discovery**. A sender announces `croc<base port>` on the group, a receiver announces `ok` and listens. The default is `239.255.255.250`, UDP port 9999. | Yes, for discovery: peers on different groups never hear each other. The relay path still works. | Silent: discovery finds nobody, then the relay or `PeerIP` path carries the transfer. |
+| SOCKS5, HTTP proxy | The local side's own dials only (CONNECT; SOCKS5 before HTTP). Invisible to the peer. | No | croc bypasses the proxy for local addresses (`utils.IsLocalIP`: loopback, link-local, private ranges). A proxy therefore affects only a public relay or Tailcat dial. With a local relay or a LAN transfer it is never used, with no error. Observed: with the public pool, connections went through a `croctest` proxy on both send and receive. |
+| Internal DNS | The local side's lookup of the relay name (built-in resolver against public DNS servers instead of the system's). | No | A transfer over the public pool works with it on. The harness cannot observe which resolver ran. `network_test.go` pins that the option reaches `models.INTERNAL_DNS`. |
 
-Not an option mismatch but easy to confuse: `NoMultiplexing` and `ThrottleUpload` are sender-side only (scenarios 6, 7 and 11 use them).
+Two limits of the harness:
+
+- A transfer across two hosts on a shared multicast group is not covered. croc drops discovery packets from the host's own addresses (`peerdiscovery` `AllowSelf` false), so two peers on one host never find each other, not even two CLIs.
+- `NoMultiplexing` and `ThrottleUpload` are sender-side only. They are not a mismatch case; scenarios 6, 7 and 11 use them.
 
 ## Verification harnesses
 
-- `scripts/lib.sh` — sourced by every `verify-*.sh`, `capture-screenshots.sh` and the App Store and Developer ID build scripts: the `timeout(1)` shim, `fail`/`pass`, `logged` (runs a build step into a log and shows its tail on failure), `require_croc`, `kill_jobs` (EXIT trap, so a failed assertion cannot leak a croc/relay/app process), `await_file`, `local_ip`.
-- `scripts/verify-interop.sh`: 15 scenarios crocmobile↔CLI (file/folder/text both ways, decline, cancel both ways mid-wire via `--throttleUpload 200k`, forced relay, LAN via `--ip`, a croc v10 peer both ways expecting failure code `peerVersion`, every public pool relay). `RELAY=host:port` routes every transfer through one relay and skips the transport (13), proxy and internal DNS (15) and pool (11) scenarios. Scenario 15 (Advanced options) is described under "Advanced options on the wire" above; its curve, hash, port and multicast cases run under `RELAY` too. Scenario 14 (stored transfers) needs neither a relay nor the internet, so it runs under `RELAY` too: it starts `croctest store-server` on a loopback port and checks wrapper upload → CLI download, wrapper revoke → CLI download fails, CLI upload → wrapper download, CLI revoke → `storeExpired`, and an existing name with Keep Both, Replace and a declined preview; the CLI's revoke receipts go to a throwaway `CROC_CONFIG_DIR`. Cancel scenarios assert received-file mismatch (unfakeable by log noise). Scenario 11 covers each of the 4 pool relays: a custom code that maps to it sent wrapper→CLI and CLI→wrapper, and a wrapper-generated code forced onto it with `croctest send -relay-index N`; plus one CLI-generated code (the CLI caches its probed relay, so that covers one index). LAN is off on both sides (`-no-local` / `send --no-local`) so only matching relays meet, and it asserts croctest's `EVENT relay <addr>` and the CLI `--debug` line `public relay index N selected: <addr>`. It waits 60 s first, runs with multiplexing off (`-no-multi` / `--no-multi`) and makes one pass over the pool per kind of transfer, because a relay admits 30 connections a minute from one address (`docs/known-issues.md`). Scenario 12 is the file policy: a CLI sends a file onto an existing one and `croctest` receives with Keep Both and Replace, answered at the prompt and preset with `-yes` (4 cases), then a zipped folder (`croc send --zip`) received twice into one folder with each policy and each accept mode (4 cases); it runs in `RELAY` mode too, so CI covers it. `croctest receive` takes `-policy keepBoth|replace` (default `keepBoth`, other values exit 2). Scenario 13 is the transport: a 130 MiB send in each of `auto` and `relay`, wrapper→CLI and CLI→wrapper (4 cases), against public infrastructure only (Tailcat bootstraps from tailcat.dev, so it is skipped with `RELAY`). It asserts byte equality, and in the CLI `--debug` log a `tailcat-offer` under auto (or `selected=derp`, the CLI's size decision, when the CLI sends) and none under relay. `croctest send` takes `-transport auto|relay|derp` (default `auto`). `croctest` also has `relay CODE` and `relays`; the relay cache lives in `crocmobile/internal/relaycache`, so croctest can seed it without adding to the gobind API.
-- `scripts/verify-app-sim.sh` — boots sim, installs app, CLI→app via `--auto-receive CODE` launch arg, then the share-extension handoff via `--auto-share-send CODE`; each gates on exact `ok success=true` + byte diff. The launch args drive the real UI state machine (`AutoVerify` → `TransferController`, accept via `respond(true)`), not engine-level autoAccept — the point is that the verified path is the one users take.
-- `scripts/verify-app-mac.sh` — macOS app both directions plus local-only: CLI→app (`--auto-receive`), app→CLI (`--auto-send PATH --code CODE`, custom-code path; source file must live in the app container — sandbox), app→CLI with `--local` (sandboxed relay-listener proof, CLI receives via `--ip`), app→CLI via custom self-hosted relay (`croc relay --ports 9021,9022,9023` + `--relay localhost:9021`), `--no-compress` path, `--ask` both-sides-confirm (auto-answered via `AutoVerify` `.confirmSend`), and scenario 7, which prints `MAC-COLLIDE-OK`: the CLI sends onto an existing file in the app's Documents and the app receives with `--when-exists keepBoth|replace` (the answer `AutoVerify` gives the incoming sheet; the setting stays Keep Both), each diffed. Scenario 8 prints `MAC-TRANSPORT-OK`: a 130 MiB transfer in each direction under `--transport auto` and `--transport relay` (the `AutoVerify` flag that sets `settings.transport`), with the same offer assertions as interop scenario 13; public internet only. The app declares document types, so bare adjacent argv tokens are document-open candidates — flags only (`--code CODE`), and every launch needs `-ApplePersistenceIgnoreState YES` (headless window-restoration hang).
-- `crockit-verify` (CrocKit executable) — Swift-layer send/receive/cancel-after-ms/`twice` (two transfers one process, the second receiving with `.replace` — proves fd0/stdout/cwd/mutex restoration composes).
-- macOS app verified via same `--auto-receive` route; container Documents at `~/Library/Containers/com.bakirgdev.CrocApp/Data/Documents/`.
+Each harness checks a different layer. `BUILDING.md`, "Verification harnesses" says how to run them. Shell traps are in `tooling.md`, "Shell and harness traps".
+
+### `scripts/lib.sh`
+
+Sourced by `verify-interop.sh`, `verify-app-mac.sh`, `verify-app-sim.sh`, `capture-screenshots.sh`, `build-appstore.sh` and `build-devid.sh`. It provides:
+
+- the `timeout(1)` shim;
+- `fail` and `pass`;
+- `logged`, which runs a build step into a log and shows its tail on failure;
+- `require_croc`;
+- `kill_jobs`, run from an EXIT trap so a failed assertion cannot leak a croc, relay or app process;
+- `await_file` and `local_ip`.
+
+### `scripts/verify-interop.sh`
+
+15 scenarios, crocmobile against the croc CLI.
+
+| Scenario | What it covers |
+|---|---|
+| 1 to 4 | File, folder and text, in both directions |
+| 5 | Decline notifies the sender |
+| 6, 7 | Receiver cancels, then sender cancels, mid-wire (`--throttleUpload 200k`). They assert a received-file mismatch, which log noise cannot fake. |
+| 8 | Forced relay (LAN off on both sides) |
+| 9 | LAN, via `--ip` |
+| 10 | A croc v10 peer, both ways, expecting `peerVersion` |
+| 11 | Every public pool relay (see below) |
+| 12 | File policy (see below) |
+| 13 | Transport (see below) |
+| 14 | Stored transfers (see below) |
+| 15 | Advanced options, described in "Advanced options on the wire" |
+
+`RELAY=host:port` routes every transfer through one relay. It skips the transport scenario (13), the pool scenario (11), and the proxy and internal DNS cases of scenario 15. Scenario 15's curve, hash, port and multicast cases still run.
+
+Start order in the harness (see "Start order: sender first"):
+
+- With a croctest sender, it waits for croctest's `EVENT code` line, plus 3 s, before a CLI receiver joins.
+- When the CLI sends, it waits a fixed 3 s.
+
+Scenario 11 (pool):
+
+- Each of the 4 pool relays gets a custom code that maps to it, sent wrapper to CLI and CLI to wrapper, and a wrapper-generated code forced onto it with `croctest send -relay-index N`. One CLI-generated code is added (the CLI caches its probed relay, so that covers one index).
+- LAN is off on both sides (`-no-local` and `send --no-local`) so only matching relays meet. It asserts croctest's `EVENT relay <addr>` and the CLI `--debug` line `public relay index N selected: <addr>`.
+- It waits 60 s first, runs with multiplexing off (`-no-multi`, `--no-multi`), and makes one pass over the pool per kind of transfer. A relay admits 30 connections a minute from one address (`../known-issues.md`, "Accepted").
+
+Scenario 12 (file policy), which also runs under `RELAY`, so CI covers it:
+
+- A CLI sends a file onto an existing one and `croctest` receives with Keep Both and with Replace, answered at the prompt and preset with `-yes` (4 cases).
+- Then a zipped folder (`croc send --zip`) is received twice into one folder with each policy and each accept mode (4 cases).
+- `croctest receive` takes `-policy keepBoth|replace` (default `keepBoth`, other values exit 2).
+
+Scenario 13 (transport):
+
+- A 130 MiB send in each of `auto` and `relay`, wrapper to CLI and CLI to wrapper (4 cases). It uses public infrastructure only, because Tailcat bootstraps from `tailcat.dev`.
+- It asserts byte equality. In the CLI `--debug` log it asserts a `tailcat-offer` under `auto` (or `selected=derp`, the CLI's size decision, when the CLI sends) and none under `relay`.
+- `croctest send` takes `-transport auto|relay|derp` (default `auto`).
+
+Scenario 14 (stored transfers), which needs neither a relay nor the internet, so it runs under `RELAY` too:
+
+- It starts `croctest store-server` on a loopback port.
+- It checks wrapper upload then CLI download, wrapper revoke then CLI download fails, CLI upload then wrapper download, and CLI revoke giving `storeExpired`.
+- It checks an existing name with Keep Both, Replace and a declined preview.
+- The CLI's revoke receipts go to a throwaway `CROC_CONFIG_DIR`.
+
+`croctest` also has `relay CODE` and `relays`. The relay cache lives in `crocmobile/internal/relaycache`, so `croctest` can seed it without adding to the gobind API.
+
+### `scripts/verify-app-sim.sh`
+
+Boots the simulator and installs the app. It runs two scenarios: CLI to app via the `--auto-receive CODE` launch argument, then the share-extension handoff via `--auto-share-send CODE`. Each gates on an exact `ok success=true` plus a byte diff.
+
+The launch arguments drive the real UI state machine (`AutoVerify` and `TransferController`, accepting through `respond(true)`), not engine-level auto-accept. The point is that the verified path is the one users take.
+
+### `scripts/verify-app-mac.sh`
+
+12 scenarios, the macOS app through launch arguments. Every transfer gates on a byte-identical diff and the app's `verify-result.txt`.
+
+- CLI to app receive (with history)
+- app to CLI send with a custom code (`--auto-send PATH --code CODE`; the source file must live in the app container because of the sandbox)
+- local-only send (`--local`; a sandboxed relay-listener proof, the CLI receives via `--ip`)
+- send through a custom self-hosted relay (`croc relay --ports 9021,9022,9023`, then `--relay localhost:9021`)
+- `--no-compress` send
+- `--ask` both-sides confirm (auto-answered by `AutoVerify` through `.confirmSend`)
+- receive onto an existing file in the app's Documents, with `--when-exists keepBoth|replace` (the answer `AutoVerify` gives the incoming sheet; prints `MAC-COLLIDE-OK`)
+- a 130 MiB transfer in each direction under `--transport auto` and `--transport relay` (prints `MAC-TRANSPORT-OK`; same offer assertions as interop scenario 13; needs the public internet)
+- stored transfers against a local store server
+- menu-bar quick send
+- Open at login
+- the Shortcuts actions
+
+Traps:
+
+- The app declares document types, so bare adjacent argv tokens are document-open candidates. Pass flags only (`--code CODE`).
+- Every launch needs `-ApplePersistenceIgnoreState YES`, or a headless window restoration hangs.
+- App-as-sender scenarios wait for the `verify-code-ready.txt` marker that `AutoVerify` writes when a send reaches its code, then 3 s (see "Start order: sender first").
+- The container Documents folder is `~/Library/Containers/com.bakirgdev.CrocApp/Data/Documents/`.
+
+### `crockit-verify`
+
+A CrocKit executable for the Swift layer. Subcommands: `send`, `receive` (optionally answering `y` or `n` and cancelling after a number of milliseconds) and `twice`.
+
+`twice` runs two transfers in one process, the second receiving with `.replace`. It proves that the restoration of fd 0, stdout, cwd and the mutex composes across transfers.
 
 ## Toolchain
 
-- Go ≥1.27.2 (brew; `crocmobile/go.mod` pins `go 1.27.2`), gomobile+gobind built by the build script from the `tool` block in `crocmobile/go.mod`. Xcode 27.0 and 27.1 bind clean (no #53316-class friction). macOS slice arm64-only (golang/go#73119); iOS device App Store layout issue golang/go#66500 is closed, and the first App Store upload passed validation (2026-10-14; gomobile still writes `MinimumOSVersion = 100.0`, which App Store Connect accepted).
-- CI notes: verify scripts need outbound network (public relay) + `CROC`/`SIM` env; fresh clone must run `scripts/build-xcframework.sh` before any Swift build (binaryTarget points at gitignored artifact).
-
-Shell and build-tool traps that bite these harnesses live in `tooling.md`.
+- Go: `crocmobile/go.mod` pins `go 1.27.2` (install with Homebrew). The build script builds gomobile and gobind from the `tool` block in `crocmobile/go.mod`.
+- Xcode 27.0 and 27.1 bind cleanly.
+- The macOS slice is arm64 only (golang/go#73119).
+- gomobile still writes `MinimumOSVersion = 100.0` into the iOS framework. App Store Connect accepted it on upload validation. The iOS device layout issue golang/go#66500 is closed.
+- A fresh clone must run `scripts/build-xcframework.sh` before any Swift build, because the `binaryTarget` points at the gitignored artifact.
+- Verify scripts need outbound network (public relay) and the `CROC` and `SIM` environment variables.

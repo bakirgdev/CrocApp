@@ -3,7 +3,7 @@ import Testing
 
 @testable import CrocApp
 
-/// R22: every accepted form parses to the same code; anything else is nil.
+/// Every accepted form parses to the same code; anything else is nil.
 @Suite struct TransferLinkTests {
     private let code = "7020-alpha-beta-gamma"
 

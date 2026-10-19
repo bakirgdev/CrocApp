@@ -1,25 +1,35 @@
-# Prior art & growth notes
+# Prior art and growth notes
 
-Research digest 2026-07-22.
+Competitor facts here change. Re-check any of them (status, price, popularity) before you quote or rely on it.
 
 ## Landscape
 
-Apple-native croc niche effectively empty: only iCroc (paid, closed-source, stale since 2024, embeds croc v10.0.8). Android: crocgui ([howeyc/crocgui](https://github.com/howeyc/crocgui), Go+Fyne, 314★), croc-app ([Dking08/croc-app](https://github.com/Dking08/croc-app), Kotlin/Compose, 87★, best mobile UX reference — but subprocess architecture, not portable to iOS). Desktop: crock ([KD-MM2/crock](https://github.com/KD-MM2/crock), 35★, best desktop UX reference). Adjacent: LocalSend (85k★, LAN-only — breaks on guest/mDNS-hostile networks and iOS backgrounding; croc's relay model is the differentiator), PairDrop, Rymdport, Destiny (wormhole Flutter, stale), Winden, Blip.
+No other well-maintained, open-source Apple-native app for croc was known when this was written. What exists:
 
-## UX patterns to adopt
+| Project | Platform | Notes |
+| --- | --- | --- |
+| iCroc | iOS and macOS | Paid, closed source, embeds an old croc (10.x). The only Apple-native croc client found. |
+| [crocgui](https://github.com/howeyc/crocgui) | Android, desktop | Go with Fyne. |
+| [croc-app](https://github.com/Dking08/croc-app) | Android | Kotlin and Compose. Best mobile UX reference, but it runs the croc binary as a subprocess, which iOS forbids. |
+| [crock](https://github.com/KD-MM2/crock) | Desktop | Best desktop UX reference. |
+| LocalSend | All | Local network only, so it fails on guest networks and when iOS suspends the app. croc's relay model is the difference. |
+| PairDrop, Rymdport, Destiny, Winden, Blip | Various | Adjacent tools, not croc clients. |
 
-- Two-verb home: giant Send / Receive, nothing else.
-- QR both directions; clipboard code auto-detect on receive.
-- Clipboard/text snippet transfer = top real-world use case (croc-app author's #1).
-- Transfer history + saved codes for repeat pairs.
-- Custom relay first-class + relay indicator (trust anxiety is real; explain PAKE/E2E in-app).
-- Receive preview (file list, sizes) before accept; sanitize filenames; explicit overwrite confirm — answers croc's 2023 audit class of issues, marketing point.
-- Deeplink `croc://<code>` encoded in QR (crock does this).
-- Positioning: "works when AirDrop/LocalSend don't — different networks, different continents."
+## UX patterns worth following
 
-## Growth playbook (LocalSend-derived)
+- Two-verb home: one big Send and one big Receive.
+- QR code in both directions, and clipboard code detection on Receive.
+- Clipboard and text transfer is the most common real use (croc-app's author says so).
+- Transfer history for repeat partners.
+- Custom relay as a first-class setting, with a visible relay indicator. Users worry about trust, so explain PAKE and end-to-end encryption in the app.
+- File list and sizes before accepting, sanitized file names, and an explicit overwrite choice. This answers the class of issues in croc's public security audit, and is a selling point.
+- Links that carry the code. The QR code encodes a `https://crocapp.dev/r/` link, which opens the app or a page that explains what to do. The old `croc://<code>` form is still accepted when scanned.
+- Positioning: it works when AirDrop and LocalSend do not, across networks and continents.
 
-- Repo description = pitch one-liner; screenshots/recordings top of README; store badges.
-- Ship minimal fast, iterate in public; donations only, no monetization.
-- Distribution breadth: App Store + TestFlight public link + DMG.
-- Post-launch: PR adding CrocApp to croc README GUI section (how crocgui/croc-app get found); HN, r/selfhosted, r/opensource, Mac blogs (MacStories et al.); translations early.
+## Growth ideas
+
+- Repo description is the pitch line. Screenshots at the top of the README, plus store badges.
+- Ship small, iterate in public. Donations only.
+- Distribute through the App Store, TestFlight and the direct download.
+- Ask for a CrocApp entry in croc's README list of GUIs, which is how the other GUIs get found.
+- Announce on Hacker News, r/selfhosted, r/opensource and Mac blogs. Translate early (`../ROADMAP.md`).

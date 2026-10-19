@@ -50,7 +50,9 @@ git clone https://github.com/bakirgdev/CrocApp.git
 cd CrocApp
 ```
 
-Also needed: `croc` CLI (`brew install croc`) and outbound network access to the public relay.
+Also needed: `croc` CLI (`brew install croc`; `croc --version` must match the pin in `crocmobile/go.mod`, otherwise `go install github.com/schollz/croc/v11@<pin>`) and outbound network access to the public relay.
+
+The first build, the full toolchain table and every check are in [`docs/BUILDING.md`](docs/BUILDING.md). How the code fits together: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Commits
 
@@ -86,7 +88,7 @@ govulncheck ./...
 
 - **Comments explain why, never what.** Do not delete existing comments unless the code they describe is going away.
 - **Stay in scope.** No drive-by refactors, no renaming unrelated symbols, no reformatting files your change does not touch.
-- **No new third-party dependencies** without agreeing on them in an issue first. New dependency may end up shipped somewhere that moves people's files!
+- **No new third-party dependencies** without agreeing on them in an issue first. A dependency ships inside an app that reads and writes people's files.
 
 ## Design rules
 
@@ -102,11 +104,45 @@ A failure means your change or `design/` is wrong. Fix one of them, never the ch
 
 UI pull requests need **before and after screenshots in both light and dark**, and on both platforms if both are affected.
 
+## Verification
+
+A build that compiles proves nothing about a transfer. CI runs formatting, lint, the builds, the unit tests and `verify-interop.sh` against a local relay. Everything else that applies to your change is yours to run:
+
+| What you changed | What to run |
+|---|---|
+| Swift under `app/` or `CrocKit/` | `scripts/format-swift.sh --lint`, the unit tests, a macOS and an iOS Simulator build |
+| Anything in `crocmobile/` | `go test -race ./...`, `golangci-lint run ./...`, then `scripts/build-xcframework.sh` |
+| `crocmobile/session.go`, `CrocKit/Sources/` or `TransferController` | the matching transfer harness, every time |
+| Anything visual | `scripts/verify-design.sh` |
+| Markdown | `scripts/verify-docs.sh` |
+
+The commands, and what each harness covers and needs, are in [`docs/BUILDING.md`](docs/BUILDING.md) under "Format and lint" and "Verification harnesses".
+
+### Tests
+
+Non-UI logic gets unit tests: Go's `testing` in `crocmobile/`, Swift Testing in `CrocKit/Tests/` and `app/CrocAppTests/`. Tests that write settings or secrets use an injected store, never the real `UserDefaults` or Keychain. There is no XCUITest: gestures, the camera and taps are checked by hand, and transfers by the harnesses. A unit test never replaces a harness run.
+
+**Paste the harness output into the pull request**, the summary lines and any failures. If you could not run something, write **"not verified"** and say why. That is an acceptable answer, and the maintainer runs it before merge. A claim that something passed when it never ran is not.
+
+## Docs
+
+Documentation is part of the change. Before you open the pull request:
+
+| What happened | Where it goes |
+|---|---|
+| A user-visible change | A line under `## [Unreleased]` in [`CHANGELOG.md`](CHANGELOG.md), written for someone deciding whether to update |
+| You changed how something works inside | The doc that describes it: [`docs/AGENTS.md`](docs/AGENTS.md) says which file owns which fact |
+| You fixed a listed defect | Delete its item from [`docs/known-issues.md`](docs/known-issues.md) |
+| You found a defect and left it | Add an item to `docs/known-issues.md` |
+| You noticed a stale or wrong doc | Fix or delete it in the same pull request |
+
+Docs state what is true now, without dates or tracking IDs; [`docs/AGENTS.md`](docs/AGENTS.md) has the writing rules. Run `scripts/verify-docs.sh` after editing any markdown.
+
 ## AI-assisted contributions
 
 Allowed, and used heavily here. Two conditions:
 
-- **Disclose it.** Own the responsibility to report even if we live in the day and age where it may be considered as norm. Fill in the AI assistance line in the PR template. It tells the reviewer where to look harder, and nobody is judged for it.
+- **Disclose it.** Fill in the AI assistance line in the PR template, even though AI use is common. You are responsible for reporting it. It tells the reviewer where to look harder, and nobody is judged for it.
 - **You own the code.** You understand every line, you can explain why each one is there, and you ran all verifications and checks yourself. "The model said it works" is not verification.
 
 Bulk-generated pull requests that the author has not read, does not understand, or cannot verify get closed without review.

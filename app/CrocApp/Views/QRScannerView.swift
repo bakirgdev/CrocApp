@@ -4,7 +4,7 @@ import SwiftUI
 import Vision
 import VisionKit
 
-/// QR scan sheet (F6). Authorization is resolved first (four distinct
+/// QR scan sheet. Authorization is resolved first (four distinct
 /// states -- see below), then DataScannerViewController.isSupported is
 /// checked as a separate capability gate: it is false on simulator and
 /// unsupported hardware regardless of authorization, so both checks stay.

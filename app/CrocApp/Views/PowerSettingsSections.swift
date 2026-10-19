@@ -1,7 +1,7 @@
 import CrocKit
 import SwiftUI
 
-/// Power-option form sections (F13-F19), shared by the macOS Settings scene
+/// Power-option form sections, shared by the macOS Settings scene
 /// and the iOS settings screen. Empty relay fields mean croc's defaults: with
 /// no custom relay, the public relay pool.
 struct PowerSettingsSections: View {

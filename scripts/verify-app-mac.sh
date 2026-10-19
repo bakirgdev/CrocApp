@@ -193,7 +193,7 @@ check_result "ask send"
 diff -r "$DOCS/askdir" "$DST/askdir" > /dev/null || fail "ask send: received folder differs"
 echo MAC-ASK-OK
 
-# --- 7: CLI -> app onto an existing file, Keep Both and Replace (R24) --------
+# --- 7: CLI -> app onto an existing file, Keep Both and Replace --------
 # --when-exists is the answer AutoVerify gives the incoming sheet; the setting
 # stays Keep Both, so a Replace proves the late answer reaches croc. Keep Both
 # leaves the existing file and adds "collide (1).txt"; Replace overwrites it.
@@ -221,7 +221,7 @@ collide keepBoth
 collide replace
 echo MAC-COLLIDE-OK
 
-# --- 8: 130 MiB in each direction, Connection Automatic and Relay only (R17) --
+# --- 8: 130 MiB in each direction, Connection Automatic and Relay only --
 # croc offers Tailcat only for sends of 128 MiB or more, so the file is just
 # over that. The CLI's --debug log shows the offer ("tailcat-offer") on the
 # receiving side of an app send, and the sender's size decision
@@ -265,7 +265,7 @@ transport_app_receive relay
 rm -f "$TMP/bigrecv.bin"
 echo MAC-TRANSPORT-OK
 
-# --- 9: stored transfers through the app (R18-R20) ---------------------------
+# --- 9: stored transfers through the app ---------------------------
 # A local croc store server (croctest store-server), so no relay and no
 # internet. One app instance uploads and keeps its receipt in memory, so the
 # revoke has to come from that same process: the script signals it with
@@ -331,7 +331,7 @@ esac
 [ ! -e "$DOCS/storeme.bin" ] || fail "revoked upload wrote a file (app)"
 echo MAC-STORE-OK
 
-# --- 10: menu-bar quick send, files and clipboard text (R26) -----------------
+# --- 10: menu-bar quick send, files and clipboard text -----------------
 # --auto-menubar-send and --auto-menubar-clipboard start the send through
 # MenuBarQuickSend, the view model behind the menu-bar window. The code is
 # generated, so the app writes it to verify-code.txt for the CLI receiver.
@@ -359,7 +359,7 @@ check_result menubar-clipboard
 grep -qF "$CLIP" "$TMPROOT/mac-cli-menubar-clip.log" || fail "menu-bar clipboard text did not reach the CLI"
 echo MAC-MENUBAR-OK
 
-# --- 11: Open at login matches the system status (R26) -----------------------
+# --- 11: Open at login matches the system status -----------------------
 # The check registers the app's login item and unregisters it again, so a
 # stray item survives only if the run is killed between the two (a login item
 # already present before the run is left unregistered). The status
@@ -379,7 +379,7 @@ case "$got" in
 esac
 echo MAC-LOGIN-OK
 
-# --- 12: the Shortcuts actions against the CLI (R27) -------------------------
+# --- 12: the Shortcuts actions against the CLI -------------------------
 # Shortcuts cannot be driven from a script, so --auto-intent calls each
 # action's perform() directly (the value rides behind --intent-arg: two bare
 # arguments in a row make AppKit skip the window). The send actions return

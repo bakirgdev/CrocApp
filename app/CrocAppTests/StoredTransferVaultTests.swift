@@ -5,7 +5,7 @@ import Testing
 @testable import CrocApp
 
 /// Receipts carry the upload token and the link key, so they live only in the
-/// Keychain (R12d, R19). Every test runs over an in-memory `SecretStore`.
+/// Keychain. Every test runs over an in-memory `SecretStore`.
 @MainActor
 @Suite struct StoredTransferVaultTests {
     private static let account = "storedReceipts"

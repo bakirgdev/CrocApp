@@ -4,7 +4,7 @@ import Testing
 
 @testable import CrocApp
 
-/// Advanced settings (R25): persistence, the proxies' Keychain-only storage and reset.
+/// Advanced settings: persistence, the proxies' Keychain-only storage and reset.
 @Suite struct AppSettingsAdvancedTests {
     private let suiteName = "CrocAppTests.\(UUID().uuidString)"
     private let defaults: UserDefaults

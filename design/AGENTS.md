@@ -84,5 +84,5 @@ A token is live when the app or a site consumes it, or when it is a step in a sc
 
 - Values are cross-referenced. Changing one means grepping `design/` and both mirrors for it.
 - `scripts/build-dmg.sh` takes its geometry from `components.md` → DiskImage; change both together.
-- Verified facts carry the date they were checked (contrast ratios, the Lucide version, Apple API names). Re-verifying means moving the date.
+- Verified facts name what they were checked against (the Lucide version, the iOS 26 SDK, the tool that computed a contrast ratio), never a date. Re-verifying against something newer means updating that name.
 - Cite design sections by name (`components.md` → AcceptGate), never by line number. Line numbers rot.

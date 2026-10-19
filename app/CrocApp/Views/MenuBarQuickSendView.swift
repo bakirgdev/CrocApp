@@ -4,7 +4,7 @@ import AppKit
 import CrocKit
 import SwiftUI
 
-/// The menu-bar window (R26): drop files or tap a button to send, then the
+/// The menu-bar window: drop files or tap a button to send, then the
 /// code, QR and progress of whatever transfer the shared controller runs.
 struct MenuBarQuickSendView: View {
     @Environment(TransferController.self) private var controller

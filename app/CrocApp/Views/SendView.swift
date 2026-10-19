@@ -1,7 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Send flow (F1 files, F2 folders, F3 text/clipboard, F5 custom code).
+/// Send flow (files, folders, text/clipboard, custom code).
 struct SendView: View {
     @Environment(TransferController.self) private var controller
     @Environment(AppRouter.self) private var router
@@ -30,7 +30,7 @@ struct SendView: View {
     /// The accent border a drag draws over the staged list (DropZone: 2pt).
     private let dropBorderWidth: CGFloat = 2
 
-    /// How long a stored upload stays on the server (R18).
+    /// How long a stored upload stays on the server.
     private enum LinkLifetime: Int, CaseIterable {
         case hour = 3_600
         case day = 86_400
@@ -135,7 +135,7 @@ struct SendView: View {
         customCode.trimmingCharacters(in: .whitespaces)
     }
 
-    /// Why "Send as link" cannot be used for what is staged, or nil (R18).
+    /// Why "Send as link" cannot be used for what is staged, or nil.
     private var linkUnavailableReason: String? {
         if mode == .text { return "Text can't be sent as a link. Switch to Files." }
         if pickedURLs.contains(where: Self.isFolder) {

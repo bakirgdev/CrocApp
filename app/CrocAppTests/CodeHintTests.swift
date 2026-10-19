@@ -3,7 +3,7 @@ import Testing
 
 @testable import CrocApp
 
-/// History keeps a code hint, never enough of a code to reuse it (R12d).
+/// History keeps a code hint, never enough of a code to reuse it.
 @Suite struct CodeHintTests {
     @Test(arguments: [
         ("wiry-buzz-grope", "wiry-…"),

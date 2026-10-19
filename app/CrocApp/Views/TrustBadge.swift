@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// F36: end-to-end encryption badge + active relay indicator, shown on the
+/// End-to-end encryption badge + active relay indicator, shown on the
 /// waiting and transferring screens. Relay kind is captured at transfer
 /// start (TransferController.activeRelay) so it can't drift mid-transfer.
 /// design/components.md → TrustBadge.

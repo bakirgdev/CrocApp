@@ -25,15 +25,16 @@ import ServiceManagement
 ///                                  record it again (macOS)
 ///   --auto-share-send CODE         send whatever's staged in the ShareInbox with custom code CODE
 ///   --local                        force croc local-only mode (LAN/sandbox listener check)
-///   --no-compress                  disable croc compression (F15)
-///   --ask                          require sender-side confirm before send (F19)
-///   --relay ADDR                   use a custom relay address (F13); also disables local-only race
+///   --no-compress                  disable croc compression
+///   --ask                          require sender-side confirm before send
+///   --relay ADDR                   use a custom relay address; also disables local-only race
 ///   --relay-password PW            the custom relay's password (croc's default applies without it)
 ///   --shown-relay default          make the trust UI name the public relay whatever --relay says
 ///   --shown-link-origin ORIGIN     make a stored link show and encode ORIGIN (scheme and host, e.g.
 ///                                  https://crocapp.dev) instead of the --store-server's; the upload
 ///                                  still goes to --store-server
 ///   --throttle RATE                cap the upload rate for a send, e.g. 4m (croc's --throttleUpload)
+///   --transport auto|relay         the Connection setting for this run (croc's --transport)
 ///   --hold                         park at the incoming prompt instead of auto-accepting
 ///   --when-exists keepBoth|replace answer the incoming prompt with this file policy
 ///                                  (the setting stays Keep Both, so the late answer must reach croc)

@@ -1,185 +1,315 @@
 # Architecture
 
-Top-down map of CrocApp. Start here, then follow the links at the bottom for depth. Doubles as a Swift/SwiftUI learning trail through the repo: every type named below is real and worth opening.
+Top-down map of CrocApp. Start here, then follow the links at the end for depth. Terms like PAKE, relay and gobind are in `docs/GLOSSARY.md`.
 
 ## System summary
 
-CrocApp is a native SwiftUI app (iOS 26 + macOS 26, one multiplatform target) that embeds [croc](https://github.com/schollz/croc) as a Go library rather than shelling out to a CLI. There is **one process**: the app binary. croc's transfer engine runs in-process as linked Go code (via a `gomobile`-built `.xcframework`), not as a subprocess and not as a daemon — iOS forbids spawning processes, so a subprocess model was never an option. A single Swift actor, `CrocEngine`, is the only thing in the app that calls into that Go code, and `TransferController` is the only thing in the app that calls `CrocEngine`. Everything above that is SwiftUI views reacting to one `@Observable` state machine.
+CrocApp is a native SwiftUI app for iOS, iPadOS and macOS 26. It embeds [croc](https://github.com/schollz/croc) as a Go library instead of running the croc command.
+
+- There is one process: the app. croc's transfer engine runs inside it as linked Go code, built into an `.xcframework` with `gomobile`.
+- It is not a subprocess and not a daemon. iOS does not allow spawning processes, so a subprocess design was never possible.
+- One Swift actor, `CrocEngine`, is the only code that calls the Go code.
+- `TransferController` is the only code that calls `CrocEngine`.
+- Everything above that is SwiftUI views reacting to one `@Observable` state machine.
+
+The SwiftUI sources build three targets:
+
+| Target | Platforms | Channel |
+| --- | --- | --- |
+| `CrocApp` | iOS and macOS | App Store builds (status: `docs/knowledge/project-overview.md`, "Status") |
+| `CrocApp Direct` | macOS, arm64 | Direct download (notarized DMG with Sparkle updates) |
+| `CrocShare` | iOS | Share extension |
 
 ## Layer diagram
 
 ```
-croc v11.5.4 (schollz/croc, go.mod pin)
-    │  Go function calls (croc.NewCtx, Client polling)
+croc v11.5.4 (schollz/croc, pinned in crocmobile/go.mod)
+    │
     ▼
-crocmobile/ (Go wrapper package)
-    │  gobind: scalars, strings, bools, interfaces, struct pointers only
-    │  (no []string, no unsigned ints, no struct slices — paths/ports/excludes
-    │  cross as newline- or comma-joined strings; fileList/progress/done cross
-    │  as JSON strings)
+crocmobile/            Go wrapper package
+    │
     ▼
-gomobile bind -target ios,iossimulator,macos/arm64
+gomobile bind          ios, iossimulator, macos/arm64
+    │
     ▼
-CrocKit/Croc.xcframework  (gitignored build artifact)
-    │  ObjC-bridged Go symbols: CrocmobileOptions, CrocmobileTransfer,
-    │  CrocmobileDelegateProtocol; import Croc
+CrocKit/Croc.xcframework   (gitignored build output)
+    │
     ▼
-CrocKit (Swift package: CrocEngine actor, DelegateBridge, Models.swift)
-    │  AsyncStream<TransferEvent>; delegate callbacks arrive on Go threads,
-    │  DelegateBridge only yields into the stream — no MainActor hop here
+CrocKit                Swift package: CrocEngine, DelegateBridge, Models.swift
+    │                  AsyncStream<TransferEvent>
     ▼
-TransferController (@MainActor @Observable, app/CrocApp/Models/)
-    │  Phase enum; intents (startSend, startReceive, startStoreSend,
-    │  startStoreReceive, respond, cancel, revoke)
+TransferController     @MainActor @Observable, app/CrocApp/Models/
+    │                  Phase enum and intent methods
     ▼
-SwiftUI views (app/CrocApp/Views/)
-    switch over controller.phase; call intents; nothing else touches CrocKit
+SwiftUI views          app/CrocApp/Views/
 ```
+
+Notes on the arrows:
+
+- Go calls croc directly (`croc.NewCtx`, then polling the client).
+- gobind only passes scalars, strings, bools, interfaces and struct pointers. Lists cross as newline- or comma-joined strings. File lists, progress and the final summary cross as JSON strings.
+- Delegate callbacks arrive on Go threads. `DelegateBridge` only yields into the stream and does not hop to `MainActor`.
 
 ## Per-layer detail
 
-### croc (vendored dependency, not this repo's code)
+### croc (dependency, not this repo's code)
 
-`schollz/croc/v11` v11.5.4, pinned in `crocmobile/go.mod`. PAKE-secured, relay-assisted, end-to-end encrypted transfer protocol. CrocApp does not fork or reimplement it (project non-goal, `docs/knowledge/project-overview.md`); upgrades are a version bump + rebind, tracked in `docs/knowledge/croc-upgrade-playbook.md`.
+- `schollz/croc/v11` v11.5.4, pinned in `crocmobile/go.mod`.
+- CrocApp does not fork or reimplement it (see `docs/knowledge/project-overview.md`).
+- Upgrades are a version bump plus a rebuild of the xcframework: `docs/knowledge/croc-upgrade-playbook.md`.
 
-### `crocmobile/` — Go wrapper
+### `crocmobile/`: Go wrapper
 
-Files: `crocmobile.go` (public API: `Options`, `Delegate` interface, `Transfer` handle, `StartSend`/`StartReceive`), `session.go` (the engine: `session` struct, `startSession`/`startReceiveSession`, the fd0 prompt pipe, the 10 Hz poller), `doc.go` (package-level gobind constraint comment), `cmd/croctest/main.go` (CLI harness, not linked into the app).
+Job: adapt croc's command-line-shaped library (process-global `os.Chdir`, stdin prompts, text receive through `os.Stdout`) so a GUI can call it repeatedly and safely.
 
-Responsibility: adapt croc's CLI-shaped library API (process-global `os.Chdir`, stdin-bound prompts, `os.Stdout`-piped text receive) into something callable repeatedly and concurrently-safely from a GUI. Key types: `Options` (mirrors croc CLI flags, gobind-safe scalar fields only), `Delegate` (8-method callback interface: `OnCodeReady`, `OnConnected`, `OnFileList`, `OnProgress`, `OnText`, `OnDone`, `OnError`, `OnStored`), `Transfer` (`Cancel()`, `Respond(accept bool, policy string)`, policy `PolicyKeepBoth` or `PolicyReplace`). `OnError` receives a JSON `{"code","message"}` payload, and `StartSend`/`StartReceive` return the same JSON as their error text (gobind hands Swift only the text); `errors.go` classifies croc and package errors into codes (`peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `other`) from croc's sentinels, this package's `codedError`, and croc v11.5.4 error text, so the app never reads croc's wording. `store.go` adds stored transfers (`StartStoreSend`, `StartStoreReceive`, `RevokeStored`) over croc's `storeclient`, on the same `Transfer` handle and `activeMu` (`docs/knowledge/crocmobile-bridge.md`). `network.go` validates the Advanced options (`invalidSetting`) and sets croc's process-wide proxy and DNS globals for the length of one transfer, restored before `activeMu` is released; stored transfers get an explicit proxied HTTP client instead, because `RevokeStored` runs outside the lock.
+Files:
 
-Deliberately does **not**: run more than one transfer at a time (package-global `activeMu` mutex — second `Start*` call returns `"another transfer is active"`), expose every croc knob (`RelayPorts`, `Curve`, `HashAlgorithm`, `ThrottleUpload`, `NoMultiplexing` are settable in `Options` but unwired above CrocKit — F20-F29 backlog, `docs/knowledge/features.md`), or let a Go panic cross the gobind boundary uncaught: `StartSend`/`StartReceive`/`Cancel`/`Respond` each carry their own `recover()`, `run()` recovers around `xfer()` and again around the terminal `OnError`/`OnText`/`OnDone` calls, and `poll()` recovers per tick around `OnConnected`/`OnFileList`/`OnProgress` (`session.go`'s `reportPanic`; a recovered panic reports code `other`). `xfer()` itself has no watchdog, though — a hang there past context cancel still holds `activeMu` forever (`docs/known-issues.md`).
+- `crocmobile.go`: public API (`Options`, the `Delegate` interface, the `Transfer` handle, `StartSend`, `StartReceive`).
+- `session.go`: the engine (the `session` struct, `startSession`, `startReceiveSession`, the prompt pipe on fd 0, the 10 Hz poller).
+- `store.go`: stored transfers (`StartStoreSend`, `StartStoreReceive`, `RevokeStored`), run on the same `Transfer` handle.
+- `errors.go`: turns croc errors into failure codes.
+- `network.go`: validates Advanced options and sets croc's process-wide proxy and DNS globals.
+- `relay.go`: public relay selection.
+- `doc.go`: the gobind constraint comment.
+- `cmd/croctest/main.go`: a command-line test harness, not linked into the app.
 
-Gobind surface: the xcframework's ObjC module is `Croc` (`import Croc`); Go symbols get an `Crocmobile`-prefixed ObjC name (`CrocmobileOptions`, `CrocmobileStartSend`, protocol `CrocmobileDelegateProtocol` → Swift `CrocmobileDelegateProtocol`). Full type-restriction list and the JSON field-by-field contract: `docs/knowledge/crocmobile-bridge.md`.
+Key types:
 
-### `Croc.xcframework` — the gomobile bind
+- `Options` mirrors croc's command-line flags, using gobind-safe scalar fields only.
+- `Delegate` has 8 callbacks: `OnCodeReady`, `OnConnected`, `OnFileList`, `OnProgress`, `OnText`, `OnDone`, `OnError`, `OnStored`.
+- `Transfer` has `Cancel()` and `Respond(accept bool, policy string)`. The policy is `PolicyKeepBoth` or `PolicyReplace`.
 
-Built by `scripts/build-xcframework.sh` (`gomobile bind -target ios,iossimulator,macos/arm64`), one output feeding both platforms. Gitignored; not part of this repo's source of truth (see Build-time architecture below).
+Errors:
 
-### `CrocKit/` — Swift package
+- `OnError` receives JSON `{"code","message"}`. `StartSend` and `StartReceive` return the same JSON as their error text, because gobind gives Swift only the text.
+- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.5.4 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `other`.
+- The app picks its wording from the code and never reads croc's text.
 
-`Package.swift`: swift-tools 6.0, platforms `.iOS("26.0")`, `.macOS("26.0")`, targets `Croc` (the binaryTarget), `CrocKit` (depends on `Croc`), `crockit-verify` (executable harness, depends on `CrocKit`).
+Network settings:
 
-- `CrocEngine.swift` — `public actor CrocEngine`. Owns the one `CrocmobileTransfer` handle at a time (`activeTransfer`), exposes `startSend`/`startReceive` (return `EngineTransfer { id: TransferID, events: AsyncStream<TransferEvent> }`), `respond(accept:policy:)`, `cancel(_ id: TransferID)` (a stale ID is ignored, so a late cancel cannot reach the next transfer). `crocOptions(from:)` maps Swift `EngineOptions` to `CrocmobileOptions` — this is the actual list of knobs the GUI can reach; anything in Go's `Options` not copied here is inert from the app's perspective. `CrocEngineError`: `.transferActive`, `.startFailed(EngineFailure)`. `Models.swift` defines `EngineFailure { code: Code, message: String }` (`Code` mirrors the Go list; an unknown code or a malformed payload decodes as `.other` with the raw text) and `TransferEvent.failed(EngineFailure)`.
-- `DelegateBridge.swift` — `final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sendable`. Bridges Go-thread callbacks into `AsyncStream<TransferEvent>.Continuation.yield`. Decodes the JSON event payloads into `Models.swift` structs; a malformed `fileList` or `done` payload becomes `.failed(...)` (code `other`) and finishes the stream; finishing runs `CrocEngine`'s `onTermination`, which cancels that transfer by its ID, so the consumer needs no cancel call.
-- `Models.swift` — `EngineOptions` (Swift-side settings struct), `TransferEvent` enum (`codeReady`, `connected`, `fileList`, `progress`, `text`, `done`, `failed`), `FileList`, `TransferProgress`, `Summary` (all `Codable, Sendable`).
-- `crockit-verify` — standalone executable (`send`/`receive`/`twice` subcommands), macOS-only interop harness, not shipped in the app.
+- `network.go` sets croc's proxy and DNS globals for the length of one transfer and restores them before `activeMu` is released.
+- Stored transfers get their own proxied HTTP client instead, because `RevokeStored` runs outside the lock.
 
-Deliberately does **not**: hop to `MainActor` itself. `DelegateBridge` only yields; the consumer (`TransferController`) does the hop, because `@MainActor @Observable` state can only be mutated there.
+What it deliberately does not do:
 
-### `TransferController` — app state machine
+- Run more than one transfer at a time. A package-global `activeMu` mutex makes a second `Start*` call return `"another transfer is active"`.
+- Let a Go panic cross into Swift. `StartSend`, `StartReceive`, `Cancel` and `Respond` each recover. `run()` recovers around `xfer()` and around the final `OnError`, `OnText` and `OnDone` calls. `poll()` recovers on every tick. A recovered panic reports code `other` (`reportPanic` in `session.go`).
+- Guard against a hang inside `xfer()` past context cancel. That would hold `activeMu` for the life of the process (`docs/known-issues.md`, "Accepted").
 
-`app/CrocApp/Models/TransferController.swift`. `@MainActor @Observable final class`. The only consumer of `CrocKit` in the app. Owns a private `CrocEngine`, a `BackgroundCoordinator`, and the `Phase` enum every view switches on. Full event-handling invariants (why `.progress` must not clobber `.incoming`, the `transferActive` retry window, copy precedence): `docs/knowledge/app-ui-architecture.md`.
+Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols get a `Crocmobile` prefix in Objective-C: `CrocmobileOptions`, `CrocmobileTransfer`, `CrocmobileStartSend`. The Go interface `Delegate` is the Objective-C protocol `CrocmobileDelegate`, which Swift imports as `CrocmobileDelegateProtocol`. The full type rules and the JSON field list are in `docs/knowledge/crocmobile-bridge.md`.
+
+### `Croc.xcframework`
+
+- Built by `scripts/build-xcframework.sh` with `gomobile bind -target ios,iossimulator,macos/arm64`. One output serves both platforms.
+- Gitignored. See "Build-time architecture" below.
+
+### `CrocKit/`: Swift package
+
+`Package.swift`: swift-tools 6.0, platforms iOS 26 and macOS 26. Targets: `Croc` (the binary target), `CrocKit`, `crockit-verify` (executable) and `CrocKitTests`.
+
+- `CrocEngine.swift`: `public actor CrocEngine`.
+  - Holds the one active `CrocmobileTransfer` (`activeTransfer`).
+  - `startSend` and `startReceive` return an `EngineTransfer` with an `id: TransferID` and `events: AsyncStream<TransferEvent>`.
+  - `startStoreSend`, `startStoreReceive` and `revokeStored` do the same for stored transfers.
+  - `respond(accept:policy:)` answers the accept prompt.
+  - `cancel(_ id: TransferID)` ignores a stale ID, so a late cancel cannot reach the next transfer.
+  - `crocOptions(from:)` maps Swift `EngineOptions` to `CrocmobileOptions`. It is the list of settings the app can reach. A Go option not copied there is unused by the app.
+  - `CrocEngineError` is `.transferActive` or `.startFailed(EngineFailure)`.
+- `DelegateBridge.swift`: `final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sendable`.
+  - Turns Go-thread callbacks into `AsyncStream<TransferEvent>.Continuation.yield`.
+  - Decodes the JSON payloads. A malformed file list, receipt or summary becomes `.failed` with code `other`, and the stream finishes.
+  - When the stream finishes, `CrocEngine`'s `onTermination` cancels that transfer by ID, so the consumer needs no cancel call.
+- `Models.swift`: `EngineOptions`, `FilePolicy`, `Transport`, `Curve`, `HashAlgorithm`, `ProxySettings`, `FileList`, `TransferProgress`, `Summary`, `StoredReceipt`, `EngineFailure`.
+  - `TransferEvent` cases: `codeReady`, `connected`, `fileList`, `progress`, `text`, `stored`, `done`, `failed`.
+  - `EngineFailure.Code` mirrors the Go codes. An unknown code or a malformed payload decodes as `.other` with the raw text.
+- `crockit-verify`: a macOS-only executable (`send`, `receive` and `twice` subcommands) that tests interop with the croc command. It is not shipped.
+
+CrocKit does not hop to `MainActor`. `DelegateBridge` only yields. `TransferController` does the hop, because its `@MainActor` state can only change there.
+
+### `TransferController`: app state machine
+
+File: `app/CrocApp/Models/TransferController.swift`. A `@MainActor @Observable final class`.
+
+- The only caller of `CrocEngine`. It owns a private `CrocEngine`, a `BackgroundCoordinator` and the `Phase` enum that every view switches on.
+- Intents: `startSend`, `startSendText`, `startStoreSend`, `startReceive`, `startStoreReceive`, `respond`, `cancel`, `revoke`.
+- `Phase` cases: `idle`, `starting`, `waiting`, `connecting`, `confirmSend`, `incoming`, `transferring`, `done`, `stored`, `failed`.
+- Event-handling rules (why progress must not overwrite `incoming`, the retry window after `transferActive`, copy precedence): `docs/knowledge/app-ui-architecture.md`, "TransferController".
 
 ### SwiftUI views
 
-`app/CrocApp/Views/`. `HomeView` is the sole `NavigationStack` (value-based `AppRouter.Route` links). `SendView`/`ReceiveView` show an input form when `!controller.isActive`, else `TransferStatusView`. `TransferStatusView` renders every non-idle `Phase`; `IncomingRequestView` (in the same file) is the accept gate. `SettingsScreen` (iOS route) and `SettingsView` (macOS `Settings` scene) both embed the shared `PowerSettingsSections`. `HistoryView`, `HowItWorksView`, `OnboardingView`, `StagedFilesSheet`, `QRCodeView`, `QRScannerView`, `TrustBadge` round out the view layer. `Models/TransferLink.swift` is the one parser for every way a code arrives (bare code, `crocapp://`, `crocapp.dev/r/`, `getcroc.com/?code=`, `croc://`); `AppRouter.open(_:)` hands it to Receive, which prefills the code and never connects by itself. Views never import `Croc` or `CrocKit` — they only read `TransferController.phase` and call its intent methods.
+Folder: `app/CrocApp/Views/`.
+
+- `HomeView` is the only `NavigationStack`. It uses value-based `AppRouter.Route` links.
+- `SendView` and `ReceiveView` show an input form when `controller.isActive` is false, otherwise `TransferStatusView`.
+- `TransferStatusView` draws every non-idle `Phase`. `IncomingRequestView` (same file) is the accept screen.
+- `SettingsScreen` (iOS, a route) and `SettingsView` (macOS `Settings` scene) both embed `PowerSettingsSections`.
+- Others: `HistoryView`, `HowItWorksView`, `OnboardingView`, `StagedFilesSheet`, `QRCodeView`, `QRScannerView`, `TrustBadge`.
+- `Models/TransferLink.swift` is the one parser for every way a link or code arrives: a bare code, a stored-transfer link, `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>`, `https://getcroc.com/?code=` and `croc://<code>`.
+- `AppRouter.open(_:)` passes the parsed link to Receive, which fills in the code and never connects by itself.
+- Views may import `CrocKit` for its value types (`Summary`, `FilePolicy`, `Transport`). They never import `Croc` and never call `CrocEngine`. They read `TransferController.phase` and call its intent methods.
 
 ## Event and control flow
 
-Real event names are the `TransferEvent` cases; `Phase` is `TransferController.Phase`.
+Event names are the `TransferEvent` cases. `Phase` is `TransferController.Phase`.
 
 ### Send, happy path
 
-1. `SendView` calls `controller.startSend(urls:customCode:)`. `phase = .starting`; `BackgroundCoordinator.transferStarted` wraps the transfer (iOS only); `engine.startSend` launches the Go session.
-2. Go delegate fires `OnCodeReady` → Swift `.codeReady(code)` → `phase = .waiting(code:)`. The waiting view shows the code, a QR (`QRCodeView`) of the `https://crocapp.dev/r/#<code>` link, and a Share Link button.
-3. Peer connects: `OnConnected` → `.connected`. If `settings.bothSidesConfirm` (croc `--ask`, F19) is on, `phase = .confirmSend` instead of `.connecting` — this is the sender-side "both sides confirm" gate; the user's accept calls `respond(accept: true)`, decline calls `cancel()`.
-4. Progress ticks arrive at ~10 Hz as `OnProgress` → `.progress(TransferProgress)`, `step` cycling `waiting` → `connected` → `transferring`. `TransferController` ignores `step == "waiting"` ticks and, critically, ignores all progress while `phase` is `.confirmSend` (same guard protects the receive side's `.incoming`) — croc is blocked in `GetInput` waiting for `respond()`, and a clobbered phase there means the UI can never call it.
-5. Transfer completes: `OnDone` → `.done(Summary)` → `phase = .done(summary, receivedText: nil)`. `finishRecord` writes a `TransferRecord` to `HistoryStore`.
+1. `SendView` calls `controller.startSend(urls:customCode:)`. Phase becomes `.starting`. On iOS, `BackgroundCoordinator.transferStarted` wraps the transfer. `engine.startSend` starts the Go session.
+2. Go calls `OnCodeReady`, Swift yields `.codeReady(code)`, and phase becomes `.waiting(code:)`. The screen shows the code, a QR code (`QRCodeView`) of the `https://crocapp.dev/r/#<code>` link, and a **Share Link** button.
+3. The peer connects: `OnConnected` gives `.connected`.
+   - If the **Confirm on Both Sides** setting (`settings.bothSidesConfirm`, croc's `--ask`) is on, phase becomes `.confirmSend` instead of `.connecting`. Accept calls `respond(accept: true)`. **Cancel** calls `cancel()`.
+4. `OnProgress` ticks arrive about 10 times a second as `.progress(TransferProgress)`. The `step` field goes `waiting`, `connected`, `transferring`.
+   - `TransferController` ignores `waiting` ticks.
+   - It also ignores all progress while phase is `.confirmSend` or `.incoming`. croc is blocked in `GetInput` waiting for `respond()`, and a phase overwritten there leaves the UI with nothing to call.
+5. `OnDone` gives `.done(Summary)`, and phase becomes `.done(summary, receivedText: nil)`. `finishRecord` writes a `TransferRecord` to `HistoryStore`.
 
 ### Receive, happy path (with accept prompt)
 
-1. `ReceiveView` calls `controller.startReceive(code:into:folderIsScoped:)`. `options.whenFileExists = settings.whenFileExists` (Keep Both by default; the policy is only used as-is under auto-accept, otherwise the incoming sheet's choice goes to `respond(accept:policy:)`); `options.autoAccept = settings.autoAccept && !settings.bothSidesConfirm` (Ask always wins over auto-accept, since engine-level `AutoAccept` answers croc's prompts with `n` and closes the pipe, which would decline instead of accept).
-2. `OnFileList` → `.fileList(FileList)`. If auto-accept is off, `phase = .incoming(list, conflicts: [], blocked: [...])` immediately (unsafe names, via `ReceivedName.isUnsafe`, are computed synchronously); a detached task then stats the output folder for name collisions and back-fills `conflicts` if the phase is still `.incoming`. Progress keeps ticking underneath (guarded, per above) because croc is blocked in `utils.GetInput`, reading the dup2'd fd0 pipe (`crocmobile/session.go`), waiting on `Respond`.
-3. User accepts: `TransferController.respond(accept: true, policy:)` calls `engine.respond(accept:policy:)` → `CrocmobileTransfer.respond` → Go sets the file policy on the croc client, writes `y\n` to the pipe (once, for receive; per-file for a sender-side Ask) followed by the policy's answers to croc's other stdin prompts (see `docs/knowledge/crocmobile-bridge.md`), and closes it. When the conflict scan found existing files the sheet offers Decline, Replace and Keep Both; otherwise a single Accept, which is Keep Both. `phase = .connecting`.
-4. `OnProgress` resumes normally, `phase = .transferring(TransferProgress)`.
-5. `OnDone` → `.done`. For a text transfer, `OnText` arrives just before `OnDone`; `receivedText` is threaded into `Phase.done(_, receivedText:)`.
+1. `ReceiveView` calls `controller.startReceive(code:into:folderIsScoped:)`.
+   - `options.whenFileExists` comes from the settings (Keep Both by default). It applies directly only under auto-accept. Otherwise the incoming sheet's choice goes to `respond(accept:policy:)`.
+   - `options.autoAccept = settings.autoAccept && !settings.bothSidesConfirm`. Confirm on Both Sides wins, because engine-level auto-accept closes the prompt pipe, which croc reads as "no".
+2. `OnFileList` gives `.fileList(FileList)`. With auto-accept off, phase becomes `.incoming(list, conflicts: [], blocked: [...])` at once.
+   - Unsafe names (`ReceivedName.isUnsafe`) are checked synchronously.
+   - A detached task then checks the output folder for name clashes and fills in `conflicts` if the phase is still `.incoming`.
+   - Progress keeps ticking underneath (and is ignored, see above) because croc is blocked in `utils.GetInput`, reading the pipe that replaced fd 0 (`crocmobile/session.go`).
+3. The user accepts: `TransferController.respond(accept: true, policy:)` calls `engine.respond`, then `CrocmobileTransfer.respond`.
+   - Go sets the file policy on the croc client and writes `y\n` to the pipe (once for a receive, once per file for a sender-side confirm). It then writes the policy's answers to croc's other stdin prompts and closes the pipe (`docs/knowledge/crocmobile-bridge.md`).
+   - If the check found existing files, the sheet offers **Decline**, **Replace** and **Keep Both**. Otherwise it offers one **Accept** button, which means Keep Both.
+   - Phase becomes `.connecting`.
+4. `OnProgress` resumes, and phase becomes `.transferring(TransferProgress)`.
+5. `OnDone` gives `.done`. For a text transfer, `OnText` arrives just before `OnDone`, and the text goes into `Phase.done(_, receivedText:)`.
 
 ### Decline and cancel
 
-- User declines `.incoming`: `respond(accept: false)` writes `n\n`, sets `declineRequested = true`. croc reports `refused files` locally (code `refused`) and `peer error: refusing files` to the peer (code `declined`). `TransferController.friendlyMessage(for:cancelRequested:declineRequested:)` maps by code, not text: "You declined the transfer." locally, "The other side declined or cancelled the transfer." on the peer's controller (a peer's cancel and a peer's decline are indistinguishable on the wire).
-- User cancels mid-transfer: `controller.cancel()` sets `cancelRequested = true` and calls `engine.cancel(transferID)` (a cancel tapped before the engine returned the ID is applied as soon as it exists), which calls the Go `Transfer.Cancel()` → `session.cancel()`: context-cancels *and* closes the prompt pipe (a bare context cancel does not unblock a pending `GetInput` read, so `cancel()` must also touch the pipe).
-- Any terminal event finishes the event stream, and the stream's `onTermination` cancels and clears that transfer by its ID, which frees the engine for the next transfer. `TransferController.handle(.failed)` does not call `engine.cancel`.
+- The user declines `.incoming`: `respond(accept: false)` writes `n\n` and sets `declineRequested`.
+  - Locally, croc reports `refused files` (code `refused`). The peer gets `refusing files` (code `declined`).
+  - `TransferController.friendlyMessage(for:cancelRequested:declineRequested:stored:)` picks text by code: "You declined the transfer." locally, and "The other device declined or cancelled the transfer." on the peer.
+  - A peer's cancel and a peer's decline look the same on the wire.
+- The user cancels mid-transfer: `controller.cancel()` sets `cancelRequested` and calls `engine.cancel(transferID)`. A cancel tapped before the ID exists is applied once it does.
+  - This reaches Go `Transfer.Cancel()`, then `session.cancel()`, which cancels the context and also closes the prompt pipe. A context cancel alone does not unblock a pending `GetInput` read.
+- Any final event finishes the stream. The stream's `onTermination` cancels and clears that transfer by ID, which frees the engine. `TransferController.handle(.failed)` does not call `engine.cancel`.
 
-Full JSON field lists, the `fileSent`-is-per-current-file wrinkle, and sub-100ms transfers that skip straight to `done`: `docs/knowledge/crocmobile-bridge.md`.
+JSON field lists, the per-file `fileSent` detail, and transfers under 100 ms that jump straight to `done`: `docs/knowledge/crocmobile-bridge.md`.
 
 ## State ownership
 
-`CrocAppApp.init()` (`app/CrocApp/CrocAppApp.swift`) builds, in order:
+`CrocAppApp.init()` (`app/CrocApp/CrocAppApp.swift`) creates, in this order:
 
-1. `AppSettings()` — must exist first; `TransferController` takes it as a constructor dependency.
-2. `HistoryStore(container:)` — `ModelContainer` is in-memory when `AutoVerify.isHarnessRun`, on-disk otherwise.
-3. `TransferController(settings:)`, then `controller.history = history` set explicitly (not a constructor argument, since `HistoryStore` depends on the harness check that also gates settings).
-4. `OutputFolderStore()`, `LocalNetworkChecker()`, `AppRouter.shared` — order among these three doesn't matter; none depend on the others.
+1. `AppSettings()`. `TransferController` takes it as a constructor argument.
+2. `HistoryStore(container:)`. The `ModelContainer` is in memory when `AutoVerify.isHarnessRun` is true (see `AutoVerify harness` in `docs/GLOSSARY.md`), on disk otherwise.
+3. `StoredTransferVault`, backed by the Keychain (or an in-memory store under the harness).
+4. `TransferController(settings:vault:)`, then `controller.history = history`.
+5. `OutputFolderStore()` and `LocalNetworkChecker()`.
+6. On macOS, `MenuBarQuickSend(controller:)`.
+7. `AppDependencyManager.shared.add(dependency:)` for the controller and output folder, so Shortcuts actions work right after launch.
+8. `AppRouter.shared.attach(controller:)`. `AppRouter.shared` already exists before `init` runs, so the controller is attached afterwards.
 
-`WindowGroup` content gets all six as `.environment(...)`, plus `.modelContainer(history.container)` for `@Query` in `HistoryView`. The macOS `Settings` scene is deliberately narrower: only `outputFolder` and `settings` are injected — no `router`, no `controller`, no `localNetwork` (Settings has no transfer to be busy with).
+Why `history` is set after construction: not verified. The code does it, with no comment saying why.
 
-`@MainActor @Observable` types: `AppSettings`, `TransferController`, `HistoryStore`, `OutputFolderStore`, `LocalNetworkChecker`, `AppRouter`, `ShareInbox` (all of them — the module default actor isolation is `MainActor`, see Concurrency below).
+Injection:
+
+- `WindowGroup` content gets `controller`, `settings`, `outputFolder`, `localNetwork`, `router` and `history` through `.environment(...)`, plus `.modelContainer(history.container)` for `@Query` in `HistoryView`.
+- The macOS `Settings` scene gets only `outputFolder` and `settings`. It has no transfer to be busy with.
+
+`@MainActor @Observable` types: `AppSettings`, `TransferController`, `HistoryStore`, `OutputFolderStore`, `LocalNetworkChecker`, `AppRouter`, `ShareInbox`, `MenuBarQuickSend`, `LoginItem`. `StoredTransferVault` and `BackgroundCoordinator` are `@MainActor` but not `@Observable`. See "Concurrency model".
 
 Persistence:
 
 | What | Where | Notes |
-|---|---|---|
-| Power settings (F13-F19, F41) | `UserDefaults`, keys prefixed `settings.` | `AppSettings`, `didSet`-triggered, gated by a `persist` flag |
-| Output folder choice | `UserDefaults` (security-scoped bookmark) | `OutputFolderStore` |
-| Transfer history (F12) | SwiftData, `TransferRecord` `@Model` | `HistoryStore`, in-memory under `AutoVerify` |
-| Stored-upload receipts (R19) | Keychain, one item `storedReceipts` | `StoredTransferVault`; purged after expiry or revoke; in memory under `AutoVerify` |
-| Share-extension handoff | App Group container (`group.com.bakirgdev.CrocApp`) | `ShareInbox` reads, `ShareStager` writes; `ShareInbox/batch-<UUID>/` + `manifest.json` |
-| Onboarding seen flag | `UserDefaults` via `@AppStorage` | `onboarding.seen`, read in `ContentView` |
+| --- | --- | --- |
+| Power settings (relay, local-only, compression and the like) | `UserDefaults`, keys prefixed `settings.` | `AppSettings`; each property saves in `didSet`; a `persist` flag turns saving off |
+| Advanced settings | `UserDefaults`, keys `settings.advanced.*` | Proxies go to the Keychain instead (accounts `advanced.socks5Proxy`, `advanced.httpProxy`) |
+| Output folder | `UserDefaults` key `outputFolderBookmark` | `OutputFolderStore`; security-scoped bookmark on macOS |
+| Transfer history | SwiftData, `TransferRecord` `@Model` | `HistoryStore`; in memory under the harness |
+| Stored-upload receipts | Keychain, one item `storedReceipts` | `StoredTransferVault`; removed on revoke and when expired; in memory under the harness |
+| Share-extension handoff | App Group container `group.com.bakirgdev.CrocApp` | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads |
+| Onboarding seen flag | `UserDefaults` via `@AppStorage("onboarding.seen")` | Read in `ContentView` |
 
 ## Platform split
 
-One SwiftUI target, `#if os(iOS)` / `#if os(macOS)` isolated to dedicated files where real divergence exists:
+One shared source tree, with `#if os(iOS)` and `#if os(macOS)` kept to dedicated files where behavior really differs.
 
 | Concern | iOS | macOS |
-|---|---|---|
-| Backgrounding | `BackgroundCoordinator` wraps transfers in `BGContinuedProcessingTask`; system Live Activity | no-op (all `BackgroundCoordinator` bodies are `#if os(iOS)`) |
-| External send entry point | Share extension (`CrocShare` appex) + `ShareInbox`/`StagedFilesSheet` | Dock-icon drop + window drop, via `AppDelegate.application(_:open:)` and `AppRouter.shared` |
-| Local-network probe | `LocalNetworkChecker` (Bonjour self-probe) | same file, same probe — macOS 15 added its own Local Network privacy pane, enforced as a Network Extension packet filter rather than through TCC |
-| Receive links | `.onOpenURL` in `CrocAppApp` (`crocapp://`, universal links) | `AppDelegate.application(_:open:)`; file URLs still go to Send. Both parse with `TransferLink` and call `AppRouter.open(_:)` |
-| QR scan | `QRScannerView` (VisionKit `DataScannerViewController`), whole file `#if os(iOS)` | not offered (QR *generation*, `QRCodeView`, is cross-platform) |
-| Settings surface | `SettingsScreen` (`Route.settings`, gear toolbar icon) | `SettingsView` (native `Settings` scene, ⌘,) |
-| Menu commands | n/a | `AppCommands` (Send ⌘1, Receive ⌘2, Show Receive Folder ⇧⌘R); in `CrocApp Direct` only, "Check for Updates…" in the app menu right after "About CrocApp" |
+| --- | --- | --- |
+| Backgrounding | `BackgroundCoordinator` wraps transfers in `BGContinuedProcessingTask`, with a system Live Activity | Nothing; the `BackgroundCoordinator` bodies are `#if os(iOS)` |
+| Sending from outside the app | Share extension (`CrocShare`) plus `ShareInbox` and `StagedFilesSheet` | Dock icon drop and window drop, through `AppDelegate.application(_:open:)` and `AppRouter.shared` |
+| Local-network check | `LocalNetworkChecker` (Bonjour self-probe) | Same file, same probe |
+| Receive links | `.onOpenURL` in `CrocAppApp` | `.onOpenURL` too, plus `AppDelegate.application(_:open:)`; file URLs go to Send; both parse with `TransferLink` and call `AppRouter.open(_:)` |
+| QR scan | `QRScannerView` (VisionKit `DataScannerViewController`); whole file is `#if os(iOS)` | Not offered (QR generation in `QRCodeView` works on both) |
+| Settings | `SettingsScreen` (`Route.settings`, gear icon in the toolbar) | `SettingsView` (native `Settings` scene, command-comma) |
+| Menu commands | None | `AppCommands`: **Send…** (command-1), **Receive…** (command-2), **Show Receive Folder in Finder** or **Show Receive Folder in Files** (shift-command-R); in `CrocApp Direct` only, **Check for Updates…** right after **About CrocApp** |
+| Menu bar | None | `MenuBarExtra` window (`MenuBarQuickSendView`), shown while **Show in Menu Bar** is on |
 
-Two entitlement sets for the main app target, selected by SDK in the pbxproj (`CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]` etc.), plus one for `CrocApp Direct`:
+macOS also enforces a Local Network privacy prompt of its own. How it is enforced (a Network Extension packet filter instead of TCC) is inferred from Apple's behavior, not verified here. See `docs/knowledge/apple-platform-constraints.md`.
 
-- `app/CrocApp/CrocApp.entitlements` (macOS): `com.apple.security.app-sandbox`, `network.client`, `network.server` (needed for the local-only relay listener), `files.user-selected.read-write`, `files.downloads.read-write` (default output folder is `~/Downloads/CrocApp`), and `com.apple.developer.associated-domains` (`applinks:crocapp.dev`). Associated Domains needs a provisioning profile, so a signed local build needs team `HBSU359M33` (`docs/BUILDING.md`, section 5).
-- `app/CrocApp/CrocApp-iOS.entitlements`: `com.apple.security.application-groups` (`group.com.bakirgdev.CrocApp`, for the share-extension handoff) and `com.apple.developer.associated-domains` (`applinks:crocapp.dev`).
-- `app/CrocAppDirect/CrocAppDirect.entitlements`: the macOS App Store set above, plus Sparkle's mach-lookup exceptions `$(PRODUCT_BUNDLE_IDENTIFIER)-spks` and `-spki`.
-- `app/CrocShare/CrocShare.entitlements`: same App Group group, nothing else (the extension has no network, no sandbox exception beyond the group).
+### Entitlements
 
-Four `Info.plist` sources (`app/Config/CrocApp-Info.plist` for iOS, `CrocApp-macOS-Info.plist` for macOS, `CrocApp-Direct-Info.plist` for `CrocApp Direct`, `CrocShare-Info.plist` for the extension) merged over Xcode's `GENERATE_INFOPLIST_FILE=YES` output; `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription` are plain `INFOPLIST_KEY_*` build settings in the pbxproj, not SDK-scoped, so they apply to every platform (macOS 15 and later also gates local network access, so the local-network string is needed there too). `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace` are SDK-scoped `INFOPLIST_KEY_*[sdk=...]` settings; `UIFileSharingEnabled` is also declared in `CrocApp-Info.plist`, and that plist copy is the one that takes effect (see `docs/known-issues.md`). `NSBonjourServices` is declared only in `CrocApp-Info.plist`, which applies to the iOS SDKs only.
+The main app target picks its entitlements file by SDK in the project (`CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]` and the simulator variant), with the macOS file as the default.
 
-### `CrocApp Direct`: Developer ID target
+- `app/CrocApp/CrocApp.entitlements` (macOS):
+  - `com.apple.security.app-sandbox`
+  - `network.client`
+  - `network.server`, so croc's local-only relay can listen on a port inside the sandbox
+  - `files.user-selected.read-write`
+  - `files.downloads.read-write`, for the default output folder `~/Downloads/CrocApp`
+  - `com.apple.developer.associated-domains` (`applinks:crocapp.dev`)
+- `app/CrocApp/CrocApp-iOS.entitlements`: `application-groups` (`group.com.bakirgdev.CrocApp`, for the share-extension handoff) and `associated-domains` (`applinks:crocapp.dev`).
+- `app/CrocAppDirect/CrocAppDirect.entitlements`: the macOS set above, plus Sparkle's mach-lookup exceptions `$(PRODUCT_BUNDLE_IDENTIFIER)-spks` and `-spki`.
+- `app/CrocShare/CrocShare.entitlements`: the same App Group and nothing else.
 
-A second macOS-only, arm64 app target for the direct-download (DMG) channel: bundle ID `com.bakirgdev.CrocApp.direct`, product `CrocApp.app` (the same product name as the App Store target, so in one shared DerivedData each scheme's build replaces the other's). Its sources are the `app/CrocApp/` synchronized group plus `app/CrocAppDirect/`, which only this target compiles. It builds with the Swift condition `DIRECT`. It is the only target that links Sparkle 2.10.0 (SwiftPM): `app/CrocAppDirect/AppUpdater.swift` owns an `SPUStandardUpdaterController` and adds "Check for Updates…" to the app menu. `app/Config/CrocApp-Direct-Info.plist` carries `SUFeedURL`, `SUPublicEDKey`, `SUEnableInstallerLauncherService` and `SUEnableSystemProfiling` (from the `SPARKLE_FEED_URL` and `SPARKLE_PUBLIC_ED_KEY` build settings; the key is the owner's release public key). The shared scheme `CrocApp Direct` has no test action. Release channel details: `docs/BUILDING.md`, section 7.
+Associated Domains needs a provisioning profile, so signing a local macOS build needs the team set in the project. See `docs/BUILDING.md`, "Verification harnesses".
 
-Sandbox boundaries that shaped the design, concretely:
+### Info.plist
 
-- Security-scoped URLs: every send/receive intent in `TransferController` calls `startAccessingSecurityScopedResource()` on user-picked URLs and tracks them in `scopedURLs` for release at stream end; `OutputFolderStore` and `HistoryView`'s bookmark-resolve path do the same, on both platforms, before any `fileExists`/`stat` call (the sandbox denies `stat` on an unopened scope — a defect caught separately on each platform, per `docs/knowledge/app-ui-architecture.md`).
-- App Group container: the only channel between `CrocShare` (a separate process, ~120 MB memory cap, no long-running work) and the main app. The extension copies attachment bytes in `loadFileRepresentation`'s synchronous callback (the source temp file is deleted once that callback returns) and never deletes existing batches — a batch may be mid-send.
-- Output folder: iOS defaults to the app's own Documents (Files-app visible via `UIFileSharingEnabled` + `LSSupportsOpeningDocumentsInPlace`); macOS defaults to `~/Downloads/CrocApp`, requiring the `files.downloads.read-write` entitlement — this is why that entitlement exists at all.
-- `network.server` on macOS exists solely so croc's local relay listener can bind a port inside the sandbox (`--local`/`onlyLocal`); this was proven, not assumed.
+Four files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-Info.plist` (iOS), `CrocApp-macOS-Info.plist`, `CrocApp-Direct-Info.plist` and `CrocShare-Info.plist`.
+
+- `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription` are plain `INFOPLIST_KEY_*` build settings, not tied to an SDK, so they apply on every platform.
+- `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace` are SDK-scoped `INFOPLIST_KEY_*` settings. `UIFileSharingEnabled` is also in `CrocApp-Info.plist`, and that copy is the one that works (`docs/known-issues.md`, "Accepted").
+- `NSBonjourServices` is only in `CrocApp-Info.plist`, so it applies to the iOS SDKs only.
+
+### `CrocApp Direct`: the direct-download target
+
+- macOS only, arm64. Bundle ID `com.bakirgdev.CrocApp.direct`. Product name `CrocApp.app`, the same as the App Store target, so two schemes sharing one DerivedData replace each other's build.
+- Builds `app/CrocApp/` plus `app/CrocAppDirect/` with the Swift condition `DIRECT`. Only this target compiles `app/CrocAppDirect/`.
+- Only this target links Sparkle 2.10.0 (SwiftPM). `app/CrocAppDirect/AppUpdater.swift` owns an `SPUStandardUpdaterController` and adds **Check for Updates…** to the app menu.
+- `CrocApp-Direct-Info.plist` sets `SUFeedURL` and `SUPublicEDKey` from the `SPARKLE_FEED_URL` and `SPARKLE_PUBLIC_ED_KEY` build settings, plus `SUEnableInstallerLauncherService` (on) and `SUEnableSystemProfiling` (off).
+- Its shared scheme has an empty test action; `CrocApp` is the scheme with tests.
+- How it ships: `docs/RELEASING.md`, "Direct download (Developer ID)".
+
+### Sandbox limits that shaped the design
+
+- Security-scoped URLs: every send or receive intent in `TransferController` calls `startAccessingSecurityScopedResource()` on URLs the user picked and tracks them in `scopedURLs` until the stream ends. `OutputFolderStore` and `HistoryView`'s bookmark path do the same before any `fileExists` or `stat` call, because the sandbox denies `stat` on a scope that is not open.
+- App Group container: the only channel between `CrocShare` and the app. `CrocShare` is a separate process with a memory cap of about 120 MB and no room for long work.
+  - It copies attachment bytes inside the synchronous `loadFileRepresentation` callback, because the source temp file is deleted when the callback returns.
+  - It never deletes existing batches, because one may be mid-send.
+- Output folder: iOS defaults to the app's Documents folder, visible in Files through `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace`. macOS defaults to `~/Downloads/CrocApp`, which is why the `files.downloads.read-write` entitlement exists.
+- `network.server` on macOS exists so croc's local relay can bind a port inside the sandbox (the **Local Network Only** setting). Not verified; see `docs/knowledge/apple-platform-constraints.md`.
 
 ## Concurrency model
 
-Swift 6 language mode (`SWIFT_VERSION = 6.0`), `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES` set on every target (`CrocApp`, `CrocApp Direct`, `CrocShare`, `CrocAppTests`), Debug and Release. Practical effect: any type in the app or share extension that doesn't opt out is implicitly `@MainActor` — this is why `AppSettings`, `TransferController`, `HistoryStore`, `OutputFolderStore`, `LocalNetworkChecker`, `AppRouter`, `ShareInbox`, and `BackgroundCoordinator` all carry an explicit `@MainActor` (belt-and-suspenders documentation of what the compiler already enforces) rather than needing it to compile.
-
-`CrocEngine` is the one deliberate exception: it's a plain `actor`, isolated to its own executor, not `MainActor`. `CrocmobileDelegate` callbacks (`OnCodeReady`, `OnProgress`, etc.) arrive on arbitrary Go threads — `crocmobile`'s poller goroutine and the transfer goroutine both call the delegate directly, with no serialization guarantee about which Swift/Go thread runs which callback. `DelegateBridge` (`@unchecked Sendable`, because `NSObject` subclasses conforming to an ObjC protocol can't be verified `Sendable` by the compiler) receives those calls and does exactly one thing: `continuation.yield(...)` into the `AsyncStream`. `AsyncStream.Continuation.yield` is safe to call from any thread. The hop to `MainActor` happens implicitly at the `for await event in stream` loop inside `TransferController.run(_:)`, because that method (and the whole class) is `@MainActor`.
+- Swift 6 language mode (`SWIFT_VERSION = 6.0`), `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`. Set on every app target (`CrocApp`, `CrocApp Direct`, `CrocShare`, `CrocAppTests`), in Debug and Release.
+- Effect: any type in the app or the share extension is `@MainActor` unless it opts out. The explicit `@MainActor` on `AppSettings`, `TransferController` and the others documents what the compiler already enforces.
+- `CrocEngine` is the deliberate exception. It is a plain `actor` on its own executor.
+- Delegate callbacks (`OnCodeReady`, `OnProgress` and the rest) arrive on arbitrary Go threads. The poller goroutine and the transfer goroutine both call the delegate directly, with no ordering between threads.
+- `DelegateBridge` is `@unchecked Sendable`, because the compiler cannot check an `NSObject` subclass that conforms to an Objective-C protocol. It only calls `continuation.yield(...)`, which is safe from any thread.
+- The hop to `MainActor` happens at the `for await event in transfer.events` loop in `TransferController.run(_:)`, because that class is `@MainActor`.
 
 ## Build-time architecture
 
-`CrocKit/Package.swift` declares `Croc` as a `.binaryTarget(path: "Croc.xcframework")`; that path is gitignored. A fresh clone therefore builds nothing in `CrocKit` or the app until `scripts/build-xcframework.sh` has run once. App version numbers come from one file, `app/Config/Version.xcconfig`, the base configuration of the project-level Debug and Release configurations, so every target inherits `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`. Full toolchain requirements, CI wiring, and the manual steps: `docs/BUILDING.md`.
+- `CrocKit/Package.swift` declares `Croc` as `.binaryTarget(path: "Croc.xcframework")`, and that path is gitignored. A fresh clone cannot build `CrocKit` or the app until `scripts/build-xcframework.sh` has run once.
+- App version numbers live in `app/Config/Version.xcconfig`, which every target inherits (`docs/BUILDING.md`, "Build settings that must not change casually").
+- Toolchain, CI wiring and manual steps: `docs/BUILDING.md`, "First build".
 
 ## Where to go next
 
 | Question | Document |
-|---|---|
-| Exact event JSON fields, croc gotchas, verification harnesses | `docs/knowledge/crocmobile-bridge.md` |
-| View-by-view UI invariants, settings/trust details, platform layer specifics | `docs/knowledge/app-ui-architecture.md` |
-| iOS/macOS platform limits (background, multicast, sandbox, App Store review) | `docs/knowledge/apple-platform-constraints.md` |
-| Feature status (shipped / planned / skipped) | `docs/knowledge/features.md` |
-| Fresh-clone build steps | `docs/BUILDING.md` |
-| Design tokens, component specs, SF Symbols mapping | `design/AGENTS.md` |
-| Term definitions (croc, PAKE, relay, etc.) | `docs/GLOSSARY.md` |
-| Known defects, accepted papercuts | `docs/known-issues.md` |
+| --- | --- |
+| Event JSON fields, croc gotchas, verification harnesses | `docs/knowledge/crocmobile-bridge.md` |
+| View-by-view UI rules, settings, platform layer | `docs/knowledge/app-ui-architecture.md` |
+| iOS and macOS limits (background, multicast, sandbox, App Store review) | `docs/knowledge/apple-platform-constraints.md` |
+| What is planned and what is not | `docs/ROADMAP.md` |
+| Fresh-clone build steps | `docs/BUILDING.md`, "First build" |
+| Signing, notarization, releases | `docs/RELEASING.md` |
+| Design tokens, components, SF Symbols mapping | `design/AGENTS.md` |
+| Term definitions | `docs/GLOSSARY.md` |
+| Known defects and accepted limits | `docs/known-issues.md` |

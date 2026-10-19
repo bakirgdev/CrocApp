@@ -2,7 +2,7 @@
 
 How the tokens reach the app. `app/CrocApp/Support/DesignTokens.swift` holds the constants and color aliases; `app/CrocApp/Assets.xcassets` holds the color sets. `scripts/verify-design.sh` checks both against `tokens.css`.
 
-The iOS 26 APIs here were checked against Apple's documentation on 2026-07-26. If one fails to compile, re-check the docs rather than working around it.
+The iOS 26 APIs here were checked against Apple's documentation for the iOS 26 SDK. If one fails to compile, re-check the docs rather than working around it.
 
 ## Colors
 

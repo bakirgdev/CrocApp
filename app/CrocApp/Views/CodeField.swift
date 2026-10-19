@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// The paste affordance is part of this component's own spec (the wrapper's
 /// asymmetric padding — 14 leading for text, 6 trailing — exists to seat a
-/// 38pt `PasteButton` flush inside the 50pt pill), so it lives here rather
+/// system-sized `PasteButton` flush inside the 50pt pill), so it lives here rather
 /// than beside the field at call sites. The system owns `PasteButton`'s
 /// chrome for paste-permission-UI reasons and only exposes
 /// `.buttonBorderShape` / `.tint` / `.labelStyle` — the exact spec colors

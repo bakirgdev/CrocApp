@@ -6,7 +6,7 @@ import AppKit
 import UIKit
 #endif
 
-/// File-menu commands, on the Mac menu bar and the iPadOS 26 menu bar (R28).
+/// File-menu commands, on the Mac menu bar and the iPadOS 26 menu bar.
 /// The receive folder opens in Finder on the Mac and in Files on iPad.
 struct AppCommands: Commands {
     let router: AppRouter

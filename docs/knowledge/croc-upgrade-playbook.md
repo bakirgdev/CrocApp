@@ -1,30 +1,39 @@
 # croc upgrade playbook
 
-How to bump the pinned croc version (go.mod). Run this as one session whenever upstream releases.
+How to bump the pinned croc version in `crocmobile/go.mod`. Run it as one session whenever upstream releases.
 
 **Pinned: v11.5.4.**
 
 ## Steps
 
-1. **Read upstream delta**: changelog/release notes + `git diff vOLD..vNEW` of `src/croc/croc.go`, `src/croc/ctx.go`, `src/cli/cli.go`, `src/models/constants.go`, `src/utils/utils.go`, `src/codephrase`, `src/publicrelay`, `src/pakekey`. Look specifically for:
-   - New callback/hook APIs for confirm prompts or output → may obsolete the fd-0 prompt pipe (the shim shrinks to nothing then)
-   - `Options` struct field changes (new flags → new `crocmobile.Options` fields; renamed/removed → compile errors, good)
-   - Changes to `Client` progress fields our poller reads (`TotalSent`, step bools, `FilesToTransfer`, `FilesToTransferCurrentNum`)
-   - Prompt sites (`utils.GetInputContext` callers) added/removed — each maps to a workaround in `docs/knowledge/crocmobile-bridge.md`
-   - Wire/protocol changes (major version bump = incompatible peers)
-2. **Cross-check every documented workaround** in `crocmobile-bridge.md` §"croc v11.5.4 gotchas" (rename the heading to the new version) against the delta: for each, decide keep / delete / adapt. Delete obsolete shims — do not leave dead workarounds.
-3. **Bump**: `cd crocmobile && go get github.com/schollz/croc/v11@vNEW && go mod tidy` (a new major changes the `/vN` import path everywhere); then `brew upgrade croc` so the test CLI matches the pin (`brew install croc` on a fresh machine). The harnesses default `CROC` to `${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc`.
-4. **Build**: `go build ./... && go vet ./...`, then `./scripts/build-xcframework.sh`, then `cd CrocKit && swift build`, then app build both platforms.
-5. **Verify**, in this order — each one covers ground the previous does not:
-   - `crockit-verify twice` — Swift layer, and the two-transfer case proves fd0/stdout/cwd/mutex restoration still composes
-   - `./scripts/verify-interop.sh` — all 15 crocmobile↔CLI scenarios
-   - `./scripts/verify-app-mac.sh` — the 12 macOS app scenarios; the widest coverage of the option surface
-   - `./scripts/verify-app-sim.sh` — iOS simulator receive and share-extension handoff
-   
-   Any failure → root-cause it against the upstream delta before touching wrapper semantics.
-6. **Docs self-heal**: update `crocmobile-bridge.md`, `what-is-croc.md` (version header + changed facts), and this file's pinned-version line.
+1. **Read the upstream delta.** Read the changelog and release notes, then `git diff vOLD..vNEW` of these paths: `src/croc/croc.go`, `src/croc/ctx.go`, `src/cli/cli.go`, `src/models/constants.go`, `src/utils/utils.go`, `src/codephrase`, `src/publicrelay`, `src/pakekey`. Look for:
+   - New callback or hook APIs for confirm prompts or output. They may make the fd 0 prompt pipe obsolete (the shim would shrink to nothing).
+   - `Options` struct changes. New flags need new `crocmobile.Options` fields. Renamed or removed fields fail to compile, which is good.
+   - Changes to the `Client` progress fields the poller reads: `TotalSent`, the step booleans, `FilesToTransfer`, `FilesToTransferCurrentNum`.
+   - Prompt sites (`utils.GetInputContext` callers) added or removed. Each one maps to a workaround in `crocmobile-bridge.md`.
+   - Wire or protocol changes. A major version bump means incompatible peers.
+2. **Cross-check every documented workaround.** Take each one in `crocmobile-bridge.md`, "croc v11.5.4 gotchas (verified against source)", and decide keep, delete or adapt against the delta. Delete obsolete shims; do not leave dead workarounds. Rename that heading to the new version in step 6.
+3. **Bump.**
+   - Run `cd crocmobile && go get github.com/schollz/croc/v11@vNEW && go mod tidy`. A new major changes the `/vN` import path everywhere.
+   - Then run `brew upgrade croc` so the test CLI matches the pin (`brew install croc` on a fresh machine). The harnesses default `CROC` to `${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc`.
+4. **Build.** Run `go build ./... && go vet ./...` in `crocmobile/`, then `./scripts/build-xcframework.sh`, then `cd CrocKit && swift build`, then build the app for both platforms.
+5. **Verify**, in this order. Each one covers ground the previous one does not (`BUILDING.md`, "Verification harnesses" has the commands):
+   - `crockit-verify twice`: the Swift layer. The two-transfer case proves the fd 0, stdout, cwd and mutex restoration still composes.
+   - `./scripts/verify-interop.sh`: all 15 crocmobile to CLI scenarios.
+   - `./scripts/verify-app-mac.sh`: the 12 macOS app scenarios. This is the widest coverage of the option surface.
+   - `./scripts/verify-app-sim.sh`: iOS simulator receive and the share-extension handoff.
+
+   Any failure: find the root cause against the upstream delta before touching wrapper semantics.
+6. **Update docs.**
+   - Run `git grep -n "v11.5.4"` (the old version string) and update every hit. The hits include this file's "Pinned" line, `what-is-croc.md` (the version header and any changed facts), `crocmobile-bridge.md` (the version in the layers diagram, the "croc v11.5.4 gotchas" heading and the Advanced options text), `known-issues.md`, and comments in `crocmobile/`.
+   - Also check any other file the grep turns up, and update facts that changed even where the version string is absent.
+   - Check the names in `known-issues.md` and `docs/GLOSSARY.md` that the delta touched.
+   - Run `scripts/verify-docs.sh`.
 
 ## Notes
 
-- A new major needs both sides upgraded. v10 and v11 peers cannot complete a transfer: v11 rejects a PAKE message that lacks protocol version 2 (`pakekey.ProtocolVersion`), and v10.5.0's message type has no version field. The peers often never meet (different room derivation and default relay), so `peerVersion` fires only on a shared room. `~/go/bin/croc` v10.5.0 is kept only as `CROC_V10` for the v10-peer message test. Coordinate app release timing with upstream adoption.
-- Watch croc's README/issues for a callback-based embedder API; that is the single change that most simplifies crocmobile.
+- A new major needs both sides upgraded. v10 and v11 peers cannot complete a transfer: v11 rejects a PAKE message that lacks protocol version 2 (`pakekey.ProtocolVersion`), and v10.5.0's message type has no version field.
+- The peers often never meet, because the room derivation and the default relay differ. So `peerVersion` fires only on a shared room.
+- `~/go/bin/croc` (v10.5.0, pinned in `scripts/croc-v10.version`) is kept only as `CROC_V10`, for the v10-peer scenario. If it is first on `PATH`, plain `croc` runs v10, so call Homebrew's `croc` by full path (`known-issues.md`, "Harnesses").
+- Coordinate app release timing with upstream adoption.
+- Watch croc's README and issues for a callback-based embedder API. That is the single change that would most simplify crocmobile.

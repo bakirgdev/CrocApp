@@ -1,7 +1,7 @@
 import CrocKit
 import SwiftUI
 
-/// Settings > Advanced (R25): croc's security, network and performance options.
+/// Settings > Advanced: croc's security, network and performance options.
 /// The defaults are croc's own and right for most people. Every control shows
 /// its default, says which side it affects and whether the other device has to
 /// match, and checks its value inline with the same rules as the engine

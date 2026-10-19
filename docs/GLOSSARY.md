@@ -1,89 +1,87 @@
 # Glossary
 
-Terms a new contributor or a fresh AI session hits in this repo and cannot infer from the name alone: croc protocol vocabulary, the Go/gomobile bridge, the SwiftUI app, and repo-local jargon. One dense line each; see `docs/knowledge/README.md` for the full-length files these definitions are summarized from.
+Terms a new contributor hits in this repo and cannot infer from the name: croc vocabulary, the Go bridge, the app, and Apple platform and repo terms. Each entry is one or two short sentences plus where to look. Longer detail lives in the file linked from the entry.
 
 ## croc
 
 | Term | Means |
-|---|---|
-| `--ask` | croc flag requiring confirmation on both sides before a transfer starts, not just the receiver's normal accept prompt; bridged into the engine via the same fd0 pipe trick as receive (`docs/knowledge/crocmobile-bridge.md`). |
-| classic mode | croc's `--classic` flag, the only mode where `--code` accepts a custom secret directly; insecure by design and deliberately unsupported here (F39, `docs/knowledge/features.md`). |
-| code phrase / secret | the `word-word-word` string (three random words from the EFF short wordlist) both devices use to find each other and derive the session key; custom via `CROC_SECRET`, min 6 chars (`docs/knowledge/what-is-croc.md`). "Secret" is croc's internal term for it: the UI never says it, only "code phrase" (`design/content.md` → Terminology). |
-| compression | croc DEFLATE-compresses (HuffmanOnly) file data by default; `--no-compress` disables it (F15). |
-| `CROC_SECRET` | env var for a custom code phrase; the only way non-classic croc accepts one, on both send and receive (`docs/knowledge/what-is-croc.md`). |
-| curve | the elliptic curve PAKE runs over, default P-256 (`--curve`, `crocmobile.Options.Curve`). |
-| hash algorithm | integrity check for transferred files, default xxhash; alternatives imohash, md5, highway via `--hash` (`crocmobile.Options.HashAlgorithm`). |
-| `--ignore-stdin` | croc CLI flag needed for non-interactive runs; the Go library equivalent (`Options.IgnoreStdin`) is always set `true` in `crocmobile/session.go`, since the app supplies its own prompt pipe instead of a real terminal. |
-| LAN peer discovery | UDP multicast peer discovery (`schollz/peerdiscovery`, ~500 ms window) that lets same-network transfers skip the relay; not guaranteed to work on every network, see `docs/knowledge/what-is-croc.md` §6. |
-| `--local` / only-local | forces a transfer to stay on the LAN, refusing the public relay; maps to `crocmobile.Options.OnlyLocal` / `AppSettings.onlyLocal` (F14). |
-| sender IP | the receive-side Advanced setting (`AppSettings.peerIP`, `EngineOptions.peerIP`, croc `--ip`): the sender's `ip:port`, IPv4 or bracketed IPv6. The receiver connects straight to the sender's local relay, skipping relays, discovery and the public pool; the trust badge reads `RelayKind.directToSender`. |
-| Advanced settings | R25 (F20-F28): `AdvancedSettingsView`, `AppSettings` keys `settings.advanced.*`, proxies in the Keychain (accounts `advanced.socks5Proxy`, `advanced.httpProxy`); croc's curve, hash, upload throttle, ports, multicast, proxies, built-in DNS and multiplexing (`docs/knowledge/app-ui-architecture.md`, "Advanced settings (R25)"). |
-| menu-bar quick send | R26 (F31), macOS only: a `MenuBarExtra` (window style) showing `MenuBarQuickSendView`, driven by `MenuBarQuickSend`, on the one `TransferController`; shown while `AppSettings.showInMenuBar` is on. `LoginItem` wraps `SMAppService.mainApp` for Open at login (`docs/knowledge/app-ui-architecture.md`, "Menu bar and Shortcuts (R26-R28)"). |
-| App Shortcut / App Intent | R27 (F34): `SendFilesIntent`, `SendTextIntent`, `ReceiveIntent` in `app/CrocApp/Intents/`, offered by `CrocAppShortcuts` (`AppShortcutsProvider`) with Siri and Spotlight phrases; they run in the foreground and depend on `TransferController` and `OutputFolderStore` through `AppDependencyManager` (`docs/knowledge/app-ui-architecture.md`, "Menu bar and Shortcuts (R26-R28)"). |
-| PAKE | Password-Authenticated Key Exchange (`github.com/schollz/pake/v3`, Boneh-Shoup construction); turns the weak code phrase into a strong session key without the relay ever learning it (`docs/knowledge/what-is-croc.md`). |
-| relay | the rendezvous/transport server both sides connect to when a direct LAN path is not available; sees ciphertext only. With no custom relay the default is croc's public relay pool (`1.getcroc.com:9009` to `4.getcroc.com:9009`), picked by the code; the old single default `croc.schollz.com:9009` survives as `models.DEFAULT_RELAY`, and a relay field equal to it means "not custom". |
-| room | the rendezvous channel on the relay, named `SHA-256(selector + "croc")`, where the selector is the first word of a three-word code (the first 4 characters for a legacy code like `NNNN-word`); two codes sharing it on the same relay collide into the same room ("room full"). |
-| shared secret prefix collision | the failure mode above: because the room name only hashes the code's selector (first word, or first 4 characters of a legacy code), concurrent transfers or test scripts using codes with the same selector collide (`docs/knowledge/crocmobile-bridge.md`). |
-| stored transfer | croc's upload-and-link mode (`croc send --store`, default server `https://getcroc.com`): files are encrypted client-side, uploaded to a server, and fetched later from a link `https://<host>/s/<id>#v1.<key>` whose fragment is the key; no peer, relay or code phrase involved. CrocApp's UI calls it Send as link (F43, `docs/knowledge/app-ui-architecture.md`, "Stored transfers"). |
-| Tailcat | croc v11's peer-to-peer data path: two native clients carry TCP streams over an in-process userspace WireGuard network that starts on DERP relays and moves to direct UDP when NAT traversal works. Under transport `auto` the sender offers it only for a send of 128 MiB or more and races it against the relay; setup contacts `tailcat.dev` and the `*.ipn.dev` DERP relays. Whether it stays in the build is decided on a physical iPhone (`docs/knowledge/device-test-checklist.md`, `docs/knowledge/crocmobile-bridge.md`). |
-| transport / Connection | croc's sender-only `--transport` (`auto`, `relay`, `derp`), shown in the app as the Connection setting: Automatic (`auto`, default) or Relay only (`relay`); the app never offers `derp`. A receive and a local-only send are always `auto` (`crocmobile.Options.Transport`, `CrocKit.Transport`, `AppSettings.transport`, F41). |
+| --- | --- |
+| `--ask` | croc flag that makes both sides confirm before a transfer starts. The app calls it **Confirm on Both Sides**. It uses the same prompt-pipe trick as receive (`docs/knowledge/crocmobile-bridge.md`). |
+| classic mode | croc's `--classic` flag. It is the only mode where `--code` takes a custom secret directly, and it is insecure by design. CrocApp does not support it. |
+| code phrase | The `word-word-word` string (three random words from the EFF short wordlist) that both devices use to find each other and derive the session key. A custom one comes from `CROC_SECRET`, at least 6 characters (`docs/knowledge/what-is-croc.md`). croc calls it the "secret"; the UI says only "code phrase" (`design/content.md`, "Terminology"). |
+| compression | croc compresses file data with DEFLATE (HuffmanOnly) by default. `--no-compress` turns it off. |
+| `CROC_SECRET` | Environment variable that sets a custom code phrase. Outside classic mode it is the only way to do that, for both send and receive. |
+| curve | The elliptic curve PAKE runs over. Default P-256. Go: `crocmobile.Options.Curve`; Swift: `CrocKit.Curve`. |
+| hash algorithm | The integrity check for transferred files. Default xxhash; also imohash, md5, highway (`--hash`). Go: `Options.HashAlgorithm`. |
+| `--ignore-stdin` | croc flag for non-interactive runs. The library option `IgnoreStdin` is always true in `crocmobile/session.go`, because the app supplies its own prompt pipe. |
+| LAN peer discovery | Finding a same-network peer by UDP multicast (`schollz/peerdiscovery`, 500 ms cap) so the transfer skips the relay. It does not work on every network (`docs/knowledge/what-is-croc.md`, "Local path"). |
+| `--local` / local only | Keeps a transfer on the local network and refuses the public relay. The app setting is **Local Network Only** (`AppSettings.onlyLocal`, `crocmobile.Options.OnlyLocal`). |
+| sender IP | Receive-side Advanced setting (`AppSettings.peerIP`, `EngineOptions.peerIP`, croc `--ip`). It is the sender's `ip:port` (IPv4 or bracketed IPv6). The receiver connects straight to the sender's local relay, skipping relays, discovery and the public pool. The trust badge then shows `RelayKind.directToSender`. |
+| Advanced settings | The Advanced page for croc's curve, hash, upload limit, ports, multicast address, proxies, built-in DNS and multiplexing. Code: `AdvancedSettingsView`, keys `settings.advanced.*` (`AppSettings`), proxies in the Keychain. See `docs/knowledge/app-ui-architecture.md`, "Advanced settings". |
+| menu-bar quick send | macOS only. A `MenuBarExtra` window (`MenuBarQuickSendView`, driven by `MenuBarQuickSend`) that sends on the one shared `TransferController`. It shows while **Show in Menu Bar** (`AppSettings.showInMenuBar`) is on. `LoginItem` wraps `SMAppService.mainApp` for **Open at login**. See `docs/knowledge/app-ui-architecture.md`, "Menu bar and Shortcuts". |
+| App Shortcut / App Intent | `SendFilesIntent`, `SendTextIntent` and `ReceiveIntent` in `app/CrocApp/Intents/`, offered by `CrocAppShortcuts` with Siri and Spotlight phrases. They run in the foreground and reach `TransferController` and `OutputFolderStore` through `AppDependencyManager`. See `docs/knowledge/app-ui-architecture.md`, "Menu bar and Shortcuts". |
+| PAKE | Password-Authenticated Key Exchange (`github.com/schollz/pake/v3`). It turns the weak code phrase into a strong session key, and the relay never learns it. |
+| relay | The server both sides connect to when no direct local path works. It sees only ciphertext. With no custom relay, croc's public pool is used (`1.getcroc.com:9009` to `4.getcroc.com:9009`), chosen from the code. A relay field equal to croc's single-server default `croc.schollz.com:9009` (`models.DEFAULT_RELAY`) means "not custom". |
+| room | The channel on the relay where two peers meet. Its name is a hash of a selector taken from the code (`docs/knowledge/what-is-croc.md`, "Rendezvous"). |
+| room collision | Two codes with the same selector on the same relay land in the same room, and the second gets "room full". Concurrent transfers and test scripts must use codes with different selectors (`docs/knowledge/what-is-croc.md`, "Rendezvous"). |
+| stored transfer | croc's upload-and-link mode (`croc send --store`, default server `https://getcroc.com`). Files are encrypted on the device, uploaded, and fetched later from `https://<host>/s/<id>#v1.<key>`, where the fragment is the key. There is no peer, relay or code phrase. The app calls it **Send as link** (`docs/knowledge/app-ui-architecture.md`, "Stored transfers"). |
+| Tailcat | croc v11's peer-to-peer data path (`docs/knowledge/what-is-croc.md`, "Transport"). Whether it stays in the build is decided on a physical iPhone (`docs/knowledge/crocmobile-bridge.md`, `docs/knowledge/device-test-checklist.md`). |
+| transport / Connection | croc's sender-only `--transport` (`auto`, `relay`, `derp`). The app shows it as **Connection**: **Automatic** (`auto`, default) or **Relay Only** (`relay`). It never offers `derp`. A receive and a local-only send are always `auto`. Code: `crocmobile.Options.Transport`, `CrocKit.Transport`, `AppSettings.transport`. |
 
 ## Go bridge
 
 | Term | Means |
-|---|---|
-| `binaryTarget` | the `Package.swift` declaration (`CrocKit/Package.swift`) pointing `CrocKit` at the gitignored `Croc.xcframework`; nothing builds until `scripts/build-xcframework.sh` produces it. |
-| delegate bridge | `DelegateBridge` (`CrocKit/Sources/CrocKit/DelegateBridge.swift`), the `NSObject` implementing gobind's `CrocmobileDelegateProtocol` and turning its callbacks (arrived on arbitrary Go threads) into `AsyncStream<TransferEvent>` yields. |
-| event stream | the `AsyncStream<TransferEvent>` returned by `CrocEngine.startSend`/`startReceive`; abandoning it cancels the underlying Go session (`onTermination`). |
-| failure code | the `code` in the `{"code","message"}` JSON that `OnError` and failed starts carry (`crocmobile/errors.go`), decoded in Swift as `EngineFailure.Code`; the app picks its copy from the code and never from croc's text (`docs/knowledge/crocmobile-bridge.md`). |
-| gobind | the Go tool (part of gomobile) that generates the ObjC/Swift binding layer from the `crocmobile` package; source of the `Crocmobile`-prefixed symbols. |
-| gomobile | the Go toolchain used to bind the `crocmobile` package into `Croc.xcframework` for iOS/macOS (`scripts/build-xcframework.sh`). |
-| ObjC symbol prefix `Crocmobile` | gobind derives this from the Go package name `crocmobile`: `CrocmobileOptions`, `CrocmobileTransfer`, `CrocmobileStartSend`/`StartReceive`, protocol `CrocmobileDelegate` → Swift `CrocmobileDelegateProtocol` (`docs/knowledge/crocmobile-bridge.md`). |
-| prompt pipe / fd0 dup2 | the mechanism bridging croc's stdin-read accept/decline prompt into Swift: a pipe's read end is `syscall.Dup2`'d onto fd 0 because croc's cached `bufio.Reader` was bound to fd 0 at package init and a plain `os.Stdin` variable swap does not reach it (`crocmobile/session.go`). |
-| session | the Go `session` struct (`crocmobile/session.go`) that owns one active transfer's `croc.Client`, prompt pipe, and cleanup; `crocmobile` allows exactly one at a time via a package-level mutex. |
-| `TransferEvent` | the Swift enum (`CrocKit/Sources/CrocKit/Models.swift`) carrying every event the engine can emit: `.codeReady`, `.connected`, `.fileList`, `.progress`, `.text`, `.done`, `.failed`. |
-| xcframework | `CrocKit/Croc.xcframework`, the gomobile build output binding `crocmobile` for iOS, iOS Simulator, and macOS; gitignored, produced by `scripts/build-xcframework.sh`. |
+| --- | --- |
+| `binaryTarget` | The `CrocKit/Package.swift` declaration that points `CrocKit` at the gitignored `Croc.xcframework`. Nothing builds until `scripts/build-xcframework.sh` produces it. |
+| delegate bridge | `DelegateBridge` (`CrocKit/Sources/CrocKit/DelegateBridge.swift`). It implements gobind's `CrocmobileDelegateProtocol` and turns callbacks from Go threads into `AsyncStream<TransferEvent>` yields. |
+| event stream | The `AsyncStream<TransferEvent>` that `CrocEngine.startSend` and `startReceive` return. Letting it end (`onTermination`) cancels the Go session. |
+| failure code | The `code` in the `{"code","message"}` JSON that `OnError` and failed starts carry (`crocmobile/errors.go`). Swift decodes it as `EngineFailure.Code`. The app picks its wording from the code, never from croc's text. |
+| gobind | The gomobile tool that generates the Objective-C and Swift binding layer from the `crocmobile` package. It is the source of the `Crocmobile`-prefixed symbols. |
+| gomobile | The Go toolchain that binds `crocmobile` into `Croc.xcframework` (`scripts/build-xcframework.sh`). |
+| `Crocmobile` prefix | gobind adds it to the Go package name `crocmobile`: `CrocmobileOptions`, `CrocmobileTransfer`, `CrocmobileStartSend`. The Go interface `Delegate` is the Objective-C protocol `CrocmobileDelegate`, imported in Swift as `CrocmobileDelegateProtocol`. |
+| prompt pipe / fd0 dup2 | How the app answers croc's accept prompt, which reads stdin. A pipe's read end is `syscall.Dup2`'d onto fd 0, because croc's cached `bufio.Reader` is tied to fd 0 and swapping `os.Stdin` would not reach it (`crocmobile/session.go`). |
+| session | The Go `session` struct (`crocmobile/session.go`). It owns one transfer's `croc.Client`, prompt pipe and cleanup. A package-level mutex allows one at a time. |
+| `TransferEvent` | The Swift enum in `CrocKit/Sources/CrocKit/Models.swift` for everything the engine reports: `.codeReady`, `.connected`, `.fileList`, `.progress`, `.text`, `.stored`, `.done`, `.failed`. |
+| xcframework | `CrocKit/Croc.xcframework`, the gomobile output that binds `crocmobile` for iOS, iOS Simulator and macOS. Gitignored. Built by `scripts/build-xcframework.sh`, the required first build step on a fresh clone. |
 
 ## App
 
 | Term | Means |
-|---|---|
-| `AppRouter` | `@Observable` singleton (`app/CrocApp/Models/AppRouter.swift`) holding the navigation path (both platforms), pending drop/dock URLs and a pending receive link (`pendingReceive`), needed because `AppDelegate` and menu commands sit outside the SwiftUI environment graph. |
-| App Group | `group.com.bakirgdev.CrocApp`, the shared container the iOS share extension stages files into (`ShareInbox/batch-<UUID>/` + `manifest.json`) for the main app to pick up (`app/CrocApp/Models/ShareInbox.swift`). |
-| `AutoVerify` harness | `app/CrocApp/Support/AutoVerify.swift`, launch-argument-driven code path (`--auto-receive`, `--auto-send`, `--ask`, etc.) that drives the real `TransferController` state machine instead of the engine directly, so verify scripts exercise the path users actually take. |
-| `BGContinuedProcessingTask` | iOS 26+ API wrapping a transfer so it survives backgrounding and gets a system Live Activity; `app/CrocApp/Platform/BackgroundCoordinator.swift`, no macOS equivalent (`docs/knowledge/apple-platform-constraints.md`). |
-| `CrocApp Direct` / `DIRECT` | the Developer ID (DMG) macOS target, bundle ID `com.bakirgdev.CrocApp.direct`, arm64 only; builds the `app/CrocApp/` sources plus `app/CrocAppDirect/` (Sparkle updater) under the Swift condition `DIRECT`. Product is `CrocApp.app`, same name as the App Store target (`docs/BUILDING.md` section 7). |
-| output folder store | `OutputFolderStore` (`app/CrocApp/Models/OutputFolderStore.swift`), tracks the receive destination folder and its security-scope bookmark; defaults to `~/Downloads/CrocApp` on macOS, app Documents on iOS. |
-| Keep Both / Replace | the receive file policy (`CrocKit.FilePolicy`, `AppSettings.whenFileExists`, Go consts `PolicyKeepBoth`/`PolicyReplace`) for a file whose name is taken: Keep Both saves the new one as `name (1).ext` (croc `--rename`), Replace overwrites and resumes (croc `--overwrite`). Chosen on the incoming sheet, or by the setting under auto-accept (`docs/knowledge/crocmobile-bridge.md`). |
-| `Phase` | the enum on `TransferController` driving every view: `idle` → `starting` → `waiting`/`connecting` → `confirmSend` or `incoming` → `transferring` → `done`, `stored` (a stored upload finished) or `failed` (`app/CrocApp/Models/TransferController.swift`). |
-| security-scoped resource | an Apple sandbox URL (from `fileImporter` or a bookmark) that needs `startAccessingSecurityScopedResource()` before use; both `TransferController` and `HistoryView` call it before touching a URL. |
-| share extension (appex) | `CrocShare`, the iOS-only app extension (`app/CrocShare/`) that stages shared files into the App Group for later send; ~120 MB memory cap, no long-running work (`docs/knowledge/app-ui-architecture.md`). |
-| receipt | `StoredReceipt` (CrocKit), what a stored upload returns: id, origin, upload token, link, expiry, download count. Held only in `StoredTransferVault` (Keychain); history keeps just the id, host and expiry. |
-| revoke | deleting a stored upload from its server with its upload token (`TransferController.revoke`, History's Revoke Link). A server that no longer has it counts as success. Only possible while the receipt is in the vault. |
-| `StoredTransferVault` | the Keychain store of stored-upload receipts (`app/CrocApp/Models/StoredTransferVault.swift`): upload token and link, which History needs to revoke and must never hold itself. |
-| `SwiftData` `TransferRecord` | the `@Model` type (`app/CrocApp/Models/TransferHistory.swift`) persisting one finished/failed transfer for local-only history (F12); never stores file contents or the full code phrase. |
-| `TransferLink` | the one parser (`app/CrocApp/Models/TransferLink.swift`) for every form a code arrives in: bare code, `crocapp://receive?code=`, `croc://<code>`, `https://crocapp.dev/r/#<code>`, `https://getcroc.com/?code=`. `TransferLink.webURL(forCode:)` builds the `crocapp.dev/r/` link. Opening one prefills Receive and never connects. |
-| trust badge | `TrustBadge` view (`app/CrocApp/Views/TrustBadge.swift`), shown in waiting/transferring/confirm-send screens, reading `TransferController.activeRelay` captured at transfer start (F36). |
-| web link / link page | `https://crocapp.dev/r/#<code>`, the waiting-screen QR and Share Link payload, served by `web/landing/r/index.html`. The code sits in the fragment, so browsers never send it to a server; the page makes no network request. It offers Open in CrocApp, the App Store, the DMG, and Receive in your browser (croc's own web app at getcroc.com, which serves the JavaScript that decrypts). |
-| `TransferController` | `@MainActor @Observable` (`app/CrocApp/Models/TransferController.swift`), the sole consumer of `CrocKit` in the app; owns `Phase` and all engine event handling. |
+| --- | --- |
+| `AppRouter` | `@Observable` singleton (`app/CrocApp/Models/AppRouter.swift`). It holds the navigation path, URLs dropped on the window or Dock, and a pending receive link (`pendingReceive`). It is a singleton because `AppDelegate` and menu commands sit outside the SwiftUI environment. |
+| App Group | `group.com.bakirgdev.CrocApp`, the shared container where the iOS share extension stages files for the app (`ShareInbox/batch-<UUID>/` plus `manifest.json`). App side: `app/CrocApp/Models/ShareInbox.swift`. |
+| `AutoVerify` harness | `app/CrocApp/Support/AutoVerify.swift`. Launch arguments (`--auto-receive`, `--auto-send`, `--ask` and others) drive the real `TransferController`, so verification scripts take the path users take. |
+| `BGContinuedProcessingTask` | The iOS 26 API that keeps a transfer running in the background and shows a system Live Activity. Code: `app/CrocApp/Platform/BackgroundCoordinator.swift`. macOS has no equivalent (`docs/knowledge/apple-platform-constraints.md`). |
+| `CrocApp Direct` / `DIRECT` | The macOS Developer ID target for the direct download: bundle ID `com.bakirgdev.CrocApp.direct`, arm64 only. It builds `app/CrocApp/` plus `app/CrocAppDirect/` (the Sparkle updater) under the Swift condition `DIRECT`. Its product is `CrocApp.app`, the same name as the App Store target. See `docs/RELEASING.md`, "Direct download (Developer ID)". |
+| output folder store | `OutputFolderStore` (`app/CrocApp/Models/OutputFolderStore.swift`). It tracks the receive folder and its security-scoped bookmark. Default: `~/Downloads/CrocApp` on macOS, the app's Documents folder on iOS. |
+| Keep Both / Replace | The receive policy for a file whose name is taken (`CrocKit.FilePolicy`, `AppSettings.whenFileExists`, Go `PolicyKeepBoth` and `PolicyReplace`). Keep Both saves `name (1).ext` (croc `--rename`). Replace overwrites and resumes (croc `--overwrite`). The user picks on the incoming sheet, or the setting applies under auto-accept. |
+| `Phase` | The enum on `TransferController` that every view switches on (cases: `docs/ARCHITECTURE.md`, "TransferController"). |
+| security-scoped resource | A sandboxed URL (from `fileImporter` or a bookmark) that needs `startAccessingSecurityScopedResource()` before use. `TransferController` and `HistoryView` both call it. |
+| share extension (appex) | `CrocShare` (`app/CrocShare/`), the iOS-only extension that stages shared files in the App Group. Memory cap about 120 MB, no long work. |
+| receipt | `StoredReceipt` (CrocKit): what a stored upload returns (id, origin, upload token, link, expiry, download count). Only `StoredTransferVault` (Keychain) holds it. History keeps just the id, host and expiry. |
+| revoke | Deleting a stored upload from its server with the upload token (`TransferController.revoke`, **Revoke Link** in History). A server that no longer has it counts as success. Possible only while the receipt is in the vault. |
+| `StoredTransferVault` | The Keychain store of stored-upload receipts (`app/CrocApp/Models/StoredTransferVault.swift`). It holds the upload token and link that History needs to revoke and must never hold itself. |
+| `TransferRecord` | The SwiftData `@Model` (`app/CrocApp/Models/TransferHistory.swift`) for one finished or failed transfer in the local-only history. It never stores file contents or the full code phrase. |
+| `TransferLink` | The one parser (`app/CrocApp/Models/TransferLink.swift`) for every form a code or link arrives in: bare code, stored link, `crocapp://receive?code=`, `croc://<code>`, `https://crocapp.dev/r/#<code>`, `https://getcroc.com/?code=`. `TransferLink.webURL(forCode:)` builds the `crocapp.dev/r/` link. Opening a link fills in Receive and never connects. |
+| trust badge | The `TrustBadge` view (`app/CrocApp/Views/TrustBadge.swift`). It shows how the transfer is routed and that it is end-to-end encrypted, on Home, How It Works and the waiting, confirm, incoming and transferring screens. It reads `TransferController.activeRelay`, captured when the transfer starts. |
+| web link / link page | `https://crocapp.dev/r/#<code>`, the payload of the waiting-screen QR code and **Share Link** (page: `web/landing/r/index.html`). The code is in the fragment, so browsers do not send it to a server, and the page makes no network request. It offers Open in CrocApp, the App Store, the DMG, and Receive in your browser (croc's own web app at getcroc.com). |
+| `TransferController` | `@MainActor @Observable` (`app/CrocApp/Models/TransferController.swift`). The only caller of `CrocEngine`. It owns `Phase` and handles every engine event. |
 
 ## Apple platform
 
 | Term | Means |
-|---|---|
-| entitlement | an Apple capability grant declared in a `.entitlements` file (`app/CrocApp/CrocApp.entitlements`, `CrocApp-iOS.entitlements`, `app/CrocAppDirect/CrocAppDirect.entitlements`, `app/CrocShare/CrocShare.entitlements`); e.g. `network.client`/`network.server` for the sandboxed Mac build, `files.downloads.read-write` for the default output folder. |
-| MAS vs Developer ID | the two macOS distribution paths: Mac App Store (sandbox mandatory) vs. direct-download Developer ID (notarized DMG, sandbox optional); separate `Config/ExportOptions-{MAS,DevID}.plist` (iOS has its own `ExportOptions-iOS.plist`; `scripts/build-appstore.sh` uses the iOS and MAS ones). |
-| notarization | Apple's malware scan required before a Developer ID build runs without warnings on a fresh Mac; `scripts/build-devid.sh` submits the app and the disk image with `notarytool submit --wait` (`docs/BUILDING.md`, section 7). |
-| `PrivacyInfo.xcprivacy` | Apple's required privacy manifest, present in both `app/CrocApp/` and `app/CrocShare/`; declares accessed API categories (UserDefaults, FileTimestamp, SystemBootTime) and no tracking/collection. |
-| Sparkle | the macOS auto-update framework (2.10.0, SwiftPM), linked into `CrocApp Direct` only; checks `SPARKLE_FEED_URL` for an appcast signed with an Ed25519 key (`SPARKLE_PUBLIC_ED_KEY`, the owner's release public key). |
-| stapling | attaching Apple's notarization ticket to a build (`xcrun stapler staple`) so first launch works offline; `scripts/build-devid.sh` staples the app and the disk image. |
+| --- | --- |
+| entitlement | A capability grant in a `.entitlements` file: `app/CrocApp/CrocApp.entitlements`, `CrocApp-iOS.entitlements`, `app/CrocAppDirect/CrocAppDirect.entitlements`, `app/CrocShare/CrocShare.entitlements`. Example: `files.downloads.read-write` for the default Mac output folder. |
+| MAS vs Developer ID | The two macOS distribution paths. Mac App Store: sandbox required. Developer ID: a notarized DMG you host yourself. Export options live in `app/Config/ExportOptions-MAS.plist` and `ExportOptions-DevID.plist`; iOS has `ExportOptions-iOS.plist` (`docs/RELEASING.md`, "Release channels"). |
+| notarization | Apple's malware scan, required before a Developer ID build opens without warnings on a fresh Mac. `scripts/build-devid.sh` submits the app and the disk image with `notarytool submit --wait`. |
+| `PrivacyInfo.xcprivacy` | Apple's privacy manifest. The app's declares the API categories it uses (UserDefaults, FileTimestamp, SystemBootTime), no tracking and no collected data. `CrocShare`'s declares none of those. |
+| Sparkle | The macOS auto-update framework (2.10.0, SwiftPM), linked into `CrocApp Direct` only. It reads `SPARKLE_FEED_URL` for an appcast signed with an Ed25519 key (`SPARKLE_PUBLIC_ED_KEY`, the public half). |
+| stapling | Attaching Apple's notarization ticket to a build (`xcrun stapler staple`) so first launch works offline. `scripts/build-devid.sh` staples the app and the disk image. |
 
 ## Repo conventions
 
 | Term | Means |
-|---|---|
-| design token | a named value (color, spacing, type, motion) in `design/`, the only source of such values allowed in app or web code; no raw hex/px (`design/AGENTS.md`). |
-| harness | one of the `scripts/verify-*.sh` scripts, or `crockit-verify`; proves a real transfer works against the croc CLI, since a green build alone is not evidence. |
-| self-heal | the end-of-session rule (root `AGENTS.md`, "Session end report") that `docs/knowledge/` and `docs/known-issues.md` are updated to match reality before a session ends. |
-| verify script | any `scripts/verify-*.sh` harness; needs outbound network to the public relay plus a `croc` CLI; CI runs only `verify-interop.sh`, against a local relay (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |
-| xcframework build step | `scripts/build-xcframework.sh`, the required first build step on a fresh clone: Go compile + gomobile bind into `CrocKit/Croc.xcframework`. |
+| --- | --- |
+| design token | A named value (color, spacing, type, motion) in `design/`. It is the only allowed source of such values in app or web code: no raw hex or px (`design/AGENTS.md`). |
+| harness | A script or tool that proves a real transfer works against the croc command: `scripts/verify-interop.sh`, `scripts/verify-app-mac.sh`, `scripts/verify-app-sim.sh` and `crockit-verify`. A green build alone is not evidence. `docs/BUILDING.md`, "Verification harnesses". |
+| verify script | Any `scripts/verify-*.sh`. The transfer ones need outbound network to the public relay plus a `croc` command. CI runs `verify-interop.sh` against a local relay and `verify-design.sh`, which needs no network (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |

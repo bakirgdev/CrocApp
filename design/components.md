@@ -97,7 +97,7 @@ Monospaced entry for `word-word-word`, used everywhere a code phrase is typed, i
 
 Wrapper: height `--control-height-lg`, padding `0 6px 0 14px`, fill `--color-surface-base`, `--radius-md`, `--border-hairline` border: `--color-separator` idle, `--color-accent` focused, `--color-status-error` invalid. Disabled dims to `--opacity-disabled-container`.
 
-Input: `--font-mono` at `--type-code-body`, `--tracking-code`, no autocapitalization, autocorrection or spell check. Trailing system `PasteButton` (it owns its glyph). Invalid shows a one-line `--type-footnote` message under the field, never the word "invalid".
+Input: `--font-mono` at `--type-code-body`, `--tracking-code`, no autocapitalization, autocorrection or spell check. Trailing system `PasteButton`, seated in the wrapper's 6px trailing inset. The system owns its glyph and its size: SwiftUI exposes only its border shape, label style and tint. Invalid shows a one-line `--type-footnote` message under the field, never the word "invalid".
 
 ### CodePhraseDisplay and QRFrame
 
