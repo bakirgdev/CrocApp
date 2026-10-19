@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2016  # awk programs in single quotes: awk expands them, not the shell
 # Keeps the repository's markdown pointing at things that exist (docs/AGENTS.md,
-# "Keeping docs true"). Checks every tracked .md file outside web/docs/content/,
-# which the Docusaurus build checks itself:
+# "Keeping docs true"). Checks every .md file outside web/docs/content/,
+# which the Docusaurus build checks itself, plus new ones not yet committed:
 #
 #   1. Relative links. `[text](path)` and `[text](path#anchor)` resolve to a
 #      tracked file or directory, and an anchor matches a heading in its target.
@@ -27,8 +27,8 @@ export LC_ALL=C
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
-# Tracked docs still on disk (a deletion not yet staged is not a doc).
-git ls-files '*.md' ':!:web/docs/content/**' | while IFS= read -r f; do
+# Tracked and new docs still on disk (a deletion not yet staged is not a doc).
+git ls-files --cached --others --exclude-standard '*.md' ':!:web/docs/content/**' | sort -u | while IFS= read -r f; do
   [ -f "$f" ] && echo "$f"
 done > "$TMP/files"
 # Every tracked file plus every directory above one: the set a path may name.

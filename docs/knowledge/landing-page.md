@@ -13,7 +13,7 @@ Operational knowledge for `web/landing/`, the plain HTML site at `https://crocap
 | `.well-known/security.txt` | The address `SECURITY.md` hands out |
 | `llms.txt`, `robots.txt`, `sitemap.xml` | Crawler and assistant files. `robots.txt` lists this sitemap and the docs one |
 | `CNAME`, `404.html` | Custom domain and not-found page |
-| `assets/img/` | Store badges, favicons and the web manifest |
+| `web/landing/assets/img/` | Store badges, favicons and the web manifest |
 
 ## How it ships
 
