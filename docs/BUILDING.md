@@ -14,6 +14,8 @@ The exact toolchain and the steps from a fresh clone to a running app, plus how 
 | golangci-lint | `2.x`; CI pins `v2.15.0` | `.github/workflows/reusable-go.yml`; rules in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
 | govulncheck | the `golang.org/x/vuln` version in the `tool` block of `crocmobile/go.mod` | `.github/workflows/reusable-go.yml` | `cd crocmobile && go tool govulncheck ./...` |
 | create-dmg | unpinned | `.github/workflows/release.yml` installs it with `brew` | `brew install create-dmg`; only `scripts/build-dmg.sh` needs it |
+| Node, pnpm | Node `26.12.0`, pnpm `12.14.0`; only the docs site (`web/docs/`) needs them | `web/docs/.nvmrc`, `packageManager` in `web/docs/package.json` | `brew install fnm pnpm`, then `fnm use` in `web/docs/`; `pnpm --dir web/docs install` (`knowledge/docs-site.md`) |
+| cwebp | unpinned; only `scripts/capture-screenshots.sh --copy-web` needs it, to write the web WebP files | none | `brew install webp` |
 | croc CLI | `v11.5.4`, the version the embedded engine uses | `crocmobile/go.mod` (`github.com/schollz/croc/v11`) | `brew install croc` (lands at `$HOMEBREW_PREFIX/bin/croc`, the harnesses' default). `croc --version` must match the pin; if the bottle lags, use `go install github.com/schollz/croc/v11@<pin>` and point `CROC` at it; only `scripts/verify-*.sh` and `crockit-verify` need it |
 
 ## First build
@@ -110,6 +112,13 @@ Design and docs, no toolchain needed:
 ```bash
 scripts/verify-design.sh   # token mirrors, contrast, no literals (design/AGENTS.md)
 scripts/verify-docs.sh     # links, repo paths and stale markers in the markdown (docs/AGENTS.md)
+```
+
+The website (landing page and docs site) builds into one artifact. Broken links and anchors fail it, and CI runs the same script in the `site build` job:
+
+```bash
+pnpm --dir web/docs install
+scripts/assemble-site.sh _site   # landing at /, docs at /docs/
 ```
 
 CI runs the Go checks with `GOOS=darwin GOARCH=arm64` set for the whole job, so `go build` and `go vet` analyze the platform the code ships on while running on a cheap Linux runner. Only `go test` unsets them. See "Troubleshooting" for the `go install` trap this causes.

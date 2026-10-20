@@ -131,14 +131,14 @@ Local Network Only (`OnlyLocal`) keeps the connection on the local network. With
 
 ### Build, update and release
 
-- **Signing:** the DMG app is signed with a Developer ID certificate, hardened runtime and timestamp; the app and the DMG are notarized and stapled (`.github/workflows/release.yml`, `web/docs/content/verify-downloads.md`). App Store builds go through Apple's signing and review.
+- **Signing:** the DMG app is signed with a Developer ID certificate, hardened runtime and timestamp; the app and the DMG are notarized and stapled (`.github/workflows/release.yml`, `web/docs/content/getting-started/verify-downloads.md`). App Store builds go through Apple's signing and review.
 - **Updates (Direct build only):** Sparkle 2 over HTTPS (`SPARKLE_FEED_URL` build setting in `app/CrocApp.xcodeproj/project.pbxproj`, read by `SUFeedURL`). The app carries the EdDSA public key (`SUPublicEDKey`) and installs an update only if the signature matches. `release.yml` fails the run if the appcast entry lacks `sparkle:edSignature` (around line 228). `SUEnableSystemProfiling` is `false` (`app/Config/CrocApp-Direct-Info.plist`). App Store builds contain no updater.
-- **Provenance:** a GitHub build provenance attestation covers the DMG, the engine archive and `appcast.xml`, made after stapling (`actions/attest-build-provenance` in `release.yml`). Verification commands are in `web/docs/content/verify-downloads.md`.
+- **Provenance:** a GitHub build provenance attestation covers the DMG, the engine archive and `appcast.xml`, made after stapling (`actions/attest-build-provenance` in `release.yml`). Verification commands are in `web/docs/content/getting-started/verify-downloads.md`.
 - **Pipeline hygiene:** third-party actions are pinned to commit SHAs; checkouts set `persist-credentials: false`; the release job runs in the `release` environment, which needs maintainer approval and allows only `main` and `v*` tags; the signing material is removed from the runner at the end of the job. Dependabot covers GitHub Actions, Go modules and Swift packages (`.github/dependabot.yml`).
 
 ## Privacy
 
-CrocApp has no account system and no analytics or advertising code. History is a local SwiftData store (`TransferRecord`, `app/CrocApp/Models/TransferHistory.swift`) holding up to 20 file names per record, counts, sizes, a code hint and status, never the full code phrase or file contents (`web/docs/content/guide/history.md`). The servers the app can contact are listed in the [privacy policy](https://crocapp.dev/privacy/). The link page at `crocapp.dev/r/` makes no network request and sets a `no-referrer` policy.
+CrocApp has no account system and no analytics or advertising code. History is a local SwiftData store (`TransferRecord`, `app/CrocApp/Models/TransferHistory.swift`) holding up to 20 file names per record, counts, sizes, a code hint and status, never the full code phrase or file contents (`web/docs/content/guide/history.md`). The servers the app can contact are listed in the [privacy policy](https://crocapp.dev/privacy/). The link page at `crocapp.dev/r/` makes no network request and sets a `no-referrer` policy. Every landing page (`web/landing/`) ships a `<meta http-equiv>` Content-Security-Policy with `default-src 'self'` and `connect-src 'self'`, so a page cannot call a third party even if script were injected (`knowledge/landing-page.md`, "Content-Security-Policy"). The pages load only their own files and keep only the theme choice in local storage.
 
 ## Design principles applied
 
@@ -185,7 +185,7 @@ The path traversal, injection, overflow and time-of-check rows cover glob `*` in
 | croc prints the code phrase, and a non-default relay password, to stderr on every send | Accepted. Nothing in the app captures stderr; a Finder, Dock or Home Screen launch connects it to `/dev/null` (strong inference, not measured on a device). A harness or Xcode debug session does capture it. `known-issues.md`. |
 | `release.yml` passes the signing `.p12` and keychain passwords on `security` argv | Accepted for a single-tenant runner. Do not run on a shared runner. |
 | `create-dmg` is installed unpinned during the release build | Accepted. `known-issues.md`. |
-| One maintainer approves releases, so there is no second reviewer on the `release` environment | Accepted. Disclosed in `web/docs/content/verify-downloads.md`. |
+| One maintainer approves releases, so there is no second reviewer on the `release` environment | Accepted. Disclosed in `SECURITY.md`, and `RELEASING.md` describes the approval gate. |
 | Compromise of the Sparkle EdDSA private key or the `release` secrets | Would allow signed malicious updates or releases. Mitigation is limited to approval gating and attestation, which a compromised pipeline could also satisfy. |
 | `manifest.batch` in the share extension's manifest is joined to the App Group path without a name check (`ShareInbox.refresh`) | Only a process with the same App Group can write it, so the writer is already inside the same-developer trust domain. Not countered by code; noted, not exploited. |
 | A sender can offer a very large total size; CrocApp adds no disk quota | The accept sheet shows the file list; the user decides. |
@@ -205,4 +205,4 @@ Follow `AGENTS.md`. Update this file in the same pull request when any of these 
 - the release workflow: signing, notarization, attestation, Sparkle keys or feed;
 - a new weakness class gets a fix: add a row to Common weaknesses countered with its test.
 
-Docs rules are in [`AGENTS.md`](AGENTS.md). Related: [`SECURITY.md`](../SECURITY.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`known-issues.md`](known-issues.md), `web/docs/content/security-and-privacy.md`, `web/docs/content/verify-downloads.md`.
+Docs rules are in [`AGENTS.md`](AGENTS.md). Related: [`SECURITY.md`](../SECURITY.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`known-issues.md`](known-issues.md), `web/docs/content/security-and-privacy.md`, `web/docs/content/getting-started/verify-downloads.md`.

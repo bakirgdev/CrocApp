@@ -12,7 +12,9 @@ extra sections where a release needs them, and the project follows
 
 ### Changed
 
-- Buttons are easier to read in light mode: text labels now use the darker green, and destructive labels are no longer drawn in red text.
+- Buttons are easier to read in light mode: text labels and filled buttons now use the darker green, so white labels pass the 4.5:1 contrast mark, and destructive labels are no longer drawn in red text.
+- The website and docs are refreshed. The docs are reorganized around what you are doing (one Settings page in the app's own order, Verify a release under Getting started, Send as link and a keyboard shortcut reference), with a new Uninstall and data page, many accuracy fixes, and redirects from the old addresses. The home page leads with "Send files with a code phrase" and shows the iPhone app beside the Mac one.
+- The website and docs use the app icon as their favicon and home-screen icon, and a new social preview card.
 - The screen that asks you to accept a transfer shows a Receiving header, the encryption badge and the file list as rows. Its Cancel button is gone: Decline answers the other device, leaving the screen gives no answer, and Home shows a banner to return to a request that is still waiting.
 - Send as Link now says Sending and Receiving like every other transfer, and copying the code shows "Copied".
 - On iPhone, a light haptic marks a finished, failed or incoming transfer and a copied or scanned code. Cancelling or declining yourself stays silent.
