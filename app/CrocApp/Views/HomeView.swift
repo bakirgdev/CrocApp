@@ -56,7 +56,7 @@ struct HomeView: View {
                             .foregroundStyle(Color.onAccent)
                             .padding(.horizontal, Spacing.space3)
                             .padding(.vertical, Spacing.space1)
-                            .background(Color.accentFill, in: Capsule())
+                            .background(Color.accentSolid, in: Capsule())
                             .offset(x: Spacing.space3, y: -Spacing.space3)
                             .accessibilityLabel(
                                 "^[\(router.pendingSendURLs.count) file](inflect: true) waiting to send"

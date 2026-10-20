@@ -53,6 +53,6 @@ Depth ladder: page, then card (`sm` or `glass`), then sheet (`lg`). Three levels
 
 ## Focus
 
-On web, `:focus-visible` replaces the native outline with `--shadow-focus-ring`: two 2px bands, `--color-surface-base` inside and `--color-accent` outside, so one band always has a 3.41:1 edge against whatever it surrounds (`colors.md` rule 7). A focused element swaps its own shadow for the ring. A transparent `outline` stays underneath so forced-colors mode, which drops box shadows, still draws an indicator.
+On web, `:focus-visible` replaces the native outline with `--shadow-focus-ring`: two 2px bands, `--color-surface-base` inside and `--color-accent` outside, so one band always has a 3.41:1 or better edge against whatever it surrounds (`colors.md` rule 7). A focused element swaps its own shadow for the ring. A transparent `outline` stays underneath so forced-colors mode, which drops box shadows, still draws an indicator.
 
 In the app the system draws focus (`swiftui.md` → Focus). Never remove a focus indicator without replacing it.

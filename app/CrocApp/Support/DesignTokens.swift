@@ -156,7 +156,12 @@ extension Color {
     /// never use this for a word, see `accentText`.
     static var accentFill: Color { .accentColor }
 
-    /// Pressed state for custom button styles built on the accent fill.
+    /// `--color-accent-solid`: the background of a filled prominent button.
+    /// Darker than `accentFill` in light so `onAccent` reads at 4.94:1
+    /// (colors.md rule 3); the same green in dark.
+    static let accentSolid = Color("ColorAccentSolid")
+
+    /// Pressed state for custom button styles built on the accent solid.
     static let accentPressed = Color("ColorAccentPressed")
 
     /// `--color-accent-tint`: the drag-over and secondary-button fill. Alpha
