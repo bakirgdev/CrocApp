@@ -57,7 +57,10 @@
 
   /* Semantic aliases: consume these */
   --color-accent:         light-dark(var(--green-600), var(--green-400));
-  --color-accent-pressed: light-dark(var(--green-700), var(--green-500));
+  /* Accent as a filled-button background: white (--color-on-accent) must read
+     on it, so light takes a darker step than --color-accent. colors.md rule 3. */
+  --color-accent-solid:   light-dark(var(--green-700), var(--green-400));
+  --color-accent-pressed: light-dark(var(--green-800), var(--green-500));
   --color-accent-tint:    var(--glass-tint-accent);
   --color-on-accent:      light-dark(#FFFFFF, #05271A);
   --color-on-status:      #FFFFFF;

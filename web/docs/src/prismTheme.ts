@@ -19,7 +19,7 @@ const prismTheme: PrismTheme = {
     },
     {
       types: ['keyword', 'atrule', 'selector', 'tag', 'builtin'],
-      style: {color: 'var(--color-accent-text)', fontWeight: '600'},
+      style: {color: 'var(--color-accent-text)'},
     },
     {
       types: ['string', 'char', 'attr-value', 'template-string', 'url'],

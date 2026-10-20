@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
     <title>Receive a file | CrocApp</title>
     <meta name="description" content="Open this transfer in CrocApp, or get the app. The code stays in your browser." />
     <!-- The code lives in the URL fragment, which a browser never sends to a
@@ -14,21 +15,19 @@
     <link rel="icon" href="/assets/img/favicon/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon/favicon-96x96.png" />
     <link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/assets/img/favicon/site.webmanifest" />
 
     <!-- --bg-base light and dark as literals: a <meta> attribute cannot read a
          custom property. Keep in sync with design/colors.md and index.html. -->
     <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
+    <!-- Synchronous on purpose: it pins a stored theme before the stylesheet paints. -->
+    <script src="/theme-init.js"></script>
+
     <link rel="stylesheet" href="/tokens.css" />
     <link rel="stylesheet" href="/styles.css" />
 
-    <script>
-      try {
-        var t = localStorage.getItem("theme");
-        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
-      } catch (e) {}
-    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to Content</a>
@@ -105,27 +104,6 @@
       </div>
     </main>
 
-    <script>
-      (function () {
-        function render() {
-          var code = "";
-          try {
-            code = decodeURIComponent(location.hash.slice(1));
-          } catch (e) {}
-          // croc rejects shorter codes (crocmobile minCodeLength); a stray
-          // fragment such as "#top" must not read as one.
-          var valid = code.length >= 6 && !/\s/.test(code);
-          document.getElementById("has-code").hidden = !valid;
-          document.getElementById("no-code").hidden = valid;
-          if (!valid) return;
-          var encoded = encodeURIComponent(code);
-          document.getElementById("code").textContent = code;
-          document.getElementById("open-app").href = "crocapp://receive?code=" + encoded;
-          document.getElementById("open-browser").href = "https://getcroc.com/?code=" + encoded;
-        }
-        render();
-        addEventListener("hashchange", render);
-      })();
-    </script>
+    <script src="/r/receive.js"></script>
   </body>
 </html>

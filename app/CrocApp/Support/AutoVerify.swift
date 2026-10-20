@@ -31,7 +31,7 @@ import ServiceManagement
 ///   --relay-password PW            the custom relay's password (croc's default applies without it)
 ///   --shown-relay default          make the trust UI name the public relay whatever --relay says
 ///   --shown-link-origin ORIGIN     make a stored link show and encode ORIGIN (scheme and host, e.g.
-///                                  https://crocapp.dev) instead of the --store-server's; the upload
+///                                  https://getcroc.com) instead of the --store-server's; the upload
 ///                                  still goes to --store-server
 ///   --throttle RATE                cap the upload rate for a send, e.g. 4m (croc's --throttleUpload)
 ///   --transport auto|relay         the Connection setting for this run (croc's --transport)
@@ -183,7 +183,7 @@ enum AutoVerify {
             }
             controller.startStoreSend(
                 urls: [URL(fileURLWithPath: args[i + 1])], downloads: downloads,
-                lifetimeSeconds: 3600)
+                lifetimeSeconds: 86_400)
             await watchStoreSend(controller, docs: docs, resultURL: resultURL)
         } else if let i = args.firstIndex(of: "--auto-store-receive"), i + 1 < args.count {
             guard let link = URL(string: args[i + 1]) else {
@@ -367,40 +367,45 @@ enum AutoVerify {
             )] = [
                 (
                     false, .completed, false, 177_000,
-                    ["Quarterly-Report.pdf", "Ridge-Sunrise.jpg", "Meeting-Notes.md"], 3, "4821",
+                    ["Quarterly-Report.pdf", "Ridge-Sunrise.jpg", "Meeting-Notes.md"], 3, "cape-…",
                     12 * 60, false
                 ),
-                (true, .completed, true, 148, [], 1, "7305", 2 * hour, false),
+                (true, .completed, true, 148, [], 1, "wiry-…", 2 * hour, false),
                 (
                     true, .completed, false, 55_000, ["Design-Assets.zip"], 1,
-                    "crocapp.dev", 5 * hour, true
+                    "getcroc.com", 5 * hour, true
                 ),
                 (
-                    false, .completed, false, 24_100_000, ["Soundtrack.wav"], 1, "6142", 1.2 * day,
+                    false, .completed, false, 24_100_000, ["Soundtrack.wav"], 1, "junky-…",
+                    1.2 * day,
                     false
                 ),
                 (
-                    true, .declined, false, 184_000, ["Contract-Draft.pdf"], 1, "3057", 2 * day,
+                    true, .declined, false, 184_000, ["Contract-Draft.pdf"], 1, "lint-…", 2 * day,
                     false
                 ),
                 (
-                    false, .failed, false, 96_000_000, ["Field-Recordings.zip"], 1, "9134", 4 * day,
+                    false, .failed, false, 96_000_000, ["Field-Recordings.zip"], 1, "mild-…",
+                    4 * day,
                     false
                 ),
                 (
                     true, .completed, false, 18_600_000,
-                    ["Slides.pdf", "Cover-Art.png", "Speaker-Notes.md", "Demo-Reel.mov"], 4, "2290",
+                    ["Slides.pdf", "Cover-Art.png", "Speaker-Notes.md", "Demo-Reel.mov"], 4, "op…",
                     6 * day, false
                 ),
                 (
                     false, .cancelled, false, 412_000_000,
-                    ["Raw-Scans.zip"], 1, "8816", 9 * day, false
+                    ["Raw-Scans.zip"], 1, "tamer-…", 9 * day, false
                 ),
                 (
-                    true, .completed, false, 7_800_000, ["Project-Archive.zip"], 1, "5503",
+                    true, .completed, false, 7_800_000, ["Project-Archive.zip"], 1, "fuzzy-…",
                     21 * day, false
                 ),
-                (false, .completed, false, 1_200_000, ["Receipts.pdf"], 1, "1948", 35 * day, false),
+                (
+                    false, .completed, false, 1_200_000, ["Receipts.pdf"], 1, "rope-…", 35 * day,
+                    false
+                ),
             ]
         for sample in samples {
             let record = TransferRecord(

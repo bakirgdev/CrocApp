@@ -15,17 +15,18 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | xcbeautify | none | CI only (`ci.yml`; `release.yml` does not use it) |
 | create-dmg 1.3.0 (Homebrew; CI installs it unpinned with `brew install create-dmg`) | none; called by `scripts/build-dmg.sh` | local + `release.yml` |
 | croc v10 CLI (the v10 peer of `verify-interop.sh` scenario 10) | `scripts/croc-v10.version` (read by the script and the `interop` job) | local + CI |
-| Node 24 | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
-| pnpm 12 | `packageManager` in `web/docs/package.json` (CI: `pnpm/action-setup` reads it) | docs site, local + CI |
-| Docusaurus 3.10, React 19.3, TypeScript 7 | `web/docs/package.json`, `pnpm-lock.yaml`; `pnpm-workspace.yaml` holds `overrides` for transitive advisories | docs site, local + CI (`pnpm run typecheck` in `github-pages.yml`) |
+| Node 26.12.0 | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
+| pnpm 12.14.0 | `packageManager` in `web/docs/package.json` (CI: `pnpm/action-setup` reads it) | docs site, local + CI |
+| Docusaurus 3.10, React 19.3, TypeScript 7 | `web/docs/package.json`, `pnpm-lock.yaml`; `pnpm-workspace.yaml` holds `overrides` for transitive advisories | docs site, local + CI (`pnpm run typecheck` in the `site build` job and `github-pages.yml`). `@docusaurus/plugin-client-redirects` writes the old-URL redirects (`docs-site.md`) |
 | Sparkle 2.10.0 (SwiftPM, `CrocApp Direct` only; auto-update for the direct-download build) | `Package.resolved` under `app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/`, minimum in the `XCRemoteSwiftPackageReference` in `project.pbxproj`; Dependabot (`swift`, `/app`) reads the Xcode project's `Package.resolved` and opens the bump | `CrocApp Direct` build, local + CI (unsigned build step) |
 | MCP servers `xcode` (`xcrun mcpbridge`) and `gopls` (`gopls mcp`) for AI sessions | `.mcp.json` (Claude Code asks each user to approve them); `gopls` starts in `crocmobile/` because the Go module lives there, not at the repo root | local AI sessions. Use `xcode` to build, run tests, render previews and read diagnostics; it needs the project open in Xcode with MCP enabled, and never replaces the harnesses (`BUILDING.md`, "Verification harnesses"). Use `gopls` for symbol search and references in `crocmobile/` |
-| `scripts/verify-design.sh` (pure bash and awk, no toolchain) | none; holds the token parity, contrast (the ratios `design/colors.md` claims, which must also appear in its Contrast section) and no-literals tables | local + CI (`contrast` job, shown as `design checks`) |
+| `scripts/verify-design.sh` (pure bash and awk, no toolchain) | none; also lints the landing and docs CSS, `app.js`, `theme-init.js`, `prismTheme.ts` and `site.webmanifest` (the `design` filter in `ci.yml` covers those paths). Holds the token parity, contrast (the ratios `design/colors.md` claims, which must also appear in its Contrast section) and no-literals tables | local + CI (`contrast` job, shown as `design checks`) |
+| `cwebp` (Homebrew `webp`) | none; called by `scripts/capture-screenshots.sh --copy-web` to write the web WebP files | local only |
 | `scripts/verify-docs.sh` (pure bash and awk) | none; the rules it enforces are in `docs/AGENTS.md` | local + CI (`docs checks`, on every push and pull request, because renaming any file can break a path a doc names) |
 | ShellCheck 0.11 (Homebrew locally; preinstalled on `ubuntu-26.04`) | none (`shellcheck -x scripts/*.sh`, default checks) | local + CI (`shellcheck` job) |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26` against a local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:17 UTC + manual |
-| GitHub Actions | `.github/workflows/github-pages.yml` | Triggers on changes to `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh` and the workflow file. PRs build only; a push to main also deploys |
+| GitHub Actions | `.github/workflows/github-pages.yml` | Push to `main` only, on changes to `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh` and the workflow file: builds `_site` and deploys. The pre-merge build is the `site build` job in `ci.yml` |
 | GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes; `workflow_dispatch` is a rehearsal that publishes nothing |
 
 - Xcode baseline lives in `.xcode-version` (plain text, one line).
@@ -41,7 +42,7 @@ The build settings that must not change casually (Swift 6 mode, deployment targe
 
 - **`ci.yml` has no workflow-level `paths:`.** A filtered-out workflow never reports, so a required check would stay pending. Jobs skip through `if:` instead (see the next bullet).
 - **The `changes` job decides which jobs run.**
-  - It diffs the PR base (or the push's `before`) against the head with `git diff --name-only` and sets one output per area: `swift`, `go`, `build`, `design`, `interop` and `scripts`. Each job gates on its output with `if:`.
+  - It diffs the PR base (or the push's `before`) against the head with `git diff --name-only` and sets one output per area: `swift`, `go`, `build`, `design`, `interop`, `scripts` and `site`. Each job gates on its output with `if:`.
   - The regexes in the `changes` job of `ci.yml` are the source of truth for what each area covers; the rule for new files is in `.github/AGENTS.md`.
   - An unknown base (a new branch, a force push) runs everything.
 - **Branch protection requires only `ci pass`** (`.github/AGENTS.md`). The reason: a skipped matrix job reports under its unexpanded name and stays pending, while `ci pass` treats `success` and `skipped` as passing.

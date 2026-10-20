@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "CrocApp",
+  "short_name": "CrocApp",
+  "description": "Send files, folders and text to another device with a short code phrase. Free, open source and end-to-end encrypted.",
+  "start_url": "/",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#FFFFFF",
+  "background_color": "#FFFFFF",
+  "display": "standalone"
+}

@@ -7,14 +7,17 @@ import prismTheme from './src/prismTheme';
 // published together by scripts/assemble-site.sh.
 const config: Config = {
   title: 'CrocApp',
-  tagline: 'End-to-end encrypted file transfer for iPhone, iPad and Mac',
-  favicon: 'img/favicon.ico',
+  tagline: 'Send files with a code phrase',
+  // The favicon set, OG image and manifest live in web/landing/ and are served
+  // from the site root, so the docs ship no copies. `favicon` and the OG image
+  // need absolute URLs: a site-relative path there is prefixed with baseUrl
+  // (/docs/). headTags are emitted verbatim, so root-relative paths work.
+  favicon: 'https://crocapp.dev/assets/img/favicon/favicon.ico',
 
-  // `faster` is what makes @docusaurus/faster a real dependency: Rspack, SWC
-  // and Lightning CSS instead of webpack, Babel and cssnano.
+  // `v4` includes `fasterByDefault`, which turns on every `future.faster` flag
+  // and needs @docusaurus/faster: Rspack, SWC, Lightning CSS, eager git reads.
   future: {
     v4: true,
-    faster: true,
   },
 
   // The theme-color values are the two literals web may write (design/web.md):
@@ -39,8 +42,24 @@ const config: Config = {
     {
       tagName: 'link',
       attributes: {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '96x96',
+        href: '/assets/img/favicon/favicon-96x96.png',
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
         rel: 'apple-touch-icon',
-        href: '/docs/img/apple-touch-icon.png',
+        href: '/assets/img/favicon/apple-touch-icon.png',
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'manifest',
+        href: '/assets/img/favicon/site.webmanifest',
       },
     },
   ],
@@ -48,9 +67,6 @@ const config: Config = {
   url: 'https://crocapp.dev',
   baseUrl: '/docs/',
   trailingSlash: true,
-
-  organizationName: 'bakirgdev',
-  projectName: 'CrocApp',
 
   onBrokenLinks: 'throw',
   onBrokenAnchors: 'throw',
@@ -71,9 +87,34 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en'],
     localeConfigs: {
-      en: {label: 'English', htmlLang: 'en-US'},
+      en: {label: 'English', htmlLang: 'en'},
     },
   },
+
+  plugins: [
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        redirects: [
+          {from: '/guide/stored-transfers', to: '/guide/send-as-link'},
+          {
+            from: ['/guide/power-options', '/guide/settings-and-trust'],
+            to: '/guide/settings',
+          },
+          {from: '/guide/advanced-settings', to: '/guide/settings#advanced'},
+          {
+            from: '/verify-downloads',
+            to: '/getting-started/verify-downloads',
+          },
+          {from: '/reference/feature-matrix', to: '/reference/croc-cli-interop'},
+          {from: '/reference/glossary', to: '/faq#glossary'},
+          {from: '/category/getting-started', to: '/getting-started/install'},
+          {from: '/category/guide', to: '/guide/sending'},
+          {from: '/category/reference', to: '/reference/croc-cli-interop'},
+        ],
+      },
+    ],
+  ],
 
   presets: [
     [
@@ -87,16 +128,10 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/bakirgdev/CrocApp/tree/main/web/docs/',
           showLastUpdateTime: true,
-          // Current *is* 1.0 (release 1.0.0, see package.json), rather than an
-          // unlabeled "Next" sitting on top of a duplicated snapshot, so a
-          // versioned_docs/ copy would only be a second place to edit. No
-          // snapshot of the earlier build is cut. Cut the first one when a
-          // release changes behavior this site must still describe for the
-          // old version: `pnpm run docusaurus docs:version 1.0`.
-          lastVersion: 'current',
-          versions: {
-            current: {label: '1.0'},
-          },
+        },
+        sitemap: {
+          lastmod: 'date',
+          ignorePatterns: ['/docs/category/**'],
         },
         // No blog. Release notes belong in GitHub Releases and CHANGELOG.md.
         blog: false,
@@ -108,15 +143,17 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/og.jpg',
+    image: 'https://crocapp.dev/assets/img/og.jpg',
     colorMode: {
       respectPrefersColorScheme: true,
     },
     navbar: {
       title: 'CrocApp',
       logo: {
-        alt: 'CrocApp',
+        alt: '',
         src: 'img/mascot.webp',
+        width: 32,
+        height: 32,
       },
       items: [
         {
@@ -124,10 +161,6 @@ const config: Config = {
           label: 'crocapp.dev',
           position: 'left',
           target: '_self',
-        },
-        {
-          type: 'docsVersionDropdown',
-          position: 'right',
         },
         {
           href: 'https://github.com/bakirgdev/CrocApp',
@@ -155,6 +188,10 @@ const config: Config = {
             {label: 'crocapp.dev', href: 'https://crocapp.dev/'},
             {label: 'GitHub', href: 'https://github.com/bakirgdev/CrocApp'},
             {
+              label: 'Release notes',
+              href: 'https://github.com/bakirgdev/CrocApp/releases',
+            },
+            {
               label: 'Issues',
               href: 'https://github.com/bakirgdev/CrocApp/issues',
             },
@@ -167,6 +204,8 @@ const config: Config = {
         {
           title: 'More',
           items: [
+            {label: 'Privacy', href: 'https://crocapp.dev/privacy/'},
+            {label: 'Support', href: 'https://crocapp.dev/support/'},
             {
               label: 'Contributing',
               href: 'https://github.com/bakirgdev/CrocApp/blob/main/CONTRIBUTING.md',

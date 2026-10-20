@@ -46,7 +46,7 @@ Always `--weight-semibold`, `--tracking-headline`, `line-height: 1`, `--radius-c
 
 | Variant | Background | Label | Border | Pressed |
 |---|---|---|---|---|
-| `prominent` | `--color-accent` | `--color-on-accent` | none | `--color-accent-pressed` |
+| `prominent` | `--color-accent-solid` | `--color-on-accent` | none | `--color-accent-pressed` |
 | `secondary` | `--color-accent-tint` | `--color-accent-text-on-tint` | none | `color-mix(in srgb, var(--color-accent) 12%, var(--color-accent-tint))` |
 | `destructive` | `--color-status-error` | `--color-on-status` | none | `color-mix(in srgb, var(--color-status-error) 82%, black)` |
 | `destructive-tinted` | `--color-status-error-tint` | `--color-text-primary` | 22% error | `color-mix(in srgb, var(--color-status-error) 12%, var(--color-status-error-tint))` |
@@ -54,7 +54,7 @@ Always `--weight-semibold`, `--tracking-headline`, `line-height: 1`, `--radius-c
 
 `prominent` and `destructive` carry `--shadow-sm` on web.
 
-- `prominent` (3.41:1) and `destructive` (3.55:1) are the filled-button deviation (`colors.md` rule 3). **There is no small filled button**: a small accent or destructive action is `secondary` or `destructive-tinted`.
+- `prominent` is 4.94:1 (AA) because its fill is `--color-accent-solid`, not the brand green; `destructive` is 3.55:1, the one accepted deviation (`colors.md` rule 3). **There is no small filled button**: a small accent or destructive action is `secondary` or `destructive-tinted`.
 - `destructive-tinted` never draws its label in the error color (2.94:1). The tint and border say "destructive"; the leading glyph may stay `--color-status-error`.
 - Usage: at most one `prominent` per screen. Filled `destructive` only for Decline (the accept gate) and confirming Clear History. Cancel transfer and Discard are `destructive-tinted`: they sit on screens the user watches for a while, and a calm screen does not shout. Everything else that is secondary is `secondary` or `plain`.
 

@@ -1,63 +1,62 @@
 ---
-sidebar_position: 7
+sidebar_position: 2
 title: FAQ
-description: Frequently asked questions about CrocApp, cost, security, accounts, and platform support.
+description: Short answers about CrocApp's cost, accounts, relays, browsers, platforms and the croc command line, plus a glossary.
 ---
 
 # FAQ
 
-## Where do I get it, and how does it update?
-
-CrocApp is available as a notarized disk image for Mac, and is coming to the App Store and the Mac App Store. The store listings will be linked from [crocapp.dev](https://crocapp.dev) once they are live. App Store builds update through the App Store. The disk image updates itself: choose **Check for Updates…** in the CrocApp menu. See [Install](getting-started/install.md).
-
 ## What does it cost?
 
-Nothing. No purchase, no subscription, no advertising and no analytics. CrocApp is free, MIT-licensed, and stays that way. Monetization is limited to optional sponsorship.
-
-## What does CrocApp guarantee?
-
-Transfers are end-to-end encrypted, the code phrase authenticates both devices, and the relay only ever sees ciphertext. CrocApp has not had a formal third-party security audit. The code is open if you want to look.
+Nothing. CrocApp is free and MIT-licensed, with no purchase, subscription, ads or analytics. Optional [sponsorship](https://github.com/sponsors/bakirgdev) is the only way to support it with money.
 
 ## Do I need an account?
 
 No. CrocApp has no accounts, analytics, ads or tracking.
 
-## Does my file go through the relay?
+## Where do I get it, and how does it update?
 
-Usually, when the two devices cannot reach each other directly. The relay forwards the encrypted transfer and only ever sees ciphertext. You can point CrocApp at your own relay instead.
+See [Requirements and install](getting-started/install.md).
 
-## What if both devices are on the same Wi-Fi?
+## Does my file go through a relay?
 
-Then the two devices connect over the local network and the data stays on that network. CrocApp tries the local network and the relay at once and uses whichever connects first.
+CrocApp tries the local network and the relay at once and uses whichever connects first. When the two devices connect over the local network, the data stays on that network. Otherwise the relay forwards the encrypted transfer and only ever sees ciphertext. You can point CrocApp at your own relay. See [Security and privacy](security-and-privacy.md) and [Settings](guide/settings.md#relay).
 
 ## Can large files go directly between devices?
 
-Yes, with the default **Automatic** connection setting. A send of 128 MiB or more also tries a direct connection, set up through `tailcat.dev`, and whichever path connects first carries the transfer. It is end-to-end encrypted either way. Choose **Relay Only** under [power options](guide/power-options.md) to keep your sends on croc's relays and away from those servers. A receive follows the sender's choice.
+Yes. With **Connection** set to **Automatic**, a send of 128 MiB or more also tries a direct connection. See [Settings](guide/settings.md#connection) for how it works and how to turn it off.
 
-## Can the other device use a browser instead of the app?
+## Can the other person use a browser instead of the app?
 
-Yes. The QR code on the sender's screen and the **Share Link** button open a page at `crocapp.dev/r/` that offers CrocApp and **Receive in Your Browser**. The browser option is croc's own web app at getcroc.com, not CrocApp, and it only works when the sender uses the default relays. It also depends on getcroc.com to serve the code that decrypts the file; see [Security and privacy](security-and-privacy.md#receiving-in-a-browser).
+Yes, through the QR code or **Share Link**, which open a page at `crocapp.dev/r/` with a **Receive in Your Browser** option. That option is croc's own web app at getcroc.com, which sees your code and serves the script that decrypts the file. See [Receiving in a browser](security-and-privacy.md#receiving-in-a-browser).
 
 ## How is this different from AirDrop?
 
 AirDrop needs two Apple devices close to each other. CrocApp works between any two devices running croc or CrocApp, on any network, including from a Mac to a Linux machine on the other side of the world.
 
-## Does it work with the croc command line tool?
+## Does it work with the croc command line?
 
-Yes, in both directions. CrocApp embeds croc v11.5.4 as a library, so it speaks the same protocol. Run `croc send` on a laptop and receive in the app on a phone, or the reverse. The other device needs croc 11 or newer; croc 10 cannot complete a transfer with it.
-
-## Can I run my own relay?
-
-Yes. Point CrocApp at any croc relay, with a relay password and an IPv6 address if you want them. Running `croc relay` on a machine you control is enough.
+Yes, in both directions. Send with `croc send` on a laptop and receive in the app, or the reverse. The other device needs croc 11 or newer. See [croc CLI interoperability](reference/croc-cli-interop.md).
 
 ## Why iOS 26 and macOS 26 only?
 
-CrocApp is a greenfield app with no existing users. Supporting older releases would mean availability checks everywhere and giving up current SwiftUI APIs and the Liquid Glass design language. The minimum is `26.0`, and every later version works. The floor is pinned at `26.0` rather than at a later minor so nobody running 26.0 through 26.4 is locked out.
-
-## Is it free? Will it ever have a paid tier?
-
-Free, MIT-licensed, and it stays that way. Monetization is limited to optional [sponsorship](https://github.com/sponsors/bakirgdev).
+CrocApp uses the current SwiftUI and the Liquid Glass design, which need the 26 releases. The minimum is `26.0`, so every later version works.
 
 ## Will there be a Windows, Linux or Android version?
 
-No. CrocApp is Apple-platform only by design. Use the [croc CLI](https://github.com/schollz/croc) elsewhere: it works with this app.
+No. CrocApp is for Apple platforms only. Use the [croc command line](https://github.com/schollz/croc) elsewhere: it works with this app. The [other croc apps](contribute.md#inspirations) include an Android client.
+
+## Glossary
+
+| Term | Means |
+|---|---|
+| Code phrase | The `word-word-word` text both devices use to find each other and to prove they hold the same secret. See [Code phrases and links](guide/code-phrases.md). |
+| Relay | A server both devices connect to when they cannot connect directly. It only ever sees ciphertext. |
+| Direct connection | A transfer between the two devices with no relay in between: over the local network, or for a large send under **Automatic**. |
+| Local network | The Wi-Fi or Ethernet network both devices share. CrocApp finds devices there without the relay, though some networks block it. |
+| Link | A `https://crocapp.dev/r/#<code>` address that carries a code phrase after the `#`. Opening one fills in **Receive** and never connects by itself. |
+| Send as link | Sending encrypted files to a link server so the other device can receive later. See [Send as link](guide/send-as-link.md). |
+| Link server | The server that holds the files of a Send as link transfer until the link ends. The default is `https://getcroc.com`. |
+| Trust badge | The label that says a transfer is end-to-end encrypted and names the route you configured. See [Settings](guide/settings.md#the-trust-badge). |
+| History | CrocApp's list of past transfers, kept only on your device. See [History](guide/history.md). |
+| Connection | The setting that decides whether a large send may use a direct connection: **Automatic** or **Relay Only**. |

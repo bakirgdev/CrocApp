@@ -72,20 +72,21 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 
 - **The two store badges are not links.**
   - The hero **Download** button scrolls to three channels. The direct-download card links to the latest GitHub release.
-  - The App Store and Mac App Store cards say "at launch" and show unlinked badges, because those apps are not released.
+  - The App Store and Mac App Store cards say "Coming soon" and show unlinked badges, because those apps are not released.
   - They become links when the apps ship, with real alt text (the markup carries a comment saying so).
 - **The hero mockup uses `--content-max-width`.**
   - `design/web.md` allows this for an element that depicts the app.
   - The exception is narrow and easy to over-apply.
-- **`llms.txt` release status is hand-maintained and nothing checks it.**
-  - It has to be edited on every release.
+- **The release status in `llms.txt` and `index.html` is hand-maintained and nothing checks it.**
+  - `llms.txt`, the JSON-LD `softwareVersion` and the "available now" copy have to be edited on every release (`RELEASING.md`, "Each release").
   - The JSON-LD carries only `datePublished`, which stays true. A `dateModified` would go stale on every commit, and templating it from `git log` would put a moving part inside a structured-data block, where a broken template corrupts silently.
   - `og.jpg` is a second hand-made asset, but it does not change.
-- **The landing and docs pages set no Content-Security-Policy.**
-  - GitHub Pages cannot send headers, so only a `<meta http-equiv>` CSP is possible. It would need a hash for each inline script (the theme script on every page, the code parser in `r/index.html`, Docusaurus's own inline scripts), regenerated on every edit.
-  - A wrong hash breaks the page silently in the browser, and `scripts/assemble-site.sh` does not check it.
-  - No injection sink exists today: `r/index.html` and `app.js` write with `textContent`, links are built with `encodeURIComponent`, and nothing loads third-party script.
-  - Clickjacking of the `/r/` buttons stays open either way, because `frame-ancestors` is ignored in a meta tag.
+- **The landing CSP is a meta tag, so it cannot stop framing, and the docs site has none.**
+  - GitHub Pages cannot send headers. `frame-ancestors` is ignored in a meta tag, so clickjacking of the `/r/` buttons stays open.
+  - The docs pages carry no policy, because Docusaurus injects inline scripts that would need a hash for each.
+  - `scripts/assemble-site.sh` does not check the landing policy; a violation shows only in the browser console (`knowledge/landing-page.md`, "Content-Security-Policy").
+- **A manual theme pin that disagrees with the OS downloads both hero image variants.** The `<picture>` source follows the OS until `app.js` runs, so the OS variant loads first and the pinned one after it. Accepted: only a visitor who overrode the OS theme pays it.
+- **GitHub Pages serves `.well-known/apple-app-site-association` as `application/octet-stream`.** It has no extension and Pages cannot set a header. Apple fetches it that way today. Not verified on a device after each deploy; re-test universal links if Apple tightens the check.
 - **`/r/` accepts any fragment of six or more characters without whitespace as a code.**
   - So `/r/#download` offers to open "download" in CrocApp.
   - It is display only: the text is escaped and the app validates the code.
@@ -99,12 +100,11 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 
 - **No site search, on purpose.**
   - A local search plugin is a new dependency. Algolia DocSearch is an external account plus a third-party request from a page that makes a privacy claim.
-  - Twenty-one pages with a full sidebar and browser find-in-page are enough at this size. Revisit if the page count grows.
-- **The version dropdown is invisible.** Docusaurus hides `docsVersionDropdown` while only one version exists. It stays hidden until the first `docusaurus docs:version` cut.
+  - Eighteen pages with a full sidebar and browser find-in-page are enough at this size. Revisit if the page count grows.
+- **The docs 404 page keeps Docusaurus's default meta description.** The theme's NotFound page sets only a title. Changing it needs a swizzle, which is not worth the upkeep.
 - **A landing-only change rebuilds the docs site too, and the reverse.** `github-pages.yml` calls `scripts/assemble-site.sh`, which builds both surfaces regardless of which one changed.
-- **Thirty-seven of the 44 screenshot pairs are unused.**
-  - `scripts/capture-screenshots.sh` writes 44 light/dark pairs under `assets/screenshots/{mac,iphone,ipad}/`.
-  - Seven are referenced, by the README, seven docs pages and the landing hero: `mac/send-code`, `mac/send-files`, `mac/settings`, `mac/history`, `iphone/receive-incoming`, `iphone/settings`, `iphone/onboarding`.
+- **Most screenshot pairs are unused.**
+  - `scripts/capture-screenshots.sh` writes light/dark pairs under `assets/screenshots/{mac,iphone,ipad}/`. The README, the docs pages and the landing hero reference ten of them: `mac/send-code`, `mac/send-files`, `mac/settings`, `mac/settings-advanced`, `mac/history`, `mac/receive-conflict`, `mac/stored-link`, `iphone/send-code`, `iphone/receive-incoming`, `iphone/onboarding`. The web copies are WebP, under `web/docs/screenshots/` and `web/landing/assets/img/screenshots/`.
   - The `app-store/` set is for App Store Connect only.
   - The rest are headroom on purpose: adding a usage is cheap, and re-capturing a deleted one is not.
 - **The two sitemaps stay separate.**

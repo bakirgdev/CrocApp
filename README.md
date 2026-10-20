@@ -1,7 +1,7 @@
 <h1 align="center">CrocApp</h1>
 
 <p align="center">
-  <strong>Send a file to any device, anywhere, with a code phrase.</strong>
+  <strong>Send files with a code phrase</strong>
   <br>
   A free, open-source native SwiftUI app for Mac, with iPhone and iPad arriving in the App Store release.
 </p>
@@ -32,7 +32,7 @@ It is a graphical front end for [croc](https://github.com/schollz/croc), the com
 | Mac (Apple silicon only) | `CrocApp-<version>-arm64.dmg` from [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest) |
 | Mac (Homebrew cask) | Not available yet. Homebrew accepts a cask once the repo shows [enough public interest](https://docs.brew.sh/Package-Acceptance-Policy#notability): 225 stars, 90 watchers, or 90 forks. Starring the repo helps |
 
-The disk image is Developer ID signed, notarized, and updates itself through Sparkle (**Check for Updates…** in the app menu). Verify it with `gh attestation verify <file> --repo bakirgdev/CrocApp` ([`SECURITY.md`](SECURITY.md)). Install guide: [crocapp.dev/docs/getting-started/install](https://crocapp.dev/docs/getting-started/install/). Or [build from source](docs/BUILDING.md).
+The disk image is Developer ID signed, notarized, and updates itself through Sparkle (**Check for Updates…** in the app menu). Verify it with `gh attestation verify <file> --repo bakirgdev/CrocApp` ([`SECURITY.md`](SECURITY.md)). Install guide: [crocapp.dev/docs/getting-started/install](https://crocapp.dev/docs/getting-started/install/). To check a download, see [Verify a release](https://crocapp.dev/docs/getting-started/verify-downloads/). Or [build from source](docs/BUILDING.md).
 
 ## How it works
 

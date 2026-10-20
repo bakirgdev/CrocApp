@@ -120,14 +120,12 @@ html {
 
 /* min() keeps the column floor from overflowing a 375px viewport. */
 .grid,
-.steps,
-.inspo {
+.steps {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(var(--grid-min-card-web), 100%), 1fr));
 }
 
-.grid,
-.inspo {
+.grid {
   gap: var(--space-5);
 }
 
@@ -168,7 +166,7 @@ html {
   padding-inline: var(--space-5);
   font-weight: var(--weight-semibold);
   color: var(--color-on-accent);
-  background: var(--color-accent);
+  background: var(--color-accent-solid);
   border-radius: var(--radius-sm);
 }
 
@@ -236,14 +234,6 @@ html {
   }
 }
 
-/* WCAG 1.4.1: the current section cannot be colour alone. Underline rather than
-   weight, which would reflow the row on every scroll. */
-.nav__link[aria-current] {
-  color: var(--color-text-primary);
-  text-decoration: underline;
-  text-underline-offset: var(--space-2);
-}
-
 /* Breakpoints are literals by necessity: a custom property does not resolve
    inside a media condition. design/spacing-layout.md → Breakpoints is the only
    place these numbers are defined.
@@ -251,7 +241,7 @@ html {
    Dropping every link on a phone would take Download with it, and the footer
    carries Docs at every width. */
 @media (width < 48rem) {
-  .nav__link:not(.nav__link--primary) {
+  .nav__links--sections .nav__link:not(.nav__link--primary) {
     display: none;
   }
 }
@@ -344,7 +334,7 @@ html {
 
 .btn--prominent {
   color: var(--color-on-accent);
-  background: var(--color-accent);
+  background: var(--color-accent-solid);
   box-shadow: var(--shadow-sm);
 }
 
@@ -547,17 +537,6 @@ html {
   flex: none;
 }
 
-/* The slot is exactly as wide as its number; the formatter caps that at four
-   characters, so a late-arriving count can only move the row by a little. */
-.nav__stars {
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-secondary);
-}
-
-.nav__stars.is-empty {
-  display: none;
-}
-
 /* The glyph shows the theme you would switch to, so light shows a moon. A
    display swap cannot ride light-dark(), hence the media mirror below. */
 .theme-toggle__sun {
@@ -620,7 +599,7 @@ html {
 /* Two columns only once the mockup can hold its cap beside a readable measure. */
 @media (width >= 64rem) {
   .hero__inner {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-11);
   }
 }
@@ -646,45 +625,62 @@ html {
   margin-block-start: var(--space-2);
 }
 
-/* Hero screenshot. The window shape and its rounded corners are in the PNG's
-   alpha, so this adds no frame of its own. */
+/* Hero screenshots. The Mac window's shape and corners are in the image's alpha, so
+   this adds no frame of its own. Widths 1.6 : 1 make the two shots about the same
+   height (Mac 4:5, iPhone 660:1434). */
 
 .hero__mockup {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: var(--space-5);
+  max-width: var(--content-max-width-prose-web);
   margin: 0;
+  margin-inline: auto;
 }
 
+/* components.md → Card: a hairline plus the card shadow, on a radius, so a
+   screenshot on the page fill still has an edge in light. No device bezel. The
+   wrapper clips the image, which also rounds the iPhone shot's square corners. */
 .hero__shot {
-  width: 100%;
-  max-width: var(--content-max-width);
-  height: auto;
-}
-
-/* Mirrors tokens.css: the OS decides by default, [data-theme] wins in both
-   directions. A <picture> could not do the second half. */
-.hero__shot--dark {
-  display: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  .hero__shot--light {
-    display: none;
-  }
-
-  .hero__shot--dark {
-    display: block;
-  }
-}
-
-[data-theme="light"] .hero__shot--light,
-[data-theme="dark"] .hero__shot--dark {
   display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  border: var(--border-hairline) solid var(--color-separator);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
-[data-theme="light"] .hero__shot--dark,
-[data-theme="dark"] .hero__shot--light {
-  display: none;
+.hero__shot--iphone {
+  border-radius: var(--radius-xl);
+}
+
+/* Side by side the shots shrink to unreadable on a phone: stack them, each wide
+   enough to read the code phrase. */
+@media (width < 40rem) {
+  .hero__mockup {
+    flex-direction: column;
+  }
+
+  .hero__shot {
+    flex: none;
+    width: 100%;
+  }
+
+  .hero__shot--iphone {
+    max-width: var(--phone-shot-max-width-web);
+  }
+}
+
+.hero__shot--mac {
+  flex-grow: 1.6;
+}
+
+.hero__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* Content sections */
@@ -754,6 +750,16 @@ html {
 
 .compare tbody tr:last-child td {
   color: var(--color-text-primary);
+}
+
+/* On a phone the nowrap cells push "No account needed" off screen with nothing
+   to say so. Let the cells wrap instead, so all three columns fit. */
+@media (width < 40rem) {
+  .compare th,
+  .compare td {
+    padding: var(--space-3);
+    white-space: normal;
+  }
 }
 
 /* Steps */
@@ -873,16 +879,16 @@ html {
 }
 
 .croc .card__body,
-.support .card__body {
+.sponsor .card__body {
   color: var(--color-text-primary);
 }
 
 .contribute__actions,
-.support__actions {
+.sponsor__actions {
   margin-block-start: var(--stack-web);
 }
 
-.support__actions {
+.sponsor__actions {
   margin-block-start: var(--space-6);
 }
 
@@ -1002,6 +1008,16 @@ html {
   flex-wrap: wrap;
   gap: 0 var(--space-3);
   margin-inline-start: auto;
+}
+
+/* Alone on a row under the text, the links wrap from the start edge instead of
+   hanging off the end of a half-empty line. */
+@media (width < 40rem) {
+  .footer__links {
+    flex-basis: 100%;
+    /* The links' own padding sits inside the text's left edge. */
+    margin-inline-start: calc(var(--space-2) * -1);
+  }
 }
 
 .footer__links a {

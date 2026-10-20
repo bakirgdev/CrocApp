@@ -10,7 +10,7 @@
 #      tokens.css (WCAG 2.x relative luminance, alpha composited onto the
 #      surface underneath), and the seven rules under the table hold as
 #      invariants. Edit a green step and this names the rule you just broke.
-#   3. No literals. Web CSS and the app write tokens, not hex, px, ms, raw
+#   3. No literals. Web CSS and scripts and the app write tokens, not hex, px, ms, raw
 #      system colors or spring presets (design/web.md -> The only literals web
 #      may write, design/swiftui.md -> Allowed literals).
 #
@@ -36,9 +36,11 @@ TOKENS=design/tokens.css
 SWIFT_TOKENS=app/CrocApp/Support/DesignTokens.swift
 COLORSETS=app/CrocApp/Assets.xcassets
 COLORS_MD=design/colors.md
+MANIFEST=web/landing/assets/img/favicon/site.webmanifest
 [ -r "$TOKENS" ] || { echo "FAIL: $TOKENS not readable" >&2; exit 2; }
 [ -r "$SWIFT_TOKENS" ] || { echo "FAIL: $SWIFT_TOKENS not readable" >&2; exit 2; }
 [ -r "$COLORS_MD" ] || { echo "FAIL: $COLORS_MD not readable" >&2; exit 2; }
+[ -r "$MANIFEST" ] || { echo "FAIL: $MANIFEST not readable" >&2; exit 2; }
 [ -d "$COLORSETS" ] || { echo "FAIL: $COLORSETS not a directory" >&2; exit 2; }
 
 # ---------------------------------------------------------------------------
@@ -96,6 +98,7 @@ NUMERIC_TABLE='
 # ---------------------------------------------------------------------------
 COLOR_TABLE='
 AccentColor|--color-accent
+ColorAccentSolid|--color-accent-solid
 ColorAccentPressed|--color-accent-pressed
 ColorAccentTint|--color-accent-tint
 ColorAccentText|--color-accent-text
@@ -160,6 +163,8 @@ light|--color-accent-text|--color-surface-base|4.94
 light|--color-accent-text|--color-surface-grouped|4.42
 light|--color-accent-text|--color-accent-tint>--color-surface-base|4.32
 light|--color-accent-text|--color-surface-card|4.94
+light|--color-accent-text|--color-fill-tertiary>--color-surface-base|4.28
+light|--color-accent-text-on-tint|--color-fill-tertiary>--color-surface-base|6.38
 light|--color-accent-text-on-tint|--color-surface-base|7.36
 light|--color-accent-text-on-tint|--color-surface-grouped|6.60
 light|--color-accent-text-on-tint|--color-accent-tint>--color-surface-base|6.45
@@ -168,7 +173,8 @@ light|--label-2-web|--color-surface-base|5.16
 light|--label-2-web|--color-surface-grouped|4.85
 light|--color-text-secondary|--color-accent-tint>--color-surface-base|4.78
 light|--label-3|--color-surface-base|1.73
-light|--color-on-accent|--color-accent|3.41
+light|--color-on-accent|--color-accent-solid|4.94
+light|--color-on-accent|--color-accent-pressed|7.36
 light|--color-on-status|--color-status-error|3.55
 light|--color-status-success|--color-status-success-tint>--color-surface-base|1.98
 light|--color-status-warning|--color-status-warning-tint>--color-surface-base|1.96
@@ -181,7 +187,8 @@ light|--glass-tint-accent|--color-surface-base|1.14
 dark|--color-accent|--color-surface-base|9.44
 dark|--color-accent|--color-surface-card|7.65
 dark|--color-accent|--color-accent-tint>--color-surface-base|7.72
-dark|--color-on-accent|--color-accent|7.19
+dark|--color-on-accent|--color-accent-solid|7.19
+dark|--color-on-accent|--color-accent-pressed|5.74
 dark|--color-on-status|--color-status-error|3.41
 dark|--label-2|--color-surface-base|6.36
 dark|--color-status-success|--color-status-success-tint>--color-surface-base|8.05
@@ -194,11 +201,15 @@ accent-text clears AA on base|light|--color-accent-text|--color-surface-base|min
 accent-text-on-tint clears AA on grouped|light|--color-accent-text-on-tint|--color-surface-grouped|min|4.5
 accent-text-on-tint clears AA on tint|light|--color-accent-text-on-tint|--color-accent-tint>--color-surface-base|min|4.5
 web secondary clears AA on grouped|light|--label-2-web|--color-surface-grouped|min|4.5
-filled prominent clears 3:1|light|--color-on-accent|--color-accent|min|3.0
+filled prominent clears AA, light|light|--color-on-accent|--color-accent-solid|min|4.5
+filled prominent clears AA, dark|dark|--color-on-accent|--color-accent-solid|min|4.5
+filled prominent pressed clears AA, light|light|--color-on-accent|--color-accent-pressed|min|4.5
+filled prominent pressed clears AA, dark|dark|--color-on-accent|--color-accent-pressed|min|4.5
+accent-text-on-tint clears AA on a fill-tertiary wash (link in code or table)|light|--color-accent-text-on-tint|--color-fill-tertiary>--color-surface-base|min|4.5
 filled destructive clears 3:1, light|light|--color-on-status|--color-status-error|min|3.0
 filled destructive clears 3:1, dark|dark|--color-on-status|--color-status-error|min|3.0
 focus ring outer band clears 3:1 on base|light|--color-accent|--color-surface-base|min|3.0
-focus ring inner band clears 3:1 on the accent fill|light|--color-surface-base|--color-accent|min|3.0
+focus ring inner band clears 3:1 on the accent solid fill|light|--color-surface-base|--color-accent-solid|min|3.0
 tertiary is NOT a usable text color|light|--label-3|--color-surface-base|max|3.0
 secondary text clears AA on the accent tint (rule 4)|light|--color-text-secondary|--color-accent-tint>--color-surface-base|min|4.5
 accent-text clears AA on a card|light|--color-accent-text|--color-surface-card|min|4.5
@@ -213,6 +224,8 @@ rule 4: secondary text is label-2-web, dark|dark|--color-text-secondary|--label-
 rule 6: link is accent-text, light|light|--color-text-link|--color-accent-text
 rule 6: link is accent-text, dark|dark|--color-text-link|--color-accent-text
 dark accent collapses to green-400|dark|--color-accent|--green-400
+dark accent-solid collapses to green-400|dark|--color-accent-solid|--green-400
+light accent-solid is green-700, the step white clears AA on|light|--color-accent-solid|--green-700
 dark accent-text collapses to green-400|dark|--color-accent-text|--green-400
 dark accent-text-on-tint collapses to green-400|dark|--color-accent-text-on-tint|--green-400
 '
@@ -237,7 +250,7 @@ SWIFT_FILES=$(find app -name '*.swift' ! -path "$SWIFT_TOKENS" ! -path 'app/Croc
 [ -n "$SWIFT_FILES" ] || { echo "FAIL: no Swift files under app/" >&2; exit 2; }
 
 WEB_FILES=$(
-  for f in web/landing/styles.css web/docs/src/css/custom.css; do
+  for f in web/landing/styles.css web/docs/src/css/custom.css web/landing/app.js web/landing/theme-init.js web/landing/r/receive.js web/docs/src/prismTheme.ts; do
     [ -r "$f" ] || { echo "FAIL: $f not readable" >&2; exit 2; }
     echo "$f"
   done
@@ -651,6 +664,20 @@ function check_ring(   ring, n, bands, k, parts, np, spread, color, want_spread,
   }
 }
 
+# The web manifest paints the installed app before any CSS loads. It has one
+# value per key, so both are --bg-base in light (web.md -> The only literals).
+function check_manifest(path,   text, key, k, rest, hex, want) {
+  text = read_file(path)
+  if (text ~ /^\001unreadable/) die(path " not readable")
+  want = resolve("--bg-base", "light", 0)
+  split("theme_color background_color", key, " ")
+  for (k = 1; k <= 2; k++) {
+    if (!match(text, "\"" key[k] "\"[ \t\n]*:[ \t\n]*\"#[0-9A-Fa-f]+\"")) { fail(path ": no " key[k] " hex color"); continue }
+    rest = substr(text, RSTART, RLENGTH); sub(/^.*"#/, "#", rest); hex = substr(rest, 1, length(rest) - 1)
+    if (parse_color(hex, "light", 0) != want) fail(path ": " key[k] " is " hex ", web.md needs --bg-base in light")
+  }
+}
+
 # The Contrast section of colors.md: from its heading to the next `## ` line.
 function contrast_section(path,   lines, n, i, in_sec, out) {
   n = split(read_file(path), lines, "\n")
@@ -733,6 +760,7 @@ BEGIN {
   }
 
   check_ring()
+  check_manifest(ENVIRON["MANIFEST"])
 
   if (nfail) {
     for (i = 1; i <= nfail; i++) print failures[i]
@@ -741,7 +769,7 @@ BEGIN {
     exit 1
   }
   if (!quiet)
-    printf "contrast: OK (%d documented ratios, %d invariants, %d alias rules, 2 focus-ring bands)\n", ncase, ninvariant, nalias
+    printf "contrast: OK (%d documented ratios, %d invariants, %d alias rules, 2 focus-ring bands, manifest colors)\n", ncase, ninvariant, nalias
 }
 '
 
@@ -836,8 +864,8 @@ function lint_text(path, text, line0, use_ex,   n, T, ln, t, rest, tok, prev, ne
       off += RSTART + RLENGTH - 1
       rest = substr(rest, RSTART + RLENGTH)
       hexlen = length(tok) - 1
-      if (before ~ /url\($/) continue
-      if (index(" \t:,(", prev) > 0 && nextc !~ /[A-Za-z0-9_-]/ && (hexlen == 3 || hexlen == 4 || hexlen == 6 || hexlen == 8))
+      if (before ~ /url\([\047"]?$/) continue
+      if (index(" \t:,(\047\"", prev) > 0 && nextc !~ /[A-Za-z0-9_-]/ && (hexlen == 3 || hexlen == 4 || hexlen == 6 || hexlen == 8))
         finding(path, line0 + ln - 1, "hex color literal " tok ": use a color token", t)
     }
     rest = t
@@ -892,6 +920,22 @@ function lint_css(path, text, line0,   s) {
   lint_text(path, blank_preludes(s), line0, 1)
 }
 
+# JS and TS: comments gone (a // only at line start or after whitespace, so
+# URLs in strings survive), then the same literal rules as CSS, plus a numeric
+# font weight, which CSS-shaped rules cannot see.
+function lint_script(path, text,   s, n, T, ln, t) {
+  s = strip_css_comments(text)
+  n = split(s, T, "\n"); s = ""
+  for (ln = 1; ln <= n; ln++) {
+    t = T[ln]
+    if (match(t, /(^|[ \t])\/\/.*$/)) t = substr(t, 1, RSTART - 1) blank(substr(t, RSTART))
+    s = s t (ln < n ? "\n" : "")
+    if (t ~ /[Ww]eight[\047"]?:[ \t]*[\047"]?[0-9]+/)
+      finding(path, ln, "font weight literal: use a --weight-* token", t)
+  }
+  lint_text(path, s, 1, 0)
+}
+
 # Every style="..." (q is the quote character) in an HTML file.
 function lint_style_attrs(path, text, re, q,   rest, base, pre, m, qi, body, prevc) {
   rest = text; base = 0
@@ -940,7 +984,9 @@ BEGIN {
     if (f == "") continue
     text = read_file(f)
     if (text ~ /^\001unreadable/) die(f " not readable")
-    if (f ~ /\.html$/) lint_html(f, text); else lint_css(f, text, 1)
+    if (f ~ /\.html$/) lint_html(f, text)
+    else if (f ~ /\.(js|ts)$/) lint_script(f, text)
+    else lint_css(f, text, 1)
     nfile++
   }
   if (nfind) {
@@ -1104,7 +1150,7 @@ BEGIN {
 }
 '
 
-export TOKENS SWIFT_TOKENS COLORSETS COLORS_MD NUMERIC_TABLE COLOR_TABLE CONTRAST_TABLE NOT_MIRRORED \
+export TOKENS SWIFT_TOKENS COLORSETS COLORS_MD MANIFEST NUMERIC_TABLE COLOR_TABLE CONTRAST_TABLE NOT_MIRRORED \
   ALLOW_WEB ALLOW_SWIFT SWIFT_FILES WEB_FILES
 export QUIET
 

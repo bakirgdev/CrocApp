@@ -3,21 +3,19 @@ name: GitHub Pages
 on:
   push:
     branches: [main]
-    paths: &site-paths
+    paths:
       - "web/landing/**"
       - "web/docs/**"
       - "design/tokens.css"
       - "scripts/assemble-site.sh"
       - ".github/workflows/github-pages.yml"
-  pull_request:
-    paths: *site-paths
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -62,8 +60,6 @@ jobs:
     name: deploy
 
     needs: build
-
-    if: github.event_name == 'push'
 
     runs-on: ubuntu-26.04
 

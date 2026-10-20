@@ -162,7 +162,7 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 
 The shared views route onto `design/`. A screen picks one of these instead of styling ad hoc.
 
-- `Views/ButtonVariants.swift`: `.buttonVariant(_:)` with `prominent`, `secondary`, `destructive`, `destructiveTinted`, `plain` (`design/components.md`, "Button"; `design/swiftui.md`, "Components"). It is a `PrimitiveButtonStyle`, so the label color sits on the label itself. Disabled buttons get only the system dimming, never an extra opacity on the label.
+- `Views/ButtonVariants.swift`: `.buttonVariant(_:)` with `prominent`, `secondary`, `destructive`, `destructiveTinted`, `plain` (`design/components.md`, "Button"; `design/swiftui.md`, "Components"). It is a `PrimitiveButtonStyle`, so the label color sits on the label itself. `prominent` fills with `Color.accentSolid`, not `Color.accent`, so the white label clears 4.5:1 in light mode (`design/colors.md`, rule 3). The pending-count badge on Home uses it too. Disabled buttons get only the system dimming, never an extra opacity on the label.
 - Filled `.destructive` is for Decline on the accept gate and the Clear History confirmation only. Cancel (waiting, transferring, confirm-send, menu bar) and Discard (`StagedFilesSheet`) are `.destructiveTinted`.
 - `DropZone`, `CodePhraseDisplay` (eyebrow, code, **Copy Code**; `compact` for the 300-wide menu bar column), `DirectionHeader` (arrow plus Sending or Receiving).
 - `ForwardProgressBar` never moves backwards, and `resetKey` snaps it when the measured thing changes (`design/motion.md`, "Choreography").

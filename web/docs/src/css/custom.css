@@ -15,8 +15,9 @@
 @import './tokens.css';
 
 :root {
-  /* Accent as a fill. --color-accent is 3.41:1 on white, fine for fills,
-     icons and borders, never for a word: link color takes --color-text-link.
+  /* Accent as a fill. --color-accent is 3.41:1 on white, fine for icons and
+     borders, never for a word: link color takes --color-text-link. A filled
+     button takes --color-accent-solid (the .button--primary rule below).
      The ladder is the aliases, which already flip per theme. Infima asks for
      three darker steps and three lighter ones; the tokens define one pressed
      step and one tint, so steps repeat rather than invent a shade. */
@@ -102,6 +103,15 @@
   --docusaurus-highlighted-code-line-bg: var(--color-fill-tertiary);
 }
 
+/* A filled primary button (only the theme's error page draws one) takes the
+   solid step so its --color-on-accent label clears AA. Infima derives the
+   hover and active fills from --ifm-color-primary-dark/-darker, already the
+   pressed alias. Scoped to the button: the global ladder stays on the accent. */
+.button--primary {
+  --ifm-color-primary: var(--color-accent-solid);
+  --ifm-button-color: var(--color-on-accent);
+}
+
 /* Hover is the pressed background only, and only where a pointer exists
    (design/components.md → States). Without the gate a touch screen keeps the
    last tapped row filled. */
@@ -116,12 +126,6 @@
   .table-of-contents__link:hover {
     background: var(--color-fill-tertiary);
   }
-}
-
-/* tokens.css defaults body to the app's grouped fill. Both web surfaces take
-   the base surface instead (design/web.md → Page fill). */
-body {
-  background: var(--ifm-background-color);
 }
 
 /* Headings: the web display scale. h1 takes section, not hero, to keep a docs
@@ -192,6 +196,39 @@ h3 {
 .markdown a:not(.card):not(.button) {
   text-decoration: underline;
   text-underline-offset: var(--space-1);
+}
+
+/* Sidebar group headings (sidebars.ts `group`): plain text, not links. */
+.sidebar-group {
+  margin-block-start: var(--space-5);
+  font-size: var(--type-footnote-size);
+  line-height: var(--type-footnote-lh);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+/* Infima sizes the logo by height only; the width attribute would otherwise
+   stretch it off its 1:1 ratio. */
+.navbar__logo img {
+  width: auto;
+}
+
+/* prism-react-renderer types fontWeight as a literal keyword, so a token
+   cannot go through the theme object. */
+.token.keyword,
+.token.atrule,
+.token.selector,
+.token.tag,
+.token.builtin {
+  font-weight: var(--weight-semibold);
+}
+
+/* Prose links on a fill surface. Inline code (an `a > code` link) and striped
+   table rows paint --color-fill-tertiary, on which --color-accent-text is
+   4.28:1; the on-tint step clears AA there (colors.md rules 1 and 6). */
+.markdown table a,
+.markdown a:has(> code) {
+  color: var(--color-accent-text-on-tint);
 }
 
 /* future.v4 layering means tokens.css's unlayered `a { color: ... }` beats
@@ -321,6 +358,13 @@ h3 {
 [data-theme='light'] img[src$='#gh-dark-mode-only'],
 [data-theme='dark'] img[src$='#gh-light-mode-only'] {
   display: none;
+}
+
+/* Mac window shots carry their shape in the alpha channel and no system shadow
+   (screenshots.md), so a light window on the light page has no edge. A
+   drop-shadow follows that alpha outline where a border would draw a box. */
+.markdown img:not([alt*='on iOS']) {
+  filter: drop-shadow(0 0 var(--border-hairline) var(--color-separator));
 }
 
 /* Portrait phone shots are more than twice as tall as they are wide; at full

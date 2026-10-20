@@ -29,7 +29,7 @@ private struct ButtonVariantStyle: PrimitiveButtonStyle {
 
         switch variant {
         case .prominent:
-            button.buttonStyle(.borderedProminent).tint(Color.accentFill)
+            button.buttonStyle(.borderedProminent).tint(Color.accentSolid)
         case .secondary:
             button.buttonStyle(.bordered).tint(Color.accentFill)
         case .destructive:

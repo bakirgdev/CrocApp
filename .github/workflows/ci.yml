@@ -29,6 +29,7 @@ jobs:
       design: ${{ steps.filter.outputs.design }}
       interop: ${{ steps.filter.outputs.interop }}
       scripts: ${{ steps.filter.outputs.scripts }}
+      site: ${{ steps.filter.outputs.site }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -65,9 +66,10 @@ jobs:
             out swift '^(app|CrocKit)/|^scripts/screenshots/|^\.swift-format$|^\.xcode-version$|^scripts/format-swift\.sh$|^\.github/workflows/(ci|reusable-swift-format)\.yml$'
             out go '^crocmobile/|^\.github/workflows/(ci|reusable-go)\.yml$'
             out build '^(app|CrocKit|crocmobile)/|^scripts/build-xcframework\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
-            out design '^design/|^app/.*\.swift$|^app/CrocApp/Assets\.xcassets/|^web/landing/.*\.(css|html)$|^web/docs/src/css/|^scripts/(lib|verify-design)\.sh$|^\.github/workflows/ci\.yml$'
+            out design '^design/|^app/.*\.swift$|^app/CrocApp/Assets\.xcassets/|^web/landing/.*\.(css|html|js)$|^web/landing/assets/img/favicon/site\.webmanifest$|^web/docs/src/(css/|prismTheme\.ts$)|^scripts/(lib|verify-design)\.sh$|^\.github/workflows/ci\.yml$'
             out interop '^(crocmobile|CrocKit)/|^scripts/(lib|verify-interop)\.sh$|^scripts/croc-v10\.version$|^\.github/workflows/ci\.yml$'
             out scripts '^scripts/.*\.sh$|^\.github/workflows/ci\.yml$'
+            out site '^web/(landing|docs)/|^design/tokens\.css$|^scripts/assemble-site\.sh$|^\.github/workflows/(ci|github-pages)\.yml$'
           } | tee -a "$GITHUB_OUTPUT"
 
   swift-format:
@@ -134,6 +136,40 @@ jobs:
           persist-credentials: false
 
       - run: scripts/verify-docs.sh
+
+  # The deploy workflow's build, run before merge so a broken docs link or type
+  # error fails the PR instead of the push to main.
+  site:
+    name: site build
+
+    needs: changes
+
+    if: needs.changes.outputs.site == 'true'
+
+    runs-on: ubuntu-26.04
+
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # needed because Docusaurus's showLastUpdateTime reads each doc page's git history
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: web/docs/.nvmrc
+
+      # Version from `packageManager`. Not corepack: Node 25+ no longer ships it.
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: web/docs/package.json
+          cache: true
+          cache_dependency_path: web/docs/pnpm-lock.yaml
+
+      - run: scripts/assemble-site.sh
+
+      - run: pnpm --dir web/docs run typecheck
 
   # The interop harness against a relay on localhost, never the public relays:
   # those rate-limit a shared runner address and make the run flaky. The
@@ -297,7 +333,7 @@ jobs:
   pass:
     name: ci pass
 
-    needs: [changes, swift-format, go, contrast, shellcheck, docs, interop, build]
+    needs: [changes, swift-format, go, contrast, shellcheck, docs, site, interop, build]
 
     if: ${{ always() }}
 

@@ -1,39 +1,29 @@
 ---
 sidebar_position: 2
 title: Your first transfer
-description: A walkthrough of one send and one receive in CrocApp, using the app's on-screen labels.
+description: One send and one receive in CrocApp, using the app's on-screen labels.
 ---
 
 # Your first transfer
 
-![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](/img/screenshots/mac/send-code-light.png#gh-light-mode-only)![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](/img/screenshots/mac/send-code-dark.png#gh-dark-mode-only)
+![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](../../screenshots/mac/send-code-light.webp#gh-light-mode-only)![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](../../screenshots/mac/send-code-dark.webp#gh-dark-mode-only)
 
-CrocApp's home screen has two buttons: **Send** and **Receive**. Everything else follows from a three-step flow:
+The home screen has two buttons, **Send** and **Receive**. On the first launch, CrocApp shows a short welcome screen first. Tap **Get Started** to continue. CrocApp may then ask for camera access (to scan QR codes) and local network access (for faster nearby transfers).
 
-1. The sender picks files, a folder, or a snippet of text.
-2. CrocApp generates a code phrase. Speak it, message it, or show it as a QR code.
-3. The other device enters the phrase, sees the file list and accepts.
+## Send
 
-The code phrase authenticates both devices (PAKE), and the transfer is end-to-end encrypted. The relay only ever sees ciphertext. On the same Wi-Fi or on different continents, CrocApp tries the local network and the relay at once and uses whichever connects first.
+1. Tap or click **Send**.
+2. Pick **Files** or **Text** under **What to Send**. For files, use **Add Files** or **Add Folder**. On a Mac you can also drop files anywhere on the window.
+3. Tap **Send**.
+4. Give the other person the code phrase on screen. They can type it, scan the QR code, or open the link from **Share Link**.
+5. When the other device accepts, the transfer runs. **Transfer complete** appears when it ends.
 
-## Sending
+## Receive
 
-1. From the home screen, tap or click **Send**.
-2. Under **What to Send**, pick **Files** or **Text**.
-   - For files: use **Add Files** or **Add Folder**, or drag files onto the drop area (macOS).
-   - For text: type or paste into the text box.
-3. Optionally set a **Custom Code** (at least 6 characters) instead of a generated one.
-4. Tap **Send**.
-5. CrocApp shows **Ready to send** with the code phrase, a **Copy Code** button, a QR code, and a **Share Link** button. Share the code or the link with the other device over a channel you trust.
-6. Once the other device connects and accepts, the transfer starts. When it finishes, CrocApp shows **Transfer complete**.
+1. Tap or click **Receive**.
+2. Enter the code phrase, paste it (a link works too), or on iOS tap **Scan QR Code**.
+3. Check the destination folder under the code field. Change it with **Change…** if needed.
+4. Tap **Receive**, then review the file list and tap **Accept** or **Decline**.
+5. When it ends, open the folder with **Open in Files** (iOS) or **Show in Finder** (Mac).
 
-## Receiving
-
-1. From the home screen, tap or click **Receive**.
-2. Enter the **Code Phrase** the sender gave you, paste it (a link works too), or (on iOS) tap **Scan QR Code**.
-3. Check the destination folder shown below the code field; change it with **Change** if needed.
-4. Tap **Receive**.
-5. CrocApp shows the file list and total size. Review it, then tap **Accept** or **Decline**.
-6. When the transfer finishes, CrocApp shows **Transfer complete** with a button to open the destination folder (**Open in Files** on iOS, **Show in Finder** on macOS).
-
-For the full detail on each step, see [Sending files](../guide/sending.md) and [Receiving files](../guide/receiving.md).
+For more on each step, see [Send](../guide/sending.md) and [Receive](../guide/receiving.md). To see why the code phrase is safe to share and what the relay sees, see [Security and privacy](../security-and-privacy.md).

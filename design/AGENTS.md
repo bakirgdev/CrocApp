@@ -38,7 +38,7 @@ The markdown is canonical. Two hand-written mirrors carry it into code:
 
 Change a value in a markdown file and in both mirrors in the same commit. `design/tokens.css` is the only committed CSS copy: `scripts/assemble-site.sh` copies it for the landing page and `web/docs`'s `tokens` npm script for the docs site. Never edit a copy.
 
-One script enforces this directory, and CI runs it on any change to `design/`, `app/` Swift or color sets, or web CSS:
+One script enforces this directory, and CI runs it on any change to `design/`, `app/` Swift or color sets, or the web CSS, scripts and manifest it lints:
 
 ```bash
 scripts/verify-design.sh   # mirror parity (tokens.css = DesignTokens.swift = color sets), contrast (every ratio colors.md claims plus the seven rules) and the no-literals lint

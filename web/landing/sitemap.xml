@@ -2,14 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://crocapp.dev/</loc>
-    <priority>1.0</priority>
+    <lastmod>2026-10-20</lastmod>
   </url>
   <url>
     <loc>https://crocapp.dev/support/</loc>
-    <priority>0.5</priority>
+    <lastmod>2026-10-20</lastmod>
   </url>
   <url>
     <loc>https://crocapp.dev/privacy/</loc>
-    <priority>0.3</priority>
+    <lastmod>2026-10-20</lastmod>
   </url>
 </urlset>

@@ -70,12 +70,23 @@ SF Pro and SF Mono through the system font, never a shipped font file, never a s
 | App icon | `assets/CrocAppIcon.icon` | the logo; the app builds `app/CrocApp/AppIcon.icon` |
 | Mascot | `assets/mascot.png` | source for every mascot derivative |
 | Mascot, web | `web/landing/assets/img/mascot-web.webp` | landing, docs navbar, web empty states |
+| Favicons | `assets/favicons/` (source set), `web/landing/assets/img/favicon/` (served copy) | the app icon at web sizes: `favicon.ico` (16, 32, 48), `favicon-96x96.png`, `apple-touch-icon.png` (180), `web-app-manifest-{192x192,512x512}.png`, `site.webmanifest`. The docs site references the landing copy. Recipe below |
 | Screenshots | `assets/screenshots/{mac,iphone,ipad}/<screen>-{light,dark}.png` | README, docs, landing hero |
 | App Store screenshots | `assets/screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` | App Store Connect |
-| Social card | `web/landing/assets/img/og.jpg` | 1200×630, light: wordmark, accent `lock`, headline, the site URL, mascot on the trailing side |
+| Social card | `web/landing/assets/img/og.jpg` | 1200×630, light: wordmark, accent `lock`, headline "Send files with a code phrase", the line "Encrypted end-to-end", the site URL, mascot on the trailing side |
 | GitHub social preview | `assets/github-social-preview.png` | 1280×640, the same layout in dark values (`--bg-secondary`, `--label-1`, `--label-2-web`, `--green-400`) with the repo URL; uploaded by hand in the repo settings |
 | Disk image background | `assets/dmg-background.tiff` | `components.md` → DiskImage |
 | App Store badges | `web/landing/assets/img/app-store.svg`, `mac-app-store.svg` | Apple's artwork, below |
+
+### Favicon recipe
+
+Favicons are the app icon, not the bare mascot. Regenerate them whenever the icon changes:
+
+1. Render the icon: `ictool assets/CrocAppIcon.icon --export-image --output-file icon.png --platform iOS --rendition Default --width 1024 --height 1024 --scale 1` (`ictool` path in `assets/AGENTS.md`). The render is the masked squircle with transparent corners; the macOS platform renders the same pixels.
+2. Make an opaque touch master from it, because iOS and Android fill transparent corners with black: scale the render to 1198px (`sips -z 1198 1198`), center-crop to 1024 (`sips -c 1024 1024`), then fill the few remaining transparent corner pixels with the icon's own corner colors. The mascot stays inside the crop.
+3. On [realfavicongenerator.net](https://realfavicongenerator.net), upload the step 1 render as the main icon and set: regular icon "Use the icon as is", no dark icon; Apple touch icon "Use a dedicated icon" with the step 2 master, "Use the icon as is", app name `CrocApp`; web app manifest "Use a dedicated icon" with the step 2 master, "Use the icon as is", name and short name `CrocApp`, background and theme color `#FFFFFF`; Windows tile left at its default; favicon path `/`, no version, metadata injection skipped. Download the zip.
+4. Keep `favicon.ico`, `favicon-96x96.png`, `apple-touch-icon.png` and the two `web-app-manifest-*` PNGs. Drop `favicon.svg` (it only wraps a PNG) and the generated `site.webmanifest`: ours keeps `id`, `description`, `scope`, relative icon paths and `purpose: "any"`, with `theme_color` and `background_color` equal to `--bg-base` light (`#FFFFFF`). The mascot overflows the 80% maskable safe zone, so the icons are not `maskable`.
+5. Put the set in `assets/favicons/`, copy the same files to `web/landing/assets/img/favicon/`.
 
 ## Naming
 

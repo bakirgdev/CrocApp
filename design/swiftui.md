@@ -11,6 +11,7 @@ One color set per semantic alias that has no exact system equivalent; a system s
 | Token | App |
 |---|---|
 | `--color-accent` | `AccentColor` set; `Color.accentFill` (also the global tint) |
+| `--color-accent-solid` | `ColorAccentSolid` set; `Color.accentSolid` (the `prominent` button tint and any solid accent fill that carries a label) |
 | `--color-accent-pressed` | `ColorAccentPressed` set; `Color.accentPressed` |
 | `--color-accent-tint` | `ColorAccentTint` set; `Color.accentTint` |
 | `--color-accent-text`, `--color-text-link` | `ColorAccentText` set; `Color.accentText` |
@@ -92,7 +93,7 @@ Haptics: `.sensoryFeedback(_:trigger:)`, iPhone only (`UIDevice.current.userInte
 
 | Design | SwiftUI |
 |---|---|
-| Button `prominent` | `.buttonStyle(.borderedProminent)`, `.buttonBorderShape(.capsule)`, label `Color.onAccent` |
+| Button `prominent` | `.buttonStyle(.borderedProminent)`, `.buttonBorderShape(.capsule)`, tint `Color.accentSolid`, label `Color.onAccent` |
 | Button `secondary` | `.buttonStyle(.bordered)`, tint `Color.accentFill`, label `Color.accentTextOnTint` |
 | Button `destructive` | `.buttonStyle(.borderedProminent)`, tint `Color.statusError`, label `Color.onStatus` |
 | Button `destructive-tinted` | `.buttonStyle(.bordered)`, tint `Color.statusError`, label `Color.textPrimary` |
