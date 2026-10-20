@@ -1,63 +1,40 @@
 ---
 sidebar_position: 1
-title: Install
-description: "How to get CrocApp: a notarized disk image for Mac today, the App Store and the Mac App Store soon, plus how updates work and how to build from source."
+title: Requirements and install
+description: "Which devices CrocApp supports, where to get it, how updates work and how to avoid mixing the App Store and disk image builds on one Mac."
 ---
 
-# Install
+# Requirements and install
 
-CrocApp has three channels. The disk image is available now; the two App Store channels are coming. Pick the one that matches your device. All of them need **iOS 26**, **iPadOS 26** or **macOS 26** (`26.0` or any later version).
+CrocApp needs **iOS 26**, **iPadOS 26** or **macOS 26** (`26.0` or any later version). The Mac app runs on Apple silicon only. There is no Intel build, no Windows, Linux or Android client, and no package-manager channel such as Homebrew.
+
+The other device needs **croc 11 or newer**, whether it runs CrocApp or the croc command line. croc 10 cannot complete a transfer with CrocApp. See [croc CLI interoperability](../reference/croc-cli-interop.md).
+
+## Where to get it
+
+The disk image for Mac is available now. The App Store and Mac App Store versions are coming, and [crocapp.dev](https://crocapp.dev) links them once they are live.
 
 | Channel | For | Where |
 |---|---|---|
-| App Store | iPhone and iPad | The listing is linked from [crocapp.dev](https://crocapp.dev) when it is live |
-| Mac App Store | Mac | The listing is linked from [crocapp.dev](https://crocapp.dev) when it is live |
-| Disk image | Mac with Apple silicon | `CrocApp-<version>-arm64.dmg` on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest), from version 1.0.0 |
+| Disk image | Mac | `CrocApp-<version>-arm64.dmg` on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest), version 1.0.0 or later |
+| App Store | iPhone and iPad | Coming |
+| Mac App Store | Mac | Coming |
 
-The store listings arrive at launch, so this page does not link them yet. There is no Intel build and no package-manager channel (Homebrew and the like).
+### Disk image
 
-## Disk image
+Open the disk image and drag **CrocApp** onto **Applications**. Use version 1.0.0 or later. The 0.9.x disk images are not notarized and use croc 10. From 1.0.0 on, Apple has notarized the app, so macOS shows only its standard first-launch confirmation.
 
-Open the disk image from GitHub Releases and drag **CrocApp** onto **Applications**. Use version 1.0.0 or later: the 0.9.x disk images are not notarized and use croc 10. From 1.0.0 on, the app is signed with a Developer ID certificate, notarized by Apple and stapled, so macOS opens it with the standard first-launch confirmation and nothing else.
+To check a download before you run it, see [Verify a release](verify-downloads.md).
 
-To check that a disk image came from this project's release workflow, run:
-
-```bash
-gh attestation verify CrocApp-<version>-arm64.dmg --repo bakirgdev/CrocApp \
-  --signer-workflow bakirgdev/CrocApp/.github/workflows/release.yml
-```
-
-See [Verify a release](../verify-downloads.md) for what the attestation covers and the other checks.
+:::warning
+Use one channel per Mac. The App Store and disk image builds are both named `CrocApp.app`, so dragging the disk image copy into **Applications** replaces the App Store copy. Their data is kept apart, but one app takes the other's place.
+:::
 
 ## Updates
 
-- **App Store builds** update through the App Store, like any other app.
-- **The disk image build** updates itself with Sparkle. Choose **Check for Updates…** in the CrocApp menu. From the second launch on, Sparkle asks whether it may check automatically. Each update is signed, and the app installs it only when the signature matches the key built into the app. The check reads a feed on github.com and sends no system profile.
-- Building from source does not update itself.
+- **App Store builds** update through the App Store.
+- **The disk image build** updates itself. Choose **Check for Updates…** in the CrocApp menu. From the second launch on, it asks whether it may check automatically. It installs an update only when the update's signature matches the key built into the app. The check reads a feed on github.com and sends no system profile.
 
-The App Store builds contain no updater, so they never contact github.com to look for updates.
+The App Store builds contain no updater, so they never contact github.com to look for updates. What changed in each release is on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases).
 
-## The other device
-
-The device you transfer with needs **croc 11 or newer**, whether it runs CrocApp or the croc CLI. croc 10 cannot complete a transfer with CrocApp; see [croc CLI interoperability](../reference/croc-cli-interop.md).
-
-## Build from source
-
-Requires:
-
-- **macOS 26**
-- **Xcode 27.1**
-- **Go 1.27.2** or newer (`gomobile` and `gobind` are rebuilt from the `go.mod` `tool` block on every run)
-
-```bash
-git clone https://github.com/bakirgdev/CrocApp.git
-cd CrocApp
-scripts/build-xcframework.sh   # Go engine -> CrocKit/Croc.xcframework
-open app/CrocApp.xcodeproj
-```
-
-:::warning
-A fresh clone builds nothing until the xcframework exists. `CrocKit`'s binary target points at a gitignored artifact, so `scripts/build-xcframework.sh` is not optional.
-:::
-
-Full toolchain reference, build settings, and troubleshooting: [`docs/BUILDING.md`](https://github.com/bakirgdev/CrocApp/blob/main/docs/BUILDING.md) on GitHub.
+To build from source, see the [contributor docs](../contribute.md).

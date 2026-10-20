@@ -6,7 +6,7 @@ description: CrocApp embeds croc v11.5.4 as a Go library, so a code phrase gener
 
 # croc CLI interoperability
 
-CrocApp embeds **croc v11.5.4** as a Go library (via a `gomobile`-built framework) rather than shelling out to the `croc` binary. That means it speaks the exact same protocol as the CLI, in both directions.
+CrocApp embeds **croc v11.5.4** as a Go library rather than shelling out to the `croc` binary. That means it speaks the exact same protocol as the CLI, in both directions.
 
 :::note
 The other device needs croc 11 or newer. A croc 10 device cannot complete a transfer with CrocApp.
@@ -41,7 +41,7 @@ Both devices need to agree on the relay. From the CLI:
 croc --relay myserver:9009 send file.txt
 ```
 
-In CrocApp, set the same address under the [relay power option](../guide/power-options.md).
+In CrocApp, set the same address under **Relay** in [Settings](../guide/settings.md#relay).
 
 ## Connection and `--transport`
 
@@ -51,32 +51,27 @@ The **Connection** setting maps to croc's `--transport` flag: **Automatic** is `
 croc send --transport relay file.txt
 ```
 
-For a send under 128 MiB, the two settings behave the same. See [power options](../guide/power-options.md) for what **Automatic** does above that size.
+For a send under 128 MiB, the two settings behave the same. See [Settings](../guide/settings.md#connection) for what **Automatic** does above that size.
 
-## Feature-to-flag mapping
+## Settings and croc flags
 
-| Feature | croc flag / origin |
+| In CrocApp | croc flag |
 |---|---|
-| Send files (multi) | positional args |
-| Send folders | positional args |
-| Send text/clipboard | `--text` |
-| Receive via code | positional args |
-| Custom code phrase (min 6 chars) | `--code` |
-| QR show on send / scan on receive | `--qrcode` |
-| Choose output folder | `--out` |
-| Keep Both / Replace on receive | `--rename` (Keep Both), `--overwrite` (Replace) |
-| File list preview, then accept or decline | interactive prompt |
-| Progress, speed, cancel | none |
-| Local network and relay race | croc default |
-| Transfer history | none |
-| Custom relay, password, IPv6 | `--relay --relay6 --pass` |
-| Force local-only | `--local` |
-| Disable compression | `--no-compress` |
-| Zip folder before send | `--zip` |
-| Exclude patterns / `.gitignore` | `--exclude --git` |
-| Auto-accept toggle | `--yes` |
-| Both-sides confirm | `--ask` |
-| Connection: Automatic or Relay only | `--transport auto\|relay` |
+| Custom code phrase (at least 6 characters) | `--code` |
+| Send text or clipboard | `--text` |
+| QR code on send and scan on receive | `--qrcode` |
+| Receive folder | `--out` |
+| **Keep Both** and **Replace** | `--rename` and `--overwrite` |
+| Relay **Address**, **IPv6 Address**, **Password** | `--relay`, `--relay6`, `--pass` |
+| **Connection**: **Automatic** or **Relay Only** | `--transport auto\|relay` |
+| **Local Network Only** | `--local` |
+| **Disable Compression** | `--no-compress` |
+| **Zip Folders Before Sending** | `--zip` |
+| **Patterns, one per line** and **Respect .gitignore** | `--exclude` and `--git` |
+| **Auto-Accept Transfers** | `--yes` |
+| **Confirm on Both Sides** | `--ask` |
+
+The file list preview, progress and history are CrocApp's own. The croc command line has no equivalent.
 
 ## Version and relay compatibility
 

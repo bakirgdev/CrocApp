@@ -1,48 +1,37 @@
 ---
-sidebar_position: 8
-title: Menu bar
-description: Send files and clipboard text from the Mac menu bar, open CrocApp at login, and use the File menu commands on iPad.
+sidebar_position: 7
+title: Mac menu bar and keyboard shortcuts
+description: Send files and clipboard text from the Mac menu bar, open CrocApp at login, and the keyboard shortcuts on Mac and iPad.
 ---
 
-# Menu bar
+# Mac menu bar and keyboard shortcuts
 
-## macOS: quick send
+## Quick send from the menu bar
 
-CrocApp puts an icon in the Mac menu bar. Click it to open a small window where you can send without opening the main window.
+CrocApp puts an icon in the Mac menu bar. Click it to open a small window that sends without opening the main window.
 
 | Control | What it does |
 |---|---|
-| **Drop Files to Send** | Drop files or folders on this area to send them |
-| **Choose Files…** | Opens a file panel; pick files and folders to send |
-| **Send Clipboard Text** | Sends the text on the clipboard. If the clipboard has no text, the window says so |
+| Drop area | Drop files or folders here to send them |
+| **Choose Files…** | Opens a file panel to pick files and folders |
+| **Send Clipboard Text** | Sends the text on the clipboard. If there is none, the window says so |
+| **Open CrocApp** | Brings the main window forward |
 
-Dropping works only once the window is open. You cannot drop files onto the menu bar icon itself: click the icon first, then drop.
+Click the icon first, then drop. You cannot drop files onto the icon itself.
 
-Once a send starts, the window shows the code, a QR code, **Copy Code**, progress and **Cancel**, the same as the Send screen. Quick send always uses a generated code; to choose your own, use the main window ([Sending files](sending.md)).
+Once a send starts, the window shows the code, a QR code, **Copy Code**, progress and **Cancel**. Quick send always uses a generated code. To choose your own, use the [main window](sending.md#custom-code).
 
-The window shares the one active transfer with the main window. It shows a transfer you started there, or from [Shortcuts](shortcuts.md), and it refuses to start a new one while another runs. If a receive needs you to accept or decline, the window tells you to open CrocApp, because that prompt lives in the main window. **Open CrocApp** at the bottom brings the main window forward.
+The window shares the one active transfer with the main window, and with [Shortcuts](shortcuts.md). It will not start a second one. If a receive needs you to accept or decline, the window says to open CrocApp, because that prompt lives in the main window.
 
-### Settings
+Turn the icon off with **Show in Menu Bar**, or start CrocApp at login with **Open at Login**, in [Settings](settings.md#receive-and-menu-bar-mac).
 
-Under **Menu Bar** in Settings (⌘,), on the General tab:
+## Keyboard shortcuts
 
-- **Show in Menu Bar** is on by default. Turn it off to remove the icon.
-- **Open at Login** is off by default. Turn it on to start CrocApp when you log in. The switch shows what macOS reports, so it follows a change you make in System Settings > General > Login Items. If macOS needs you to approve CrocApp there, the setting says so and an **Open Settings** button takes you to Login Items.
-
-## iPad: File menu commands
-
-On iPad, the iPadOS 26 menu bar lists the same File commands as the Mac:
+These work on Mac and on iPad with a keyboard. **Send…** and **Receive…** are disabled while a transfer is running.
 
 | Command | Shortcut |
 |---|---|
-| **Send…** | ⌘1 |
-| **Receive…** | ⌘2 |
-| **Show Receive Folder in Files** | ⇧⌘R |
-
-**Show Receive Folder in Files** opens the Files app at your receive folder. On a Mac the same shortcut reveals the folder in Finder. The Files hand-off has not been checked on an iPad yet.
-
-## See also
-
-- [Sending files](sending.md) for the full Send screen.
-- [Shortcuts](shortcuts.md) for automating sends and receives.
-- [Settings and trust](settings-and-trust.md) for where settings live.
+| **Send…** (File menu) | ⌘1 |
+| **Receive…** (File menu) | ⌘2 |
+| **Show Receive Folder in Finder** (Mac) or **Show Receive Folder in Files** (iPad) | ⇧⌘R |
+| Settings (Mac) | ⌘, |

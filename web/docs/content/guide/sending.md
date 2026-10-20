@@ -1,54 +1,53 @@
 ---
 sidebar_position: 1
-title: Sending files
-description: How to send files, folders, and text in CrocApp, including the share extension and the one-active-transfer rule.
+title: Send
+description: How to send files, folders and text in CrocApp, from the app, a drop, the share sheet or Finder.
 ---
 
-# Sending files
+# Send
 
-![The CrocApp Send screen on macOS with three files staged and the Send button ready](/img/screenshots/mac/send-files-light.png#gh-light-mode-only)![The CrocApp Send screen on macOS with three files staged and the Send button ready](/img/screenshots/mac/send-files-dark.png#gh-dark-mode-only)
+![The CrocApp Send screen on macOS with three files staged and the Send button ready](../../screenshots/mac/send-files-light.webp#gh-light-mode-only)![The CrocApp Send screen on macOS with three files staged and the Send button ready](../../screenshots/mac/send-files-dark.webp#gh-dark-mode-only)
 
-Open **Send** from the home screen. The **What to Send** picker switches between two modes:
+Tap or click **Send** on the home screen. The **What to Send** picker switches between **Files** and **Text**.
 
 ## Files
 
-- **Add Files** opens a file picker; you can select multiple files at once.
-- **Add Folder** picks a whole folder to send.
-- On macOS, you can also drag files or folders onto the drop area.
-- Picked items appear in a list, each removable with its **x** button.
+- **Add Files** opens a picker. Select as many files as you like.
+- **Add Folder** picks a whole folder.
+- Remove an item from the list with its **x** button.
+
+On a Mac you can also drag files or folders onto the window at any point: a **Drop to Send** overlay appears. Dropping on the Dock icon, or choosing CrocApp in Finder's **Open With**, starts a send the same way. If a transfer is already running, the files wait, and a count appears on the **Send** button.
 
 ## Text
 
-Type or paste into the text box, or use the **Paste** button to pull the current clipboard contents in directly (an explicit action, never a silent background read).
+Type or paste into the text box, or tap **Paste** to insert the clipboard. CrocApp never reads the clipboard unless you ask.
 
 ## Custom code
 
-The **Custom Code** field is optional. Leave it blank for a generated code, or enter your own (minimum 6 characters) so it can be shared through a channel you already trust, for example by dictating it over a call.
+Leave the code field empty for a generated code phrase. To choose your own, type it into the field marked **Custom code (optional)**. It needs at least 6 characters. See [Code phrases and links](code-phrases.md#custom-codes) before you do.
 
-## Starting the send
+## Start the send
 
-Tap **Send**. CrocApp shows the generated (or custom) code phrase, a **Copy Code** button, a QR code the other device can scan, and a **Share Link** button. The QR code and the link open CrocApp on the other device, or a page at `crocapp.dev/r/` if it does not have the app (see [Code phrases](code-phrases.md#receiving-a-link)). With a custom relay or Local network only, a note on the screen says that receiving in a browser needs the default relays. The screen also shows a trust badge describing which relay path is in use.
+Tap **Send**. The screen shows **Ready to send** with:
 
-## Send as link
+- the code phrase and **Copy Code**
+- a QR code
+- **Share Link**, which shares a `crocapp.dev/r/` link that opens the app on the other device, or a page that explains the options if it is not installed (see [Code phrases and links](code-phrases.md#receiving-a-link))
+- a trust badge naming the route you configured (see [The trust badge](settings.md#the-trust-badge))
 
-Instead of a code, **Send as Link** (files only) sends your files, encrypted on your device, to a link server and gives you a link the other device can open later, with no need to be online at the same time. You choose how long the link lasts and how many downloads it allows. See [Send as link](stored-transfers.md).
+The screen reads **Waiting for the other device…** until the other device connects. A note appears when a custom relay or **Local Network Only** is on, because receiving in a browser needs the default relays.
 
-## Menu bar and Shortcuts
+If **Confirm on Both Sides** is on, a prompt reading **The other device is connected** appears when it connects, and nothing moves until you tap **Send**. Once the transfer runs, CrocApp shows per-file and overall progress, speed and **Cancel**.
 
-On a Mac, the [menu bar icon](menu-bar.md) sends files or clipboard text without opening the main window. On any device, [Shortcuts](shortcuts.md) can send files and text for you and hand back the code.
+Start the sender before the receiver. A receiver that joins first can fail with a generic error. See [Troubleshooting](../troubleshooting.md#the-receiver-started-first).
 
-## One active transfer at a time
+## One transfer at a time
 
-CrocApp allows exactly one active transfer at a time, matching a limit in the underlying engine. You cannot start a second send or receive while one is in progress; finish or cancel the current transfer first.
+You cannot start a second send or receive while one is running. Finish or cancel the current one first.
 
-## Share extension (iOS only)
+## Other ways to send
 
-On iOS, you can share files into CrocApp from any other app's share sheet. Shared items are staged, and a **Shared Files** sheet appears with **Discard** and **Send** buttons when you next open CrocApp. Choosing **Send** carries the staged files into the normal Send flow.
-
-## Staged files sheet
-
-The staged-files sheet lists every item that was shared in, so you can review what will be sent before committing to it.
-
-## What the sender sees during the transfer
-
-Once the other device connects, CrocApp shows **Ready to send** and waits. If [**Confirm on Both Sides**](power-options.md) is on, you get a prompt reading **The other device is connected**, with **Send** and **Cancel**, before anything moves. During transfer, CrocApp shows per-file and overall progress with speed, plus a **Cancel** button.
+- **Share sheet (iOS).** Share files into CrocApp from any app. A **Shared Files** sheet lists what arrived, with **Discard** and **Send**.
+- **Mac menu bar.** Send without opening the main window. See [Mac menu bar and keyboard shortcuts](menu-bar.md).
+- **Shortcuts and Siri.** See [Shortcuts and Siri](shortcuts.md).
+- **Send as Link.** Send files to a link server so the other device can receive later. See [Send as link](send-as-link.md).

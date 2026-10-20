@@ -1,40 +1,38 @@
 ---
-sidebar_position: 7
+sidebar_position: 6
 title: History
-description: "CrocApp's local-only transfer history: what it records, what it deliberately never records, and how to clear it."
+description: "CrocApp's local-only transfer history: what it records, what it never records, and how to delete entries."
 ---
 
 # History
 
-![CrocApp's History screen on macOS listing past transfers with their direction, file counts, and status](/img/screenshots/mac/history-light.png#gh-light-mode-only)![CrocApp's History screen on macOS listing past transfers with their direction, file counts, and status](/img/screenshots/mac/history-dark.png#gh-dark-mode-only)
+![The History screen on macOS listing past transfers with their direction, file counts, and status](../../screenshots/mac/history-light.webp#gh-light-mode-only)![The History screen on macOS listing past transfers with their direction, file counts, and status](../../screenshots/mac/history-dark.webp#gh-dark-mode-only)
 
-CrocApp keeps a local list of past transfers, reachable from the home screen's history icon. It never leaves the device: there is no sync, no export and no server involved.
+CrocApp keeps a list of past transfers on your device. Open it from the clock icon on the home screen. It has no sync, no export and no server.
 
-## What's recorded
+## What is recorded
 
 For each finished or failed transfer:
 
-- Direction (sent or received) and whether it was a text transfer
-- Up to 20 file names
-- Total file count and total size
-- A **code hint**: the first word of a code shaped like a generated one (for example, "wiry-…"), or only the first two characters of any other code, never the full phrase. A Send as Link transfer keeps the link server's host instead (see [Links sent](#links-sent))
-- Date and status (completed, failed, cancelled, or declined)
-- For sends, a set of file bookmarks used to support **Send Again**, captured all-or-nothing and only up to 200 items. A record with no bookmarks does not offer Send Again
+- the direction (sent or received), and whether it was text
+- up to 20 file names, the file count and the total size
+- a **code hint**: the first word of a code shaped like a generated one (for example `wiry-…`), or only the first two characters of any other code. The full phrase is never stored
+- the date and the status: **Completed**, **Failed**, **Cancelled** or **Declined**
+- for sends, bookmarks to the original files (up to 200) that make **Send Again** possible
 
-## What's never recorded
-
-- File contents
-- The full code phrase, only that hint
-- Anything beyond the 20-name and 200-bookmark caps
-
-## Links sent
-
-A file sent with [Send as link](stored-transfers.md) is recorded with the link server's host name and the time the link expires, then **Link expired** or **Link revoked** later. **Revoke Link**, in the row's context menu (and as a swipe action on iOS), deletes the files from the link server after a confirmation. The link and the token that revokes it are never stored in History; they stay in the Keychain until the link is revoked or expires.
+File contents are never recorded.
 
 ## Send Again
 
-For a past send, the history entry's context menu (or swipe action on iOS) offers **Send Again** if bookmarks were captured for it. This re-stages the same files into a new send. If the original files were moved or deleted since, CrocApp tells you they are no longer available rather than silently sending nothing.
+For a past send, the row's context menu (or a swipe on iOS) offers **Send Again**, which stages the same files in a new send. If the originals were moved or deleted, CrocApp says so instead of sending nothing.
 
-## Clearing history
+## Links you sent
 
-Tap **Clear** in the history screen's toolbar, then confirm. This removes the list only. Files you have already received stay where they were saved.
+A [Send as link](send-as-link.md) row shows the link server's host and when the link expires, then **Link expired** or **Link revoked**. Use **Revoke Link** in the row's context menu to end a live link. The link itself is never stored here.
+
+## Delete
+
+- **Delete** in a row's context menu (or a swipe on iOS) removes that entry.
+- **Clear** in the toolbar, then **Clear All**, removes the whole list.
+
+Both remove the list only. Files you already received stay where they were saved. Revoke a live link before you delete its row, because the row is where you revoke from.

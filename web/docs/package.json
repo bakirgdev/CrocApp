@@ -2,7 +2,7 @@
   "name": "crocapp-docs",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@12.11.2",
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "docusaurus": "docusaurus",
     "tokens": "cp ../../design/tokens.css src/css/tokens.css && cp ../landing/assets/img/mascot-web.webp static/img/mascot.webp",
@@ -18,12 +18,13 @@
   "dependencies": {
     "@docusaurus/core": "^3.10.2",
     "@docusaurus/faster": "^3.10.2",
+    "@docusaurus/plugin-client-redirects": "^3.10.2",
     "@docusaurus/preset-classic": "^3.10.2",
     "@mdx-js/react": "^3.1.1",
     "clsx": "^2.1.1",
     "prism-react-renderer": "^2.4.1",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.10.2",
@@ -45,6 +46,6 @@
     ]
   },
   "engines": {
-    "node": ">=24.21.0"
+    "node": ">=26.12.0"
   }
 }

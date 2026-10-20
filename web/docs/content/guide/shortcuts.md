@@ -1,10 +1,10 @@
 ---
-sidebar_position: 9
-title: Shortcuts
+sidebar_position: 8
+title: Shortcuts and Siri
 description: Three CrocApp actions for the Shortcuts app, Siri and Spotlight, to send files, send text and receive, and what each one returns.
 ---
 
-# Shortcuts
+# Shortcuts and Siri
 
 CrocApp adds three actions to the Shortcuts app on iPhone, iPad and Mac. Use them in your own shortcuts, or say or type the phrase in Siri and Spotlight.
 
@@ -24,21 +24,17 @@ Both send actions use a generated code. They finish as soon as croc has a code, 
 
 ## Receiving
 
-**Receive with CrocApp** takes a croc code or any link CrocApp opens: a `crocapp://` link, a `crocapp.dev/r/` link, a `getcroc.com` link, or a [Send as link](stored-transfers.md) link. It waits until the transfer ends, then returns the received files and shows "Received N items."
+**Receive with CrocApp** takes a croc code or any link CrocApp opens: a `crocapp://` link, a `crocapp.dev/r/` link, a `getcroc.com` link, or a [Send as link](send-as-link.md) link. It waits until the transfer ends, then returns the received files and shows "Received 3 items." (or "Received 1 item.")
 
 Received text comes back as a file named `Received text.txt`.
 
-The action does not accept or decline for you. The prompt appears in CrocApp unless **Auto-Accept Transfers** is on in [Settings](power-options.md). If a received file has the same name as an existing one, the **When a File Already Exists** setting decides (Keep Both or Replace), and the action returns the new copies.
+The action does not accept or decline for you. The prompt appears in CrocApp unless **Auto-Accept Transfers** is on in [Settings](settings.md#confirmation). If a received file has the same name as an existing one, the **When a File Already Exists** setting decides (Keep Both or Replace), and the action returns the new copies.
 
 ## One transfer at a time
 
 CrocApp runs one transfer at a time. If one is already running, the action fails with "CrocApp is already sending or receiving. Wait for it to finish."
 
-## Finder Quick Action
-
-On a Mac, Shortcuts can offer a shortcut as a Quick Action in Finder. A shortcut that uses **Send Files with CrocApp** should work as one, with no extra setup. This has not been checked on a Mac yet.
-
 ## See also
 
-- [Sending files](sending.md) and [Receiving files](receiving.md) for the same flows in the app.
-- [Menu bar](menu-bar.md) for sending from the Mac menu bar.
+- [Send](sending.md) and [Receive](receiving.md) for the same flows in the app.
+- [Mac menu bar and keyboard shortcuts](menu-bar.md) for sending from the Mac menu bar.

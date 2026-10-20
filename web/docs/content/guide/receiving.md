@@ -1,60 +1,65 @@
 ---
 sidebar_position: 2
-title: Receiving files
-description: How to receive a transfer in CrocApp, review the file list, and handle conflicts.
+title: Receive
+description: How to receive a transfer in CrocApp, review the file list, choose where files land and handle name conflicts.
 ---
 
-# Receiving files
+# Receive
 
-![CrocApp on iOS showing a receive of three files with Decline and Accept buttons](/img/screenshots/iphone/receive-incoming-light.png#gh-light-mode-only)![CrocApp on iOS showing a receive of three files with Decline and Accept buttons](/img/screenshots/iphone/receive-incoming-dark.png#gh-dark-mode-only)
+![CrocApp on iOS showing a receive of three files with Decline and Accept buttons](../../screenshots/iphone/receive-incoming-light.webp#gh-light-mode-only)![CrocApp on iOS showing a receive of three files with Decline and Accept buttons](../../screenshots/iphone/receive-incoming-dark.webp#gh-dark-mode-only)
 
-Open **Receive** from the home screen.
+Tap or click **Receive** on the home screen.
 
-## Entering a code
+## Enter the code
 
-Type the **Code Phrase** into the field, paste it with the **Paste** button, or (iOS only) tap **Scan QR Code** to scan the sender's QR code. The **Receive** button stays disabled until the entered code is at least 6 characters long.
+Type the code phrase into the **Code phrase** field, tap **Paste**, or on iOS tap **Scan QR Code**. **Receive** stays disabled until the code is at least 6 characters.
 
-You can also paste a link, or open one from outside the app (for example by scanning the QR code with the camera). CrocApp fills in the code and waits: nothing connects until you tap **Receive**. See [Code phrases](code-phrases.md#accepted-forms) for the link forms it accepts, and for receiving in a browser instead.
+You can also paste or open a link. CrocApp fills in the code and waits. Nothing connects until you tap **Receive**. See [Code phrases and links](code-phrases.md#accepted-forms) for the forms it accepts.
 
-A link from [Send as link](stored-transfers.md) works the same way: paste it, or scan its QR code on iOS, and the code field is replaced by a **Receive from Link** row naming the link server. Tapping **Receive** then shows the usual file list below, with **Keep Both** and **Replace**; auto-accept does not apply to it.
+A link from [Send as link](send-as-link.md) replaces the code field with a **Receive from Link** row that names the link server.
 
-## Choosing where files land
+If the code is right but nothing connects, ask the sender to start first, and see [Troubleshooting](../troubleshooting.md).
 
-Below the code field, CrocApp shows the current destination folder. Tap **Change** to pick a different one, or **Reset** to return to the default.
+## Choose where files land
 
-Defaults differ by platform:
+The current destination folder shows below the code field. **Change…** picks another folder, and **Reset** returns to the default:
 
-- **macOS**: `Downloads/CrocApp`
-- **iOS**: the app's Documents folder, which is visible in the Files app
+- **Mac:** `Downloads/CrocApp`
+- **iOS:** the app's Documents folder, which shows in the Files app
 
-## Accepting or declining
+On a Mac you can also change it in [Settings](settings.md) under **Save Received Files To**.
 
-After you tap **Receive** and connect to the sender, CrocApp shows the full file list with sizes and a total. From here:
+## Accept or decline
 
-- **Accept** starts the transfer. It appears alone when nothing at the destination clashes with the files being received, and it then means Keep Both (below).
-- **Decline** refuses it. This is the only way to refuse once you have seen the list. There is no cancel button at this stage.
+After you tap **Receive** and connect, CrocApp lists the files with sizes and a total. Tap **Accept** to start, or **Decline** to refuse. Decline is the only way out at this point. If the sender turned on **Confirm on Both Sides**, they confirm too.
 
-If the sender has [Confirm on both sides](power-options.md) turned on, the sender must also confirm before the transfer proceeds.
+If you know the sender's address, you can connect straight to it with **Sender IP** in [Settings](settings.md#advanced).
 
-If you know the sender's address, you can connect to it directly with **Sender IP** under [Advanced settings](advanced-settings.md#network).
+When a transfer is waiting for your answer and you are on another screen, the home screen shows **Files are waiting for your answer** with **Review**.
 
-## Overwrite and conflicts
+## Name conflicts
 
-CrocApp never overwrites an existing file unless you say so. If any file being received already exists at the destination, the accept screen shows a banner that says how many items already exist and what each choice does, and replaces **Accept** with two choices, besides **Decline**:
+CrocApp never overwrites a file unless you say so. When a name is already taken, a banner reads **Some names are already taken** and **Accept** is replaced by two choices:
 
-- **Keep Both** (the prominent default) saves the new file under a new name next to the old one: `name (1).ext`, then `name (2).ext`, and so on.
-- **Replace** overwrites the existing file. A partly received file resumes where it stopped instead of restarting.
+- **Keep Both** (the default) saves the new file as `name (1).ext`, then `name (2).ext`, and so on.
+- **Replace** overwrites the existing file. A partly received file resumes where it stopped.
 
-A file that already exists with identical content is left as it is under either choice. Files with unsafe names (for example, ones trying to escape the destination folder) block the accept buttons entirely, as a safety measure on top of croc's own name sanitization.
+A file that already exists with identical content is left alone under either choice. A file with an unsafe name (one that tries to escape the destination folder) blocks the buttons.
 
-A folder sent as a zip arrives as a single `.zip` name, so the preview cannot see which of its files already exist. The sheet then offers only **Accept**, which is Keep Both: it silently keeps the existing files and skips the matching ones in the archive. Replace and auto-accept keep them too. To get the sender's copies, move the old folder away before receiving.
+A folder sent as a zip arrives as one `.zip` name, so CrocApp cannot tell which of its files exist. The sheet then offers only **Accept**, which behaves as **Keep Both**: existing files stay and matching files in the archive are skipped. To get the sender's copies, move your old folder away first.
+
+![CrocApp on macOS showing three incoming files, a warning that some names are already taken, and the Decline, Replace and Keep Both buttons](../../screenshots/mac/receive-conflict-light.webp#gh-light-mode-only)![CrocApp on macOS showing three incoming files, a warning that some names are already taken, and the Decline, Replace and Keep Both buttons](../../screenshots/mac/receive-conflict-dark.webp#gh-dark-mode-only)
 
 ## Auto-accept
 
-Auto-accept is **off by default**. When off, you always see the file-list preview above before anything is saved. Turning it on (in [power options](power-options.md)) skips that preview. That page describes the warning CrocApp shows when it is enabled. Because there is no sheet to ask, a setting under it, **When a File Already Exists**, decides between Keep Both (the default) and Replace. Replace overwrites existing files, except inside a zipped folder, where the existing files are kept (see above).
+Auto-accept is off by default, so you always see the file list first. Turning on **Auto-Accept Transfers** in [Settings](settings.md#confirmation) skips that preview. Because there is no sheet to ask, **When a File Already Exists** decides between **Keep Both** and **Replace**.
 
 ## After the transfer
 
-When it finishes, CrocApp shows **Transfer complete** (or a message if something went wrong) with a button to open the destination: **Open in Files** on iOS, **Show in Finder** on macOS. The File menu also has **Show Receive Folder in Finder** (macOS) and **Show Receive Folder in Files** (iPad), both ⇧⌘R; see [Menu bar](menu-bar.md#ipad-file-menu-commands).
+CrocApp shows **Transfer complete**, or a message if something went wrong. Open the folder with **Show in Finder** (Mac) or **Open in Files** (iOS). On iOS, **Open in Files** appears only when the destination is the default Documents folder. If you picked another folder, open it from the Files app.
 
-A [Shortcuts](shortcuts.md) action can receive for you with a code or link and return the files.
+A received text snippet shows as **Received text** with **Copy Text**.
+
+The Mac **File** menu also has **Show Receive Folder in Finder**, and iPad has **Show Receive Folder in Files**. Both use ⇧⌘R.
+
+A [Shortcuts](shortcuts.md) action can receive for you and hand back the files.

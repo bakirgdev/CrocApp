@@ -1,43 +1,29 @@
 ---
 slug: /
 sidebar_position: 1
-title: CrocApp documentation
+sidebar_label: Overview
+title: Documentation
 description: Send files, folders and text to another device with a short code phrase. Free, open source and end-to-end encrypted.
 ---
 
 # CrocApp documentation
 
-![CrocApp's first-run welcome screen on iOS, explaining the code phrase in three lines](/img/screenshots/iphone/onboarding-light.png#gh-light-mode-only)![CrocApp's first-run welcome screen on iOS, explaining the code phrase in three lines](/img/screenshots/iphone/onboarding-dark.png#gh-dark-mode-only)
+![The first-run welcome screen on iOS, explaining the code phrase in three lines](../screenshots/iphone/onboarding-light.webp#gh-light-mode-only)![The first-run welcome screen on iOS, explaining the code phrase in three lines](../screenshots/iphone/onboarding-dark.webp#gh-dark-mode-only)
 
-CrocApp sends files, folders and text to another device with a short code phrase like `cape-junky-widow`. Transfers are end-to-end encrypted. There is no account, and the two devices do not need to share a network.
+CrocApp sends files, folders and text to another device with a short code phrase like `cape-junky-widow`. There is no account, and the two devices do not need to share a network. It runs on iPhone, iPad and Mac.
 
-It is a graphical front end for [croc](https://github.com/schollz/croc), the command-line file-transfer tool by Zack Scholl. CrocApp embeds croc's Go library rather than shelling out to the binary, so a code phrase from the croc CLI works in the app, and a code phrase from the app works in the CLI.
+It is a graphical front end for [croc](https://github.com/schollz/croc), the command-line file-transfer tool by Zack Scholl. A code phrase from the croc command line works in the app, and the other way round.
 
-:::note
-CrocApp is unofficial and unaffiliated. Nothing here implies endorsement by croc's author.
-:::
+## Start here
 
-## How it works, in short
+- [Requirements and install](getting-started/install.md): get the app and check your device is supported.
+- [Your first transfer](getting-started/first-transfer.md): one send and one receive, step by step.
+- [Code phrases and links](guide/code-phrases.md): share a code by voice, QR code or link.
+- [Troubleshooting](troubleshooting.md): a transfer that will not connect.
+- [Security and privacy](security-and-privacy.md): what is protected, and what each server sees.
 
-The sender picks files, a folder or a snippet of text. CrocApp generates a code phrase, which can be spoken, messaged or shown as a QR code. The other device enters the phrase, sees the file list and accepts. The code phrase authenticates both devices (PAKE, password-authenticated key exchange), and the transfer is end-to-end encrypted. The relay only ever sees ciphertext. When the two devices connect over the local network, the data stays on that network.
-
-## Platform requirements
-
-CrocApp requires **iOS 26**, **iPadOS 26**, or **macOS 26**, meaning `26.0` or any later version. It is Apple-platform only: there is no Windows, Linux or Android client.
+The sidebar lists the rest. The [FAQ](faq.md) has short answers and a glossary.
 
 :::note
-The other device needs **croc 11 or newer**, whether it runs CrocApp or the croc CLI. croc 10 cannot complete a transfer with CrocApp.
+CrocApp is unofficial and unaffiliated with croc. Nothing here implies endorsement by croc's author.
 :::
-
-CrocApp is available as a notarized disk image for Mac. Apps for iPhone and iPad and a Mac App Store version are coming to the App Store. See [Install](getting-started/install.md) for where to get each one.
-
-## Where to go next
-
-- [Install](getting-started/install.md): the three channels, updates, and how to build from source
-- [Your first transfer](getting-started/first-transfer.md): a walkthrough of one send and one receive
-- [Sending files](guide/sending.md), [Receiving files](guide/receiving.md), [Code phrases](guide/code-phrases.md), [Send as link](guide/stored-transfers.md)
-- [Power options](guide/power-options.md), [Advanced settings](guide/advanced-settings.md), [Settings and trust](guide/settings-and-trust.md), [History](guide/history.md)
-- [Menu bar](guide/menu-bar.md) and [Shortcuts](guide/shortcuts.md)
-- [croc CLI interoperability](reference/croc-cli-interop.md) and the [feature matrix](reference/feature-matrix.md)
-- [Security and privacy](security-and-privacy.md), [Troubleshooting](troubleshooting.md), [FAQ](faq.md)
-- [Contribute](contribute.md)

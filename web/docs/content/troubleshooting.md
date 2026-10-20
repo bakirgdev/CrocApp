@@ -1,57 +1,73 @@
 ---
-sidebar_position: 6
+sidebar_position: 1
 title: Troubleshooting
-description: "Fixes for common CrocApp problems: stalled transfers, rejected codes, backgrounding limits and permission issues."
+description: "Fixes for common CrocApp problems: a transfer that never connects, a rejected code, permission prompts, interrupted transfers and missing files."
 ---
 
 # Troubleshooting
 
-## Transfer stalls or never connects
+## The transfer never connects
 
-CrocApp races a direct local-network connection against the relay and uses whichever connects first. Finding devices on the local network uses UDP multicast, and it is not guaranteed to work on every network. Some networks (client-isolation-style Wi-Fi, for example) hide other devices entirely, even though the relay path still works. If a transfer stalls at "Waiting" or "Connecting":
+CrocApp tries the local network and the relay at once and uses whichever connects first. Finding devices on the local network uses UDP multicast, which some networks block, such as guest Wi-Fi with client isolation. The relay path still works there, so:
 
-- Check that both devices have working internet access, so the relay path can work even if the local path can't.
-- Check the [local network permission](#local-network-permission-prompt) below.
-- There is no in-app fix for a network that blocks multicast discovery outright. The transfer should still complete over the relay.
+- Check that both devices have internet access.
+- Check the [local network permission](#local-network-access-is-off).
+- Start the sender first, then the receiver (see below).
+- If you see "This is taking longer than usual", double-check the code and make sure the other device is ready.
 
-## Code rejected or the receive button stays disabled
+## The receiver started first
 
-- A code phrase must be at least 6 characters. The **Receive** button stays disabled until you've entered enough.
-- A wrong code fails immediately rather than hanging.
-- If you're using a custom code you also use for testing or scripting, note that codes sharing their first word can collide into the same relay room. Generated codes rarely do: two share a first word about once in 1296.
+If the receiver joins before the sender has started, the receive can fail with a generic "Transfer failed. Try again, or check your connection." This hits custom codes, and the croc command line sending with a fixed code. Start the sender, then the receiver.
+
+## No internet
+
+With no connection, a send with a generated code fails before a code appears, with "No public relay answered. Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network." Reconnect, or turn on **Local Network Only** in [Settings](guide/settings.md#transfer) when both devices share a network.
+
+If only croc's public relay is unreachable from your network, set a [custom relay](guide/settings.md#relay) you control, or use **Local Network Only**.
+
+## The code is rejected, or Receive stays disabled
+
+- A code needs at least 6 characters. **Receive** stays disabled until it has them.
+- A wrong code fails at once with "The codes don't match."
+- "That code is already in use. Try a different code." means another transfer holds that custom code. Pick another.
+- Codes that start with the same word can land in the same relay room. Generated codes rarely collide.
 
 ## A link or QR code does not open CrocApp
 
-- A link only fills in the code on **Receive**; nothing connects until you tap **Receive**. If a transfer is already running, the link is kept and CrocApp does not move you away from it.
-- If the phone camera opens `crocapp.dev/r/` in the browser instead of the app, CrocApp is not installed, or iOS has not opened the link in it. Tap **Open in CrocApp** on that page, or copy the link into the **Receive** field.
-- On Mac, a link may open the page in the browser rather than the app; **Open in CrocApp** on the page still works.
-- **Receive in Your Browser** fails if the sender uses a custom relay or **Local Network Only**. The browser client knows only the default relays; receive in CrocApp instead.
+- A link only fills in the code. Tap **Receive** to connect. If a transfer is already running, CrocApp keeps the link and stays on that transfer.
+- If the phone camera opens `crocapp.dev/r/` in the browser, CrocApp is not installed or iOS did not hand the link over. Tap **Open in CrocApp** on that page, or copy the link into the **Receive** field.
+- On a Mac the link may open in the browser. **Open in CrocApp** on the page still works.
+- **Receive in Your Browser** fails when the sender uses a custom relay or **Local Network Only**. The browser client knows only the default relays.
+- A [Send as link](guide/send-as-link.md) QR code does not open CrocApp from the Camera app. Use **Scan QR Code** inside CrocApp.
 
-## The other device uses a different croc version
+## The other device uses an older croc
 
-CrocApp embeds croc v11.5.4 as its engine. It's built to interoperate with the `croc` CLI in both directions. The other device needs croc 11 or newer: croc 10 cannot complete a transfer with the app. When both sides reach the same relay, the app says the other device runs an older croc. Often it does not (with a generated code, or when the two use different relays), and the app just keeps waiting for the other device, so if a transfer with a croc 10 user never connects, ask them to upgrade to croc 11.
+The other device needs croc 11 or newer. When both sides reach the same relay, CrocApp says "The other device runs an older croc. Both sides need croc 11 or newer." Often it does not: with a generated code, or when the two use different relays, the app keeps waiting. If a transfer with a croc 10 user never connects, ask them to upgrade.
 
-## iOS backgrounding limits
+## Local network access is off
 
-iOS does not allow raw TCP transfers to keep running arbitrarily in the background. CrocApp uses `BGContinuedProcessingTask` (iOS 26+) to keep a transfer going and show a system Live Activity, but it's best-effort: the system can end it under memory pressure, and a low-progress transfer is more likely to be killed than a nearly-finished one. For a transfer you don't want interrupted, keep CrocApp in the foreground until it finishes. If it does get cut off, croc's own resume behavior means restarting the same transfer picks up from where it left off rather than starting over, as long as you choose **Replace** for the partly received files. **Keep Both** saves the partly received file as a new copy instead of resuming it.
+The first time CrocApp needs the local network, the system asks for permission. If you refuse it, or the permission seems stuck (an iOS quirk where a granted permission does not work until you toggle it or restart), CrocApp falls back to the relay and shows **Local network access is off**. Tap **Open Settings** and turn on CrocApp under Privacy & Security > Local Network. This applies on iOS and on Mac.
 
-## Local network permission prompt
+## Scan QR Code does not work
 
-On first local-network use, iOS shows a system prompt asking to allow CrocApp to find devices on your local network. If you deny it, or the grant ends up "stuck" (a known iOS quirk where a granted permission does not work until you toggle it or reboot), CrocApp falls back to the relay only. If you see the banner **Local network access is off**, use its **Open Settings** button to check Settings > Privacy > Local Network.
+On iOS, scanning needs camera access. If you refused it, CrocApp shows "Camera access denied". Tap **Open Settings** and allow it. If it says "Camera access restricted", a parental control or device policy blocks it, and Settings cannot change that. Type or paste the code instead.
 
-## Received files not visible where expected
+## A transfer stopped in the background
 
-- On iOS, received files land in the app's Documents folder, which is visible in the Files app by default.
-- If your receive destination was set to a folder picked through a cloud-storage provider (rather than a local location), the **Open in Files** button after a receive may not open it correctly. This is a known limitation. Navigate to the folder manually in the Files app instead.
+On iOS, a transfer keeps running when you leave the app and shows a Live Activity, but iOS can stop it, more likely for a transfer with little progress. Keep CrocApp in the foreground for a transfer you do not want interrupted.
 
-## Relay unreachable
+To resume, start the same transfer again and choose **Replace** for the partly received files. **Keep Both** saves a new copy instead of resuming.
 
-CrocApp uses croc's public relay by default. If it's unreachable from your network, you can set a [custom relay](guide/settings-and-trust.md) you control instead, or turn on **Local Network Only** if both devices are on the same network and you don't need the relay at all.
+## Received files are not where I expect
 
-## Auto-accept and `--ask` senders
+- On iOS, files land in the app's Documents folder, visible in the Files app.
+- **Open in Files** appears only when the destination is that default folder. For a folder you picked, such as one in cloud storage, open it from the Files app.
+- On a Mac, the default is `Downloads/CrocApp`. **Show in Finder** or ⇧⌘R opens it.
 
-If you have auto-accept on and the sender is using croc's `--ask` confirmation flag, the transfer can be auto-declined. CrocApp's message currently says the other device declined, rather than explaining that your own auto-accept setting caused it. This is a known issue with no fix yet; turning off auto-accept avoids it.
+## Auto-accept and a sender who confirms
 
-## No cancel button while reviewing a receive
+With **Auto-Accept Transfers** on and a sender using croc's `--ask` option, the transfer can be declined, and CrocApp says the other device declined. Turn off auto-accept to avoid it.
 
-Once you are looking at the file list, **Decline** is the only way out. There is no separate cancel button at that stage, and the transfer-ended notification can lag slightly while croc finishes reconnect attempts underneath. This is expected behavior, not a bug.
+## Still stuck
+
+Ask on [GitHub Discussions](https://github.com/bakirgdev/CrocApp/discussions), or see [Support](https://crocapp.dev/support/).

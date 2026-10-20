@@ -1,55 +1,109 @@
 ---
-sidebar_position: 6
-title: Settings and trust
-description: Where CrocApp's settings live, why you might run your own relay, and what the trust badge tells you.
+sidebar_position: 5
+title: Settings
+description: Every CrocApp setting in the order the app lists them, with defaults, what each one affects and whether the other device has to match.
 ---
 
-# Settings and trust
+# Settings
 
-![CrocApp Settings on macOS showing the receive folder and the relay address fields](/img/screenshots/mac/settings-light.png#gh-light-mode-only)![CrocApp Settings on macOS showing the receive folder and the relay address fields](/img/screenshots/mac/settings-dark.png#gh-dark-mode-only)
+![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-light.webp#gh-light-mode-only)![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-dark.webp#gh-dark-mode-only)
 
-## Where settings live
+On a Mac, open Settings with ⌘, and use the **General** and **Advanced** tabs. On iOS, tap the gear on the home screen. **Advanced** is a row at the bottom of that screen.
 
-On macOS, settings are in the Settings scene (⌘,), with a **Receive** section (destination folder, plus a **Show in Finder** button) above the [power options](power-options.md). On iOS, the settings screen (reached from the home toolbar) holds the power options; the receive destination folder is changed from the **Receive** screen itself instead.
+Settings stay on the device. There is no sync and no account. Defaults suit most people.
 
-Settings persist locally on the device. There is no sync and no account to sign into.
+## Receive and Menu bar (Mac)
 
-## Custom relay
+The **Receive** section shows **Save Received Files To**, with **Change…**, **Reset** and **Show in Finder**. On iOS, change the destination from the **Receive** screen instead.
 
-By default, CrocApp uses croc's public relay. You can point it at a relay you run yourself instead, under the [Relay power option](power-options.md). Reasons to run your own:
+The **Menu bar** section has **Show in Menu Bar** (on by default) and **Open at Login** (off by default). **Open at Login** follows what macOS reports, so a change in System Settings > General > Login Items shows up here. If macOS needs your approval, an **Open Settings** button takes you to Login Items. See [Mac menu bar and keyboard shortcuts](menu-bar.md).
 
-- You want transfers to route through infrastructure you control rather than the shared public relay.
-- You are on a network where you would rather not depend on an external service.
+## Relay
 
-Running `croc relay` on a machine you control is enough; then enter its address (and password, if you set one) in CrocApp's relay fields.
+By default CrocApp uses croc's public relay pool, the same one the croc command line uses. **Address** and **IPv6 Address** show "Public relay pool" when empty, and **Password** shows "Default".
 
-## Link server
+To use your own relay, run `croc relay` on a machine you control and enter its address, and its password if you set one. The other device must use the same relay. The app cannot run a relay itself. Reasons to run your own: your transfers route through infrastructure you control, or you would rather not depend on an external service.
 
-The **Send as Link** section holds the **Server** field for [Send as link](stored-transfers.md#the-link-server-setting). It defaults to `https://getcroc.com`, which is run by croc's author, not by CrocApp, and it accepts an `https` address (or `http` on localhost) with nothing after the host. A **Reset** button restores the default. The relay and **Connection** settings do not apply to a link send.
+## Send as link
+
+**Link Server** holds the server for [Send as link](send-as-link.md). The default is `https://getcroc.com`, run by croc's author, not by CrocApp. **Reset to https://getcroc.com** appears once you change it.
+
+The address is checked as you type. It must use `https` (plain `http` is allowed only for `localhost`), and it can have nothing after the host name: no path, query or fragment. The server must speak croc's stored-transfer protocol.
 
 ## Connection
 
-The **Connection** picker under the [power options](power-options.md) chooses how a send carries large files. **Automatic** (the default) can also use a direct path between the devices for a send of 128 MiB or more, set up through `tailcat.dev`. A send set to **Relay Only** never contacts those servers; a receive follows the sender's choice. The data is end-to-end encrypted either way.
+**Connection** chooses how a send carries large files.
+
+- **Automatic** (the default): a send of 128 MiB or more also tries a direct connection between the two devices, set up through `tailcat.dev`. That path uses its own relays (`*.ipn.dev`) when the devices cannot reach each other. It starts next to croc's relay, and whichever connects first carries the transfer. Smaller sends never start it.
+- **Relay Only**: a send never contacts `tailcat.dev` or the `*.ipn.dev` servers.
+
+The data is end-to-end encrypted on every path. Only the sender's choice applies. A receive follows whatever the sender uses, so the picker has no effect when you receive, and a receive from a sender on Automatic can use those servers. The picker is disabled while **Local Network Only** is on.
+
+## Transfer
+
+- **Local Network Only**: transfers never use a relay on the internet. If a direct local connection cannot be made, the transfer fails instead of falling back.
+- **Disable Compression**: sends file data uncompressed.
+- **Zip Folders Before Sending**: packs a folder into one archive before sending.
+
+## Exclude from sends
+
+Type patterns in **Patterns, one per line** to skip matching files when you send a folder. **Respect .gitignore** also skips whatever your `.gitignore` would.
+
+## Confirmation
+
+- **Confirm on Both Sides**: the sender also approves each transfer, through the prompt **The other device is connected**, on top of the other device's accept step. It overrides **Auto-Accept Transfers**.
+- **Auto-Accept Transfers**: off by default. When on, files from anyone who has your code are saved without a preview. Turn it on only for senders you fully trust. **When a File Already Exists** then decides between **Keep Both** (the default) and **Replace**. Unsafe file names still cancel the transfer.
 
 ## Advanced
 
-Proxies, ports, the encryption curve and similar options are under **Advanced**; see [Advanced settings](advanced-settings.md). The two proxy addresses can contain a password, so they are kept in the Keychain.
+![CrocApp Settings on macOS showing the Advanced tab with Curve, File Hash and the proxy fields](../../screenshots/mac/settings-advanced-light.webp#gh-light-mode-only)![CrocApp Settings on macOS showing the Advanced tab with Curve, File Hash and the proxy fields](../../screenshots/mac/settings-advanced-dark.webp#gh-dark-mode-only)
 
-## Menu bar (macOS)
+**Advanced** holds croc options most people never need. Every default is croc's own. Each field checks what you type and shows a message under it. If a saved value is not usable, a transfer fails with "An Advanced setting can't be used" instead of falling back to something else. **Reset to Defaults** at the bottom puts every setting back after a confirmation, and removes the saved proxies.
 
-The **Menu Bar** section of Settings has **Show in Menu Bar** and **Open at Login**; see [Menu bar](menu-bar.md#settings).
+| Setting | Default | Affects | Does the other device have to match? |
+|---|---|---|---|
+| Curve | P-256 | Receiving | No: the sender uses the receiver's choice |
+| File Hash | xxHash | Sending | No: the receiver uses the sender's choice |
+| SOCKS5 Proxy | None | This device | No |
+| HTTP Proxy | None | This device | No |
+| Built-in DNS Resolver | Off | This device | No |
+| Multicast Address (Mac only) | `239.255.255.250` | Both devices | Yes, to find each other on the local network |
+| Sender IP | None | Receiving | No, but it must be the sender's address and base port |
+| Send Speed Limit | No limit | Sending | No |
+| Base Port | 9009 | Sending | Only if the other device connects by sender IP |
+| Parallel Connections | 4 | Sending | No |
+| Multiplexing | On | Sending | No: the receiver follows |
+
+**Security.** **Curve** is P-256, P-384, P-521, SIEC or Ed25519. **File Hash** is xxHash, imohash, MD5 or HighwayHash.
+
+**Network.**
+
+- **SOCKS5 Proxy** and **HTTP Proxy** send this device's connections through a proxy. Enter `host:port` or an address such as `socks5://user:password@host:1080` (SOCKS5 takes `socks5://` or `socks5h://`, HTTP takes `http://` or `https://`). If both are set, SOCKS5 wins. Connections to your local network skip the proxy. They also apply to [Send as link](send-as-link.md). A proxy address can contain a password, so CrocApp keeps both in the Keychain, never in the settings file or an error message.
+- **Built-in DNS Resolver** looks up relay names with croc's own resolver instead of the system's.
+- **Multicast Address** is the group croc uses to find devices on the local network. It must be an IPv4 multicast address, `224.0.0.0` to `239.255.255.255`. iOS needs an Apple entitlement for this that CrocApp does not have, so iOS always uses the default.
+- **Sender IP** is for receiving. Enter the sender's address and port, such as `192.168.1.20:9009` or `[fe80::1]:9009`, and CrocApp connects straight to it, skipping relays and discovery. If nothing answers, the receive fails at once. It does not fall back to a relay.
+
+**Performance.**
+
+- **Send Speed Limit** caps this device's sending speed in bytes per second: digits with an optional `k`, `m` or `g`, such as `500k` or `2m`.
+- **Base Port** and **Parallel Connections** set the ports the sender listens on: the base port, then one more per connection. With the defaults that is 9009 to 9013, and the last port must stay at or below 65535. They matter when the other device connects by sender IP, or when something else on your device uses those ports.
+- **Multiplexing** off sends over one data connection.
 
 ## The trust badge
 
-While CrocApp is waiting, confirming or transferring, CrocApp shows a trust badge: an **End-to-end encrypted** label plus a line describing the relay path actually in use for that transfer:
+Waiting, confirming and transferring screens, and the home screen, show **End-to-end encrypted** with one line naming the route you configured:
 
 - "Local network only: nothing leaves your network"
 - "Via custom relay `<address>`, which sees only encrypted data"
 - "Via the public croc relay, which sees only encrypted data"
-- "Straight to the sender, no relay in between" (a receive with a [sender IP](advanced-settings.md#network) set)
+- "Straight to the sender, no relay in between" (a receive with **Sender IP** set)
 
-The badge is captured when the transfer starts, so changing settings mid-transfer cannot make it describe a different path.
+The badge reads your settings. It does not report which path carried the data. A transfer that croc moved over the local network, or over the direct connection under **Automatic**, can still say "Via the public croc relay". The statement that the server sees only encrypted data holds on every path.
+
+## About
+
+**About** shows the app version and links to the privacy policy and support page.
 
 ## What is stored
 
-Settings (relay address, relay password, connection, link server, local-only, compression, zip, exclude patterns, gitignore, both-sides confirm, auto-accept, and the Advanced options) are stored locally on the device. The relay password and the two proxy addresses are in the Keychain. No settings, transfer content or code phrases are sent anywhere except as part of a transfer you start.
+Settings are stored on the device. The relay password, the two proxies and Send as link receipts are in the Keychain. Nothing in Settings, no transfer content and no code phrase is sent anywhere except as part of a transfer you start. See [Uninstall and data](../uninstall.md) for where it all lives.
