@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
     <title>Support | CrocApp</title>
     <meta
       name="description"
@@ -11,26 +12,39 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://crocapp.dev/support/" />
 
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CrocApp" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://crocapp.dev/support/" />
+    <meta property="og:title" content="Support | CrocApp" />
+    <meta property="og:description" content="Get help with CrocApp: the documentation, the issue tracker, community discussions, and how to report a security problem privately." />
+    <meta property="og:image" content="https://crocapp.dev/assets/img/og.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The CrocApp wordmark and mascot beside the headline Send files with a code phrase, with the line Encrypted end-to-end and the address crocapp.dev." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Support | CrocApp" />
+    <meta name="twitter:description" content="Get help with CrocApp: the documentation, the issue tracker, community discussions, and how to report a security problem privately." />
+    <meta name="twitter:image" content="https://crocapp.dev/assets/img/og.jpg" />
+    <meta name="twitter:image:alt" content="The CrocApp wordmark and mascot beside the headline Send files with a code phrase, with the line Encrypted end-to-end and the address crocapp.dev." />
+
     <link rel="icon" href="/assets/img/favicon/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon/favicon-96x96.png" />
     <link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/assets/img/favicon/site.webmanifest" />
 
     <!-- --bg-base light and dark as literals: a <meta> attribute cannot read a
          custom property. Keep in sync with design/colors.md and index.html. -->
     <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
+    <!-- Synchronous on purpose: it pins a stored theme before the stylesheet paints. -->
+    <script src="/theme-init.js"></script>
+
     <link rel="stylesheet" href="/tokens.css" />
     <link rel="stylesheet" href="/styles.css" />
 
-    <!-- Runs before first paint so a stored preference cannot flash. This is the
-         page's only script: there is no toggle here, so nothing else is needed. -->
-    <script>
-      try {
-        var t = localStorage.getItem("theme");
-        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
-      } catch (e) {}
-    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to Content</a>
@@ -142,7 +156,7 @@
         <nav class="footer__links t-footnote" aria-label="Footer">
           <a href="/">Home</a>
           <a href="/docs/">Documentation</a>
-          <a href="/support/" aria-current="page">Help and Contact</a>
+          <a href="/support/" aria-current="page">Support</a>
           <a href="/privacy/">Privacy</a>
           <a href="https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md" target="_blank" rel="noopener">
             Security Policy

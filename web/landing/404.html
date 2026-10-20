@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
     <title>Page not found | CrocApp</title>
     <meta name="description" content="That page is not here. Links back to crocapp.dev and the CrocApp documentation." />
     <!-- A 404 is served at whatever path the visitor asked for, so it must not
@@ -13,23 +14,19 @@
     <link rel="icon" href="/assets/img/favicon/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon/favicon-96x96.png" />
     <link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/assets/img/favicon/site.webmanifest" />
 
     <!-- --bg-base light and dark as literals: a <meta> attribute cannot read a
          custom property. Keep in sync with design/colors.md and index.html. -->
     <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
+    <!-- Synchronous on purpose: it pins a stored theme before the stylesheet paints. -->
+    <script src="/theme-init.js"></script>
+
     <link rel="stylesheet" href="/tokens.css" />
     <link rel="stylesheet" href="/styles.css" />
 
-    <!-- Runs before first paint so a stored preference cannot flash. This is the
-         page's only script: there is no toggle here, so nothing else is needed. -->
-    <script>
-      try {
-        var t = localStorage.getItem("theme");
-        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
-      } catch (e) {}
-    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to Content</a>
