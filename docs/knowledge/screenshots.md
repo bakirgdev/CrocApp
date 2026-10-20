@@ -26,7 +26,12 @@ scripts/capture-screenshots.sh --copy-web      # refresh the web copies, no disp
 - It creates simulators named "CrocApp Shots <device>" (iPhone and iPad for the main set, then iPhone 17 Pro and iPhone Duo one at a time for the store-only classes, each deleted as soon as its pass ends), starts a croc relay and, for `stored-link`, a store server, and removes all of them on exit.
 - Needs Go (the store server comes from `crocmobile/cmd/croctest`) and a v11 `croc` (default `/opt/homebrew/bin/croc`, override with `CROC`; crocmobile embeds v11.5.4).
 
-After a run, refresh the web copies with `--copy-web`. It overwrites only the files already present under `web/docs/static/img/screenshots/` and `web/landing/assets/img/screenshots/` (same `mac/`, `iphone/`, `ipad/` subfolders); to publish a new shot, copy its file there once.
+After a run, refresh the web copies with `--copy-web`. The pages use WebP, not PNG, so it rebuilds with `cwebp` (`brew install webp`; the script fails if it is missing) every `.webp` already present under `web/docs/screenshots/` and `web/landing/assets/img/screenshots/`:
+
+- Each file's source is `assets/screenshots/` plus the same relative path with `.png`. A `.webp` with no matching source fails the run.
+- Each file keeps its current pixel size (read with `sips`), so the landing hero stays 840x1050 (Mac) and 660x1434 (iPhone), matching the `width` and `height` attributes in `index.html`. A source whose aspect ratio no longer matches the file fails the run: resize the file once by hand with the same `cwebp` flags and the new size, update the page's attributes, then re-run.
+- Flags are `-q 85 -m 6`, with `-resize W H` only when the size differs from the source.
+- To publish a new shot, run `cwebp` on its source into the web folder once, at the size the page needs; later runs keep it fresh.
 
 ## The screens
 
@@ -116,7 +121,7 @@ The one fixed wait left is `settle` (one second): a view needs a frame or two to
 - The relay runs with `--debug` because its "room has first peer" line is the signal that a sender is registered; the receiver must join after that, or the PAKE handshake is corrupted.
 - This leans on croc v11's log wording, so the script refuses another major version.
 
-**Codes are random.** `new_code` builds `NNNN-word-word-word` from `/dev/urandom` with three distinct words. The relay derives the room from the first four characters of this legacy shape (`what-is-croc.md`, "Rendezvous"), so the four digits are unique within a run.
+**Codes are random.** `new_code` builds the app's current shape, `word-word-word`, from `/dev/urandom` with three distinct words. The relay derives the room from the first word of a three-word code (`what-is-croc.md`, "Rendezvous"), so the first word is unique within a run.
 
 **Mid-transfer shots.** Localhost moves 150 MB in under a second, so nothing is photographable unthrottled. The sender is throttled (`--throttle 6m` on the app, `--throttleUpload 6m` on the CLI), and at 40% the script sends `SIGSTOP` to the peer. Both ends then stand still, so the bar and the rate stay as they are. `sending` has the app as sender and a CLI receiver; `receiving` is the mirror.
 
@@ -150,14 +155,18 @@ The script is host-independent this way.
 For any future screenshot work:
 
 - **Real files, generated at run time, never committed.** `scripts/screenshots/payload.swift` renders a three-page PDF (`Quarterly-Report.pdf`) and a JPEG (`Ridge-Sunrise.jpg`); the Markdown note is a heredoc; `Design-Assets.zip` comes from `ditto`. File rows show a symbol by file type, so real extensions matter more than real content. Large transfer payloads (`Project-Archive.zip`, `Field-Recordings.zip`, 150 MB) are random bytes under a believable name, because only the name is ever shown.
-- **Neutral, pleasant names.** No personal names, no real people or companies, no real hosts beyond the project's own (`crocapp.dev` for the stored-link record). Names read like work files.
+- **Neutral, pleasant names.** No personal names, no real people or companies, no real hosts beyond the project's own (`getcroc.com`, the default link server, for the stored-link record). Names read like work files.
 - **History is a showcase list** (`seedHistory` in `AutoVerify.swift`): sends and receives, completed, declined, failed and cancelled, a text snippet, a stored link with its expiry, file counts of one to four, ages from twelve minutes to five weeks. Names match the payload names where a payload exists, and sizes match the real payloads, so the incoming preview and the history agree.
 - **The code on screen is random per run** and never a real one.
-- **What is on screen must be true of a default setup.** The relay is local, but the trust UI is pinned to the default relay (`--shown-relay default`) so the browser-receive note and the pill read as a normal install. The `stored-link` shot uploads to a local store server but passes `--shown-link-origin https://crocapp.dev`, so the link and its QR code read `https://crocapp.dev/s/...#v1...`.
+- **What is on screen must be true of a default setup.** The relay is local, but the trust UI is pinned to the default relay (`--shown-relay default`) so the browser-receive note and the pill read as a normal install. The `stored-link` shot uploads to a local store server but passes `--shown-link-origin https://getcroc.com` with the app's default one-day lifetime, so the link and its QR code read `https://getcroc.com/s/...#v1...`, as a default install produces (`StoredSendOptions().server`).
 - **Same states on every device**, so a screen name means one thing everywhere. Add a screen by adding its name to `SCREENS`, a case to `capture_screen`, and, for macOS, its window title to `mac_titles`.
 - **Keep shots free of transient UI**: no "Starting...", no spinners that mean "slow", no permission alerts, no focus carets. Wait on a harness signal, not a delay.
 
 ## Known soft spots
+
+- **Mac Settings (General) is scrolled to its end.** The form is taller than the window and the window cannot be stretched, so `mac_settings` scrolls it (`window scroll`) and the shot shows Transfer through About, with the top sliding under the toolbar. The earlier sections (Receive, Menu bar, Relay, Send as link, Connection) are not in this shot.
+- **Mac light shots have no window edge.** Window captures are made without the system shadow (`screencapture -o`), in both themes. A light window on a white page looks unframed; a page that needs an edge adds it in CSS.
+- **`iphone/onboarding` is a real sheet.** On iOS the onboarding is a `.sheet`, so the light shot shows the dimmed home screen above and around it. Dark shows the same over black.
 
 - **`ipad/` is the phone layout stretched.** See `../known-issues.md`, "Design system".
 - **No `iphone-duo-inner`, and `iphone-duo-outer` is not upload-ready.** See "iPhone Duo" above. The outer shots lay out sideways and clip the bottom of taller screens (`02-send-code-dark` loses "Waiting for the receiver…"). Recapture before an upload that needs them, once a runtime or Simulator.app can drive the Duo properly.
@@ -166,22 +175,24 @@ For any future screenshot work:
 
 ## Where they are used
 
-Seven pairs are referenced; the rest and the whole `app-store/` set are captured and unused by the web (`../known-issues.md`, "Docs site").
+Ten pairs are referenced by the web or the README; the rest and the whole `app-store/` set are captured and unused by the web (`../known-issues.md`, "Docs site").
 
 - Root `README.md`: `mac/send-code`, `iphone/receive-incoming`, `mac/settings`, via `<picture>` elements that swap on the viewer's GitHub theme.
-- Docs site: copies under `web/docs/static/img/screenshots/`, one pair per page:
+- Docs site: WebP copies under `web/docs/screenshots/` (outside `static/`, so Docusaurus ships only the hashed copy), referenced by relative path, one pair per page:
 
   | Pair | Page |
   |---|---|
+  | `iphone/onboarding` | index |
   | `mac/send-code` | first-transfer |
   | `mac/send-files` | sending |
   | `iphone/receive-incoming` | receiving |
-  | `mac/settings` | settings-and-trust |
-  | `iphone/settings` | power-options |
+  | `mac/receive-conflict` | receiving |
+  | `mac/stored-link` | send-as-link |
+  | `mac/settings` | settings |
+  | `mac/settings-advanced` | settings |
   | `mac/history` | history |
-  | `iphone/onboarding` | index |
 
   `.md` there is CommonMark (`docusaurus.config.ts` sets `markdown.format: 'detect'`), so `<ThemedImage>` is unavailable. The pages use GitHub's `#gh-light-mode-only` and `#gh-dark-mode-only` fragments, and `src/css/custom.css` supplies the rule that makes them mean anything. That rule follows Docusaurus's theme toggle, not the OS setting.
-- Landing hero: `web/landing/assets/img/screenshots/mac/send-code-*`, two `<img>` elements swapped by CSS. Not a `<picture>` with `prefers-color-scheme`, because the header's toggle pins `[data-theme]` and a media query would ignore it.
+- Landing hero: WebP copies of `mac/send-code-*` and `iphone/send-code-*` under `web/landing/assets/img/screenshots/`, two `<img>` elements per device swapped by CSS. Not a `<picture>` with `prefers-color-scheme`, because the header's toggle pins `[data-theme]` and a media query would ignore it.
 
 A copy is a copy: changing a shot means re-running the script and `scripts/capture-screenshots.sh --copy-web`.

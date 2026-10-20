@@ -33,7 +33,7 @@
 #   DEVICE          mac, iphone, ipad, iphone63 or duo: only those devices
 #   SCREEN          only those screens, both appearances, plus the store file
 #   --list          print the manifest and exit
-#   --copy-web      refresh the web copies from assets/screenshots/ and exit
+#   --copy-web      rebuild the web WebP copies from assets/screenshots/ and exit (needs cwebp)
 # Environment: CROC (default: the Homebrew croc, v11 like crocmobile),
 # PHONE_TYPE, PHONE63_TYPE, PAD_TYPE and DUO_TYPE (simulator device type ids),
 # DUO_OUTER_DISPLAY (simctl display id of the Duo's outer screen), RUNTIME (simulator
@@ -125,15 +125,33 @@ case "${1:-}" in
     exit 0
     ;;
   --copy-web)
-    # Refreshes the files a web surface already uses, keeping their device
-    # subfolder; a new shot goes in by adding its file to the folder first.
-    for dir in web/docs/static/img/screenshots web/landing/assets/img/screenshots; do
+    # Rebuilds the WebP files a web surface already uses from their PNG sources
+    # (same relative path under assets/screenshots/), at each file's current
+    # pixel size. A new shot goes in by running cwebp on it once, into the web
+    # folder, at the size its page needs.
+    command -v cwebp > /dev/null || fail "cwebp is missing (brew install webp)"
+    for dir in web/docs/screenshots web/landing/assets/img/screenshots; do
       n=0
       while IFS= read -r f; do
-        cp "$OUT/${f#"$dir"/}" "$f"
+        rel=${f#"$dir"/}
+        src="$OUT/${rel%.webp}.png"
+        [ -f "$src" ] || fail "$f has no source $src"
+        w=$(sips -g pixelWidth "$f" | awk '/pixelWidth/ {print $2}')
+        h=$(sips -g pixelHeight "$f" | awk '/pixelHeight/ {print $2}')
+        sw=$(sips -g pixelWidth "$src" | awk '/pixelWidth/ {print $2}')
+        sh=$(sips -g pixelHeight "$src" | awk '/pixelHeight/ {print $2}')
+        # Cross-multiplied, so a one-pixel rounding difference still passes.
+        d=$((w * sh - h * sw))
+        [ "${d#-}" -le $((sw + sh)) ] \
+          || fail "$f is ${w}x${h} but $src is ${sw}x${sh}: the aspect ratio changed, resize the page's image by hand (see docs/knowledge/screenshots.md)"
+        if [ "$w" = "$sw" ] && [ "$h" = "$sh" ]; then
+          cwebp -quiet -q 85 -m 6 "$src" -o "$f" 2> /dev/null || fail "cwebp failed on $src"
+        else
+          cwebp -quiet -q 85 -m 6 -resize "$w" "$h" "$src" -o "$f" 2> /dev/null || fail "cwebp failed on $src"
+        fi
         n=$((n + 1))
-      done < <(find "$dir" -name '*.png')
-      echo "refreshed $n files in $dir"
+      done < <(find "$dir" -name '*.webp' | sort)
+      echo "rebuilt $n files in $dir"
     done
     exit 0
     ;;
@@ -256,26 +274,33 @@ rand_int() { od -An -N4 -tu4 /dev/urandom | tr -d ' '; }
 rand_hex() { od -An -N12 -tx1 /dev/urandom | tr -d ' \n'; }
 
 WORDS=(amber willow signal copper lantern summit quiet meadow anchor violet harbor drift
-  golden cedar morrow silver thicket crimson pillar indigo marsh russet canyon)
+  golden cedar morrow silver thicket crimson pillar indigo marsh russet canyon bridge falcon
+  garden hollow island jasper kernel lagoon mosaic nectar orchard pebble quartz ribbon sparrow
+  timber umber velvet walnut yonder zephyr acorn basil clover dune ember fjord glacier heron
+  ivory juniper kettle lilac maple nutmeg olive prairie quill river saffron tundra uplands
+  vista wren xenon yarrow zenith)
 
-# Sets the variable named by $1 to a fresh code, NNNN-word-word-word. The relay
-# hashes a code's first 4 characters into a room name, so those must not repeat
-# within a run; a fresh relay per run covers the runs before this one.
+# Sets the variable named by $1 to a fresh code, word-word-word, the shape the
+# app generates. The relay hashes a three-word code's first word into a room
+# name, so that word must not repeat among recent codes (CODE_PREFIXES, cleared
+# once most of WORDS is used); a fresh relay per run covers the runs before this one.
 new_code() {                                        # new_code VAR
-  local prefix words="" i w
+  local first words="" i w
+  [ "$(wc -w <<< "$CODE_PREFIXES")" -lt $((${#WORDS[@]} - 8)) ] || CODE_PREFIXES=""
   while :; do
-    prefix=$((1000 + $(rand_int) % 9000))
-    in_list "$CODE_PREFIXES" "$prefix" || break
+    first=${WORDS[$(($(rand_int) % ${#WORDS[@]}))]}
+    in_list "$CODE_PREFIXES" "$first" || break
   done
-  CODE_PREFIXES="$CODE_PREFIXES$prefix "
-  for i in 1 2 3; do
+  CODE_PREFIXES="$CODE_PREFIXES$first "
+  words=$first
+  for i in 1 2; do
     while :; do
       w=${WORDS[$(($(rand_int) % ${#WORDS[@]}))]}
-      case "$words-" in *"-$w-"*) ;; *) break ;; esac
+      case "-$words-" in *"-$w-"*) ;; *) break ;; esac
     done
     words="$words-$w"
   done
-  printf -v "$1" '%s' "$prefix$words"
+  printf -v "$1" '%s' "$words"
 }
 
 port_up() { nc -z 127.0.0.1 "$1" > /dev/null 2>&1; }
@@ -604,6 +629,10 @@ mac_settings() {                                    # mac_settings TAB
   done
   osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID) to click button \"$1\" of toolbar 1 of window 1" >/dev/null
   poll 5 mac_window_shown "$(mac_titles)" || die "the Settings window never showed the $1 tab"
+  # The General form is taller than the window and cannot be stretched, so
+  # scroll it to its end: the bottom then closes on a whole caption, and the
+  # top slides under the toolbar like any scrolled form.
+  [ "$1" != General ] || "$TMP/bin/window" scroll CrocApp
   settle
   snap
   quit_app
@@ -681,7 +710,7 @@ capture_screen() {
     stored-link)
       start_store_server
       launch --auto-store-send "$DOCS/shots/Quarterly-Report.pdf" --store-server "$STORE_URL" \
-        --shown-link-origin https://crocapp.dev --store-downloads 3 --screen send
+        --shown-link-origin https://getcroc.com --store-downloads 3 --screen send
       await_docs_file verify-store-link.txt 60
       settle
       snap
@@ -690,7 +719,7 @@ capture_screen() {
 }
 
 # A local croc store server, as in verify-app-mac.sh, so "Send as link" never
-# uploads to a real server. The link on screen is rewritten to crocapp.dev.
+# uploads to a real server. The link on screen is rewritten to the default link server, getcroc.com.
 start_store_server() {
   [ -z "$STORE_URL" ] || return 0
   ( cd crocmobile && go build -o "$TMP/bin/croctest" ./cmd/croctest )

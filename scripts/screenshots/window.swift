@@ -1,6 +1,8 @@
 // Window and permission queries the shell has no tool for.
 //   window list OWNER   one line per on-screen window of the app named OWNER:
 //                       id, layer, title, width, height (tab separated)
+//   window scroll OWNER scrolls the content of OWNER's front window to its end
+//                       (moves the pointer over it, then posts wheel events)
 //   window preflight    exit 1 and name what is missing unless Screen Recording
 //                       and Accessibility are granted to the calling terminal
 //
@@ -32,6 +34,27 @@ case "list" where args.count > 2:
         let height = (bounds?["Height"] as? NSNumber)?.intValue ?? 0
         print("\(number)\t\(layer)\t\(name)\t\(width)\t\(height)")
     }
+case "scroll" where args.count > 2:
+    guard
+        let list = CGWindowListCopyWindowInfo(
+            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]],
+        let window = list.first(where: {
+            $0[kCGWindowOwnerName as String] as? String == args[2]
+                && $0[kCGWindowLayer as String] as? Int == 0
+        }),
+        let bounds = window[kCGWindowBounds as String] as? [String: Any],
+        let x = (bounds["X"] as? NSNumber)?.doubleValue,
+        let y = (bounds["Y"] as? NSNumber)?.doubleValue,
+        let w = (bounds["Width"] as? NSNumber)?.doubleValue,
+        let h = (bounds["Height"] as? NSNumber)?.doubleValue
+    else { fail("no window of \(args[2]) to scroll") }
+    CGWarpMouseCursorPosition(CGPoint(x: x + w / 2, y: y + h / 2))
+    for _ in 0..<10 {
+        CGEvent(
+            scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 1, wheel1: -400, wheel2: 0,
+            wheel3: 0)?.post(tap: .cghidEventTap)
+        usleep(50_000)
+    }
 case "preflight":
     var missing: [String] = []
     if !CGPreflightScreenCaptureAccess() { missing.append("Screen Recording") }
@@ -40,5 +63,5 @@ case "preflight":
         fail("missing: \(missing.joined(separator: ", "))")
     }
 default:
-    fail("usage: window list OWNER | window preflight")
+    fail("usage: window list OWNER | window scroll OWNER | window preflight")
 }
