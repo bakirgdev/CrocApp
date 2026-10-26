@@ -29,7 +29,7 @@ final class OutputFolderStore {
         // This is a static computed property (called with no instance in
         // scope), so there's nowhere to hang a bookmarkWasReset-style flag --
         // fall back to a directory that is actually guaranteed to exist
-        // instead, rather than handing the engine a path that startReceive
+        // instead, rather than handing the engine a path that a receive
         // would then fail against opaquely.
         var isDirectory: ObjCBool = false
         let created = FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDirectory)

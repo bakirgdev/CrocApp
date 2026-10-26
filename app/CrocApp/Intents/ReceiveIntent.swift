@@ -31,11 +31,12 @@ struct ReceiveIntent: AppIntent {
         AppRouter.shared.openReceive()
         switch link {
         case .code(let code):
-            controller.startReceive(
-                code: code, into: folder, folderIsScoped: outputFolder.isUserSelected)
+            controller.start(
+                .receive(code: code, folder: folder, folderIsScoped: outputFolder.isUserSelected))
         case .stored(let url):
-            controller.startStoreReceive(
-                link: url, into: folder, folderIsScoped: outputFolder.isUserSelected)
+            controller.start(
+                .storedReceive(
+                    link: url, folder: folder, folderIsScoped: outputFolder.isUserSelected))
         }
         let text = try await controller.awaitReceive()
         // The controller let go of a chosen folder when the transfer ended.

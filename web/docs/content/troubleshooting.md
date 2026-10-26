@@ -17,19 +17,19 @@ CrocApp tries the local network and the relay at once and uses whichever connect
 
 ## The receiver started first
 
-If the receiver joins before the sender has started, the receive fails with "The other device wasn't ready, or the connection was too slow. Start the send there first, then enter the code again." The sending device can say "The codes don't match." at the same moment. This hits custom codes, and the croc command line sending with a fixed code. Start the send again first, then the receive.
+If the receiver joins before the sender has started, the receive fails with "The other device wasn't ready" and "Start the send there first, or use a faster connection, then enter the code again." The sending device can say "The code phrases don't match" at the same moment. This hits custom codes, and the croc command line sending with a fixed code. Start the send again first, then the receive.
 
 ## No internet
 
-With no connection, a send with a generated code fails before a code appears, with "No public relay answered. Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network." Reconnect, or turn on **Local Network Only** in [Settings](guide/settings.md#transfer) when both devices share a network.
+With no connection, a send with a generated code fails before a code appears, with "No public relay answered". Reconnect and tap **Try Again**, or turn on **Local Network Only** in [Settings](guide/settings.md#transfer) when both devices share a network.
 
 If only croc's public relay is unreachable from your network, set a [custom relay](guide/settings.md#relay) you control, or use **Local Network Only**.
 
 ## The code is rejected, or Receive stays disabled
 
 - A code needs at least 6 characters. **Receive** stays disabled until it has them.
-- A wrong code fails at once with "The codes don't match."
-- "That code is already in use. Try a different code." means another transfer holds that custom code. Pick another.
+- A wrong code fails at once with "The code phrases don't match".
+- "That code is already in use" means another transfer holds that custom code. Pick another.
 - Codes that start with the same word can land in the same relay room. Generated codes rarely collide.
 
 ## A link or QR code does not open CrocApp
@@ -42,7 +42,7 @@ If only croc's public relay is unreachable from your network, set a [custom rela
 
 ## The other device uses an older croc
 
-The other device needs croc 11 or newer. When both sides reach the same relay, CrocApp says "The other device runs an older croc. Both sides need croc 11 or newer." Often it does not: with a generated code, or when the two use different relays, the app keeps waiting. If a transfer with a croc 10 user never connects, ask them to upgrade.
+The other device needs croc 11 or newer. When both sides reach the same relay, CrocApp says "The other device's croc is outdated". Often it does not: with a generated code, or when the two use different relays, the app keeps waiting. If a transfer with a croc 10 user never connects, ask them to upgrade.
 
 ## Local network access is off
 
@@ -56,7 +56,7 @@ On iOS, scanning needs camera access. If you refused it, CrocApp shows "Camera a
 
 On iOS, a transfer keeps running when you leave the app and shows a Live Activity, but iOS can stop it, more likely for a transfer with little progress. Keep CrocApp in the foreground for a transfer you do not want interrupted.
 
-To resume, start the same transfer again and choose **Replace** for the partly received files. **Keep Both** saves a new copy instead of resuming.
+To resume, tap **Try Again** or start the same transfer again, and choose **Replace** for the partly received files. **Keep Both** saves a new copy instead of resuming.
 
 ## Received files are not where I expect
 
@@ -66,11 +66,11 @@ To resume, start the same transfer again and choose **Replace** for the partly r
 
 ## Auto-accept and a sender who confirms
 
-With **Auto-Accept Transfers** on and a sender using croc's `--ask` option, the transfer can be declined, and CrocApp says the other device declined. Turn off auto-accept to avoid it.
+With **Auto-Accept Transfers** on and a sender using croc's `--ask` option, the transfer fails, and CrocApp says "Auto-accept can't answer this sender". Tap **Open Settings** and turn off **Auto-Accept Transfers**, or ask the sender to send without `--ask`.
 
 ## A cancelled transfer does not stop
 
-If CrocApp says "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again.", the transfer engine kept running after you cancelled, and CrocApp cannot start another transfer until it restarts. Quit CrocApp and open it again.
+If CrocApp says "The cancelled transfer didn't stop", the transfer engine kept running after you cancelled, and CrocApp cannot start another transfer until it restarts. Quit CrocApp and open it again.
 
 ## Still stuck
 

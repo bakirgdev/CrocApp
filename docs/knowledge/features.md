@@ -47,6 +47,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Share extension (send from any app) | iOS and iPadOS | shipped |
 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` (universal link), `https://getcroc.com/?code=`, and `croc://<code>` (QR payload of older CrocApp builds). One parser, `TransferLink`. Opening a link prefills Receive and never connects. | all | shipped |
 | Trust UI: encryption badge, "How it works", active-relay indicator | all | shipped |
+| Failure screen: what happened, what to do, and **Try Again** or **Open Settings** when one can help | all | shipped |
 | Waiting-screen QR and **Share Link** encode `https://crocapp.dev/r/#<code>` (see below) | all | shipped |
 | Send as Link (stored transfers; see below) | all | shipped |
 | **Haptics** setting (on by default): a short tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer | iPhone only | shipped |

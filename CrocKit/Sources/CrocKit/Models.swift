@@ -249,8 +249,8 @@ public struct EngineFailure: Error, Equatable, Sendable {
     }
 }
 
-public struct FileList: Codable, Sendable {
-    public struct Entry: Codable, Sendable {
+public struct FileList: Codable, Sendable, Equatable {
+    public struct Entry: Codable, Sendable, Equatable {
         public let name: String
         public let size: Int64
     }
@@ -259,7 +259,7 @@ public struct FileList: Codable, Sendable {
     public let totalSize: Int64
 }
 
-public struct TransferProgress: Codable, Sendable {
+public struct TransferProgress: Codable, Sendable, Equatable {
     public let currentFile: Int
     public let totalFiles: Int
     public let fileName: String
@@ -270,7 +270,7 @@ public struct TransferProgress: Codable, Sendable {
     public let step: String
 }
 
-public struct Summary: Codable, Sendable {
+public struct Summary: Codable, Sendable, Equatable {
     public let success: Bool
     public let files: Int
     public let totalSize: Int64

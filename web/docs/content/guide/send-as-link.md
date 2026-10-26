@@ -59,7 +59,7 @@ In **Receive**, paste the link, or on iOS tap **Scan QR Code** and scan the QR c
 
 CrocApp then fetches the file list for you to review. Choose **Accept**, or **Keep Both** or **Replace** if a name is taken, as in [Receive](receiving.md#name-conflicts). Auto-accept never applies to a link.
 
-A link that has expired, been revoked or run out of downloads says so: "This link has expired, was revoked, or has no downloads left."
+A link that has expired, been revoked or run out of downloads says so: "This link no longer works". Ask the sender for a new link.
 
 The phone's Camera app does not open CrocApp for these links, because they point at the link server. A camera scan opens the link server's page in the browser. Use **Scan QR Code** inside CrocApp, or paste the link.
 
@@ -97,4 +97,4 @@ For everything CrocApp can contact, see [Security and privacy](../security-and-p
 
 ## If iOS interrupts a send
 
-A link send keeps going when you leave the app, but iOS may stop it. CrocApp then says iOS stopped it in the background. A link send cannot resume, so trying again starts over and makes a new link. If iOS stops a receive from a link, open the link again. Keep the app in the foreground for a large send if you can.
+A link send keeps going when you leave the app, but iOS may stop it. CrocApp then says iOS stopped it in the background. A link send cannot resume, so **Try Again** starts over and makes a new link. If iOS stops a receive from a link, **Try Again** opens the link again. Keep the app in the foreground for a large send if you can.

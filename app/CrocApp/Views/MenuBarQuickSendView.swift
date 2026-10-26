@@ -53,8 +53,8 @@ struct MenuBarQuickSendView: View {
                 Text("Open CrocApp to accept or decline them.")
                     .font(.callout).foregroundStyle(Color.textSecondary)
             }
-        case .transferring(let p):
-            transferring(p)
+        case .transferring:
+            if let p = controller.progress { transferring(p) }
         case .done(let summary, let receivedText):
             VStack(spacing: Spacing.space3) {
                 Label(
@@ -74,9 +74,9 @@ struct MenuBarQuickSendView: View {
                     .buttonVariant(.secondary)
                 doneButton
             }
-        case .failed(let message):
+        case .failed(let failure):
             VStack(spacing: Spacing.space3) {
-                StatusBanner(kind: .error, title: message)
+                StatusBanner(kind: .error, title: failure.title, detail: failure.detail)
                 doneButton
             }
         }

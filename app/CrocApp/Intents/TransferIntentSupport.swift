@@ -47,7 +47,7 @@ extension TransferController {
     func awaitCode() async throws -> String {
         let outcome = await wait { () -> Result<String, TransferIntentError>? in
             if let code = currentCode { return .success(code) }
-            if case .failed(let message) = phase { return .failure(.failed(message)) }
+            if case .failed(let failure) = phase { return .failure(.failed(failure.text)) }
             return nil
         }
         return try settle(outcome)
@@ -67,7 +67,7 @@ extension TransferController {
         let outcome = await wait { () -> Result<String?, TransferIntentError>? in
             switch phase {
             case .done(_, let text): .success(text)
-            case .failed(let message): .failure(.failed(message))
+            case .failed(let failure): .failure(.failed(failure.text))
             default: nil
             }
         }

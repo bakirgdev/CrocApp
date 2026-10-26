@@ -41,9 +41,7 @@ struct ContentView: View {
         .animation(
             reduceMotion ? nil : Motion.easeOut(Motion.durationFast), value: isDropTargeted)
             #endif
-            .phoneHaptic(
-                trigger: TransferHaptic(controller.phase, endedByUser: controller.endedByUser)
-            ) { _, new in new?.feedback }
+            .phoneHaptic(trigger: TransferHaptic(controller.phase)) { _, new in new?.feedback }
             .task {
                 if AutoVerify.forcesOnboarding || (!onboardingSeen && !AutoVerify.isHarnessRun) {
                     showOnboarding = true
@@ -71,7 +69,7 @@ struct ContentView: View {
                 // instance's own `staged` cache). A transfer started
                 // elsewhere (e.g. AutoVerify's own short-lived ShareInbox for
                 // --auto-share-send) already consumed the manifest by the
-                // time it calls startSend, so if this instance's first-ever
+                // time it calls start, so if this instance's first-ever
                 // refresh() lands mid-transfer it has no cached `staged` to
                 // protect the batch with and deletes the file out from under
                 // croc mid-send. controller.isActive flips true synchronously
@@ -93,7 +91,7 @@ struct ContentView: View {
                         // this the transfer would run invisibly under
                         // HomeView. Mirrors AppDelegate's dock-drop routing.
                         router.path = [.send]
-                        controller.startSend(urls: urls, customCode: "")
+                        controller.start(.sendFiles(urls: urls, code: ""))
                     },
                     discard: {
                         shareInbox.consumeManifest()

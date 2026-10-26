@@ -5,7 +5,7 @@ import SwiftData
 
 /// One finished (or failed) transfer. Local only — never synced.
 /// Privacy: stores at most `maxNames` file names, a code *hint*
-/// (`TransferController.codeHint`; only the server host for a stored link),
+/// (`CodeHint`; only the server host for a stored link),
 /// and, for sends, bookmarks so history can re-stage the same files. Never
 /// file contents, never the full code phrase, never a stored link or token.
 /// Bookmarks are stored only for sends of at most `maxBookmarks` items and

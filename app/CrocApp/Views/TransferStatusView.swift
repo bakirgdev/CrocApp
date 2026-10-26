@@ -10,6 +10,10 @@ struct TransferStatusView: View {
     @Environment(TransferController.self) private var controller
     @Environment(LocalNetworkChecker.self) private var localNetwork
     @Environment(OutputFolderStore.self) private var outputFolder
+    @Environment(AppRouter.self) private var router
+    #if os(macOS)
+    @Environment(\.openSettings) private var openSettings
+    #endif
     @State private var showsSlowPhaseHint = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // components.md → StatusBlock/EmptyState: decorative glyph at 44, scaled.
@@ -116,14 +120,14 @@ struct TransferStatusView: View {
             waitingView(code: code)
         case .incoming(let list, let conflicts, let blocked):
             IncomingRequestView(list: list, conflicts: conflicts, blocked: blocked)
-        case .transferring(let progress):
-            transferringView(progress)
+        case .transferring:
+            if let progress = controller.progress { transferringView(progress) }
         case .done(let summary, let receivedText):
             doneView(summary, receivedText: receivedText)
         case .stored(let receipt):
             storedView(receipt)
-        case .failed(let message):
-            failedView(message)
+        case .failed(let failure):
+            failedView(failure)
         }
     }
 
@@ -181,8 +185,26 @@ struct TransferStatusView: View {
             title: "Local network access is off",
             detail: Self.localNetworkDeniedDetail,
             actionTitle: "Open Settings",
-            action: openLocalNetworkSettings
+            action: { open(.localNetworkAccess) }
         )
+    }
+
+    /// Opens where the fix lives (components.md → StatusBlock): CrocApp's own
+    /// Settings for one of our settings, the system's for a permission.
+    private func open(_ place: SettingsPlace) {
+        switch place {
+        case .localNetworkAccess:
+            openLocalNetworkSettings()
+        case .general, .advanced:
+            #if os(macOS)
+            router.settingsTab = place == .advanced ? .advanced : .general
+            openSettings()
+            #else
+            // Pushed on top, so Back returns to this result.
+            router.path.append(
+                contentsOf: place == .advanced ? [.settings, .advancedSettings] : [.settings])
+            #endif
+        }
     }
 
     private func openLocalNetworkSettings() {
@@ -482,13 +504,36 @@ struct TransferStatusView: View {
         }
     }
 
-    private func failedView(_ message: String) -> some View {
+    private func failedView(_ failure: TransferFailure) -> some View {
         VStack(spacing: Spacing.space5) {
-            StatusBlock(kind: .error, title: message)
-            Button("OK") { controller.reset() }
-                .buttonVariant(.prominent)
-                .controlSize(.large)
+            StatusBlock(kind: .error, title: failure.title, detail: failure.detail)
+            // components.md → StatusBlock: Done always, plus the one action
+            // that could help, if any.
+            VStack(spacing: Spacing.space3) {
+                switch failure.remedy {
+                case .tryAgain?:
+                    failureAction("Try Again") { controller.retry() }
+                    failureAction("Done", variant: .secondary) { controller.reset() }
+                case .openSettings(let place)?:
+                    failureAction("Open Settings") { open(place) }
+                    failureAction("Done", variant: .secondary) { controller.reset() }
+                case nil:
+                    failureAction("Done") { controller.reset() }
+                }
+            }
         }
+    }
+
+    /// A StatusBlock action: large and full width.
+    private func failureAction(
+        _ title: LocalizedStringKey, variant: ButtonVariant = .prominent,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title).frame(maxWidth: .infinity)
+        }
+        .buttonVariant(variant)
+        .controlSize(.large)
     }
 }
 

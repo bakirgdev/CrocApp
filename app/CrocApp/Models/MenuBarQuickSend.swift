@@ -24,7 +24,7 @@ final class MenuBarQuickSend {
         let files = urls.filter(\.isFileURL)
         guard !controller.isActive, !files.isEmpty else { return false }
         notice = nil
-        controller.startSend(urls: files, customCode: "")
+        controller.start(.sendFiles(urls: files, code: ""))
         return true
     }
 
@@ -37,7 +37,7 @@ final class MenuBarQuickSend {
             return false
         }
         notice = nil
-        controller.startSendText(text, customCode: "")
+        controller.start(.sendText(text: text, code: ""))
         return true
     }
 
