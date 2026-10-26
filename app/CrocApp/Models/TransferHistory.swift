@@ -91,13 +91,17 @@ final class HistoryStore {
             )
             // Corrupt store beats a launch crash: fall back to memory-only.
             let config = ModelConfiguration(isStoredInMemoryOnly: true)
-            // try! is deliberate, the only one in the app: this schema is
-            // fixed and ours, and an in-memory store has no failure mode a
-            // disk-backed one has (no corruption, no existing file) -- if
-            // this throws, the environment itself is broken (e.g. out of
-            // memory) and there is no fallback left that would leave the
-            // app in a working state anyway.
-            return try! ModelContainer(for: TransferRecord.self, configurations: config)
+            // Crashing here is deliberate: this schema is fixed and ours, and
+            // an in-memory store has no failure mode a disk-backed one has (no
+            // corruption, no existing file) -- if this throws, the environment
+            // itself is broken (e.g. out of memory) and there is no fallback
+            // left that would leave the app in a working state anyway. The
+            // message puts the error in the crash log.
+            do {
+                return try ModelContainer(for: TransferRecord.self, configurations: config)
+            } catch {
+                fatalError("history store failed to open in memory: \(error)")
+            }
         }
     }
 
