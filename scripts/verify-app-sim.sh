@@ -27,7 +27,7 @@ require_croc
 SIM="${SIM:-iPhone 17 Pro}"   # list runtimes with: xcrun simctl list devices
 BUNDLE=com.bakirgdev.CrocApp
 GROUP=group.com.bakirgdev.CrocApp
-DD="$TMPROOT/dd-sim"
+DD=$(derived_data sim)
 
 TMP=$(mktemp -d)
 trap 'kill_jobs; rm -rf "$TMP"' EXIT

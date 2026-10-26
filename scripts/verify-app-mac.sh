@@ -24,7 +24,7 @@ DOCS="$HOME/Library/Containers/$BUNDLE/Data/Documents"
 RESULT="$DOCS/verify-result.txt"
 HISTORY="$DOCS/verify-history.txt"
 READY="$DOCS/verify-code-ready.txt"
-DD="$TMPROOT/dd-mac"
+DD=$(derived_data mac)
 
 RECV_DIR="$HOME/Downloads/CrocApp"                 # the Receive action's real folder
 RECV_NAME="intent-recv-$$.txt"

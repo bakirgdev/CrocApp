@@ -55,8 +55,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - Every checkout and session on one machine shares one address, so one limit: another run on the public pool can use up yours.
 - **Two checkouts cannot run the same harness at once on one Mac.**
   - `verify-app-mac.sh` and `verify-app-sim.sh` share the app container, `~/Downloads/CrocApp` and the pasteboard. A wrapper sender and `--local` scenarios in `verify-interop.sh` bind croc's default ports 9009 to 9013 and announce on the default multicast group, so a second run sees the first one's sender.
-  - `verify-app-mac.sh` builds into `$TMPDIR/dd-mac`, which every checkout shares. A second checkout's build fails with `Crocmobile.objc.h has been modified since the module file ... was built`. Run it with a `TMPDIR` of its own.
-  - Take turns, and give each run its own `TMPDIR`. The local relay needs no care: each run picks its own free ports.
+  - Take turns. The local relay needs no care: each run picks its own free ports, and each checkout builds into its own DerivedData (`derived_data` in `scripts/lib.sh`).
 
 ## Design system
 
