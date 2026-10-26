@@ -86,7 +86,7 @@ Type patterns in **Patterns, one per line** to skip matching files when you send
 **Performance.**
 
 - **Send Speed Limit** caps this device's sending speed in bytes per second: digits with an optional `k`, `m` or `g`, such as `500k` or `2m`.
-- **Base Port** and **Parallel Connections** set the ports the sender listens on: the base port, then one more per connection. With the defaults that is 9009 to 9013, and the last port must stay at or below 65535. They matter when the other device connects by sender IP, or when something else on your device uses those ports.
+- **Base Port** and **Parallel Connections** set the ports the sender listens on: the base port, then one more per connection. With the defaults that is 9009 to 9013, and the last port must stay at or below 65535. They matter when the other device connects by sender IP, or when something else on your device uses those ports. A port that is already taken is skipped for the next free one, so the port a Sender IP receiver needs can be higher than the one you set. If not enough ports are free, the send stops with an error.
 - **Multiplexing** off sends over one data connection.
 
 ## The trust badge

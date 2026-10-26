@@ -5,7 +5,7 @@ The engine contract between Go and Swift, and the croc behaviours it has to work
 ## Layers
 
 ```
-croc v11.5.4 (go.mod pin) → crocmobile/ (Go wrapper) → gomobile bind →
+croc v11.5.5 (go.mod pin) → crocmobile/ (Go wrapper) → gomobile bind →
 CrocKit/Croc.xcframework (gitignored, scripts/build-xcframework.sh) →
 CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 ```
@@ -81,7 +81,7 @@ How `classify` picks a code:
 Notes:
 
 - Order matters in `classify`: a peer's refusal also cancels croc's context, and a bad relay password is reported as `could not connect to`.
-- croc exports sentinels for relay failures only, so the rest is matched on croc v11.5.4 text. `errors_test.go` pins the live ones against real croc clients and an in-process relay.
+- croc exports sentinels for relay failures only, so the rest is matched on croc v11.5.5 text. `errors_test.go` pins the live ones against real croc clients and an in-process relay.
 - A local `Cancel()` during the accept prompt cancels the context before it closes the prompt pipe, and `GetInputContext` returns the context error whenever the context is done. By reading the source that failure is `cancelled`, not `refused`. Not verified live.
 
 ## Stored transfers
@@ -154,7 +154,7 @@ Answers queued for croc's stdin prompts:
 
 ### Transport
 
-`Options.Transport` is croc v11's sender-only `Transport`. "croc v11.5.4 gotchas" explains what `auto` does.
+`Options.Transport` is croc v11's sender-only `Transport`. "croc v11.5.5 gotchas" explains what `auto` does.
 
 - The app uses `TransportAuto` (`"auto"`, also the empty string) and `TransportRelay` (`"relay"`). Swift mirrors them as the `Transport` enum on `EngineOptions.transport`, stored as `AppSettings.transport` (an unknown stored value reads as auto).
 - `sessionTransport` (`session.go`) forces auto on a receive and on a local-only send, because croc rejects anything else there (`transport selection is sender-only`, and `--transport` with `--local` unless auto).
@@ -178,7 +178,7 @@ Generated codes on the public pool:
 - If no relay answers, the send fails like the CLI, with `noPublicRelay`. The app shows its own copy pointing to **Local Network Only**.
 - There is deliberately no "draw a code anyway" fallback. After the relay dial fails, croc waits only about 10 s for a LAN peer (`defaultAlternateSenderRouteTimeout`), so a code shown offline would expire before the receiver could type it.
 
-## croc v11.5.4 gotchas (verified against source)
+## croc v11.5.5 gotchas (verified against source)
 
 ### Rooms and codes
 
@@ -247,13 +247,13 @@ The batch fixes this. `verify-interop.sh` scenario 12 covers it.
 
 `Options.Curve`, `HashAlgorithm`, `BasePort` and `Transfers`, `MulticastAddress`, `PeerIP`, `Socks5Proxy`, `HTTPProxy` and `InternalDNS` map one to one onto croc's flags of the same name (`buildCrocOptions` and `network.go`). `croctest` takes `-curve -hash -port -transfers -multicast -ip -socks5 -connect -internal-dns`.
 
-`verify-interop.sh` scenario 15 runs each against the croc v11.5.4 CLI. The table records what that scenario observed, with the croc source (`src/croc/croc.go`, `comm/comm.go`) read for the reason.
+`verify-interop.sh` scenario 15 runs each against the croc v11.5.5 CLI. The table records what that scenario observed, with the croc source (`src/croc/croc.go`, `comm/comm.go`) read for the reason.
 
 | Option | Which side it matters on | Peer must match? | Mismatch |
 |---|---|---|---|
 | Curve | The **receiver** chooses it. Its PAKE message carries the curve name and the sender adopts it (sender `--debug`: `using curve p384`). A sender's own curve is never read. | No | Never an error, in either direction: the transfer runs on the receiver's curve. A name croc does not know fails at the receiver start with `{"code":"other","message":"no such curve"}`. The app picks from a list, so that cannot happen there. |
 | Hash | The **sender** chooses it and the receiver adopts it (receiver `--debug`: `using hash algorithm: md5`). `imohash` goes out as `imohash-v2`. | No | Never an error: a receiver set to `highway` takes the sender's `md5`. An unknown name fails at the sender start: `{"code":"other","message":"unsupported algorithm: bogus"}`. |
-| Base port, Transfers | **Sender** only. Its local relay listens on the base port and the next `Transfers` ports (the CLI's `--port` and `--transfers`). The banner lists the data ports, for example `banner: 26993,26994`. | The receiver needs the base port, through discovery (which announces it) or `PeerIP`. | A receiver pointed at the wrong port fails (see PeerIP). If a port is busy, croc moves to the next open ones (`utils.FindOpenPorts`, read from source, not observed), so the announced port can differ from the setting. |
+| Base port, Transfers | **Sender** only. Its local relay listens on the base port and the next `Transfers` ports (the CLI's `--port` and `--transfers`). The banner lists the data ports, for example `banner: 26993,26994`. | The receiver needs the base port, through discovery (which announces it) or `PeerIP`. | A receiver pointed at the wrong port fails (see PeerIP). If a port is busy or already has a loopback listener, croc skips it and binds the next free ones, scanning at most 200 ports from the base (`reserveLocalRelayListeners` in `local_relay.go`, read from source, not observed), so the announced port can differ from the setting. If it cannot bind them all, the send fails at start with `start local relay: not enough open ports to run local relay: reserved N of M` (code `other`). |
 | PeerIP | **Receiver** only (`--ip host:port`). It connects straight to the sender's local relay and skips the public relay and discovery. It works only with a sender whose local relay is on (not `NoLocal`) and reachable. | The sender must listen there. | Nothing listening: it fails at once with `relayUnreachable` (`could not connect to 127.0.0.1:<port>: ... connection refused`), with no fallback to a relay. |
 | Multicast address | Both sides of **LAN discovery**. A sender announces `croc<base port>` on the group, a receiver announces `ok` and listens. The default is `239.255.255.250`, UDP port 9999. | Yes, for discovery: peers on different groups never hear each other. The relay path still works. | Silent: discovery finds nobody, then the relay or `PeerIP` path carries the transfer. |
 | SOCKS5, HTTP proxy | The local side's own dials only (CONNECT; SOCKS5 before HTTP). Invisible to the peer. | No | croc bypasses the proxy for local addresses (`utils.IsLocalIP`: loopback, link-local, private ranges). A proxy therefore affects only a public relay or Tailcat dial. With a local relay or a LAN transfer it is never used, with no error. Observed: with the public pool, connections went through a `croctest` proxy on both send and receive. |

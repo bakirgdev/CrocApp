@@ -69,7 +69,7 @@ func startError(err error) error {
 
 // classify maps an error from croc or this package to a failure code. croc
 // exports sentinels for relay failures only; everything else is matched on the
-// text croc v11.5.4 produces (errors_test.go pins each one against a real croc
+// text croc v11.5.5 produces (errors_test.go pins each one against a real croc
 // client where it can). Order matters: a peer's refusal also cancels croc's
 // context, and a bad relay password is reported as "could not connect to".
 func classify(err error) string {

@@ -19,7 +19,7 @@ One fact has one home. Everywhere else links to that home instead of restating i
 
 ## Writing rules
 
-- **State what is true now.** Facts, constraints, reasons and direction. Leave out dates, run IDs, plan or ticket IDs and "first we tried" stories: git history keeps them, and they go stale. A fact checked against an upstream names the version it was checked against ("croc v11.5.4", "Xcode 27 SDK").
+- **State what is true now.** Facts, constraints, reasons and direction. Leave out dates, run IDs, plan or ticket IDs and "first we tried" stories: git history keeps them, and they go stale. A fact checked against an upstream names the version it was checked against ("croc v11.5.5", "Xcode 27 SDK").
 - **Check before writing.** Read the code, config or upstream source a claim is about. Mark anything not checked as "not verified", "inferred" or "unknown", in those words.
 - **Cite by file and heading text**, as in `BUILDING.md`, "Verification harnesses". Never by section number or line number.
 - **Plain English for a developer new to this repo.** One idea per sentence. A bullet stays a few lines; split anything longer, and use a table when rows compare. Define a term on first use or link `GLOSSARY.md`. Commas, colons or parentheses, not em dashes.

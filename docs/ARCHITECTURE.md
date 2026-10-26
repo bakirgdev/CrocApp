@@ -23,7 +23,7 @@ The SwiftUI sources build three targets:
 ## Layer diagram
 
 ```
-croc v11.5.4 (schollz/croc, pinned in crocmobile/go.mod)
+croc v11.5.5 (schollz/croc, pinned in crocmobile/go.mod)
     │
     ▼
 crocmobile/            Go wrapper package
@@ -54,7 +54,7 @@ Notes on the arrows:
 
 ### croc (dependency, not this repo's code)
 
-- `schollz/croc/v11` v11.5.4, pinned in `crocmobile/go.mod`.
+- `schollz/croc/v11` v11.5.5, pinned in `crocmobile/go.mod`.
 - CrocApp does not fork or reimplement it (see `docs/knowledge/project-overview.md`).
 - Upgrades are a version bump plus a rebuild of the xcframework: `docs/knowledge/croc-upgrade-playbook.md`.
 
@@ -82,7 +82,7 @@ Key types:
 Errors:
 
 - `OnError` receives JSON `{"code","message"}`. `StartSend` and `StartReceive` return the same JSON as their error text, because gobind gives Swift only the text.
-- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.5.4 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `other`.
+- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.5.5 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `other`.
 - The app picks its wording from the code and never reads croc's text.
 
 Network settings:

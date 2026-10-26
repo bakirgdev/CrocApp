@@ -122,7 +122,7 @@ Highlights
 - iPad File menu: Show Receive Folder in Files (Shift Command R).
 
 Good to know
-- The transfer engine is croc 11.5.4. A device running croc 10 cannot transfer with CrocApp; it needs croc 11 or newer.
+- The transfer engine is croc 11.5.5. A device running croc 10 cannot transfer with CrocApp; it needs croc 11 or newer.
 - Errors say what went wrong: a wrong code, a refused transfer, a lost connection, a device on an older croc, or no public relay available.
 - History keeps less of a code than before, and never the whole code.
 
@@ -293,7 +293,7 @@ Keep `ITSAppUsesNonExemptEncryption` = `false` in both App Store Info.plists, an
 ### Verified locally (project facts)
 
 - The two App Store Info.plists set `ITSAppUsesNonExemptEncryption` to `false` (`../RELEASING.md`, "Export compliance"). The Direct build plist and the share extension plist do not set it.
-- Engine: croc v11.5.4 with `pake/v3` v3.2.0. Traffic encryption is AES-256-GCM (`crypt.go`, `crypto/aes`), with ChaCha20-Poly1305, PBKDF2 and Argon2 from `golang.org/x/crypto` in the same package. The session key comes from PAKE2 with a selectable curve, then HKDF-SHA256. Default curve p256 (`cli.go`). Available curves in `pake.AvailableCurves()`: p521, p256, p384, **siec**, ed25519. Tailcat (large sends) adds Tailscale's WireGuard (`tailscale/wireguard-go`) over DERP servers. TLS to getcroc.com uses the platform or Go stack (inference; not traced).
+- Engine: croc v11.5.5 with `pake/v3` v3.2.0. Traffic encryption is AES-256-GCM (`crypt.go`, `crypto/aes`), with ChaCha20-Poly1305, PBKDF2 and Argon2 from `golang.org/x/crypto` in the same package. The session key comes from PAKE2 with a selectable curve, then HKDF-SHA256. Default curve p256 (`cli.go`). Available curves in `pake.AvailableCurves()`: p521, p256, p384, **siec**, ed25519. Tailcat (large sends) adds Tailscale's WireGuard (`tailscale/wireguard-go`) over DERP servers. TLS to getcroc.com uses the platform or Go stack (inference; not traced).
 - CrocApp exposes the curve choice, including SIEC, as a user setting (`CrocKit/Sources/CrocKit/Models.swift`, enum `Curve`; `app/CrocApp/Views/AdvancedSettingsView.swift`). Default is p256.
 - The app source is public under MIT, so "publicly available" holds for the app's own code (inference that the whole build qualifies, since the Go modules are public too).
 
@@ -371,4 +371,4 @@ Apple's pages change. Re-read them before you rely on a limit or a rule.
 - Third party, App Store Connect question wording (not Apple): https://developer.apple.com/forums/thread/127505 and https://github.com/straff2002/OpenGlasses/pull/472
 - Third party, French filing practice: https://developer.apple.com/forums/thread/741830 and https://gist.github.com/safaiyeh/f6ee55b19eeaa81354275046803e69af
 - getcroc.com page and its bundled script (labels, Umami, AdSense): https://getcroc.com
-- Local: `app/Config/*.plist`, `app/CrocApp/PrivacyInfo.xcprivacy`, `app/CrocApp.xcodeproj/project.pbxproj` (purpose strings, category), `LICENSE`, croc v11.5.4 and pake v3.2.0 in the Go module cache, `../known-issues.md`, `../RELEASING.md`.
+- Local: `app/Config/*.plist`, `app/CrocApp/PrivacyInfo.xcprivacy`, `app/CrocApp.xcodeproj/project.pbxproj` (purpose strings, category), `LICENSE`, croc v11.5.5 and pake v3.2.0 in the Go module cache, `../known-issues.md`, `../RELEASING.md`.
