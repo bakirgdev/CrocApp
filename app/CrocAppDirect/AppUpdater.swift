@@ -24,8 +24,9 @@ final class AppUpdater {
         // Sparkle documents `canCheckForUpdates` as KVO-compliant. The change
         // can arrive on any thread, so hop to the main actor before writing
         // the observed property.
-        canCheckObservation = updater.observe(\.canCheckForUpdates) { [weak self] updater, _ in
-            let canCheck = updater.canCheckForUpdates
+        canCheckObservation = updater.observe(\.canCheckForUpdates, options: .new) {
+            [weak self] _, change in
+            guard let canCheck = change.newValue else { return }
             Task { @MainActor in self?.canCheckForUpdates = canCheck }
         }
     }
