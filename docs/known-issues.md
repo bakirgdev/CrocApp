@@ -12,7 +12,6 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 
 - **Export compliance needs two owner actions in App Store Connect.**
   - The position (`ITSAppUsesNonExemptEncryption` is `false`, France excluded from availability) is in `RELEASING.md`, "Export compliance". Owner actions: remove France from availability, and file a `future` issue to add it back after an ANSSI declaration.
-  - Also undecided: croc's `siec` curve is selectable in Advanced settings and may count as non-standard cryptography. That would need a BIS and NSA notification email, or hiding the curve.
   - The research behind this is in `knowledge/app-store-listing.md`, "Export compliance". It is not legal advice, and the exact App Store Connect questions could not be fetched.
 - **The Accessibility Inspector and VoiceOver audit has not run on any 1.0 view.**
   - It needs Accessibility Inspector and VoiceOver on iOS and macOS, so no automated session can do it.

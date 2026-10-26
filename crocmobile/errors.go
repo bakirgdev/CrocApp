@@ -31,7 +31,7 @@ const (
 	codeConnectionLost   = "connectionLost"   // the connection dropped mid-transfer
 	codeStoreLimit       = "storeLimit"       // stored transfer: the server's size, file-count, download, quota or rate limit
 	codeStoreExpired     = "storeExpired"     // stored transfer: the server no longer has it (expired, revoked, used up)
-	codeInvalidSetting   = "invalidSetting"   // an Advanced option (proxy, ports, multicast, sender IP) failed validation
+	codeInvalidSetting   = "invalidSetting"   // an Advanced option (proxy, speed limit, multicast, sender IP) failed validation
 	codeOther            = "other"
 )
 

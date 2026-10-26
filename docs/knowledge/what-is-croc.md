@@ -41,7 +41,7 @@ Ports: transfer ports default to 9009-9013, control port first.
 ### 3. PAKE
 
 - The passphrase part of the code (the final two words of a three-word code) feeds PAKE2 (`github.com/schollz/pake/v3` v3.2.0, Boneh-Shoup construction) through `src/pakekey`. `pakekey` binds the exchange to the purpose, room and role of each side.
-- The default curve is P-256 (`--curve`: p256, p384, p521, siec, ed25519).
+- The default curve is P-256 (`--curve`: p256, p384, p521, siec, ed25519). The receiver's choice wins: the sender adopts it. CrocApp always uses P-256 and has no curve setting.
 - It turns the weak phrase into a strong session key. The relay never learns it.
 - The peer PAKE protocol is versioned (`pakekey.ProtocolVersion` = 2) and fails closed on a mismatch.
 
@@ -86,7 +86,7 @@ Data is DEFLATE-compressed (HuffmanOnly; `--no-compress` disables it) and chunke
 
 - Interrupted transfers resume: the receiver scans the partial file for zeroed chunks.
 - An existing file of the same size is hashed and skipped when equal.
-- The hash is xxhash by default. `--hash` offers imohash (sampled), md5 and highway.
+- The hash is xxhash by default. `--hash` offers imohash (sampled), md5 and highway. The sender's choice wins: the receiver adopts it. CrocApp has no hash setting, so it always sends xxhash.
 
 ### 8. Reconnect
 
@@ -104,7 +104,7 @@ A dropped transfer is retried up to 10 times, with a backoff of 100 ms doubling 
   - SOCKS5 proxy including Tor (`--socks5`, relay DNS resolved by the proxy);
   - HTTP proxy (`--connect`);
   - upload throttle (`--throttleUpload`);
-  - curve and hash selection;
+  - curve and hash selection (CrocApp offers neither);
   - local only (`--local`).
 - **Stored transfers**: `croc store` (or `send --store`) uploads client-side-encrypted files to a service (default `https://getcroc.com`). It sets a limited number of downloads (`--downloads`, default 1) and a lifetime (`--expiration`, default 1d). The receiver uses the printed link or token. The sender revokes with `--revoke`. This is separate from the live PAKE protocol.
 - **Shared terminal**: `croc ssh` hosts or joins a terminal with six-word invitations over a Tailcat path, with a relay fallback.

@@ -22,9 +22,13 @@ extra sections where a release needs them, and the project follows
 - The transfer engine is croc v11.5.5. Transfers stay compatible with croc 11 on the other device.
 - The update checker in the direct-download Mac build is Sparkle 2.10.1. It fixes an update installing too early when the app sits at a path in NFC Unicode form.
 
+### Removed
+
+- Six Advanced settings are gone: **Curve**, **File Hash**, **Base Port**, **Parallel Connections**, **Multiplexing** and **Built-in DNS Resolver**. croc picks the right curve and hash on its own (a sender takes the receiver's curve, a receiver takes the sender's hash), so two devices never need to match, and ports, connection count and DNS are croc internals. CrocApp now uses croc's defaults: curve P-256, ports 9009 to 9013. A **Sender IP** receive from a CrocApp sender uses port 9009. Proxies, **Sender IP**, **Send Speed Limit** and, on macOS, **Multicast Address** stay.
+
 ### Fixed
 
-- A send whose local ports cannot be opened (Settings > Advanced, base port and connections) now fails with a message. Before, croc could stop the whole app there.
+- A send whose local ports cannot be opened (another app already uses them) now fails with a message. Before, croc could stop the whole app there.
 
 ### Security
 

@@ -83,16 +83,6 @@ import Testing
         #expect(AppSettings.senderIPError(text) != nil)
     }
 
-    @Test(arguments: [(9009, 4), (9100, 2), (50000, 1), (65533, 2), (1, 1), (65534, 1)])
-    func portsAccept(base: Int, transfers: Int) {
-        #expect(AppSettings.portsError(basePort: base, transfers: transfers) == nil)
-    }
-
-    @Test(arguments: [(0, 4), (-1, 4), (9009, 0), (9009, -1), (65535, 4), (65534, 2), (70000, 1)])
-    func portsReject(base: Int, transfers: Int) {
-        #expect(AppSettings.portsError(basePort: base, transfers: transfers) != nil)
-    }
-
     @Test(arguments: ["", "  ", "500k", "500K", "2m", "2M", "1g", "1G", "1000", "10", "99k"])
     func throttleAccepts(_ text: String) {
         #expect(AppSettings.throttleError(text) == nil)
@@ -109,9 +99,6 @@ import Testing
     @Test func defaultsAreValid() {
         let defaults = AppSettings.advancedDefaults
         #expect(AppSettings.multicastAddressError(defaults.multicastAddress) == nil)
-        #expect(
-            AppSettings.portsError(basePort: defaults.basePort, transfers: defaults.transfers)
-                == nil)
         #expect(AppSettings.throttleError(defaults.throttleUpload) == nil)
         #expect(AppSettings.senderIPError(defaults.peerIP) == nil)
     }

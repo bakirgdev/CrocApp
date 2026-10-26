@@ -38,12 +38,8 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | SOCKS5 proxy (Settings > Advanced) | `--socks5` | all | shipped |
 | HTTP proxy | `--connect` | all | shipped |
 | Upload speed limit (sender side) | `--throttleUpload` | all | shipped |
-| Curve choice (the receiver's choice wins and the sender adopts it) | `--curve` | all | shipped |
-| Hash algorithm (sender side) | `--hash` | all | shipped |
 | Sender IP, direct connect (receive side) | `--ip` | all | shipped |
 | Custom multicast address | `--multicast` | macOS only; iOS has no multicast entitlement | shipped |
-| Base port, parallel connections, multiplexing toggle (sender side) | `--port`, `--transfers`, `--no-multi` | all | shipped |
-| Built-in DNS resolver | `--internal-dns` | all | shipped |
 
 ## App-native features
 

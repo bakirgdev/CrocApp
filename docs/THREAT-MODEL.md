@@ -97,10 +97,10 @@ CrocApp does not defend against, and does not claim to:
 
 Facts verified against croc v11.5.5 and pake v3.2.0 source:
 
-- **Key agreement:** PAKE2 (Boneh and Shoup) from `schollz/pake` v3.2.0, with fresh random secrets per session drawn from `crypto/rand`. CrocApp sets curve P-256 by default (`NewOptionsDefault` in `crocmobile/crocmobile.go`); p384, p521, siec and ed25519 are selectable under Advanced settings.
+- **Key agreement:** PAKE2 (Boneh and Shoup) from `schollz/pake` v3.2.0, with fresh random secrets per session drawn from `crypto/rand`. CrocApp fixes curve P-256 (`crocCurve` in `crocmobile/network.go`) and has no curve setting. A sender adopts the curve its receiver announces (`croc.go`), so a CLI receiver can still pick another curve that pake offers, including `siec`.
 - **Transfer key:** HKDF-SHA256 over the PAKE secret, the transcript and a fresh salt (`src/pakekey/pakekey.go:110`). Key confirmation uses HMAC-SHA256 compared with `hmac.Equal`. A device that does not know the code phrase fails here.
 - **Data:** AES-256-GCM with a random nonce per message (`src/crypt/crypt.go`).
-- **File-integrity hash:** `xxhash` by default; md5, imohash and highway are selectable. It is an integrity check on the file, not a security control.
+- **File-integrity hash:** `xxhash`, croc's default, which CrocApp does not let the user change. A receiver adopts the sender's hash, so a CLI sender can use md5, imohash or highway. It is an integrity check on the file, not a security control.
 
 CrocApp implements none of this. It passes the code phrase and options to croc and shows the result.
 

@@ -160,10 +160,10 @@ Both app `Info.plist` files (`app/Config/CrocApp-Info.plist`, `app/Config/CrocAp
 
 - `false` is a position, not only a way past the check. croc's encryption (AES-256-GCM, PAKE) is standard and its source is public, so the app relies on the open-source exemption (EAR 742.15(b)).
 - Apple's own table makes `false` coherent only while France is excluded. The first App Store release therefore ships without France in its availability. A later release adds France after an ANSSI declaration, and the key then becomes `true` with an issued code.
-- Still open: whether croc's selectable `siec` PAKE curve counts as non-standard cryptography, which would need a BIS and NSA notification email or hiding the curve.
+- SIEC is no longer a separate question for the app: CrocApp has no curve setting and uses P-256 itself. croc still links the `siec` curve and a sender adopts its receiver's curve, so a CLI receiver can pick it (`app-store-listing.md`, "Export compliance").
 - If the exemption does not hold, set the key to `true` and add the `ITSEncryptionExportComplianceCode` that App Store Connect issues after the documentation is approved.
 
-The research, the exact answers to give if App Store Connect asks, and the SIEC question are in `docs/knowledge/app-store-listing.md`, "Export compliance". The owner's open actions are in `known-issues.md`, "Release".
+The research and the exact answers to give if App Store Connect asks are in `docs/knowledge/app-store-listing.md`, "Export compliance". The owner's open actions are in `known-issues.md`, "Release".
 
 ## One-time setup
 

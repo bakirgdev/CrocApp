@@ -31,18 +31,6 @@ public enum Transport: String, Sendable, CaseIterable {
     case relay
 }
 
-/// The PAKE curve the key exchange runs on. Both sides must pick the same one.
-/// Raw values are croc's `--curve` names; `p256` is croc's default.
-public enum Curve: String, Sendable, CaseIterable {
-    case p256, p384, p521, siec, ed25519
-}
-
-/// How the sender hashes files to verify them. The receiver uses the sender's
-/// choice. Raw values are croc's `--hash` names; `xxhash` is croc's default.
-public enum HashAlgorithm: String, Sendable, CaseIterable {
-    case xxhash, imohash, md5, highway
-}
-
 /// The proxies a connection goes through. Either may carry credentials in a
 /// URL (`socks5://user:secret@host:1080`), so the description never shows them.
 /// Blank means none; SOCKS5 wins when both are set.
@@ -92,19 +80,9 @@ public struct EngineOptions: Sendable {
     // Advanced options. The defaults are croc's own (`EngineOptionsDefaultsTests`
     // checks them against the engine).
 
-    /// Receiving: the sender adopts the receiver's curve, so peers need not match.
-    public var curve = Curve.p256
-    /// Send only; the receiver uses the sender's choice.
-    public var hashAlgorithm = HashAlgorithm.xxhash
     /// Send only: bytes per second, digits with an optional `k`, `m` or `g`
     /// (`"500k"`). Blank means no limit.
     public var throttleUpload = ""
-    /// Send only: one data connection instead of several.
-    public var noMultiplexing = false
-    /// Send only: the first port of this side's local relay.
-    public var basePort = Int(CrocmobileDefaultBasePort)
-    /// Send only: data ports after `basePort`. All ports must stay at or below 65535.
-    public var transfers = Int(CrocmobileDefaultTransfers)
     /// IPv4 multicast group for finding peers on the local network. Both sides
     /// must use the same one.
     public var multicastAddress = CrocmobileDefaultMulticastAddress
@@ -115,8 +93,6 @@ public struct EngineOptions: Sendable {
     public var socks5Proxy = ""
     /// May carry credentials; see `ProxySettings`.
     public var httpProxy = ""
-    /// Resolve relay names with croc's built-in resolver instead of the system's.
-    public var internalDNS = false
     public init() {}
 }
 
@@ -207,7 +183,7 @@ public struct EngineFailure: Error, Equatable, Sendable {
         case storeLimit
         /// Stored transfers: the server no longer has it (expired, revoked, used up).
         case storeExpired
-        /// An Advanced option (proxy, ports, multicast address, sender IP) failed the engine's check.
+        /// An Advanced option (proxy, speed limit, multicast address, sender IP) failed the engine's check.
         case invalidSetting
     }
 

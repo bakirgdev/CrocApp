@@ -220,17 +220,11 @@ public actor CrocEngine {
         opts.gitIgnore = o.gitIgnore
         opts.exclude = o.exclude.joined(separator: "\n")
         opts.ask = o.ask
-        opts.curve = o.curve.rawValue
-        opts.hashAlgorithm = o.hashAlgorithm.rawValue
         opts.throttleUpload = o.throttleUpload
-        opts.noMultiplexing = o.noMultiplexing
-        opts.basePort = o.basePort
-        opts.transfers = o.transfers
         opts.multicastAddress = o.multicastAddress
         opts.peerIP = o.peerIP
         opts.socks5Proxy = o.socks5Proxy
         opts.httpProxy = o.httpProxy
-        opts.internalDNS = o.internalDNS
         return opts
     }
 }

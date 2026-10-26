@@ -52,17 +52,6 @@ extension AppSettings {
         return nil
     }
 
-    /// The sender's local relay listens on `base` to `base + transfers`.
-    nonisolated static func portsError(basePort: Int, transfers: Int) -> String? {
-        if basePort < 1 || basePort > 65535 { return "The base port must be from 1 to 65535." }
-        if transfers < 1 { return "Use at least 1 parallel connection." }
-        if basePort + transfers > 65535 {
-            return
-                "The ports run from the base port up by the number of connections. Keep the last one at 65535 or lower."
-        }
-        return nil
-    }
-
     /// croc's format: whole bytes per second, optionally with k, m or g
     /// (kilo-, mega-, gigabytes). A lone digit is refused: croc quietly ignores
     /// a one-character value, which would look like a limit that is not there.
