@@ -50,7 +50,7 @@ git clone https://github.com/bakirgdev/CrocApp.git
 cd CrocApp
 ```
 
-Also needed: `croc` CLI (`brew install croc`; `croc --version` must match the pin in `crocmobile/go.mod`, otherwise `go install github.com/schollz/croc/v11@<pin>`) and outbound network access to the public relay.
+Also needed: `croc` CLI (`brew install croc`; `croc --version` must match the pin in `crocmobile/go.mod`, otherwise `go install github.com/schollz/croc/v11@<pin>`) and, only for `PUBLIC_POOL=1` harness runs, outbound network access to the public relay (the harnesses otherwise start a local relay).
 
 The first build, the full toolchain table and every check are in [`docs/BUILDING.md`](docs/BUILDING.md). How the code fits together: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 

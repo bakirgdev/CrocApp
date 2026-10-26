@@ -297,7 +297,7 @@ Launch arguments drive the real controller, not the engine directly, so the veri
 - `--auto-send PATH --code CODE` needs both flags. Without `--code`, nothing happens.
 - On macOS the `--auto-send` source must be container-resident (sandbox).
 - The `.confirmSend` auto-answer happens in every harness mode, with or without `--ask`.
-- `--relay ADDR` also sets `harnessDisableLocal`, to kill the LAN race.
+- `--relay ADDR` sets only the relay, so the LAN route stays on. `--disable-local` sets `harnessDisableLocal`, to kill the LAN race: the custom-relay scenario of `verify-app-mac.sh` and `capture-screenshots.sh` pass it. It has no value, so on macOS it goes last (`crocmobile-bridge.md`, "`scripts/verify-app-mac.sh`").
 - `--when-exists` is the policy `AutoVerify` answers the incoming sheet with. The setting itself stays Keep Both, so the late answer must reach croc.
 - The screenshot flags (`--screen`, `--stage`, `--seed-history`, `--hold`) are documented in `screenshots.md`.
 

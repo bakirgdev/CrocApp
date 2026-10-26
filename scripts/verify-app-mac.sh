@@ -7,6 +7,11 @@
 # local store server, menu-bar quick send, Open at login and the Shortcuts
 # actions. Every transfer gates on a byte-identical diff AND the app's
 # verify-result.txt.
+#
+# Every relay transfer goes through a `croc relay` this script starts on free
+# loopback ports (scripts/lib.sh, "The relay a harness sends through"), so a run
+# needs no internet. PUBLIC_POOL=1 uses the public relay pool instead; RELAY=host:port
+# a relay that is already running.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
@@ -40,6 +45,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
+use_relay "$TMPROOT/mac-relay.log"
+CLI_R=${RELAY:+--relay=$RELAY}                     # one word, empty on the public pool: the CLI takes --relay before its command
+
 logged "$TMPROOT/mac-build.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
   -destination 'platform=macOS' -derivedDataPath "$DD" -allowProvisioningUpdates build
 APP=$(find "$DD/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
@@ -52,18 +60,31 @@ rm -f "$RESULT" "$HISTORY" "$DOCS/macfile.txt"
 # The app declares document types, so a bare argv token next to a path is
 # treated as a document to open -- pass everything as a flag. Window-state
 # restoration hangs a headless launch, hence -ApplePersistenceIgnoreState.
-run_app() {
+run_app_raw() {                                     # run_app_raw ARGS...: no relay argument
   rm -f "$READY"
+  mark_relay
   "$BIN" -ApplePersistenceIgnoreState YES "$@" &
   APP_PID=$!
 }
 
+# Sends and receives through the harness relay, with the app's LAN route on (the
+# app's default; only --disable-local turns it off). The relay argument goes
+# first: AppKit takes the token after a value-less flag (--local, --ask,
+# --disable-local) as its value, so those must come last (AutoVerify.swift).
+# Scenarios that use no relay (--local, stored transfers, Open at login) use
+# run_app_raw.
+run_app() {
+  run_app_raw ${RELAY:+--relay "$RELAY"} "$@"
+}
+
 # The receiver must join the relay room after the app: one that arrives first
 # fails with "flate: corrupt input". The marker fires before croc dials the
-# relay, hence the extra sleep.
-await_ready() {
+# relay; the relay's own log says when the app is in its room (lib.sh,
+# await_sender). A `local` send opens its room in the app's own process, where
+# nothing outside can see it: the sleep is the only signal left.
+await_ready() {                                     # await_ready [local]
   await_file "$READY" 60 || fail "app never reported its code (no $READY)"
-  sleep 3
+  if [ "${1:-}" = local ]; then sleep 3; else await_sender; fi
 }
 
 await_app() {                                       # await_app SECONDS
@@ -84,7 +105,7 @@ recv_from_app() {                                   # recv_from_app LABEL SRC DS
   local label=$1 src=$2 dst=$3
   shift 3
   mkdir -p "$dst"
-  ( cd "$dst" && CROC_SECRET="$C" timeout "${RECV_TIMEOUT:-120}" "$CROC" --ignore-stdin --yes "$@" ) \
+  ( cd "$dst" && CROC_SECRET="$C" timeout "${RECV_TIMEOUT:-120}" "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes "$@" ) \
       > "$TMPROOT/mac-cli-$label.log" 2>&1 || fail "$label: croc receive exited $? (log: $TMPROOT/mac-cli-$label.log)"
   await_app 30
   check_result "$label"
@@ -98,9 +119,10 @@ code() { echo "$1$$-mac"; }
 # --- 1: CLI -> app, plus SwiftData history isolation -------------------------
 C=$(code recv)
 echo "mac transfer $$" > "$TMP/macfile.txt"
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --disable-clipboard --ignore-stdin send macfile.txt ) \
+mark_relay
+( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send macfile.txt ) \
     > "$TMPROOT/mac-cli-send.log" 2>&1 &
-sleep 3
+await_sender
 run_app --auto-receive "$C" > "$TMPROOT/mac-app-recv.log" 2>&1
 await_app 120
 check_result receive
@@ -135,28 +157,42 @@ else
   C=$(code locl)
   rm -f "$RESULT"
   echo "mac local send $$" > "$DOCS/localme.txt"
-  run_app --auto-send "$DOCS/localme.txt" --code "$C" --local > "$TMPROOT/mac-app-local.log" 2>&1
-  await_ready
-  recv_from_app local "$DOCS/localme.txt" "$TMP/d3" --ip "$LOCAL_IP:9009"
+  run_app_raw --auto-send "$DOCS/localme.txt" --code "$C" --local > "$TMPROOT/mac-app-local.log" 2>&1
+  await_ready local
+  # No relay: the CLI reaches the app through --ip. (CLI_R="" holds for this call only.)
+  CLI_R="" recv_from_app local "$DOCS/localme.txt" "$TMP/d3" --ip "$LOCAL_IP:9009"
   echo MAC-LOCAL-SEND-OK
 fi
 
 # --- 4: app -> CLI, custom relay ---------------------------------------------
-# --relay also sets harnessDisableLocal, killing the LAN race, so success here
-# proves traffic really went through this relay.
+# --disable-local kills the LAN route, so a transfer that succeeds crossed the
+# relay. The relay's log confirms it: a second peer must have joined a room
+# while this scenario ran. Every other relay scenario sends through the harness
+# relay with the LAN on, so this one needs a relay of its own only on the public
+# pool. The value-less --disable-local goes last (see run_app).
+second_peers() { { grep -c 'room has second peer' "$TMPROOT/mac-relay.log" || true; } 2>/dev/null; }
 C=$(code rlay)
-RELAY_LOG="$TMPROOT/mac-relay.log"
-"$CROC" relay --ports 9021,9022,9023 > "$RELAY_LOG" 2>&1 &
-RELAY_PID=$!
-sleep 1
+if [ -z "$RELAY" ]; then
+  start_croc_relay "$TMPROOT/mac-relay.log"
+  RELAY=$RELAY_AT
+  CLI_R="--relay=$RELAY"
+fi
+# RELAY_PID is set only for a relay this run started, whose log is mac-relay.log.
+if [ -n "$RELAY_PID" ]; then SECOND_BEFORE=$(second_peers); fi
 rm -f "$RESULT"
 echo "mac relay send $$" > "$DOCS/relayme.txt"
-run_app --auto-send "$DOCS/relayme.txt" --code "$C" --relay localhost:9021 > "$TMPROOT/mac-app-relay.log" 2>&1
+run_app --auto-send "$DOCS/relayme.txt" --code "$C" --disable-local > "$TMPROOT/mac-app-relay.log" 2>&1
 await_ready
-recv_from_app relay "$DOCS/relayme.txt" "$TMP/d4" --relay localhost:9021
-kill "$RELAY_PID" 2>/dev/null || true
-wait "$RELAY_PID" 2>/dev/null || true
-[ -s "$RELAY_LOG" ] || fail "relay send: relay logged nothing"
+recv_from_app relay "$DOCS/relayme.txt" "$TMP/d4"
+if [ -n "$RELAY_PID" ]; then
+  [ "$(second_peers)" -gt "$SECOND_BEFORE" ] || fail "relay send: no second peer joined a room on the relay (log: $TMPROOT/mac-relay.log)"
+  if [ -z "$RELAY_LOG" ]; then                      # the relay this scenario started on the public pool: stop it
+    kill "$RELAY_PID" 2>/dev/null || true
+    RELAY_PID=""
+    RELAY=""
+    CLI_R=""
+  fi
+fi
 echo MAC-RELAY-OK
 
 # --- 5: app -> CLI, no compress ----------------------------------------------
@@ -185,7 +221,7 @@ run_app --auto-send "$DOCS/askdir" --code "$C" --ask > "$TMPROOT/mac-app-ask.log
 await_ready
 DST="$TMP/d6"; mkdir -p "$DST"
 printf 'y\ny\n' > "$TMP/ask-answers"
-( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" --yes < "$TMP/ask-answers" ) > "$TMPROOT/mac-cli-ask.log" 2>&1 \
+( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --yes < "$TMP/ask-answers" ) > "$TMPROOT/mac-cli-ask.log" 2>&1 \
   || fail "ask send: croc receive exited $? (log: $TMPROOT/mac-cli-ask.log)"
 await_app 30
 check_result "ask send"
@@ -202,9 +238,10 @@ collide() {                                         # collide POLICY
   rm -f "$RESULT" "$DOCS/collide.txt" "$DOCS/collide (1).txt"
   echo "existing file" > "$DOCS/collide.txt"
   echo "mac collide $policy $$" > "$TMP/collide.txt"
-  ( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --disable-clipboard --ignore-stdin send collide.txt ) \
+  mark_relay
+  ( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send collide.txt ) \
       > "$TMPROOT/mac-cli-collide-$policy.log" 2>&1 &
-  sleep 3
+  await_sender
   run_app --auto-receive "$C" --when-exists "$policy" > "$TMPROOT/mac-app-collide-$policy.log" 2>&1
   await_app 120
   check_result "collide $policy"
@@ -247,10 +284,11 @@ big_app_receive() {
   local log="$TMPROOT/mac-cli-xr.log" cli_pid
   C=$(code xrecv)
   rm -f "$RESULT" "$DOCS/bigrecv.bin"
-  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" --debug --disable-clipboard --ignore-stdin send bigrecv.bin ) \
+  mark_relay
+  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send bigrecv.bin ) \
       > "$log" 2>&1 &
   cli_pid=$!
-  sleep 3
+  await_sender
   run_app --auto-receive "$C" > "$TMPROOT/mac-app-xr.log" 2>&1
   await_app 300
   wait "$cli_pid" || true
@@ -288,7 +326,7 @@ rm -f "$RESULT" "$STORE_LINK" "$DOCS/verify-store-revoke.go" "$DOCS/storeme.bin"
 # 5 MiB spans two upload chunks.
 head -c 5242880 /dev/urandom > "$DOCS/store-src/storeme.bin"
 
-run_app --auto-store-send "$DOCS/store-src/storeme.bin" --store-server "$STORE" --store-downloads 3 \
+run_app_raw --auto-store-send "$DOCS/store-src/storeme.bin" --store-server "$STORE" --store-downloads 3 \
     > "$TMPROOT/mac-app-store-send.log" 2>&1
 SENDER_PID=$APP_PID
 await_file "$STORE_LINK" 60 || fail "stored upload: the app never wrote its link"
@@ -301,7 +339,7 @@ CROC_STORE_TOKEN="$LINK" timeout 60 "$CROC" --yes --out "$TMP/d9cli" > "$TMPROOT
 cmp "$DOCS/store-src/storeme.bin" "$TMP/d9cli/storeme.bin" || fail "stored upload -> CLI download: file differs"
 
 rm -f "$RESULT"
-run_app --auto-store-receive "$LINK" > "$TMPROOT/mac-app-store-recv.log" 2>&1
+run_app_raw --auto-store-receive "$LINK" > "$TMPROOT/mac-app-store-recv.log" 2>&1
 await_app 60
 check_result "stored receive"
 cmp "$DOCS/store-src/storeme.bin" "$DOCS/storeme.bin" || fail "stored upload -> app download: file differs"
@@ -320,7 +358,7 @@ CROC_STORE_TOKEN="$LINK" timeout 60 "$CROC" --yes --out "$TMP/d9gone" > "$TMPROO
     && fail "revoked upload still downloads (CLI)"
 [ -z "$(ls -A "$TMP/d9gone")" ] || fail "revoked upload wrote files (CLI)"
 rm -f "$RESULT" "$DOCS/storeme.bin"
-run_app --auto-store-receive "$LINK" > "$TMPROOT/mac-app-store-gone.log" 2>&1
+run_app_raw --auto-store-receive "$LINK" > "$TMPROOT/mac-app-store-gone.log" 2>&1
 await_app 60
 got=$(cat "$RESULT" 2>/dev/null || echo missing)
 echo "revoked receive result: $got"
@@ -352,7 +390,7 @@ run_app --auto-menubar-clipboard > "$TMPROOT/mac-app-menubar-clip.log" 2>&1
 await_ready
 C=$(cat "$DOCS/verify-code.txt")
 mkdir -p "$TMP/d10t"
-( cd "$TMP/d10t" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes ) \
+( cd "$TMP/d10t" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes ) \
     > "$TMPROOT/mac-cli-menubar-clip.log" 2>&1 || fail "menubar-clipboard: croc receive exited $? (log: $TMPROOT/mac-cli-menubar-clip.log)"
 await_app 30
 check_result menubar-clipboard
@@ -366,7 +404,7 @@ echo MAC-MENUBAR-OK
 # values are SMAppService.Status raw values: 0 notRegistered, 1 enabled,
 # 2 requiresApproval.
 rm -f "$RESULT"
-run_app --auto-login-item > "$TMPROOT/mac-app-login.log" 2>&1
+run_app_raw --auto-login-item > "$TMPROOT/mac-app-login.log" 2>&1
 await_file "$RESULT" 30 || fail "login item check wrote no result"
 kill "$APP_PID" 2>/dev/null || true
 wait "$APP_PID" 2>/dev/null || true
@@ -399,7 +437,7 @@ run_app --auto-intent send-text --intent-arg "$INTENT_TEXT" > "$TMPROOT/mac-app-
 await_ready
 C=$(cat "$DOCS/verify-code.txt")
 mkdir -p "$TMP/d12t"
-( cd "$TMP/d12t" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes ) \
+( cd "$TMP/d12t" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes ) \
     > "$TMPROOT/mac-cli-intent-text.log" 2>&1 || fail "intent-send-text: croc receive exited $? (log: $TMPROOT/mac-cli-intent-text.log)"
 await_app 30
 check_result intent-send-text
@@ -408,9 +446,10 @@ grep -qF "$INTENT_TEXT" "$TMPROOT/mac-cli-intent-text.log" || fail "Send Text ac
 C=$(code intr)
 rm -f "$RESULT" "$HISTORY"
 echo "mac intent receive $$" > "$TMP/$RECV_NAME"
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --disable-clipboard --ignore-stdin send "$RECV_NAME" ) \
+mark_relay
+( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send "$RECV_NAME" ) \
     > "$TMPROOT/mac-cli-intent-send.log" 2>&1 &
-sleep 3
+await_sender
 run_app --auto-intent receive --intent-arg "$C" > "$TMPROOT/mac-app-intent-recv.log" 2>&1
 await_app 120
 got=$(cat "$RESULT" 2>/dev/null || echo missing)

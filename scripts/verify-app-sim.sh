@@ -11,6 +11,12 @@
 # receiver that arrives first corrupts the PAKE handshake ("problem with
 # decoding: invalid character", or "flate: corrupt input" when it times out
 # croc's 500 ms local-endpoint probe and decodes the late reply as data).
+#
+# Both scenarios send through a `croc relay` this script starts on free loopback
+# ports (scripts/lib.sh, "The relay a harness sends through"); the simulator
+# shares the Mac's network, so it reaches that relay on 127.0.0.1. PUBLIC_POOL=1
+# uses the public relay pool instead; RELAY=host:port a relay that is already
+# running.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
@@ -26,6 +32,9 @@ DD="$TMPROOT/dd-sim"
 TMP=$(mktemp -d)
 trap 'kill_jobs; rm -rf "$TMP"' EXIT
 
+use_relay "$TMPROOT/sim-relay.log"
+CLI_R=${RELAY:+--relay=$RELAY}                     # one word, empty on the public pool: the CLI takes --relay before its command
+
 xcrun simctl bootstatus "$SIM" -b > /dev/null
 logged "$TMPROOT/sim-build.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
   -destination "platform=iOS Simulator,name=$SIM" -derivedDataPath "$DD" build
@@ -39,7 +48,7 @@ READY="$DOCS/verify-code-ready.txt"
 
 launch() {                                          # launch ARGS...
   xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
-  xcrun simctl launch "$SIM" "$BUNDLE" "$@" > /dev/null
+  xcrun simctl launch "$SIM" "$BUNDLE" "$@" ${RELAY:+--relay "$RELAY"} > /dev/null
 }
 
 check_result() {                                    # check_result LABEL
@@ -56,9 +65,10 @@ check_result() {                                    # check_result LABEL
 C="sim-$$-recv"
 rm -f "$RESULT" "$READY" "$DOCS/simfile.txt"
 echo "sim transfer $$" > "$TMP/simfile.txt"
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --disable-clipboard --ignore-stdin send simfile.txt ) \
+mark_relay
+( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send simfile.txt ) \
     > "$TMPROOT/sim-send.log" 2>&1 &
-sleep 3
+await_sender
 launch --auto-receive "$C"
 check_result receive
 cmp -s "$TMP/simfile.txt" "$DOCS/simfile.txt" || fail "receive: received bytes differ"
@@ -80,16 +90,18 @@ mkdir -p "$GROUP_DIR/ShareInbox/$BATCH"
 head -c 1048576 /dev/urandom > "$GROUP_DIR/ShareInbox/$BATCH/payload.bin"
 printf '{"batch":"%s","files":["payload.bin"]}\n' "$BATCH" > "$GROUP_DIR/ShareInbox/manifest.json"
 
+mark_relay
 launch --auto-share-send "$C"
 # A fixed sleep lost the sender-first race whenever the app launched slowly.
-# The marker fires before croc dials the relay, so wait 3 s more (1 s still
-# lost the race once).
+# The marker fires before croc dials the relay, so the relay's own log says
+# when the app is in its room (lib.sh, await_sender; on the public pool it
+# sleeps 3 s instead, which 1 s once failed to cover).
 await_file "$READY" 60 || fail "app never reported its code (no $READY)"
-sleep 3
+await_sender
 
 # CROC_SECRET rather than a positional code: the croc CLI refuses a positional
 # receive code and points at CROC_SECRET.
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" --ignore-stdin --yes ) \
+( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes ) \
     > "$TMPROOT/share-sim-recv.log" 2>&1 || {
   rc=$?
   tail -n 30 "$TMPROOT/share-sim-recv.log" >&2

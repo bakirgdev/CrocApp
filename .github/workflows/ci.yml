@@ -171,9 +171,9 @@ jobs:
 
       - run: pnpm --dir web/docs run typecheck
 
-  # The interop harness against a relay on localhost, never the public relays:
-  # those rate-limit a shared runner address and make the run flaky. The
-  # public-pool scenario stays a local run (docs/BUILDING.md).
+  # The interop harness, which starts its own relay on localhost (scripts/lib.sh),
+  # never the public relays: those rate-limit a shared runner address and make
+  # the run flaky. The public-pool scenario stays a local run (docs/BUILDING.md).
   interop:
     name: interop (local relay)
 
@@ -195,29 +195,43 @@ jobs:
           go-version-file: crocmobile/go.mod
           cache-dependency-path: crocmobile/go.sum
 
-      # The CLI peer must match the croc the engine embeds: Homebrew's bottle
-      # lagged at 11.5.0, which has no `croc store`.
-      - name: Install the croc CLI at the engine version
+      # The CLI peers must match the croc the engine embeds (Homebrew's bottle
+      # lagged at 11.5.0, which has no `croc store`) and the v10 test peer.
+      - name: Read the croc CLI versions
+        id: croc
         shell: bash
         run: |
           set -euo pipefail
-          v=$(cd crocmobile && go list -m -f '{{.Version}}' github.com/schollz/croc/v11)
-          GOBIN="$RUNNER_TEMP/croc11" go install "github.com/schollz/croc/v11@$v"
+          v11=$(cd crocmobile && go list -m -f '{{.Version}}' github.com/schollz/croc/v11)
+          v10=$(cat scripts/croc-v10.version)
+          echo "v11=$v11" >> "$GITHUB_OUTPUT"
+          echo "v10=$v10" >> "$GITHUB_OUTPUT"
 
-      # The croc v10 peer.
-      - run: go install "github.com/schollz/croc/v10@$(cat scripts/croc-v10.version)"
+      # An exact-match key only: a binary of another version must never restore.
+      - name: Restore the croc CLIs
+        id: croc-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/croc-cli
+          key: croc-cli-${{ runner.os }}-${{ runner.arch }}-${{ steps.croc.outputs.v11 }}-${{ steps.croc.outputs.v10 }}
 
-      # Admission limits raised as a margin: every connection comes from
-      # 127.0.0.1, which a relay admits 30 times a minute by default.
+      - name: Install the croc CLIs
+        if: steps.croc-cache.outputs.cache-hit != 'true'
+        shell: bash
+        env:
+          V11: ${{ steps.croc.outputs.v11 }}
+          V10: ${{ steps.croc.outputs.v10 }}
+        run: |
+          set -euo pipefail
+          GOBIN="$RUNNER_TEMP/croc-cli/v11" go install "github.com/schollz/croc/v11@$V11"
+          GOBIN="$RUNNER_TEMP/croc-cli/v10" go install "github.com/schollz/croc/v10@$V10"
+
+      # The script starts its own relay, with raised admission limits.
       - name: Interop against a local croc relay
-        shell: bash
-        run: |
-          set -euo pipefail
-          croc="$RUNNER_TEMP/croc11/croc"
-          "$croc" relay --host 127.0.0.1 --ports 9309,9310,9311,9312,9313 \
-            --source-join-limit 1000 --room-join-limit 1000 > "$RUNNER_TEMP/relay.log" 2>&1 &
-          for _ in $(seq 50); do nc -z 127.0.0.1 9309 && break; sleep 0.2; done
-          CROC="$croc" CROC_V10="$(go env GOPATH)/bin/croc" RELAY=127.0.0.1:9309 scripts/verify-interop.sh
+        env:
+          CROC: ${{ runner.temp }}/croc-cli/v11/croc
+          CROC_V10: ${{ runner.temp }}/croc-cli/v10/croc
+        run: scripts/verify-interop.sh
 
   build:
     name: build (${{ matrix.platform }})

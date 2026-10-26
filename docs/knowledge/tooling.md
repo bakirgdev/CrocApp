@@ -24,7 +24,7 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | `cwebp` (Homebrew `webp`) | none; called by `scripts/capture-screenshots.sh --copy-web` to write the web WebP files | local only |
 | `scripts/verify-docs.sh` (pure bash and awk) | none; the rules it enforces are in `docs/AGENTS.md` | local + CI (`docs checks`, on every push and pull request, because renaming any file can break a path a doc names) |
 | ShellCheck 0.11 (Homebrew locally; preinstalled on `ubuntu-26.04`) | none (`shellcheck -x scripts/*.sh`, default checks) | local + CI (`shellcheck` job) |
-| GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26` against a local `croc relay` |
+| GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26`, which starts its own local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:17 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | Push to `main` only, on changes to `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh` and the workflow file: builds `_site` and deploys. The pre-merge build is the `site build` job in `ci.yml` |
 | GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes; `workflow_dispatch` is a rehearsal that publishes nothing |
@@ -55,9 +55,10 @@ The build settings that must not change casually (Swift 6 mode, deployment targe
   - The macOS leg runs `xcodebuild test`, which builds the app first, so it has no separate build step. Both legs pass `COMPILER_INDEX_STORE_ENABLE=NO`.
   - The DerivedData cache saves package resolution, not compiles: a fresh checkout gives every source a new mtime, so Xcode recompiles the app. A cache of `CrocKit/.build` would fail the same way, so there is none.
 - **The `interop (local relay)` job (`macos-26`) runs `scripts/verify-interop.sh` against a local relay.**
-  - It starts `croc relay` on 127.0.0.1 with raised admission limits, because the public relays rate-limit a shared runner address.
+  - The script starts `croc relay` on 127.0.0.1 itself, with raised admission limits, because the public relays rate-limit a shared runner address (`scripts/lib.sh`, "The relay a harness sends through"). The job only provides the CLI binaries.
   - It installs the v11 CLI with `go install` at the version in `crocmobile/go.mod`, because Homebrew's bottle can lag that pin and the store scenario needs `croc store`. It installs the v10 peer the same way, at the version in `scripts/croc-v10.version`.
-  - CI does not run the other harnesses or the public-pool scenario.
+  - Both binaries are cached under one key made of the runner OS and architecture and the two versions, with no fallback key, so a hit means exactly those versions and skips both installs. A version bump in `crocmobile/go.mod` or `scripts/croc-v10.version` misses the cache and installs afresh.
+  - CI does not run the other harnesses or the public-pool scenario (`PUBLIC_POOL=1`).
 - **The go job carries the engine's build tag.** `GOFLAGS=-tags=croc_no_tailcat` is set job-wide in `reusable-go.yml` (and on the fuzz job in `go-weekly.yml`), so build, vet, test, fuzz, govulncheck and golangci-lint all see the croc without Tailcat that ships. A new Go step needs nothing extra. `TestBuildIsRelayOnly` fails a test run that lacks the tag.
 - **`go install` under the go job's cross-compile env.** The go job sets `GOOS=darwin GOARCH=arm64` job-wide so `go build` and `go vet` analyze the shipping target.
   - `go install` honours that and drops a darwin binary into `$GOPATH/bin/darwin_arm64/`, which is unrunnable on the Linux host and not where `$(go env GOPATH)/bin/` looks (exit 127).
@@ -105,6 +106,7 @@ These cost real debugging time on this machine. All are environment quirks, not 
   - Under the caller's `set -e`, a failing `kill` aborts the EXIT trap midway, skips the `rm -rf "$TMP"` beside it, and turns a successful run into exit 1.
   - `verify-interop.sh` and `verify-app-sim.sh` both register that trap, so `kill $pids 2>/dev/null || true` must stay.
   - The `interop (local relay)` job trusts these scripts' exit codes.
+- **A harness's relay is disowned, so a bare `wait` does not wait on it.** `verify-interop.sh` ends many scenarios in `wait`, which would otherwise block on the relay forever. `start_croc_relay` therefore runs `disown` on it, `jobs -p` no longer lists it, and `kill_jobs` stops it by `RELAY_PID`. Checked on bash 3.2 (`/bin/bash`) and bash 5.3.
 
 ## Deferred, with the trigger for revisiting
 

@@ -46,16 +46,17 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - croc drops discovery packets from its own host's addresses, so two peers on one machine never find each other (CLI to CLI included).
   - The multicast case in `scripts/verify-interop.sh` instead listens on the group and asserts what each side announces.
   - A real two-device check on a shared non-default group has not been done.
-- **The harnesses fail at random against the public relays when they rate-limit.**
+- **A harness run on the public relays (`PUBLIC_POOL=1`) fails at random when they rate-limit.**
   - A croc v11 relay admits 30 connections a minute from one address (`DEFAULT_SOURCE_JOIN_LIMIT`, `DEFAULT_JOIN_LIMIT_WINDOW`). A multiplexed transfer opens 9 per peer (1 control, 8 data). With both peers on one machine, two transfers on the same pool relay inside a minute can be refused with `relay admission rate limited`.
   - `verify-interop.sh`, `verify-app-mac.sh` and `verify-app-sim.sh` then fail at whichever step hits the limit. The pool-relay case in `verify-interop.sh` waits 60 s and turns multiplexing off for this reason.
-  - A slow admission also defeats the fixed 3 s wait after a CLI sender. The receiver then joins first and fails with `joinedEarly` ("The other device wasn't ready, or the connection was too slow."). Seen in `verify-app-mac.sh` scenario 8, where the CLI sender's room confirmation took 4.8 s.
-  - CI avoids it: the `interop (local relay)` job sets `RELAY` to a local `croc relay` with raised admission limits (`BUILDING.md`, "Verification harnesses").
-  - The other harnesses have no local-relay mode. Use a local relay for a deterministic result, leave a minute between public-relay runs, and treat a failure as a regression only after finding the cause in its log.
+  - A slow admission also defeats a fixed 3 s wait after a sender. The receiver then joins first and fails with `joinedEarly` ("The other device wasn't ready, or the connection was too slow."). Seen in `verify-app-mac.sh` scenario 8, where the CLI sender's room confirmation took 4.8 s.
+  - By default the harnesses avoid both: each starts its own `croc relay` with raised admission limits and starts a receiver only when that relay's debug log shows the sender's room (`BUILDING.md`, "Verification harnesses"; CI's `interop (local relay)` job runs the same way).
+  - A pool relay's log is not ours to read, so on the public pool, and with an explicit `RELAY`, the harnesses still wait a fixed 3 s after a sender. Leave a minute between public-pool runs, and treat a failure as a regression only after finding the cause in its log.
+  - Every checkout and session on one machine shares one address, so one limit: another run on the public pool can use up yours.
 - **Two checkouts cannot run the same harness at once on one Mac.**
   - `verify-app-mac.sh` and `verify-app-sim.sh` share the app container, `~/Downloads/CrocApp` and the pasteboard. A wrapper sender and `--local` scenarios in `verify-interop.sh` bind croc's default ports 9009 to 9013 and announce on the default multicast group, so a second run sees the first one's sender.
   - `verify-app-mac.sh` builds into `$TMPDIR/dd-mac`, which every checkout shares. A second checkout's build fails with `Crocmobile.objc.h has been modified since the module file ... was built`. Run it with a `TMPDIR` of its own.
-  - Take turns, and give each run its own `TMPDIR` and `RELAY` ports.
+  - Take turns, and give each run its own `TMPDIR`. The local relay needs no care: each run picks its own free ports.
 
 ## Design system
 

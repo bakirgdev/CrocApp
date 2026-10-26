@@ -27,7 +27,9 @@ import ServiceManagement
 ///   --local                        force croc local-only mode (LAN/sandbox listener check)
 ///   --no-compress                  disable croc compression
 ///   --ask                          require sender-side confirm before send
-///   --relay ADDR                   use a custom relay address; also disables local-only race
+///   --relay ADDR                   use a custom relay address (the LAN route stays on)
+///   --disable-local                turn the LAN route off, so success provably went through the
+///                                  relay; value-less, so on macOS it goes last
 ///   --relay-password PW            the custom relay's password (croc's default applies without it)
 ///   --shown-relay default          make the trust UI name the public relay whatever --relay says
 ///   --shown-link-origin ORIGIN     make a stored link show and encode ORIGIN (scheme and host, e.g.
@@ -119,9 +121,9 @@ enum AutoVerify {
         }
         if let i = args.firstIndex(of: "--relay"), i + 1 < args.count {
             controller.settings.relayAddress = args[i + 1]
-            // Kill the LAN race so success provably went through the relay.
-            controller.harnessDisableLocal = true
         }
+        // Kill the LAN race so success provably went through the relay.
+        if args.contains("--disable-local") { controller.harnessDisableLocal = true }
         if let i = args.firstIndex(of: "--relay-password"), i + 1 < args.count {
             controller.settings.relayPassword = args[i + 1]
         }
