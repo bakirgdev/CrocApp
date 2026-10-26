@@ -12,7 +12,7 @@ Each code works for one transfer and expires with it. Anyone who has the code be
 
 ## Share a code
 
-CrocApp shows the code as text and as a QR code, with **Copy Code** and **Share Link** beside it. The QR code and the link are the same address, `https://crocapp.dev/r/#<code>`. A phone camera that scans it opens CrocApp, or a page that explains the options if the app is not installed.
+CrocApp shows the code as text and as a QR code, with **Copy Code** and **Share Link** beside it. The QR code and the link are the same address, `https://crocapp.dev/r/#<code>`. A phone camera that scans it opens CrocApp, or a page that explains the options if the app is not installed. **Copy Code** removes the code from the clipboard after 5 minutes unless you copied something else since (on a Mac, only while CrocApp is running).
 
 On the other device, bring the code into **Receive** by typing it, tapping **Paste**, or on iOS tapping **Scan QR Code**. CrocApp never reads the clipboard on its own.
 

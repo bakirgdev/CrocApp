@@ -489,7 +489,7 @@ struct TransferStatusView: View {
                 .accessibilityLabel("Link")
             HStack(spacing: Spacing.space5) {
                 Button {
-                    Clipboard.copy(receipt.link, thisDeviceOnly: true)
+                    Clipboard.copySecret(receipt.link, thisDeviceOnly: true)
                 } label: {
                     Label("Copy Link", systemImage: "doc.on.doc")
                 }
