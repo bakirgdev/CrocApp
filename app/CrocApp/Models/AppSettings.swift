@@ -74,10 +74,34 @@ final class AppSettings {
     var peerIP: String { didSet { save(peerIP, "settings.advanced.peerIP") } }
     /// Proxies may carry credentials: Keychain only, see `persistProxy`.
     var socks5Proxy: String {
-        didSet { persistProxy(socks5Proxy, account: Self.socks5ProxyAccount) }
+        didSet { persistProxy(socks5Proxy, account: Self.socks5ProxyAccount, as: .socks5Proxy) }
     }
     var httpProxy: String {
-        didSet { persistProxy(httpProxy, account: Self.httpProxyAccount) }
+        didSet { persistProxy(httpProxy, account: Self.httpProxyAccount, as: .httpProxy) }
+    }
+
+    /// The settings kept in `secrets` instead of `storage`.
+    enum Secret {
+        case relayPassword, socks5Proxy, httpProxy
+    }
+
+    /// Secrets whose last write to `secrets` failed. The property keeps the
+    /// edit for this launch, but the store still holds the previous value,
+    /// which is what the next launch reads. A secret leaves the set on its
+    /// next successful write.
+    private(set) var unsavedSecrets: Set<Secret> = []
+
+    /// The inline error under a field in `unsavedSecrets`. Never names the value.
+    static var secretNotSavedTitle: String {
+        String(localized: "Couldn't save to the Keychain")
+    }
+
+    static var secretNotSavedDetail: String {
+        String(
+            localized: "Edit the field to try again before you quit CrocApp.",
+            comment:
+                "Under a Keychain field whose change was not saved. Until it is, the next launch shows the previous value."
+        )
     }
 
     /// Why `text` cannot be a stored-transfer server, or nil when it can. The
@@ -178,21 +202,32 @@ final class AppSettings {
     /// Deletes rather than stores "" so clearing the field doesn't leave a
     /// Keychain item with an empty password behind.
     private func persistRelayPassword() {
-        if relayPassword.isEmpty {
-            secrets.delete(account: Self.relayPasswordAccount)
-        } else {
-            secrets.set(relayPassword, account: Self.relayPasswordAccount)
-        }
+        let saved =
+            relayPassword.isEmpty
+            ? secrets.delete(account: Self.relayPasswordAccount)
+            : secrets.set(relayPassword, account: Self.relayPasswordAccount)
+        record(saved, for: .relayPassword)
     }
 
     /// Keychain-only: a proxy URL can hold a user name and password. Deletes
     /// rather than stores a blank.
-    private func persistProxy(_ value: String, account: String) {
+    private func persistProxy(_ value: String, account: String, as secret: Secret) {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty {
-            secrets.delete(account: account)
-        } else {
-            secrets.set(trimmed, account: account)
+        let saved =
+            trimmed.isEmpty
+            ? secrets.delete(account: account)
+            : secrets.set(trimmed, account: account)
+        record(saved, for: secret)
+    }
+
+    /// Touches `unsavedSecrets` only when the outcome changes, because every
+    /// keystroke in a secret field persists and each write would otherwise
+    /// redraw whatever reads the set.
+    private func record(_ saved: Bool, for secret: Secret) {
+        if saved {
+            if unsavedSecrets.contains(secret) { unsavedSecrets.remove(secret) }
+        } else if !unsavedSecrets.contains(secret) {
+            unsavedSecrets.insert(secret)
         }
     }
 }

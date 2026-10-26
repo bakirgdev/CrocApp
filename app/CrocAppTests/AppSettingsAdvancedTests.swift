@@ -92,6 +92,26 @@ import Testing
         #expect(makeSettings().socks5Proxy == "")
     }
 
+    @Test func aFailedProxyWriteIsShownOnItsOwnFieldUntilAWriteSucceeds() {
+        let s = makeSettings()
+        secrets.failWrites = true
+
+        s.socks5Proxy = "proxy.example:1080"
+
+        #expect(s.unsavedSecrets == [.socks5Proxy])
+        #expect(secrets.items.isEmpty)
+
+        secrets.failWrites = false
+        s.httpProxy = "proxy.example:3128"
+
+        #expect(s.unsavedSecrets == [.socks5Proxy], "another secret's write leaves it unsaved")
+
+        s.socks5Proxy = "proxy.example:1081"
+
+        #expect(s.unsavedSecrets.isEmpty)
+        #expect(secrets.items["advanced.socks5Proxy"] == "proxy.example:1081")
+    }
+
     /// A harness run builds its settings on its own memory, so its overrides
     /// cannot reach the proxies a real user saved.
     @Test func settingsOnSeparateStoresShareNothing() {

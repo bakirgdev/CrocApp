@@ -14,23 +14,42 @@ protocol SecretStore {
 /// UserDefaults' plaintext plist. On macOS that plist sits at
 /// `~/Library/Containers/<bundle-id>/Data/Library/Preferences/`, readable by
 /// any process running as the same user via `defaults read`; on iOS it's
-/// pulled into unencrypted device backups. `kSecAttrAccessibleAfterFirstUnlock`
-/// keeps items readable by background transfers without a biometric/passcode
-/// prompt.
+/// pulled into unencrypted device backups.
 ///
-/// Deliberately does *not* set `kSecUseDataProtectionKeychain`, so macOS uses
-/// the file-based keychain. The data-protection keychain is the modern
-/// recommendation, but it resolves an app's keychain access group from the
-/// team ID in its signature: unsigned builds (tests and CI run with
-/// `CODE_SIGNING_ALLOWED=NO`) have none and fail with
-/// `errSecMissingEntitlement`. Switching later also needs a migration, since
-/// items already in the file-based keychain are not visible from the other.
-/// iOS is unaffected: it only has the data-protection keychain.
+/// `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` keeps items readable by
+/// background transfers without a biometric/passcode prompt, and keeps them
+/// on this device: a backup restored to another device does not bring them
+/// back. `kSecAttrSynchronizable` stays unset, so they never sync through
+/// iCloud Keychain either. An update writes the accessibility too, so an item
+/// stored under another class takes this one on its next write.
+///
+/// Every query sets `kSecUseDataProtectionKeychain`. iOS ignores it (it only
+/// has that keychain); on macOS it is what makes the accessibility class
+/// apply at all, because the legacy file-based keychain ignores it. That
+/// keychain scopes items by the `com.apple.application-identifier`
+/// entitlement, which every signed Mac build gets from its provisioning
+/// profile: development, Mac App Store and the Developer ID profile of
+/// `CrocApp Direct`. A build without one (`CODE_SIGNING_ALLOWED=NO`, as CI
+/// builds) cannot use the Keychain: a read finds nothing
+/// (`errSecItemNotFound`), and a write or delete fails with
+/// `errSecMissingEntitlement`, which is logged. Tests and harness runs inject
+/// an in-memory `SecretStore`, so only such a build's own launch, which only
+/// reads, reaches it. Items in the file-based keychain are never read.
 ///
 /// Failures are logged with their `OSStatus`, never the value.
 struct KeychainStore: SecretStore {
     private static let service = "com.bakirgdev.CrocApp"
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "keychain")
+
+    /// The item for `account`, in the data-protection keychain.
+    private static func query(account: String) -> [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecUseDataProtectionKeychain as String: true,
+        ]
+    }
 
     /// Write `value` under `account`, replacing any existing item.
     /// Add-then-update-on-`errSecDuplicateItem` rather than delete-then-add,
@@ -38,14 +57,12 @@ struct KeychainStore: SecretStore {
     @discardableResult
     func set(_ value: String, account: String) -> Bool {
         let data = Data(value.utf8)
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: Self.service,
-            kSecAttrAccount as String: account,
+        let query = Self.query(account: account)
+        let attributes: [String: Any] = [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
         ]
-        var addAttributes = query
-        addAttributes[kSecValueData as String] = data
-        addAttributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        let addAttributes = query.merging(attributes) { $1 }
 
         let addStatus = SecItemAdd(addAttributes as CFDictionary, nil)
         if addStatus == errSecSuccess { return true }
@@ -54,8 +71,7 @@ struct KeychainStore: SecretStore {
             return false
         }
 
-        let updateStatus = SecItemUpdate(
-            query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
         guard updateStatus == errSecSuccess else {
             Self.log.error("update \(account, privacy: .public) failed: OSStatus \(updateStatus)")
             return false
@@ -65,13 +81,9 @@ struct KeychainStore: SecretStore {
 
     /// Read the value stored under `account`, or nil if absent.
     func get(account: String) -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: Self.service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
+        var query = Self.query(account: account)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         if status != errSecSuccess, status != errSecItemNotFound {
@@ -85,12 +97,7 @@ struct KeychainStore: SecretStore {
     /// as success -- the end state (nothing stored) is what the caller wants.
     @discardableResult
     func delete(account: String) -> Bool {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: Self.service,
-            kSecAttrAccount as String: account,
-        ]
-        let status = SecItemDelete(query as CFDictionary)
+        let status = SecItemDelete(Self.query(account: account) as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             Self.log.error("delete \(account, privacy: .public) failed: OSStatus \(status)")
             return false
