@@ -24,7 +24,7 @@ enum ShareStager {
         // Never wipe the inbox here: a prior batch may be mid-send, with croc
         // actively reading its files. The main app's purgeStaleBatches()
         // sweeps orphaned batches once it's idle.
-        let batchName = "batch-" + UUID().uuidString
+        let batchName = ShareHandoff.makeBatchName()
         let batchDir = inbox.appendingPathComponent(batchName, isDirectory: true)
         try FileManager.default.createDirectory(at: batchDir, withIntermediateDirectories: true)
 
@@ -59,11 +59,10 @@ enum ShareStager {
                     cont.resume(throwing: error ?? ShareStagerError.nothingUsable)
                     return
                 }
+                // The app drops a name `ReceivedName` rejects when it reads
+                // the manifest, so stage such a file under a safe name instead.
                 var name = url.lastPathComponent
-                let hasControl = name.unicodeScalars.contains {
-                    $0.properties.generalCategory == .control
-                }
-                if name.isEmpty || name.hasPrefix(".") || hasControl { name = "shared-file" }
+                if name.hasPrefix(".") || ReceivedName.isUnsafe(name) { name = "shared-file" }
                 var candidate = name
                 var counter = 2
                 while taken.contains(candidate)
