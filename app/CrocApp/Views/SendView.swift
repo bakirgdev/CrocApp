@@ -63,8 +63,12 @@ struct SendView: View {
             }
         }
         .navigationTitle("Send")
-        .onAppear { consumePendingURLs() }
+        .onAppear {
+            consumePendingURLs()
+            consumePendingText()
+        }
         .onChange(of: router.pendingSendURLs) { _, _ in consumePendingURLs() }
+        .onChange(of: router.pendingSendText) { _, _ in consumePendingText() }
     }
 
     // At accessibility text sizes the form is taller than a phone screen, so it
@@ -229,6 +233,14 @@ struct SendView: View {
         mode = .files
         pickedURLs.append(contentsOf: router.pendingSendURLs.filter { !pickedURLs.contains($0) })
         router.pendingSendURLs = []
+    }
+
+    /// Appends rather than replaces, so text the user already typed survives.
+    private func consumePendingText() {
+        guard let pending = router.pendingSendText else { return }
+        mode = .text
+        text = text.isEmpty ? pending : text + "\n" + pending
+        router.pendingSendText = nil
     }
 
     // MARK: - Files

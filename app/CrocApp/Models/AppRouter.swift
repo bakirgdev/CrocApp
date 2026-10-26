@@ -17,6 +17,9 @@ final class AppRouter {
     var path: [Route] = []
     /// URLs waiting for SendView to pick up into its staged list.
     var pendingSendURLs: [URL] = []
+    /// Text waiting for SendView to stage in its text mode (Services menu,
+    /// Send Clipboard). Like the URLs, it only stages: it never sends.
+    var pendingSendText: String?
     /// A receive link waiting for ReceiveView to prefill from it. Opening a
     /// link never connects: the user taps Receive.
     var pendingReceive: TransferLink?
@@ -48,6 +51,11 @@ final class AppRouter {
         for url in urls where !pendingSendURLs.contains(url) {
             pendingSendURLs.append(url)
         }
+        if !isBusy, path != [.send] { path = [.send] }
+    }
+
+    func openSend(text: String) {
+        pendingSendText = text
         if !isBusy, path != [.send] { path = [.send] }
     }
 
