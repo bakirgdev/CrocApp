@@ -75,22 +75,14 @@ final class AppSettings {
         didSet { persistProxy(httpProxy, account: Self.httpProxyAccount) }
     }
 
-    /// Why `text` cannot be a stored-transfer server, or nil when it can.
-    /// Mirrors the engine: `https`, or `http` on loopback only, and nothing
-    /// after the host.
+    /// Why `text` cannot be a stored-transfer server, or nil when it can. The
+    /// engine decides: `https`, or `http` on loopback only, and nothing after
+    /// the host. Blank is refused, unlike the Advanced fields.
     static func storedServerError(_ text: String) -> String? {
-        let address = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let parts = URLComponents(string: address),
-            let scheme = parts.scheme?.lowercased(), scheme == "https" || scheme == "http",
-            let host = parts.host?.lowercased().trimmingCharacters(in: ["[", "]"]), !host.isEmpty
-        else { return "Enter a server address such as \(defaultStoredServer)." }
-        guard parts.user == nil, parts.password == nil, parts.query == nil, parts.fragment == nil,
-            parts.path.isEmpty || parts.path == "/"
-        else { return "Enter the server's address only, with nothing after the host name." }
-        if scheme == "http", !TransferLink.loopbackHosts.contains(host) {
-            return "The server must use https. Plain http works only for localhost."
-        }
-        return nil
+        engineError(
+            .storeServer, text,
+            "Enter the server's address only, such as \(defaultStoredServer). It must use https, or http for localhost."
+        )
     }
 
     init(defaults d: UserDefaults = .standard, secrets: any SecretStore = KeychainStore()) {

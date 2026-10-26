@@ -90,6 +90,182 @@ func TestValidateNetworkOptions(t *testing.T) {
 	}
 }
 
+// settingCases is, per ValidateSetting field, what the engine accepts and
+// refuses. The app keeps no copy of these rules: its settings form asks the
+// engine.
+var settingCases = []struct {
+	field   string
+	valid   []string
+	invalid []string
+}{
+	{
+		SettingSocks5Proxy,
+		[]string{
+			"", "   ", "127.0.0.1:1080", "proxy.example:1080", "socks5://user:secret@proxy.example:1080",
+			"socks5h://proxy.example:1080", "SOCKS5://proxy.example:1080", " socks5://proxy.example:1080 ",
+			"socks5://[::1]:1080",
+		},
+		[]string{
+			"proxy.example", "http://user:secret@proxy.example:1080", "socks5://:1080",
+			"user:secret@proxy.example", "socks5://proxy.example", "proxy.example:port", "proxy.example:0",
+			"proxy.example:70000", "socks5://proxy.example:1080 extra", "::1:1080", "socks5://host:1080:2",
+			"socks5:host:1080", "pro\u00a0xy.example:1080",
+		},
+	},
+	{
+		SettingHTTPProxy,
+		[]string{
+			"", "proxy.example:3128", "http://user:secret@proxy.example:3128", " https://proxy.example:443 ",
+			"https://proxy.example:443/", "http://[::1]:3128",
+		},
+		[]string{
+			"socks5://user:secret@proxy.example:1080", "user:secret@proxy.example", "proxy.example",
+			"ftp://proxy.example:21", "http://:3128", "::1:3128", "http://host:3128:2",
+		},
+	},
+	{
+		SettingMulticastAddress,
+		[]string{"", "239.255.255.250", "224.0.0.251", "239.255.255.255", " 224.0.0.1 "},
+		[]string{
+			"10.0.0.1", "ff02::1", "not an address", "223.255.255.255", "240.0.0.0", "239.255.255",
+			"239.255.255.256", "239.255.255.250.1", "239.255.255.0250",
+		},
+	},
+	{
+		SettingPeerIP,
+		[]string{"", "10.0.0.1:9009", "[::1]:9009", " 192.168.1.20:65535 ", "[fe80::1]:1"},
+		[]string{
+			"10.0.0.1", "sender.local:9009", "10.0.0.1:0", "10.0.0.1:http", "10.0.0.1:65536", "::1:9009",
+			"[::1]", "[::1]9009", "[not-ip]:9009", "[fe80::1%en0]:9009", ":9009",
+		},
+	},
+	{
+		SettingThrottleUpload,
+		[]string{"", "  ", "500k", "500K", "2m", "2M", "1g", "1G", "1000", "10", "99k"},
+		[]string{
+			"k", "xk", "5", "0k", "0", "00", "-5k", "+5k", "1.5m", "5kb", "5 k", "fast",
+			"99999999999999999999k", "٣k",
+		},
+	},
+	{
+		SettingStoreServer,
+		[]string{
+			"https://getcroc.com", "https://getcroc.com/", "  https://example.org:8443  ",
+			"http://localhost:8080", "http://127.0.0.1:9", "http://[::1]:8080",
+		},
+		[]string{
+			"http://example.com", "http://localhost.example.com", "ftp://getcroc.com", "getcroc.com", "", "   ",
+			"https://", "https://getcroc.com/s/abc", "https://getcroc.com?x=1", "https://getcroc.com#frag",
+			"https://user:pw@getcroc.com", "https://:8080",
+		},
+	},
+}
+
+func TestValidateSetting(t *testing.T) {
+	for _, c := range settingCases {
+		for _, v := range c.valid {
+			if err := ValidateSetting(c.field, v); err != nil {
+				t.Errorf("ValidateSetting(%s, %q) = %v, want nil", c.field, v, err)
+			}
+		}
+		for _, v := range c.invalid {
+			err := ValidateSetting(c.field, v)
+			if got := payloadCode(err); got != codeInvalidSetting {
+				t.Errorf("ValidateSetting(%s, %q) = %v, want a %s payload", c.field, v, err, codeInvalidSetting)
+			}
+		}
+	}
+}
+
+// payloadCode decodes the failure payload ValidateSetting returns, or "" for nil
+// or for text that is not a payload.
+func payloadCode(err error) string {
+	var f failure
+	if err == nil || json.Unmarshal([]byte(err.Error()), &f) != nil {
+		return ""
+	}
+	return f.Code
+}
+
+func TestValidateSettingCoversEverySetting(t *testing.T) {
+	fields := []string{
+		SettingSocks5Proxy, SettingHTTPProxy, SettingThrottleUpload, SettingMulticastAddress, SettingPeerIP,
+		SettingStoreServer,
+	}
+	if len(settingChecks) != len(fields) || len(settingCases) != len(fields) {
+		t.Fatalf("%d checks and %d case tables for %d settings", len(settingChecks), len(settingCases), len(fields))
+	}
+	for _, f := range fields {
+		if settingChecks[f] == nil {
+			t.Errorf("no check for %s", f)
+		}
+	}
+	// The names are the Options and StoreOptions fields, so Swift and Go read the same word.
+	for _, f := range fields {
+		_, inOptions := reflect.TypeOf(Options{}).FieldByName(f)
+		_, inStoreOptions := reflect.TypeOf(StoreOptions{}).FieldByName(strings.TrimPrefix(f, "Store"))
+		if !inOptions && (!strings.HasPrefix(f, "Store") || !inStoreOptions) {
+			t.Errorf("%q is not an Options field or a Store-prefixed StoreOptions field", f)
+		}
+	}
+}
+
+// A transfer start and a settings form must never disagree: for every value in
+// the tables, the start's own check and ValidateSetting accept or refuse alike.
+func TestValidateSettingMatchesTransferStart(t *testing.T) {
+	starts := map[string]func(v string) error{
+		SettingSocks5Proxy:      func(v string) error { return validateNetworkOptions(&Options{Socks5Proxy: v}) },
+		SettingHTTPProxy:        func(v string) error { return validateNetworkOptions(&Options{HTTPProxy: v}) },
+		SettingThrottleUpload:   func(v string) error { return validateNetworkOptions(&Options{ThrottleUpload: v}) },
+		SettingMulticastAddress: func(v string) error { return validateNetworkOptions(&Options{MulticastAddress: v}) },
+		SettingPeerIP:           func(v string) error { return validateNetworkOptions(&Options{PeerIP: v}) },
+		SettingStoreServer:      validateStoreOrigin,
+	}
+	for _, c := range settingCases {
+		for _, v := range append(slices.Clone(c.valid), c.invalid...) {
+			start, setting := starts[c.field](v), ValidateSetting(c.field, v)
+			if (start == nil) != (setting == nil) {
+				t.Errorf("%s %q: transfer start = %v, ValidateSetting = %v", c.field, v, start, setting)
+			}
+		}
+	}
+}
+
+func TestValidateSettingUnknownField(t *testing.T) {
+	for _, field := range []string{"", "socks5Proxy", "Server", "OutDir", "Code"} {
+		err := ValidateSetting(field, "x")
+		if payloadCode(err) != codeOther {
+			t.Errorf("ValidateSetting(%q) = %v, want a %s payload", field, err, codeOther)
+		}
+	}
+}
+
+// A proxy URL can carry a password, so no refusal may repeat any part of it,
+// including the refusals that come from url.Parse.
+func TestValidateSettingNeverQuotesAProxy(t *testing.T) {
+	values := []string{
+		"socks5://user:hunter2@nohost", "http://user:hunter2@nohost:1080", "user:hunter2@nohost:1080",
+		"socks5://user:hunter2@[bad:1080", "https://user:hunter2@nohost:99999", "ftp://user:hunter2@nohost:21",
+		"socks5://user:hunter2@nohost:1080 extra", "socks5://user:hunter2@:1080",
+	}
+	for _, field := range []string{SettingSocks5Proxy, SettingHTTPProxy} {
+		for _, v := range values {
+			err := ValidateSetting(field, v)
+			if err == nil {
+				continue
+			}
+			if payloadCode(err) != codeInvalidSetting {
+				t.Errorf("ValidateSetting(%s, %q) = %v, want a %s payload", field, v, err, codeInvalidSetting)
+			}
+			for _, leak := range []string{"hunter2", "nohost"} {
+				if strings.Contains(err.Error(), leak) {
+					t.Errorf("ValidateSetting(%s, %q) error %q quotes %q", field, v, err, leak)
+				}
+			}
+		}
+	}
+}
+
 func TestInvalidSettingFailsBeforeTheLock(t *testing.T) {
 	_, err := StartSend("", "hello", &Options{Socks5Proxy: "socks5://user:secret@nohost"}, newStoreRecorder())
 	if err == nil || !strings.Contains(err.Error(), codeInvalidSetting) || strings.Contains(err.Error(), "secret") {
@@ -307,6 +483,7 @@ func FuzzProxyURL(f *testing.F) {
 		"", "127.0.0.1:1080", "proxy.example:3128", "socks5://user:secret@proxy.example:1080",
 		"socks5h://proxy.example:1080", "http://user:secret@proxy.example:3128", " https://proxy.example:443 ",
 		"proxy.example", "socks5://:1080", "user:secret@proxy.example", "proxy.example:0", "proxy.example:70000",
+		"::1:1080", "socks5://host:1080:2", "socks5://[::1]:1080",
 	} {
 		f.Add(s)
 	}
@@ -334,6 +511,9 @@ func FuzzProxyURL(f *testing.F) {
 			port, perr := strconv.Atoi(u.Port())
 			if !slices.Contains(c.allowed, u.Scheme) || u.Hostname() == "" || perr != nil || port < 1 || port > 65535 {
 				t.Fatalf("proxyURL(%q, %s) accepted %q: scheme, host or port invalid", value, c.scheme, u)
+			}
+			if strings.Contains(u.Hostname(), ":") && !strings.HasPrefix(u.Host, "[") {
+				t.Fatalf("proxyURL(%q, %s) accepted %q: host has an unbracketed colon", value, c.scheme, u)
 			}
 		}
 	})

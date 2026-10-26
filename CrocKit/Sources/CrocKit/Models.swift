@@ -8,6 +8,44 @@ public enum RelayDefaults {
     public static var address6: String { CrocmobileDefaultRelayAddress6() }
 }
 
+/// A setting whose value the engine checks. `validate(_:)` runs the check a
+/// transfer start runs, so a settings form shows an error exactly when the
+/// transfer would refuse the value, and never tells the two apart.
+public enum EngineSetting: Sendable, CaseIterable {
+    case socks5Proxy
+    case httpProxy
+    /// Send only: `EngineOptions.throttleUpload`.
+    case throttleUpload
+    case multicastAddress
+    /// Receive only: `EngineOptions.peerIP`.
+    case peerIP
+    /// `StoredSendOptions.server`.
+    case storeServer
+
+    /// Throws an `EngineFailure` with code `.invalidSetting` when the engine
+    /// refuses `value`. Blank is valid for every setting except `storeServer`,
+    /// which needs an origin. A proxy failure never quotes the value, which can
+    /// carry credentials. A pure, fast call: no transfer state, any thread.
+    public func validate(_ value: String) throws {
+        var error: NSError?
+        guard CrocmobileValidateSetting(engineName, value, &error) else {
+            throw EngineFailure(payload: error?.localizedDescription)
+        }
+    }
+
+    /// The name `ValidateSetting` in `crocmobile/network.go` takes.
+    private var engineName: String {
+        switch self {
+        case .socks5Proxy: CrocmobileSettingSocks5Proxy
+        case .httpProxy: CrocmobileSettingHTTPProxy
+        case .throttleUpload: CrocmobileSettingThrottleUpload
+        case .multicastAddress: CrocmobileSettingMulticastAddress
+        case .peerIP: CrocmobileSettingPeerIP
+        case .storeServer: CrocmobileSettingStoreServer
+        }
+    }
+}
+
 /// What a receive does with an incoming file whose name already exists.
 /// Raw values mirror `PolicyKeepBoth` and `PolicyReplace` in
 /// `crocmobile/crocmobile.go`.
