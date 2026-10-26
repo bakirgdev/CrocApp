@@ -213,6 +213,9 @@ Permanent or deferred, each with its reason.
 - **`poll()` reads `croc.Client` scalar and slice fields with no synchronization** (croc's own goroutines write them unguarded).
   - The worst case is a briefly wrong progress number. It is bounds-checked (`progressSnapshot` in `session.go`), so it cannot panic.
   - A real fix needs upstream locking.
+- **The settings check accepts a few values that cannot work.**
+  - The settings fields ask the engine (`ValidateSetting`, `knowledge/crocmobile-bridge.md`, "Validating a setting"), so a field is exactly as strict as a transfer start. Two cases pass anyway: a link server with no host name before the port (`https://:8080`, croc's `normalizeOrigin` only tests that the host part is not empty) and a proxy host holding a non-ASCII space (`net/url` allows it).
+  - Checked against croc v11.5.5 and Go 1.27.3. The transfer then fails at its dial, not at a form error. Not verified live.
 - **A generated-code send with no internet or no reachable pool relay fails before a code is shown.**
   - With default settings, no pool relay answers the 1 s probe (`generatePublicCode` in `crocmobile/relay.go`), so the send fails with code `noPublicRelay` (croc's `no public relay available`, the same as the v11 CLI).
   - A "draw a code anyway and let a LAN peer join" fallback does not work: after the relay dial fails, croc waits for a LAN peer for only 10 s (`defaultAlternateSenderRouteTimeout`, unexported), and a `croctest send -relay 127.0.0.1:1` with no receiver printed its code and failed about 11 s later.

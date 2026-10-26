@@ -68,7 +68,7 @@ Files:
 - `session.go`: the engine (the `session` struct, `startSession`, `startReceiveSession`, the prompt pipe on fd 0, the 10 Hz poller).
 - `store.go`: stored transfers (`StartStoreSend`, `StartStoreReceive`, `RevokeStored`), run on the same `Transfer` handle.
 - `errors.go`: turns croc errors into failure codes.
-- `network.go`: validates Advanced options, holds the croc CLI defaults the library does not apply (curve, relay ports) and sets croc's process-wide proxy globals.
+- `network.go`: validates Advanced options and exports `ValidateSetting`, which runs the same checks for the app's settings form. It also holds the croc CLI defaults the library does not apply (curve, relay ports) and sets croc's process-wide proxy globals.
 - `relay.go`: public relay selection.
 - `doc.go`: the gobind constraint comment.
 - `cmd/croctest/main.go`: a command-line test harness, not linked into the app.
@@ -121,7 +121,8 @@ Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols ge
   - Turns Go-thread callbacks into `AsyncStream<TransferEvent>.Continuation.yield`.
   - Decodes the JSON payloads. A malformed file list, receipt or summary becomes `.failed` with code `other`, and the stream finishes.
   - When the stream finishes, `CrocEngine`'s `onTermination` cancels that transfer by ID, so the consumer needs no cancel call.
-- `Models.swift`: `EngineOptions`, `FilePolicy`, `ProxySettings`, `FileList`, `TransferProgress`, `Summary`, `StoredReceipt`, `EngineFailure`.
+- `Models.swift`: `EngineOptions`, `FilePolicy`, `ProxySettings`, `FileList`, `TransferProgress`, `Summary`, `StoredReceipt`, `EngineFailure`, `EngineSetting`.
+  - `EngineSetting.validate(_:)` throws an `EngineFailure` when the engine refuses a value for a setting (`ValidateSetting` in Go). It is a pure call, so it needs no actor. The app's settings fields use it instead of their own rules.
   - `TransferEvent` cases: `codeReady`, `connected`, `fileList`, `progress`, `text`, `stored`, `done`, `failed`.
   - `EngineFailure.Code` mirrors the Go codes. An unknown code or a malformed payload decodes as `.other` with the raw text.
 - `crockit-verify`: a macOS-only executable (`send`, `receive` and `twice` subcommands) that tests interop with the croc command. It is not shipped.

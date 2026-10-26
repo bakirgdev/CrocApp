@@ -81,7 +81,7 @@ How `classify` picks a code:
 | `transferActive` | this package's own `codedError`: a start while another transfer holds `activeMu`. CrocKit throws `CrocEngineError.transferActive` for it |
 | `engineStuck` | this package's own `codedError`: the cancel watchdog's terminal event, and every start while a stuck session holds `activeMu` (see "Cancel and teardown") |
 | `storeLimit`, `storeExpired` | stored-transfer HTTP refusals (see "Stored transfers") |
-| `invalidSetting` | an Advanced option failed validation |
+| `invalidSetting` | an Advanced option failed validation, or `ValidateSetting` refused a link server (see "Validating a setting") |
 
 Notes:
 
@@ -284,6 +284,18 @@ Two limits of the harness:
 - A transfer across two hosts on a shared multicast group is not covered. croc drops discovery packets from the host's own addresses (`peerdiscovery` `AllowSelf` false), so two peers on one host never find each other, not even two CLIs.
 - `NoMultiplexing` and `ThrottleUpload` are sender-side only. They are not a mismatch case; scenarios 6, 7 and 11 use them.
 - The sender-IP case needs ports 9009 to 9013 free on the host, because a wrapper sender no longer takes a different base port. The harness waits up to 30 s for them and then fails.
+
+### Validating a setting
+
+`ValidateSetting(field, value string) error` in `network.go` is how the app's settings form asks the engine whether a value is valid, so the form keeps no copy of the rules.
+
+- **One code path.** `settingChecks` maps each field name to its check. `validateNetworkOptions` (run by `startSession` before it takes the lock) loops over it for the five network fields, and `ValidateSetting` looks the field up in the same map. `TestValidateSettingMatchesTransferStart` checks that the two accept and refuse alike.
+- **Fields**, as constants: `SettingSocks5Proxy`, `SettingHTTPProxy`, `SettingThrottleUpload`, `SettingMulticastAddress`, `SettingPeerIP` (the `Options` field names) and `SettingStoreServer` (`StoreOptions.Server`). CrocKit's `EngineSetting` reads them through gobind.
+- **Result.** `nil`, or the `startError` JSON payload. A refused value has code `invalidSetting`; an unknown field name has code `other`. The call takes no lock, so it works during a transfer.
+- **Normalization.** Each check trims the value the way the engine does: `buildCrocOptions` trims the upload limit, sender IP and multicast address, `proxyURL` and `setNetworkGlobals` trim the proxies, and croc's `normalizeOrigin` trims the server. The app passes the text as typed. Blank is valid for every field except `SettingStoreServer`, which needs an origin.
+- **Proxy errors never quote the value**, which can carry credentials. `TestValidateSettingNeverQuotesAProxy` includes refusals that come from `url.Parse`.
+- **`SettingStoreServer` wraps `validateStoreOrigin`**, the check `StartStoreSend` runs, in code `invalidSetting`. `StartStoreSend` keeps the plain error, so a refused server there still has code `other`.
+- **The rules are the engine's, not a mirror of them.** Checked on Go 1.27.3 and croc v11.5.5: `normalizeOrigin` compares the loopback host case-sensitively (`http://LOCALHOST` is refused) and accepts an empty query or fragment (`https://host?`) and an empty host name before a port (`https://:8080`). `net/url` refuses an unbracketed colon in a host for `http` and `https` only, so `proxyURL` adds the same refusal for the SOCKS5 schemes (`::1:1080`, `socks5://host:1080:2`).
 
 ## Verification harnesses
 

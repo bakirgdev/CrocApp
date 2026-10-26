@@ -4,7 +4,7 @@ import SwiftUI
 /// Settings > Advanced: croc's network and performance options.
 /// The defaults are croc's own and right for most people. Every control shows
 /// its default, says which side it affects and whether the other device has to
-/// match, and checks its value inline with the same rules as the engine
+/// match, and checks its value inline by asking the engine
 /// (`AdvancedSettingsValidation.swift`). A page pushed from the iOS settings
 /// screen, a tab in the macOS Settings window.
 struct AdvancedSettingsView: View {
