@@ -25,7 +25,7 @@ Everything here is deferred until after the App Store release and carries the [`
 | Area | Item |
 |---|---|
 | Distribution | [Publish a Homebrew cask once the repo meets homebrew/cask requirements](https://github.com/bakirgdev/CrocApp/issues/10) (see the README Download table) |
-| Languages | [Localize the app and docs, with Crowdin for community translations](https://github.com/bakirgdev/CrocApp/issues/11), starting with Bosnian. The app uses plain string literals today (`knowledge/app-ui-architecture.md`, "Structure") |
+| Languages | [Localize the app and docs, with Crowdin for community translations](https://github.com/bakirgdev/CrocApp/issues/11), starting with Bosnian. The app's strings already reach String Catalogs, with English only (`knowledge/app-ui-architecture.md`, "Localization") |
 | System integration | [macOS Finder Share extension](https://github.com/bakirgdev/CrocApp/issues/22) |
 | | [Control Center control for sending and receiving](https://github.com/bakirgdev/CrocApp/issues/23) |
 | | [Spotlight indexing of transfer history](https://github.com/bakirgdev/CrocApp/issues/24) (never code phrases or link keys) |

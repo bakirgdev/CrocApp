@@ -32,6 +32,8 @@ Run `scripts/verify-docs.sh` after editing markdown; CI runs it.
 
 Anything a user sees (app views, the landing page, the docs site, release artwork, store copy, UI strings) follows `design/`. Start at `design/AGENTS.md`. Run `scripts/verify-design.sh` after touching any of it; CI runs it.
 
+New app text must be localizable (String Catalogs, English only today). How each kind of string is written, what is never localized, and how to sync the catalogs: `docs/knowledge/app-ui-architecture.md`, "Localization".
+
 ## Skills
 
 Load these before the matching work, every time:
