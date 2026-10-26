@@ -29,7 +29,7 @@ croc v11.5.5 (schollz/croc, pinned in crocmobile/go.mod)
 crocmobile/            Go wrapper package
     │
     ▼
-gomobile bind          ios, iossimulator, macos/arm64
+gomobile bind          ios, iossimulator/arm64, macos/arm64
     │
     ▼
 CrocKit/Croc.xcframework   (gitignored build output)
@@ -100,7 +100,7 @@ Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols ge
 
 ### `Croc.xcframework`
 
-- Built by `scripts/build-xcframework.sh` with `gomobile bind -target ios,iossimulator,macos/arm64 -tags croc_no_tailcat`, croc's relay-only build. One output serves both platforms.
+- Built by `scripts/build-xcframework.sh` with `gomobile bind -target ios,iossimulator/arm64,macos/arm64 -tags croc_no_tailcat`, croc's relay-only build. One output serves both platforms.
 - Gitignored. See "Build-time architecture" below.
 
 ### `CrocKit/`: Swift package

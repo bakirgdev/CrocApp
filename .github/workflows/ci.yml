@@ -233,25 +233,42 @@ jobs:
     strategy:
       fail-fast: false
 
+      # `slice` builds only the xcframework slice the leg links. `action` is
+      # `test` on macOS, which builds the app before it runs the tests.
       matrix:
         include:
           - platform: macOS
             destination: platform=macOS
+            slice: macos/arm64
+            action: test
           - platform: iOS Simulator
             destination: generic/platform=iOS Simulator
+            slice: iossimulator/arm64
+            action: build
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - id: xcode
+        run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
+
+      # The bind is the slowest step and its inputs rarely change: a hit skips
+      # Go and the bind. go.mod carries the Go and gomobile pins, so a toolchain
+      # bump misses too.
+      - name: Cache Croc.xcframework
+        id: xcframework
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: CrocKit/Croc.xcframework
+          key: xcframework-${{ matrix.platform }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('crocmobile/**', 'scripts/build-xcframework.sh') }}
+
+      - if: steps.xcframework.outputs.cache-hit != 'true'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: crocmobile/go.mod
           cache-dependency-path: crocmobile/go.sum
-
-      - id: xcode
-        run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
 
       - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
@@ -268,21 +285,26 @@ jobs:
             deriveddata-${{ matrix.platform }}-${{ steps.xcode.outputs.version }}-
 
       - name: Build Croc.xcframework
+        if: steps.xcframework.outputs.cache-hit != 'true'
+        env:
+          XCFRAMEWORK_TARGETS: ${{ matrix.slice }}
         run: scripts/build-xcframework.sh
 
-      - name: Build CrocApp
+      # The index store only serves an IDE, so CI skips writing it.
+      - name: ${{ matrix.action == 'test' && 'Build and test' || 'Build' }} CrocApp
         shell: bash
         working-directory: app
         env:
           DESTINATION: ${{ matrix.destination }}
+          ACTION: ${{ matrix.action }}
         run: |
           set -o pipefail
           xcodebuild -scheme CrocApp \
             -destination "$DESTINATION" \
             -derivedDataPath "$RUNNER_TEMP/dd" \
-            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
             SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES \
-            build \
+            "$ACTION" \
             | xcbeautify --renderer github-actions
 
       # Also builds every CrocKit target, crockit-verify included, for the host.
@@ -290,20 +312,6 @@ jobs:
         if: matrix.platform == 'macOS'
         shell: bash
         run: set -o pipefail && swift test --package-path CrocKit -Xswiftc -warnings-as-errors 2>&1 | xcbeautify --renderer github-actions
-
-      - name: Test CrocApp
-        if: matrix.platform == 'macOS'
-        shell: bash
-        working-directory: app
-        run: |
-          set -o pipefail
-          xcodebuild -scheme CrocApp \
-            -destination 'platform=macOS' \
-            -derivedDataPath "$RUNNER_TEMP/dd" \
-            CODE_SIGNING_ALLOWED=NO \
-            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES \
-            test \
-            | xcbeautify --renderer github-actions
 
       # Last: it writes CrocApp.app into the same DerivedData as the test step.
       - name: Build CrocApp Direct
@@ -315,7 +323,7 @@ jobs:
           xcodebuild -scheme 'CrocApp Direct' \
             -destination 'platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/dd" \
-            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
             SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES \
             build \
             | xcbeautify --renderer github-actions

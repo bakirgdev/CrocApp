@@ -58,14 +58,14 @@ The script builds gomobile and gobind from the `tool` block into `.tools/` (prep
 
 ```bash
 gomobile bind \
-  -target ios,iossimulator,macos/arm64 \
+  -target ios,iossimulator/arm64,macos/arm64 \
   -iosversion 26.0 -macosversion 26.0 \
   -trimpath -ldflags "-s -w" -tags croc_no_tailcat \
   -o "../CrocKit/Croc.xcframework" \
   .
 ```
 
-- **Targets**: `ios`, `iossimulator`, `macos/arm64`. There is no `macos/amd64` slice.
+- **Targets**: `ios`, `iossimulator/arm64`, `macos/arm64`. There is no `macos/amd64` slice and no `x86_64` simulator slice: the pbxproj sets `EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64`, so even a `generic/platform=iOS Simulator` build links only arm64. `XCFRAMEWORK_TARGETS` overrides the list in gomobile's `-target` syntax (CI's build legs pass one slice each); a framework built that way serves only those platforms until the next full run.
 - **`-iosversion` and `-macosversion`**: both `26.0`, matching the deployment target everywhere else.
 - **`-trimpath` and `-ldflags "-s -w"`**: both are build flags that `gomobile bind` shares with `go build` (`gomobile help bind`). `-trimpath` removes build-machine paths from the binary, and `-s -w` omits the Go symbol table and DWARF. The static archive in each slice halves (the macOS slice goes from 56.0 MB to 27.7 MB), and an unsigned Release `xcodebuild build` of the app shrinks by about 1.6 MB, because that build does not strip. An `xcodebuild archive` strips symbols itself, so a shipped app barely changes: the unsigned macOS archive executable went from 22.07 MB to 22.00 MB (measured, Xcode 27.1, Go 1.27.3, croc v11.5.5). Size comparisons therefore belong on an archive, not on a `build`.
 - **`-tags croc_no_tailcat`**: croc's build tag that compiles out Tailcat, its peer-to-peer data path (Tailscale's WireGuard, gVisor, DERP). The shipped executable halves (measured on unsigned `xcodebuild archive` executables with and without the tag, Xcode 27.1, Go 1.27.3, croc v11.5.5: macOS 21,951,912 B to 10,452,200 B, iOS 21,278,008 B to 10,313,128 B), and `auto` transport means the relay and the LAN. `go list -tags croc_no_tailcat -deps` in `crocmobile/` shows no gVisor package (42 without the tag) and no `wireguard-go`. **Every other Go build of `crocmobile/` carries the same tag**, so what is tested is what ships: `GOFLAGS=-tags=croc_no_tailcat` in `reusable-go.yml` and `go-weekly.yml`, `build-tags` in `crocmobile/.golangci.yml`, `-tags croc_no_tailcat` on the harnesses' `croctest` builds, and `TestBuildIsRelayOnly` fails a test run that lacks the tag.
