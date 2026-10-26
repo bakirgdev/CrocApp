@@ -369,7 +369,7 @@ A CrocKit executable for the Swift layer. Subcommands: `send`, `receive` (option
 
 ## Toolchain
 
-- Go: `crocmobile/go.mod` pins `go 1.27.2` (install with Homebrew). The build script builds gomobile and gobind from the `tool` block in `crocmobile/go.mod`.
+- Go: `crocmobile/go.mod` pins `go 1.27.3` (install with Homebrew). The build script builds gomobile and gobind from the `tool` block in `crocmobile/go.mod`.
 - Xcode 27.0 and 27.1 bind cleanly.
 - The macOS slice is arm64 only (golang/go#73119).
 - gomobile still writes `MinimumOSVersion = 100.0` into the iOS framework. App Store Connect accepted it on upload validation. The iOS device layout issue golang/go#66500 is closed.

@@ -20,6 +20,10 @@ extra sections where a release needs them, and the project follows
 - On iPhone, a light haptic marks a finished, failed or incoming transfer and a copied or scanned code. Cancelling or declining yourself stays silent.
 - Settings labels use title case, and "Auto-accept incoming files" is now "Auto-Accept Transfers".
 
+### Security
+
+- The transfer engine is built with Go 1.27.3, which stops trusting a set of compromised intermediate certificates ([GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809)). This covers the HTTPS connections the engine makes, such as Send as link.
+
 ## [1.0.0] - 2026-10-15
 
 CrocApp 1.0 is a notarized disk image for Mac. The iPhone, iPad and Mac App Store builds are in TestFlight and follow with the first App Store release, so the iPhone and iPad items below reach users then. The other device needs croc 11 or newer.

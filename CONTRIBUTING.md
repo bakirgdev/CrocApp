@@ -43,7 +43,7 @@ Issues labeled `help wanted` are open for anyone to pick up.
 
 ## Setup
 
-Requires **macOS 26**, **Xcode 27**, and **Go 1.27.2** (or newer).
+Requires **macOS 26**, **Xcode 27**, and **Go 1.27.3** (or newer).
 
 ```bash
 git clone https://github.com/bakirgdev/CrocApp.git

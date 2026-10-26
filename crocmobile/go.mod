@@ -1,6 +1,6 @@
 module github.com/bakirgdev/CrocApp/crocmobile
 
-go 1.27.2
+go 1.27.3
 
 require github.com/schollz/croc/v11 v11.5.4
 

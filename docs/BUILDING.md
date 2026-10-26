@@ -8,7 +8,7 @@ The exact toolchain and the steps from a fresh clone to a running app, plus how 
 |---|---|---|---|
 | Host OS | macOS 26 | `CONTRIBUTING.md`, "Setup" | n/a |
 | Xcode | the version in `.xcode-version` | `.xcode-version` | Apple Developer downloads, or `xcodes install $(cat .xcode-version)` |
-| Go | `>= 1.27.2` | `crocmobile/go.mod` (`go 1.27.2`) | `brew install go` |
+| Go | `>= 1.27.3` | `crocmobile/go.mod` (`go 1.27.3`) | `brew install go` |
 | gomobile, gobind | the `golang.org/x/mobile` version in the `tool` block of `crocmobile/go.mod` | `scripts/build-xcframework.sh` rebuilds both into `.tools/` on every run | nothing to install by hand |
 | swift-format | bundled with the pinned Xcode (Swift 6.4 toolchain), not versioned separately | `.swift-format` holds the rules | none, run `scripts/format-swift.sh` |
 | golangci-lint | `2.x`; CI pins `v2.15.0` | `.github/workflows/reusable-go.yml`; rules in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
@@ -219,7 +219,7 @@ Any change to `crocmobile/session.go`, `CrocKit/Sources/` or `TransferController
 - **The deployment target is `26.0` everywhere, never a minor.** `IPHONEOS_DEPLOYMENT_TARGET` and `MACOSX_DEPLOYMENT_TARGET` in the pbxproj, `platforms: [.iOS("26.0"), .macOS("26.0")]` in `CrocKit/Package.swift`, and `-iosversion 26.0 -macosversion 26.0` in `scripts/build-xcframework.sh`. All four move together.
 - **macOS is arm64 only.** `"ARCHS[sdk=macosx*]" = arm64` in the pbxproj. The xcframework has no `x86_64` macOS slice (golang/go#73119), so the pin makes an Intel archive fail the link cleanly instead of attempting a link that cannot succeed.
 - **One version source, `app/Config/Version.xcconfig`.** It holds `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` and is the base configuration of the project-level Debug and Release configurations, so every target inherits it. Never set either in a target's build settings. `RELEASING.md`, "Each release", covers when to bump them.
-- **The Go toolchain pin is `>= 1.27.2` in `crocmobile/go.mod`.** After bumping it, rerun `scripts/build-xcframework.sh` to confirm the bind still works before trusting anything downstream.
+- **The Go toolchain pin is `>= 1.27.3` in `crocmobile/go.mod`.** After bumping it, rerun `scripts/build-xcframework.sh` to confirm the bind still works before trusting anything downstream.
 
 ## Troubleshooting
 
