@@ -133,7 +133,6 @@ On macOS, `AppCommands` replaces the `.appInfo` group with an **About CrocApp** 
 - A stored transfer cannot resume, so no failure offers the resume hint. A background expiry reads "Sending was interrupted" or "Receiving was interrupted", and its detail says to keep CrocApp open and try again, or open the link again. Both offer **Try Again**.
 - A failure whose situation `isStored` names the link server for `relayUnreachable` and `connectionLost`, which is how a store call reports a network failure.
 - `revoke(_ record:)` (throws `EngineFailure`) calls `CrocEngine.revokeStored`, which needs no free engine slot. It then drops the receipt and sets `revokedAt`. `canRevoke(_:)` is true for an unexpired, unrevoked record whose receipt this device still holds.
-- `Clipboard.copySecret(_, thisDeviceOnly:)` copies a credential and drops it after `Clipboard.secretLifetime` (5 minutes): the code phrase (**Copy Code**, Universal Clipboard stays on) and a stored link (**Copy Link**, `thisDeviceOnly: true`, because its fragment is the key). iOS sets `UIPasteboard` `.expirationDate`, plus `.localOnly` for the link. The macOS pasteboard has no expiry, so the copy also carries `org.nspasteboard.ConcealedType` (clipboard managers that follow nspasteboard.org skip it), uses `.currentHostOnly` for the link, and the app clears the pasteboard after the lifetime, only while it is running and only if `changeCount` has not moved. `Clipboard.copy(_)` is a plain copy with no expiry, for **Copy Received Text** and **Copy Text**. `ClipboardTests` run the macOS clear against a private `NSPasteboard`.
 - The Camera app does not open CrocApp for a stored link. The Associated Domains entitlement and the apple-app-site-association file cover only `crocapp.dev/r/*`. Receiving in the app means **Paste** or **Scan QR Code**.
 
 Views for stored transfers:
@@ -233,6 +232,14 @@ Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookma
 
 - `Support/SecurityScopedBookmark.swift`: bookmark create, resolve and resolveIfReachable. `OutputFolderStore` and `HistoryView`'s resend path share it. `resolveIfReachable` starts the security scope before the existence probe, for the reason above.
 - `Support/EngineConstraints.swift`: `minCodeLength = 6`, mirroring `minCodeLength` in `crocmobile/crocmobile.go` (also used in `session.go`). The Go side counts bytes and Swift counts characters, so the UI check is the stricter one for non-ASCII codes. It exists for inline feedback before a doomed send or receive start. There is no shared source of truth across the Go/Swift boundary, so keep the two in sync by hand.
+- `Support/Clipboard.swift`: two copy paths.
+  - `Clipboard.copy(_)` is a plain copy with no expiry, for **Copy Received Text** and **Copy Text**.
+  - `Clipboard.copySecret(_, thisDeviceOnly:)` is for a credential. It leaves the pasteboard after `Clipboard.secretLifetime` (5 minutes).
+  - **Copy Code** uses it with Universal Clipboard on, because copying on a Mac and pasting on an iPhone is a core use. **Copy Link** uses it with `thisDeviceOnly: true`, because the link's fragment is the key.
+  - iOS: `UIPasteboard.setItems(_:options:)` with `.expirationDate`, plus `.localOnly` for the link. `Clipboard.secretOptions(thisDeviceOnly:now:)` builds the options, so a unit test can read them.
+  - macOS has no expiry. The copy carries `org.nspasteboard.ConcealedType` (clipboard managers that follow nspasteboard.org skip it) and uses `.currentHostOnly` for the link.
+  - The macOS clear runs in the app, after the lifetime, only while the app is running, and only if `changeCount` has not moved, so a later copy is never wiped.
+  - Not verified on hardware: the expiry on a device, the link staying off Universal Clipboard, a clipboard manager honoring the marker, and whether the code also expires on the other device. `device-test-checklist.md`, "Clipboard", lists the checks. `ClipboardTests` cover the options and the macOS clear against a private `NSPasteboard`.
 - `Support/DesignTokens.swift`: the app's routing layer onto `design/`. It holds `Spacing`, `Radius`, `BorderWidth`, `ControlHeight`, `IconSize`, `LayoutCap`, `Opacity`, `Tracking`, `ComponentMetrics`, `Motion` and `Shadow`, plus `Color` aliases. Where a system semantic already matches a token exactly, the alias routes there instead of duplicating an asset-catalog entry.
 
 ## Conflict scan

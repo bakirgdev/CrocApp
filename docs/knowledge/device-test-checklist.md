@@ -2,7 +2,7 @@
 
 A repeatable procedure for what the simulator and the verify scripts cannot check: real iPhone, iPad and Mac hardware. This file records no results. Tick items on your own copy or in the pull request.
 
-Run the whole list before each App Store submission, and run the matching section after any change to that area (background handling, share extension, links, stored transfers, menu bar, Shortcuts, large files).
+Run the whole list before each App Store submission, and run the matching section after any change to that area (background handling, share extension, links, stored transfers, clipboard, menu bar, Shortcuts, large files).
 
 Setup unless a section says otherwise: an iPhone or iPad on iOS or iPadOS 26 or later, a Mac on macOS 26 or later with CrocApp, and the croc CLI v11 for the other end. Hash files with `shasum -a 256`. To hash a file received on the iPhone, copy it to the Mac first.
 
@@ -58,6 +58,18 @@ Use an iPhone with the default server (`https://getcroc.com`) and the public int
 - [ ] 3b. Point the Camera app at the same QR on a phone with CrocApp and on a phone without it. The stored link points at the server, not at `crocapp.dev/r/`, so the Camera is expected to open the server's page in the browser on both phones, not CrocApp. Note what each phone does and what the page shows.
 - [ ] 4. In CrocApp, receive the link (tap **Receive**). Pass: the incoming preview lists the file, **Accept** saves it, and its SHA-256 equals the source file's.
 - [ ] 5. In History, open the sent row and choose **Revoke** (swipe) or **Revoke Link** (touch and hold), then confirm. Pass: the row reads "Link revoked", and reopening the link in a browser reports the link as gone.
+
+## Clipboard
+
+Use an iPhone and a Mac signed in to the same iCloud account with Handoff on, which Universal Clipboard needs. Item 4 needs a clipboard manager that follows nspasteboard.org (Maccy is one). The expiry items need a stopwatch.
+
+- [ ] 1. On the Mac, start a send and click **Copy Code**. Paste on the iPhone within a minute. Pass: the code pastes, because the code stays on Universal Clipboard.
+- [ ] 2. Paste on the Mac and on the iPhone 6 minutes after the copy in item 1. Pass on the Mac: nothing pastes, because CrocApp was running and cleared it. Note what the iPhone does: whether the clear reaches the other device through Universal Clipboard is unknown.
+- [ ] 3. On the iPhone, start a send and tap **Copy Code**. Paste at 4 minutes, then at 6 minutes. Pass: it pastes at 4 minutes and nothing pastes at 6. Note whether the Mac pastes it.
+- [ ] 4. On the Mac with the clipboard manager running, click **Copy Code**. Pass: the manager does not keep the code in its history (or masks it, if the manager offers that). Then copy other text within the 5 minutes and wait. Pass: the other text stays.
+- [ ] 5. On the Mac, send a file as a link and click **Copy Link**. Paste on the iPhone. Pass: nothing pastes on the iPhone, because the link is copied for this device only. Paste on the Mac within 5 minutes, then again after 6. Pass: it pastes, then nothing pastes.
+- [ ] 6. On the iPhone, tap **Copy Link** and paste after 6 minutes. Pass: nothing pastes. (The iPhone-to-Mac half is "Stored transfers", item 2.)
+- [ ] 7. On the Mac, click **Copy Code**, quit CrocApp, wait 6 minutes and paste. Pass: the code still pastes. This is the documented limit: the macOS clear only runs while the app is running.
 
 ## Menu bar on a Mac
 

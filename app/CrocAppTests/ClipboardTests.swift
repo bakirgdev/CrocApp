@@ -13,7 +13,8 @@ import AppKit
     private static let lifetime: TimeInterval = 0.05
 
     private func withPasteboard(_ body: (NSPasteboard) async -> Void) async {
-        let pasteboard = NSPasteboard(name: NSPasteboard.Name("app.crocapp.tests.\(UUID().uuidString)"))
+        let pasteboard = NSPasteboard(
+            name: NSPasteboard.Name("app.crocapp.tests.\(UUID().uuidString)"))
         defer { pasteboard.releaseGlobally() }
         await body(pasteboard)
     }
@@ -80,8 +81,24 @@ import AppKit
 }
 #endif
 
-@Suite struct ClipboardLifetimeTests {
-    @Test func secretsLastFiveMinutes() {
-        #expect(Clipboard.secretLifetime == 300)
+#if os(iOS)
+import UIKit
+
+/// The options handed to `UIPasteboard.setItems(_:options:)`, read without
+/// touching the pasteboard.
+@Suite struct ClipboardSecretOptionsTests {
+    private let now = Date(timeIntervalSince1970: 1_000_000)
+
+    @Test func codeExpiresAfterTheLifetimeAndStaysOnUniversalClipboard() {
+        let options = Clipboard.secretOptions(thisDeviceOnly: false, now: now)
+        #expect(options[.expirationDate] as? Date == now.addingTimeInterval(300))
+        #expect(options[.localOnly] as? Bool == false)
+    }
+
+    @Test func linkExpiresAfterTheLifetimeAndStaysOnThisDevice() {
+        let options = Clipboard.secretOptions(thisDeviceOnly: true, now: now)
+        #expect(options[.expirationDate] as? Date == now.addingTimeInterval(300))
+        #expect(options[.localOnly] as? Bool == true)
     }
 }
+#endif

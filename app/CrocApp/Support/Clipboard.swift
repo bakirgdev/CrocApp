@@ -27,15 +27,25 @@ enum Clipboard {
         #if os(iOS)
         UIPasteboard.general.setItems(
             [[UIPasteboard.typeAutomatic: string]],
-            options: [
-                .expirationDate: Date.now.addingTimeInterval(secretLifetime),
-                .localOnly: thisDeviceOnly,
-            ])
+            options: secretOptions(thisDeviceOnly: thisDeviceOnly))
         #else
         copySecret(
             string, thisDeviceOnly: thisDeviceOnly, to: .general, lifetime: secretLifetime)
         #endif
     }
+
+    #if os(iOS)
+    /// The `setItems` options for a secret, a pure function so a test can read
+    /// them without touching the pasteboard.
+    static func secretOptions(
+        thisDeviceOnly: Bool, now: Date = .now
+    ) -> [UIPasteboard.OptionsKey: Any] {
+        [
+            .expirationDate: now.addingTimeInterval(secretLifetime),
+            .localOnly: thisDeviceOnly,
+        ]
+    }
+    #endif
 
     #if os(macOS)
     /// nspasteboard.org marker that clipboard managers honor: they skip the
