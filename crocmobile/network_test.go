@@ -109,7 +109,7 @@ var settingCases = []struct {
 			"proxy.example", "http://user:secret@proxy.example:1080", "socks5://:1080",
 			"user:secret@proxy.example", "socks5://proxy.example", "proxy.example:port", "proxy.example:0",
 			"proxy.example:70000", "socks5://proxy.example:1080 extra", "::1:1080", "socks5://host:1080:2",
-			"socks5:host:1080",
+			"socks5:host:1080", "pro\u00a0xy.example:1080",
 		},
 	},
 	{
@@ -156,7 +156,7 @@ var settingCases = []struct {
 		[]string{
 			"http://example.com", "http://localhost.example.com", "ftp://getcroc.com", "getcroc.com", "", "   ",
 			"https://", "https://getcroc.com/s/abc", "https://getcroc.com?x=1", "https://getcroc.com#frag",
-			"https://user:pw@getcroc.com",
+			"https://user:pw@getcroc.com", "https://:8080",
 		},
 	},
 }

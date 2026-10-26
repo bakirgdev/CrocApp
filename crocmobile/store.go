@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -64,8 +65,16 @@ func validateStoreOrigin(origin string) error {
 		ID:        storecrypto.EncodeBase64URL(make([]byte, storecrypto.TransferIDLen)),
 		MasterKey: make([]byte, storecrypto.KeySize),
 	}
-	_, err := probe.BrowserURL()
-	return err
+	link, err := probe.BrowserURL()
+	if err != nil {
+		return err
+	}
+	// croc's normalizeOrigin only checks that the host part is not empty, so
+	// "https://:8080" passes it and fails later at the dial.
+	if u, err := url.Parse(link); err != nil || u.Hostname() == "" {
+		return fmt.Errorf("store server %q has no host name", origin)
+	}
+	return nil
 }
 
 // checkStoreLimits refuses what the server would refuse after the upload has

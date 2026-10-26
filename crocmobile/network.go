@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/schollz/croc/v11/src/comm"
 	"github.com/schollz/croc/v11/src/storeclient"
@@ -171,9 +172,10 @@ func proxyURL(value, defaultScheme string, schemes ...string) (*url.URL, error) 
 	}
 	u, err := url.Parse(value)
 	// net/url refuses a host with an unbracketed colon ("::1", "host:1080:2")
-	// for http and https only; the socks5 schemes would pass it to a dial that
-	// cannot work.
-	if err != nil || u.Hostname() == "" || (strings.Contains(u.Hostname(), ":") && !strings.HasPrefix(u.Host, "[")) {
+	// for http and https only, and allows a non-ASCII space in any host; both
+	// would reach a dial that cannot work.
+	if err != nil || u.Hostname() == "" || (strings.Contains(u.Hostname(), ":") && !strings.HasPrefix(u.Host, "[")) ||
+		strings.IndexFunc(u.Hostname(), unicode.IsSpace) >= 0 {
 		return nil, invalidSetting("%s proxy is not host:port or a proxy URL", defaultScheme)
 	}
 	if port, err := strconv.Atoi(u.Port()); err != nil || port < 1 || port > 65535 {
