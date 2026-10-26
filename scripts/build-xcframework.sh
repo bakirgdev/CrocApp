@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds CrocKit/Croc.xcframework from crocmobile via gomobile.
 #
-# Requires: Go >= 1.27.2 (go.mod pin; brew install go), Xcode 26+.
+# Requires: Go >= 1.27.3 (go.mod pin; brew install go), Xcode 26+.
 # gomobile and gobind come from the `tool` directives in crocmobile/go.mod, so
 # there is one x/mobile version in the repo. Dependabot does not bump it (tool
 # requirements are `// indirect`): bump by hand with
