@@ -95,12 +95,8 @@ enum EngineStart {
         let proxies = proxies(settings)
         o.socks5Proxy = proxies.socks5
         o.httpProxy = proxies.http
-        #if os(macOS)
-        // iOS has no multicast entitlement (concern 8): the field is hidden
-        // there and the engine keeps croc's default group.
         let multicast = settings.multicastAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         if !multicast.isEmpty { o.multicastAddress = multicast }
-        #endif
         return o
     }
 }

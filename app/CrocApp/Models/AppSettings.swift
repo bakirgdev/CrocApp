@@ -66,7 +66,7 @@ final class AppSettings {
     var throttleUpload: String {
         didSet { save(throttleUpload, "settings.advanced.throttleUpload") }
     }
-    /// Blank means croc's default group. macOS only: iOS has no multicast entitlement.
+    /// Blank means croc's default group.
     var multicastAddress: String {
         didSet { save(multicastAddress, "settings.advanced.multicastAddress") }
     }
