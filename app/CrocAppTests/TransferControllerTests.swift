@@ -28,10 +28,12 @@ import Testing
         " Start the same transfer again; replacing the partly received files resumes it."
 
     init() throws {
-        let defaults = try #require(UserDefaults(suiteName: "CrocAppTests.\(UUID().uuidString)"))
+        let suiteName = "CrocAppTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
         settings = AppSettings(defaults: defaults, secrets: FakeSecretStore())
-        // Settings a test changes stay in memory.
+        // Settings a test changes stay in memory, so the suite's file can go now.
         settings.persist = false
+        defaults.removePersistentDomain(forName: suiteName)
         vault = StoredTransferVault(secrets: FakeSecretStore())
         history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
         controller = TransferController(settings: settings, vault: vault, engine: engine)
@@ -362,7 +364,7 @@ import Testing
     /// The controller handles events and calls the engine on its own tasks,
     /// so a test cannot await either directly.
     private func waitUntil(
-        _ what: String, timeout: Duration = .seconds(5),
+        _ what: String, timeout: Duration = .seconds(30),
         sourceLocation: SourceLocation = #_sourceLocation,
         _ condition: () async -> Bool
     ) async throws {

@@ -138,6 +138,8 @@ actor FakeTransferEngine: TransferEngine {
             await withCheckedContinuation { heldStart = $0 }
         }
         if !startErrors.isEmpty { throw startErrors.removeFirst() }
+        // CrocEngine's contract: one transfer at a time.
+        if stream > 0, !finished { throw CrocEngineError.transferActive }
 
         endStream()
         stream += 1
