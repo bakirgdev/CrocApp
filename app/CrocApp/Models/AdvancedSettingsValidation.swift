@@ -1,4 +1,5 @@
 import CrocKit
+import Foundation
 
 /// Checks for the Settings fields the engine validates. The engine decides
 /// (`EngineSetting`, `ValidateSetting` in `crocmobile/network.go`), so a field
@@ -38,15 +39,17 @@ extension AppSettings {
             "Enter a speed such as 500k, 2m or 1g, or leave it blank for no limit.")
     }
 
-    /// `message` when the engine refuses `text` for `setting`, else nil.
+    /// `message`, resolved, when the engine refuses `text` for `setting`, else
+    /// nil. A `LocalizedStringResource`, so the lookup happens only on failure:
+    /// the checks run on every render of the field.
     nonisolated static func engineError(
-        _ setting: EngineSetting, _ text: String, _ message: String
+        _ setting: EngineSetting, _ text: String, _ message: LocalizedStringResource
     ) -> String? {
         do {
             try setting.validate(text)
             return nil
         } catch {
-            return message
+            return String(localized: message)
         }
     }
 }

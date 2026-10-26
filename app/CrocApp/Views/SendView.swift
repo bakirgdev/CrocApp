@@ -8,9 +8,16 @@ struct SendView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    enum Mode: String, CaseIterable {
-        case files = "Files"
-        case text = "Text"
+    enum Mode: CaseIterable {
+        case files
+        case text
+
+        var label: LocalizedStringKey {
+            switch self {
+            case .files: "Files"
+            case .text: "Text"
+            }
+        }
     }
 
     @State private var mode: Mode = .files
@@ -36,7 +43,7 @@ struct SendView: View {
         case day = 86_400
         case week = 604_800
 
-        var label: String {
+        var label: LocalizedStringKey {
             switch self {
             case .hour: "1 hour"
             case .day: "1 day"
@@ -80,7 +87,7 @@ struct SendView: View {
     private var formContent: some View {
         VStack(spacing: Spacing.space5) {
             Picker("What to Send", selection: $mode) {
-                ForEach(Mode.allCases, id: \.self) { Text($0.rawValue) }
+                ForEach(Mode.allCases, id: \.self) { Text($0.label) }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -99,8 +106,7 @@ struct SendView: View {
                     text: $customCode,
                     isInvalid: !customCodeTrimmed.isEmpty
                         && customCodeTrimmed.count < EngineConstraints.minCodeLength,
-                    invalidMessage:
-                        "A code is at least \(EngineConstraints.minCodeLength) characters."
+                    invalidMessage: CodeField.tooShortMessage
                 ) { pasted in
                     customCode = pasted
                 }
@@ -136,19 +142,31 @@ struct SendView: View {
 
     /// Why "Send as link" cannot be used for what is staged, or nil.
     private var linkUnavailableReason: String? {
-        if mode == .text { return "Text can't be sent as a link. Switch to Files." }
+        if mode == .text {
+            return String(localized: "Text can't be sent as a link. Switch to Files.")
+        }
         if pickedURLs.contains(where: Self.isFolder) {
-            return "Folders can't be sent as a link. Remove the folders, or send them with a code."
+            return String(
+                localized:
+                    "Folders can't be sent as a link. Remove the folders, or send them with a code."
+            )
         }
         return nil
+    }
+
+    /// The link server's problem and where to fix it, or nil when it is fine.
+    private var storedServerProblem: String? {
+        AppSettings.storedServerError(settings.storedServer).map {
+            String(
+                localized: "\($0) Change it in Settings.",
+                comment: "The placeholder is a sentence saying what is wrong with the link server.")
+        }
     }
 
     /// What the banner and caption below the toggle say, read with the toggle.
     private var linkToggleHint: String {
         if let reason = linkUnavailableReason { return reason }
-        if linkSelected, let error = AppSettings.storedServerError(settings.storedServer) {
-            return error + " Change it in Settings."
-        }
+        if linkSelected, let problem = storedServerProblem { return problem }
         return ""
     }
 
@@ -173,8 +191,8 @@ struct SendView: View {
                 Stepper(value: $linkDownloads, in: 1...100) {
                     Text("Downloads allowed: \(linkDownloads)")
                 }
-                if let error = AppSettings.storedServerError(settings.storedServer) {
-                    StatusBanner(kind: .error, title: error + " Change it in Settings.")
+                if let problem = storedServerProblem {
+                    StatusBanner(kind: .error, title: problem)
                 } else {
                     Text(
                         "Files are encrypted on this device before they reach \(serverHost). Anyone with the link can receive them until it expires or runs out."

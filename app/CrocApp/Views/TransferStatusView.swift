@@ -169,11 +169,16 @@ struct TransferStatusView: View {
     // The two platforms spell the same pane differently, and naming the wrong
     // one is worse than naming none.
     #if os(iOS)
-    private static let localNetworkDeniedDetail =
-        "Transfers use the relay only. Enable it in Settings › Privacy & Security › Local Network for faster direct transfers."
+    private static let localNetworkDeniedDetail = String(
+        localized:
+            "Transfers use the relay only. Enable it in Settings › Privacy & Security › Local Network for faster direct transfers.",
+        comment: "The path names the iOS Settings app. Match its translated pane names.")
     #else
-    private static let localNetworkDeniedDetail =
-        "Transfers use the relay only. Enable it in System Settings › Privacy & Security › Local Network for faster direct transfers."
+    private static let localNetworkDeniedDetail = String(
+        localized:
+            "Transfers use the relay only. Enable it in System Settings › Privacy & Security › Local Network for faster direct transfers.",
+        comment: "The path names the macOS System Settings app. Match its translated pane names."
+    )
     #endif
 
     // components.md → StatusBanner: local-network-denied is `info` (blue), not
@@ -182,7 +187,7 @@ struct TransferStatusView: View {
     private var localNetworkDeniedBanner: some View {
         StatusBanner(
             kind: .info,
-            title: "Local network access is off",
+            title: String(localized: "Local network access is off"),
             detail: Self.localNetworkDeniedDetail,
             actionTitle: "Open Settings",
             action: { open(.localNetworkAccess) }
@@ -259,7 +264,7 @@ struct TransferStatusView: View {
     }
 
     /// croc's browser client only knows the default relays.
-    private var browserReceiveNote: String? {
+    private var browserReceiveNote: LocalizedStringKey? {
         switch controller.activeRelay {
         case .publicDefault, .directToSender: nil
         case .custom:
@@ -318,7 +323,8 @@ struct TransferStatusView: View {
                     Text(
                         // spellsOutZero: the default renders the first moments
                         // of every transfer as "Zero kB / 41 MB".
-                        "\(p.fileSent.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.fileSize.formatted(.byteCount(style: .file)))"
+                        verbatim:
+                            "\(p.fileSent.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.fileSize.formatted(.byteCount(style: .file)))"
                     )
                 }
                 .font(.caption)
@@ -403,8 +409,10 @@ struct TransferStatusView: View {
             StatusBlock(
                 kind: summary.success ? .success : .error,
                 title: receivedText != nil
-                    ? "Received text"
-                    : (summary.success ? "Transfer complete" : "Transfer finished with problems"),
+                    ? String(localized: "Received text")
+                    : (summary.success
+                        ? String(localized: "Transfer complete")
+                        : String(localized: "Transfer finished with problems")),
                 detail: receivedText == nil
                     ? inflected(
                         AttributedString(
@@ -572,11 +580,13 @@ struct IncomingRequestView: View {
             .foregroundStyle(Color.textSecondary)
             .monospacedDigit()
             if !blocked.isEmpty {
-                StatusBanner(kind: .error, title: "Blocked: unsafe file names in this transfer.")
+                StatusBanner(
+                    kind: .error,
+                    title: String(localized: "Blocked: unsafe file names in this transfer."))
             } else if !conflicts.isEmpty {
                 StatusBanner(
                     kind: .warning,
-                    title: "Some names are already taken",
+                    title: String(localized: "Some names are already taken"),
                     detail: inflected(
                         AttributedString(
                             localized:

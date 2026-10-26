@@ -1,0 +1,467 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ + %lld more" : {
+      "comment" : "The first placeholder is a file name, the second how many other files the transfer had.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ + %2$lld more"
+          }
+        }
+      }
+    },
+    "%@ Change it in Settings." : {
+      "comment" : "The placeholder is a sentence saying what is wrong with the link server."
+    },
+    "1 day" : {},
+    "1 hour" : {},
+    "7 days" : {},
+    "A code is at least %lld characters." : {
+      "comment" : "The placeholder is the minimum number of characters a code needs."
+    },
+    "A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer." : {},
+    "About" : {},
+    "About CrocApp" : {},
+    "Accept" : {},
+    "Add Files" : {},
+    "Add Folder" : {},
+    "Address" : {},
+    "Advanced" : {},
+    "Allow CrocApp in System Settings > General > Login Items." : {},
+    "Allow camera access in Settings to scan QR codes." : {},
+    "An Advanced setting can't be used" : {},
+    "Another transfer is still running" : {},
+    "Anyone who gets this link can download the files until it expires or runs out. Revoke it any time in History." : {},
+    "Applies to both devices. They find each other on the local network only if both use the same address. Blank uses %@." : {
+      "comment" : "Note under the Multicast Address field. The placeholder is the default multicast address."
+    },
+    "Applies to this device only. Ignored when a SOCKS5 proxy is set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain." : {},
+    "Applies to this device only. Takes priority over the HTTP proxy if both are set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain." : {},
+    "Applies when receiving. Connects straight to the sender at this address and port, skipping relays. Use the sender's base port, 9009 unless they changed it." : {},
+    "Applies when sending. The most this device sends per second, such as 500k, 2m or 1g. The other device is not affected." : {},
+    "Ask them to send it again." : {},
+    "Auto-Accept Transfers" : {},
+    "Auto-Accept Transfers skips the file preview. Leave it off unless you fully trust the sender." : {},
+    "Auto-accept can't answer this sender" : {},
+    "Auto-accept cancelled the transfer, so ask the sender to rename the files." : {},
+    "Blocked: unsafe file names in this transfer." : {},
+    "Both devices run PAKE (password-authenticated key exchange) to turn the code phrase into a strong encryption key. The code itself never crosses the network, and a wrong code fails immediately." : {},
+    "Both sides need croc 11 or newer, so update croc there." : {
+      "comment" : "croc is the name of the file-transfer tool and stays untranslated."
+    },
+    "Camera access denied" : {},
+    "Camera access is restricted on this device and can't be changed here." : {},
+    "Camera access restricted" : {},
+    "Camera scanning isn't available on this device" : {},
+    "Camera unavailable" : {},
+    "Cancel" : {},
+    "Cancelled" : {
+      "comment" : "VoiceOver label of a history row's status icon."
+    },
+    "Cancelled." : {
+      "comment" : "Error Shortcuts shows when the person stops the action."
+    },
+    "Change…" : {},
+    "Check for Updates…" : {},
+    "Check the code phrase on both devices." : {},
+    "Check the proxies, addresses, ports and send speed limit in Settings > Advanced." : {
+      "comment" : "Advanced is the title of a page in Settings."
+    },
+    "Check the relay password in Settings." : {},
+    "Check with them before you send it again." : {},
+    "Check your connection and try again." : {},
+    "Check your internet connection and try again." : {},
+    "Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network." : {
+      "comment" : "Local Network Only is the label of a switch in Settings."
+    },
+    "Check your internet connection." : {},
+    "Choose Files…" : {},
+    "Clear" : {},
+    "Clear All" : {},
+    "Clear all history" : {},
+    "Clear all history?" : {},
+    "Clear link" : {},
+    "Code or Link" : {},
+    "Code phrase" : {},
+    "Completed" : {
+      "comment" : "VoiceOver label of a history row's status icon."
+    },
+    "Confirm on Both Sides" : {},
+    "Confirmation" : {},
+    "Connecting…" : {},
+    "Copied" : {},
+    "Copy Code" : {},
+    "Copy Link" : {},
+    "Copy Received Text" : {},
+    "Copy Text" : {},
+    "Couldn't change Open at login: %@" : {
+      "comment" : "Open at Login is a switch in Settings. The placeholder is the system's reason."
+    },
+    "Couldn't reach the link server" : {},
+    "Couldn't reach the relay" : {},
+    "Couldn't revoke the link" : {},
+    "CrocApp" : {
+      "shouldTranslate" : false
+    },
+    "CrocApp is already sending or receiving. Wait for it to finish." : {},
+    "CrocApp will ask to use your camera (to scan QR codes) and your local network (for faster nearby transfers)." : {},
+    "Current file progress" : {},
+    "Custom code (optional)" : {},
+    "Decline" : {},
+    "Declined" : {
+      "comment" : "VoiceOver label of a history row's status icon."
+    },
+    "Default" : {
+      "comment" : "Placeholder of the relay password field when none is set."
+    },
+    "Delete" : {},
+    "Devices on the same network transfer directly, and the data never leaves your network. The local path and the relay race; the faster one wins." : {},
+    "Disable Compression" : {},
+    "Discard" : {},
+    "Done" : {},
+    "Downloads allowed: %lld" : {
+      "comment" : "Label of a stepper. The placeholder is how many times the link can be downloaded."
+    },
+    "Drop files here to send" : {},
+    "Drop files or folders here" : {},
+    "Drop files to send" : {},
+    "Drop to Send" : {},
+    "Encrypted on this device. The link server only holds the encrypted files." : {},
+    "End-to-end encrypted" : {},
+    "Enter a speed such as 500k, 2m or 1g, or leave it blank for no limit." : {},
+    "Enter an IPv4 multicast address from 224.0.0.0 to 239.255.255.255." : {},
+    "Enter host:port, or an address starting with http:// or https://." : {},
+    "Enter host:port, or an address starting with socks5:// or socks5h://." : {},
+    "Enter the code phrase instead." : {},
+    "Enter the sender's address and port, such as 192.168.1.20:9009. The port must be a number from 1 to 65535." : {},
+    "Enter the server's address only, such as %@. It must use https, or http for localhost." : {
+      "comment" : "Error under the Link Server field. The placeholder is an example address and stays as it is."
+    },
+    "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner. Share it over a channel you trust; it expires with the transfer." : {},
+    "Everything is encrypted on your device and decrypted only on the other one. Nothing in between can read it." : {},
+    "Exclude from sends" : {},
+    "Failed" : {
+      "comment" : "VoiceOver label of a history row's status icon."
+    },
+    "File %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "File %1$lld of %2$lld"
+          }
+        }
+      },
+      "comment" : "Progress through a transfer of several files: this file's number, then how many files there are."
+    },
+    "Files" : {},
+    "Files are encrypted on this device before they reach %@. Anyone with the link can receive them until it expires or runs out." : {
+      "comment" : "Note under the Send as Link switch. The placeholder is the link server's host name."
+    },
+    "Files are encrypted with the code phrase. The relay only ever sees ciphertext." : {},
+    "Files are waiting for your answer" : {},
+    "Files from anyone who has your code are saved without preview or confirmation. Keep Both saves a new copy next to an existing file; Replace overwrites it. Unsafe file names still cancel the transfer. Confirm on Both Sides overrides Auto-Accept Transfers." : {},
+    "Find the sender automatically" : {},
+    "Finished sends and receives appear here." : {},
+    "Finished transfers are listed in History, which stays on this device." : {},
+    "Folders can't be sent as a link. Remove the folders, or send them with a code." : {},
+    "General" : {},
+    "Get Started" : {},
+    "HTTP Proxy" : {},
+    "Haptics" : {},
+    "History" : {},
+    "History is off" : {},
+    "How It Works" : {},
+    "How croc keeps transfers private" : {},
+    "IPv6 Address" : {},
+    "It expired, was revoked or has no downloads left, so ask the sender for a new link." : {},
+    "Keep Both" : {},
+    "Link" : {
+      "comment" : "VoiceOver label of the text that shows a link."
+    },
+    "Link Lasts" : {},
+    "Link Server" : {},
+    "Link expired %@" : {
+      "comment" : "The placeholder is the date and time the link stopped working."
+    },
+    "Link expires %@" : {
+      "comment" : "The placeholder is the date and time the link stops working."
+    },
+    "Link ready" : {},
+    "Link revoked %@" : {
+      "comment" : "The placeholder is the date and time the link was revoked."
+    },
+    "Local Network Only" : {},
+    "Local network access is off" : {},
+    "Local network only: nothing leaves your network" : {},
+    "Local network when possible" : {},
+    "Local-only transfers never touch a relay on the internet." : {},
+    "Lost connection to the other device" : {},
+    "Menu bar" : {},
+    "Multicast Address" : {},
+    "Network" : {},
+    "No limit" : {},
+    "No public relay answered" : {},
+    "No transfers yet" : {},
+    "None, or host:port" : {},
+    "Nothing is saved without your OK: a transfer you receive shows a file preview you accept or decline. Auto-Accept Transfers is off unless you turn it on." : {},
+    "OK" : {},
+    "On the other device, enter this code or scan the QR." : {},
+    "One code phrase does everything" : {},
+    "One code, one transfer" : {},
+    "Open CrocApp" : {},
+    "Open CrocApp to accept or decline them." : {},
+    "Open Settings" : {},
+    "Open at Login" : {},
+    "Open in Files" : {},
+    "Overall progress" : {},
+    "Password" : {},
+    "Patterns, one per line" : {},
+    "Performance" : {},
+    "Privacy Policy" : {},
+    "Proxies, sender IP, speed limit and more. The defaults suit most people." : {},
+    "Public relay pool" : {},
+    "Puts every setting on this page back to croc's default and removes the saved proxies." : {},
+    "QR code for the code phrase" : {},
+    "QR code for the link" : {},
+    "Quit and reopen CrocApp to transfer again." : {},
+    "Ready to send" : {},
+    "Receive" : {},
+    "Receive ${codeOrLink} with CrocApp" : {
+      "comment" : "Summary of the Receive action in Shortcuts. ${codeOrLink} is its input and stays as it is."
+    },
+    "Receive from Link" : {},
+    "Receive with CrocApp" : {},
+    "Received" : {},
+    "Received %lld items." : {
+      "comment" : "Spoken or shown by Shortcuts after Receive. The placeholder is how many files or text items arrived.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Received %lld item."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Received %lld items."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Received files" : {},
+    "Received text" : {},
+    "Receives files with a croc code or a download link and returns them." : {},
+    "Receive…" : {},
+    "Receiving" : {},
+    "Receiving in a browser needs the default relays. This transfer stays on your local network." : {},
+    "Receiving in a browser needs the default relays. This transfer uses a custom relay." : {},
+    "Receiving progress" : {},
+    "Receiving was interrupted" : {},
+    "Receiving with CrocApp" : {
+      "comment" : "Title of the iOS Live Activity while receiving."
+    },
+    "Relay" : {},
+    "Remove %@" : {
+      "comment" : "VoiceOver label of the button that removes a staged file. The placeholder is the file name."
+    },
+    "Removes the list only. Received files stay where they are." : {},
+    "Replace" : {},
+    "Reset" : {
+      "comment" : "Button that sets the receive folder back to the default."
+    },
+    "Reset all Advanced settings?" : {},
+    "Reset to %@" : {
+      "comment" : "Button that puts the link server back to its default. The placeholder is the default server address."
+    },
+    "Reset to Defaults" : {},
+    "Respect .gitignore" : {},
+    "Review" : {
+      "comment" : "Button that opens the waiting transfer request."
+    },
+    "Revoke" : {},
+    "Revoke Link" : {},
+    "Revoke this link?" : {},
+    "SOCKS5 Proxy" : {},
+    "Same Wi-Fi or different continents, transfers find the fastest path automatically." : {},
+    "Save Received Files To" : {},
+    "Save Transfer History" : {},
+    "Scan Code" : {},
+    "Scan QR Code" : {},
+    "Send" : {
+      "comment" : "Confirm button of the file chooser."
+    },
+    "Send ${files} with CrocApp" : {
+      "comment" : "Summary of the Send Files action in Shortcuts. ${files} is its input and stays as it is."
+    },
+    "Send ${text} with CrocApp" : {
+      "comment" : "Summary of the Send Text action in Shortcuts. ${text} is its input and stays as it is."
+    },
+    "Send Again" : {},
+    "Send Clipboard Text" : {},
+    "Send Files" : {},
+    "Send Files with CrocApp" : {},
+    "Send Speed Limit" : {},
+    "Send Text" : {},
+    "Send Text with CrocApp" : {},
+    "Send as Link" : {},
+    "Send as Link uploads encrypted files to this server. The link server holds them until the link expires and cannot read them; the key is in the link." : {},
+    "Send as link" : {},
+    "Send encrypted files as a link instead of with a code." : {},
+    "Send fewer or smaller files, allow fewer downloads, or wait a while before sending again." : {},
+    "Send files and text from the menu bar without opening the window." : {},
+    "Send the selected items to the connected device?" : {},
+    "Sender IP" : {},
+    "Sending" : {},
+    "Sending progress" : {},
+    "Sending shows a short code phrase. Enter it on the other device and the two connect." : {},
+    "Sending was interrupted" : {},
+    "Sending with CrocApp" : {
+      "comment" : "Title of the iOS Live Activity while sending."
+    },
+    "Sends files or folders with a croc code and returns the code. Keep CrocApp open until the transfer ends." : {},
+    "Sends text with a croc code and returns the code. Keep CrocApp open until the transfer ends." : {},
+    "Send…" : {},
+    "Sent" : {},
+    "Sent files" : {},
+    "Settings" : {},
+    "Share Link" : {},
+    "Shared Files" : {},
+    "Show Receive Folder in Files" : {},
+    "Show Receive Folder in Finder" : {},
+    "Show in Finder" : {},
+    "Show in Menu Bar" : {},
+    "Some names are already taken" : {},
+    "Start the same transfer again; replacing the partly received files resumes it." : {
+      "comment" : "Replace is the label of a button in the incoming-files prompt."
+    },
+    "Start the send there first, or use a faster connection, then enter the code again." : {},
+    "Starting…" : {},
+    "Straight to the sender, no relay in between" : {},
+    "Strong keys from short codes" : {},
+    "Support" : {},
+    "Text" : {},
+    "Text can't be sent as a link. Switch to Files." : {},
+    "Text snippet" : {},
+    "Text to send" : {},
+    "That code is already in use" : {},
+    "That is not a croc code or a CrocApp link." : {},
+    "The camera couldn't start. Close this and try again." : {},
+    "The cancelled transfer didn't stop" : {},
+    "The clipboard has no text to send." : {},
+    "The code is %@. Keep CrocApp open until the transfer ends." : {
+      "comment" : "Spoken or shown by Shortcuts after Send Files and Send Text. The placeholder is the code phrase."
+    },
+    "The code phrases don't match" : {},
+    "The files are deleted from the link server and the link stops working for everyone." : {},
+    "The link server refused this send" : {},
+    "The originals were moved or deleted since that transfer." : {},
+    "The other device declined or cancelled" : {},
+    "The other device is connected" : {},
+    "The other device is connected. Send now?" : {},
+    "The other device is waiting for you to accept or decline." : {},
+    "The other device wasn't ready" : {},
+    "The other device's croc is outdated" : {},
+    "The relay is just a pipe" : {},
+    "The relay rejected its password" : {},
+    "The transfer failed" : {},
+    "There is nothing to send." : {},
+    "This also removes the saved proxies." : {},
+    "This is taking longer than usual. Double-check the code, or the other device may not be ready." : {},
+    "This link no longer works" : {},
+    "Those files aren't available anymore" : {},
+    "Total %@ / %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Total %1$@ / %2$@"
+          }
+        }
+      },
+      "comment" : "Total progress of a transfer: bytes done, then the total size. Both placeholders are file sizes such as 12 MB."
+    },
+    "Transfer" : {},
+    "Transfer cancelled" : {},
+    "Transfer code" : {},
+    "Transfer complete" : {},
+    "Transfer finished with errors" : {},
+    "Transfer finished with problems" : {},
+    "Transfer history" : {},
+    "Transfers use the relay only. Enable it in Settings › Privacy & Security › Local Network for faster direct transfers." : {
+      "comment" : "The path names the iOS Settings app. Match its translated pane names."
+    },
+    "Transfers use the relay only. Enable it in System Settings › Privacy & Security › Local Network for faster direct transfers." : {
+      "comment" : "The path names the macOS System Settings app. Match its translated pane names."
+    },
+    "Try Again" : {},
+    "Try a different code." : {},
+    "Try again in a moment." : {},
+    "Turn off Auto-Accept Transfers in Settings and try again, or ask the sender to resend without their confirmation option." : {
+      "comment" : "Auto-Accept Transfers is the label of a switch in Settings."
+    },
+    "Turn on Save Transfer History in Settings to list finished transfers here." : {},
+    "Unsafe file names were blocked" : {},
+    "Version" : {},
+    "Via custom relay %@, which sees only encrypted data" : {
+      "comment" : "Line of the trust badge. The placeholder is the relay's address."
+    },
+    "Via the public croc relay, which sees only encrypted data" : {},
+    "Wait for it to end, then try again." : {},
+    "Waiting for connection…" : {
+      "comment" : "Subtitle of the iOS Live Activity before the transfer has any progress."
+    },
+    "Waiting for the other device…" : {},
+    "Waiting for the sender…" : {},
+    "Welcome to CrocApp" : {},
+    "What to Send" : {},
+    "When a File Already Exists" : {},
+    "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay." : {},
+    "Works anywhere" : {},
+    "Works until %@, for ^[%lld download](inflect: true)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Works until %1$@, for ^[%2$lld download](inflect: true)"
+          }
+        }
+      },
+      "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows."
+    },
+    "You declined the transfer" : {},
+    "You stay in control" : {},
+    "Zip Folders Before Sending" : {},
+    "^[%lld file](inflect: true) waiting to send" : {
+      "comment" : "VoiceOver label of the badge on the Send button. The placeholder is the number of queued files."
+    },
+    "^[%lld file](inflect: true) • %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "^[%1$lld file](inflect: true) • %2$@"
+          }
+        }
+      },
+      "comment" : "Summary of a finished transfer: the number of files, then their total size such as 24 MB."
+    },
+    "^[%lld item](inflect: true) in this transfer share a name with a file here. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files." : {
+      "comment" : "Warning in the incoming-files prompt. The placeholder is how many items clash. Keep Both and Replace are the labels of its two buttons."
+    },
+    "iOS paused the transfer" : {},
+    "iOS stopped it in the background, so keep CrocApp open and open the link again." : {},
+    "iOS stopped it in the background, so keep CrocApp open and try again." : {},
+    "or add them with the buttons below" : {}
+  },
+  "version" : "1.0"
+}

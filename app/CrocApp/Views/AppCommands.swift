@@ -58,7 +58,7 @@ struct AppCommands: Commands {
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
         return NSAttributedString(
-            string: "Privacy Policy",
+            string: String(localized: "Privacy Policy"),
             attributes: [
                 .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
                 .foregroundColor: NSColor.labelColor,

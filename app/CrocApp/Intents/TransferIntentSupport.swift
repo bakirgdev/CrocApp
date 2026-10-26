@@ -6,6 +6,8 @@ enum TransferIntentError: Error, CustomLocalizedStringResourceConvertible {
     case busy
     case nothingToSend
     case notACodeOrLink
+    case cancelled
+    /// The words are already localized (`TransferFailure.text`).
     case failed(String)
 
     var localizedStringResource: LocalizedStringResource {
@@ -13,7 +15,9 @@ enum TransferIntentError: Error, CustomLocalizedStringResourceConvertible {
         case .busy: "CrocApp is already sending or receiving. Wait for it to finish."
         case .nothingToSend: "There is nothing to send."
         case .notACodeOrLink: "That is not a croc code or a CrocApp link."
-        case .failed(let message): "\(message)"
+        case .cancelled: "Cancelled."
+        // A runtime string is not a literal, so it adds no catalog key.
+        case .failed(let message): LocalizedStringResource(String.LocalizationValue(message))
         }
     }
 }
@@ -57,7 +61,7 @@ extension TransferController {
     private func settle<T>(_ outcome: Result<T, TransferIntentError>?) throws -> T {
         guard let outcome else {
             cancel()
-            throw TransferIntentError.failed("Cancelled.")
+            throw TransferIntentError.cancelled
         }
         return try outcome.get()
     }

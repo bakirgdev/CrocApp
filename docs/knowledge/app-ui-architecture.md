@@ -19,7 +19,7 @@ Shared pieces (Views/): ButtonVariants, DropZone, CodePhraseDisplay, DirectionHe
 QRCodeView (cross-platform gen) / QRScannerView.swift (whole file #if os(iOS), VisionKit)
 ```
 
-Localization: UI strings are plain literals in the views. There is no String Catalog (`*.xcstrings`), and the project knows only the `en` and `Base` regions. The plan is in `docs/ROADMAP.md`.
+Localization: the app ships in English only, but every user-facing string reaches a String Catalog. See "Localization" below.
 
 Construction order in `CrocAppApp.init` matters: `AppSettings` (on in-memory storage and secrets for a harness run), then the `HistoryStore` container (in memory for a harness run), then `StoredTransferVault`, then `TransferController(settings:vault:)`, then `controller.history = history`.
 
@@ -312,6 +312,81 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 - `PrivacyInfo.xcprivacy` sits in both synced target folders. The app declares UserDefaults CA92.1, FileTimestamp C617.1 and 3B52.1, and SystemBootTime 35F9.1 (the Go engine's `stat` family and `mach_absolute_time` imports). The extension declares an empty accessed-API list. Both declare no tracking and no collection.
 - `ITSAppUsesNonExemptEncryption` is set in `CrocApp-Info.plist` (iOS) and `CrocApp-macOS-Info.plist`, the two plists App Store builds use. The value, the reason and the open decisions are in `docs/RELEASING.md`, "Export compliance".
 - Two `.glassEffect()` call sites exist: the code card in `CodePhraseDisplay`, which `waitingView` uses, and the macOS-only **Drop to Send** full-window overlay in `ContentView` (`design/components.md`, "DropZone").
+
+## Localization
+
+The app ships in English only and is ready for more languages. The catalogs exist and every user-facing string reaches one. No second language is in them yet, and the project knows only the `en` and `Base` regions. The plan for languages is in `docs/ROADMAP.md`.
+
+| Catalog | Bundle | Holds |
+| --- | --- | --- |
+| `app/CrocApp/Localizable.xcstrings` | `CrocApp`, `CrocApp Direct` | every string of the app and of `app/CrocAppDirect/`, and the App Intents titles, descriptions and parameter summaries |
+| `app/CrocApp/AppShortcuts.xcstrings` | the same | the three Siri phrases of `CrocAppShortcuts` |
+| `app/CrocApp/InfoPlist.xcstrings` | the same | the camera and local-network permission texts |
+| `app/CrocShare/Localizable.xcstrings` | `CrocShare` | the share extension's few strings. An extension is its own bundle, so it has its own catalog |
+
+### What is localized, and how
+
+What a string is used for decides how it is written. Never wrap a literal that SwiftUI already treats as a key.
+
+| The text is | Write |
+| --- | --- |
+| a literal handed to a SwiftUI view or modifier that takes a key (`Text`, `Button`, `Label`, `navigationTitle`, `accessibilityLabel`, `ContentUnavailableView`) | the literal itself. A parameter that only ever receives literals is typed `LocalizedStringKey` (`DropZone.title`, `CodeField.placeholder`, `AdvancedRow.footnote`), because a `String` parameter shows its text as it is and Xcode never extracts it |
+| built in a model or helper, or needed as a `String` (`TransferFailure`, the Settings field errors, the `StatusBanner` and `StatusBlock` title and detail, VoiceOver announcements, the iOS Live Activity text, `NSOpenPanel`) | `String(localized:)`, with `comment:` where the meaning or a placeholder is not obvious. It resolves when it is built, so never keep one past a language change (the system relaunches the app for one) |
+| an App Intents title, description, parameter or dialog | a `LocalizedStringResource`, or the literal where the API takes one. Shortcuts resolves it |
+| formatted data (`"\(done) / \(total)"` of two file sizes) | `Text(verbatim:)`, or `Text(_:format:)` for a number. Otherwise the build adds a meaningless `%@ / %@` key |
+| a count | `^[\(n) file](inflect: true)` in a `Text` or an `AttributedString(localized:)` (`inflected(_:)` turns the result into a `String`), or one plural variation in the catalog (`Received %lld items.`) |
+
+Never localize:
+
+- Code phrases, file names, URLs, relay addresses and croc or Go output. The engine's `EngineFailure.message` is never shown (`TransferFailure`).
+- `Logger` messages, test strings and preview-only labels (use `Text(verbatim:)` there, as `ButtonVariants.swift` does).
+- The `AutoVerify` markers and the failure copy the harness scripts match, such as "This link no longer works" in `scripts/verify-app-mac.sh`. The harnesses expect English, so run them on an English system.
+- The names `CrocApp` and `croc`.
+
+Not localizable yet: `known-issues.md`, "Design system", lists the on-screen strings that still bypass the catalogs.
+
+### Keeping a catalog in step
+
+Apple says Xcode adds new keys to the catalogs on every build in the IDE. `xcodebuild` does not: with Xcode 27.1 a build compiles the strings but leaves the `.xcstrings` files untouched. What the IDE does can be run by hand, because the compiler writes one `.stringsdata` file per source file, and `xcstringstool sync` merges them into a catalog.
+
+The three variants compile different code (`#if os(iOS)`, `#if os(macOS)`, `#if DIRECT`), so build all of them, then sync from every `.stringsdata`. A sync from one variant drops the keys only the others use.
+
+```bash
+DD=$(mktemp -d)
+FLAGS=(CODE_SIGNING_ALLOWED=NO -derivedDataPath "$DD")
+xcodebuild build -project app/CrocApp.xcodeproj -scheme CrocApp -destination platform=macOS "${FLAGS[@]}"
+xcodebuild build -project app/CrocApp.xcodeproj -scheme CrocApp -destination 'generic/platform=iOS Simulator' "${FLAGS[@]}"
+xcodebuild build -project app/CrocApp.xcodeproj -scheme 'CrocApp Direct' -destination platform=macOS "${FLAGS[@]}"
+
+# One --stringsdata per file; the Direct build's directory has a space in it.
+sync() {
+  local catalog=$1; shift; local args=() f d
+  for d in "$@"; do
+    while IFS= read -r f; do args+=(--stringsdata "$f"); done < <(find "$d" -name '*.stringsdata')
+  done
+  xcrun xcstringstool sync "$catalog" "${args[@]}"
+}
+B="$DD/Build/Intermediates.noindex/CrocApp.build"
+APP=("$B/Debug-iphonesimulator/CrocApp.build" "$B/Debug/CrocApp Direct.build" "$B/Debug/CrocApp.build")
+sync app/CrocApp/Localizable.xcstrings "${APP[@]}"
+sync app/CrocApp/AppShortcuts.xcstrings "${APP[@]}"
+sync app/CrocShare/Localizable.xcstrings "$B/Debug-iphonesimulator/CrocShare.build"
+```
+
+The file name is the table name, so each catalog takes only its own table. A sync keeps comments, translations and `shouldTranslate`, and removes an untranslated key no code uses any more.
+
+Two things no build writes, so edit them by hand:
+
+- `InfoPlist.xcstrings` holds `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription`. Apple's Xcode 16.3 release notes say the IDE extracts Info.plist keys into this catalog on its own. `xcodebuild` writes nothing there (verified), and the IDE was not run, so both keys are seeded with their current text. Keep a changed permission text in step with `app/Config/CrocApp-Info.plist` or the `INFOPLIST_KEY_` setting.
+- The plural variation of `Received %lld items.`, which `ReceiveIntent` uses for its dialog. `LocalizationTests` pins that 1 and 3 render as "1 item" and "3 items".
+
+### Adding a language
+
+1. In Xcode, open each catalog and add the language, which also adds it to the project's regions.
+2. Translate. Keep every placeholder (`%@`, `%lld`, `${applicationName}`), and move it where the grammar needs it. Give each count key plural variations: `^[%lld file](inflect: true)` only works for the languages Apple's automatic grammar agreement supports (not checked which), and the other languages need explicit variations.
+3. Translate the three phrases in `AppShortcuts.xcstrings`, each with `${applicationName}`, and the two permission texts in `InfoPlist.xcstrings`.
+4. Test with the scheme's **App Language** option, or the launch argument `-AppleLanguages (xx)`. Check the longest strings against `design/spacing-layout.md`: a translation is often longer than the English.
+5. The docs site (`web/docs/`), the landing page and the store listing (`app-store-listing.md`) are separate and not in the catalogs.
 
 ## SwiftUI and Xcode API facts
 

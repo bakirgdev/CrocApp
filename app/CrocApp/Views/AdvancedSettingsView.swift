@@ -117,14 +117,14 @@ struct AdvancedSettingsView: View {
 /// One setting: the control, its inline error (words and an icon, never colour
 /// alone), then a footnote on which side it affects.
 private struct AdvancedRow<Content: View>: View {
-    let footnote: String
+    let footnote: LocalizedStringKey
     var error: String?
     @ViewBuilder var content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.space3) {
             content
-                .accessibilityHint(error ?? footnote)
+                .accessibilityHint(error.map { Text(verbatim: $0) } ?? Text(footnote))
             if let error {
                 StatusBanner(kind: .error, title: error)
                     .frame(maxWidth: .infinity, alignment: .leading)

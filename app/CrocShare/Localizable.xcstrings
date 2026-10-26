@@ -1,0 +1,22 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "App Group container unavailable." : {
+      "comment" : "Shown in the share sheet when the files cannot be handed to the app."
+    },
+    "Couldn't prepare files" : {},
+    "Done" : {},
+    "Nothing shareable was provided." : {
+      "comment" : "Shown in the share sheet when the shared items hold no file."
+    },
+    "Preparing files…" : {},
+    "Ready to send" : {},
+    "Send with CrocApp" : {
+      "comment" : "Title of the share sheet."
+    },
+    "^[%lld file](inflect: true) staged. Open CrocApp to start the transfer." : {
+      "comment" : "Shown in the share sheet once the files are staged. The placeholder is how many files."
+    }
+  },
+  "version" : "1.0"
+}

@@ -72,6 +72,10 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 - **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
   - It is synchronous file I/O on the main actor, run by `SendView` when it builds the row. A network or iCloud volume could make it hitch.
   - Not measured. A fix would read the size once when files are staged.
+- **A little on-screen text cannot be translated yet.**
+  - The `/s` after a transfer speed (`TransferStatusView.speedText`) and the receive-folder labels "Downloads/CrocApp" and "Documents" (`OutputFolderStore.defaultDisplayName`) are English text built by hand. `byteCount` already localizes the size itself.
+  - `CodeField.tooShortMessage` counts "characters" with `EngineConstraints.minCodeLength`, which is 6. It is not inflected (`design/content.md`, "Numbers"), so a minimum of 1 would read "1 characters". Every other count noun is inflected.
+  - Fixing the speed needs a format string, and the folder labels need the system's folder names. Left because the app has one language so far (`knowledge/app-ui-architecture.md`, "Localization").
 
 ## Landing page
 

@@ -64,7 +64,9 @@ struct OnboardingView: View {
         #endif
     }
 
-    private func bullet(_ icon: String, _ title: String, _ text: String) -> some View {
+    private func bullet(
+        _ icon: String, _ title: LocalizedStringKey, _ text: LocalizedStringKey
+    ) -> some View {
         HStack(alignment: .top, spacing: Spacing.space4) {
             Image(systemName: icon)
                 .font(.title3)

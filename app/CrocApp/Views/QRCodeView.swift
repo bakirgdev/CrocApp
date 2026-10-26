@@ -8,7 +8,7 @@ import SwiftUI
 /// design/components.md → CodePhraseDisplay and QRFrame.
 struct QRCodeView: View {
     let content: String
-    var label = "QR code for the code phrase"
+    var label: LocalizedStringKey = "QR code for the code phrase"
     @State private var image: CGImage?
 
     // White in both themes: scanners need the contrast whatever the appearance

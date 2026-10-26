@@ -33,7 +33,7 @@ final class MenuBarQuickSend {
         guard !controller.isActive else { return false }
         let text = NSPasteboard.general.string(forType: .string) ?? ""
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            notice = "The clipboard has no text to send."
+            notice = String(localized: "The clipboard has no text to send.")
             return false
         }
         notice = nil
@@ -48,7 +48,7 @@ final class MenuBarQuickSend {
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = true
-        panel.prompt = "Send"
+        panel.prompt = String(localized: "Send", comment: "Confirm button of the file chooser.")
         NSApp.activate()
         guard panel.runModal() == .OK else { return }
         send(urls: panel.urls)

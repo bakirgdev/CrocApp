@@ -1,8 +1,11 @@
 import CrocKit
+import Foundation
 
 /// Why a transfer ended without its result: the words the failure screen
 /// shows (design/content.md → Errors) and the action it offers
 /// (design/components.md → StatusBlock). All failure copy lives in this file.
+/// The words are resolved `String`s (`String(localized:)`) because their
+/// consumers need one: VoiceOver announcements, Shortcuts errors, the harness.
 struct TransferFailure: Equatable {
     enum Remedy: Equatable {
         /// The same inputs could now succeed: Try Again, then Done.
@@ -100,34 +103,41 @@ extension TransferFailure {
     }
 
     static let cancelledByUser = TransferFailure(
-        title: "Transfer cancelled", detail: nil, remedy: nil, endedByUser: true)
+        title: String(localized: "Transfer cancelled"), detail: nil, remedy: nil,
+        endedByUser: true)
 
     static let declinedByUser = TransferFailure(
-        title: "You declined the transfer", detail: nil, remedy: nil, endedByUser: true)
+        title: String(localized: "You declined the transfer"), detail: nil, remedy: nil,
+        endedByUser: true)
 
     /// The engine kept a cancelled transfer running and refuses every start
     /// until the app is relaunched.
     static let engineStuck = TransferFailure(
-        title: "The cancelled transfer didn't stop",
-        detail: "Quit and reopen CrocApp to transfer again.", remedy: nil)
+        title: String(localized: "The cancelled transfer didn't stop"),
+        detail: String(localized: "Quit and reopen CrocApp to transfer again."), remedy: nil)
 
     /// Used from both `.done` and `.failed`: a blocked transfer can terminate
     /// either way depending on whether the cancel beat the last event.
     static let blockedAutoAccept = TransferFailure(
-        title: "Unsafe file names were blocked",
-        detail: "Auto-accept cancelled the transfer, so ask the sender to rename the files.",
+        title: String(localized: "Unsafe file names were blocked"),
+        detail: String(
+            localized:
+                "Auto-accept cancelled the transfer, so ask the sender to rename the files."),
         remedy: nil)
 
     static let autoAcceptCannotConfirm = TransferFailure(
-        title: "Auto-accept can't answer this sender",
-        detail:
-            "Turn off Auto-Accept Transfers in Settings and try again, or ask the sender to resend without their confirmation option.",
+        title: String(localized: "Auto-accept can't answer this sender"),
+        detail: String(
+            localized:
+                "Turn off Auto-Accept Transfers in Settings and try again, or ask the sender to resend without their confirmation option.",
+            comment: "Auto-Accept Transfers is the label of a switch in Settings."),
         remedy: .openSettings(.general))
 
     /// Keep Both saves a partly received file as a new copy, so only Replace
     /// resumes it.
-    static let resumeHint =
-        "Start the same transfer again; replacing the partly received files resumes it."
+    static let resumeHint = String(
+        localized: "Start the same transfer again; replacing the partly received files resumes it.",
+        comment: "Replace is the label of a button in the incoming-files prompt.")
 
     /// A stored transfer cannot resume (concern 4), so it says to start over.
     static func backgroundExpired(
@@ -135,17 +145,23 @@ extension TransferFailure {
     ) -> TransferFailure {
         switch (stored, direction) {
         case (false, _):
-            TransferFailure(title: "iOS paused the transfer", detail: resumeHint, remedy: .tryAgain)
+            TransferFailure(
+                title: String(localized: "iOS paused the transfer"), detail: resumeHint,
+                remedy: .tryAgain)
         case (true, .send):
             TransferFailure(
-                title: "Sending was interrupted",
-                detail: "iOS stopped it in the background, so keep CrocApp open and try again.",
+                title: String(localized: "Sending was interrupted"),
+                detail: String(
+                    localized:
+                        "iOS stopped it in the background, so keep CrocApp open and try again."),
                 remedy: .tryAgain)
         case (true, .receive):
             TransferFailure(
-                title: "Receiving was interrupted",
-                detail:
-                    "iOS stopped it in the background, so keep CrocApp open and open the link again.",
+                title: String(localized: "Receiving was interrupted"),
+                detail: String(
+                    localized:
+                        "iOS stopped it in the background, so keep CrocApp open and open the link again."
+                ),
                 remedy: .tryAgain)
         }
     }
@@ -158,77 +174,98 @@ extension TransferFailure {
     ) -> TransferFailure {
         if stored, code == .relayUnreachable || code == .connectionLost {
             return TransferFailure(
-                title: "Couldn't reach the link server",
-                detail: "Check your internet connection and try again.", remedy: .tryAgain)
+                title: String(localized: "Couldn't reach the link server"),
+                detail: String(localized: "Check your internet connection and try again."),
+                remedy: .tryAgain)
         }
         switch code {
         case .peerVersion:
             return TransferFailure(
-                title: "The other device's croc is outdated",
-                detail: "Both sides need croc 11 or newer, so update croc there.", remedy: nil)
+                title: String(localized: "The other device's croc is outdated"),
+                detail: String(
+                    localized: "Both sides need croc 11 or newer, so update croc there.",
+                    comment: "croc is the name of the file-transfer tool and stays untranslated."),
+                remedy: nil)
         case .relayUnreachable:
             return TransferFailure(
-                title: "Couldn't reach the relay", detail: "Check your internet connection.",
+                title: String(localized: "Couldn't reach the relay"),
+                detail: String(localized: "Check your internet connection."),
                 remedy: .tryAgain)
         case .noPublicRelay:
             return TransferFailure(
-                title: "No public relay answered",
-                detail:
-                    "Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network.",
+                title: String(localized: "No public relay answered"),
+                detail: String(
+                    localized:
+                        "Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network.",
+                    comment: "Local Network Only is the label of a switch in Settings."),
                 remedy: .tryAgain)
         case .declined:
             // A peer's cancel arrives the same way.
             return TransferFailure(
-                title: "The other device declined or cancelled",
+                title: String(localized: "The other device declined or cancelled"),
                 detail: direction == .receive
-                    ? "Ask them to send it again." : "Check with them before you send it again.",
+                    ? String(localized: "Ask them to send it again.")
+                    : String(localized: "Check with them before you send it again."),
                 remedy: nil)
         case .refused:
             // This side's own prompt said no without a Decline tap (an EOF).
-            return TransferFailure(title: "You declined the transfer", detail: nil, remedy: nil)
+            return TransferFailure(
+                title: String(localized: "You declined the transfer"), detail: nil, remedy: nil)
         case .roomFull:
             return TransferFailure(
-                title: "That code is already in use", detail: "Try a different code.",
+                title: String(localized: "That code is already in use"),
+                detail: String(localized: "Try a different code."),
                 remedy: nil)
         case .badPassword:
             return TransferFailure(
-                title: "The relay rejected its password",
-                detail: "Check the relay password in Settings.", remedy: .openSettings(.general))
+                title: String(localized: "The relay rejected its password"),
+                detail: String(localized: "Check the relay password in Settings."),
+                remedy: .openSettings(.general))
         case .wrongCode:
             return TransferFailure(
-                title: "The code phrases don't match",
-                detail: "Check the code phrase on both devices.", remedy: nil)
+                title: String(localized: "The code phrases don't match"),
+                detail: String(localized: "Check the code phrase on both devices."),
+                remedy: nil)
         case .cancelled:
-            return TransferFailure(title: "Transfer cancelled", detail: nil, remedy: nil)
+            return TransferFailure(
+                title: String(localized: "Transfer cancelled"), detail: nil, remedy: nil)
         case .connectionLost:
             return TransferFailure(
-                title: "Lost connection to the other device",
-                detail: "Check your internet connection.", remedy: .tryAgain)
+                title: String(localized: "Lost connection to the other device"),
+                detail: String(localized: "Check your internet connection."),
+                remedy: .tryAgain)
         case .storeLimit:
             // Over the server's size, file count or download limit, or too
             // many sends made recently.
             return TransferFailure(
-                title: "The link server refused this send",
-                detail:
-                    "Send fewer or smaller files, allow fewer downloads, or wait a while before sending again.",
+                title: String(localized: "The link server refused this send"),
+                detail: String(
+                    localized:
+                        "Send fewer or smaller files, allow fewer downloads, or wait a while before sending again."
+                ),
                 remedy: nil)
         case .storeExpired:
             // scripts/verify-app-mac.sh matches this title.
             return TransferFailure(
-                title: "This link no longer works",
-                detail:
-                    "It expired, was revoked or has no downloads left, so ask the sender for a new link.",
+                title: String(localized: "This link no longer works"),
+                detail: String(
+                    localized:
+                        "It expired, was revoked or has no downloads left, so ask the sender for a new link."
+                ),
                 remedy: nil)
         case .invalidSetting:
             return TransferFailure(
-                title: "An Advanced setting can't be used",
-                detail:
-                    "Check the proxies, addresses, ports and send speed limit in Settings > Advanced.",
+                title: String(localized: "An Advanced setting can't be used"),
+                detail: String(
+                    localized:
+                        "Check the proxies, addresses, ports and send speed limit in Settings > Advanced.",
+                    comment: "Advanced is the title of a page in Settings."),
                 remedy: .openSettings(.advanced))
         case .transferActive:
             return TransferFailure(
-                title: "Another transfer is still running",
-                detail: "Wait for it to end, then try again.", remedy: .tryAgain)
+                title: String(localized: "Another transfer is still running"),
+                detail: String(localized: "Wait for it to end, then try again."),
+                remedy: .tryAgain)
         case .engineStuck:
             return .engineStuck
         case .joinedEarly:
@@ -236,13 +273,16 @@ extension TransferFailure {
             // late. The sender has failed too by then, and a generated code
             // changes when it starts again, so the same code may not work.
             return TransferFailure(
-                title: "The other device wasn't ready",
-                detail:
-                    "Start the send there first, or use a faster connection, then enter the code again.",
+                title: String(localized: "The other device wasn't ready"),
+                detail: String(
+                    localized:
+                        "Start the send there first, or use a faster connection, then enter the code again."
+                ),
                 remedy: nil)
         case .other:
             return TransferFailure(
-                title: "The transfer failed", detail: "Check your connection and try again.",
+                title: String(localized: "The transfer failed"),
+                detail: String(localized: "Check your connection and try again."),
                 remedy: .tryAgain)
         }
     }

@@ -1,0 +1,48 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Receive with ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Receive with ${applicationName}"
+            ]
+          }
+        }
+      },
+      "comment" : "Phrase that starts the action by voice. ${applicationName} is the app name and stays as it is."
+    },
+    "Send files with ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Send files with ${applicationName}"
+            ]
+          }
+        }
+      },
+      "comment" : "Phrase that starts the action by voice. ${applicationName} is the app name and stays as it is."
+    },
+    "Send text with ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Send text with ${applicationName}"
+            ]
+          }
+        }
+      },
+      "comment" : "Phrase that starts the action by voice. ${applicationName} is the app name and stays as it is."
+    }
+  },
+  "version" : "1.0"
+}
