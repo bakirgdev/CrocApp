@@ -116,6 +116,17 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - `pnpm audit --prod` reports one High advisory with no fix: `braces@3.0.3` (GHSA-vfj7-8cjw-p6xm, stack exhaustion), reached through `chokidar` and `micromatch` inside Docusaurus core. It is build-time only, and no attacker input reaches the glob handling.
   - Re-run the audit on each Docusaurus upgrade.
 
+## App
+
+- **An auto-accept block silences the failure haptic.**
+  - Under auto-accept, `TransferController` stops an offer with an unsafe file name by calling its own `cancel()`, which sets `cancelRequested`. `endedByUser` then reads true, so `TransferHaptic` treats the block like a **Cancel** tap and stays silent.
+  - `TransferControllerTests`, `autoAcceptCancelsAnOfferWithAnUnsafeName`, asserts the current behaviour under a `FIXME`. Fix it by tracking the block apart from a user cancel, and flip that assertion.
+  - Found in the unit test and the code, not observed on a device.
+- **A late bookmark capture can land on the next transfer's history record.**
+  - `beginFileSend` writes its bookmarks into `pendingRecord` from a background task with no generation check, unlike the conflict scan. If the send ends and the next transfer starts before the capture finishes, the old bookmarks attach to the new record.
+  - Only a following file send can show it, through **Send Again** re-staging the earlier send's files: one with more than 200 items (it captures none of its own), or one whose own capture finishes first.
+  - Found by reading the code, not reproduced. Fix it with the same generation check the conflict scan uses.
+
 ## Accepted
 
 Permanent or deferred, each with its reason.

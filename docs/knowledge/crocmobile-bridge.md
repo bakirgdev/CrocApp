@@ -10,6 +10,8 @@ CrocKit/Croc.xcframework (gitignored, scripts/build-xcframework.sh) →
 CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 ```
 
+The app sees `CrocEngine` through the `TransferEngine` protocol (`CrocKit/Sources/CrocKit/CrocEngine.swift`), so its tests can drive `TransferController` with a fake. A fake has to keep the part of the contract the controller relies on, which the protocol's doc comment lists.
+
 ## gobind surface (naming)
 
 - The xcframework is `Croc.xcframework`. The framework module is `Croc` (from the `-o` basename), so Swift writes `import Croc`.

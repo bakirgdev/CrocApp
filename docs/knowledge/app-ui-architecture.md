@@ -27,6 +27,8 @@ Construction order in `CrocAppApp.init` matters: `AppSettings`, then the `Histor
 
 `@MainActor @Observable`. It is the only code that uses `CrocEngine`. Many other files `import CrocKit` for its types, but only the controller starts and answers transfers.
 
+It reaches the engine through the `TransferEngine` protocol. `init(settings:vault:engine:)` defaults to `CrocEngine()`, so the app passes none. `app/CrocAppTests/TransferControllerTests.swift` passes `FakeTransferEngine`, which emits events one at a time and records every call, and checks the rules below against it. A change to one of these rules needs that test updated in the same change.
+
 `Phase`: `idle` → `starting` → `waiting(code)` / `connecting` → `confirmSend` | `incoming(FileList, conflicts, blocked)` → `transferring(TransferProgress)` → `done(Summary, receivedText?)` | `stored(StoredReceipt)` | `failed(String)`. Views switch on it. `reset()` has no guard, but the UI offers it only from a terminal phase.
 
 ### Event handling

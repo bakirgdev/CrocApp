@@ -2,8 +2,9 @@ import CrocKit
 import Foundation
 import Observation
 
-/// The app-side state machine over CrocEngine. Views render `phase` and call
-/// the intent methods; nothing else in the app touches CrocKit directly.
+/// The app-side state machine over a `TransferEngine` (`CrocEngine` in the
+/// app). Views render `phase` and call the intent methods; nothing else in the
+/// app touches CrocKit directly.
 @MainActor
 @Observable
 final class TransferController {
@@ -83,7 +84,7 @@ final class TransferController {
     /// cannot miss it.
     private(set) var currentCode: String?
 
-    private let engine = CrocEngine()
+    private let engine: any TransferEngine
     private let background = BackgroundCoordinator()
     private var backgroundExpired = false
     private var streamTask: Task<Void, Never>?
@@ -132,9 +133,13 @@ final class TransferController {
         var expiresAt: Date?
     }
 
-    init(settings: AppSettings, vault: StoredTransferVault) {
+    init(
+        settings: AppSettings, vault: StoredTransferVault,
+        engine: any TransferEngine = CrocEngine()
+    ) {
         self.settings = settings
         self.vault = vault
+        self.engine = engine
     }
 
     // MARK: - Intents

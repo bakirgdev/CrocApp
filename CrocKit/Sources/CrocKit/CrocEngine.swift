@@ -10,13 +10,49 @@ public enum CrocEngineError: Error, Sendable {
 /// transfer cannot reach the next one.
 public struct TransferID: Hashable, Sendable {
     private let value = UUID()
+
+    /// A new ID, unequal to every other.
+    public init() {}
 }
 
 /// A started transfer: its ID and its event stream.
 public struct EngineTransfer: Sendable {
     public let id: TransferID
     public let events: AsyncStream<TransferEvent>
+
+    public init(id: TransferID, events: AsyncStream<TransferEvent>) {
+        self.id = id
+        self.events = events
+    }
 }
+
+/// What the app needs from a transfer engine: `CrocEngine` in the app, a fake
+/// in the app's tests. The contract is `CrocEngine`'s: one transfer at a time,
+/// a start throws `CrocEngineError`, the stream ends after `.done` or
+/// `.failed`, and `cancel` ignores an ID that is no longer active.
+public protocol TransferEngine: Sendable {
+    func startSend(
+        paths: [String], text: String?, options: EngineOptions
+    ) async throws -> EngineTransfer
+
+    func startReceive(code: String, options: EngineOptions) async throws -> EngineTransfer
+
+    func startStoreSend(
+        paths: [String], options: StoredSendOptions
+    ) async throws -> EngineTransfer
+
+    func startStoreReceive(
+        link: String, outDir: String, proxy: ProxySettings
+    ) async throws -> EngineTransfer
+
+    func respond(accept: Bool, policy: FilePolicy) async
+
+    func cancel(_ id: TransferID) async
+
+    func revokeStored(_ receipt: StoredReceipt, proxy: ProxySettings) async throws
+}
+
+extension CrocEngine: TransferEngine {}
 
 /// Wraps the gomobile croc bridge. One transfer at a time (crocmobile
 /// serializes on process-global cwd/stdin/stdout).
