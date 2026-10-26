@@ -388,7 +388,7 @@ kill "$STORE_PID"
 wait "$STORE_PID" 2>/dev/null || true
 
 # 15. Advanced options that change the wire, against the croc v11 CLI with
-# the matching flag. What each case pins down was observed with croc v11.5.4:
+# the matching flag. What each case pins down was observed with croc v11.5.5:
 #  - curve: the receiver chooses it and the sender adopts it ("using curve" in
 #    the CLI sender's --debug log); the sender's own curve is never used, so a
 #    mismatch is not an error in either direction.

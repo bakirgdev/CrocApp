@@ -1,6 +1,6 @@
 # Threat model and assurance case
 
-Why CrocApp's security requirements are met, for a reviewer who wants to check. Scope: CrocApp on iOS, iPadOS and macOS (release status: `knowledge/project-overview.md`, "Status"), the `crocmobile/` Go bridge, the `CrocKit` package, the share extension, and the release pipeline. The transfer protocol belongs to [croc](https://github.com/schollz/croc) v11.5.4 (pinned in `crocmobile/go.mod`); this document says what CrocApp relies on there and what it adds. To report a vulnerability, see [`SECURITY.md`](../SECURITY.md).
+Why CrocApp's security requirements are met, for a reviewer who wants to check. Scope: CrocApp on iOS, iPadOS and macOS (release status: `knowledge/project-overview.md`, "Status"), the `crocmobile/` Go bridge, the `CrocKit` package, the share extension, and the release pipeline. The transfer protocol belongs to [croc](https://github.com/schollz/croc) v11.5.5 (pinned in `crocmobile/go.mod`); this document says what CrocApp relies on there and what it adds. To report a vulnerability, see [`SECURITY.md`](../SECURITY.md).
 
 **No third-party security audit of croc or CrocApp has been done.** Everything below is the maintainer's own analysis, backed by the code and tests it names. Where a claim is read from croc's source and not run here, it says so.
 
@@ -71,7 +71,7 @@ CrocApp does not defend against, and does not claim to:
  +----------------------------------------------+          +--------------+
  | SwiftUI app  ------>  CrocKit  ------>  Go    |          |  CrocApp or  |
  | (TransferController)  (actor)   crocmobile    |          |  croc CLI    |
- |        ^                         + croc v11.5.4|          +------^-------+
+ |        ^                         + croc v11.5.5|          +------^-------+
  |        |                            |         |                 |
  | Share extension (App Group)         |         |                 | (PAKE + AES-GCM,
  +--------|-----------------------------|---------+                 |     end to end)
@@ -95,7 +95,7 @@ CrocApp does not defend against, and does not claim to:
 
 ### Key agreement
 
-Facts verified against croc v11.5.4 and pake v3.2.0 source:
+Facts verified against croc v11.5.5 and pake v3.2.0 source:
 
 - **Key agreement:** PAKE2 (Boneh and Shoup) from `schollz/pake` v3.2.0, with fresh random secrets per session drawn from `crypto/rand`. CrocApp sets curve P-256 by default (`NewOptionsDefault` in `crocmobile/crocmobile.go`); p384, p521, siec and ed25519 are selectable under Advanced settings.
 - **Transfer key:** HKDF-SHA256 over the PAKE secret, the transcript and a fresh salt (`src/pakekey/pakekey.go:110`). Key confirmation uses HMAC-SHA256 compared with `hmac.Equal`. A device that does not know the code phrase fails here.
@@ -167,7 +167,7 @@ Saltzer and Schroeder, with the evidence for each.
 | **Missing authentication** (CWE-306) | The code phrase gates the exchange (PAKE); the relay hop has its own authentication; the receiver confirms the file list | croc (Key agreement and data protection, Relay and local network); `IncomingRequestView` | Interop harnesses (`scripts/verify-interop.sh`) |
 | **Unrestricted resource use** (CWE-400) | One transfer at a time; stored sends capped by file count and size before anything is sent; reported sizes clamped; History capped per record and in total (`knowledge/app-ui-architecture.md`, "History"); the share extension activates for at most 25 files, images or movies of each type. No cap on total received size is added by CrocApp | `store.go` limits; `TransferHistory.swift`; `app/Config/CrocShare-Info.plist` | `TestStoreSendLimitsFailBeforeUpload`, `TestStoreSendOversizeFailsBeforeHashing` |
 | **Cleartext storage and exposure of credentials** (CWE-312, CWE-532) | Relay password, proxy credentials and Send as Link receipts live in the Keychain; Keychain failures log the `OSStatus` only; proxy validation errors never quote the value; History keeps a code hint, never the full code. A legacy plaintext relay password is migrated into the Keychain | `KeychainStore.swift`, `AppSettings.swift`, `StoredTransferVault.swift`, `network.go` | `RelayPasswordMigrationTests`, `StoredTransferVaultTests`, `FuzzProxyURL` |
-| **Weak or broken cryptography** (CWE-327) | No custom cryptography. AES-256-GCM, HKDF-SHA256, HMAC-SHA256 and PAKE2 come from croc and pake; `crypto/rand` for secrets. The integrity hash is not used for security | croc v11.5.4, pake v3.2.0 | Not tested by CrocApp; relies on upstream |
+| **Weak or broken cryptography** (CWE-327) | No custom cryptography. AES-256-GCM, HKDF-SHA256, HMAC-SHA256 and PAKE2 come from croc and pake; `crypto/rand` for secrets. The integrity hash is not used for security | croc v11.5.5, pake v3.2.0 | Not tested by CrocApp; relies on upstream |
 | **Insecure transport for link server** (CWE-319) | `https` required, `http` allowed on loopback only; checked in Go and in Swift | `validateStoreOrigin`; `TransferLink`; `AppSettings.storedServerError` | `StoredServerValidationTests`, `TransferLinkTests`, `TestStoreReceiveRejectsBadLinks` |
 | **Panic or crash from untrusted input** (CWE-248, CWE-476) | Exported Go entry points recover and report an error; delegate callbacks survive a panicking delegate; malformed JSON from the bridge becomes a failure event | `crocmobile.go`, `store.go`, `DelegateBridge.swift` | `TestStoreCallbacksSurviveAPanickingDelegate`, `TestReportPanicPayloadIsOther`, `TestNetworkGlobalsRestoredAfterPanic`, `DelegateBridgeTests` |
 | **Update fetched without integrity check** (CWE-494) | Sparkle EdDSA verification over an HTTPS feed; release job fails without `sparkle:edSignature`; notarization; attestations | Build, update and release | `verify-downloads` steps; CI release rehearsal |

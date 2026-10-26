@@ -230,7 +230,7 @@ done
 CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 require_croc
 "$CROC" --version | grep -q 'version v\?11\.' \
-  || fail "croc 11 expected (crocmobile pins v11.5.4), '$CROC' says: $("$CROC" --version)"
+  || fail "croc 11 expected (crocmobile pins v11.5.5), '$CROC' says: $("$CROC" --version)"
 if in_list "$RUN_SCREENS" stored-link; then
   command -v go >/dev/null || fail "go is needed to build the local store server for stored-link"
 fi

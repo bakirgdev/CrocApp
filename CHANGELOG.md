@@ -19,6 +19,11 @@ extra sections where a release needs them, and the project follows
 - Send as Link now says Sending and Receiving like every other transfer, and copying the code shows "Copied".
 - On iPhone, a light haptic marks a finished, failed or incoming transfer and a copied or scanned code. Cancelling or declining yourself stays silent.
 - Settings labels use title case, and "Auto-accept incoming files" is now "Auto-Accept Transfers".
+- The transfer engine is croc v11.5.5. Transfers stay compatible with croc 11 on the other device.
+
+### Fixed
+
+- A send whose local ports cannot be opened (Settings > Advanced, base port and connections) now fails with a message. Before, croc could stop the whole app there.
 
 ### Security
 

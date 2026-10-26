@@ -2,7 +2,7 @@
 
 How to bump the pinned croc version in `crocmobile/go.mod`. Run it as one session whenever upstream releases.
 
-**Pinned: v11.5.4.**
+**Pinned: v11.5.5.**
 
 ## Steps
 
@@ -12,7 +12,7 @@ How to bump the pinned croc version in `crocmobile/go.mod`. Run it as one sessio
    - Changes to the `Client` progress fields the poller reads: `TotalSent`, the step booleans, `FilesToTransfer`, `FilesToTransferCurrentNum`.
    - Prompt sites (`utils.GetInputContext` callers) added or removed. Each one maps to a workaround in `crocmobile-bridge.md`.
    - Wire or protocol changes. A major version bump means incompatible peers.
-2. **Cross-check every documented workaround.** Take each one in `crocmobile-bridge.md`, "croc v11.5.4 gotchas (verified against source)", and decide keep, delete or adapt against the delta. Delete obsolete shims; do not leave dead workarounds. Rename that heading to the new version in step 6.
+2. **Cross-check every documented workaround.** Take each one in `crocmobile-bridge.md`, "croc v11.5.5 gotchas (verified against source)", and decide keep, delete or adapt against the delta. Delete obsolete shims; do not leave dead workarounds. Rename that heading to the new version in step 6.
 3. **Bump.**
    - Run `cd crocmobile && go get github.com/schollz/croc/v11@vNEW && go mod tidy`. A new major changes the `/vN` import path everywhere.
    - Then run `brew upgrade croc` so the test CLI matches the pin (`brew install croc` on a fresh machine). The harnesses default `CROC` to `${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc`.
@@ -25,7 +25,7 @@ How to bump the pinned croc version in `crocmobile/go.mod`. Run it as one sessio
 
    Any failure: find the root cause against the upstream delta before touching wrapper semantics.
 6. **Update docs.**
-   - Run `git grep -n "v11.5.4"` (the old version string) and update every hit. The hits include this file's "Pinned" line, `what-is-croc.md` (the version header and any changed facts), `crocmobile-bridge.md` (the version in the layers diagram, the "croc v11.5.4 gotchas" heading and the Advanced options text), `known-issues.md`, and comments in `crocmobile/`.
+   - Run `git grep -n "v11.5.5"` (the old version string) and update every hit. The hits include this file's "Pinned" line, `what-is-croc.md` (the version header and any changed facts), `crocmobile-bridge.md` (the version in the layers diagram, the "croc v11.5.5 gotchas" heading and the Advanced options text), `known-issues.md`, and comments in `crocmobile/`.
    - Also check any other file the grep turns up, and update facts that changed even where the version string is absent.
    - Check the names in `known-issues.md` and `docs/GLOSSARY.md` that the delta touched.
    - Run `scripts/verify-docs.sh`.

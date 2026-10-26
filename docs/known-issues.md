@@ -127,7 +127,7 @@ Permanent or deferred, each with its reason.
   - `pnpm audit` lists it, and any Dependabot alert for it is dismissed with this reason.
   - `web/docs/osv-scanner.toml` ignores it so OpenSSF Scorecard's Vulnerabilities check does not count it. Remove this item and that entry when `braces` publishes a fix.
 - **`golang.org/x/crypto` carries GO-2026-5932 (the unmaintained `openpgp` package) with no fixed version.**
-  - The advisory covers the whole module, but nothing imports `openpgp`. In non-test code croc v11.5.4 imports only the `argon2`, `chacha20poly1305`, `hkdf`, `pbkdf2` and `ssh` packages of `x/crypto`, and `go tool govulncheck ./...` in `crocmobile/` reports it as required but not called.
+  - The advisory covers the whole module, but nothing imports `openpgp`. In non-test code croc v11.5.5 imports only the `argon2`, `chacha20poly1305`, `hkdf`, `pbkdf2` and `ssh` packages of `x/crypto`, and `go tool govulncheck ./...` in `crocmobile/` reports it as required but not called.
   - `crocmobile/osv-scanner.toml` ignores it for Scorecard. Remove both if `x/crypto` drops `openpgp` or a dependency starts importing it.
 - **Three OpenSSF Scorecard alerts are dismissed as "won't fix".** Scorecard opens a code-scanning alert for every check below 10, and these cannot reach 10 with one maintainer.
   - **Branch-Protection:** 10 needs two approving reviewers with admins included, so nothing could merge. `main` keeps pull requests, the `ci pass` check, linear history, and no force push or deletion.
@@ -191,12 +191,12 @@ Permanent or deferred, each with its reason.
   - Existing members are kept and matching ones in the archive are skipped under every policy, Replace and auto-accept included. The stdin answers croc's unzip prompt reads are always "n", because a queued "y" would also answer the accept prompt croc re-runs after a reconnect or forces when the sender used `--ask` (`knowledge/crocmobile-bridge.md`).
   - The archive's contents are known to croc only after it unpacks, and keeping what is there loses nothing.
 - **A file whose name ends in a space cannot be sent to a croc v11 peer.**
-  - CrocApp sends the exact name (crocmobile `splitPaths`). croc 11.5.4 receivers, CLI and crocmobile alike, refuse it: `unsafe receive path in "report.pdf ": Windows-trimmed trailing character`. The sender sees `cancelled`.
+  - CrocApp sends the exact name (crocmobile `splitPaths`). croc 11.5.5 receivers, CLI and crocmobile alike, refuse it: `unsafe receive path in "report.pdf ": Windows-trimmed trailing character`. The sender sees `cancelled`.
   - The refusal is croc's receive-path policy. Rename the file to send it.
 - **A croc v11 reconnect after a manually accepted receive ends as `refused`.**
   - croc re-runs the accept prompt on the sender's file list after each reconnect (`resetForReconnectAttempt`, then `processMessageFileInfo`). The next queued stdin answer is "n", so the receive fails instead of resuming.
   - Answering "y" there would accept a list the user never saw, and crocmobile cannot tell that prompt from the unzip prompt on the same pipe.
-  - Read from croc v11.5.4 source; no harness forces a reconnect.
+  - Read from croc v11.5.5 source; no harness forces a reconnect.
 - **`xfer()` has no watchdog.**
   - If croc ever blocks past context cancel and prompt-pipe close, `activeMu` is held for the process's lifetime and every later transfer returns "another transfer is active".
   - Forcing the lock open while croc is still running would let two sessions mutate the same process-global state (`os.Chdir`, stdin/stdout swaps).
@@ -208,7 +208,7 @@ Permanent or deferred, each with its reason.
   - A "draw a code anyway and let a LAN peer join" fallback does not work: after the relay dial fails, croc waits for a LAN peer for only 10 s (`defaultAlternateSenderRouteTimeout`, unexported), and a `croctest send -relay 127.0.0.1:1` with no receiver printed its code and failed about 11 s later.
   - Workaround: turn on **Local Network Only** (`web/docs/content/troubleshooting.md`, "Relay unreachable"). The app shows "No public relay answered. Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network."
 - **A receiver that joins before the sender fails with `flate: corrupt input before offset 6`.**
-  - The receiver's `pake1` local probe times out after 500 ms and it carries on with the main PAKE. The sender's late reply to the old probe is then decoded as a transfer message (`knowledge/crocmobile-bridge.md`, "croc v11.5.4 gotchas").
+  - The receiver's `pake1` local probe times out after 500 ms and it carries on with the main PAKE. The sender's late reply to the old probe is then decoded as a transfer message (`knowledge/crocmobile-bridge.md`, "croc v11.5.5 gotchas").
   - Generated codes are sender-first, but custom codes are not. A receiver who types an agreed code before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it. The user sees the generic failure copy.
   - Workaround: start the sender first, then the receiver. `verify-app-sim.sh`, `verify-app-mac.sh` and `verify-interop.sh` all delay their CLI receiver for this reason.
   - Not verified whether `schollz/croc` has an upstream issue for it. The probe timeout and the frame decoding are croc's.
