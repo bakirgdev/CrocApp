@@ -105,10 +105,9 @@ import Testing
     @Test func revokeNeedsAnUnexpiredUnrevokedReceipt() throws {
         let vault = StoredTransferVault(secrets: FakeSecretStore(), now: now)
         vault.add(receipt("a"))
-        // Nothing is written to these defaults: the test sets no setting.
-        let defaults = try #require(UserDefaults(suiteName: "CrocAppTests.\(UUID().uuidString)"))
         let controller = TransferController(
-            settings: AppSettings(defaults: defaults, secrets: FakeSecretStore()), vault: vault)
+            settings: AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore()),
+            vault: vault)
         func record(_ id: String?, expiresIn seconds: TimeInterval = 3600) -> TransferRecord {
             TransferRecord(
                 isSend: true, status: .completed, isText: false, fileCount: 1, totalBytes: 1,

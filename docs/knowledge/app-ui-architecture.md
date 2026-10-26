@@ -21,7 +21,7 @@ QRCodeView (cross-platform gen) / QRScannerView.swift (whole file #if os(iOS), V
 
 Localization: UI strings are plain literals in the views. There is no String Catalog (`*.xcstrings`), and the project knows only the `en` and `Base` regions. The plan is in `docs/ROADMAP.md`.
 
-Construction order in `CrocAppApp.init` matters: `AppSettings`, then the `HistoryStore` container (in memory for a harness run), then `StoredTransferVault`, then `TransferController(settings:vault:)`, then `controller.history = history`.
+Construction order in `CrocAppApp.init` matters: `AppSettings` (on in-memory storage and secrets for a harness run), then the `HistoryStore` container (in memory for a harness run), then `StoredTransferVault`, then `TransferController(settings:vault:)`, then `controller.history = history`.
 
 ## TransferController
 
@@ -68,14 +68,29 @@ Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answ
 ### History capture
 
 - A `PendingRecord` snapshot is set in all start intents. Send: names capped at 20, bookmarks all-or-nothing up to 200, built while the security scope is held. Receive: filled from `.fileList`. `codeHint` is backfilled at `.codeReady` for generated codes.
-- `finishRecord(status:summary:)` runs at `.done`, `.failed` and the startup `catch`. It sets `pendingRecord = nil` first, so a double terminal event is harmless. It must run while `receivedText` is still set, so `isText` backfills.
+- `finishRecord(status:summary:)` runs at `.done`, `.failed` and the startup `catch`. It sets `pendingRecord = nil` first, so a double terminal event is harmless, and returns right after that while **Save Transfer History** is off. It must run while `receivedText` is still set, so `isText` backfills.
 - Status mapping: `done` becomes completed or failed per the summary. `failed` plus `cancelRequested` becomes cancelled. `failed` plus `declineRequested` becomes declined.
 
 ## Settings and trust
 
-`Models/AppSettings.swift` is `@MainActor @Observable`. Its `UserDefaults` keys start with `settings.`. A `didSet` persists each value, gated by a `persist` flag (the harness override channel).
+`Models/AppSettings.swift` is `@MainActor @Observable`. `AppSettings(storage:secrets:)` takes two injected stores:
 
-`relayPassword` is the one setting that is not in `UserDefaults`. It lives in the Keychain via `Support/KeychainStore.swift` and is migrated out of the plist on first launch. Its `didSet` goes through `persistRelayPassword()`, which honours the same `persist` gate. The gate matters here more than for other settings: `resetToDefaults()` assigns `relayPassword = ""`, and an ungated write would blank a real user's stored password on any machine that has run a verify script.
+| Store | Protocol | App | Harness run and tests |
+| --- | --- | --- | --- |
+| Values | `SettingsStorage` (`object(forKey:)`, `set(_:forKey:)`), `Support/SettingsStorage.swift` | `UserDefaults.standard`, which already conforms | `MemorySettingsStorage` |
+| Secrets | `SecretStore`, `Support/KeychainStore.swift` | `KeychainStore` | `MemorySecretStore` (app), `FakeSecretStore` (tests) |
+
+Each setting has its own key, starting with `settings.`, and a `didSet` writes just that key. There is no `Codable` blob: a synthesized `Codable` struct resets every field to its default when a build adds one. A key that is absent, or holds another type, reads as the setting's default, and the keys are part of the contract with saved preferences, so never rename one. `AppSettingsPersistenceTests` pins them.
+
+A harness run is decided in `CrocAppApp.init` (`AutoVerify.isHarnessRun`), which builds `AppSettings` on `MemorySettingsStorage` and `MemorySecretStore`. Its overrides start from the defaults and reach neither `UserDefaults` nor the Keychain, so a manual run's settings cannot bleed into a harness run, and a harness run cannot blank a real stored password. Every test suite does the same: a `UserDefaults(suiteName:)` writes a `CrocAppTests.*.plist` into the sandbox container's `Library/Preferences` that `removePersistentDomain` does not delete.
+
+`relayPassword` is the one setting that is not in `storage`. It lives in `secrets` (the Keychain). Its `didSet` goes through `persistRelayPassword()`, which deletes the item instead of storing a blank.
+
+**Not behind the injected storage:** `OutputFolderStore` (`UserDefaults.standard`, key `outputFolderBookmark`) and `@AppStorage("onboarding.seen")` in `ContentView`. Neither a unit test nor a verify script writes them: `OutputFolderStore` writes only from **Change…** and **Reset**, and the first-run flag only when the onboarding sheet is dismissed (a `--screen onboarding` capture run, by hand).
+
+**Save Transfer History** (`saveTransferHistory`, key `settings.saveTransferHistory`, default on). `TransferController.finishRecord` returns before it builds the record while the setting is off, so a finished, failed, cancelled or declined transfer leaves nothing in History. Records already there stay until the user deletes them. A **Send as Link** upload made while it is off has no History row, so it cannot be revoked from History: the receipt stays in the Keychain vault until it expires. `HistoryView` shows "History is off" with **Open Settings** instead of the empty list while the setting is off and no records exist (`design/components.md`, "HistoryRow").
+
+**Haptics** (`haptics`, key `settings.haptics`, default on, iPhone only). `phoneHaptic` (`Views/PhoneHaptics.swift`) is the one place that checks it, together with the iPhone idiom, so every call site honors it. The modifier reads `AppSettings` from the environment on iOS, so a view that uses `phoneHaptic` needs it there (the WindowGroup provides it). `Views/GeneralSettingsSections.swift` holds the two rows, shared by the macOS General tab and the iOS `SettingsScreen`; the Haptics row only exists on iPhone.
 
 Relay strings use `""` for "croc default" (the `TextField` prompt reads "Public relay pool") and reach the engine as stored, password included. Go resolves them (`crocmobile/relay.go`): blank means croc's default, and with no custom relay and Local Network Only off, the relay comes from upstream's public pool by code.
 
@@ -123,8 +138,8 @@ History never holds the token or the link. A stored record's `codeHint` is the s
 croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes it from `SettingsScreen` (`Route.advancedSettings`, `--screen advanced`). macOS Settings is a `TabView` with **General** and **Advanced** tabs, because the Advanced controls and their footnotes would double a form that already scrolls.
 
 - `AppSettings` has one property per control under `settings.advanced.<name>`: `throttleUpload`, `multicastAddress`, `peerIP`. Defaults come from `EngineOptions()`, so they are croc's. The curve, hash, ports, connection count, multiplexing and DNS are not settings (`crocmobile-bridge.md`, "Advanced options on the wire").
-- `resetAdvancedToDefaults()` backs the **Reset to Defaults** button and persists. The harness `resetToDefaults()` calls it with `persist` off.
-- **The two proxies are Keychain-only.** The `SecretStore` accounts are `advanced.socks5Proxy` and `advanced.httpProxy`. They are deleted when blank and use the same `persist` gate as `relayPassword`.
+- `resetAdvancedToDefaults()` backs the **Reset to Defaults** button and persists.
+- **The two proxies are Keychain-only.** The `SecretStore` accounts are `advanced.socks5Proxy` and `advanced.httpProxy`. They are deleted when blank, like `relayPassword`.
 - Proxies can carry credentials. `ProxySettings`, `EngineOptions` and `StoredSendOptions` describe themselves without the value. The Go engine never quotes a proxy in an error, and nothing logs them. `AppSettingsAdvancedTests` asserts that `UserDefaults` holds no proxy key or value.
 - `Models/AdvancedSettingsValidation.swift` holds the inline checks: `socks5ProxyError`, `httpProxyError`, `multicastAddressError`, `senderIPError`, `throttleError`. The app keeps no rules of its own. Each one asks the engine through CrocKit's `EngineSetting.validate(_:)` (`ValidateSetting` in `crocmobile/network.go`, the check a transfer start runs) and returns only the field's plain-words text on a refusal. `storedServerError` works the same way. Blank means the default, except for the link server. The value tables live in `network_test.go`, and `SettingsValidationTests` checks that each field reaches the engine.
 - One message per field, so the sender IP text names the port range too and the link server text covers the scheme and the host-only rule.
@@ -176,7 +191,7 @@ The shared views route onto `design/`. A screen picks one of these instead of st
 - **Accept gate.** `.incoming` offers Decline only, with no Cancel. Cancel would answer the sender on the user's behalf, so `TransferStatusView.showsCancel` is false there (`design/components.md`, "AcceptGate"). Leaving the screen answers nothing and stays silent.
 - `HomeView` shows a "Files are waiting for your answer" `StatusBanner` with **Review** (`router.path = [.receive]`) while the phase is `.incoming`, so a live request is never lost.
 - **Phase cross-fade.** `TransferStatusView` animates on `phaseKind` (the phase case without its payload), not on progress ticks, so only a real phase change cross-fades. It is `nil` under Reduce Motion (`design/motion.md`, "Choreography").
-- **Haptics.** Phase haptics live in `ContentView`: one `.phoneHaptic(trigger: TransferHaptic(controller.phase, endedByUser: controller.endedByUser))` on the root. `TransferHaptic` has three cases (completed, failed, incoming), and a failure the user asked for stays silent. The fourth event, `.selection` for a copied or scanned code, fires from `CodePhraseDisplay` and `ReceiveView`. iPhone only (`design/motion.md`, "Haptics and sound").
+- **Haptics.** Phase haptics live in `ContentView`: one `.phoneHaptic(trigger: TransferHaptic(controller.phase, endedByUser: controller.endedByUser))` on the root. `TransferHaptic` has three cases (completed, failed, incoming), and a failure the user asked for stays silent. The fourth event, `.selection` for a copied or scanned code, fires from `CodePhraseDisplay` and `ReceiveView`. iPhone only, and silent while the **Haptics** setting is off (`phoneHaptic` checks both; `design/motion.md`, "Haptics and sound").
 - **Wording.** Status titles are sentence case ("Link ready"). Controls are Title Case (**Send as Link**, **Local Network Only**, **Auto-Accept Transfers**). Section headers, footers and descriptions stay sentence case (`design/content.md`, "Capitalization"). A stored transfer still reads Sending or Receiving, never Uploading or Downloading, and "incoming" is not user-facing (`design/content.md`, "Terminology").
 
 ## History
@@ -189,6 +204,7 @@ Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookma
 
 `Views/HistoryView.swift` (`Route.history`, clock toolbar icon on both platforms):
 - `@Query` sorted newest first.
+- With no records, "No transfers yet" with **Send** and **Receive**, or "History is off" with **Open Settings** while **Save Transfer History** is off (`openSettings` on macOS, `Route.settings` pushed on iOS).
 - Swipe and context delete.
 - **Clear** behind a confirmation.
 - **Send Again** for send records that carry bookmarks: resolve the bookmarks, then `router.openSend`.
@@ -303,7 +319,7 @@ Launch arguments drive the real controller, not the engine directly, so the veri
 
 `AutoVerify`'s bodies are `#if DEBUG`. In Release, `isHarnessRun` is a hardcoded `false` and `runIfRequested` is a no-op, so the harness cannot run in a store build. The type still exists in Release because `CrocAppApp.swift` and `ContentView.swift` call it unconditionally. The verify scripts build Debug.
 
-`isHarnessRun` is true for any `--auto-*` mode or `--screen`. Settings overrides apply in any harness run. They start from `resetToDefaults()`, with `persist = false` set first, so real `UserDefaults` are never touched.
+`isHarnessRun` is true for any `--auto-*` mode or `--screen`. Settings overrides apply in any harness run. `CrocAppApp.init` builds `AppSettings` on `MemorySettingsStorage` and `MemorySecretStore` for it ("Settings and trust"), so the overrides start from the defaults and real `UserDefaults` and the Keychain are never touched.
 
 Result files, all written to the container's Documents folder (hardcoded, independent of `OutputFolderStore.defaultFolder`):
 

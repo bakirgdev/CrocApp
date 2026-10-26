@@ -21,7 +21,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Incoming file list preview with Accept and Decline | croc's interactive prompt | all | shipped |
 | Progress, speed and Cancel; system Live Activity while backgrounded | engine progress events | Live Activity on iOS and iPadOS | shipped |
 | LAN and relay race | croc default | all | shipped |
-| Transfer history (local only) | app-native | all | shipped |
+| Transfer history (local only), with a **Save Transfer History** setting (on by default; off records nothing new and keeps what is there) | app-native | all | shipped |
 
 ## Power options
 
@@ -49,6 +49,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Trust UI: encryption badge, "How it works", active-relay indicator | all | shipped |
 | Waiting-screen QR and **Share Link** encode `https://crocapp.dev/r/#<code>` (see below) | all | shipped |
 | Send as Link (stored transfers; see below) | all | shipped |
+| **Haptics** setting (on by default): a short tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer | iPhone only | shipped |
 | Menu bar quick send (see below) | macOS only | shipped |
 | Shortcuts and Siri actions (see below) | all | shipped |
 | **Show Receive Folder in Finder** (macOS) or **Show Receive Folder in Files** (iPadOS) in the File menu | iPadOS (Files) and macOS (Finder) | shipped |

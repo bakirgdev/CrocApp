@@ -2,20 +2,19 @@ import CrocKit
 import Foundation
 import Observation
 
-/// Persisted power options. String relay fields store "" for
+/// Persisted app options. String relay fields store "" for
 /// "use croc default" and go to the engine as stored; the engine resolves
-/// defaults and the public relay pool. `persist` gates UserDefaults writes so AutoVerify can override per-run
-/// without contaminating real settings. didSet does not fire for the
-/// assignments in init. `relayPassword` is the one exception to "UserDefaults":
-/// it lives in the Keychain (see `KeychainStore`) and `persist` gates that
-/// write too, so a harness run's `resetToDefaults()` can't blank the real
-/// stored password. The Advanced proxies are the same: they can carry
-/// credentials, so they live in the Keychain and never in UserDefaults.
+/// defaults and the public relay pool. Each property writes its own key to
+/// `storage` in `didSet` (which does not fire for the assignments in init), so
+/// adding a setting never resets the others. A harness run and the tests pass
+/// in-memory storage and secrets instead of the real ones. `relayPassword` is
+/// the one exception to "storage": it lives in `secrets` (the Keychain, see
+/// `KeychainStore`). The Advanced proxies are the same: they can carry
+/// credentials, so they live in `secrets` and never in `storage`.
 @MainActor
 @Observable
 final class AppSettings {
     private static let relayPasswordAccount = "relayPassword"
-    private static let legacyRelayPasswordKey = "settings.relayPassword"
 
     private static let socks5ProxyAccount = "advanced.socks5Proxy"
     private static let httpProxyAccount = "advanced.httpProxy"
@@ -28,8 +27,7 @@ final class AppSettings {
         case directToSender
     }
 
-    @ObservationIgnored var persist = true
-    @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let storage: any SettingsStorage
     @ObservationIgnored private let secrets: any SecretStore
 
     var relayAddress: String { didSet { save(relayAddress, "settings.relayAddress") } }
@@ -53,6 +51,13 @@ final class AppSettings {
     /// macOS menu-bar quick send. On by default; the menu-bar scene is
     /// inserted only while this is true.
     var showInMenuBar: Bool { didSet { save(showInMenuBar, "settings.showInMenuBar") } }
+    /// Off: a finished transfer leaves no History record. Records already
+    /// there stay until the user deletes them.
+    var saveTransferHistory: Bool {
+        didSet { save(saveTransferHistory, "settings.saveTransferHistory") }
+    }
+    /// iPhone only. Off silences every haptic; the screen still shows each event.
+    var haptics: Bool { didSet { save(haptics, "settings.haptics") } }
 
     // Advanced. Defaults are croc's, read from `EngineOptions`.
     static let advancedDefaults = EngineOptions()
@@ -85,34 +90,45 @@ final class AppSettings {
         )
     }
 
-    init(defaults d: UserDefaults = .standard, secrets: any SecretStore = KeychainStore()) {
-        defaults = d
+    init(
+        storage: any SettingsStorage = UserDefaults.standard,
+        secrets: any SecretStore = KeychainStore()
+    ) {
+        self.storage = storage
         self.secrets = secrets
-        relayAddress = d.string(forKey: "settings.relayAddress") ?? ""
-        relayAddress6 = d.string(forKey: "settings.relayAddress6") ?? ""
-        // Runs before AutoVerify can ever flip `persist` false (AppSettings()
-        // is constructed first in CrocAppApp.init), so this always sees a
-        // real launch's persist=true default.
-        relayPassword = Self.migrateRelayPassword(defaults: d, secrets: secrets)
-        onlyLocal = d.bool(forKey: "settings.onlyLocal")
-        noCompress = d.bool(forKey: "settings.noCompress")
-        zipFolder = d.bool(forKey: "settings.zipFolder")
-        excludePatterns = d.string(forKey: "settings.excludePatterns") ?? ""
-        useGitIgnore = d.bool(forKey: "settings.useGitIgnore")
-        autoAccept = d.bool(forKey: "settings.autoAccept")
-        bothSidesConfirm = d.bool(forKey: "settings.bothSidesConfirm")
+        relayAddress = Self.read(storage, "settings.relayAddress", default: "")
+        relayAddress6 = Self.read(storage, "settings.relayAddress6", default: "")
+        relayPassword = secrets.get(account: Self.relayPasswordAccount) ?? ""
+        onlyLocal = Self.read(storage, "settings.onlyLocal", default: false)
+        noCompress = Self.read(storage, "settings.noCompress", default: false)
+        zipFolder = Self.read(storage, "settings.zipFolder", default: false)
+        excludePatterns = Self.read(storage, "settings.excludePatterns", default: "")
+        useGitIgnore = Self.read(storage, "settings.useGitIgnore", default: false)
+        autoAccept = Self.read(storage, "settings.autoAccept", default: false)
+        bothSidesConfirm = Self.read(storage, "settings.bothSidesConfirm", default: false)
         whenFileExists =
-            d.string(forKey: "settings.whenFileExists").flatMap(FilePolicy.init(rawValue:))
-            ?? .keepBoth
-        storedServer = d.string(forKey: "settings.storedServer") ?? Self.defaultStoredServer
-        showInMenuBar = d.object(forKey: "settings.showInMenuBar") as? Bool ?? true
+            (storage.object(forKey: "settings.whenFileExists") as? String)
+            .flatMap(FilePolicy.init(rawValue:)) ?? .keepBoth
+        storedServer = Self.read(
+            storage, "settings.storedServer", default: Self.defaultStoredServer)
+        showInMenuBar = Self.read(storage, "settings.showInMenuBar", default: true)
+        saveTransferHistory = Self.read(storage, "settings.saveTransferHistory", default: true)
+        haptics = Self.read(storage, "settings.haptics", default: true)
         let croc = Self.advancedDefaults
-        throttleUpload = d.string(forKey: "settings.advanced.throttleUpload") ?? croc.throttleUpload
-        multicastAddress =
-            d.string(forKey: "settings.advanced.multicastAddress") ?? croc.multicastAddress
-        peerIP = d.string(forKey: "settings.advanced.peerIP") ?? croc.peerIP
+        throttleUpload = Self.read(
+            storage, "settings.advanced.throttleUpload", default: croc.throttleUpload)
+        multicastAddress = Self.read(
+            storage, "settings.advanced.multicastAddress", default: croc.multicastAddress)
+        peerIP = Self.read(storage, "settings.advanced.peerIP", default: croc.peerIP)
         socks5Proxy = secrets.get(account: Self.socks5ProxyAccount) ?? ""
         httpProxy = secrets.get(account: Self.httpProxyAccount) ?? ""
+    }
+
+    /// The stored value, or `fallback` when the key is absent or holds another type.
+    private static func read<Value>(
+        _ storage: any SettingsStorage, _ key: String, default fallback: Value
+    ) -> Value {
+        storage.object(forKey: key) as? Value ?? fallback
     }
 
     var relayKind: RelayKind {
@@ -136,27 +152,6 @@ final class AppSettings {
             .filter { !$0.isEmpty }
     }
 
-    /// Harness-only: force every field back to its blank/default state so a
-    /// manual run's UserDefaults can't bleed into a harness run (call only
-    /// after `persist = false`, so this itself never writes UserDefaults or,
-    /// for `relayPassword`, the Keychain).
-    func resetToDefaults() {
-        relayAddress = ""
-        relayAddress6 = ""
-        relayPassword = ""
-        onlyLocal = false
-        noCompress = false
-        zipFolder = false
-        excludePatterns = ""
-        useGitIgnore = false
-        autoAccept = false
-        bothSidesConfirm = false
-        whenFileExists = .keepBoth
-        storedServer = Self.defaultStoredServer
-        showInMenuBar = true
-        resetAdvancedToDefaults()
-    }
-
     /// The Reset to Defaults button in Settings > Advanced: every Advanced
     /// control back to croc's default. Persists like any edit, and clearing the
     /// proxies deletes their Keychain items.
@@ -176,45 +171,23 @@ final class AppSettings {
             && peerIP.isEmpty && socks5Proxy.isEmpty && httpProxy.isEmpty
     }
 
-    /// One-time move of the relay password off UserDefaults (plaintext
-    /// plist) into the Keychain. The legacy value is removed only after the
-    /// Keychain write succeeds; on failure this launch uses it and the next
-    /// launch retries.
-    private static func migrateRelayPassword(
-        defaults: UserDefaults, secrets: any SecretStore
-    ) -> String {
-        guard let legacy = defaults.string(forKey: legacyRelayPasswordKey), !legacy.isEmpty else {
-            return secrets.get(account: relayPasswordAccount) ?? ""
-        }
-        if secrets.set(legacy, account: relayPasswordAccount) {
-            defaults.removeObject(forKey: legacyRelayPasswordKey)
-        }
-        return legacy
-    }
-
     private func save(_ value: Any, _ key: String) {
-        guard persist else { return }
-        defaults.set(value, forKey: key)
+        storage.set(value, forKey: key)
     }
 
-    /// Mirrors `save`'s `persist` gate but targets the Keychain instead of
-    /// UserDefaults. Deletes rather than stores "" so clearing the field
-    /// doesn't leave a Keychain item with an empty password behind. A
-    /// successful write also drops a legacy value a failed migration kept,
-    /// which would otherwise overwrite this one on the next launch.
+    /// Deletes rather than stores "" so clearing the field doesn't leave a
+    /// Keychain item with an empty password behind.
     private func persistRelayPassword() {
-        guard persist else { return }
-        let stored =
-            relayPassword.isEmpty
-            ? secrets.delete(account: Self.relayPasswordAccount)
-            : secrets.set(relayPassword, account: Self.relayPasswordAccount)
-        if stored { defaults.removeObject(forKey: Self.legacyRelayPasswordKey) }
+        if relayPassword.isEmpty {
+            secrets.delete(account: Self.relayPasswordAccount)
+        } else {
+            secrets.set(relayPassword, account: Self.relayPasswordAccount)
+        }
     }
 
-    /// Same `persist` gate as the other writes, but Keychain-only: a proxy URL
-    /// can hold a user name and password. Deletes rather than stores a blank.
+    /// Keychain-only: a proxy URL can hold a user name and password. Deletes
+    /// rather than stores a blank.
     private func persistProxy(_ value: String, account: String) {
-        guard persist else { return }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             secrets.delete(account: account)

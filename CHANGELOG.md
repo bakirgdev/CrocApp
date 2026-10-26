@@ -10,6 +10,11 @@ extra sections where a release needs them, and the project follows
 
 ## [Unreleased]
 
+### Added
+
+- **Save Transfer History** in Settings (on by default). Turn it off and finished transfers are no longer listed in History. What is already there stays until you delete it, and History says "History is off" while it is empty.
+- **Haptics** in Settings on iPhone (on by default). Turn it off to silence every tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer.
+
 ### Changed
 
 - The app is about half the size. The transfer engine is now croc's relay-only build, without Tailcat, the direct-connection path croc could try for large sends. The main executable went from 22.0 MB to 10.5 MB on Mac and from 21.3 MB to 10.3 MB on iPhone and iPad (measured on unsigned release archives). Transfers use croc's relay or your local network, as they did for everything under 128 MiB.

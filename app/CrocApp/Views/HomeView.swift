@@ -127,6 +127,7 @@ struct HomeView: View {
 struct SettingsScreen: View {
     var body: some View {
         Form {
+            GeneralSettingsSections()
             PowerSettingsSections()
             Section {
                 NavigationLink("Advanced", value: AppRouter.Route.advancedSettings)

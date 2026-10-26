@@ -18,6 +18,11 @@ The **Receive** section shows **Save Received Files To**, with **Change…**, **
 
 The **Menu bar** section has **Show in Menu Bar** (on by default) and **Open at Login** (off by default). **Open at Login** follows what macOS reports, so a change in System Settings > General > Login Items shows up here. If macOS needs your approval, an **Open Settings** button takes you to Login Items. See [Mac menu bar and keyboard shortcuts](menu-bar.md).
 
+## History and haptics
+
+- **Save Transfer History** (on by default): finished transfers are listed in [History](history.md), which stays on this device. Turn it off and new transfers are no longer recorded. What is already in History stays until you delete it, and the History screen says "History is off" while it is empty. A [Send as link](send-as-link.md) upload sent while this is off leaves no row, so you cannot revoke that link later. It stops working when it expires.
+- **Haptics** (iPhone only, on by default): a short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer. Turn it off to silence all of them. Each event still shows on screen.
+
 ## Relay
 
 By default CrocApp uses croc's public relay pool, the same one the croc command line uses. **Address** and **IPv6 Address** show "Public relay pool" when empty, and **Password** shows "Default".

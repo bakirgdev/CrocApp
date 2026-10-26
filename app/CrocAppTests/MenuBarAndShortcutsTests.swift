@@ -8,14 +8,12 @@ import ServiceManagement
 #endif
 
 @Suite struct ShowInMenuBarSettingTests {
-    @Test func onByDefaultAndPersistsOff() throws {
-        let name = "CrocAppTests.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: name))
-        defer { defaults.removePersistentDomain(forName: name) }
+    @Test func onByDefaultAndPersistsOff() {
+        let storage = MemorySettingsStorage()
         let secrets = FakeSecretStore()
-        #expect(AppSettings(defaults: defaults, secrets: secrets).showInMenuBar)
-        AppSettings(defaults: defaults, secrets: secrets).showInMenuBar = false
-        #expect(!AppSettings(defaults: defaults, secrets: secrets).showInMenuBar)
+        #expect(AppSettings(storage: storage, secrets: secrets).showInMenuBar)
+        AppSettings(storage: storage, secrets: secrets).showInMenuBar = false
+        #expect(!AppSettings(storage: storage, secrets: secrets).showInMenuBar)
     }
 }
 
@@ -128,9 +126,7 @@ import ServiceManagement
 @Suite struct MenuBarQuickSendTests {
     private func makeController() -> TransferController {
         TransferController(
-            settings: AppSettings(
-                defaults: UserDefaults(suiteName: "CrocAppTests.\(UUID().uuidString)")!,
-                secrets: FakeSecretStore()),
+            settings: AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore()),
             vault: StoredTransferVault(secrets: MemorySecretStore()))
     }
 
