@@ -152,6 +152,10 @@ Permanent or deferred, each with its reason.
   - Revisit when the minimum OS reaches 27.
 - **`OutputFolderStore.select` silently does nothing if bookmarking fails.** It is rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
+- **A blocked file name is still drawn as the sender wrote it.**
+  - `IncomingRequestView` lists the offered names, and `HistoryDraft.offer` stores them in the history record before `ReceivedName.isUnsafe` runs. A name with a text-direction control therefore reads spoofed in the sheet, next to the "Blocked" banner, and can read spoofed in the History row of that transfer (read from the code, not run).
+  - Nothing is saved or opened under that name: Accept is disabled, and auto-accept cancels.
+  - Would change: show a blocked name with the scalars `ReceivedName` rejects escaped or removed, and record that form.
 - **Gesture-level flows are not machine-verified.**
   - Drag-and-drop, camera QR and taps have no XCUITest coverage, by decision.
   - Unit tests cover non-UI logic (Go `go test -race`, Swift Testing in `CrocKitTests` and `CrocAppTests`, all in CI). The harnesses cover transfers. UI flows are verified by hand.

@@ -12,6 +12,7 @@ enum ShareHandoff {
     static let groupID = "group.com.bakirgdev.CrocApp"
     static let inboxDirName = "ShareInbox"
     static let manifestName = "manifest.json"
+    private static let batchPrefix = "batch-"
 
     /// Names one staged batch. The extension writes it after the batch's files
     /// are in place, so a manifest on disk always points at a complete batch.
@@ -26,6 +27,19 @@ enum ShareHandoff {
         FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: groupID)?
             .appendingPathComponent(inboxDirName, isDirectory: true)
+    }
+
+    /// A fresh batch directory name: `batch-` and a UUID.
+    static func makeBatchName() -> String {
+        batchPrefix + UUID().uuidString
+    }
+
+    /// True only for the shape `makeBatchName` produces. The reader checks it
+    /// before joining `Manifest.batch` to a path, because a manifest is data
+    /// read out of the App Group container, not something the app wrote.
+    static func isValidBatchName(_ name: String) -> Bool {
+        name.hasPrefix(batchPrefix)
+            && UUID(uuidString: String(name.dropFirst(batchPrefix.count))) != nil
     }
 
     static func manifestURL(in inbox: URL) -> URL {
