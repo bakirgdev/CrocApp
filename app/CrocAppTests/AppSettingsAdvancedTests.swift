@@ -6,20 +6,11 @@ import Testing
 
 /// Advanced settings: persistence, the proxies' Keychain-only storage and reset.
 @Suite struct AppSettingsAdvancedTests {
-    private let suiteName = "CrocAppTests.\(UUID().uuidString)"
-    private let defaults: UserDefaults
+    private let storage = MemorySettingsStorage()
     private let secrets = FakeSecretStore()
 
-    init() throws {
-        defaults = try #require(UserDefaults(suiteName: suiteName))
-    }
-
-    private func cleanUp() {
-        defaults.removePersistentDomain(forName: suiteName)
-    }
-
     private func makeSettings() -> AppSettings {
-        AppSettings(defaults: defaults, secrets: secrets)
+        AppSettings(storage: storage, secrets: secrets)
     }
 
     private func setNonDefaults(_ s: AppSettings) {
@@ -31,7 +22,6 @@ import Testing
     }
 
     @Test func freshDefaultsAreCrocs() {
-        defer { cleanUp() }
         let s = makeSettings()
         #expect(s.throttleUpload == "")
         #expect(s.multicastAddress == "239.255.255.250")
@@ -42,7 +32,6 @@ import Testing
     }
 
     @Test func changesSurviveARelaunch() {
-        defer { cleanUp() }
         setNonDefaults(makeSettings())
 
         let r = makeSettings()
@@ -56,7 +45,6 @@ import Testing
 
     /// Two settings saved under each other's key would still pass the test above.
     @Test func eachSettingPersistsAlone() {
-        defer { cleanUp() }
         let edits: [(String, (AppSettings) -> Void)] = [
             ("throttle", { $0.throttleUpload = "2m" }),
             ("multicast", { $0.multicastAddress = "224.0.0.251" }),
@@ -65,10 +53,10 @@ import Testing
             ("http", { $0.httpProxy = "proxy.example:3128" }),
         ]
         for (name, edit) in edits {
-            defaults.removePersistentDomain(forName: suiteName)
-            secrets.items.removeAll()
-            edit(makeSettings())
-            let r = makeSettings()
+            let storage = MemorySettingsStorage()
+            let secrets = FakeSecretStore()
+            edit(AppSettings(storage: storage, secrets: secrets))
+            let r = AppSettings(storage: storage, secrets: secrets)
             let changed = [
                 "throttle": r.throttleUpload != "",
                 "multicast": r.multicastAddress != "239.255.255.250", "peerIP": r.peerIP != "",
@@ -82,19 +70,17 @@ import Testing
 
     /// A proxy URL can hold a password: it belongs in the Keychain, never in the plist.
     @Test func proxiesLiveOnlyInTheSecretStore() {
-        defer { cleanUp() }
         setNonDefaults(makeSettings())
 
         #expect(secrets.items["advanced.socks5Proxy"] == "socks5://user:secret@proxy.example:1080")
         #expect(secrets.items["advanced.httpProxy"] == "http://user:secret@proxy.example:3128")
-        let stored = defaults.persistentDomain(forName: suiteName) ?? [:]
+        let stored = storage.values
         #expect(!stored.keys.contains { $0.lowercased().contains("proxy") })
         #expect(!String(describing: stored).contains("secret"))
         #expect(!String(describing: stored).contains("proxy.example"))
     }
 
     @Test func blankProxyDeletesTheKeychainItem() {
-        defer { cleanUp() }
         let s = makeSettings()
         s.socks5Proxy = "proxy.example:1080"
         s.httpProxy = "proxy.example:3128"
@@ -106,31 +92,20 @@ import Testing
         #expect(makeSettings().socks5Proxy == "")
     }
 
-    @Test func persistOffWritesNoProxy() {
-        defer { cleanUp() }
-        let s = makeSettings()
-        s.persist = false
-        s.socks5Proxy = "proxy.example:1080"
-        s.peerIP = "10.0.0.1:9100"
-        s.resetToDefaults()
-        s.httpProxy = "proxy.example:3128"
-        #expect(secrets.items.isEmpty)
-        #expect(defaults.persistentDomain(forName: suiteName)?.isEmpty ?? true)
-    }
-
-    /// A harness run's reset must not blank proxies a real user saved.
-    @Test func harnessResetKeepsSavedProxies() {
-        defer { cleanUp() }
+    /// A harness run builds its settings on its own memory, so its overrides
+    /// cannot reach the proxies a real user saved.
+    @Test func settingsOnSeparateStoresShareNothing() {
         secrets.items["advanced.socks5Proxy"] = "proxy.example:1080"
-        let s = makeSettings()
-        s.persist = false
-        s.resetToDefaults()
-        #expect(s.socks5Proxy == "")
+        let harness = AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore())
+        #expect(harness.socks5Proxy == "")
+        harness.socks5Proxy = "other.example:1080"
+        harness.peerIP = "10.0.0.1:9100"
         #expect(secrets.items["advanced.socks5Proxy"] == "proxy.example:1080")
+        #expect(storage.values.isEmpty)
+        #expect(makeSettings().socks5Proxy == "proxy.example:1080")
     }
 
     @Test func resetAdvancedRestoresEveryDefaultAndPersists() {
-        defer { cleanUp() }
         let s = makeSettings()
         setNonDefaults(s)
         s.relayAddress = "relay.example:9009"
@@ -148,7 +123,6 @@ import Testing
     }
 
     @Test func receiveRelayKindFollowsTheSenderIP() {
-        defer { cleanUp() }
         let s = makeSettings()
         #expect(s.receiveRelayKind == .publicDefault)
         s.peerIP = "10.0.0.1:9009"

@@ -69,7 +69,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - About 30 call sites style text with `.secondary` instead of `Color.textSecondary` (`design/colors.md` rule 4). The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
   - The failure screen is a single long title and an **OK** button (`TransferStatusView.failedView`), where the book wants a title, a detail and actions by failure kind (`design/components.md`, "StatusBlock").
   - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/content.md`, "Terminology").
-  - Not built: the Home recent transfers, the Save Transfer History, Notifications and Haptics settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary".
+  - Not built: the Home recent transfers, the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary".
 - **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
   - It is synchronous file I/O on the main actor, run by `SendView` when it builds the row. A network or iCloud volume could make it hitch.
   - Not measured. A fix would read the size once when files are staged.
@@ -168,6 +168,7 @@ Permanent or deferred, each with its reason.
   - Per-window navigation needs `@FocusedValue` plumbing to reach `AppDelegate` and `Commands`, which sit outside the environment graph.
   - Multi-window reachability has never been observed. Revisit if someone reports it.
 - **Deleting a stored upload's History row removes the only Revoke button.** The receipt stays in the Keychain until the link expires, but nothing lists receipts without a record. Revoke before deleting the row. Revisit if users lose links this way.
+  - The same holds for a link sent while **Save Transfer History** is off: the upload leaves no record, so the link can only expire. The setting's footer does not say so.
 - **The Camera app cannot open CrocApp for a stored link.**
   - The stored link points at the transfer server, and Associated Domains covers only `crocapp.dev/r/*`, so a camera scan opens the server's page in the browser.
   - In-app **Scan QR Code** and Paste work.

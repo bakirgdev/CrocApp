@@ -60,6 +60,8 @@ struct SettingsView: View {
 
             menuBarSection
 
+            GeneralSettingsSections()
+
             PowerSettingsSections()
 
             AboutSection()

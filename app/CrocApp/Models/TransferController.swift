@@ -639,6 +639,7 @@ final class TransferController {
     private func finishRecord(_ status: TransferRecord.Status, summary: Summary?) {
         guard var p = pendingRecord else { return }
         pendingRecord = nil
+        guard settings.saveTransferHistory else { return }
         if let summary {
             p.totalBytes = summary.totalSize
             if summary.files > 0 { p.fileCount = summary.files }

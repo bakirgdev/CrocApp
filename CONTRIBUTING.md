@@ -121,7 +121,7 @@ The commands, and what each harness covers and needs, are in [`docs/BUILDING.md`
 
 ### Tests
 
-Non-UI logic gets unit tests: Go's `testing` in `crocmobile/`, Swift Testing in `CrocKit/Tests/` and `app/CrocAppTests/`. Tests that write settings or secrets use an injected store, never the real `UserDefaults` or Keychain. There is no XCUITest: gestures, the camera and taps are checked by hand, and transfers by the harnesses. A unit test never replaces a harness run.
+Non-UI logic gets unit tests: Go's `testing` in `crocmobile/`, Swift Testing in `CrocKit/Tests/` and `app/CrocAppTests/`. Tests that write settings or secrets use an injected store (`MemorySettingsStorage`, `FakeSecretStore`), never the real `UserDefaults` or Keychain. Never use `UserDefaults(suiteName:)`: it leaves a `CrocAppTests.*.plist` behind in the sandbox container. There is no XCUITest: gestures, the camera and taps are checked by hand, and transfers by the harnesses. A unit test never replaces a harness run.
 
 **Paste the harness output into the pull request**, the summary lines and any failures. If you could not run something, write **"not verified"** and say why. That is an acceptable answer, and the maintainer runs it before merge. A claim that something passed when it never ran is not.
 

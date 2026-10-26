@@ -183,7 +183,5 @@ extension View {
 #Preview {
     NavigationStack { AdvancedSettingsView() }
         .environment(
-            AppSettings(
-                defaults: UserDefaults(suiteName: "AdvancedSettingsPreview") ?? .standard,
-                secrets: MemorySecretStore()))
+            AppSettings(storage: MemorySettingsStorage(), secrets: MemorySecretStore()))
 }

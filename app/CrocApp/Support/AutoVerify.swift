@@ -106,10 +106,9 @@ enum AutoVerify {
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments
         guard isHarnessRun else { return }
-        // Harness overrides go through the real settings store, unpersisted.
-        // Reset first so a manual run's UserDefaults can't bleed into this run.
-        controller.settings.persist = false
-        controller.settings.resetToDefaults()
+        // CrocAppApp.init built the settings on in-memory storage and secrets for
+        // a harness run, so they start at their defaults and these overrides
+        // never reach UserDefaults or the Keychain.
         if args.contains("--local") { controller.settings.onlyLocal = true }
         if args.contains("--no-compress") { controller.settings.noCompress = true }
         if args.contains("--ask") { controller.settings.bothSidesConfirm = true }

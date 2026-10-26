@@ -12,6 +12,8 @@ CrocApp keeps a list of past transfers on your device. Open it from the clock ic
 
 ## What is recorded
 
+**Save Transfer History** in [Settings](settings.md) is on by default. Turn it off and nothing new is recorded. Entries already here stay until you delete them.
+
 For each finished or failed transfer:
 
 - the direction (sent or received), and whether it was text

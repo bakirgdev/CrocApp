@@ -27,13 +27,8 @@ import Testing
     private static let resumeHint =
         " Start the same transfer again; replacing the partly received files resumes it."
 
-    init() throws {
-        let suiteName = "CrocAppTests.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suiteName))
-        settings = AppSettings(defaults: defaults, secrets: FakeSecretStore())
-        // Settings a test changes stay in memory, so the suite's file can go now.
-        settings.persist = false
-        defaults.removePersistentDomain(forName: suiteName)
+    init() {
+        settings = AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore())
         vault = StoredTransferVault(secrets: FakeSecretStore())
         history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
         controller = TransferController(settings: settings, vault: vault, engine: engine)
@@ -82,6 +77,56 @@ import Testing
         #expect(record.fileCount == 1)
         #expect(record.totalBytes == 100)
         #expect(!record.isText)
+    }
+
+    @Test func savingHistoryOffRecordsNoFinishedTransfer() async throws {
+        settings.saveTransferHistory = false
+        controller.startSend(urls: [file], customCode: "")
+        try await waitForTransfer()
+        try await deliver(.codeReady(Self.code))
+        try await deliver(.connected)
+        try await deliver(.done(Self.summary(files: 1, totalSize: 100)))
+
+        #expect(try #require(controller.phase.result).summary.success)
+        #expect(history.recordCount() == 0)
+    }
+
+    @Test func savingHistoryOffRecordsNoFailedTransferEither() async throws {
+        settings.saveTransferHistory = false
+        await engine.failNextStart(
+            with: .startFailed(EngineFailure(code: .relayUnreachable, message: "i/o timeout")))
+        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        try await waitUntil("the start to fail") { controller.phase.name == "failed" }
+
+        #expect(history.recordCount() == 0)
+    }
+
+    @Test func savingHistoryOffKeepsTheRecordsAlreadyThere() async throws {
+        history.add(
+            TransferRecord(
+                isSend: false, status: .completed, isText: false, fileCount: 2, totalBytes: 20,
+                names: ["old.txt", "older.txt"], codeHint: "wiry-…", bookmarks: []))
+        settings.saveTransferHistory = false
+        controller.startSend(urls: [file], customCode: "")
+        try await waitForTransfer()
+        try await deliver(.codeReady(Self.code))
+        try await deliver(.connected)
+        try await deliver(.done(Self.summary(files: 1, totalSize: 100)))
+
+        let record = try onlyRecord()
+        #expect(record.names == ["old.txt", "older.txt"], "the new transfer left no record")
+    }
+
+    @Test func savingHistoryBackOnRecordsAgain() async throws {
+        settings.saveTransferHistory = false
+        settings.saveTransferHistory = true
+        controller.startSend(urls: [file], customCode: "")
+        try await waitForTransfer()
+        try await deliver(.codeReady(Self.code))
+        try await deliver(.connected)
+        try await deliver(.done(Self.summary(files: 1, totalSize: 100)))
+
+        #expect(try onlyRecord().names == ["notes.txt"])
     }
 
     @Test func confirmOnBothSidesHoldsTheSendUntilAccepted() async throws {

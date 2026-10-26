@@ -10,6 +10,10 @@ struct HistoryView: View {
     @Environment(TransferController.self) private var controller
     @Environment(AppRouter.self) private var router
     @Environment(HistoryStore.self) private var history
+    @Environment(AppSettings.self) private var settings
+    #if os(macOS)
+    @Environment(\.openSettings) private var openSettings
+    #endif
     @Query(sort: \TransferRecord.date, order: .reverse) private var records: [TransferRecord]
 
     @State private var confirmClear = false
@@ -19,7 +23,20 @@ struct HistoryView: View {
 
     var body: some View {
         Group {
-            if records.isEmpty {
+            if records.isEmpty, !settings.saveTransferHistory {
+                // components.md → HistoryRow: with Save Transfer History off the
+                // empty list says so instead of promising rows that never come.
+                ContentUnavailableView {
+                    Label("History is off", systemImage: "clock.arrow.circlepath")
+                } description: {
+                    Text(
+                        "Turn on Save Transfer History in Settings to list finished transfers here."
+                    )
+                } actions: {
+                    Button("Open Settings") { showSettings() }
+                        .buttonVariant(.prominent)
+                }
+            } else if records.isEmpty {
                 ContentUnavailableView {
                     Label("No transfers yet", systemImage: "clock.arrow.circlepath")
                 } description: {
@@ -96,6 +113,14 @@ struct HistoryView: View {
         } message: {
             Text("The originals were moved or deleted since that transfer.")
         }
+    }
+
+    private func showSettings() {
+        #if os(macOS)
+        openSettings()
+        #else
+        router.path.append(.settings)
+        #endif
     }
 
     private var revokeDialogShown: Binding<Bool> {

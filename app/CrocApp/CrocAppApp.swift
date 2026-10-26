@@ -26,11 +26,14 @@ struct CrocAppApp: App {
     #endif
 
     init() {
-        let settings = AppSettings()
-        _settings = State(initialValue: settings)
-        // Harness transfers must not pollute real history (mirrors the
-        // settings persist=false channel) -- point the store at memory.
+        // Harness runs must not touch real settings, history or secrets: point
+        // every store at memory.
         let harness = AutoVerify.isHarnessRun
+        let settings =
+            harness
+            ? AppSettings(storage: MemorySettingsStorage(), secrets: MemorySecretStore())
+            : AppSettings()
+        _settings = State(initialValue: settings)
         let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: harness))
         _history = State(initialValue: history)
         let vault = StoredTransferVault(secrets: harness ? MemorySecretStore() : KeychainStore())

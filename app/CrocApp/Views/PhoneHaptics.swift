@@ -8,20 +8,34 @@ import UIKit
 /// The four haptic events in design/motion.md → Haptics and sound. iPhone only:
 /// iPad's haptics are inconsistent across models and macOS has none.
 extension View {
-    /// `.sensoryFeedback(trigger:_:)` that stays silent off iPhone. Return nil
-    /// from `feedback` to skip a change.
+    /// `.sensoryFeedback(trigger:_:)` that stays silent off iPhone and while
+    /// the Haptics setting is off. Return nil from `feedback` to skip a change.
+    /// On iOS the view needs `AppSettings` in its environment.
     func phoneHaptic<T: Equatable>(
         trigger: T, _ feedback: @escaping (_ oldValue: T, _ newValue: T) -> SensoryFeedback?
     ) -> some View {
         #if os(iOS)
-        sensoryFeedback(trigger: trigger) { old, new in
-            UIDevice.current.userInterfaceIdiom == .phone ? feedback(old, new) : nil
-        }
+        modifier(PhoneHapticModifier(trigger: trigger, feedback: feedback))
         #else
         self
         #endif
     }
 }
+
+#if os(iOS)
+private struct PhoneHapticModifier<T: Equatable>: ViewModifier {
+    @Environment(AppSettings.self) private var settings
+    let trigger: T
+    let feedback: (_ oldValue: T, _ newValue: T) -> SensoryFeedback?
+
+    func body(content: Content) -> some View {
+        content.sensoryFeedback(trigger: trigger) { old, new in
+            settings.haptics && UIDevice.current.userInterfaceIdiom == .phone
+                ? feedback(old, new) : nil
+        }
+    }
+}
+#endif
 
 /// What a phase change means for haptics. Everything else in a running
 /// transfer (progress, connecting, waiting) stays silent. A failure the user

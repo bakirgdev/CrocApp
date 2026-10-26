@@ -199,7 +199,7 @@ JSON field lists, the per-file `fileSent` detail, and transfers under 100 ms tha
 
 `CrocAppApp.init()` (`app/CrocApp/CrocAppApp.swift`) creates, in this order:
 
-1. `AppSettings()`. `TransferController` takes it as a constructor argument.
+1. `AppSettings(storage:secrets:)`, on `UserDefaults` and the Keychain, or on in-memory stores when `AutoVerify.isHarnessRun` is true. `TransferController` takes it as a constructor argument.
 2. `HistoryStore(container:)`. The `ModelContainer` is in memory when `AutoVerify.isHarnessRun` is true (see `AutoVerify harness` in `docs/GLOSSARY.md`), on disk otherwise.
 3. `StoredTransferVault`, backed by the Keychain (or an in-memory store under the harness).
 4. `TransferController(settings:vault:)`, then `controller.history = history`.
@@ -221,7 +221,7 @@ Persistence:
 
 | What | Where | Notes |
 | --- | --- | --- |
-| Power settings (relay, local-only, compression and the like) | `UserDefaults`, keys prefixed `settings.` | `AppSettings`; each property saves in `didSet`; a `persist` flag turns saving off |
+| App settings (relay, local-only, compression, Save Transfer History, Haptics and the like) | `UserDefaults`, one key per setting, prefixed `settings.` | `AppSettings`; each property saves its own key in `didSet`, through the injected `SettingsStorage` (`MemorySettingsStorage` under the harness and in tests) |
 | Advanced settings | `UserDefaults`, keys `settings.advanced.*` | Proxies go to the Keychain instead (accounts `advanced.socks5Proxy`, `advanced.httpProxy`) |
 | Output folder | `UserDefaults` key `outputFolderBookmark` | `OutputFolderStore`; security-scoped bookmark on macOS |
 | Transfer history | SwiftData, `TransferRecord` `@Model` | `HistoryStore`; in memory under the harness |
