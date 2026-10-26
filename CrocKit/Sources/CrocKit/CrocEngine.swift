@@ -29,7 +29,9 @@ public struct EngineTransfer: Sendable {
 /// What the app needs from a transfer engine: `CrocEngine` in the app, a fake
 /// in the app's tests. The contract is `CrocEngine`'s: one transfer at a time,
 /// a start throws `CrocEngineError`, the stream ends after `.done` or
-/// `.failed`, and `cancel` ignores an ID that is no longer active.
+/// `.failed`, a start made once either has arrived succeeds, cancelling the
+/// task that awaits a start cancels that start, and `cancel` ignores an ID
+/// that is no longer active.
 public protocol TransferEngine: Sendable {
     func startSend(
         paths: [String], text: String?, options: EngineOptions
@@ -65,26 +67,28 @@ public actor CrocEngine {
 
     public func startSend(
         paths: [String], text: String?, options: EngineOptions
-    ) throws -> EngineTransfer {
+    ) async throws -> EngineTransfer {
         let opts = try Self.crocOptions(from: options)
         let joined = try Self.joinedPaths(paths)
-        return try start { bridge, error in
+        return try await start { bridge, error in
             CrocmobileStartSend(joined, text ?? "", opts, bridge, error)
         }
     }
 
     public func startReceive(
         code: String, options: EngineOptions
-    ) throws -> EngineTransfer {
+    ) async throws -> EngineTransfer {
         let opts = try Self.crocOptions(from: options)
-        return try start { bridge, error in CrocmobileStartReceive(code, opts, bridge, error) }
+        return try await start { bridge, error in
+            CrocmobileStartReceive(code, opts, bridge, error)
+        }
     }
 
     /// Uploads `paths` (regular files) encrypted to `options.server`. Events:
     /// `.progress`, then `.stored(receipt)` and `.done`.
     public func startStoreSend(
         paths: [String], options: StoredSendOptions
-    ) throws -> EngineTransfer {
+    ) async throws -> EngineTransfer {
         let opts = CrocmobileStoreOptions()
         opts.server = options.server
         opts.downloads = options.downloads
@@ -92,7 +96,7 @@ public actor CrocEngine {
         opts.socks5Proxy = options.proxy.socks5
         opts.httpProxy = options.proxy.http
         let joined = try Self.joinedPaths(paths)
-        return try start { bridge, error in
+        return try await start { bridge, error in
             CrocmobileStartStoreSend(joined, opts, bridge, error)
         }
     }
@@ -101,9 +105,9 @@ public actor CrocEngine {
     /// `respond(accept:policy:)`; on accept the files land in `outDir`.
     public func startStoreReceive(
         link: String, outDir: String, proxy: ProxySettings
-    ) throws -> EngineTransfer {
+    ) async throws -> EngineTransfer {
         let opts = Self.storeOptions(proxy: proxy)
-        return try start { bridge, error in
+        return try await start { bridge, error in
             CrocmobileStartStoreReceive(link, outDir, opts, bridge, error)
         }
     }
@@ -140,10 +144,36 @@ public actor CrocEngine {
 
     func isActive(_ id: TransferID) -> Bool { id == activeID }
 
+    /// Cancelling the calling task while a start runs cancels that start
+    /// (`CrocmobileCancelStart`). The start runs synchronously on this actor,
+    /// so `cancel(_:)` cannot reach it, and a generated-code send can spend up
+    /// to a second probing the public relays before Go returns a transfer.
     private func start(
         launch: (DelegateBridge, NSErrorPointer) -> CrocmobileTransfer?
+    ) async throws -> EngineTransfer {
+        try await withTaskCancellationHandler {
+            try startNow(launch: launch)
+        } onCancel: {
+            CrocmobileCancelStart()
+        }
+    }
+
+    private func startNow(
+        launch: (DelegateBridge, NSErrorPointer) -> CrocmobileTransfer?
     ) throws -> EngineTransfer {
-        guard activeTransfer == nil else { throw CrocEngineError.transferActive }
+        if activeTransfer != nil {
+            // Go sends OnDone or OnError only after freeing its lock, so a
+            // transfer whose bridge has seen either is over, even before
+            // onTermination's task gets here to clear it.
+            guard bridge?.hasEnded == true else { throw CrocEngineError.transferActive }
+            activeTransfer = nil
+            activeID = nil
+        }
+        // A cancel that came before Go registered the start would be lost.
+        if Task.isCancelled {
+            throw CrocEngineError.startFailed(
+                EngineFailure(code: .cancelled, message: "start cancelled"))
+        }
 
         let (stream, continuation) = AsyncStream.makeStream(of: TransferEvent.self)
         let bridge = DelegateBridge(continuation: continuation)
@@ -154,7 +184,11 @@ public actor CrocEngine {
             self.bridge = nil
             // gobind passes only the Go error's text, which carries the same
             // payload as OnError.
-            throw CrocEngineError.startFailed(EngineFailure(payload: error?.localizedDescription))
+            let failure = EngineFailure(payload: error?.localizedDescription)
+            // Go refuses on its own while a session it still runs holds the
+            // lock, for example one whose stream was abandoned.
+            if failure.code == .transferActive { throw CrocEngineError.transferActive }
+            throw CrocEngineError.startFailed(failure)
         }
         let id = TransferID()
         activeTransfer = transfer

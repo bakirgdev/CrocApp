@@ -253,8 +253,8 @@ type storeSummary struct {
 // startSession it touches no cwd, stdin or stdout: storeclient takes explicit
 // paths.
 func startStoreSession(d Delegate, work func(context.Context, *session) (storeSummary, error)) (*Transfer, error) {
-	if !activeMu.TryLock() {
-		return nil, errors.New("another transfer is active")
+	if err := lockTransfer(); err != nil {
+		return nil, err
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &session{
@@ -269,17 +269,10 @@ func startStoreSession(d Delegate, work func(context.Context, *session) (storeSu
 	return &Transfer{s: s}, nil
 }
 
-// runStore is run's counterpart for stored transfers: the same release and
-// recover ordering, so the lock outlives the terminal event and a panicking
-// delegate cannot leak it.
+// runStore is run's counterpart for stored transfers, with the same ordering:
+// the lock is free before the terminal event, the cancel watchdog may have
+// claimed that event already, and a panicking delegate is recovered.
 func (s *session) runStore(ctx context.Context, work func(context.Context, *session) (storeSummary, error)) {
-	defer activeMu.Unlock()
-	defer s.ctxCancel()
-	defer func() {
-		if r := recover(); r != nil {
-			reportPanic(s, r)
-		}
-	}()
 	var (
 		sum storeSummary
 		err error
@@ -293,6 +286,17 @@ func (s *session) runStore(ctx context.Context, work func(context.Context, *sess
 		sum, err = work(ctx, s)
 	}()
 	close(s.done)
+	s.ctxCancel()
+	unmarkStuck(s)
+	activeMu.Unlock()
+	if !s.terminal.CompareAndSwap(false, true) {
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			reportPanic(s, r)
+		}
+	}()
 	if err != nil {
 		s.delegate.OnError(errorJSON(err))
 		return

@@ -112,6 +112,23 @@ private func events(_ drive: (DelegateBridge) -> Void) async -> [TransferEvent] 
         }
     }
 
+    /// Go sends its terminal call after freeing its lock, so only that call
+    /// lets `CrocEngine` start the next transfer at once. A stream finished
+    /// early on a malformed payload leaves the Go session running.
+    @Test func onlyTheTerminalCallEndsTheSession() {
+        let (_, continuation) = AsyncStream.makeStream(of: TransferEvent.self)
+        let done = DelegateBridge(continuation: continuation)
+        done.onProgress(#"{"currentFile":0}"#)
+        done.onFileList("not json")
+        #expect(!done.hasEnded)
+        done.onDone("not json")
+        #expect(done.hasEnded)
+
+        let failed = DelegateBridge(continuation: continuation)
+        failed.onError(#"{"code":"engineStuck","message":"x"}"#)
+        #expect(failed.hasEnded)
+    }
+
     @Test(arguments: [
         nil, "", "not json", #"{"files":[{"name":"a"}],"emptyFolders":0,"totalSize":1}"#,
     ])

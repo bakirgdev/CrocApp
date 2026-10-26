@@ -19,6 +19,19 @@ import Testing
         #expect(message(.roomFull, cancel: true, decline: true) == "Transfer cancelled.")
     }
 
+    /// A stuck engine refuses every later start, so a Cancel tap must not hide it.
+    @Test func aStuckEngineWinsOverLocalIntent() {
+        #expect(
+            message(.engineStuck, cancel: true, decline: true)
+                == "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again.")
+        let stored = TransferController.friendlyMessage(
+            for: EngineFailure(code: .engineStuck, message: "x"), cancelRequested: true,
+            declineRequested: false, stored: true)
+        #expect(
+            stored
+                == "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again.")
+    }
+
     @Test(arguments: [
         (
             EngineFailure.Code.peerVersion,
@@ -44,6 +57,15 @@ import Testing
         (
             .invalidSetting,
             "An Advanced setting can't be used. Check the proxies, addresses, ports and send speed limit in Settings > Advanced."
+        ),
+        (.transferActive, "Another transfer is still running. Wait for it to end, then try again."),
+        (
+            .engineStuck,
+            "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again."
+        ),
+        (
+            .joinedEarly,
+            "The other device wasn't sending yet. Start the send there first, then enter the code again."
         ),
         (.other, "Transfer failed. Try again, or check your connection."),
     ])

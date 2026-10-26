@@ -150,6 +150,27 @@ func TestClassifyLiveCrocErrors(t *testing.T) {
 		wantCode(t, "receive", err, codeCancelled)
 	})
 
+	// The receiver's local probe (sent only with LAN on) times out before the
+	// sender joins, and the sender's late answer to it breaks the receiver.
+	// What the sender sees depends on its own LAN setting (a CLI sender with
+	// LAN on fails with "could not secure channel"), so it is only stopped.
+	t.Run("receiver joined before the sender", func(t *testing.T) {
+		recv := testClientOptions(false, relay, testRelayPassword, "oscar-bravo-charlie")
+		recv.DisableLocal = false
+		recvErr := make(chan error, 1)
+		go func() { recvErr <- runClient(t, timeout(t, 20*time.Second), recv) }()
+		time.Sleep(1500 * time.Millisecond)
+		sendCtx, stopSend := context.WithCancel(context.Background())
+		sendDone := make(chan struct{})
+		go func() {
+			defer close(sendDone)
+			_ = runClient(t, sendCtx, testClientOptions(true, relay, testRelayPassword, "oscar-bravo-charlie"))
+		}()
+		wantCode(t, "receive", <-recvErr, codeJoinedEarly)
+		stopSend()
+		<-sendDone
+	})
+
 	// Through croc's control-connection call, the one its clients use.
 	t.Run("room full", func(t *testing.T) {
 		for i := range 2 {
@@ -181,6 +202,7 @@ func TestClassifyCrocErrorText(t *testing.T) {
 		{fmt.Errorf("write: %w", syscall.EPIPE), codeConnectionLost},
 		{errors.New("transfer disconnected after 3 reconnect attempts: missing reconnect room"), codeConnectionLost},
 		{context.Canceled, codeCancelled},
+		{errors.New("problem with decoding: decompress message: decompress data: flate: corrupt input before offset 6\nclose decompressor: flate: corrupt input before offset 6"), codeJoinedEarly},
 		{errors.New("received archive failed validation or extraction"), codeOther},
 	}
 	for _, c := range cases {
@@ -196,7 +218,7 @@ func TestNoPublicRelayHasItsOwnCode(t *testing.T) {
 	down := func(context.Context, string, time.Duration) (time.Duration, error) {
 		return 0, errors.New("unreachable")
 	}
-	_, err := generatePublicCode(down)
+	_, err := generatePublicCode(context.Background(), down)
 	wantCode(t, "generatePublicCode", fmt.Errorf("could not generate code phrase: %w", err), codeNoPublicRelay)
 }
 

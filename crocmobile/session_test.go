@@ -9,8 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -847,4 +849,236 @@ func FuzzSplitPaths(f *testing.F) {
 			t.Fatalf("splitPaths does not round-trip: %q then %q", got, again)
 		}
 	})
+}
+
+// lifecycleRecorder collects a session's code and terminal events from the
+// goroutines of run, the cancel watchdog and the test. onEnd runs inside the
+// terminal call, before it returns.
+type lifecycleRecorder struct {
+	mu        sync.Mutex
+	codes     []string
+	codeReady int
+	onEnd     func()
+	ended     chan struct{}
+	once      sync.Once
+}
+
+func newLifecycleRecorder() *lifecycleRecorder {
+	return &lifecycleRecorder{ended: make(chan struct{})}
+}
+
+func (r *lifecycleRecorder) OnCodeReady(string) {
+	r.mu.Lock()
+	r.codeReady++
+	r.mu.Unlock()
+}
+func (r *lifecycleRecorder) OnConnected()      {}
+func (r *lifecycleRecorder) OnFileList(string) {}
+func (r *lifecycleRecorder) OnProgress(string) {}
+func (r *lifecycleRecorder) OnText(string)     {}
+func (r *lifecycleRecorder) OnStored(string)   {}
+func (r *lifecycleRecorder) OnDone(string)     { r.end("done") }
+func (r *lifecycleRecorder) OnError(m string) {
+	var f failure
+	if err := json.Unmarshal([]byte(m), &f); err != nil {
+		f.Code = "undecodable: " + m
+	}
+	r.end(f.Code)
+}
+
+func (r *lifecycleRecorder) end(code string) {
+	r.mu.Lock()
+	r.codes = append(r.codes, code)
+	r.mu.Unlock()
+	if r.onEnd != nil {
+		r.onEnd()
+	}
+	r.once.Do(func() { close(r.ended) })
+}
+
+func (r *lifecycleRecorder) wait(t *testing.T) {
+	t.Helper()
+	select {
+	case <-r.ended:
+	case <-time.After(20 * time.Second):
+		t.Fatal("no terminal event")
+	}
+}
+
+func (r *lifecycleRecorder) terminalCodes() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]string(nil), r.codes...)
+}
+
+func startCode(t *testing.T, err error) string {
+	t.Helper()
+	if err == nil {
+		t.Fatal("start succeeded, want an error")
+	}
+	return decodeFailure(t, err.Error()).Code
+}
+
+// The lock is free inside the terminal call, so a consumer that starts the
+// next transfer the moment it sees OnDone or OnError never finds it busy.
+func TestRunFreesTheLockBeforeTheTerminalEvent(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, xferErr := range []error{nil, errors.New("peer error: refusing files")} {
+		if err := lockTransfer(); err != nil {
+			t.Fatal(err)
+		}
+		heldAtEnd := false
+		d := newLifecycleRecorder()
+		d.onEnd = func() {
+			heldAtEnd = !activeMu.TryLock()
+			if !heldAtEnd {
+				activeMu.Unlock()
+			}
+		}
+		pollDone := make(chan struct{})
+		close(pollDone)
+		s := &session{client: &croc.Client{}, delegate: d, done: make(chan struct{}), pollDone: pollDone}
+		s.run(func() error { return xferErr }, wd, activeMu.Unlock)
+		if heldAtEnd {
+			t.Errorf("xfer error %v: the lock was still held during the terminal call", xferErr)
+		}
+		if got := d.terminalCodes(); len(got) != 1 {
+			t.Errorf("xfer error %v: terminal events %v, want one", xferErr, got)
+		}
+	}
+}
+
+// A real receive that fails at once is started again from inside its own
+// OnError, the earliest moment a consumer can react: it must get the engine.
+func TestStartFromTheTerminalEventGetsTheEngine(t *testing.T) {
+	o := NewOptionsDefault()
+	o.RelayAddress = "127.0.0.1:1"
+	o.DisableLocal = true
+	o.OutDir = t.TempDir()
+	second := newLifecycleRecorder()
+	var restartErr error
+	first := newLifecycleRecorder()
+	first.onEnd = func() { _, restartErr = StartReceive("restart-bravo-two", o, second) }
+	if _, err := StartReceive("restart-alpha-one", o, first); err != nil {
+		t.Fatal(err)
+	}
+	first.wait(t)
+	if restartErr != nil {
+		t.Fatalf("start from OnError: %v", restartErr)
+	}
+	second.wait(t)
+	for name, d := range map[string]*lifecycleRecorder{"first": first, "second": second} {
+		if got := d.terminalCodes(); !slices.Equal(got, []string{codeRelayUnreachable}) {
+			t.Errorf("%s receive ended %v, want [%s]", name, got, codeRelayUnreachable)
+		}
+	}
+}
+
+// A start while a transfer holds the engine is refused at once, with its own
+// code, which CrocKit turns into CrocEngineError.transferActive.
+func TestConcurrentStartIsRefused(t *testing.T) {
+	if err := lockTransfer(); err != nil {
+		t.Fatal(err)
+	}
+	defer activeMu.Unlock()
+	o := NewOptionsDefault()
+	o.OutDir = t.TempDir()
+	_, err := StartReceive("busy-alpha-bravo", o, newLifecycleRecorder())
+	if code := startCode(t, err); code != codeTransferActive {
+		t.Errorf("start while busy: code %s, want %s", code, codeTransferActive)
+	}
+	o.Code = "busy-charlie-delta"
+	_, err = StartSend("/nonexistent", "", o, newLifecycleRecorder())
+	if code := startCode(t, err); code != codeTransferActive {
+		t.Errorf("send while busy: code %s, want %s", code, codeTransferActive)
+	}
+}
+
+// A croc call that outlives a cancel by stuckAfter is reported as engineStuck,
+// later starts fail fast with that code, and the engine frees itself if croc
+// returns after all, without a second terminal event.
+func TestCancelWatchdogReportsAStuckSession(t *testing.T) {
+	defer func(d time.Duration) { stuckAfter = d }(stuckAfter)
+	stuckAfter = 50 * time.Millisecond
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := lockTransfer(); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	unblock := make(chan struct{})
+	d := newLifecycleRecorder()
+	pollDone := make(chan struct{})
+	close(pollDone)
+	s := &session{ctxCancel: cancel, delegate: d, done: make(chan struct{}), pollDone: pollDone}
+	returned := make(chan struct{})
+	go func() {
+		defer close(returned)
+		s.run(func() error { <-unblock; return ctx.Err() }, wd, activeMu.Unlock)
+	}()
+
+	s.cancel()
+	d.wait(t)
+	if got := d.terminalCodes(); !slices.Equal(got, []string{codeEngineStuck}) {
+		t.Fatalf("terminal events %v, want [%s]", got, codeEngineStuck)
+	}
+
+	o := NewOptionsDefault()
+	o.OutDir = t.TempDir()
+	begin := time.Now()
+	_, err = StartReceive("after-stuck-alpha", o, newLifecycleRecorder())
+	if code := startCode(t, err); code != codeEngineStuck {
+		t.Errorf("start while stuck: code %s, want %s", code, codeEngineStuck)
+	}
+	if took := time.Since(begin); took > time.Second {
+		t.Errorf("start while stuck took %v, want it to fail fast", took)
+	}
+
+	close(unblock)
+	<-returned
+	if err := lockTransfer(); err != nil {
+		t.Fatalf("after croc returned: %v", err)
+	}
+	activeMu.Unlock()
+	if got := d.terminalCodes(); len(got) != 1 {
+		t.Errorf("terminal events %v, want only the watchdog's", got)
+	}
+}
+
+// A cancel that croc honours in time leaves the watchdog silent.
+func TestCancelWatchdogQuietWhenCrocReturns(t *testing.T) {
+	defer func(d time.Duration) { stuckAfter = d }(stuckAfter)
+	stuckAfter = 200 * time.Millisecond
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := lockTransfer(); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	d := newLifecycleRecorder()
+	pollDone := make(chan struct{})
+	close(pollDone)
+	s := &session{ctxCancel: cancel, delegate: d, done: make(chan struct{}), pollDone: pollDone}
+	returned := make(chan struct{})
+	go func() {
+		defer close(returned)
+		s.run(func() error { <-ctx.Done(); return ctx.Err() }, wd, activeMu.Unlock)
+	}()
+	s.cancel()
+	<-returned
+	time.Sleep(2 * stuckAfter)
+	if got := d.terminalCodes(); !slices.Equal(got, []string{codeCancelled}) {
+		t.Errorf("terminal events %v, want [%s]", got, codeCancelled)
+	}
+	if err := lockTransfer(); err != nil {
+		t.Fatal(err)
+	}
+	activeMu.Unlock()
 }

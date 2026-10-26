@@ -1,5 +1,6 @@
 import Croc
 import Foundation
+import Synchronization
 
 /// Bridges CrocmobileDelegateProtocol callbacks (arbitrary Go threads)
 /// into an AsyncStream. Terminates the stream on done/error.
@@ -18,6 +19,13 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
     // share mutable state.
     private let decoder = JSONDecoder()
     private let receiptDecoder = StoredReceipt.decoder()
+    private let ended = Mutex(false)
+
+    /// The Go session sent its terminal `OnDone` or `OnError`. Go frees its
+    /// transfer lock before either, so once this is true a new start can go
+    /// ahead. An early finish of the stream (a malformed payload) does not set
+    /// it: the Go session is still running then.
+    var hasEnded: Bool { ended.withLock { $0 } }
 
     init(continuation: AsyncStream<TransferEvent>.Continuation) {
         self.continuation = continuation
@@ -70,6 +78,7 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
         continuation.yield(.stored(receipt))
     }
     func onDone(_ summaryJSON: String?) {
+        ended.withLock { $0 = true }
         if let json = summaryJSON, let s = decode(json, as: Summary.self) {
             continuation.yield(.done(s))
         } else {
@@ -79,6 +88,7 @@ final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sen
         continuation.finish()
     }
     func onError(_ payload: String?) {
+        ended.withLock { $0 = true }
         continuation.yield(.failed(EngineFailure(payload: payload)))
         continuation.finish()
     }

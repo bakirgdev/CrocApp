@@ -5,9 +5,13 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/schollz/croc/v11/src/publicrelay"
 )
 
 // The pool and its order are protocol: a croc bump that changes them must fail here.
@@ -120,7 +124,7 @@ func TestGeneratePublicCodeMapsToProbedRelay(t *testing.T) {
 	for idx := range wantPool {
 		forgetPublicRelay()
 		var calls atomic.Int32
-		code, err := generatePublicCode(probeOnly(idx, &calls))
+		code, err := generatePublicCode(context.Background(), probeOnly(idx, &calls))
 		if err != nil {
 			t.Fatalf("index %d: %v", idx, err)
 		}
@@ -138,17 +142,17 @@ func TestSelectPublicRelayCachesUntilForgotten(t *testing.T) {
 	t.Cleanup(forgetPublicRelay)
 	forgetPublicRelay()
 	var first, cached, after atomic.Int32
-	if idx, err := selectPublicRelay(probeOnly(2, &first)); err != nil || idx != 2 {
+	if idx, err := selectPublicRelay(context.Background(), probeOnly(2, &first)); err != nil || idx != 2 {
 		t.Fatalf("first select = %d, %v; want 2", idx, err)
 	}
-	if idx, err := selectPublicRelay(probeOnly(3, &cached)); err != nil || idx != 2 {
+	if idx, err := selectPublicRelay(context.Background(), probeOnly(3, &cached)); err != nil || idx != 2 {
 		t.Fatalf("cached select = %d, %v; want 2", idx, err)
 	}
 	if n := cached.Load(); n != 0 {
 		t.Errorf("cached select probed %d relays, want 0", n)
 	}
 	forgetPublicRelay()
-	if idx, err := selectPublicRelay(probeOnly(3, &after)); err != nil || idx != 3 {
+	if idx, err := selectPublicRelay(context.Background(), probeOnly(3, &after)); err != nil || idx != 3 {
 		t.Errorf("select after forget = %d, %v; want 3", idx, err)
 	}
 }
@@ -159,11 +163,60 @@ func TestSelectPublicRelayFailureIsNotCached(t *testing.T) {
 	down := func(context.Context, string, time.Duration) (time.Duration, error) {
 		return 0, errors.New("unreachable")
 	}
-	if _, err := generatePublicCode(down); err == nil {
+	if _, err := generatePublicCode(context.Background(), down); err == nil {
 		t.Fatal("generatePublicCode with every relay down: want error")
 	}
 	var calls atomic.Int32
-	if idx, err := selectPublicRelay(probeOnly(1, &calls)); err != nil || idx != 1 {
+	if idx, err := selectPublicRelay(context.Background(), probeOnly(1, &calls)); err != nil || idx != 1 {
 		t.Errorf("select after failure = %d, %v; want 1", idx, err)
 	}
+}
+
+// CancelStart reaches a generated-code send still probing the pool. The probe
+// here never answers, so only the cancel can end it: the start fails as
+// cancelled, shows no code, and leaves the engine free.
+func TestCancelStartStopsTheRelayProbe(t *testing.T) {
+	t.Cleanup(forgetPublicRelay)
+	forgetPublicRelay()
+	defer func(p publicrelay.Probe) { relayProbe = p }(relayProbe)
+	probing := make(chan struct{}, len(wantPool))
+	relayProbe = func(ctx context.Context, _ string, _ time.Duration) (time.Duration, error) {
+		probing <- struct{}{}
+		<-ctx.Done()
+		return 0, ctx.Err()
+	}
+	file := filepath.Join(t.TempDir(), "f.txt")
+	if err := os.WriteFile(file, []byte("hi"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	o := NewOptionsDefault()
+	o.WorkDir = t.TempDir()
+	d := newLifecycleRecorder()
+	errc := make(chan error, 1)
+	go func() {
+		_, err := StartSend(file, "", o, d)
+		errc <- err
+	}()
+
+	<-probing
+	CancelStart()
+	select {
+	case err := <-errc:
+		if code := startCode(t, err); code != codeCancelled {
+			t.Errorf("start cancelled during the probe: code %s, want %s", code, codeCancelled)
+		}
+	case <-time.After(publicrelay.ProbeTimeout / 2):
+		t.Fatal("StartSend still running half a probe timeout after CancelStart")
+	}
+	d.mu.Lock()
+	shown := d.codeReady
+	d.mu.Unlock()
+	if shown != 0 {
+		t.Errorf("OnCodeReady called %d times for a cancelled start", shown)
+	}
+	if err := lockTransfer(); err != nil {
+		t.Fatalf("after the cancelled start: %v", err)
+	}
+	activeMu.Unlock()
+	CancelStart() // nothing pending: a no-op
 }

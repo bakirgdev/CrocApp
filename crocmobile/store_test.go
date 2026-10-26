@@ -76,10 +76,10 @@ func (r *storeRecorder) wait(t *testing.T) {
 	case <-time.After(30 * time.Second):
 		t.Fatal("stored transfer did not finish")
 	}
-	// run releases activeMu after the terminal call; wait for it so the next
-	// start in the same test cannot see "another transfer is active".
-	for i := 0; i < 200 && !activeMu.TryLock(); i++ {
-		time.Sleep(10 * time.Millisecond)
+	// runStore frees activeMu before the terminal call, so the next start in
+	// the same test can begin at once.
+	if !activeMu.TryLock() {
+		t.Fatal("transfer lock still held after the terminal event")
 	}
 	activeMu.Unlock()
 }
@@ -434,9 +434,9 @@ func TestStoreHoldsTheTransferLock(t *testing.T) {
 		t.Fatal(err)
 	}
 	<-rec.fileReady
-	if _, err := StartStoreSend(writeFiles(t, src, map[string]string{"b.txt": "y"})[0], &StoreOptions{Server: server}, newStoreRecorder()); err == nil ||
-		!strings.Contains(err.Error(), "another transfer is active") {
-		t.Fatalf("second start while one waits: err = %v", err)
+	_, err = StartStoreSend(writeFiles(t, src, map[string]string{"b.txt": "y"})[0], &StoreOptions{Server: server}, newStoreRecorder())
+	if code := startCode(t, err); code != codeTransferActive {
+		t.Fatalf("second start while one waits: code %s, want %s", code, codeTransferActive)
 	}
 	tr.Cancel()
 	rec.wait(t)

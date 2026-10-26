@@ -37,11 +37,15 @@ It reaches the engine through the `TransferEngine` protocol. `init(settings:vaul
 - **Failure copy is picked by `EngineFailure.code`, never by text.** `friendlyMessage(for:cancelRequested:declineRequested:stored:)` checks `cancelRequested` ("Transfer cancelled.") and `declineRequested` ("You declined the transfer.") first, then maps the code.
 - It never shows `failure.message`: croc's wording changes per release, and a recovered panic carries a stack trace.
 - A peer's decline arrives as `.declined` ("The other device declined or cancelled the transfer."). A peer's cancel looks the same. This side's own decline, or a prompt that hits EOF, arrives as `.refused`.
-- **`transferActive` on start: retry once after about 300 ms.** The engine still holds the previous transfer for a short time after `done`.
+- **No retry on `transferActive`.** The engine is free once a terminal event arrives (`crocmobile-bridge.md`, "Engine behavior invariants"), so a start after `.done` or `.failed` succeeds. `transferActive` means a transfer really runs, and it gets its own copy.
 - `handle(.failed)` does not call the engine. The stream's `onTermination` cancels and clears the transfer by its ID.
-- `TransferController` keeps that `transferID`. Every cancel (user, background expiry, auto-accept block) targets it. A cancel tapped before `run()` has the ID is applied as soon as `startSend` or `startReceive` returns.
-- Copy precedence when several conditions apply, highest first: `blockedAutoAccept`, `backgroundExpired`, the auto-accept-versus-remote-`--ask` case, then the cancel and decline mapping. The `catch` in `run()` repeats the `backgroundExpired` step, so a thrown expiry keeps the resume hint.
-- `blockedAutoAccept` is checked in `.done` as well as `.failed`. `cancel()` is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed`, because the history schema has no blocked case and "Cancelled" reads as a user action.
+- `TransferController` keeps that `transferID`. Every cancel (user, background expiry, auto-accept block) targets it.
+- A cancel before the ID exists cancels `startTask`, the task awaiting the engine's start, and `CrocEngine` then cancels the start in Go (`CrocmobileCancelStart`). The start runs in its own task because cancelling `streamTask` would also end the event loop. `run()` still cancels by ID once a start returns, in case it finished first.
+- The auto-accept block cancels through `cancelEngineTransfer()`, which leaves `cancelRequested` unset. `endedByUser` stays false, so the failure haptic plays: the user tapped nothing.
+- Copy precedence when several conditions apply, highest first: code `engineStuck`, `blockedAutoAccept`, `backgroundExpired`, the auto-accept-versus-remote-`--ask` case, then the cancel and decline mapping. The `catch` in `run()` repeats the `engineStuck` and `backgroundExpired` steps, so a thrown expiry keeps the resume hint.
+- `engineStuck` outranks a Cancel tap in `friendlyMessage` too. Only a relaunch frees the engine, and every later start fails with the same copy.
+- `joinedEarly` (a receiver that joined before the sender) gets copy that says to start the send first. There is no automatic retry, because the sender has failed by then too (`../known-issues.md`, "Accepted").
+- `blockedAutoAccept` is checked in `.done` as well as `.failed`. The block's cancel is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed`, because the history schema has no blocked case and "Cancelled" reads as a user action.
 - `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) in `.starting` or `.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips. The clock survives the `.starting` to `.connecting` handoff, because the user sees one stall.
 
 ### Code `refused` under auto-accept is not a peer decline
@@ -205,7 +209,7 @@ The shape check alone is not enough: a scan can outlive a whole fast transfer an
 
 With conflicts, the sheet offers Decline, Replace and Keep Both (Keep Both prominent) and a banner. Without conflicts, or while the scan runs, it offers a single Accept, which means Keep Both. A zipped folder arrives as one `.zip` name, so the scan sees none of its members (`docs/known-issues.md`, "Accepted").
 
-`startSend`'s bookmark creation (up to 200 `bookmarkData` calls) runs off the main actor the same way and writes back into `pendingRecord`. If a transfer terminates first, `pendingRecord` is already nil and the record carries no bookmarks, so **Send Again** hides instead of breaking. `SecurityScopedBookmark.create` is `nonisolated` for this.
+`startSend`'s bookmark creation (up to 200 `bookmarkData` calls) runs off the main actor the same way and writes back into `pendingRecord`, under the same `transferGeneration` check, so a capture that outlives its send cannot land on the next transfer's record. If a transfer terminates first, `pendingRecord` is already nil and the record carries no bookmarks, so **Send Again** hides instead of breaking. `SecurityScopedBookmark.create` is `nonisolated` for this.
 
 ## Receive links
 

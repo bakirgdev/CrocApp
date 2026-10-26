@@ -10,7 +10,8 @@ import CrocKit
 // transfer mid-wire (as opposed to only being exercised pre/post-transfer).
 // twice: receives code1 to completion, then code2 to completion, in the same
 // process -- proves fd0/stdout/cwd/mutex restoration in crocmobile composes
-// across repeated transfers, not just a single one.
+// across repeated transfers, not just a single one, and that the second start
+// succeeds at once, with no retry.
 import Foundation
 
 let args = CommandLine.arguments
@@ -60,25 +61,15 @@ func drive(_ stream: AsyncStream<TransferEvent>, answer: Bool) async -> Bool {
     return false  // stream ended without done/error
 }
 
-/// Starts a receive for `code`, retrying past CrocEngineError.transferActive:
-/// the previous transfer's `activeTransfer` slot is cleared by an
-/// unstructured Task spawned from onTermination (see CrocEngine.swift), so it
-/// can still be racing to clear when the next transfer wants to start.
+/// Starts a receive for `code` and drives it to completion. No retry: a start
+/// made right after the previous transfer's terminal event must succeed, and
+/// `twice` relies on that.
 func receiveToCompletion(code: String, options: EngineOptions) async -> Bool {
-    var transfer: EngineTransfer?
-    for _ in 0..<40 {
-        do {
-            transfer = try await engine.startReceive(code: code, options: options)
-            break
-        } catch CrocEngineError.transferActive {
-            try? await Task.sleep(nanoseconds: 50_000_000)
-        } catch {
-            print("EVENT error \(error)")
-            return false
-        }
-    }
-    guard let transfer else {
-        print("EVENT error transfer still active after retries")
+    let transfer: EngineTransfer
+    do {
+        transfer = try await engine.startReceive(code: code, options: options)
+    } catch {
+        print("EVENT error \(error)")
         return false
     }
     return await drive(transfer.events, answer: true)

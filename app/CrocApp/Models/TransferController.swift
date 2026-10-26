@@ -88,6 +88,9 @@ final class TransferController {
     private let background = BackgroundCoordinator()
     private var backgroundExpired = false
     private var streamTask: Task<Void, Never>?
+    /// The engine start in flight. Until it returns an ID, cancelling this task
+    /// is how a cancel reaches the engine.
+    private var startTask: Task<EngineTransfer, any Error>?
     /// The engine transfer this controller started last; every cancel targets it,
     /// so a late cancel cannot reach the next transfer.
     private var transferID: TransferID?
@@ -231,11 +234,16 @@ final class TransferController {
         // existing all-or-nothing fallback, so "Send Again" is hidden rather
         // than broken.
         if urls.count <= TransferRecord.maxBookmarks {
+            // Every caller calls run() right after this, which bumps the
+            // generation for this send. A capture that lands once the next
+            // transfer has started must not attach to that one's record.
+            let generation = transferGeneration + 1
             Task { [weak self] in
                 let all = await Task.detached(priority: .userInitiated) {
                     urls.compactMap { SecurityScopedBookmark.create(for: $0) }
                 }.value
-                guard let self, all.count == urls.count else { return }
+                guard let self, all.count == urls.count, self.transferGeneration == generation
+                else { return }
                 self.pendingRecord?.bookmarks = all
             }
         }
@@ -347,9 +355,18 @@ final class TransferController {
 
     func cancel() {
         cancelRequested = true
-        // Before the engine has started there is nothing to cancel yet; run()
-        // cancels as soon as the ID exists.
-        guard let id = transferID else { return }
+        cancelEngineTransfer()
+    }
+
+    /// Stops the engine transfer without recording a Cancel tap, so the
+    /// auto-accept block does not read as one (`endedByUser`).
+    private func cancelEngineTransfer() {
+        // Before the engine has returned an ID, cancel the start itself; run()
+        // also cancels by ID once one exists, in case the start finished first.
+        guard let id = transferID else {
+            startTask?.cancel()
+            return
+        }
         Task { await engine.cancel(id) }
     }
 
@@ -396,34 +413,27 @@ final class TransferController {
         transferID = nil
         streamTask = Task {
             do {
-                var transfer: EngineTransfer
-                do {
-                    transfer = try await start()
-                } catch CrocEngineError.transferActive {
-                    // Brief window after `done` where the engine still holds
-                    // the previous transfer (bridge doc) -- retry once.
-                    try await Task.sleep(for: .milliseconds(300))
-                    transfer = try await start()
-                }
+                // Its own task, so cancelEngineTransfer() can cancel the start
+                // alone; cancelling streamTask would also end the event loop.
+                let starting = Task { try await start() }
+                startTask = starting
+                let transfer = try await starting.value
+                startTask = nil
                 transferID = transfer.id
-                if cancelRequested { cancel() }
+                if cancelRequested { cancelEngineTransfer() }
                 for await event in transfer.events { handle(event) }
             } catch {
+                startTask = nil
                 // Startup failure before any event flowed -- still tear down
                 // the idle-timer lock / BG task requested at the top of run().
                 background.transferEnded(success: false)
+                let failure = Self.startFailure(error)
                 // Same precedence as handle(.failed): an expiry that surfaces
                 // as a thrown error must keep the resume hint, not fall back
                 // to generic copy.
-                if backgroundExpired {
+                if backgroundExpired, failure.code != .engineStuck {
                     phase = .failed(backgroundExpiredCopy)
                 } else {
-                    let failure: EngineFailure
-                    if case CrocEngineError.startFailed(let f) = error {
-                        failure = f
-                    } else {
-                        failure = EngineFailure(code: .other, message: "\(error)")
-                    }
                     phase = .failed(
                         Self.friendlyMessage(
                             for: failure, cancelRequested: cancelRequested,
@@ -466,7 +476,7 @@ final class TransferController {
                 // for unsafe names is killing the transfer.
                 if !blocked.isEmpty {
                     blockedAutoAccept = true
-                    cancel()
+                    cancelEngineTransfer()
                 }
                 return
             }
@@ -513,8 +523,8 @@ final class TransferController {
             pendingRecord?.expiresAt = receipt.expiresAt
         case .done(let summary):
             background.transferEnded(success: true)
-            // cancel() is fire-and-forget, so a small enough transfer can reach
-            // .done before the block's cancellation lands on the engine. The
+            // The block's cancel is fire-and-forget, so a small enough transfer
+            // can reach .done before the cancellation lands on the engine. The
             // bytes are already written either way; this only stops the UI and
             // the history record reporting a plain success for a blocked one.
             if blockedAutoAccept {
@@ -529,7 +539,11 @@ final class TransferController {
             }
         case .failed(let failure):
             background.transferEnded(success: false)
-            if blockedAutoAccept {
+            if failure.code == .engineStuck {
+                // Only a relaunch frees the engine, so this outranks every
+                // other reason, a Cancel tap included.
+                phase = .failed(Self.engineStuckCopy)
+            } else if blockedAutoAccept {
                 phase = .failed(Self.blockedAutoAcceptCopy)
             } else if backgroundExpired {
                 phase = .failed(backgroundExpiredCopy)
@@ -554,8 +568,8 @@ final class TransferController {
                 }
                 phase = .failed(copy)
             }
-            // blockedAutoAccept outranks cancelRequested: the block issues the
-            // cancel itself, and "Cancelled" in history reads as a user action.
+            // blockedAutoAccept outranks cancelRequested, in case Cancel was
+            // also tapped: "Cancelled" in history reads as a user action.
             // .failed is the closest existing status; a dedicated case would be
             // a schema change.
             let status: TransferRecord.Status
@@ -640,6 +654,21 @@ final class TransferController {
 
     // MARK: - Error copy
 
+    /// A start error as the failure the copy is chosen by.
+    private static func startFailure(_ error: any Error) -> EngineFailure {
+        switch error {
+        case CrocEngineError.startFailed(let failure): failure
+        case CrocEngineError.transferActive:
+            EngineFailure(code: .transferActive, message: "another transfer is active")
+        default: EngineFailure(code: .other, message: "\(error)")
+        }
+    }
+
+    /// The engine kept a cancelled transfer running and refuses every start
+    /// until the app is relaunched.
+    private static let engineStuckCopy =
+        "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again."
+
     /// Used from both `.done` and `.failed`: a blocked transfer can terminate
     /// either way depending on whether the cancel beat the last event.
     private static let blockedAutoAcceptCopy =
@@ -667,6 +696,7 @@ final class TransferController {
         for failure: EngineFailure, cancelRequested: Bool, declineRequested: Bool,
         stored: Bool = false
     ) -> String {
+        if failure.code == .engineStuck { return engineStuckCopy }
         if cancelRequested { return "Transfer cancelled." }
         if declineRequested { return "You declined the transfer." }
         if stored, failure.code == .relayUnreachable || failure.code == .connectionLost {
@@ -705,6 +735,13 @@ final class TransferController {
         case .invalidSetting:
             return
                 "An Advanced setting can't be used. Check the proxies, addresses, ports and send speed limit in Settings > Advanced."
+        case .transferActive:
+            return "Another transfer is still running. Wait for it to end, then try again."
+        case .engineStuck:
+            return engineStuckCopy
+        case .joinedEarly:
+            return
+                "The other device wasn't sending yet. Start the send there first, then enter the code again."
         case .other:
             return "Transfer failed. Try again, or check your connection."
         }

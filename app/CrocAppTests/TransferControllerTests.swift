@@ -201,9 +201,6 @@ import Testing
         await engine.finish()
     }
 
-    // FIXME: the block's own cancel() sets cancelRequested, so endedByUser
-    // reads true and ContentView skips the failure haptic, though the user
-    // tapped nothing. This test asserts that current behaviour.
     @Test(arguments: [true, false])
     func autoAcceptCancelsAnOfferWithAnUnsafeName(endsWithDone: Bool) async throws {
         settings.autoAccept = true
@@ -230,7 +227,7 @@ import Testing
         }
         #expect(controller.phase.failureCopy == Self.blockedCopy)
         #expect(try onlyRecord().status == .failed, "a block is not a user cancel")
-        #expect(controller.endedByUser)
+        #expect(!controller.endedByUser, "the user tapped nothing, so the failure haptic plays")
         #expect(await engine.cancels == [id])
     }
 
@@ -287,6 +284,7 @@ import Testing
 
         await engine.releaseStart()
         try await waitForTransfer()
+        #expect(await engine.cancelledStarts == 1, "the cancel reached the start itself")
         let id = try #require(await engine.transferIDs.first)
         try await waitUntil("the deferred cancel") { await engine.cancels == [id] }
 
@@ -296,15 +294,63 @@ import Testing
         #expect(await engine.cancels == [id], "cancelled once")
     }
 
-    @Test func startRetriesOnceWhileTheEngineIsStillBusy() async throws {
+    /// The engine frees itself before its terminal event, so a busy engine
+    /// means a transfer that is really running: no retry.
+    @Test func aBusyEngineFailsTheStartWithoutRetry() async throws {
         await engine.failNextStart(with: .transferActive)
         controller.startSend(urls: [file], customCode: "")
-        try await waitForTransfer()
-        #expect(await engine.starts.count == 2)
+        try await waitUntil("the start to fail") { controller.phase.name == "failed" }
 
-        try await deliver(.codeReady(Self.code))
-        #expect(controller.phase.waitingCode == Self.code)
+        #expect(
+            controller.phase.failureCopy
+                == "Another transfer is still running. Wait for it to end, then try again.")
+        #expect(await engine.starts.count == 1)
+        #expect(try onlyRecord().status == .failed)
+    }
+
+    @Test func aStartRightAfterTheLastEventStarts() async throws {
+        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        try await waitForTransfer()
+        try await deliver(.failed(EngineFailure(code: .joinedEarly, message: "flate")))
+        #expect(
+            controller.phase.failureCopy
+                == "The other device wasn't sending yet. Start the send there first, then enter the code again."
+        )
+        #expect(await engine.starts.count == 1, "no automatic retry")
+
+        controller.reset()
+        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        try await waitUntil("the second start") { await engine.starts.count == 2 }
+        try await waitForTransfer()
+        #expect(await engine.transferIDs.count == 2, "the engine took it at once")
+        #expect(controller.phase.name == "starting")
         await engine.finish()
+    }
+
+    /// The engine's watchdog ends a cancel croc never honoured. Its copy wins
+    /// over "Transfer cancelled.", because only a relaunch helps.
+    @Test func aStuckEngineAfterCancelAsksForARelaunch() async throws {
+        controller.startSend(urls: [file], customCode: "")
+        try await waitForTransfer()
+        try await deliver(.codeReady(Self.code))
+        controller.cancel()
+        let id = try #require(await engine.transferIDs.first)
+        try await waitUntil("the engine to get the cancel") { await engine.cancels == [id] }
+
+        try await deliver(.failed(EngineFailure(code: .engineStuck, message: "did not return")))
+        #expect(
+            controller.phase.failureCopy
+                == "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again.")
+        #expect(try onlyRecord().status == .cancelled)
+
+        controller.reset()
+        await engine.failNextStart(
+            with: .startFailed(EngineFailure(code: .engineStuck, message: "never returned")))
+        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        try await waitUntil("the start to fail") { controller.phase.name == "failed" }
+        #expect(
+            controller.phase.failureCopy
+                == "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again.")
     }
 
     @Test func startFailureShowsItsCopyAndIsRecorded() async throws {

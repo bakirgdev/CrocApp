@@ -29,6 +29,9 @@ actor FakeTransferEngine: TransferEngine {
     private(set) var responses: [Response] = []
     private(set) var cancels: [TransferID] = []
     private(set) var revokes: [StoredReceipt] = []
+    /// How many held starts found their calling task cancelled on release.
+    /// `CrocEngine` would cancel such a start; the fake still returns it.
+    private(set) var cancelledStarts = 0
 
     private var startErrors: [CrocEngineError] = []
     private var holdsNextStart = false
@@ -136,6 +139,7 @@ actor FakeTransferEngine: TransferEngine {
         if holdsNextStart {
             holdsNextStart = false
             await withCheckedContinuation { heldStart = $0 }
+            if Task.isCancelled { cancelledStarts += 1 }
         }
         if !startErrors.isEmpty { throw startErrors.removeFirst() }
         // CrocEngine's contract: one transfer at a time.
