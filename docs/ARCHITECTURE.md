@@ -107,7 +107,8 @@ Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols ge
 
 `Package.swift`: swift-tools 6.0, platforms iOS 26 and macOS 26. Targets: `Croc` (the binary target), `CrocKit`, `crockit-verify` (executable) and `CrocKitTests`.
 
-- `CrocEngine.swift`: `public actor CrocEngine`.
+- `CrocEngine.swift`: `public actor CrocEngine`, and the `TransferEngine` protocol it conforms to.
+  - `TransferEngine` is exactly what `TransferController` calls: `startSend`, `startReceive`, `startStoreSend`, `startStoreReceive`, `respond`, `cancel` and `revokeStored`, all `async`. It exists so the app's tests can stand in a fake engine. `TransferID` and `EngineTransfer` have public initializers for the same reason.
   - Holds the one active `CrocmobileTransfer` (`activeTransfer`).
   - `startSend` and `startReceive` return an `EngineTransfer` with an `id: TransferID` and `events: AsyncStream<TransferEvent>`.
   - `startStoreSend`, `startStoreReceive` and `revokeStored` do the same for stored transfers.
@@ -130,7 +131,8 @@ CrocKit does not hop to `MainActor`. `DelegateBridge` only yields. `TransferCont
 
 File: `app/CrocApp/Models/TransferController.swift`. A `@MainActor @Observable final class`.
 
-- The only caller of `CrocEngine`. It owns a private `CrocEngine`, a `BackgroundCoordinator` and the `Phase` enum that every view switches on.
+- The only caller of `CrocEngine`. It holds the engine as `any TransferEngine`, a `BackgroundCoordinator` and the `Phase` enum that every view switches on.
+- `init(settings:vault:engine:)` defaults `engine` to `CrocEngine()`. `TransferControllerTests` passes `FakeTransferEngine` (both in `app/CrocAppTests/`).
 - Intents: `startSend`, `startSendText`, `startStoreSend`, `startReceive`, `startStoreReceive`, `respond`, `cancel`, `revoke`.
 - `Phase` cases: `idle`, `starting`, `waiting`, `connecting`, `confirmSend`, `incoming`, `transferring`, `done`, `stored`, `failed`.
 - Event-handling rules (why progress must not overwrite `incoming`, the retry window after `transferActive`, copy precedence): `docs/knowledge/app-ui-architecture.md`, "TransferController".
