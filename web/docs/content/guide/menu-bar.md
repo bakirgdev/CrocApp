@@ -15,9 +15,11 @@ CrocApp puts an icon in the Mac menu bar. Click it to open a small window that s
 | Drop area | Drop files or folders here to send them |
 | **Choose Files…** | Opens a file panel to pick files and folders |
 | **Send Clipboard Text** | Sends the text on the clipboard. If there is none, the window says so |
-| **Open CrocApp** | Brings the main window forward |
+| **Open CrocApp** | Brings the main window forward, or opens it if you closed it |
 
 Click the icon first, then drop. You cannot drop files onto the icon itself.
+
+CrocApp has one main window. Closing it does not quit CrocApp: the menu bar icon stays and a transfer keeps running. Click the Dock icon, open a CrocApp link or choose **Open CrocApp** to bring the window back.
 
 Once a send starts, the window shows the code, a QR code, **Copy Code**, progress and **Cancel**. Quick send always uses a generated code. To choose your own, use the [main window](sending.md#custom-code).
 

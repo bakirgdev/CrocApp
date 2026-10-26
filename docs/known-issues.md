@@ -164,9 +164,9 @@ Permanent or deferred, each with its reason.
 - **`UIFileSharingEnabled` is declared twice**, in `app/Config/CrocApp-Info.plist` and as a pair of sdk-scoped `INFOPLIST_KEY_*` settings in the pbxproj.
   - The plist declaration is the one that works. Removing it drops the key from the built `Info.plist` and takes the app out of the Files app, even though `xcodebuild -showBuildSettings` resolves the build setting to `YES` (measured on a simulator build).
   - The pbxproj pair is inert for this key and harmless. The only risk is drift, and the values agree.
-- **`AppRouter` is a singleton with no reset hook, so multiple macOS windows share one navigation path.**
-  - Per-window navigation needs `@FocusedValue` plumbing to reach `AppDelegate` and `Commands`, which sit outside the environment graph.
-  - Multi-window reachability has never been observed. Revisit if someone reports it.
+- **A plain Mac launch can open with no window.**
+  - Seen on a development Mac for a bundle ID that carried saved restoration state: a normal launch opened no window and logged `hasPersistentStateToRestore=1` with a restored window of `0x0`. The same happened on a `WindowGroup` build, so the single `Window` scene did not cause it. A fresh bundle ID opened its window every time, also after the window was closed and the app relaunched.
+  - A reopen (`open -a`, a Dock click) or a link brings the window back. The cause is not pinned down. `.defaultLaunchBehavior(.presented)` and `.restorationBehavior(.disabled)` on the `Window` did not fix the case above, so neither is in the code.
 - **Deleting a stored upload's History row removes the only Revoke button.** The receipt stays in the Keychain until the link expires, but nothing lists receipts without a record. Revoke before deleting the row. Revisit if users lose links this way.
   - The same holds for a link sent while **Save Transfer History** is off: the upload leaves no record, so the link can only expire. The setting's footer does not say so.
 - **The Camera app cannot open CrocApp for a stored link.**

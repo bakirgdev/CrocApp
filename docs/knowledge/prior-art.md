@@ -23,7 +23,7 @@ No other well-maintained, open-source Apple-native app for croc was known when t
 - Transfer history for repeat partners.
 - Custom relay as a first-class setting, with a visible relay indicator. Users worry about trust, so explain PAKE and end-to-end encryption in the app.
 - File list and sizes before accepting, sanitized file names, and an explicit overwrite choice. This answers the class of issues in croc's public security audit, and is a selling point.
-- Links that carry the code. The QR code encodes a `https://crocapp.dev/r/` link, which opens the app or a page that explains what to do. The old `croc://<code>` form is still accepted when scanned.
+- Links that carry the code. The QR code encodes a `https://crocapp.dev/r/` link, which opens the app or a page that explains what to do.
 - Positioning: it works when AirDrop and LocalSend do not, across networks and continents.
 
 ## Growth ideas
