@@ -12,7 +12,7 @@ description: How to remove CrocApp from iPhone, iPad and Mac, where it keeps dat
 |---|---|---|
 | Settings, including the receive folder you chose | The app's preferences | Yes |
 | [History](guide/history.md) | A database in the app's own storage | Yes |
-| Relay password, the two proxies, and receipts for [Send as link](guide/send-as-link.md) | The Keychain, on this device only | Mac: no. iPhone and iPad: not verified |
+| Relay password, the two proxies, and receipts for [Send as link](guide/send-as-link.md) | The Keychain | Mac: no (checked on a development build only). iPhone and iPad: not verified |
 | Received files, iOS | The app's **Documents** folder | Yes: they are deleted with the app |
 | Received files, Mac | `Downloads/CrocApp`, or the folder you chose | No |
 | Files staged by the share sheet, iOS | The app's shared storage | Yes |
@@ -29,7 +29,7 @@ You can leave this out if you do not care about leftovers. Each step is in the a
 4. **Mac only:** turn off **Open at Login** in Settings, or the login item stays registered until you remove it in System Settings > General > Login Items.
 5. **Save any received files you want.** On iOS they live in the app's Documents folder and go with the app.
 
-Keychain items for a revoked link are removed on revoke, and for an expired link at the next launch. On Mac, deleting the app leaves the other Keychain items in place, and they are not in your login keychain, so steps 1 and 3 are the way to remove them. Where they show in Keychain Access or the Passwords app is not verified. On iPhone and iPad, whether they survive deleting the app is not verified, which is why step 3 comes first.
+Keychain items for a revoked link are removed on revoke, and for an expired link at the next launch. On Mac, deleting the app leaves the other Keychain items in place, and they are not in your login keychain, so steps 1 and 3 are the way to remove them. This was checked on a development build, not on the App Store or disk image build. Where they show in Keychain Access or the Passwords app is not verified. On iPhone and iPad, whether they survive deleting the app is not verified, which is why step 3 comes first.
 
 CrocApp 1.0.0 and earlier kept these items in the login keychain on Mac, and newer versions do not read or remove them. If you used one of those versions, remove them in Keychain Access: search for `com.bakirgdev.CrocApp`.
 

@@ -18,7 +18,7 @@ extra sections where a release needs them, and the project follows
 
 ### Changed
 
-- The relay password, the proxies and Send as link receipts stay on this device: they are never synced, and a backup restored to a new device does not bring them back. If one of them cannot be saved to the Keychain, its field now says so instead of seeming saved.
+- The relay password, the proxies and Send as link receipts stay on this device: they are never synced, and a backup restored to a new device does not bring them back. On iPhone and iPad this applies to each one from the next time it is saved. If the relay password or a proxy cannot be saved to the Keychain, its field now says so instead of seeming saved.
 
 - A failed transfer now says what happened and what to do, and offers the one action that can help. **Try Again** runs the same transfer again when it could now succeed (a dropped connection, an unreachable relay or link server, iOS stopping it in the background). **Open Settings** goes where the fix is when a setting is the cause (a rejected relay password, an Advanced setting that cannot be used, auto-accept meeting a sender who confirms). Otherwise there is only **Done**. Shortcuts and the menu bar show the same words.
 

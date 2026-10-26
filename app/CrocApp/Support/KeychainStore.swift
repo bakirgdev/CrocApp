@@ -27,14 +27,16 @@ protocol SecretStore {
 /// has that keychain); on macOS it is what makes the accessibility class
 /// apply at all, because the legacy file-based keychain ignores it. That
 /// keychain scopes items by the `com.apple.application-identifier`
-/// entitlement, which every signed Mac build gets from its provisioning
-/// profile: development, Mac App Store and the Developer ID profile of
-/// `CrocApp Direct`. A build without one (`CODE_SIGNING_ALLOWED=NO`, as CI
-/// builds) cannot use the Keychain: a read finds nothing
-/// (`errSecItemNotFound`), and a write or delete fails with
-/// `errSecMissingEntitlement`, which is logged. Tests and harness runs inject
-/// an in-memory `SecretStore`, so only such a build's own launch, which only
-/// reads, reaches it. Items in the file-based keychain are never read.
+/// entitlement, which a signed Mac build gets from its provisioning profile.
+/// Checked on signed development builds of both Mac targets and on the
+/// Developer ID export of `CrocApp Direct`; the Mac App Store profile lists
+/// it too, but that build was not checked. A Mac build without one
+/// (`CODE_SIGNING_ALLOWED=NO`, as CI builds) cannot use the Keychain: a read
+/// finds nothing (`errSecItemNotFound`), and a write or delete fails with
+/// `errSecMissingEntitlement`, which is logged, so its secrets never persist.
+/// Tests and harness runs inject an in-memory `SecretStore`, so in CI only the
+/// test host's launch, which only reads, reaches it. Items in the file-based
+/// keychain are never read.
 ///
 /// Failures are logged with their `OSStatus`, never the value.
 struct KeychainStore: SecretStore {

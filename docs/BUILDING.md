@@ -207,7 +207,7 @@ The harness starts the relay as `$CROC --debug relay --host 127.0.0.1` on five f
 - `scripts/verify-app-mac.sh` and `scripts/capture-screenshots.sh` pass `-allowProvisioningUpdates` to their macOS `xcodebuild`.
 - Xcode needs an account in team `HBSU359M33`.
 - On a new Mac, also pass `-allowProvisioningDeviceRegistration` once, so the Mac is registered as a development device.
-- A contributor outside that team cannot sign these builds. Unsigned builds (`CODE_SIGNING_ALLOWED=NO`, what CI does) still work.
+- A contributor outside that team cannot sign these builds. Unsigned builds (`CODE_SIGNING_ALLOWED=NO`, what CI does) still build and pass the tests, but an unsigned Mac app cannot use the Keychain: the relay password, the proxies and Send as Link receipts do not persist (`docs/known-issues.md`, "App and UI").
 
 **Trap**: a harness case that tests an answer given mid-transfer must start the transfer with the opposite or default setting, or it proves only the start options. `croctest -policy` sets the Options only under `-yes`, and `AutoVerify --when-exists` answers the sheet without touching `settings.whenFileExists`.
 
