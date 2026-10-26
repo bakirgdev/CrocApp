@@ -75,7 +75,7 @@ Terms a new contributor hits in this repo and cannot infer from the name: croc v
 | MAS vs Developer ID | The two macOS distribution paths. Mac App Store: sandbox required. Developer ID: a notarized DMG you host yourself. Export options live in `app/Config/ExportOptions-MAS.plist` and `ExportOptions-DevID.plist`; iOS has `ExportOptions-iOS.plist` (`docs/RELEASING.md`, "Release channels"). |
 | notarization | Apple's malware scan, required before a Developer ID build opens without warnings on a fresh Mac. `scripts/build-devid.sh` submits the app and the disk image with `notarytool submit --wait`. |
 | `PrivacyInfo.xcprivacy` | Apple's privacy manifest. The app's declares the API categories it uses (UserDefaults, FileTimestamp, SystemBootTime), no tracking and no collected data. `CrocShare`'s declares none of those. |
-| Sparkle | The macOS auto-update framework (2.10.0, SwiftPM), linked into `CrocApp Direct` only. It reads `SPARKLE_FEED_URL` for an appcast signed with an Ed25519 key (`SPARKLE_PUBLIC_ED_KEY`, the public half). |
+| Sparkle | The macOS auto-update framework (2.10.1, SwiftPM), linked into `CrocApp Direct` only. It reads `SPARKLE_FEED_URL` for an appcast signed with an Ed25519 key (`SPARKLE_PUBLIC_ED_KEY`, the public half). |
 | stapling | Attaching Apple's notarization ticket to a build (`xcrun stapler staple`) so first launch works offline. `scripts/build-devid.sh` staples the app and the disk image. |
 
 ## Repo conventions

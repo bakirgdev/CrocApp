@@ -193,7 +193,8 @@ How Tailcat works, its 128 MiB threshold and the servers it contacts: `what-is-c
 - A receiver handed a `tailcat-offer` joins Tailcat whatever its own setting. The receiver follows the sender and does not choose.
 - Every data chunk is encrypted with the session key (AEAD) on either path.
 - Tailcat's data path has been seen working on a physical iPhone. On the development Mac, `croc --transport derp` CLI to CLI does not complete, cause unknown (`../known-issues.md`, "Harnesses").
-- croc has a `croc_no_tailcat` build tag that removes Tailcat and downgrades `derp` to `relay`. The app build does not use it. Passing it through `gomobile bind -tags` is inferred, not verified.
+- croc has a `croc_no_tailcat` build tag that removes Tailcat and downgrades `derp` to `relay`. The app build does not use it. Checked against croc v11.5.5: `gomobile bind -tags croc_no_tailcat` builds all three slices, and `go test -tags croc_no_tailcat ./...` passes in `crocmobile/`. The tag drops most of tailscale, gvisor and wireguard-go from the dependency graph and cuts the unsigned Release executable from 25.4 MB to 13.3 MB (iOS) and from 26.3 MB to 13.5 MB (macOS). An unsigned macOS archive executable goes from 22.0 MB to 10.5 MB.
+- Under the tag, from croc's source (`tailcat_negotiation.go`, `croc.go`; not run): `auto` sends use the relay with no error, a `derp` send is downgraded to `relay` in `newClient`, and a receive from a sender that requires Tailcat (an untagged CLI with `--transport derp`) fails with `peer requires Tailcat, but Tailcat is disabled or unavailable locally`. The app would then have to drop the **Connection** choice and every text about Tailcat (`HowItWorksView`, the docs site, `THREAT-MODEL.md`). No transfer harness was run with the tag: not verified.
 
 ### CLI behaviour that bites scripts
 
@@ -370,7 +371,7 @@ A CrocKit executable for the Swift layer. Subcommands: `send`, `receive` (option
 ## Toolchain
 
 - Go: `crocmobile/go.mod` pins `go 1.27.3` (install with Homebrew). The build script builds gomobile and gobind from the `tool` block in `crocmobile/go.mod`.
-- Xcode 27.0 and 27.1 bind cleanly.
+- Xcode 27.1 binds cleanly.
 - The macOS slice is arm64 only (golang/go#73119).
 - gomobile still writes `MinimumOSVersion = 100.0` into the iOS framework. App Store Connect accepted it on upload validation. The iOS device layout issue golang/go#66500 is closed.
 - A fresh clone must run `scripts/build-xcframework.sh` before any Swift build, because the `binaryTarget` points at the gitignored artifact.
