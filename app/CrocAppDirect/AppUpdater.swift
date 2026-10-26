@@ -1,23 +1,33 @@
-import Combine
+import Observation
 import Sparkle
 import SwiftUI
 
 /// Sparkle updater for the Developer ID build. Only the `CrocApp Direct`
 /// target compiles this folder and links Sparkle; the App Store build has
 /// neither.
-final class AppUpdater: ObservableObject {
+@MainActor
+@Observable
+final class AppUpdater {
     static let shared = AppUpdater()
 
-    @Published private(set) var canCheckForUpdates = false
-    private let controller = SPUStandardUpdaterController(
+    private(set) var canCheckForUpdates: Bool
+    @ObservationIgnored private let controller = SPUStandardUpdaterController(
         startingUpdater: true,
         updaterDelegate: nil,
         userDriverDelegate: nil
     )
+    @ObservationIgnored private var canCheckObservation: NSKeyValueObservation?
 
     private init() {
-        controller.updater.publisher(for: \.canCheckForUpdates)
-            .assign(to: &$canCheckForUpdates)
+        let updater = controller.updater
+        canCheckForUpdates = updater.canCheckForUpdates
+        // Sparkle documents `canCheckForUpdates` as KVO-compliant. The change
+        // can arrive on any thread, so hop to the main actor before writing
+        // the observed property.
+        canCheckObservation = updater.observe(\.canCheckForUpdates) { [weak self] updater, _ in
+            let canCheck = updater.canCheckForUpdates
+            Task { @MainActor in self?.canCheckForUpdates = canCheck }
+        }
     }
 
     func checkForUpdates() {
@@ -34,7 +44,7 @@ struct UpdateCommands: Commands {
 }
 
 private struct CheckForUpdatesButton: View {
-    @ObservedObject private var updater = AppUpdater.shared
+    private let updater = AppUpdater.shared
 
     var body: some View {
         Button("Check for Updates…") { updater.checkForUpdates() }
