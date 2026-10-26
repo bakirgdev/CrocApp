@@ -17,7 +17,7 @@ CrocApp tries the local network and the relay at once and uses whichever connect
 
 ## The receiver started first
 
-If the receiver joins before the sender has started, the receive fails with "The other device wasn't sending yet. Start the send there first, then enter the code again." The sending device can say "The codes don't match." at the same moment. This hits custom codes, and the croc command line sending with a fixed code. Start the send again first, then the receive.
+If the receiver joins before the sender has started, the receive fails with "The other device wasn't ready, or the connection was too slow. Start the send there first, then enter the code again." The sending device can say "The codes don't match." at the same moment. This hits custom codes, and the croc command line sending with a fixed code. Start the send again first, then the receive.
 
 ## No internet
 

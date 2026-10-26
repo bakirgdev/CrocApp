@@ -49,7 +49,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 - **The harnesses fail at random against the public relays when they rate-limit.**
   - A croc v11 relay admits 30 connections a minute from one address (`DEFAULT_SOURCE_JOIN_LIMIT`, `DEFAULT_JOIN_LIMIT_WINDOW`). A multiplexed transfer opens 9 per peer (1 control, 8 data). With both peers on one machine, two transfers on the same pool relay inside a minute can be refused with `relay admission rate limited`.
   - `verify-interop.sh`, `verify-app-mac.sh` and `verify-app-sim.sh` then fail at whichever step hits the limit. The pool-relay case in `verify-interop.sh` waits 60 s and turns multiplexing off for this reason.
-  - A slow admission also defeats the fixed 3 s wait after a CLI sender. The receiver then joins first and fails with `joinedEarly` ("The other device wasn't sending yet."). Seen in `verify-app-mac.sh` scenario 8, where the CLI sender's room confirmation took 4.8 s.
+  - A slow admission also defeats the fixed 3 s wait after a CLI sender. The receiver then joins first and fails with `joinedEarly` ("The other device wasn't ready, or the connection was too slow."). Seen in `verify-app-mac.sh` scenario 8, where the CLI sender's room confirmation took 4.8 s.
   - CI avoids it: the `interop (local relay)` job sets `RELAY` to a local `croc relay` with raised admission limits (`BUILDING.md`, "Verification harnesses").
   - The other harnesses have no local-relay mode. Use a local relay for a deterministic result, leave a minute between public-relay runs, and treat a failure as a regression only after finding the cause in its log.
 - **Two checkouts cannot run the same harness at once on one Mac.**
@@ -220,10 +220,20 @@ Permanent or deferred, each with its reason.
 - **A receiver that joins before the sender fails, and so does the sender.**
   - The receiver's `pake1` local probe times out after 500 ms and it carries on with the main PAKE. The sender's late reply to the old probe is then decoded as a transfer message and fails with `flate: corrupt input before offset 6` (`knowledge/crocmobile-bridge.md`, "Start order: sender first").
   - Generated codes are sender-first, but custom codes are not. A receiver who types an agreed code before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it.
-  - The receiver reports `joinedEarly`: "The other device wasn't sending yet. Start the send there first, then enter the code again." A sender with LAN on fails with croc's `could not secure channel` and shows "The codes don't match.", because that text is also a real mismatch.
+  - The receiver reports `joinedEarly`: "The other device wasn't ready, or the connection was too slow. Start the send there first, then enter the code again." A sender with LAN on fails with croc's `could not secure channel` and shows "The codes don't match.", because that text is also a real mismatch.
   - There is no automatic retry of the receive. With a croc v11.5.5 CLI sender, the sender had already failed when the receiver did, and a second receive with the same code only waited for a sender that was gone. Both sides have to start again, sender first.
   - Workaround: start the sender first, then the receiver. `verify-app-sim.sh`, `verify-app-mac.sh` and `verify-interop.sh` all delay their CLI receiver for this reason.
+  - The same error follows a slow link even when the sender was first: croc waits only 500 ms for the probe reply, so a SOCKS5 proxy, a slow mobile link or a distant relay can make the reply late. The copy therefore names both causes.
   - Not verified whether `schollz/croc` has an upstream issue for it. The probe timeout and the frame decoding are croc's.
+- **Cancelling a start is best effort.**
+  - `CancelStart()` reaches a start only once Go has registered its context (`lockTransfer`, `Getwd`, the network globals). A cancel that lands before that finds nothing, and the start goes on to show a code.
+  - `TransferController` recovers by cancelling by transfer ID as soon as the start returns. Other callers of `CrocEngine` (such as `crockit-verify`) do not.
+- **A panic inside `Cancel` or `Respond` reports `OnError` while the transfer still runs.**
+  - `reportPanic` there skips the single-final-event guard, so CrocKit drops the live session's handle and the session can later send a second final event.
+  - It needs a Go panic in those calls, which none has been seen to raise. A fix claims the session's terminal flag first, or only logs the panic.
+- **A malformed callback payload ends the Swift stream before Go has finished.**
+  - `DelegateBridge` finishes the stream without marking the transfer ended, so a new start within the Go cancel's unwind time fails with "Another transfer is still running." (the removed 300 ms retry used to hide this).
+  - It needs a payload the bridge cannot decode, which only a bridge bug produces.
 - **A transfer with a croc 10 peer usually shows no error and waits until the user cancels.**
   - The app reports `peerVersion` ("peer uses unsupported PAKE protocol version 0; upgrade both croc clients") only when both peers reach the same relay room.
   - croc v10 derives the room from the code's first 4 characters (`src/croc/croc.go`, `SharedSecret[:4]`). croc v11 derives it from the first word of a three-word code (`src/codephrase/codephrase.go`, `Parse`). So an app-generated code lands in a different room than a v10 peer computes, unless the first word has exactly 4 letters.

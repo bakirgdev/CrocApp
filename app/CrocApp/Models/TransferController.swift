@@ -741,7 +741,7 @@ final class TransferController {
             return engineStuckCopy
         case .joinedEarly:
             return
-                "The other device wasn't sending yet. Start the send there first, then enter the code again."
+                "The other device wasn't ready, or the connection was too slow. Start the send there first, then enter the code again."
         case .other:
             return "Transfer failed. Try again, or check your connection."
         }

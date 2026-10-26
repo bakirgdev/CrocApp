@@ -249,7 +249,7 @@ type storeSummary struct {
 }
 
 // startStoreSession takes the process-global lock and runs work on a new
-// goroutine, which releases the lock after the terminal delegate call. Unlike
+// goroutine, which releases the lock just before the terminal delegate call. Unlike
 // startSession it touches no cwd, stdin or stdout: storeclient takes explicit
 // paths.
 func startStoreSession(d Delegate, work func(context.Context, *session) (storeSummary, error)) (*Transfer, error) {

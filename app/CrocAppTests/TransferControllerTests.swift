@@ -314,7 +314,7 @@ import Testing
         try await deliver(.failed(EngineFailure(code: .joinedEarly, message: "flate")))
         #expect(
             controller.phase.failureCopy
-                == "The other device wasn't sending yet. Start the send there first, then enter the code again."
+                == "The other device wasn't ready, or the connection was too slow. Start the send there first, then enter the code again."
         )
         #expect(await engine.starts.count == 1, "no automatic retry")
 
