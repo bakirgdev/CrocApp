@@ -179,16 +179,3 @@ struct ReceiveView: View {
         )
     }
 }
-
-extension View {
-    /// design/accessibility.md → Hit targets: bare text buttons still get a
-    /// 44pt target on iOS. macOS keeps its own control sizing.
-    fileprivate func hitTarget() -> some View {
-        #if os(iOS)
-        frame(minWidth: ControlHeight.hitTargetMin, minHeight: ControlHeight.hitTargetMin)
-            .contentShape(Rectangle())
-        #else
-        self
-        #endif
-    }
-}
