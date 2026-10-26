@@ -73,6 +73,11 @@
 			path = CrocAppDirect;
 			sourceTree = "<group>";
 		};
+		DA0000000000000000000011 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +121,7 @@
 				84DEC94930101868006ECBE6 /* CrocApp */,
 				DA0000000000000000000004 /* CrocAppDirect */,
 				CA0000000000000000000002 /* CrocShare */,
+				DA0000000000000000000011 /* Shared */,
 				844EAD42307C8833006F34A7 /* CrocAppTests */,
 				DA0000000000000000000002 /* Config */,
 				84DEC94830101868006ECBE6 /* Products */,
@@ -183,6 +189,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				84DEC94930101868006ECBE6 /* CrocApp */,
+				DA0000000000000000000011 /* Shared */,
 			);
 			name = CrocApp;
 			packageProductDependencies = (
@@ -206,6 +213,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				CA0000000000000000000002 /* CrocShare */,
+				DA0000000000000000000011 /* Shared */,
 			);
 			name = CrocShare;
 			packageProductDependencies = (
@@ -229,6 +237,7 @@
 			fileSystemSynchronizedGroups = (
 				84DEC94930101868006ECBE6 /* CrocApp */,
 				DA0000000000000000000004 /* CrocAppDirect */,
+				DA0000000000000000000011 /* Shared */,
 			);
 			name = "CrocApp Direct";
 			packageProductDependencies = (
