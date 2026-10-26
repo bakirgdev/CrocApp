@@ -46,8 +46,7 @@ struct ReceiveIntent: AppIntent {
             names: controller.offeredFileNames, in: folder, since: started)
         if let text { urls.append(try IntentStaging.textFile(text)) }
         let files = urls.map { IntentFile(fileURL: $0) }
-        return .result(
-            value: files,
-            dialog: files.count == 1 ? "Received 1 item." : "Received \(files.count) items.")
+        // One key: Localizable.xcstrings varies it by plural ("1 item", "3 items").
+        return .result(value: files, dialog: "Received \(files.count) items.")
     }
 }

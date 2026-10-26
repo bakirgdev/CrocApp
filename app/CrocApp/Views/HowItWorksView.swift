@@ -40,7 +40,9 @@ struct HowItWorksView: View {
         .navigationTitle("How It Works")
     }
 
-    private func item(_ icon: String, _ title: String, _ text: String) -> some View {
+    private func item(
+        _ icon: String, _ title: LocalizedStringKey, _ text: LocalizedStringKey
+    ) -> some View {
         Label {
             VStack(alignment: .leading, spacing: Spacing.space2) {
                 Text(title).font(.headline)

@@ -37,7 +37,9 @@ final class BackgroundCoordinator {
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
         self.title = title
-        self.subtitle = "Waiting for connection…"
+        self.subtitle = String(
+            localized: "Waiting for connection…",
+            comment: "Subtitle of the iOS Live Activity before the transfer has any progress.")
         self.onExpiration = onExpiration
         generation += 1
         let expected = generation

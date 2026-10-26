@@ -139,7 +139,7 @@ struct HistoryView: View {
                 revokeFailure =
                     TransferFailure(failure, situation: .init(isStored: true)).text
             } catch {
-                revokeFailure = "Try again in a moment."
+                revokeFailure = String(localized: "Try again in a moment.")
             }
         }
     }
@@ -231,20 +231,35 @@ private struct HistoryRow: View {
     private var linkState: String? {
         guard record.storedID != nil else { return nil }
         if let revokedAt = record.revokedAt {
-            return "Link revoked \(revokedAt.formatted(date: .abbreviated, time: .shortened))"
+            return String(
+                localized:
+                    "Link revoked \(revokedAt.formatted(date: .abbreviated, time: .shortened))",
+                comment: "The placeholder is the date and time the link was revoked.")
         }
         guard let expiresAt = record.expiresAt else { return nil }
         let when = expiresAt.formatted(date: .abbreviated, time: .shortened)
-        return expiresAt > .now ? "Link expires \(when)" : "Link expired \(when)"
+        return expiresAt > .now
+            ? String(
+                localized: "Link expires \(when)",
+                comment: "The placeholder is the date and time the link stops working.")
+            : String(
+                localized: "Link expired \(when)",
+                comment: "The placeholder is the date and time the link stopped working.")
     }
 
     private var title: String {
-        if record.isText { return "Text snippet" }
+        if record.isText { return String(localized: "Text snippet") }
         guard let first = record.names.first else {
-            return record.isSend ? "Sent files" : "Received files"
+            return record.isSend
+                ? String(localized: "Sent files") : String(localized: "Received files")
         }
         let extras = record.fileCount - 1
-        return extras > 0 ? "\(first) + \(extras) more" : first
+        return extras > 0
+            ? String(
+                localized: "\(first) + \(extras) more",
+                comment:
+                    "The first placeholder is a file name, the second how many other files the transfer had."
+            ) : first
     }
 
     private var statusBadge: some View {
@@ -267,10 +282,10 @@ private struct HistoryRow: View {
 extension TransferRecord.Status {
     fileprivate var title: String {
         switch self {
-        case .completed: "Completed"
-        case .failed: "Failed"
-        case .cancelled: "Cancelled"
-        case .declined: "Declined"
+        case .completed: String(localized: "Completed")
+        case .failed: String(localized: "Failed")
+        case .cancelled: String(localized: "Cancelled")
+        case .declined: String(localized: "Declined")
         }
     }
 }

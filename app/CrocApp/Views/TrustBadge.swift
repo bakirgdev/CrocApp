@@ -94,7 +94,7 @@ struct TrustBadge: View {
     }
 
     // Claim only what is true (content.md → Claims): never more than that.
-    private var relayLine: String {
+    private var relayLine: LocalizedStringKey {
         switch relay {
         case .localOnly:
             return "Local network only: nothing leaves your network"

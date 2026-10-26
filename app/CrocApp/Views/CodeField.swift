@@ -12,7 +12,7 @@ import SwiftUI
 /// (`--color-accent-text-on-tint` on `--color-accent-tint`) are not
 /// reachable through that surface, so this gets as close as the API allows.
 struct CodeField: View {
-    let placeholder: String
+    let placeholder: LocalizedStringKey
     @Binding var text: String
     var isInvalid: Bool = false
     /// Says in words what is wrong, shown under the field and read by
@@ -25,6 +25,13 @@ struct CodeField: View {
     var onPaste: ((String) -> Void)?
 
     @FocusState private var isFocused: Bool
+
+    /// What `invalidMessage` says for a code shorter than the engine accepts.
+    static var tooShortMessage: String {
+        String(
+            localized: "A code is at least \(EngineConstraints.minCodeLength) characters.",
+            comment: "The placeholder is the minimum number of characters a code needs.")
+    }
 
     // components.md → CodeField: wrapper padding is `0 6px 0 14px`, not a
     // Spacing step, so it is a private constant of this component.

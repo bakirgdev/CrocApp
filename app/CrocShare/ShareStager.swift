@@ -7,8 +7,8 @@ enum ShareStagerError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .noAppGroup: "App Group container unavailable."
-        case .nothingUsable: "Nothing shareable was provided."
+        case .noAppGroup: String(localized: "App Group container unavailable.")
+        case .nothingUsable: String(localized: "Nothing shareable was provided.")
         }
     }
 }

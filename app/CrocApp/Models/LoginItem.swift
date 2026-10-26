@@ -41,7 +41,11 @@ final class LoginItem {
         do {
             if on { try service.register() } else { try service.unregister() }
         } catch {
-            errorMessage = "Couldn't change Open at login: \(error.localizedDescription)"
+            errorMessage = String(
+                localized: "Couldn't change Open at login: \(error.localizedDescription)",
+                comment:
+                    "Open at Login is a switch in Settings. The placeholder is the system's reason."
+            )
         }
         refresh()
     }

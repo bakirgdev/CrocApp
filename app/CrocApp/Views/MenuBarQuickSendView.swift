@@ -133,7 +133,8 @@ struct MenuBarQuickSendView: View {
                 .accessibilityLabel(progressLabel)
                 .accessibilityValue(fraction.formatted(.percent.precision(.fractionLength(0))))
             Text(
-                "\(done.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
+                verbatim:
+                    "\(done.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
             )
             .font(.caption)
             .foregroundStyle(Color.textSecondary)
@@ -144,7 +145,7 @@ struct MenuBarQuickSendView: View {
 
     private var direction: TransferController.Direction { controller.direction }
 
-    private var progressLabel: String {
+    private var progressLabel: LocalizedStringKey {
         direction == .send ? "Sending progress" : "Receiving progress"
     }
 

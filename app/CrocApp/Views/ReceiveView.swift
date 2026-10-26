@@ -50,8 +50,7 @@ struct ReceiveView: View {
                     placeholder: "Code phrase",
                     text: $code,
                     isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength,
-                    invalidMessage:
-                        "A code is at least \(EngineConstraints.minCodeLength) characters."
+                    invalidMessage: CodeField.tooShortMessage
                 ) { pasted in
                     if let link = TransferLink.parse(pasted) { router.open(link) }
                 }

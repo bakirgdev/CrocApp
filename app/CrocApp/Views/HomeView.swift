@@ -28,8 +28,9 @@ struct HomeView: View {
                     // user answers.
                     StatusBanner(
                         kind: .info,
-                        title: "Files are waiting for your answer",
-                        detail: "The other device is waiting for you to accept or decline.",
+                        title: String(localized: "Files are waiting for your answer"),
+                        detail: String(
+                            localized: "The other device is waiting for you to accept or decline."),
                         actionTitle: "Review"
                     ) {
                         router.path = [.receive]
@@ -50,7 +51,7 @@ struct HomeView: View {
                     // while-busy policy) -- surface the count so it isn't
                     // discoverable only by manually visiting Send.
                     if !router.pendingSendURLs.isEmpty {
-                        Text("\(router.pendingSendURLs.count)")
+                        Text(router.pendingSendURLs.count, format: .number)
                             .font(.footnote.weight(.semibold))
                             .monospacedDigit()
                             .foregroundStyle(Color.onAccent)

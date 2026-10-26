@@ -85,9 +85,18 @@ extension View {
         Button("Accept") {}.buttonVariant(.prominent).controlSize(.large)
         Button("Copy Code") {}.buttonVariant(.secondary)
         Button("Decline") {}.buttonVariant(.destructive)
-        Button("Clear History") {}.buttonVariant(.destructiveTinted)
+        // Verbatim, so these preview-only labels stay out of the String Catalog.
+        Button {
+        } label: {
+            Text(verbatim: "Clear History")
+        }
+        .buttonVariant(.destructiveTinted)
         Button("Review") {}.buttonVariant(.plain)
-        Button("Disabled") {}.buttonVariant(.prominent).disabled(true)
+        Button {
+        } label: {
+            Text(verbatim: "Disabled")
+        }
+        .buttonVariant(.prominent).disabled(true)
     }
     .padding(Spacing.space5)
 }

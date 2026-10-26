@@ -277,8 +277,14 @@ final class TransferController {
         phase = .starting
         let title =
             switch direction {
-            case .send: "Sending with CrocApp"
-            case .receive: "Receiving with CrocApp"
+            case .send:
+                String(
+                    localized: "Sending with CrocApp",
+                    comment: "Title of the iOS Live Activity while sending.")
+            case .receive:
+                String(
+                    localized: "Receiving with CrocApp",
+                    comment: "Title of the iOS Live Activity while receiving.")
             }
         background.transferStarted(title: title) { [weak self] in
             guard let self else { return }

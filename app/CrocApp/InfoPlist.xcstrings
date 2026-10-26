@@ -1,0 +1,30 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSCameraUsageDescription" : {
+      "comment" : "Why the iOS app asks for the camera. Shown in the system permission prompt.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "CrocApp uses the camera to scan the QR code for a code phrase."
+          }
+        }
+      }
+    },
+    "NSLocalNetworkUsageDescription" : {
+      "comment" : "Why the app asks for local network access. Shown in the system permission prompt.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "CrocApp uses the local network to discover nearby devices for direct, faster transfers."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
