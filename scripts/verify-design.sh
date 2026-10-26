@@ -105,6 +105,7 @@ ColorAccentText|--color-accent-text
 ColorAccentTextOnTint|--color-accent-text-on-tint
 ColorOnAccent|--color-on-accent
 ColorPaper|--paper
+ColorTextSecondary|--color-text-secondary
 ColorScrim|--color-scrim
 ColorStatusSuccessTint|--color-status-success-tint
 ColorStatusWarningTint|--color-status-warning-tint
@@ -137,7 +138,7 @@ NOT_MIRRORED='
 ^--font-
 ^--tracking-
 ^--icon-stroke
-^--color-text-
+^--color-text-(primary|tertiary|quaternary|link)$
 ^--color-fill
 ^--color-separator$
 ^--color-on-status$
@@ -169,9 +170,12 @@ light|--color-accent-text-on-tint|--color-surface-base|7.36
 light|--color-accent-text-on-tint|--color-surface-grouped|6.60
 light|--color-accent-text-on-tint|--color-accent-tint>--color-surface-base|6.45
 light|--label-2|--color-surface-base|3.44
-light|--label-2-web|--color-surface-base|5.16
-light|--label-2-web|--color-surface-grouped|4.85
-light|--color-text-secondary|--color-accent-tint>--color-surface-base|4.78
+light|--label-2-text|--color-surface-base|5.63
+light|--label-2-text|--color-surface-grouped|5.26
+light|--label-2|--color-surface-grouped|3.30
+light|--color-text-secondary|--color-accent-tint>--color-surface-base|5.19
+light|--color-text-secondary|--color-fill-tertiary>--color-surface-grouped|4.83
+light|--color-text-secondary|--color-status-error-tint>--color-surface-grouped|4.70
 light|--label-3|--color-surface-base|1.73
 light|--color-on-accent|--color-accent-solid|4.94
 light|--color-on-accent|--color-accent-pressed|7.36
@@ -191,6 +195,8 @@ dark|--color-on-accent|--color-accent-solid|7.19
 dark|--color-on-accent|--color-accent-pressed|5.74
 dark|--color-on-status|--color-status-error|3.41
 dark|--label-2|--color-surface-base|6.36
+dark|--color-text-secondary|--color-surface-card|5.95
+dark|--color-text-secondary|--color-status-success-tint>--color-surface-card|4.74
 dark|--color-status-success|--color-status-success-tint>--color-surface-base|8.05
 dark|--color-status-warning|--color-status-warning-tint>--color-surface-base|7.93
 dark|--color-status-error|--color-status-error-tint>--color-surface-base|5.25
@@ -200,7 +206,7 @@ accent fill clears 3:1 on base|light|--color-accent|--color-surface-base|min|3.0
 accent-text clears AA on base|light|--color-accent-text|--color-surface-base|min|4.5
 accent-text-on-tint clears AA on grouped|light|--color-accent-text-on-tint|--color-surface-grouped|min|4.5
 accent-text-on-tint clears AA on tint|light|--color-accent-text-on-tint|--color-accent-tint>--color-surface-base|min|4.5
-web secondary clears AA on grouped|light|--label-2-web|--color-surface-grouped|min|4.5
+secondary text clears AA on grouped|light|--label-2-text|--color-surface-grouped|min|4.5
 filled prominent clears AA, light|light|--color-on-accent|--color-accent-solid|min|4.5
 filled prominent clears AA, dark|dark|--color-on-accent|--color-accent-solid|min|4.5
 filled prominent pressed clears AA, light|light|--color-on-accent|--color-accent-pressed|min|4.5
@@ -212,6 +218,18 @@ focus ring outer band clears 3:1 on base|light|--color-accent|--color-surface-ba
 focus ring inner band clears 3:1 on the accent solid fill|light|--color-surface-base|--color-accent-solid|min|3.0
 tertiary is NOT a usable text color|light|--label-3|--color-surface-base|max|3.0
 secondary text clears AA on the accent tint (rule 4)|light|--color-text-secondary|--color-accent-tint>--color-surface-base|min|4.5
+secondary text clears AA on a success tint over grouped (rule 4)|light|--color-text-secondary|--color-status-success-tint>--color-surface-grouped|min|4.5
+secondary text clears AA on a warning tint over grouped (rule 4)|light|--color-text-secondary|--color-status-warning-tint>--color-surface-grouped|min|4.5
+secondary text clears AA on an error tint over grouped (rule 4)|light|--color-text-secondary|--color-status-error-tint>--color-surface-grouped|min|4.5
+secondary text clears AA on an info tint over grouped (rule 4)|light|--color-text-secondary|--color-status-info-tint>--color-surface-grouped|min|4.5
+secondary text clears AA on the fill-tertiary wash over grouped (rule 4)|light|--color-text-secondary|--color-fill-tertiary>--color-surface-grouped|min|4.5
+secondary text clears AA on a success tint over a card, dark (rule 4)|dark|--color-text-secondary|--color-status-success-tint>--color-surface-card|min|4.5
+secondary text clears AA on a warning tint over a card, dark (rule 4)|dark|--color-text-secondary|--color-status-warning-tint>--color-surface-card|min|4.5
+secondary text clears AA on an error tint over a card, dark (rule 4)|dark|--color-text-secondary|--color-status-error-tint>--color-surface-card|min|4.5
+secondary text clears AA on an info tint over a card, dark (rule 4)|dark|--color-text-secondary|--color-status-info-tint>--color-surface-card|min|4.5
+secondary text clears AA on the accent tint over a card, dark (rule 4)|dark|--color-text-secondary|--color-accent-tint>--color-surface-card|min|4.5
+the system secondary label clears the 3:1 glyph floor on grouped (rule 4)|light|--label-2|--color-surface-grouped|min|3.0
+the system secondary label is NOT text on grouped (rule 4)|light|--label-2|--color-surface-grouped|max|4.5
 accent-text clears AA on a card|light|--color-accent-text|--color-surface-card|min|4.5
 the accent tint is NOT a visible focus indicator (rule 7)|light|--glass-tint-accent|--color-surface-base|max|1.5
 dark status success clears AA on its own tint|dark|--color-status-success|--color-status-success-tint>--color-surface-base|min|4.5
@@ -219,8 +237,8 @@ dark status warning clears AA on its own tint|dark|--color-status-warning|--colo
 dark status error clears AA on its own tint|dark|--color-status-error|--color-status-error-tint>--color-surface-base|min|4.5
 dark status info clears AA on its own tint|dark|--color-status-info|--color-status-info-tint>--color-surface-base|min|4.5
 == aliases ==
-rule 4: secondary text is label-2-web, light|light|--color-text-secondary|--label-2-web
-rule 4: secondary text is label-2-web, dark|dark|--color-text-secondary|--label-2-web
+rule 4: secondary text is label-2-text, light|light|--color-text-secondary|--label-2-text
+rule 4: secondary text is label-2-text, dark|dark|--color-text-secondary|--label-2-text
 rule 6: link is accent-text, light|light|--color-text-link|--color-accent-text
 rule 6: link is accent-text, dark|dark|--color-text-link|--color-accent-text
 dark accent collapses to green-400|dark|--color-accent|--green-400

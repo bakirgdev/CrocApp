@@ -29,13 +29,32 @@ When prose names a control, quote its exact label in bold: tap **Copy Code**.
 
 ## Errors
 
-State what happened and what to do, in one line, without blame.
+A failure has two parts, on every surface that shows one (StatusBlock, StatusBanner, alert, notification): what happened, then what to do. Without blame.
 
-- "The other device declined the transfer." Not "Transfer failed (code 3)."
-- Never blame the user, never "invalid", never "oops".
-- No error codes, stack traces or croc output in the primary line. A useful detail goes in a secondary `--type-footnote` line.
-- If the user can fix it, the fix is in the sentence or in an adjacent button ("Open Settings").
+| Part | Rule | Example |
+|---|---|---|
+| Title | what happened, in words: sentence case, no period, six words at most, never "invalid" or "oops" | "Couldn't reach the relay" |
+| Detail | what to do, one sentence with a period | "Check your internet connection." |
+
+More pairs: "The other device declined" and "Ask them to send it again."; "The code phrases don't match" and "Check the code phrase on both devices."; "Sending was interrupted" and "Keep CrocApp in the foreground and try again."
+
+- No error codes, stack traces or croc output in either part. A useful technical detail goes in a secondary `--type-footnote` line under the actions.
+- If the user can fix it, the detail names the fix. A fix that lives in Settings gets an adjacent **Open Settings**, a retry gets **Try Again** (`components.md` → StatusBlock).
 - If the user cannot fix it, say so and offer no button that will not help.
+- A banner's title and body are the same pair.
+- A cancel or decline the user made is not a failure: its title stands alone ("Transfer cancelled"), with **Done**.
+
+## Settings
+
+A row's label names the thing, in Title Case, as a noun phrase: never "Enable" or "Allow". A footer is one sentence in sentence case that says what the row changes, and makes no claim outside Claims below.
+
+| Row | Footer |
+|---|---|
+| **Save Transfer History** | Finished transfers are listed in History, which stays on this device. |
+| Section "Notifications": **Incoming Transfers**, **Finished Transfers** | Shown only while CrocApp is in the background. |
+| **Haptics** (iPhone only) | A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer. |
+
+When the system has notifications off for CrocApp, both Notifications rows are disabled and the footer reads "Notifications are off for CrocApp in Settings." ("System Settings" on a Mac) with an **Open Settings** button.
 
 ## Numbers
 
@@ -73,10 +92,35 @@ Relative inside a week ("yesterday", "3 days ago"), short absolute after. Never 
 | end-to-end encrypted (always hyphenated) | end to end encrypted, secure, military-grade, bank-level |
 | croc | Croc, CROC |
 | CrocApp | Croc App, CrocAPP |
+| notification | alert, push, toast. "Banner" is only the in-app StatusBanner |
+| haptics | vibration, buzz |
+
+"Incoming" appears in one place: the label **Incoming Transfers** (Settings → Notifications) and the notification kind it names. Nothing is being received before the user says yes, so "Receiving" would be false there. Everywhere else direction stays Sending and Receiving.
+
+The code phrase rule covers accessibility labels and hints as well as visible text: a VoiceOver label reads "Code phrase", never "Transfer code".
 
 "Password" is right only for the relay password, a real password a user types for their own relay. Explaining PAKE ("password-authenticated key exchange") on How It Works is a protocol name, not a name for the code phrase.
 
 **Send as link** (stored transfers) is still sending: "Send as Link", "Sending", "Link ready". The link server is the croc project's server, or one you run, that holds the encrypted files. The one place "download" appears is as the noun for one fetch of a link: "Downloads allowed: 5", "2 of 5 downloads used".
+
+## System surfaces
+
+Copy for what the app shows outside its windows (`platforms.md` → System surfaces). The two app rules hold: direction in words, and never a code phrase, a link or file contents. A notification shows a count and a size, written as the result screen writes them (`3 files • 24 MB`; a text payload is "Text snippet"), and never file names: a name is the first thing a bystander reads on a Lock Screen, and the count is enough to decide to review.
+
+| Surface | Title | Body |
+|---|---|---|
+| Notification: a request waits | Files are waiting for your answer | `3 files • 24 MB` |
+| the same, previews hidden | | Open CrocApp to review. |
+| Notification action | **Review** | |
+| Notification: a send finished | Sending complete | `3 files • 24 MB` |
+| Notification: a receive finished | Receiving complete | `3 files • 24 MB` |
+| Notification: a link is ready | Link ready | Open CrocApp to copy or share it. |
+| Notification: a transfer failed | the failure's title | the failure's detail (Errors) |
+| a result (sent, received, link ready or failed), previews hidden | | Open CrocApp to see the result. |
+| Widget, no transfers | No transfers yet | |
+| Widget, Save Transfer History off | History is off | |
+| Widget and control labels | Send, Receive | |
+| Menu bar icon, spoken | CrocApp, then the state: "waiting for the other device", "sending 42 percent", "receiving 42 percent", "needs your answer", "transfer failed". Idle is "CrocApp" | |
 
 ## Claims
 

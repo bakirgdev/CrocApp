@@ -4,10 +4,11 @@ The binding floor for the app, the landing page and the docs site. Nothing in `c
 
 ## Contrast
 
-WCAG 2.2 AA: body text 4.5:1, large text and UI boundaries 3:1. **Light is the constrained theme:** check it first. Ratios and the seven rules are in `colors.md` → Contrast and are enforced by `scripts/verify-design.sh`. Two decide most work:
+WCAG 2.2 AA: body text 4.5:1, large text and UI boundaries 3:1. **Light is the constrained theme:** check it first. Ratios and the seven rules are in `colors.md` → Contrast and are enforced by `scripts/verify-design.sh`. Three decide most work:
 
 - **Accent is a fill, not a label.** Accent text is `--color-accent-text`, or `--color-accent-text-on-tint` on grouped and tinted surfaces. In the app that includes every bordered and plain button label.
 - **A status color is a fill, never a foreground.** Status text is `--color-text-primary`.
+- **Secondary text is `--color-text-secondary`.** The system's `.secondary` and `.tertiary` are non-text and large text only (`colors.md` rule 4).
 
 The one accepted deviation is the filled destructive button (`colors.md` rule 3); the filled prominent button clears AA on `--color-accent-solid`.
 
@@ -33,7 +34,7 @@ Text styles, never a fixed point size; glyph sizes through text styles or `@Scal
 
 ## Reduced motion
 
-No press scale, no indeterminate slide, every state change instant rather than removed (`motion.md` → Motion).
+No press scale, no indeterminate slide, every state change instant rather than removed (`motion.md` → Motion). Each extra motion drops to an instant change or a static glyph: symbol replace, numeric text, banner and row insertion, the waiting pulse (`motion.md` → Vocabulary).
 
 ## Reduced transparency
 
@@ -47,6 +48,10 @@ Touch and keyboard users never hover. Hover may restate, never reveal (`platform
 
 Every DropZone ships beside a real file-picker button.
 
+## Haptics
+
+Never the only signal: every haptic is also visible and announced, and the Haptics setting turns them all off without losing anything (`motion.md` → Haptics and sound).
+
 ## Announcements
 
-Error banners and terminal failures are announced to VoiceOver; progress is not announced on every tick.
+Error banners and terminal failures are announced to VoiceOver; progress is not announced on every tick. A sidebar row's state is announced once per phase change. A copy announces "Copied", a scan "Code scanned" or "Link scanned".

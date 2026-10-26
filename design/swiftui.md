@@ -18,7 +18,8 @@ One color set per semantic alias that has no exact system equivalent; a system s
 | `--color-accent-text-on-tint` | `ColorAccentTextOnTint` set; `Color.accentTextOnTint` |
 | `--color-on-accent` | `ColorOnAccent` set; `Color.onAccent` |
 | `--color-on-status` | `Color.onStatus` (`.white` in both themes) |
-| `--color-text-primary/secondary/tertiary` | `.primary` / `.secondary` / tertiary label, via `Color.textPrimary/Secondary/Tertiary` |
+| `--color-text-primary`, `--color-text-tertiary` | `.primary` / tertiary label, via `Color.textPrimary`, `Color.textTertiary` (tertiary is decorative only, `colors.md` rule 5) |
+| `--color-text-secondary` | `ColorTextSecondary` set; `Color.textSecondary`. The only secondary text color |
 | `--color-status-success/warning/error/info` | `Color.statusSuccess/Warning/Error/Info` (system green, orange, red, blue match the tokens) |
 | `--color-status-*-tint` | `ColorStatus*Tint` sets; `Color.status*Tint` |
 | `--color-surface-grouped` | `Color.surfaceGrouped` (iOS grouped background, macOS window background) |
@@ -32,7 +33,7 @@ UIKit/AppKit-backed colors need an `#if os()` split; `DesignTokens.swift` is the
 
 **`Color.accentFill` is a fill, not a label color** (`colors.md` rule 1). `AccentColor` is the global tint, so every `.bordered`, `.borderless` and plain button label inherits it at 3.41:1 unless the button variant sets the label. That is why buttons go through the variants below and never style themselves.
 
-`.secondary` is `--label-2` (0.60), not the web's `--label-2-web` (0.75): deliberate, `colors.md` rule 4.
+**Never `.secondary` or `.tertiary` for text.** Apple's secondaryLabel is 3.44:1 on white and fails any text below large size, so text takes `Color.textSecondary`, including a footer or an EmptyState description inside a system control. `.secondary` stays legal for a glyph and for large text (`colors.md` rule 4). The Swift lint in `scripts/verify-design.sh` does not catch it yet, so review for it.
 
 ## Typography
 
@@ -65,9 +66,21 @@ Never a fixed `.font(.system(size:))`: text takes a style, and a glyph size a co
 | `--border-hairline(-half)` | `BorderWidth.hairline`, `.hairlineHalf` |
 | `--control-height-*`, `--hit-target-min` | `ControlHeight.large/medium/small`, `.hitTargetMin`; large buttons take `.controlSize(.large)` |
 | `--icon-size-*` | `IconSize.small/medium/large` |
-| `--content-max-width` | `LayoutCap.contentMaxWidth` |
+| `--content-max-width` | `LayoutCap.contentMaxWidth`: on the screen's content in compact width, on each detail screen's content in regular width (Navigation) |
 | `--opacity-disabled-container` | `Opacity.disabledContainer` |
 | component constants | `ComponentMetrics` when shared by two views, otherwise a private constant in the view |
+
+## Navigation
+
+| Design (`platforms.md` → Layout by width) | App |
+| --- | --- |
+| Compact or regular | `@Environment(\.horizontalSizeClass)` at the root: `.compact` is Home in a `NavigationStack`, `.regular` is a two-column `NavigationSplitView`. SwiftUI reports macOS as always regular |
+| Sidebar | a `List(selection:)` of `Label` rows. No `navigationSplitViewColumnWidth`, no style override and the default column visibility: the system owns widths, hiding and the material |
+| Detail | one `NavigationStack` per sidebar item, so Advanced settings and How It Works push inside the detail |
+| The cap | `.frame(maxWidth: LayoutCap.contentMaxWidth)` on each detail screen's content, never on the split view or the sidebar |
+| Per-scene state | the sidebar selection and each detail's path are scene state (`@SceneStorage` or a per-scene model), not the `AppRouter.shared` singleton's (`docs/knowledge/app-ui-architecture.md`). The transfer, settings and history stay app-level |
+
+The Mac Settings scene stays a `Settings` scene. Its window sizes are literals from `platforms.md`, allowed in the scene declarations.
 
 ## Materials
 
@@ -87,7 +100,16 @@ The system draws focus on both platforms. `--shadow-focus-ring` is a web constru
 
 Phase changes animate with `Motion.easeOut(Motion.durationBase)` on the swapping container and `.transition(.opacity)`. Read `@Environment(\.accessibilityReduceMotion)` and pass `nil` when it is on. No `.spring`, no `.bouncy`, no `.snappy` (`motion.md`).
 
-Haptics: `.sensoryFeedback(_:trigger:)`, iPhone only (`UIDevice.current.userInterfaceIdiom == .phone`), the four events in `motion.md` → Haptics and sound. No audio.
+The extra motions (`motion.md` → Vocabulary). Each one reads `accessibilityReduceMotion`:
+
+| Design | App |
+| --- | --- |
+| Symbol replace | `.contentTransition(.symbolEffect(.replace))` on the `Image`; `.contentTransition(.identity)` when Reduce Motion is on |
+| Numeric text | `.contentTransition(.numericText())` with `.monospacedDigit()`, the value changed inside `Motion.easeOut(Motion.durationBase)`; `.identity` when Reduce Motion is on |
+| Insert | `.transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: -Spacing.space3)).animation(Motion.easeOut(Motion.durationBase)), removal: .opacity.animation(Motion.easeStandard(Motion.durationFast))))`; `.identity` when Reduce Motion is on |
+| Pulse | `.symbolEffect(.pulse, isActive:)`, active only in the `waiting` phase and only with Reduce Motion off |
+
+Haptics: `.sensoryFeedback(_:trigger:)`, only when `UIDevice.current.userInterfaceIdiom == .phone` and the Haptics setting is on, the five events in `motion.md` → Haptics and sound. No audio.
 
 ## Components
 
@@ -124,7 +146,7 @@ These tokens have no Swift form on purpose. `scripts/verify-design.sh` skips the
 | `--tracking-*` except code and eyebrow | text styles carry Apple's optical tracking; `.tracking()` on a system style fights it |
 | `--icon-stroke-*` | SF Symbols have weights, not strokes |
 | `--color-text-quaternary`, `--color-fill*` | system semantics, used through the system controls |
-| `--color-text-primary/secondary/tertiary`, `--color-text-link`, `--color-surface-*`, `--color-separator`, `--color-status-*` (not the tints), `--color-on-status` | mirrored by name as `Color` aliases above, but their values come from the OS (or `.white`), so there is no number to compare |
+| `--color-text-primary/tertiary`, `--color-text-link`, `--color-surface-*`, `--color-separator`, `--color-status-*` (not the tints), `--color-on-status` | mirrored by name as `Color` aliases above, but their values come from the OS (or `.white`), so there is no number to compare |
 
 ## Constraints carried from the app
 

@@ -62,7 +62,10 @@
 | Transfer declined (history status) | `hand.raised.fill` |
 | Advanced settings | `slider.horizontal.3` |
 | App mark (onboarding) | `arrow.left.arrow.right.circle.fill` |
-| Menu bar extra | `arrow.up.arrow.down.circle` |
+| Menu bar icon, idle | `arrow.up.arrow.down.circle` |
+| Menu bar icon, waiting or transferring | `arrow.up.arrow.down.circle.fill` |
+| Menu bar icon, needs attention | `exclamationmark.circle.fill` (the Error glyph, reused) |
+| Quick Look | `eye` |
 | Camera denied, restricted or unavailable | `video.slash` |
 
 `xmark.circle.fill` is both Remove item and the failed status on purpose: never on one screen together, and the history use carries an accessibility label naming the status.

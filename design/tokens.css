@@ -29,8 +29,9 @@
   --paper:            light-dark(#FFFFFF, #000000);
   --label-1:          light-dark(rgba(0,0,0,1),         rgba(255,255,255,1));
   --label-2:          light-dark(rgba(60,60,67,0.60),   rgba(235,235,245,0.60));
-  /* --label-2 is Apple's secondaryLabel and fails AA on white. colors.md rule 4. */
-  --label-2-web:      light-dark(rgba(60,60,67,0.75),   rgba(235,235,245,0.60));
+  /* --label-2 is Apple's secondaryLabel: 3.44:1 on white, so large text and non-text only.
+     --label-2-text is the secondary label for any text. colors.md rule 4. */
+  --label-2-text:     light-dark(rgba(60,60,67,0.78),   rgba(235,235,245,0.60));
   --label-3:          light-dark(rgba(60,60,67,0.30),   rgba(235,235,245,0.30));
   --label-4:          light-dark(rgba(60,60,67,0.18),   rgba(235,235,245,0.16));
   --separator:        light-dark(rgba(60,60,67,0.29),   rgba(84,84,88,0.65));
@@ -70,7 +71,7 @@
   --color-accent-text-on-tint: light-dark(var(--green-800), var(--green-400));
 
   --color-text-primary:    var(--label-1);
-  --color-text-secondary:  var(--label-2-web);
+  --color-text-secondary:  var(--label-2-text);
   --color-text-tertiary:   var(--label-3);
   --color-text-quaternary: var(--label-4);
   --color-text-link:       var(--color-accent-text);

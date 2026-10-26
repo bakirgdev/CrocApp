@@ -35,7 +35,7 @@ Theme-independent literals. The accent alias swaps which step it points at. The 
 | `--paper` | `#FFFFFF` | `#000000` |
 | `--label-1` | `rgba(0,0,0,1)` | `rgba(255,255,255,1)` |
 | `--label-2` | `rgba(60,60,67,0.60)` | `rgba(235,235,245,0.60)` |
-| `--label-2-web` | `rgba(60,60,67,0.75)` | `rgba(235,235,245,0.60)` |
+| `--label-2-text` | `rgba(60,60,67,0.78)` | `rgba(235,235,245,0.60)` |
 | `--label-3` | `rgba(60,60,67,0.30)` | `rgba(235,235,245,0.30)` |
 | `--label-4` | `rgba(60,60,67,0.18)` | `rgba(235,235,245,0.16)` |
 | `--separator` | `rgba(60,60,67,0.29)` | `rgba(84,84,88,0.65)` |
@@ -83,7 +83,7 @@ Pair each with the matching `--blur-*` and `--glass-saturate` (see `materials.md
 | `--color-on-accent` | `#FFFFFF` | `#05271A` |
 | `--color-on-status` | `#FFFFFF` | `#FFFFFF` |
 | `--color-text-primary` | `--label-1` | `--label-1` |
-| `--color-text-secondary` | `--label-2-web` | `--label-2-web` |
+| `--color-text-secondary` | `--label-2-text` | `--label-2-text` |
 | `--color-text-tertiary` | `--label-3` | `--label-3` |
 | `--color-text-quaternary` | `--label-4` | `--label-4` |
 | `--color-text-link` | `--color-accent-text` | `--color-accent-text` |
@@ -116,9 +116,9 @@ Every row is recomputed from `tokens.css` by `scripts/verify-design.sh` (contras
 | `--color-accent-text` on grouped / accent tint | 4.42 / 4.32 | fails body: use the step below |
 | `--color-accent-text` on a `--color-fill-tertiary` wash (inline code, striped table row) | 4.28 | fails body: use the step below |
 | `--color-accent-text-on-tint` `#116243` on base / grouped / accent tint / fill wash | 7.36 / 6.60 / 6.45 / 6.38 | AA body everywhere |
-| `--label-2` 0.60 on base | 3.44 | fails body: Apple's own secondaryLabel |
-| `--label-2-web` 0.75 on base / grouped | 5.16 / 4.85 | AA body |
-| `--color-text-secondary` (`--label-2-web`) on accent tint | 4.78 | AA body, 0.28 of headroom |
+| `--label-2` 0.60 on base / grouped | 3.44 / 3.30 | glyphs (3:1) and large text only: Apple's own secondaryLabel |
+| `--label-2-text` 0.78 on base / grouped | 5.63 / 5.26 | AA body |
+| `--color-text-secondary` (`--label-2-text`) on accent tint / fill-tertiary wash over grouped / error tint over grouped | 5.19 / 4.83 / 4.70 | AA body. The error tint over grouped is the weakest of the four status tints |
 | `--label-3` on base | 1.73 | decorative fill only |
 | `--color-accent` band of `--shadow-focus-ring` on base, and the base band on `--color-accent-solid` | 3.41 / 4.94 | AA non-text, rule 7 |
 | `--glass-tint-accent` composited on base | 1.14 | not a focus indicator, rule 7 |
@@ -127,7 +127,7 @@ Every row is recomputed from `tokens.css` by `scripts/verify-design.sh` (contras
 | `--color-status-success` / `-warning` / `-error` on its own tint | 1.98 / 1.96 / 2.94 | nothing |
 | `--color-status-success` / `-warning` / `-error` / `-info` on base | 2.22 / 2.20 / 3.55 / 4.02 | fill and glyph only |
 
-Dark, for the record: accent 9.44 on base, 7.65 on card, 7.72 on its own tint; `--color-on-accent` 7.19 on `--color-accent-solid` (the accent itself) and 5.74 on `--color-accent-pressed`; `--color-on-status` 3.41 on `--color-status-error`, the same rule-3 deviation as light; `--label-2` 6.36 on base; every status color on its own tint: success 8.05, warning 7.93, error 5.25, info 4.92 (all AA body). Nothing else in dark needs a substitute, which is why `--color-accent-solid` and all three accent-text aliases collapse to `--green-400` there.
+Dark, for the record: accent 9.44 on base, 7.65 on card, 7.72 on its own tint; `--color-on-accent` 7.19 on `--color-accent-solid` (the accent itself) and 5.74 on `--color-accent-pressed`; `--color-on-status` 3.41 on `--color-status-error`, the same rule-3 deviation as light; `--label-2` 6.36 on base; `--color-text-secondary` (the same 0.60 in dark) 5.95 on a card and 4.74 on a success tint over a card, its weakest surface; every status color on its own tint: success 8.05, warning 7.93, error 5.25, info 4.92 (all AA body). Nothing else in dark needs a substitute, which is why `--color-accent-solid` and all three accent-text aliases collapse to `--green-400` there.
 
 ### Rules
 
@@ -137,7 +137,7 @@ Dark, for the record: accent 9.44 on base, 7.65 on card, 7.72 on its own tint; `
 
 3. **A filled prominent button is `--color-accent-solid`, not `--color-accent`.** White on the brand green is 3.41:1, so light fills with `--green-700` (4.94:1, AA body) and presses to `--green-800` (7.36:1); dark keeps the accent, which already clears 7.19:1. Accent as a background that carries a label is the one use `--color-accent` does not serve. The filled destructive button has no such step and ships at 3.55:1 light, 3.41:1 dark: the system has one error red (`--sys-red`, Apple's own value, and the app's destructive controls read as the system's), darkening it for one control would fork the status color from every glyph, tint and border that share it, and a darker red is a new base color rather than an existing ramp step. It clears 3:1 on three conditions: the label stays ≥ 17px semibold and never shrinks, small sizes use `destructive-tinted`, and filled destructive stays limited to Decline and confirming Clear History (`components.md` → Button). Their ink is `--color-on-accent` and `--color-on-status`: the only two places a knocked-out label is allowed, and neither is a raw literal.
 
-4. **`--color-text-secondary` is not `--label-2` in light.** Apple's secondaryLabel (0.60) is 3.44:1 on white, below AA for anything under large text, which is most of a web page. `--label-2` keeps the true system value so the app stays visually native; the alias resolves to `--label-2-web` (0.75). An app view consuming these tokens directly wants `--label-2`.
+4. **Secondary text is `--color-text-secondary`, never Apple's `.secondary`.** The system's secondaryLabel (`--label-2`, 0.60) is 3.44:1 on white and 3.30:1 on the grouped page: enough for a glyph (3:1), not for text. `--color-text-secondary` resolves to `--label-2-text` (0.78 in light, the system's own 0.60 in dark), which clears 4.5:1 on every surface that carries it: base, card, grouped, the accent tint, a fill wash and each of the four status tints. At 0.75 the error tint over grouped measured 4.36 and the DropZone fill 4.48, which is why 0.78. The app mirrors the alias as the `ColorTextSecondary` color set, so the web and the app read one value. `.secondary` and `.tertiary` are for non-text (a glyph) and large text only. Large text is 24px or more, or 18.66px or more at weight 700 (WCAG's 18pt, and 14pt bold): in this scale `--type-large-title`, `--type-title1`, `--type-title2` and `--type-code-hero`. Body, callout, subhead, footnote and caption text, and `--type-title3` at 600, are not large. A string we write inside a system control (a Form footer, an EmptyState description) takes the token explicitly; only text the system draws itself (a placeholder, a picker's value) keeps Apple's own.
 
 5. **`--color-text-tertiary` is not a text color and not a UI-boundary color.** 1.73:1. Decorative fills only. Anything a sighted user has to *see* (disclosure chevrons, remove controls, empty-state glyphs) takes secondary or better.
 

@@ -24,7 +24,7 @@ Approved boilerplate, used verbatim:
 - Never overstate security. Claims come only from the approved list in `content.md` → Claims.
 - Direction is always explicit: "Sending" and "Receiving" as words, never color or position alone.
 - Nothing is accepted without an explicit yes, unless the user turned on auto-accept.
-- Errors say what happened and what to do, in one line, without blame: "The other device declined the transfer."
+- Errors say what happened and what to do, a short title then one sentence, without blame: "The other device declined", "Ask them to send it again."
 
 Copy mechanics (case, terminology, numbers) are `content.md`.
 
@@ -74,7 +74,7 @@ SF Pro and SF Mono through the system font, never a shipped font file, never a s
 | Screenshots | `assets/screenshots/{mac,iphone,ipad}/<screen>-{light,dark}.png` | README, docs, landing hero |
 | App Store screenshots | `assets/screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` | App Store Connect |
 | Social card | `web/landing/assets/img/og.jpg` | 1200×630, light: wordmark, accent `lock`, headline "Send files with a code phrase", the line "Encrypted end-to-end", the site URL, mascot on the trailing side |
-| GitHub social preview | `assets/github-social-preview.png` | 1280×640, the same layout in dark values (`--bg-secondary`, `--label-1`, `--label-2-web`, `--green-400`) with the repo URL; uploaded by hand in the repo settings |
+| GitHub social preview | `assets/github-social-preview.png` | 1280×640, the same layout in dark values (`--bg-secondary`, `--label-1`, `--label-2-text`, `--green-400`) with the repo URL; uploaded by hand in the repo settings |
 | Disk image background | `assets/dmg-background.tiff` | `components.md` → DiskImage |
 | App Store badges | `web/landing/assets/img/app-store.svg`, `mac-app-store.svg` | Apple's artwork, below |
 
