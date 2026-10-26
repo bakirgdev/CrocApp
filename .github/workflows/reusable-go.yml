@@ -14,9 +14,12 @@ jobs:
 
     timeout-minutes: 15
 
+    # GOFLAGS puts the engine's build tag on every go command below, so the
+    # checks run on what ships (scripts/build-xcframework.sh).
     env:
       GOOS: darwin
       GOARCH: arm64
+      GOFLAGS: -tags=croc_no_tailcat
 
     defaults:
       run:

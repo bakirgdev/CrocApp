@@ -3,8 +3,7 @@
 # in 12 scenarios: CLI -> app receive (+ history), app -> CLI send, local-only
 # send, custom-relay send, no-compress send, both-sides-confirm send, a receive
 # onto an existing file with Keep Both and with Replace, a 130 MiB transfer in
-# each direction under Connection Automatic and Relay only (needs the public
-# internet: Tailcat bootstraps from tailcat.dev), stored transfers against a
+# each direction that must not use Tailcat, stored transfers against a
 # local store server, menu-bar quick send, Open at login and the Shortcuts
 # actions. Every transfer gates on a byte-identical diff AND the app's
 # verify-result.txt.
@@ -221,47 +220,48 @@ collide keepBoth
 collide replace
 echo MAC-COLLIDE-OK
 
-# --- 8: 130 MiB in each direction, Connection Automatic and Relay only --
-# croc offers Tailcat only for sends of 128 MiB or more, so the file is just
-# over that. The CLI's --debug log shows the offer ("tailcat-offer") on the
-# receiving side of an app send, and the sender's size decision
-# ("selected=derp") on a CLI send. Under relay the offer must be absent.
+# --- 8: 130 MiB in each direction, no Tailcat ----------------------
+# The app is built without Tailcat (croc_no_tailcat), so a transfer of 128 MiB
+# or more, which the stock CLI would race over Tailcat against a capable peer,
+# goes over the relay. The CLI runs on its default --transport auto, and its
+# --debug log must show the plain relay line and no Tailcat offer. The CLI still
+# logs "selected=derp" for its size decision on a send: that is not Tailcat.
+# The observed log lines are in docs/knowledge/crocmobile-bridge.md,
+# "Transport and Tailcat".
 head -c 136314880 /dev/urandom > "$TMP/bigrecv.bin"
-transport_app_send() {                              # transport_app_send MODE
-  local mode=$1
-  C=$(code "xs$mode")
+no_tailcat() {                                      # no_tailcat LOG LABEL
+  grep -aq "selected croc relay data transport$" "$1" || fail "$2: CLI log has no plain relay data transport line"
+  ! grep -aEq "tailcat-offer|starting Tailcat server|Tailcat fallback|selected staged" "$1" || fail "$2: CLI log shows a Tailcat offer"
+}
+big_app_send() {
+  C=$(code xsend)
   rm -f "$RESULT" "$DOCS/bigsend.bin"
   head -c 136314880 /dev/urandom > "$DOCS/bigsend.bin"
-  run_app --auto-send "$DOCS/bigsend.bin" --code "$C" --transport "$mode" \
-      > "$TMPROOT/mac-app-xs$mode.log" 2>&1
+  run_app --auto-send "$DOCS/bigsend.bin" --code "$C" > "$TMPROOT/mac-app-xsend.log" 2>&1
   await_ready
-  RECV_TIMEOUT=300 recv_from_app "xsend-$mode" "$DOCS/bigsend.bin" "$TMP/d8s-$mode" --debug
-  cmp -s "$DOCS/bigsend.bin" "$TMP/d8s-$mode/bigsend.bin" || fail "transport $mode send: 130 MiB differs"
-  rm -f "$DOCS/bigsend.bin" "$TMP/d8s-$mode/bigsend.bin"
+  RECV_TIMEOUT=300 recv_from_app "xsend" "$DOCS/bigsend.bin" "$TMP/d8s" --debug
+  cmp -s "$DOCS/bigsend.bin" "$TMP/d8s/bigsend.bin" || fail "large send: 130 MiB differs"
+  rm -f "$DOCS/bigsend.bin" "$TMP/d8s/bigsend.bin"
 }
-transport_app_receive() {                           # transport_app_receive MODE
-  local mode=$1 log="$TMPROOT/mac-cli-xr$1.log" cli_pid
-  C=$(code "xr$mode")
+big_app_receive() {
+  local log="$TMPROOT/mac-cli-xr.log" cli_pid
+  C=$(code xrecv)
   rm -f "$RESULT" "$DOCS/bigrecv.bin"
-  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" --debug --disable-clipboard --ignore-stdin send --transport "$mode" bigrecv.bin ) \
+  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" --debug --disable-clipboard --ignore-stdin send bigrecv.bin ) \
       > "$log" 2>&1 &
   cli_pid=$!
   sleep 3
-  run_app --auto-receive "$C" > "$TMPROOT/mac-app-xr$mode.log" 2>&1
+  run_app --auto-receive "$C" > "$TMPROOT/mac-app-xr.log" 2>&1
   await_app 300
   wait "$cli_pid" || true
-  check_result "transport $mode receive"
-  cmp -s "$TMP/bigrecv.bin" "$DOCS/bigrecv.bin" || fail "transport $mode receive: 130 MiB differs"
+  check_result "large receive"
+  cmp -s "$TMP/bigrecv.bin" "$DOCS/bigrecv.bin" || fail "large receive: 130 MiB differs"
   rm -f "$DOCS/bigrecv.bin"
 }
-transport_app_send auto
-grep -q "tailcat-offer" "$TMPROOT/mac-cli-xsend-auto.log" || fail "transport auto send: no Tailcat offer"
-transport_app_send relay
-! grep -q "tailcat-offer" "$TMPROOT/mac-cli-xsend-relay.log" || fail "transport relay send: Tailcat offered"
-transport_app_receive auto
-grep -q "selected=derp" "$TMPROOT/mac-cli-xrauto.log" || fail "transport auto receive: CLI did not choose Tailcat"
-transport_app_receive relay
-! grep -q "tailcat-offer" "$TMPROOT/mac-cli-xrrelay.log" || fail "transport relay receive: Tailcat offered"
+big_app_send
+no_tailcat "$TMPROOT/mac-cli-xsend.log" "large send"
+big_app_receive
+no_tailcat "$TMPROOT/mac-cli-xr.log" "large receive"
 rm -f "$TMP/bigrecv.bin"
 echo MAC-TRANSPORT-OK
 
@@ -273,7 +273,7 @@ echo MAC-TRANSPORT-OK
 # The source sits in a subfolder because the second instance receives into
 # Documents itself.
 CT="$TMP/croctest"
-( cd crocmobile && go build -o "$CT" ./cmd/croctest )
+( cd crocmobile && go build -tags croc_no_tailcat -o "$CT" ./cmd/croctest )
 mkdir -p "$TMP/store9" "$DOCS/store-src"
 "$CT" store-server "$TMP/store9" > "$TMP/9srv.log" 2>&1 &
 STORE=""

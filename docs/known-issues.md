@@ -15,8 +15,8 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - The research behind this is in `knowledge/app-store-listing.md`, "Export compliance". It is not legal advice, and the exact App Store Connect questions could not be fetched.
 - **The Accessibility Inspector and VoiceOver audit has not run on any 1.0 view.**
   - It needs Accessibility Inspector and VoiceOver on iOS and macOS, so no automated session can do it.
-  - Views to cover: the Keep Both / Replace sheet, the **When a File Already Exists** and **Connection** pickers, the waiting screen's QR code, Share Link and relay note, Send as Link and its result screen, the stored-link row on Receive, History (Revoke and the row layout), the stored-server field, the Advanced settings page, and the menu-bar window.
-  - Checked so far without the tools: a code pass over every 1.0 view against `design/accessibility.md`, and the iPhone 17 Pro simulator at the largest accessibility text size. The sheet's buttons stack, status screens scroll, the code wraps, and the pickers read in full. Long names in the incoming list are middle-truncated by design.
+  - Views to cover: the Keep Both / Replace sheet, the **When a File Already Exists** picker, the waiting screen's QR code, Share Link and relay note, Send as Link and its result screen, the stored-link row on Receive, History (Revoke and the row layout), the stored-server field, the Advanced settings page, and the menu-bar window.
+  - Checked so far without the tools: a code pass over every 1.0 view against `design/accessibility.md`, and the iPhone 17 Pro simulator at the largest accessibility text size. The sheet's buttons stack, status screens scroll, the code wraps, and the picker reads in full. Long names in the incoming list are middle-truncated by design.
   - Still to check by ear: whether VoiceOver reads an Advanced field's hint and its visible footnote or error twice, whether a decorative QR image with a label is exposed as an image, and Full Keyboard Access focus in the menu-bar window when its content changes.
   - Not looked at: the macOS layout of the changed views.
   - Not measured: the rendered size of the code field's system `PasteButton` against the 44 pt hit target. SwiftUI lets the app set only its border shape, label style and tint, so the system decides its size.
@@ -46,16 +46,15 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - croc drops discovery packets from its own host's addresses, so two peers on one machine never find each other (CLI to CLI included).
   - The multicast case in `scripts/verify-interop.sh` instead listens on the group and asserts what each side announces.
   - A real two-device check on a shared non-default group has not been done.
-- **On the development Mac, `croc --transport derp` CLI to CLI does not complete.**
-  - A 130 MiB send failed twice with `DERP connection failed: peer connection: dial Tailcat streams: context deadline exceeded`, while all four `*.ipn.dev` DERP hosts answered HTTPS.
-  - The cause is unknown. Both peers on one host is a suspect, not proven.
-  - On a physical iPhone `derp` completed (`knowledge/device-test-checklist.md`, "Transport and Tailcat gate"), so Tailcat's data path works on iOS.
-  - Under `auto` on the Mac the relay carries the data, so transfers succeed. The transport cases in `verify-interop.sh` and `verify-app-mac.sh` assert only the `tailcat-offer` in the CLI log, not that Tailcat carried the bytes.
 - **The harnesses fail at random against the public relays when they rate-limit.**
   - A croc v11 relay admits 30 connections a minute from one address (`DEFAULT_SOURCE_JOIN_LIMIT`, `DEFAULT_JOIN_LIMIT_WINDOW`). A multiplexed transfer opens 9 per peer (1 control, 8 data). With both peers on one machine, two transfers on the same pool relay inside a minute can be refused with `relay admission rate limited`.
   - `verify-interop.sh`, `verify-app-mac.sh` and `verify-app-sim.sh` then fail at whichever step hits the limit. The pool-relay case in `verify-interop.sh` waits 60 s and turns multiplexing off for this reason.
   - CI avoids it: the `interop (local relay)` job sets `RELAY` to a local `croc relay` with raised admission limits (`BUILDING.md`, "Verification harnesses").
   - The other harnesses have no local-relay mode. Use a local relay for a deterministic result, leave a minute between public-relay runs, and treat a failure as a regression only after finding the cause in its log.
+- **Two checkouts cannot run the same harness at once on one Mac.**
+  - `verify-app-mac.sh` and `verify-app-sim.sh` share the app container, `~/Downloads/CrocApp` and the pasteboard. A wrapper sender and `--local` scenarios in `verify-interop.sh` bind croc's default ports 9009 to 9013 and announce on the default multicast group, so a second run sees the first one's sender.
+  - `verify-app-mac.sh` builds into `$TMPDIR/dd-mac`, which every checkout shares. A second checkout's build fails with `Crocmobile.objc.h has been modified since the module file ... was built`. Run it with a `TMPDIR` of its own.
+  - Take turns, and give each run its own `TMPDIR` and `RELAY` ports.
 
 ## Design system
 
@@ -164,7 +163,7 @@ Permanent or deferred, each with its reason.
   - Unit tests cover non-UI logic (Go `go test -race`, Swift Testing in `CrocKitTests` and `CrocAppTests`, all in CI). The harnesses cover transfers. UI flows are verified by hand.
   - See `CONTRIBUTING.md`.
 - **The trust badge names the configured route, not the path that carried the data.**
-  - `TrustBadge` reads the relay setting. A transfer that croc moved over the LAN, or over Tailcat under **Connection** = Automatic, still shows "Via the public croc relay" (or the custom relay).
+  - `TrustBadge` reads the relay setting. A transfer that croc moved over the LAN still shows "Via the public croc relay" (or the custom relay).
   - croc does not report the winning path to the engine.
   - The badge's claim that the server sees only encrypted data holds on every path.
 - **`HistoryStore.clear()` has not been watched emptying the list without a relaunch.**

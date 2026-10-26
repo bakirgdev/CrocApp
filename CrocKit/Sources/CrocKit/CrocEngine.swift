@@ -214,7 +214,6 @@ public actor CrocEngine {
         opts.autoAccept = o.autoAccept
         opts.overwrite = o.whenFileExists == .replace
         opts.rename = o.whenFileExists == .keepBoth
-        opts.transport = o.transport.rawValue
         opts.noCompress = o.noCompress
         opts.zipFolder = o.zipFolder
         opts.gitIgnore = o.gitIgnore

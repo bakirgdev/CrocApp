@@ -108,7 +108,7 @@ CrocApp implements none of this. It passes the code phrase and options to croc a
 
 The relay hop is authenticated with its own PAKE using the relay password (an outbound credential), separate from the end-to-end exchange; the relay sees ciphertext only. The default relay password is croc's built-in value, which is public in croc's source and provides no secrecy; it gates the relay, not the data. With a custom relay, the user sets the password in Settings and it is held in the Keychain.
 
-Local Network Only (`OnlyLocal`) keeps the connection on the local network. With Connection = Automatic, a large send can also use Tailcat (`tailcat.dev`, `*.ipn.dev`; threshold in `knowledge/what-is-croc.md`, "Transport"); the data is end-to-end encrypted on either path, and Relay Only never contacts them (`Options.Transport`). The trust badge names the configured route, not the path that carried the data (`known-issues.md`, Accepted).
+Local Network Only (`OnlyLocal`) keeps the connection on the local network. The engine is croc's relay-only build (`croc_no_tailcat`, set in `scripts/build-xcframework.sh`), so the relay and the LAN are the only data paths. There is no Tailcat, DERP or `tailcat.dev` path in the shipped binary, and no setting to turn one on. The trust badge names the configured route, not the path that carried the data (`known-issues.md`, Accepted).
 
 ### App sandbox and entitlements
 

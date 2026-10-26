@@ -722,7 +722,7 @@ capture_screen() {
 # uploads to a real server. The link on screen is rewritten to the default link server, getcroc.com.
 start_store_server() {
   [ -z "$STORE_URL" ] || return 0
-  ( cd crocmobile && go build -o "$TMP/bin/croctest" ./cmd/croctest )
+  ( cd crocmobile && go build -tags croc_no_tailcat -o "$TMP/bin/croctest" ./cmd/croctest )
   mkdir -p "$TMP/store"
   "$TMP/bin/croctest" store-server "$TMP/store" > "$TMP/store-srv.log" 2>&1 &
   STORE_PID=$!

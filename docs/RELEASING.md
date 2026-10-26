@@ -210,4 +210,4 @@ These steps are done by a person, not by a script. Follow them on a new machine,
    - The App Store Connect listing: pricing, availability without France, privacy answers, age rating, export compliance answers and screenshots. The field text is in `docs/knowledge/app-store-listing.md`.
    - An Accessibility Inspector and VoiceOver audit.
    - Apple's answer on the multicast entitlement request. If it is granted, Apple adds "Multicast Networking" as a capability on `com.bakirgdev.CrocApp`, and the `com.apple.developer.networking.multicast` entitlement can be added to the iOS target. If it is not granted by submission, ship without it, hide the iOS multicast setting, and file a `future` issue.
-   - A check-in with the croc maintainer about the name, the public relay pool default, the Tailcat `auto` default, getcroc.com stored transfers and the browser link.
+   - A check-in with the croc maintainer about the name, the public relay pool default, getcroc.com stored transfers and the browser link.

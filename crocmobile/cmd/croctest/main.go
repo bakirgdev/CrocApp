@@ -1,6 +1,6 @@
 // croctest exercises crocmobile from the command line for interop verification.
 //
-//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [-transport auto|relay|derp] [ADVANCED] [PATH...]
+//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [ADVANCED] [PATH...]
 //	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-policy keepBoth|replace] [-cancel-after MS] [ADVANCED] CODE
 //	croctest store-send [-server URL] [-downloads N] [-lifetime SECONDS] [-socks5 ADDR] [-connect ADDR] PATH...
 //	croctest store-receive [-out DIR] [-answer y|n] [-policy keepBoth|replace] [-cancel-after MS] [-socks5 ADDR] [-connect ADDR] LINK
@@ -18,9 +18,6 @@
 //
 // -policy is what a receive does with a file whose name already exists: on the
 // Options for -yes, in the accept answer otherwise.
-//
-// -transport is the sender's data transport; croc's "derp" forces Tailcat with
-// no relay fallback.
 //
 // ADVANCED are the Options of the app's Advanced settings, named like croc's
 // own flags: -multicast, -ip, -socks5, -connect.
@@ -190,7 +187,6 @@ func main() {
 	throttle := fs.String("throttle", "", "cap sender upload rate, e.g. 200k, 1m (send)")
 	relayIndex := fs.Int("relay-index", -1, "public pool relay a generated code maps to (send)")
 	noMulti := fs.Bool("no-multi", false, "one data connection instead of one per relay port (send)")
-	transport := fs.String("transport", crocmobile.TransportAuto, "data transport: auto|relay|derp (send)")
 	multicast := fs.String("multicast", crocmobile.DefaultMulticastAddress, "multicast address for LAN discovery")
 	peerIP := fs.String("ip", "", "sender ip:port, skipping relays (receive)")
 	socks5 := fs.String("socks5", "", "SOCKS5 proxy")
@@ -225,7 +221,6 @@ func main() {
 	}
 	opts.ThrottleUpload = *throttle
 	opts.NoMultiplexing = *noMulti
-	opts.Transport = *transport
 	opts.MulticastAddress = *multicast
 	opts.PeerIP = *peerIP
 	opts.Socks5Proxy = *socks5

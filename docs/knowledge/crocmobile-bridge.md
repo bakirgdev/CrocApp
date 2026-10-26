@@ -152,17 +152,11 @@ Answers queued for croc's stdin prompts:
 
 - `crocOptions(from:)` sets every `crocmobile.Options` field. `Rename` and `Overwrite` both come from the one knob `EngineOptions.whenFileExists` (`FilePolicy`, default `.keepBoth`).
 - Advanced options (throttle, multicast group, sender IP, proxies) are the ones the app sets. See "Advanced options on the wire". `buildCrocOptions` fixes the rest to what the croc CLI defaults to (`cli.go`), because the library does not default them itself: curve `p256`, local relay ports 9009 to 9013 (`crocBasePort`, `crocTransfers` in `network.go`). The hash is left empty, so croc picks xxhash (`sendCollectFiles` in `croc.go`).
-- `croctest` can set the same fields from the command line, plus `-transport derp`.
+- `croctest` can set the same fields from the command line.
 
 ### Transport
 
-`Options.Transport` is croc v11's sender-only `Transport`. "croc v11.5.5 gotchas" explains what `auto` does.
-
-- The app uses `TransportAuto` (`"auto"`, also the empty string) and `TransportRelay` (`"relay"`). Swift mirrors them as the `Transport` enum on `EngineOptions.transport`, stored as `AppSettings.transport` (an unknown stored value reads as auto).
-- `sessionTransport` (`session.go`) forces auto on a receive and on a local-only send, because croc rejects anything else there (`transport selection is sender-only`, and `--transport` with `--local` unless auto).
-- Any other value goes through croc's `ParseTransportMode`, so an unknown value is a start error.
-- croc's `derp` (Tailcat only, no relay fallback) parses and reaches croc, but only `croctest -transport auto|relay|derp` and Go callers can set it. The app never offers it.
-- The **Connection** picker is disabled while **Local Network Only** is on.
+There is no transport option. The engine is built with croc's `croc_no_tailcat` tag, so `Options` carries no `Transport` and `buildCrocOptions` leaves croc's at the default `auto`. Under the tag `auto` uses the relay and the LAN, never Tailcat. "Transport and Tailcat" has the details and the checks.
 
 ### Relay values
 
@@ -189,14 +183,17 @@ Generated codes on the public pool:
 
 ### Transport and Tailcat
 
-How Tailcat works, its 128 MiB threshold and the servers it contacts: `what-is-croc.md`, "Transport". What matters in the bridge:
+How Tailcat works, its 128 MiB threshold and the servers it contacts: `what-is-croc.md`, "Transport". CrocApp ships without it.
 
-- The sender sends a `tailcat-offer` when it races Tailcat. If Tailcat fails, the relay carries the data.
-- A receiver handed a `tailcat-offer` joins Tailcat whatever its own setting. The receiver follows the sender and does not choose.
-- Every data chunk is encrypted with the session key (AEAD) on either path.
-- Tailcat's data path has been seen working on a physical iPhone. On the development Mac, `croc --transport derp` CLI to CLI does not complete, cause unknown (`../known-issues.md`, "Harnesses").
-- croc has a `croc_no_tailcat` build tag that removes Tailcat and downgrades `derp` to `relay`. The app build does not use it. Checked against croc v11.5.5: `gomobile bind -tags croc_no_tailcat` builds all three slices, and `go test -tags croc_no_tailcat ./...` passes in `crocmobile/`. The tag drops most of tailscale, gvisor and wireguard-go from the dependency graph and cuts the unsigned Release executable from 25.4 MB to 13.3 MB (iOS) and from 26.3 MB to 13.5 MB (macOS). An unsigned macOS archive executable goes from 22.0 MB to 10.5 MB.
-- Under the tag, from croc's source (`tailcat_negotiation.go`, `croc.go`; not run): `auto` sends use the relay with no error, a `derp` send is downgraded to `relay` in `newClient`, and a receive from a sender that requires Tailcat (an untagged CLI with `--transport derp`) fails with `peer requires Tailcat, but Tailcat is disabled or unavailable locally`. The app would then have to drop the **Connection** choice and every text about Tailcat (`HowItWorksView`, the docs site, `THREAT-MODEL.md`). No transfer harness was run with the tag: not verified.
+- `scripts/build-xcframework.sh` passes `-tags croc_no_tailcat` to `gomobile bind`. The tag swaps croc's `tailcattransport` for a stub (`src/tailcattransport/transport_unsupported.go` in croc; `Available()` is false), which drops Tailscale's WireGuard, gVisor and DERP from the binary. `go list -tags croc_no_tailcat -deps` in `crocmobile/` finds 0 gVisor packages and 0 `wireguard-go` packages (42 gVisor packages without the tag).
+- Every other Go build of `crocmobile/` carries the same tag, so tests match what ships (`BUILDING.md`, "What build-xcframework.sh does"). `TestBuildIsRelayOnly` fails a test run without it by checking `tailcattransport.Available()`.
+- Size: the shipped executable halves (`BUILDING.md`; measured sizes are in `CHANGELOG.md`).
+- Effect on a transfer, observed with the stock croc v11.5.5 CLI (`verify-interop.sh` scenario 13):
+  - A CLI on its default `--transport auto` still logs `Tailcat bootstrap region prepared` and `auto transport size decision: ... selected=derp` for a send of 128 MiB or more, because it prepares Tailcat before it knows the peer. Neither line means Tailcat carried data.
+  - The peer does not advertise Tailcat, so the CLI logs the plain line `selected croc relay data transport` and sends no `tailcat-offer`. Against a Tailcat-capable CLI the same send logs `tailcat-offer`, `starting Tailcat server` and `selected staged croc relay data transport` or `... after Tailcat fallback`.
+  - With `tailcat.dev` unreachable (a dead proxy in the CLI's environment) the transfer still completes over the relay, in the same time.
+- A CLI sender with `--transport derp` (Tailcat only, no relay fallback) cannot send to this build. The CLI fails with `--transport derp requires a Tailcat-capable peer` and exits 1. A CrocApp receiver fails within seconds with `EVENT error {"code":"other","message":"peer requires Tailcat, but Tailcat is disabled or unavailable locally"}` (`activateSecureChannel` in `tailcat_negotiation.go`). It does not hang. The code is `other`: `classify` in `errors.go` has no case for it. `--transport` exists only on a send, so the wrapper cannot be the `derp` side.
+- A receive from a CLI sender on `auto` or `relay` works as before.
 
 ### CLI behaviour that bites scripts
 
@@ -258,7 +255,7 @@ The curve, hash, base port, transfers and internal DNS are not options. croc set
 |---|---|---|---|
 | PeerIP | **Receiver** only (`--ip host:port`). It connects straight to the sender's local relay and skips the public relay and discovery. It works only with a sender whose local relay is on (not `NoLocal`) and reachable. | The sender must listen there. | Nothing listening: it fails at once with `relayUnreachable` (`could not connect to 127.0.0.1:<port>: ... connection refused`), with no fallback to a relay. |
 | Multicast address | Both sides of **LAN discovery**. A sender announces `croc<port>` (`croc9009` for a CrocApp sender) on the group, a receiver announces `ok` and listens. The default is `239.255.255.250`, UDP port 9999. | Yes, for discovery: peers on different groups never hear each other. The relay path still works. | Silent: discovery finds nobody, then the relay or `PeerIP` path carries the transfer. |
-| SOCKS5, HTTP proxy | The local side's own dials only (CONNECT; SOCKS5 before HTTP). Invisible to the peer. | No | croc bypasses the proxy for local addresses (`utils.IsLocalIP`: loopback, link-local, private ranges). A proxy therefore affects only a public relay or Tailcat dial. With a local relay or a LAN transfer it is never used, with no error. Observed: with the public pool, connections went through a `croctest` proxy on both send and receive. |
+| SOCKS5, HTTP proxy | The local side's own dials only (CONNECT; SOCKS5 before HTTP). Invisible to the peer. | No | croc bypasses the proxy for local addresses (`utils.IsLocalIP`: loopback, link-local, private ranges). A proxy therefore affects only a public relay dial. With a local relay or a LAN transfer it is never used, with no error. Observed: with the public pool, connections went through a `croctest` proxy on both send and receive. |
 
 Two limits of the harness:
 
@@ -295,11 +292,11 @@ Sourced by `verify-interop.sh`, `verify-app-mac.sh`, `verify-app-sim.sh`, `captu
 | 10 | A croc v10 peer, both ways, expecting `peerVersion` |
 | 11 | Every public pool relay (see below) |
 | 12 | File policy (see below) |
-| 13 | Transport (see below) |
+| 13 | Large files without Tailcat (see below) |
 | 14 | Stored transfers (see below) |
 | 15 | Advanced options, described in "Advanced options on the wire" |
 
-`RELAY=host:port` routes every transfer through one relay. It skips the transport scenario (13), the pool scenario (11), and the proxy cases of scenario 15. Scenario 15's sender IP and multicast cases still run.
+`RELAY=host:port` routes every transfer through one relay. It skips the pool scenario (11) and the proxy cases of scenario 15. Scenario 13 runs, because the relay carries its data and the CLI finishes without `tailcat.dev`. Scenario 15's sender IP and multicast cases still run.
 
 Start order in the harness (see "Start order: sender first"):
 
@@ -318,11 +315,10 @@ Scenario 12 (file policy), which also runs under `RELAY`, so CI covers it:
 - Then a zipped folder (`croc send --zip`) is received twice into one folder with each policy and each accept mode (4 cases).
 - `croctest receive` takes `-policy keepBoth|replace` (default `keepBoth`, other values exit 2).
 
-Scenario 13 (transport):
+Scenario 13 (large files without Tailcat):
 
-- A 130 MiB send in each of `auto` and `relay`, wrapper to CLI and CLI to wrapper (4 cases). It uses public infrastructure only, because Tailcat bootstraps from `tailcat.dev`.
-- It asserts byte equality. In the CLI `--debug` log it asserts a `tailcat-offer` under `auto` (or `selected=derp`, the CLI's size decision, when the CLI sends) and none under `relay`.
-- `croctest send` takes `-transport auto|relay|derp` (default `auto`).
+- A 130 MiB transfer, wrapper to CLI and CLI to wrapper, with the CLI on its default `--transport auto`. It asserts byte equality, and in the CLI `--debug` log the plain `selected croc relay data transport` line with no `tailcat-offer`, `starting Tailcat server`, `Tailcat fallback` or `selected staged` line ("Transport and Tailcat").
+- Then a CLI sender with `--transport derp` to the wrapper: the wrapper must exit non-zero within 30 s with the peer-requires-Tailcat error above, and receive nothing.
 
 Scenario 14 (stored transfers), which needs neither a relay nor the internet, so it runs under `RELAY` too:
 
@@ -350,7 +346,7 @@ The launch arguments drive the real UI state machine (`AutoVerify` and `Transfer
 - `--no-compress` send
 - `--ask` both-sides confirm (auto-answered by `AutoVerify` through `.confirmSend`)
 - receive onto an existing file in the app's Documents, with `--when-exists keepBoth|replace` (the answer `AutoVerify` gives the incoming sheet; prints `MAC-COLLIDE-OK`)
-- a 130 MiB transfer in each direction under `--transport auto` and `--transport relay` (prints `MAC-TRANSPORT-OK`; same offer assertions as interop scenario 13; needs the public internet)
+- a 130 MiB transfer in each direction against a CLI on `--transport auto`, which must show the plain relay line and no Tailcat offer (prints `MAC-TRANSPORT-OK`; same log assertions as interop scenario 13)
 - stored transfers against a local store server
 - menu-bar quick send
 - Open at login

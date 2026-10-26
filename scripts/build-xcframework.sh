@@ -30,10 +30,15 @@ go mod download
 # -trimpath and "-s -w" (no Go symbol table or DWARF) halve the static archive
 # and shrink an unsigned `xcodebuild build`. Xcode strips an archive anyway, so
 # a shipped app barely changes (docs/BUILDING.md, "What build-xcframework.sh does").
+# -tags croc_no_tailcat builds croc without Tailcat (its peer-to-peer data path,
+# which pulls in Tailscale and gVisor): the shipped executable halves, and `auto`
+# transport means the relay and the LAN. Every other Go build of crocmobile (the
+# harnesses' croctest, CI, golangci-lint) carries the same tag, so what is tested
+# is what ships.
 gomobile bind \
   -target ios,iossimulator,macos/arm64 \
   -iosversion 26.0 -macosversion 26.0 \
-  -trimpath -ldflags "-s -w" \
+  -trimpath -ldflags "-s -w" -tags croc_no_tailcat \
   -o "../$OUT" \
   .
 cd ..

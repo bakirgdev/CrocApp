@@ -29,8 +29,6 @@ CrocApp tries the local network and the relay at once, and the faster one carrie
 
 Every transfer uses a fresh code. Whoever has it before the transfer completes can join, so share it over a channel you trust. A `crocapp.dev/r/#<code>` link keeps the code after the `#`, which browsers never send to a server. The page makes no network request and sets a `no-referrer` policy. Anyone who sees the link still has the code.
 
-For a send of 128 MiB or more under **Connection** > **Automatic**, CrocApp also tries a direct connection set up through `tailcat.dev`. It is end-to-end encrypted too. See [Settings](guide/settings.md#connection).
-
 You stay in control: a receive shows the file list and waits for you to accept or decline, unless you turn on **Auto-Accept Transfers**.
 
 ## What each server sees
@@ -39,7 +37,6 @@ You stay in control: a receive shows the file list and waits for you to accept o
 |---|---|---|
 | croc public relays (`1.getcroc.com` to `4.getcroc.com`) | Every transfer with a code, unless you use your own relay or **Local Network Only** | Both devices' IP addresses, timing, amount of data, and a room name hashed from the code's first word. The data is ciphertext |
 | Link server (`getcroc.com` by default) | **Send as Link**, and opening or revoking a link | The encrypted files and their size, the lifetime and download count you chose, and your IP address |
-| `tailcat.dev` and `*.ipn.dev` | A send of 128 MiB or more under **Automatic**, and a receive from such a sender | Both devices' IP addresses, timing and the size of encrypted packets. The data is ciphertext |
 | `github.com` | Update checks in the Mac disk image build only | The usual details of a web request. The request carries no system profile |
 
 An operator decides what its own server logs, so this is what each can see by design. The [privacy policy](https://crocapp.dev/privacy/) has the full list, including servers you choose yourself.

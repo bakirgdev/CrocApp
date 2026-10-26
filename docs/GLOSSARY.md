@@ -23,8 +23,8 @@ Terms a new contributor hits in this repo and cannot infer from the name: croc v
 | room | The channel on the relay where two peers meet. Its name is a hash of a selector taken from the code (`docs/knowledge/what-is-croc.md`, "Rendezvous"). |
 | room collision | Two codes with the same selector on the same relay land in the same room, and the second gets "room full". Concurrent transfers and test scripts must use codes with different selectors (`docs/knowledge/what-is-croc.md`, "Rendezvous"). |
 | stored transfer | croc's upload-and-link mode (`croc send --store`, default server `https://getcroc.com`). Files are encrypted on the device, uploaded, and fetched later from `https://<host>/s/<id>#v1.<key>`, where the fragment is the key. There is no peer, relay or code phrase. The app calls it **Send as link** (`docs/knowledge/app-ui-architecture.md`, "Stored transfers"). |
-| Tailcat | croc v11's peer-to-peer data path (`docs/knowledge/what-is-croc.md`, "Transport"). Whether it stays in the build is decided on a physical iPhone (`docs/knowledge/crocmobile-bridge.md`, `docs/knowledge/device-test-checklist.md`). |
-| transport / Connection | croc's sender-only `--transport` (`auto`, `relay`, `derp`). The app shows it as **Connection**: **Automatic** (`auto`, default) or **Relay Only** (`relay`). It never offers `derp`. A receive and a local-only send are always `auto`. Code: `crocmobile.Options.Transport`, `CrocKit.Transport`, `AppSettings.transport`. |
+| Tailcat | croc v11's peer-to-peer data path (`docs/knowledge/what-is-croc.md`, "Transport"). CrocApp is built without it (`croc_no_tailcat`), so `auto` means the relay and the LAN (`docs/knowledge/crocmobile-bridge.md`, "Transport").
+| transport | croc's sender-only `--transport` (`auto`, `relay`, `derp`). CrocApp has no setting for it: the relay-only build makes `auto` the relay and the LAN, and a CLI sender that asks for `derp` makes a CrocApp receiver fail (`docs/knowledge/crocmobile-bridge.md`, "Transport"). |
 
 ## Go bridge
 

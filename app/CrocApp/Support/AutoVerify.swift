@@ -34,7 +34,6 @@ import ServiceManagement
 ///                                  https://getcroc.com) instead of the --store-server's; the upload
 ///                                  still goes to --store-server
 ///   --throttle RATE                cap the upload rate for a send, e.g. 4m (croc's --throttleUpload)
-///   --transport auto|relay         the Connection setting for this run (croc's --transport)
 ///   --hold                         park at the incoming prompt instead of auto-accepting
 ///   --when-exists keepBoth|replace answer the incoming prompt with this file policy
 ///                                  (the setting stays Keep Both, so the late answer must reach croc)
@@ -117,11 +116,6 @@ enum AutoVerify {
             let policy = FilePolicy(rawValue: args[i + 1])
         {
             sheetPolicy = policy
-        }
-        if let i = args.firstIndex(of: "--transport"), i + 1 < args.count,
-            let transport = Transport(rawValue: args[i + 1])
-        {
-            controller.settings.transport = transport
         }
         if let i = args.firstIndex(of: "--relay"), i + 1 < args.count {
             controller.settings.relayAddress = args[i + 1]

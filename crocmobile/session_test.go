@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/schollz/croc/v11/src/croc"
+	"github.com/schollz/croc/v11/src/tailcattransport"
 	"github.com/schollz/croc/v11/src/utils"
 )
 
@@ -103,7 +104,6 @@ func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 		IgnoreStdin:      true,
 		DisableClipboard: true,
 		Quiet:            false,
-		Transport:        croc.TransportAuto,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("buildCrocOptions mismatch\n got: %+v\nwant: %+v", got, want)
@@ -593,36 +593,18 @@ func TestParsePolicy(t *testing.T) {
 	}
 }
 
-// croc refuses a non-auto transport on a receive and on a local-only send, so
-// Transport only reaches croc on any other send.
-func TestBuildCrocOptionsTransport(t *testing.T) {
-	tests := []struct {
-		sender, onlyLocal bool
-		transport         string
-		want              croc.TransportMode
-	}{
-		{true, false, "", croc.TransportAuto},
-		{true, false, TransportAuto, croc.TransportAuto},
-		{true, false, TransportRelay, croc.TransportRelay},
-		{true, false, " Relay ", croc.TransportRelay},
-		{true, false, "derp", croc.TransportDERP},
-		{true, true, TransportRelay, croc.TransportAuto},
-		{false, false, TransportRelay, croc.TransportAuto},
-		{false, false, "bogus", croc.TransportAuto},
+// The engine ships relay-only (croc_no_tailcat, scripts/build-xcframework.sh),
+// so every build and test of this package must carry the tag, or the tests
+// would exercise an engine that is not the shipped one.
+func TestBuildIsRelayOnly(t *testing.T) {
+	if tailcattransport.Available() {
+		t.Fatal("Tailcat is compiled in: build and test with -tags croc_no_tailcat (docs/BUILDING.md, \"Format and lint\")")
 	}
-	for _, tt := range tests {
-		o := &Options{OnlyLocal: tt.onlyLocal, Transport: tt.transport}
-		c := mustBuildCrocOptions(t, tt.sender, "secret-code", o)
-		if c.Transport != tt.want {
-			t.Errorf("sender=%v onlyLocal=%v Transport=%q: croc Transport=%q, want %q",
-				tt.sender, tt.onlyLocal, tt.transport, c.Transport, tt.want)
+	for _, sender := range []bool{true, false} {
+		c := mustBuildCrocOptions(t, sender, "secret-code", &Options{})
+		if c.Transport != "" {
+			t.Errorf("sender=%v: croc Transport = %q, want it left at croc's auto", sender, c.Transport)
 		}
-	}
-}
-
-func TestBuildCrocOptionsUnknownTransport(t *testing.T) {
-	if _, err := buildCrocOptions(true, "secret-code", &Options{Transport: "bogus"}); err == nil {
-		t.Fatal("send with Transport \"bogus\": no error")
 	}
 }
 

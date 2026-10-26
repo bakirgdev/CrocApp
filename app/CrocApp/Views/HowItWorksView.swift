@@ -26,10 +26,6 @@ struct HowItWorksView: View {
                     "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay."
                 )
                 item(
-                    "point.3.connected.trianglepath.dotted", "Direct path for large files",
-                    "With Connection set to Automatic, a send of 128 MiB or more also tries Tailcat: a direct connection set up through tailcat.dev, with its own relays (*.ipn.dev) when the devices cannot reach each other. Whichever path is faster carries the transfer, still end-to-end encrypted. A send set to Relay only never contacts these servers; a receive follows the sender's choice."
-                )
-                item(
                     "wifi", "Local network when possible",
                     "Devices on the same network transfer directly, and the data never leaves your network. The local path and the relay race; the faster one wins."
                 )

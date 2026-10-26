@@ -34,7 +34,6 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Exclude patterns, respect `.gitignore` | `--exclude`, `--git` | all | shipped |
 | Auto-Accept Transfers (off by default, warning shown) | `--yes` | all | shipped |
 | Confirm on Both Sides | `--ask` | all | shipped |
-| Connection: Automatic or Relay Only (sender side; a receive follows the sender) | `--transport auto\|relay` | all | shipped |
 | SOCKS5 proxy (Settings > Advanced) | `--socks5` | all | shipped |
 | HTTP proxy | `--connect` | all | shipped |
 | Upload speed limit (sender side) | `--throttleUpload` | all | shipped |
@@ -77,5 +76,6 @@ Details:
 | `--stdout` piping | CLI-only concept |
 | `--classic` mode | insecure by design |
 | `--remember` | app settings persist anyway |
+| Tailcat, `--transport` | The engine is croc's relay-only build (`croc_no_tailcat`). It halves the app, and the relay and the LAN carry every transfer, so there is no Connection setting. See `crocmobile-bridge.md`, "Transport" |
 
 What stands between the shipped feature set and the first App Store release is listed in `docs/known-issues.md`, "Release".
