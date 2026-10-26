@@ -10,7 +10,6 @@ import Testing
     @Test(arguments: [
         "7020-alpha-beta-gamma",
         "  7020-alpha-beta-gamma\n",
-        "croc://7020-alpha-beta-gamma",
         "crocapp://receive?code=7020-alpha-beta-gamma",
         "CrocApp://Receive?code=7020-alpha-beta-gamma",
         "https://crocapp.dev/r/#7020-alpha-beta-gamma",
@@ -37,8 +36,7 @@ import Testing
         "   ",
         "short",
         "two words here",
-        "croc://short",
-        "croc://",
+        "croc://7020-alpha-beta-gamma",
         "crocapp://receive",
         "crocapp://receive?code=short",
         "crocapp://send?code=7020-alpha-beta-gamma",
