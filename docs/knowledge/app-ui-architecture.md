@@ -9,7 +9,7 @@ Engine contract: `crocmobile-bridge.md`. Open defects: `docs/known-issues.md`.
 ```
 CrocAppApp owns @State TransferController + AppSettings + OutputFolderStore
   + HistoryStore + LocalNetworkChecker + AppRouter.shared (+ MenuBarQuickSend on macOS)
-  → .environment on WindowGroup content
+  → .environment on the one main scene's content (CrocAppApp.mainContent)
   (macOS Settings scene gets only outputFolder + settings, no router/controller/localNetwork)
 ContentView → HomeView (sole NavigationStack, path: $router.path, value-based links)
   → SendView | ReceiveView | SettingsScreen | HistoryView | HowItWorksView
@@ -247,12 +247,12 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 
 ## Receive links
 
-- `Models/TransferLink.swift` is the one parser. `TransferLink.parse(_:)` takes a bare code, `crocapp://receive?code=`, `croc://<code>` (the QR payload of older CrocApp builds), `https://crocapp.dev/r/#<code>` or `https://getcroc.com/?code=`, and yields `.code`.
+- `Models/TransferLink.swift` is the one parser. `TransferLink.parse(_:)` takes a bare code, `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` or `https://getcroc.com/?code=`, and yields `.code`.
 - It also parses a stored-transfer link `https://<host>/s/<id>#v1.<key>` into `.stored(URL)`. `http` is accepted only for `localhost`, `127.0.0.1` and `::1`. `ReceiveView` takes it (see "Stored transfers").
 - `TransferLink.webURL(forCode:)` builds the `crocapp.dev/r/` link.
 - `AppRouter.open(_:)` stores the link in `pendingReceive` and calls `openReceive()` unless `isBusy`. Mid-transfer the link is kept and the user is not moved.
 - `ReceiveView` consumes `pendingReceive` (`onChange(initial: true)` on the form) and fills `code`. Opening a link never starts a receive: the user taps **Receive**.
-- Entry points all go through `TransferLink.parse` and then `router.open`: the QR scan sheet (iOS), the **Paste** button, typed or pasted text containing `://` in the code field, `.onOpenURL` in `CrocAppApp` (iOS universal links and `crocapp://`), and `AppDelegate.application(_:open:)` on macOS (file URLs still go to Send).
+- Entry points all go through `TransferLink.parse` and then `router.open`: the QR scan sheet (iOS), the **Paste** button, typed or pasted text containing `://` in the code field, `.onOpenURL` in `CrocAppApp` (iOS universal links and `crocapp://`), and `AppDelegate.application(_:open:)` on macOS (file URLs still go to Send). On macOS a link reaches both the delegate and `.onOpenURL` (measured), which is harmless because `router.open` is idempotent.
 - The `crocapp` scheme is in the iOS, macOS and Direct Info plists in `app/Config/`.
 - Universal links for `crocapp.dev/r/*` need the Associated Domains entitlement (all three app entitlements files carry it) and `web/landing/.well-known/apple-app-site-association`, which lists both app IDs.
 - `TransferStatusView.waitingView` encodes the QR as `TransferLink.webURL(forCode:)` and adds a **Share Link** button.
@@ -268,14 +268,15 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 - `recheckIfDenied()` re-probes from `.denied` when `scenePhase` goes `.active` (for example after the user granted access in Settings). It never re-probes `.granted` or unresolved states and never stacks a second in-flight probe.
 - Denial shows a banner plus **Open Settings** in `TransferStatusView`. Denial only resolves at the 8 s timeout, because a first `.waiting` may just be the pending permission prompt.
 - Testing a macOS denial is awkward (`docs/known-issues.md`, "Accepted").
-- `Models/ShareInbox.swift` and `Views/StagedFilesSheet.swift` pick up batches staged by the share extension from the App Group (`ShareInbox/batch-<UUID>/` plus `manifest.json`). The manifest is consumed on the user's decision, the batch files outlive the send, and `purgeStaleBatches` runs at idle.
+- `Models/ShareInbox.swift` and `Views/StagedFilesSheet.swift` pick up batches staged by the share extension from the App Group (`ShareInbox/batch-<UUID>/` plus `manifest.json`). The group ID, directory and file names and the `Manifest` type are `app/Shared/ShareHandoff.swift`, one file compiled into `CrocApp`, `CrocApp Direct` and `CrocShare` (a synchronized folder group listed on all three targets), so the writer and the reader cannot drift. The group ID is also in the entitlements files, which cannot import Swift. `ShareInbox` logs (category `share`) a manifest it cannot decode and any file removal that fails, and stays best effort. The manifest is consumed on the user's decision, the batch files outlive the send, and `purgeStaleBatches` runs at idle.
 - The whole `scenePhase` refresh is gated on `!controller.isActive`. An ungated refresh once purged a live batch mid-send.
 - `app/CrocShare/` is an iOS-only app extension. The pbxproj entry is hand-built, and `platformFilter = ios` on the dependency and the embed keeps macOS clean.
 - File-copy staging happens inside the `loadFileRepresentation` handler, because of the roughly 120 MB extension memory cap. It never wipes existing batches.
 - The Info plists live in `app/Config/`, outside the synced folders, to avoid a generated-plist collision. The app's `INFOPLIST_FILE` is sdk-scoped.
+- **One scene on iPad.** `app/Config/CrocApp-Info.plist` sets `UIApplicationSceneManifest` with `UIApplicationSupportsMultipleScenes` NO. The generated manifest (`INFOPLIST_KEY_UIApplicationSceneManifest_Generation`) is documented as "an entry suitable for a multi-window application" and builds `UIApplicationSupportsMultipleScenes = YES`, so the target leaves that setting out. Measured on an iPad simulator (iOS 27.0 runtime): `UIApplication.shared.supportsMultipleScenes` read true with the manifest YES and false with NO, and the app launches and renders either way. `WindowGroup` stays the iOS scene, because `Window` is not an iOS scene (Apple lists macOS and visionOS only).
 - Files-app visibility comes from `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace`. **The two do not behave the same way**, although both are declared as sdk-scoped `INFOPLIST_KEY_*` settings in the pbxproj.
 - `LSSupportsOpeningDocumentsInPlace` is injected into the built `Info.plist` from the build setting alone. `UIFileSharingEnabled` is not, and only lands because `app/Config/CrocApp-Info.plist` also declares it literally.
-- Measured with Xcode: delete the two plist lines and `plutil -p` on the built `CrocApp.app/Info.plist` shows `UIFileSharingEnabled` gone, while `LSSupportsOpeningDocumentsInPlace`, `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription` survive. `xcodebuild -showBuildSettings` still resolves `INFOPLIST_KEY_UIFileSharingEnabled = YES`.
+- Measured with Xcode: delete the two plist lines and `plutil -p` on the built `CrocApp.app/Info.plist` shows `UIFileSharingEnabled` gone, while `LSSupportsOpeningDocumentsInPlace` and `NSLocalNetworkUsageDescription` survive. `xcodebuild -showBuildSettings` still resolves `INFOPLIST_KEY_UIFileSharingEnabled = YES`.
 - So the plist declaration is load-bearing and the pbxproj key is inert for that one setting. Do not deduplicate by deleting the plist lines: that silently removes the app from the Files app.
 - **Open in Files** on the receive-done screen uses the `shareddocuments://` scheme, which is a community convention with no public API. The button is shown only when the receive folder is the app's own default folder, because the scheme resolves only paths inside the app container.
 
@@ -293,7 +294,10 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 - Side effect: the app is listed in Finder's "Open With" for everything. `INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]=YES` is required, or Xcode auto-injects an invalid `NO`.
 - `Views/SettingsView.swift` has a **General** tab (output-folder **Change…** and **Reset**, **Show in Finder**, the menu bar section, the power sections, About) and an **Advanced** tab.
 - `Views/AppCommands.swift` provides **Send…** ⌘1 and **Receive…** ⌘2 (both disabled while a transfer is active), and the Show Receive Folder item ⇧⌘R.
-- Window: `.defaultSize(560×700)`, content `minWidth 480` and `minHeight 560`.
+- **One main window.** `CrocAppApp.mainScene` is a single-instance `Window("CrocApp", id: "main")` with `.defaultSize(560×700)`, content `minWidth 480` and `minHeight 560`. One transfer runs at a time, so a second window could only mirror the first with a navigation path of its own; `AppRouter.shared` is the one path.
+- Apple's `Window` quits the app when it closes. `AppDelegate.applicationShouldTerminateAfterLastWindowClosed` returns false, so a running transfer and the menu-bar item outlive the window. Measured on macOS 27: with the delegate method missing, `performClose` on the window ended the process; with it, the process stayed and the window was `isVisible == false`.
+- The window comes back from a reopen (`open -a`, the event a Dock click sends; the Dock click itself was not tried), from a link, and from **Open CrocApp** in the menu-bar window. `openWindow(id:)` opens a closed `Window` scene and orders an open one to the front (Apple's `OpenWindowAction`), so `MenuBarQuickSendView.openMainWindow` is `NSApp.activate()` plus `openWindow(id:)`. Measured with the window closed: `open -a` and a link each made it visible again, and `openWindow(id:)` called from the menu-bar scene did too. With it open there was still one window. The menu-bar button itself was not clicked.
+- The old `.handlesExternalEvents(preferring: [], allowing: ["*"])` is gone, because a `Window` is never duplicated by an opened URL.
 - `CrocApp Direct` only (`#if DIRECT`, `app/CrocAppDirect/AppUpdater.swift`): a **Check for Updates…** item in the app menu right after **About CrocApp**, backed by Sparkle's `SPUStandardUpdaterController`. The App Store target has no such item.
 - The default output folder is `~/Downloads/CrocApp`. It needs the `files.downloads.read-write` entitlement. The folder is auto-created in `defaultFolder`, and `defaultDisplayName` supplies the UI label. The receive-done screen offers **Show in Finder** via `NSWorkspace.activateFileViewerSelecting`.
 - Build and release scripts are described in `docs/RELEASING.md`.
@@ -319,7 +323,7 @@ Checked against the Xcode 26 SDK:
 - `DataScannerViewController.isSupported` is `false` on the simulator, so the sheet shows a fallback. `startScanning` failures surface through `onStartFailure` as "Camera unavailable".
 - QR generation: `CIFilter.qrCodeGenerator` with a static shared `CIContext`. Cache the `CGImage` in `@State` keyed by `.task(id: content)`, and render it with `Image(decorative:scale:).interpolation(.none)`.
 - Using a type across files in the same module still needs a per-file `import CrocKit`.
-- The camera key is `INFOPLIST_KEY_NSCameraUsageDescription`. It must be set in every app-target build configuration (CrocApp and CrocApp Direct, Debug and Release).
+- The camera key is a literal in `Config/CrocApp-Info.plist`, which only the iOS SDKs use, so it covers Debug and Release at once. The macOS builds (`CrocApp` and `CrocApp Direct`) carry none: the scanner is `#if os(iOS)`, and Apple requires the key only for an app that uses camera APIs. Do not move it back to an `INFOPLIST_KEY_` setting: scoped to iOS it still lands in the macOS `Info.plist` as an empty string.
 - `app/CrocApp/AppIcon.icon` is an Icon Composer bundle. Synced-folder auto-include picks it up as long as its name matches `ASSETCATALOG_COMPILER_APPICON_NAME`. It compiles for both platforms with no pbxproj edit.
 
 ## AutoVerify harness
@@ -356,5 +360,6 @@ Launch gotchas, both macOS:
 
 - Once `CFBundleDocumentTypes` exists, bare adjacent argv tokens are document-open candidates and AppKit skips creating the default window. Use flag-style arguments only.
 - Scripted launches need `-ApplePersistenceIgnoreState YES` or they hang in window restoration.
+- A plain launch can come up with no window when the bundle ID carries leftover restoration state (`known-issues.md`, "A plain Mac launch can open with no window"). Test window behavior on a fresh bundle ID or pass the flag.
 
 On the CLI side of a verify run, a receiving `croc` needs `CROC_SECRET=` in the environment instead of a positional code. croc refuses custom positional codes in non-classic mode for receive as well as send.

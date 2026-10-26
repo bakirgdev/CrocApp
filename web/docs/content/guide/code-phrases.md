@@ -24,7 +24,6 @@ Whatever you paste, scan or open, CrocApp reads the code out of it:
 - `https://crocapp.dev/r/#<code>`, the link CrocApp shares
 - `crocapp://receive?code=<code>`
 - `https://getcroc.com/?code=<code>`, the link the croc command line's `--qrcode` shows
-- `croc://<code>`, from QR codes in earlier CrocApp builds
 
 ## Receiving a link
 

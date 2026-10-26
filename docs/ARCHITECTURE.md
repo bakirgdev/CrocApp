@@ -12,7 +12,7 @@ CrocApp is a native SwiftUI app for iOS, iPadOS and macOS 26. It embeds [croc](h
 - `TransferController` is the only code that calls `CrocEngine`.
 - Everything above that is SwiftUI views reacting to one `@Observable` state machine.
 
-The SwiftUI sources build three targets:
+The SwiftUI sources build three targets. `app/Shared/` is a folder group compiled into all three (today only `ShareHandoff.swift`, the share-handoff contract):
 
 | Target | Platforms | Channel |
 | --- | --- | --- |
@@ -149,7 +149,7 @@ Folder: `app/CrocApp/Views/`.
 - `TransferStatusView` draws every non-idle `Phase`. `IncomingRequestView` (same file) is the accept screen.
 - `SettingsScreen` (iOS, a route) and `SettingsView` (macOS `Settings` scene) both embed `PowerSettingsSections`.
 - Others: `HistoryView`, `HowItWorksView`, `OnboardingView`, `StagedFilesSheet`, `QRCodeView`, `QRScannerView`, `TrustBadge`.
-- `Models/TransferLink.swift` is the one parser for every way a link or code arrives: a bare code, a stored-transfer link, `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>`, `https://getcroc.com/?code=` and `croc://<code>`.
+- `Models/TransferLink.swift` is the one parser for every way a link or code arrives: a bare code, a stored-transfer link, `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>`, `https://getcroc.com/?code=`.
 - `AppRouter.open(_:)` passes the parsed link to Receive, which fills in the code and never connects by itself.
 - Views may import `CrocKit` for its value types (`Summary`, `FilePolicy`). They never import `Croc` and never call `CrocEngine`. They read `TransferController.phase` and call its intent methods.
 
@@ -213,7 +213,7 @@ Why `history` is set after construction: not verified. The code does it, with no
 
 Injection:
 
-- `WindowGroup` content gets `controller`, `settings`, `outputFolder`, `localNetwork`, `router` and `history` through `.environment(...)`, plus `.modelContainer(history.container)` for `@Query` in `HistoryView`.
+- The one main window's content (`CrocAppApp.mainContent`) gets `controller`, `settings`, `outputFolder`, `localNetwork`, `router` and `history` through `.environment(...)`, plus `.modelContainer(history.container)` for `@Query` in `HistoryView`. The app has one main window because one transfer runs at a time: a `Window` scene on macOS, a `WindowGroup` limited to one scene on iPad (`docs/knowledge/app-ui-architecture.md`, "Platform layer, iOS" and "Platform layer, macOS").
 - The macOS `Settings` scene gets only `outputFolder` and `settings`. It has no transfer to be busy with.
 
 `@MainActor @Observable` types: `AppSettings`, `TransferController`, `HistoryStore`, `OutputFolderStore`, `LocalNetworkChecker`, `AppRouter`, `ShareInbox`, `MenuBarQuickSend`, `LoginItem`. `StoredTransferVault` and `BackgroundCoordinator` are `@MainActor` but not `@Observable`. See "Concurrency model".
@@ -227,7 +227,7 @@ Persistence:
 | Output folder | `UserDefaults` key `outputFolderBookmark` | `OutputFolderStore`; security-scoped bookmark on macOS |
 | Transfer history | SwiftData, `TransferRecord` `@Model` | `HistoryStore`; in memory under the harness |
 | Stored-upload receipts | Keychain, one item `storedReceipts` | `StoredTransferVault`; removed on revoke and when expired; in memory under the harness |
-| Share-extension handoff | App Group container `group.com.bakirgdev.CrocApp` | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads |
+| Share-extension handoff | App Group container `group.com.bakirgdev.CrocApp` | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads; the names and the manifest type are `app/Shared/ShareHandoff.swift`, compiled into both |
 | Onboarding seen flag | `UserDefaults` via `@AppStorage("onboarding.seen")` | Read in `ContentView` |
 
 ## Platform split
@@ -268,9 +268,10 @@ Associated Domains needs a provisioning profile, so signing a local macOS build 
 
 Four files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-Info.plist` (iOS), `CrocApp-macOS-Info.plist`, `CrocApp-Direct-Info.plist` and `CrocShare-Info.plist`.
 
-- `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription` are plain `INFOPLIST_KEY_*` build settings, not tied to an SDK, so they apply on every platform.
+- `NSLocalNetworkUsageDescription` is a plain `INFOPLIST_KEY_*` build setting, not tied to an SDK, so it applies on every platform. `NSCameraUsageDescription` is a literal in `CrocApp-Info.plist` (iOS only) and absent from the macOS and Direct builds, because the QR scanner is iOS-only and a macOS build never touches the camera. It is not an `INFOPLIST_KEY_*` setting: an sdk-scoped one still lands in the macOS `Info.plist` as an empty string (measured, like the `UIStatusBarStyle` and `UIApplicationSupportsIndirectInputEvents` entries the iOS-scoped settings leave there).
 - `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace` are SDK-scoped `INFOPLIST_KEY_*` settings. `UIFileSharingEnabled` is also in `CrocApp-Info.plist`, and that copy is the one that works (`docs/known-issues.md`, "Accepted").
-- `NSBonjourServices` is only in `CrocApp-Info.plist`, so it applies to the iOS SDKs only.
+- `NSBonjourServices` (`_crocapp._tcp`, the type `LocalNetworkChecker` browses) is in `CrocApp-Info.plist`, `CrocApp-macOS-Info.plist` and `CrocApp-Direct-Info.plist`. macOS 15 and later has local network privacy, and TN3179 does not limit the key to iOS.
+- `UIApplicationSceneManifest` is in `CrocApp-Info.plist` with `UIApplicationSupportsMultipleScenes` set to NO. The target does not set `INFOPLIST_KEY_UIApplicationSceneManifest_Generation`, because that setting writes a multi-window manifest.
 
 ### `CrocApp Direct`: the direct-download target
 

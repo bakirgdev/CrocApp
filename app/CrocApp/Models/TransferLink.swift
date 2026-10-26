@@ -17,11 +17,6 @@ enum TransferLink: Equatable {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return nil }
         guard text.contains("://") else { return validCode(text).map(TransferLink.code) }
-        // 0.9.9 QR payload. Everything after the prefix is the code, so it is
-        // not run through URLComponents.
-        if text.hasPrefix("croc://") {
-            return validCode(String(text.dropFirst("croc://".count))).map(TransferLink.code)
-        }
         guard let parts = URLComponents(string: text), let scheme = parts.scheme?.lowercased(),
             parts.user == nil, parts.password == nil
         else { return nil }

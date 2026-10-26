@@ -29,7 +29,9 @@ The app has two layouts and picks one by width, never by device. Width is the ho
 
 ## Windows and scenes
 
-Each window (Mac) and scene (iPad) owns its own navigation state: its sidebar selection and the path inside its detail, restored per scene. A new scene starts at Send. The transfer is app-wide, one at a time, so every window shows the same phase and its sidebar row shows it. A receive link, a shared file or a drop navigates only the frontmost scene, and only when no transfer is active.
+The app has one main window on Mac and one scene on iPad. The transfer is app-wide and runs one at a time, so a second window could only mirror the first with navigation of its own. The Mac main window is a single-instance `Window` scene and iPad turns multiple scenes off (`UIApplicationSupportsMultipleScenes` NO), so the sidebar selection and the path inside each detail live in the one `AppRouter.shared`. A receive link, a shared file or a drop navigates that window, and only when no transfer is active.
+
+Closing the Mac window leaves CrocApp running: the menu bar item stays and a running transfer finishes. A Dock click, a receive link or **Open CrocApp** in the menu bar window brings the window back.
 
 ## iPhone
 

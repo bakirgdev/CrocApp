@@ -1,41 +1,23 @@
 import Foundation
+import OSLog
 import Observation
 
 // Reads files staged by the CrocShare extension out of the App Group
-// container. macOS has no share extension and no app group entitlement —
-// containerURL returns nil there and everything degrades to a no-op.
+// container (the contract is in Shared/ShareHandoff.swift). macOS has no
+// share extension and no app group entitlement — containerURL returns nil
+// there and everything degrades to a no-op.
 @MainActor
 @Observable
 final class ShareInbox {
-    static let groupID = "group.com.bakirgdev.CrocApp"
-    // Mirrored in CrocShare/ShareStager.swift -- these three literals (group
-    // ID, inbox directory name, manifest file name) must match exactly
-    // across the two targets, which can't share a Swift file without a
-    // package. A drift here breaks the share handoff silently: no compiler
-    // error, staged files just never appear.
-    private static let inboxDirName = "ShareInbox"
-    private static let manifestName = "manifest.json"
+    private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "share")
 
     private(set) var staged: [URL] = []
 
-    private struct Manifest: Codable {
-        var batch: String
-        var files: [String]
-    }
-
-    private var inboxDir: URL? {
-        FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: Self.groupID)?
-            .appendingPathComponent(Self.inboxDirName, isDirectory: true)
-    }
-
     func refresh() {
-        guard let inbox = inboxDir else { return }
-        purgeStaleBatches()
-        let manifestURL = inbox.appendingPathComponent(Self.manifestName)
-        guard let data = try? Data(contentsOf: manifestURL),
-            let manifest = try? JSONDecoder().decode(Manifest.self, from: data)
-        else {
+        guard let inbox = ShareHandoff.inboxURL else { return }
+        let manifest = readManifest(in: inbox)
+        purgeStaleBatches(in: inbox, keeping: manifest?.batch)
+        guard let manifest else {
             staged = []
             return
         }
@@ -52,27 +34,55 @@ final class ShareInbox {
     // Called when the user decides (send or discard): the prompt must not
     // re-appear, but batch files stay on disk — croc reads them mid-transfer.
     func consumeManifest() {
-        guard let inbox = inboxDir else { return }
-        try? FileManager.default.removeItem(at: inbox.appendingPathComponent(Self.manifestName))
+        guard let inbox = ShareHandoff.inboxURL else { return }
+        remove(ShareHandoff.manifestURL(in: inbox), what: "manifest")
     }
 
     // Sweep batches no manifest points to (previous sends, discards).
-    func purgeStaleBatches() {
-        guard let inbox = inboxDir else { return }
-        let manifestURL = inbox.appendingPathComponent(Self.manifestName)
-        var liveBatch: String?
-        if let data = try? Data(contentsOf: manifestURL),
-            let manifest = try? JSONDecoder().decode(Manifest.self, from: data)
-        {
-            liveBatch = manifest.batch
+    private func purgeStaleBatches(in inbox: URL, keeping liveBatch: String?) {
+        let contents: [URL]
+        do {
+            contents = try FileManager.default.contentsOfDirectory(
+                at: inbox, includingPropertiesForKeys: nil)
+        } catch {
+            // No inbox yet (nothing was ever shared) is not a failure.
+            if (error as? CocoaError)?.code != .fileReadNoSuchFile {
+                Self.log.error(
+                    "share inbox listing failed: \(String(describing: error), privacy: .public)")
+            }
+            return
         }
-        let contents =
-            (try? FileManager.default.contentsOfDirectory(
-                at: inbox, includingPropertiesForKeys: nil)) ?? []
         for url in contents where url.hasDirectoryPath && url.lastPathComponent != liveBatch {
             // Never delete the batch backing an active send.
             if !staged.isEmpty, staged[0].deletingLastPathComponent() == url { continue }
-            try? FileManager.default.removeItem(at: url)
+            remove(url, what: "stale batch")
+        }
+    }
+
+    /// nil when there is no manifest. A manifest that exists but cannot be
+    /// read or decoded is logged, then treated as absent.
+    private func readManifest(in inbox: URL) -> ShareHandoff.Manifest? {
+        let url = ShareHandoff.manifestURL(in: inbox)
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        do {
+            return try JSONDecoder().decode(ShareHandoff.Manifest.self, from: Data(contentsOf: url))
+        } catch {
+            Self.log.error(
+                "share manifest unreadable: \(String(describing: error), privacy: .public)")
+            return nil
+        }
+    }
+
+    /// Best effort: a leftover file costs disk space or re-offers a share
+    /// prompt, so a failure is logged and the app carries on.
+    private func remove(_ url: URL, what: String) {
+        do {
+            try FileManager.default.removeItem(at: url)
+        } catch {
+            if (error as? CocoaError)?.code == .fileNoSuchFile { return }
+            Self.log.error(
+                "share inbox \(what, privacy: .public) removal failed: \(String(describing: error), privacy: .public)"
+            )
         }
     }
 }

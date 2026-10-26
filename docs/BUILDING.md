@@ -89,7 +89,7 @@ It is the only Swift lint check CI runs. Locally, run it without the flag to rew
 scripts/format-swift.sh
 ```
 
-The script owns the list of paths swift-format covers: `app/CrocApp`, `app/CrocAppDirect`, `app/CrocShare`, `app/CrocAppTests`, `CrocKit/Sources`, `CrocKit/Tests`, `CrocKit/Package.swift` and `scripts/screenshots`. Add a new Swift target there, so CI and every doc pick it up at once. `CrocKit` is listed path by path because a recursive run on it descends into `.build/` and `Croc.xcframework/`.
+The script owns the list of paths swift-format covers: `app/CrocApp`, `app/CrocAppDirect`, `app/CrocShare`, `app/Shared`, `app/CrocAppTests`, `CrocKit/Sources`, `CrocKit/Tests`, `CrocKit/Package.swift` and `scripts/screenshots`. Add a new Swift target there, so CI and every doc pick it up at once. `CrocKit` is listed path by path because a recursive run on it descends into `.build/` and `Croc.xcframework/`.
 
 **Trap**: `format --in-place` does not fix lint-only rules. Several enabled rules only flag and never rewrite (for example `ReplaceForEachWithForLoop`, `OnlyOneTrailingClosureArgument`, `AlwaysUseLowerCamelCase`). A clean `format` run is not evidence that `lint --strict` passes, which is why the script always runs both. The full list is in `docs/knowledge/tooling.md`, "swift-format traps".
 

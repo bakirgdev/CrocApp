@@ -3,9 +3,8 @@ import SwiftUI
 
 /// Crisp QR rendering of what the sender shows on screen. The payload is the
 /// receive link from `TransferLink.webURL(forCode:)` (`https://crocapp.dev/r/#<code>`),
-/// which opens the app through the universal link or the browser receive page;
-/// it is not a `croc://` URL. The scanner side accepts the link, the legacy
-/// `croc://` form and the bare code (`TransferLink.parse`).
+/// which opens the app through the universal link or the browser receive page.
+/// The scanner side accepts that link and the bare code (`TransferLink.parse`).
 /// design/components.md → CodePhraseDisplay and QRFrame.
 struct QRCodeView: View {
     let content: String

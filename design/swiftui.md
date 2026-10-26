@@ -18,11 +18,12 @@ One color set per semantic alias that has no exact system equivalent; a system s
 | `--color-accent-text-on-tint` | `ColorAccentTextOnTint` set; `Color.accentTextOnTint` |
 | `--color-on-accent` | `ColorOnAccent` set; `Color.onAccent` |
 | `--color-on-status` | `Color.onStatus` (`.white` in both themes) |
-| `--color-text-primary`, `--color-text-tertiary` | `.primary` / tertiary label, via `Color.textPrimary`, `Color.textTertiary` (tertiary is decorative only, `colors.md` rule 5) |
+| `--color-text-primary` | `.primary`, via `Color.textPrimary` |
+| `--color-text-tertiary` | no alias: decorative only (`colors.md` rule 5), so a glyph that needs it takes the system `.tertiary` style |
 | `--color-text-secondary` | `ColorTextSecondary` set; `Color.textSecondary`. The only secondary text color |
 | `--color-status-success/warning/error/info` | `Color.statusSuccess/Warning/Error/Info` (system green, orange, red, blue match the tokens) |
 | `--color-status-*-tint` | `ColorStatus*Tint` sets; `Color.status*Tint` |
-| `--color-surface-grouped` | `Color.surfaceGrouped` (iOS grouped background, macOS window background) |
+| `--color-surface-grouped` | no alias: no view paints it by name, and the system supplies it (iOS grouped background, macOS window background) through its grouped containers such as `Form` |
 | `--color-surface-card` | `Color.surfaceCard` |
 | `--color-surface-base` | `Color.surfaceBase` |
 | `--color-separator` | `Color.separatorToken` |
@@ -78,7 +79,7 @@ Never a fixed `.font(.system(size:))`: text takes a style, and a glyph size a co
 | Sidebar | a `List(selection:)` of `Label` rows. No `navigationSplitViewColumnWidth`, no style override and the default column visibility: the system owns widths, hiding and the material |
 | Detail | one `NavigationStack` per sidebar item, so Advanced settings and How It Works push inside the detail |
 | The cap | `.frame(maxWidth: LayoutCap.contentMaxWidth)` on each detail screen's content, never on the split view or the sidebar |
-| Per-scene state | the sidebar selection and each detail's path are scene state (`@SceneStorage` or a per-scene model), not the `AppRouter.shared` singleton's (`docs/knowledge/app-ui-architecture.md`). The transfer, settings and history stay app-level |
+| Navigation state | the sidebar selection and each detail's path live on `AppRouter.shared`, because the app has one main window (`platforms.md` → Windows and scenes). The transfer, settings and history stay app-level too |
 
 The Mac Settings scene stays a `Settings` scene. Its window sizes are literals from `platforms.md`, allowed in the scene declarations.
 
@@ -146,7 +147,7 @@ These tokens have no Swift form on purpose. `scripts/verify-design.sh` skips the
 | `--tracking-*` except code and eyebrow | text styles carry Apple's optical tracking; `.tracking()` on a system style fights it |
 | `--icon-stroke-*` | SF Symbols have weights, not strokes |
 | `--color-text-quaternary`, `--color-fill*` | system semantics, used through the system controls |
-| `--color-text-primary/tertiary`, `--color-text-link`, `--color-surface-*`, `--color-separator`, `--color-status-*` (not the tints), `--color-on-status` | mirrored by name as `Color` aliases above, but their values come from the OS (or `.white`), so there is no number to compare |
+| `--color-text-primary/tertiary`, `--color-text-link`, `--color-surface-*`, `--color-separator`, `--color-status-*` (not the tints), `--color-on-status` | values come from the OS (or `.white`), so there is no number to compare. The ones the app draws with are `Color` aliases above (`textPrimary`, `surfaceBase`, `surfaceCard`, `separatorToken`, `status*`, `onStatus`); `--color-text-tertiary` and `--color-surface-grouped` have none |
 
 ## Constraints carried from the app
 

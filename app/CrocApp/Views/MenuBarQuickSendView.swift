@@ -158,13 +158,11 @@ struct MenuBarQuickSendView: View {
             .buttonVariant(.prominent)
     }
 
+    /// The main scene is a single-instance `Window`, so `openWindow` opens it
+    /// when closed and orders the open one to the front.
     private func openMainWindow() {
         NSApp.activate()
-        if let window = NSApp.windows.first(where: { $0.canBecomeMain }) {
-            window.makeKeyAndOrderFront(nil)
-        } else {
-            openWindow(id: CrocAppApp.mainWindowID)
-        }
+        openWindow(id: CrocAppApp.mainWindowID)
     }
 }
 #endif

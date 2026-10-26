@@ -31,6 +31,14 @@
 			</array>
 		</dict>
 	</array>
+	<!-- The local-network probe (LocalNetworkChecker) browses and advertises
+	     this Bonjour type. macOS 15 and later has local network privacy, and
+	     TN3179 asks for the types an app browses in NSBonjourServices without
+	     limiting that to iOS. -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_crocapp._tcp</string>
+	</array>
 	<key>SUFeedURL</key>
 	<string>$(SPARKLE_FEED_URL)</string>
 	<key>SUPublicEDKey</key>

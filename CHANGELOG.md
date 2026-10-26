@@ -29,11 +29,13 @@ extra sections where a release needs them, and the project follows
 - Settings labels use title case, and "Auto-accept incoming files" is now "Auto-Accept Transfers".
 - The transfer engine is croc v11.5.5. Transfers stay compatible with croc 11 on the other device.
 - The update checker in the direct-download Mac build is Sparkle 2.10.1. It fixes an update installing too early when the app sits at a path in NFC Unicode form.
+- CrocApp has one main window on Mac and iPad. One transfer runs at a time, so a second window could only mirror the first and walk its own screens. On iPad the app no longer opens a second window of itself. On Mac, closing the window leaves CrocApp running in the menu bar, and a link, the Dock icon or **Open CrocApp** brings the window back.
 
 ### Removed
 
 - The **Connection** setting (Automatic or Relay Only) and the "Direct path for large files" note in How It Works. With no direct-connection path in the app there is nothing to choose, and CrocApp no longer contacts `tailcat.dev` or the `*.ipn.dev` servers. A croc command-line sender that forces that path (`--transport derp`) cannot send to CrocApp: the receive fails with "peer requires Tailcat". Without that flag, large files from the command line work as before.
 - Six Advanced settings are gone: **Curve**, **File Hash**, **Base Port**, **Parallel Connections**, **Multiplexing** and **Built-in DNS Resolver**. croc picks the right curve and hash on its own (a sender takes the receiver's curve, a receiver takes the sender's hash), so two devices never need to match, and ports, connection count and DNS are croc internals. CrocApp now uses croc's defaults: curve P-256, ports 9009 to 9013. A **Sender IP** receive from a CrocApp sender uses port 9009. Proxies, **Sender IP**, **Send Speed Limit** and, on macOS, **Multicast Address** stay.
+- CrocApp no longer reads the `croc://<code>` QR codes that 0.9.9 showed. A code phrase typed or pasted, and the `https://crocapp.dev/r/` links, still work.
 
 ### Fixed
 

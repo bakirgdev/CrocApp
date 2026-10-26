@@ -14,30 +14,13 @@ enum ShareStagerError: LocalizedError {
 }
 
 enum ShareStager {
-    static let groupID = "group.com.bakirgdev.CrocApp"
-    // Mirrored in Models/ShareInbox.swift (main app target) -- these three
-    // literals (group ID, inbox directory name, manifest file name) must
-    // match exactly across the two targets, which can't share a Swift file
-    // without a package. A drift here breaks the share handoff silently: no
-    // compiler error, staged files just never appear on the main-app side.
-    private static let inboxDirName = "ShareInbox"
-    private static let manifestName = "manifest.json"
-
-    struct Manifest: Codable {
-        var batch: String
-        var files: [String]
-    }
-
     // File-copy only; never read payload bytes into memory (share extensions
-    // die around ~120 MB resident).
-    static func stage(items: [NSExtensionItem]) async throws -> Manifest {
-        guard
-            let container = FileManager.default
-                .containerURL(forSecurityApplicationGroupIdentifier: groupID)
-        else {
+    // die around ~120 MB resident). The inbox layout and manifest are the
+    // contract in Shared/ShareHandoff.swift.
+    static func stage(items: [NSExtensionItem]) async throws -> ShareHandoff.Manifest {
+        guard let inbox = ShareHandoff.inboxURL else {
             throw ShareStagerError.noAppGroup
         }
-        let inbox = container.appendingPathComponent(inboxDirName, isDirectory: true)
         // Never wipe the inbox here: a prior batch may be mid-send, with croc
         // actively reading its files. The main app's purgeStaleBatches()
         // sweeps orphaned batches once it's idle.
@@ -58,9 +41,9 @@ enum ShareStager {
         }
         guard !names.isEmpty else { throw ShareStagerError.nothingUsable }
 
-        let manifest = Manifest(batch: batchName, files: names)
+        let manifest = ShareHandoff.Manifest(batch: batchName, files: names)
         let data = try JSONEncoder().encode(manifest)
-        try data.write(to: inbox.appendingPathComponent(manifestName), options: .atomic)
+        try data.write(to: ShareHandoff.manifestURL(in: inbox), options: .atomic)
         return manifest
     }
 

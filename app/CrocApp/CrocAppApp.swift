@@ -54,34 +54,7 @@ struct CrocAppApp: App {
     }
 
     var body: some Scene {
-        WindowGroup(id: Self.mainWindowID) {
-            ContentView()
-                .environment(controller)
-                .environment(settings)
-                .environment(outputFolder)
-                .environment(localNetwork)
-                .environment(router)
-                .environment(history)
-                .modelContainer(history.container)
-                .onOpenURL { url in
-                    if let link = TransferLink.parse(url.absoluteString) { router.open(link) }
-                }
-                #if os(macOS)
-            // Without this every opened URL builds a new window and drops the
-            // typed state of the old one.
-            .handlesExternalEvents(preferring: [], allowing: ["*"])
-            .frame(minWidth: 480, minHeight: 560)
-                #endif
-        }
-        #if os(macOS)
-        .defaultSize(width: 560, height: 700)
-        #endif
-        .commands {
-            AppCommands(router: router, outputFolder: outputFolder, controller: controller)
-            #if DIRECT
-            UpdateCommands()
-            #endif
-        }
+        mainScene
 
         #if os(macOS)
         MenuBarExtra(
@@ -107,6 +80,45 @@ struct CrocAppApp: App {
         // form marooned in the middle.
         .windowResizability(.contentMinSize)
         .defaultSize(width: 480, height: 780)
+        #endif
+    }
+
+    /// One transfer runs at a time, so the app has one main window and one
+    /// navigation path. macOS takes the single-instance `Window`; iOS has no
+    /// `Window` scene, so iPad stays a `WindowGroup` limited to one scene by
+    /// `UIApplicationSupportsMultipleScenes = NO` in `Config/CrocApp-Info.plist`.
+    @SceneBuilder private var mainScene: some Scene {
+        #if os(macOS)
+        Window("CrocApp", id: Self.mainWindowID) { mainContent }
+            .defaultSize(width: 560, height: 700)
+            .commands { appCommands }
+        #else
+        WindowGroup(id: Self.mainWindowID) { mainContent }
+            .commands { appCommands }
+        #endif
+    }
+
+    private var mainContent: some View {
+        ContentView()
+            .environment(controller)
+            .environment(settings)
+            .environment(outputFolder)
+            .environment(localNetwork)
+            .environment(router)
+            .environment(history)
+            .modelContainer(history.container)
+            .onOpenURL { url in
+                if let link = TransferLink.parse(url.absoluteString) { router.open(link) }
+            }
+            #if os(macOS)
+        .frame(minWidth: 480, minHeight: 560)
+            #endif
+    }
+
+    @CommandsBuilder private var appCommands: some Commands {
+        AppCommands(router: router, outputFolder: outputFolder, controller: controller)
+        #if DIRECT
+        UpdateCommands()
         #endif
     }
 }

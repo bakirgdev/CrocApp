@@ -197,16 +197,6 @@ extension Color {
     /// for glyphs and large text only.
     static let textSecondary = Color("ColorTextSecondary")
 
-    /// Tertiary is decorative-only: not a text color and not a UI-boundary
-    /// color, 1.73:1 (colors.md → Contrast, rule 5).
-    static var textTertiary: Color {
-        #if os(iOS)
-        Color(uiColor: .tertiaryLabel)
-        #else
-        Color(nsColor: .tertiaryLabelColor)
-        #endif
-    }
-
     // MARK: - Status (design/swiftui.md → Colors)
 
     /// System semantics match the token values for the four status colors.
@@ -227,15 +217,6 @@ extension Color {
     static let statusInfoTint = Color("ColorStatusInfoTint")
 
     // MARK: - Surfaces (design/swiftui.md → Colors)
-
-    /// `--color-surface-grouped`: iOS grouped background, macOS window background.
-    static var surfaceGrouped: Color {
-        #if os(iOS)
-        Color(uiColor: .systemGroupedBackground)
-        #else
-        Color(nsColor: .windowBackgroundColor)
-        #endif
-    }
 
     /// `--color-surface-base` (colors.md → Semantic aliases): the plain,
     /// unelevated page fill. iOS takes `.systemBackground`; macOS has no
