@@ -146,10 +146,18 @@ Permanent or deferred, each with its reason.
 
 ### App and UI
 
+- **Unsigned Mac builds cannot use the Keychain.**
+  - The data-protection keychain needs the `com.apple.application-identifier` entitlement, which a signed build gets from its provisioning profile. A build with `CODE_SIGNING_ALLOWED=NO` (CI, or a contributor outside team `HBSU359M33`) reads nothing, and every write or delete fails with `errSecMissingEntitlement`. The relay password, the proxies and Send as Link receipts do not persist; a relay password or proxy field shows "Couldn't save to the Keychain".
+  - No test or harness needs it: they inject in-memory secret stores. An unsigned iOS Simulator build was not checked.
 - **`dropDestination(for:action:isTargeted:)` stays at `ContentView.swift`, `SendView.swift` and `MenuBarQuickSendView.swift`.**
   - The Xcode 27 SDK marks it deprecated only for a future OS (`deprecated: 100000.0`), so builds emit no warning.
   - The replacement `dropDestination(for:isEnabled:action:)` takes a `Void` action (a drop cannot be rejected) and has no `isTargeted`. Its highlight API `onDropSessionUpdated` is iOS 27 / macOS 26 only, and the deployment target is iOS 26.0.
   - Revisit when the minimum OS reaches 27.
+- **Keychain items written by earlier builds stay behind.**
+  - Mac: `KeychainStore` reads, writes and deletes only in the data-protection keychain (`kSecUseDataProtectionKeychain`). Earlier Mac builds (the withdrawn 0.9.9 and 1.0.0 disk images, and development builds) wrote to the login keychain. CrocApp no longer reads those items, and clearing a field in Settings does not delete them.
+  - Not a new exposure: they stay as they were stored, in the login keychain under the access control they were created with.
+  - No migration code, by owner decision: the app has no users. Remove them by hand in Keychain Access (search for `com.bakirgdev.CrocApp`), or with `security delete-generic-password -s com.bakirgdev.CrocApp -a <account>` for each account: `relayPassword`, `advanced.socks5Proxy`, `advanced.httpProxy`, `storedReceipts`.
+  - iPhone and iPad: an item that an earlier TestFlight or development build wrote keeps `kSecAttrAccessibleAfterFirstUnlock`, so a backup can still restore it to another device, until that setting (or the receipt list) is next saved.
 - **`OutputFolderStore.select` silently does nothing if bookmarking fails.** It is rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **Gesture-level flows are not machine-verified.**

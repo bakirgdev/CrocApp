@@ -29,6 +29,11 @@ struct PowerSettingsSections: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             #endif
+            if settings.unsavedSecrets.contains(.relayPassword) {
+                StatusBanner(
+                    kind: .error, title: AppSettings.secretNotSavedTitle,
+                    detail: AppSettings.secretNotSavedDetail)
+            }
         }
 
         Section {

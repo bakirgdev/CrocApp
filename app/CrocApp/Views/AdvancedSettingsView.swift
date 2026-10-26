@@ -19,7 +19,8 @@ struct AdvancedSettingsView: View {
                 AdvancedRow(
                     footnote:
                         "Applies to this device only. Takes priority over the HTTP proxy if both are set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain.",
-                    error: AppSettings.socks5ProxyError(settings.socks5Proxy)
+                    error: AppSettings.socks5ProxyError(settings.socks5Proxy),
+                    notSaved: settings.unsavedSecrets.contains(.socks5Proxy)
                 ) {
                     LabeledField("SOCKS5 Proxy") {
                         TextField(
@@ -32,7 +33,8 @@ struct AdvancedSettingsView: View {
                 AdvancedRow(
                     footnote:
                         "Applies to this device only. Ignored when a SOCKS5 proxy is set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain.",
-                    error: AppSettings.httpProxyError(settings.httpProxy)
+                    error: AppSettings.httpProxyError(settings.httpProxy),
+                    notSaved: settings.unsavedSecrets.contains(.httpProxy)
                 ) {
                     LabeledField("HTTP Proxy") {
                         TextField(
@@ -117,6 +119,8 @@ struct AdvancedSettingsView: View {
 private struct AdvancedRow<Content: View>: View {
     let footnote: LocalizedStringKey
     var error: String?
+    /// The value's Keychain write failed (`AppSettings.unsavedSecrets`).
+    var notSaved = false
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -126,6 +130,13 @@ private struct AdvancedRow<Content: View>: View {
             if let error {
                 StatusBanner(kind: .error, title: error)
                     .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if notSaved {
+                StatusBanner(
+                    kind: .error, title: AppSettings.secretNotSavedTitle,
+                    detail: AppSettings.secretNotSavedDetail
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             Text(footnote)
                 .font(.footnote)

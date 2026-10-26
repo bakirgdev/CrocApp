@@ -18,6 +18,8 @@ extra sections where a release needs them, and the project follows
 
 ### Changed
 
+- The relay password, the proxies and Send as link receipts stay on this device: they are never synced, and a backup restored to a new device does not bring them back. On iPhone and iPad this applies to each one from the next time it is saved. If the relay password or a proxy cannot be saved to the Keychain, its field now says so instead of seeming saved.
+
 - A failed transfer now says what happened and what to do, and offers the one action that can help. **Try Again** runs the same transfer again when it could now succeed (a dropped connection, an unreachable relay or link server, iOS stopping it in the background). **Open Settings** goes where the fix is when a setting is the cause (a rejected relay password, an Advanced setting that cannot be used, auto-accept meeting a sender who confirms). Otherwise there is only **Done**. Shortcuts and the menu bar show the same words.
 
 - The app is about half the size. The transfer engine is now croc's relay-only build, without Tailcat, the direct-connection path croc could try for large sends. The main executable went from 22.0 MB to 10.5 MB on Mac and from 21.3 MB to 10.3 MB on iPhone and iPad (measured on unsigned release archives). Transfers use croc's relay or your local network, as they did for everything under 128 MiB.

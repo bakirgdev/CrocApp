@@ -68,7 +68,7 @@ The build settings that must not change casually (Swift 6 mode, deployment targe
   - gomobile treats any func named `New<TypeName>` as a constructor and builds the Objective-C selector from what follows that prefix (`bind/gen.go`, `bind/genobjc.go`).
   - A bare `NewOptions` on type `Options` leaves an empty suffix and emits `- (nullable instancetype)init` on `CrocmobileOptions`, which clashes with `NSObject`'s `nonnull init`.
   - The constructor is named `NewOptionsDefault`, which yields the selector `initDefault`. Do not rename it back, and do not add a `New<Type>` func whose suffix is empty.
-- **macOS app build has no signing identity.** The runner has no `Mac Development` cert, so the `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` to `xcodebuild`. The iOS Simulator destination never signs, so it needs nothing.
+- **macOS app build has no signing identity.** The runner has no `Mac Development` cert, so the `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` to `xcodebuild`. That app cannot use the Keychain, which no test needs: the suites inject in-memory secret stores (`app/CrocApp/Support/KeychainStore.swift`). The iOS Simulator destination never signs, so it needs nothing.
 - **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `github-pages.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and sets `cancel-in-progress` only for pull requests, so deploys on `main` queue instead of cancelling each other.
 - **Scheduled workflows are disabled after 60 days of repo inactivity.** `go-weekly.yml` stops firing silently; `workflow_dispatch` restarts it.
 

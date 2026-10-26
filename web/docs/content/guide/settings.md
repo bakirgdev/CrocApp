@@ -91,4 +91,4 @@ The badge reads your settings. It does not report which path carried the data. A
 
 ## What is stored
 
-Settings are stored on the device. The relay password, the two proxies and Send as link receipts are in the Keychain. Nothing in Settings, no transfer content and no code phrase is sent anywhere except as part of a transfer you start. See [Uninstall and data](../uninstall.md) for where it all lives.
+Settings are stored on the device. The relay password, the two proxies and Send as link receipts are in the Keychain. If the relay password or a proxy cannot be saved there, its field shows "Couldn't save to the Keychain": the new value works until you quit CrocApp, so edit the field to try again. Nothing in Settings, no transfer content and no code phrase is sent anywhere except as part of a transfer you start. See [Uninstall and data](../uninstall.md) for where it all lives.

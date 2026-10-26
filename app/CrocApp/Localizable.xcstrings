@@ -102,6 +102,7 @@
     "Couldn't reach the link server" : {},
     "Couldn't reach the relay" : {},
     "Couldn't revoke the link" : {},
+    "Couldn't save to the Keychain" : {},
     "CrocApp" : {
       "shouldTranslate" : false
     },
@@ -128,6 +129,9 @@
     "Drop files or folders here" : {},
     "Drop files to send" : {},
     "Drop to Send" : {},
+    "Edit the field to try again before you quit CrocApp." : {
+      "comment" : "Under a Keychain field whose change was not saved. Until it is, the next launch shows the previous value."
+    },
     "Encrypted on this device. The link server only holds the encrypted files." : {},
     "End-to-end encrypted" : {},
     "Enter a speed such as 500k, 2m or 1g, or leave it blank for no limit." : {},
@@ -146,6 +150,7 @@
       "comment" : "VoiceOver label of a history row's status icon."
     },
     "File %lld of %lld" : {
+      "comment" : "Progress through a transfer of several files: this file's number, then how many files there are.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -153,8 +158,7 @@
             "value" : "File %1$lld of %2$lld"
           }
         }
-      },
-      "comment" : "Progress through a transfer of several files: this file's number, then how many files there are."
+      }
     },
     "Files" : {},
     "Files are encrypted on this device before they reach %@. Anyone with the link can receive them until it expires or runs out." : {
@@ -380,6 +384,7 @@
     "This link no longer works" : {},
     "Those files aren't available anymore" : {},
     "Total %@ / %@" : {
+      "comment" : "Total progress of a transfer: bytes done, then the total size. Both placeholders are file sizes such as 12 MB.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -387,8 +392,7 @@
             "value" : "Total %1$@ / %2$@"
           }
         }
-      },
-      "comment" : "Total progress of a transfer: bytes done, then the total size. Both placeholders are file sizes such as 12 MB."
+      }
     },
     "Transfer" : {},
     "Transfer cancelled" : {},
@@ -428,6 +432,7 @@
     "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay." : {},
     "Works anywhere" : {},
     "Works until %@, for ^[%lld download](inflect: true)" : {
+      "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -435,8 +440,7 @@
             "value" : "Works until %1$@, for ^[%2$lld download](inflect: true)"
           }
         }
-      },
-      "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows."
+      }
     },
     "You declined the transfer" : {},
     "You stay in control" : {},
@@ -445,6 +449,7 @@
       "comment" : "VoiceOver label of the badge on the Send button. The placeholder is the number of queued files."
     },
     "^[%lld file](inflect: true) • %@" : {
+      "comment" : "Summary of a finished transfer: the number of files, then their total size such as 24 MB.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -452,8 +457,7 @@
             "value" : "^[%1$lld file](inflect: true) • %2$@"
           }
         }
-      },
-      "comment" : "Summary of a finished transfer: the number of files, then their total size such as 24 MB."
+      }
     },
     "^[%lld item](inflect: true) in this transfer share a name with a file here. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files." : {
       "comment" : "Warning in the incoming-files prompt. The placeholder is how many items clash. Keep Both and Replace are the labels of its two buttons."
