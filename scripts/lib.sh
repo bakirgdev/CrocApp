@@ -7,6 +7,13 @@
 TMPROOT="${TMPDIR:-/tmp}"
 TMPROOT="${TMPROOT%/}"
 
+# DerivedData for NAME, one per checkout: two worktrees building into the same
+# directory trip Clang's module cache ("Crocmobile.objc.h has been modified
+# since the module file ... was built"). Call it from the repository root.
+derived_data() {                                    # derived_data NAME
+  echo "$TMPROOT/dd-$1-$(pwd -P | shasum | cut -c1-10)"
+}
+
 fail() { echo "FAIL: $*" >&2; exit 1; }
 pass() { echo "PASS: $*"; }
 

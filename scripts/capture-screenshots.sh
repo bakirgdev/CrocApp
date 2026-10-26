@@ -41,6 +41,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
+DD_MAC=$(derived_data mac)
+DD_SIM=$(derived_data sim)
 
 BUNDLE=com.bakirgdev.CrocApp
 OUT=assets/screenshots
@@ -803,17 +805,17 @@ echo "building..."
 BIN=""
 if [ "$uses_mac" = 1 ]; then
   logged "$TMPROOT/shots-mac-build.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
-    -destination 'platform=macOS' -derivedDataPath "$TMPROOT/dd-mac" -allowProvisioningUpdates build
-  BIN=$(find "$TMPROOT/dd-mac/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)/Contents/MacOS/CrocApp
-  [ -x "$BIN" ] || fail "no CrocApp.app in $TMPROOT/dd-mac (see $TMPROOT/shots-mac-build.log)"
+    -destination 'platform=macOS' -derivedDataPath "$DD_MAC" -allowProvisioningUpdates build
+  BIN=$(find "$DD_MAC/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)/Contents/MacOS/CrocApp
+  [ -x "$BIN" ] || fail "no CrocApp.app in $DD_MAC (see $TMPROOT/shots-mac-build.log)"
   stage_payloads "$MAC_DOCS"
 fi
 
 if [ "$uses_sim" = 1 ]; then
   logged "$TMPROOT/shots-sim-build.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
-    -destination 'generic/platform=iOS Simulator' -derivedDataPath "$TMPROOT/dd-sim" build
-  SIM_APP=$(find "$TMPROOT/dd-sim/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
-  [ -n "$SIM_APP" ] || fail "no CrocApp.app in $TMPROOT/dd-sim (see $TMPROOT/shots-sim-build.log)"
+    -destination 'generic/platform=iOS Simulator' -derivedDataPath "$DD_SIM" build
+  SIM_APP=$(find "$DD_SIM/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
+  [ -n "$SIM_APP" ] || fail "no CrocApp.app in $DD_SIM (see $TMPROOT/shots-sim-build.log)"
 fi
 
 start_relay
