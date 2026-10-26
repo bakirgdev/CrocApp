@@ -187,13 +187,15 @@ extension Color {
 
     // MARK: - Text (design/swiftui.md → Colors)
 
-    /// System semantics for text primary/secondary/tertiary.
+    /// System semantic for primary text.
     static var textPrimary: Color { .primary }
 
-    /// `.secondary` is `--label-2` (0.60), not the web alias: deliberate, the
-    /// app stays native and only the web needs the 0.75 correction
-    /// (colors.md → Contrast, rule 4).
-    static var textSecondary: Color { .secondary }
+    /// `--color-text-secondary`: the only secondary text color. A color set,
+    /// not `.secondary`: Apple's secondaryLabel is 3.44:1 on white and fails AA
+    /// for any text below large size, this clears 4.5:1 on every surface that
+    /// carries it (colors.md → Contrast, rule 4). `.secondary` stays legal
+    /// for glyphs and large text only.
+    static let textSecondary = Color("ColorTextSecondary")
 
     /// Tertiary is decorative-only: not a text color and not a UI-boundary
     /// color, 1.73:1 (colors.md → Contrast, rule 5).

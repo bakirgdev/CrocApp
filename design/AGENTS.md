@@ -7,16 +7,16 @@ Canonical design system for every CrocApp surface: the SwiftUI apps (iOS, iPadOS
 | Path | Owns |
 | --- | --- |
 | `brand.md` | The brandbook: positioning, voice, logo and mascot, color and type at a glance, imagery, naming, attribution, App Store badges |
-| `content.md` | Copy mechanics: capitalization, sentences, errors, numbers, terminology, the approved security claims |
+| `content.md` | Copy mechanics: capitalization, sentences, errors, settings and system-surface copy, numbers, terminology, the approved security claims |
 | `colors.md` | Palette, semantic aliases, verified contrast and the seven contrast rules |
 | `typography.md` | Font stacks, the app type scale, the web display scale, tracking |
 | `spacing-layout.md` | 4pt grid, radii, control sizes, layout caps, web layout, breakpoints, borders |
 | `materials.md` | Liquid Glass, reduced transparency, elevation, focus |
-| `motion.md` | Easing, durations, phase choreography, haptics, the no-audio rule |
+| `motion.md` | Easing, durations, the motion vocabulary, phase choreography, haptics, the no-audio rule |
 | `components.md` | Every component: which system control it is, or the exact measurements when we draw it |
 | `iconography.md` | SF Symbols (app) to Lucide (web) mapping, sizes, stroke weights |
 | `accessibility.md` | The binding accessibility floor for all surfaces |
-| `platforms.md` | What legitimately differs between iPhone, iPad, macOS and the web |
+| `platforms.md` | What legitimately differs between iPhone, iPad, macOS and the web: layout by width, windows, system surfaces (notifications, widgets, the menu bar, the Dock) |
 | `swiftui.md` | Token to SwiftUI translation |
 | `web.md` | Token to landing page and docs site translation |
 | `tokens.css` | Every token as a CSS custom property |

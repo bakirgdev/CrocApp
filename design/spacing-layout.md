@@ -42,7 +42,7 @@ On Apple platforms always use `style: .continuous` (`.rect(cornerRadius:style:)`
 |---|---|---|
 | `--content-max-width` | 480px | the app's content column on every device; extra width becomes margin |
 
-What legitimately differs per device is `platforms.md`.
+In compact width the cap sits on the screen's content. In regular width it sits on each detail screen's content, centered in the detail column, and never on the split view, the sidebar or a toolbar (`platforms.md` → Layout by width). Column widths themselves are the system's, so there is no token for them. What legitimately differs per device is `platforms.md`.
 
 ## Control sizing
 

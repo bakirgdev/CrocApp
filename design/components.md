@@ -105,7 +105,7 @@ The sender's waiting state. Centered column, gap `--space-5`:
 
 1. Eyebrow "READY TO SEND": `--type-footnote`, semibold, `--tracking-eyebrow`, uppercase, secondary.
 2. The code: `--type-code-hero` bold mono, `--tracking-code`, selectable, wraps only between words. It may sit on a `.glassEffect()` pill at `--radius-xl`.
-3. Copy button, `secondary`: glyph `doc.on.doc` and label "Copy Code", flipping to `checkmark` and "Copied" for two seconds after a copy.
+3. Copy button, `secondary`: glyph `doc.on.doc` and label "Copy Code", flipping to `checkmark` and "Copied" for two seconds after a copy. The glyph swaps with symbol replace and the copy fires `.selection` (`motion.md`). Copy Link and Copy Text flip the same way.
 4. QR frame: 168 square, always white (scanners need it), `--radius-md`, 12 padding, `--shadow-md`, hairline `--color-separator` border. Payload: the receive link `https://crocapp.dev/r/#<code>` from `TransferLink.webURL(forCode:)`, which opens the app through the universal link or the browser receive page.
 5. Optional caption, `--type-callout` secondary, at most 320 wide.
 
@@ -113,11 +113,11 @@ The menu bar window shows the same code at `--type-title3` mono semibold, becaus
 
 ### TransferProgress
 
-- **Direction header**: `arrow.up` or `arrow.down` at `--icon-size-sm` in `--color-accent`, plus the word **Sending** or **Receiving** in `--type-headline`. Both change together and neither is optional. A Send-as-link transfer says Sending and Receiving too.
+- **Direction header**: `arrow.up` or `arrow.down` at `--icon-size-sm` in `--color-accent`, plus the word **Sending** or **Receiving** in `--type-headline`. Both change together and neither is optional. A Send-as-link transfer says Sending and Receiving too. While the sender waits for the other device the arrow pulses, and only then (`motion.md` → Vocabulary).
 - Current file: middle-truncated name (`--type-callout`), bar, caption row `File N of M` and `done / size`.
 - Overall: bar, caption row `done / size` and the live speed in `--weight-medium` primary. Unknown or zero speed shows an em-dash placeholder.
 
-Captions `--type-caption1` secondary. Every number is tabular (`.monospacedDigit()`). Bars are system `ProgressView`, animated at `--dur-base` `--ease-out`, never backwards.
+Captions `--type-caption1` secondary. Every number is tabular (`.monospacedDigit()`) and changes with numeric text (`motion.md` → Vocabulary). Bars are system `ProgressView`, animated at `--dur-base` `--ease-out`, never backwards.
 
 ### StatusBanner
 
@@ -130,11 +130,21 @@ Inline advisory. Padding `--space-4 --space-5`, gap `--space-3`, `--radius-md`, 
 | error | `--color-status-error` | `exclamationmark.circle.fill` | yes |
 | success | `--color-status-success` | `checkmark.circle` | no |
 
-Glyph at 19 in the kind color, decorative (`colors.md` rule 2). Title `--type-subhead` semibold **primary**; body `--type-footnote` secondary. Optional trailing action, `plain`.
+Glyph at 19 in the kind color, decorative (`colors.md` rule 2). Title `--type-subhead` semibold **primary**; body `--type-footnote` secondary. Optional trailing action, `plain`. A banner that appears uses the insert transition (`motion.md` → Vocabulary).
 
 ### StatusBlock
 
-Large centered result (done, failed). A 64 circle in the kind tint holding a 34 glyph in the kind color, then the title `--type-title3` semibold primary, then detail `--type-callout` secondary. Padding `--space-6`, gap `--space-3`. The title states the outcome in words; the glyph only repeats it.
+Large centered result (done, failed). A 64 circle in the kind tint holding a 34 glyph in the kind color, then the title `--type-title3` semibold primary, then detail `--type-callout` secondary, then the actions, large and full width, stacked at `--space-3`. Padding `--space-6`, gap `--space-3`. The title states the outcome in words; the glyph only repeats it. Copy: `content.md` → Errors.
+
+**A failure** is a short title, a one-sentence detail and at most two actions chosen by the kind of failure. **Done is always one of them.** The other is offered only when it could help:
+
+| Failure kind | Examples | Actions |
+|---|---|---|
+| Worth another try: the same inputs could now succeed | the connection dropped, the relay or the link server is unreachable, iOS paused the transfer in the background | **Try Again** `prominent`, **Done** `secondary` |
+| A setting is the cause | the relay rejected its password, an Advanced setting the engine cannot use, local network access is off | **Open Settings** `prominent`, **Done** `secondary` |
+| Retrying would not help: the user must change something, or the other device said no | the other device declined, the codes do not match, the link expired or has no downloads left | **Done** `prominent`, alone |
+
+**Try Again** re-runs the same transfer with the same inputs, so it never appears when the user must change a code or a setting, after a decline, or for a transfer that cannot be restarted. **Open Settings** goes where the fix lives: CrocApp's own Settings for one of our settings, the system's Settings for a permission. A button that will not help is never offered (`content.md` → Errors). The screen announces the failure and fires `.error` (`motion.md` → Haptics and sound).
 
 ### AcceptGate
 
@@ -153,7 +163,7 @@ Composition: direction header (Receiving), TrustBadge pill, the file list as `Fi
 There is no Cancel and no "Not now" here: either would answer the sender on the user's behalf or promise a deferral the protocol cannot deliver. The sender's own timeout is the only thing that ends the wait.
 
 1. **Navigating away never responds**: not on backgrounding, not on a timeout of our own.
-2. **A live request is never lost.** While one is pending and the user is elsewhere, an `info` StatusBanner with a Review action sits on Home and returns to the gate. Persistent, not a toast.
+2. **A live request is never lost.** While one is pending and the user is elsewhere, an `info` StatusBanner with a Review action sits on Home and returns to the gate. In regular width the same banner heads every detail screen except the gate, and the Receive SidebarRow carries a Review badge (`platforms.md` → Layout by width). A notification offers the same Review and nothing more (`platforms.md` → Notifications). Persistent, not a toast.
 3. **The copy separates them.** Decline is worded as telling the other device no. Nothing describes leaving as an action.
 
 Auto-accept, when the user turns it on in Settings, skips this gate; it is off by default on every platform (`platforms.md`).
@@ -163,6 +173,8 @@ Auto-accept, when the user turns it on in Settings, skips this gate; it is off b
 Send queue and accept-gate row. Min height 48, padding `--space-3 --space-4`, gap `--space-3`.
 
 Type glyph at 20 in `--color-accent`: `folder`, `photo`, `doc.text`, `doc`. Filename **middle-truncated** with the last 8 characters pinned so the extension stays visible. Size `--type-footnote` secondary, tabular. Remove control (send queue only): `xmark.circle.fill` at 20, `--color-text-secondary`, labelled "Remove <name>", with a `--hit-target-min` hit area.
+
+**Received** (a completed receive; `platforms.md` → Received files): no remove control. The row is one button that opens Quick Look, labelled "Quick Look <name>", with a trailing `ShareLink` (`square.and.arrow.up` at 20, `--color-text-secondary`, `--hit-target-min` hit area). It drags out as the file on iPad and Mac. Its context menu holds Quick Look, Share and Show in Finder or Show in Files. A folder row has no Quick Look: its action is the existing folder button.
 
 ### HistoryRow
 
@@ -177,7 +189,44 @@ Title `--type-body`, middle-truncated: the first filename plus "+ N more", or "T
 | cancelled | `slash.circle` | `--color-text-secondary` |
 | declined | `hand.raised.fill` | `--color-status-error` |
 
-The status glyph is the one place a status color appears without an adjacent word, so its accessibility label (the status word) is mandatory. Actions: context menu everywhere, swipe on iOS (System controls → ContextMenu, SwipeActions). Empty list is an EmptyState with a Send and a Receive action.
+The status glyph is the one place a status color appears without an adjacent word, so its accessibility label (the status word) is mandatory. Actions: context menu everywhere, swipe on iOS (System controls → ContextMenu, SwipeActions). Empty list is an EmptyState with a Send and a Receive action. With Save Transfer History off it says so instead: title "History is off", description "Turn on Save Transfer History in Settings to list finished transfers here.", and an **Open Settings** button.
+
+**Detail.** A row opens its record: a grouped `Form` titled by the row's title. A status row (glyph and word), `LabeledContent` rows Date, Size and Files (and Expires for a stored send), the file names, then the actions the context menu already offers (Send Again, Revoke Link, Delete) as buttons. It shows nothing the record does not hold.
+
+### Home
+
+The compact root (`platforms.md` → Layout by width): one column capped at `--content-max-width`, page padding `--space-5`, gap `--space-6` between blocks, in this order:
+
+1. TrustBadge pill.
+2. The pending-request banner, only while a request waits (AcceptGate rule 2).
+3. The two actions: Send `prominent`, Receive `secondary`, large and full width, min height 100 (a component constant, not a control size), `.fill` glyph, label `--type-title2` bold.
+4. **Recent transfers**, always below the two actions.
+
+**Recent transfers.** Up to three records, newest first, in one grouped section headed "Recent transfers" (the system's section header, `--color-text-secondary`). A row is a HistoryRow cut to what a glance needs:
+
+- leading direction glyph at `--icon-size-md`, `--color-accent` when completed and `--color-text-secondary` otherwise;
+- title `--type-body` on one line: the file's name, middle-truncated; "3 files" when the record holds several (HistoryRow's "+ N more" would need a second line); "Text snippet" for text;
+- metadata `--type-caption1` secondary on one line: the relative date (`content.md` → Dates). A record that did not complete leads with its status word ("Failed", "Cancelled", "Declined"), because a glyph color alone is not a status;
+- the system disclosure chevron, padding `--space-3` `--space-4`, gap `--space-3`, min height `--hit-target-min`. No size and no code hint.
+
+A tap opens the record's detail in History. The row speaks as one label: "Sent 3 files, yesterday".
+
+- **No history yet:** an EmptyState replaces the section, glyph `clock.arrow.circlepath` at 34 (compact), title "No transfers yet", description "Finished sends and receives appear here." It has no button: the two actions above it are the actions.
+- **Save Transfer History off:** the section is **hidden, not empty**. An empty state would promise rows that will never come.
+- At the largest Dynamic Type sizes the page scrolls and the two actions stay first.
+
+### SidebarRow
+
+Regular width only. A system sidebar row (`Label`, the system's selection and material) whose trailing state is ours. Only the row of the active transfer's direction has a state; the others stay at rest, and so does a row whose transfer finished or failed (the result is in the detail and in a notification). The state is words first.
+
+| Phase | Trailing state | Spoken as |
+|---|---|---|
+| starting, connecting | "Connecting", `--type-caption1` `--color-text-secondary` | "Send, connecting" |
+| waiting (a sender with a code, nobody joined) | "Waiting", the same style | "Send, waiting for the other device" |
+| confirmSend, incoming | a **Review** badge: capsule `--color-accent-solid`, label `--color-on-accent`, `--type-footnote` semibold, padding `--space-1` `--space-3` | "Receive, needs your answer" |
+| transferring | the integer percent, `--type-caption1` secondary, tabular, numeric text; the direction word when the total is unknown | "Send, 42 percent" |
+
+Selecting the row shows its screen (the gate, the waiting screen, the progress). The app never selects a row or changes the detail on its own: a request that arrives while the user reads History steals nothing and answers nothing. A change is announced once per phase, never per progress tick. Contrast of the state text on the sidebar material is the system's to keep: check it with Accessibility Inspector (not verified).
 
 ### OnboardingSheet
 
@@ -217,9 +266,9 @@ Background `assets/dmg-background.tiff`: a 1x and 2x multi-representation TIFF (
 | Element | Spec | Center y |
 |---|---|---|
 | Title "CrocApp" | `--type-title3` semibold, `--label-1` dark | 44 |
-| Lucide `arrow-right`, midway between the icons | 44×44, stroke 1.5, `--label-2-web` dark | 170 |
+| Lucide `arrow-right`, midway between the icons | 44×44, stroke 1.5, `--label-2-text` dark | 170 |
 | Label plates, one under each icon | 140×26, radius 13, `rgba(235,235,245,0.85)` | 254 |
-| Hint "Drag CrocApp onto Applications" | `--type-footnote`, `--label-2-web` dark | 316 |
+| Hint "Drag CrocApp onto Applications" | `--type-footnote`, `--label-2-text` dark | 316 |
 
 **Dark only, with label plates.** Finder shows one fixed image regardless of appearance, and with a background picture set it draws icon labels black in both appearances (verified on macOS 27). The plates keep those black labels readable on the dark fill; a plate center sits 84pt below its icon center, where Finder puts a 128pt icon's label. Keep everything inside the top 340pt: Finder clips at about 368pt under the title bar, 340 with the path bar on. No accent, gradient or mascot.
 
@@ -231,11 +280,12 @@ Background `assets/dmg-background.tiff`: a 1x and 2x multi-representation TIFF (
 |---|---|---|
 | SegmentedControl | `Picker` + `.pickerStyle(.segmented)` | segment labels Title Case |
 | Toggle | `Toggle` | system tint; no custom switch |
-| Settings rows | `Form` + `.formStyle(.grouped)`, `LabeledContent`, `Toggle`, `Picker`, `NavigationLink` | trailing paths truncate in the middle |
+| Sidebar | `NavigationSplitView` sidebar, `List(selection:)` of `Label` rows | the system's width, style, selection and material (`platforms.md`); the trailing state is SidebarRow |
+| Settings rows | `Form` + `.formStyle(.grouped)`, `LabeledContent`, `Toggle`, `Picker`, `NavigationLink` | trailing paths truncate in the middle. A footer we write takes `--color-text-secondary` explicitly (`colors.md` rule 4). Labels and footers for Save Transfer History, Notifications and Haptics: `content.md` → Settings. Haptics exists on iPhone only |
 | SettingsForm | macOS Settings scene (⌘,), the same `Form` | default focus on a real visible button, never a text field. Advanced, Power and About are sections of it |
 | Sheet toolbar | `.toolbar` with `.cancellationAction` / `.confirmationAction` | a destructive confirm is labelled by the sheet's copy, not painted red |
 | ProgressBar | `ProgressView(value:total:)`; indeterminate `ProgressView()` | see TransferProgress |
-| EmptyState | `ContentUnavailableView` | glyph secondary, description one sentence |
+| EmptyState | `ContentUnavailableView` | glyph secondary, description one sentence in `--color-text-secondary`, set explicitly |
 | Alert, ConfirmationDialog | system presentations | only for an irreversible destructive action or a failure the user must acknowledge; everything else is a StatusBanner. A confirmation title is a question ("Clear all history?"), a failure title a statement. One sentence of message saying what will and will not happen. Destructive choice takes the destructive role, the safe choice is the cancel role. Never more than two actions |
 | ContextMenu, SwipeActions | `.contextMenu`, `.swipeActions` | always additive: every action is reachable another way. An entry that removes the row takes the destructive role; one that only asks first (Revoke) takes `--color-status-error` as its tint instead, or SwiftUI animates the row away. A swipe's leading edge is constructive, its trailing edge destructive |
 | Share | `ShareLink` | |

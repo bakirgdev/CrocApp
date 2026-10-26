@@ -60,10 +60,16 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 
 ## Design system
 
-- **iPad shows the iPhone layout stretched; there is no iPad-specific layout.**
-  - The app is one `NavigationStack` and `TARGETED_DEVICE_FAMILY` is `1,2`. On an iPad Pro 13-inch the screens are the phone screens at tablet size, with content capped by `LayoutCap.contentMaxWidth` and wide empty margins.
+- **iPad shows the iPhone layout stretched: the layout is specified, not built.**
+  - `design/platforms.md`, "Layout by width", specifies a `NavigationSplitView` for regular width (sidebar rows Send, Receive, History, plus Settings on iPad; the Mac keeps its Settings scene) and keeps Home plus `NavigationStack` for compact width. The implementation is pending.
+  - Today the app is one `NavigationStack` and `TARGETED_DEVICE_FAMILY` is `1,2`. On an iPad Pro 13-inch the screens are the phone screens at tablet size, with content capped by `LayoutCap.contentMaxWidth` and wide empty margins.
   - The `ipad/` screenshots and the 13-inch App Store set show exactly that.
-  - A split view or a two-column Send/Receive layout would be new work. Until then, App Store listing copy must not promise an iPad-optimised experience.
+  - Until the split view ships, App Store listing copy must not promise an iPad-optimised experience.
+- **The views predate the amended design book.** What the book now specifies and the app does not do yet:
+  - About 30 call sites style text with `.secondary` instead of `Color.textSecondary` (`design/colors.md` rule 4). The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
+  - The failure screen is a single long title and an **OK** button (`TransferStatusView.failedView`), where the book wants a title, a detail and actions by failure kind (`design/components.md`, "StatusBlock").
+  - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/content.md`, "Terminology").
+  - Not built: the Home recent transfers, the Save Transfer History, Notifications and Haptics settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary".
 - **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
   - It is synchronous file I/O on the main actor, run by `SendView` when it builds the row. A network or iCloud volume could make it hitch.
   - Not measured. A fix would read the size once when files are staged.
