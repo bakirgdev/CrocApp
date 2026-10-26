@@ -657,7 +657,7 @@ proxy_receive socks5 -socks5
 proxy_send http -connect
 proxy_receive http -connect
 
-if [ -z "${PUBLIC_POOL:-}" ]; then
+if [ -z "${PUBLIC_POOL:-}" ]; then                 # use_relay accepted only empty or 1
   echo "SKIP: public relay pool (11): set PUBLIC_POOL=1"
   echo "ALL INTEROP CHECKS PASSED (local relay $RELAY; public pool scenario skipped)"
   exit 0

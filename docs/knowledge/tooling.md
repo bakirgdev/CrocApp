@@ -105,8 +105,8 @@ These cost real debugging time on this machine. All are environment quirks, not 
 - **A harness trap must not fail a passing run.** `lib.sh`'s `kill_jobs` runs `kill $pids` on whatever `jobs -p` lists, but `jobs -p` still lists jobs that have already exited, and `kill` fails on those.
   - Under the caller's `set -e`, a failing `kill` aborts the EXIT trap midway, skips the `rm -rf "$TMP"` beside it, and turns a successful run into exit 1.
   - `verify-interop.sh` and `verify-app-sim.sh` both register that trap, so `kill $pids 2>/dev/null || true` must stay.
-- **A harness's relay is disowned, so a bare `wait` does not wait on it.** `verify-interop.sh` ends many scenarios in `wait`, which would otherwise block on the relay forever. `start_croc_relay` therefore runs `disown` on it, `jobs -p` no longer lists it, and `kill_jobs` stops it by `RELAY_PID`. Checked on bash 3.2 (`/bin/bash`) and bash 5.3.
   - The `interop (local relay)` job trusts these scripts' exit codes.
+- **A harness's relay is disowned, so a bare `wait` does not wait on it.** `verify-interop.sh` ends many scenarios in `wait`, which would otherwise block on the relay forever. `start_croc_relay` therefore runs `disown` on it, `jobs -p` no longer lists it, and `kill_jobs` stops it by `RELAY_PID`. Checked on bash 3.2 (`/bin/bash`) and bash 5.3.
 
 ## Deferred, with the trigger for revisiting
 

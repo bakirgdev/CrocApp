@@ -380,7 +380,7 @@ The launch arguments drive the real UI state machine (`AutoVerify` and `Transfer
 - CLI to app receive (with history)
 - app to CLI send with a custom code (`--auto-send PATH --code CODE`; the source file must live in the app container because of the sandbox)
 - local-only send (`--local`; a sandboxed relay-listener proof, the CLI receives via `--ip`)
-- send through a custom self-hosted relay (`--relay ADDRESS`, which also turns the app's LAN route off). Every relay scenario passes `--relay` now, so this one is the harness relay itself; with `PUBLIC_POOL=1` it starts a relay of its own for this scenario only
+- send through a custom self-hosted relay (`--relay ADDRESS --disable-local`: the second flag turns the app's LAN route off, so the transfer must cross the relay, and the scenario asserts that the relay log gained a `room has second peer` line). Every other relay scenario passes `--relay` alone, so the app runs with its default LAN route on; this one uses the harness relay too, and with `PUBLIC_POOL=1` it starts a relay of its own for this scenario only
 - `--no-compress` send
 - `--ask` both-sides confirm (auto-answered by `AutoVerify` through `.confirmSend`)
 - receive onto an existing file in the app's Documents, with `--when-exists keepBoth|replace` (the answer `AutoVerify` gives the incoming sheet; prints `MAC-COLLIDE-OK`)
@@ -394,7 +394,7 @@ Traps:
 
 - The app declares document types, so bare adjacent argv tokens are document-open candidates. Pass flags only (`--code CODE`).
 - Every launch needs `-ApplePersistenceIgnoreState YES`, or a headless window restoration hangs.
-- App-as-sender scenarios wait for the `verify-code-ready.txt` marker that `AutoVerify` writes when a send reaches its code, then for the app's room to show in the relay log (see "Start order in the harness" above). The `--relay ADDRESS` argument goes before any value-less flag (`--ask`, `--local`), because AppKit reads the token after such a flag as its value.
+- App-as-sender scenarios wait for the `verify-code-ready.txt` marker that `AutoVerify` writes when a send reaches its code, then for the app's room to show in the relay log (see "Start order in the harness" above). The `--relay ADDRESS` argument goes before any value-less flag (`--ask`, `--local`, `--disable-local`), because AppKit reads the token after such a flag as its value.
 - The container Documents folder is `~/Library/Containers/com.bakirgdev.CrocApp/Data/Documents/`.
 
 ### `crockit-verify`

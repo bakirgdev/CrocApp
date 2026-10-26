@@ -64,8 +64,8 @@ final class TransferController {
     }
     #endif
 
-    /// Harness-only (AutoVerify --relay): kills the LAN race so the custom
-    /// relay path is provably exercised. Not a user setting.
+    /// Harness-only (AutoVerify --disable-local): kills the LAN race so the
+    /// custom relay path is provably exercised. Not a user setting.
     var harnessDisableLocal = false
 
     var isActive: Bool {

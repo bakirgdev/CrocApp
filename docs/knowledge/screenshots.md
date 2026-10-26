@@ -97,7 +97,7 @@ The app is driven by DEBUG-only launch flags in `app/CrocApp/Support/AutoVerify.
 | `--auto-send PATH --code CODE`, `--auto-receive CODE` | run a real transfer |
 | `--auto-store-send PATH --store-server URL --store-downloads N` | upload to the local store server and park on "Link ready" |
 | `--shown-link-origin ORIGIN` | show and encode the stored link under ORIGIN (scheme and host; path and fragment kept, port dropped), whatever `--store-server` is |
-| `--relay ADDR`, `--relay-password PW` | use a custom relay (also switches the LAN race off) |
+| `--relay ADDR`, `--relay-password PW` | use a custom relay. `--relay` leaves the LAN race on, so `capture-screenshots.sh` ends every launch with `--disable-local`, which switches it off |
 | `--shown-relay default` | make the trust UI name the public relay, whatever `--relay` says |
 | `--throttle RATE` | cap the app's upload rate, e.g. `6m` |
 

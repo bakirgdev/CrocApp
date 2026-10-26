@@ -146,6 +146,10 @@ start_croc_relay() {                                # start_croc_relay LOG
 # Settles which relay this run uses: sets RELAY (host:port, empty for the public
 # pool) and RELAY_LOG.
 use_relay() {                                       # use_relay LOG
+  case "${PUBLIC_POOL:-}" in
+    ''|1) ;;
+    *) fail "PUBLIC_POOL must be empty or 1, not '$PUBLIC_POOL'" ;;
+  esac
   if [ -n "${PUBLIC_POOL:-}" ]; then
     [ -z "$RELAY" ] || fail "PUBLIC_POOL=1 and RELAY=$RELAY exclude each other"
   elif [ -z "$RELAY" ]; then

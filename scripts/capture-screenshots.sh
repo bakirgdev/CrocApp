@@ -363,6 +363,7 @@ start_receiver() {                                  # start_receiver CODE
 }
 
 RELAY_ARGS=()                                       # set once the relay runs
+DISABLE_LOCAL=""                                    # 1 once RELAY_ARGS is set: --relay alone leaves the LAN route on, so launch() ends with --disable-local
 
 phase_is() { grep -Eq "$1" "$DOCS/verify-phase.txt" 2>/dev/null; }
 await_phase() {                                     # await_phase REGEX SECONDS
@@ -547,13 +548,13 @@ mac_titles() {                                      # the window title(s) a scre
 launch() {                                          # launch ARGS...
   rm -f "$DOCS"/verify-*.txt
   if [ "$DEV" = mac ]; then
-    "$BIN" -ApplePersistenceIgnoreState YES "${LOCALE_ARGS[@]}" "$@" > "$TMP/app.log" 2>&1 &
+    "$BIN" -ApplePersistenceIgnoreState YES "${LOCALE_ARGS[@]}" "$@" ${DISABLE_LOCAL:+--disable-local} > "$TMP/app.log" 2>&1 &
     APP_PID=$!
     poll 30 mac_has_window || die "the app opened no window"
     activate_app
   else
     xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
-    xcrun simctl launch "$SIM" "$BUNDLE" "${LOCALE_ARGS[@]}" "$@" > /dev/null
+    xcrun simctl launch "$SIM" "$BUNDLE" "${LOCALE_ARGS[@]}" "$@" ${DISABLE_LOCAL:+--disable-local} > /dev/null
   fi
 }
 
@@ -817,6 +818,7 @@ fi
 
 start_relay
 RELAY_ARGS=(--relay "$RELAY_ADDR" --relay-password "$RELAY_PASS" --shown-relay default)
+DISABLE_LOCAL=1
 
 # A full run rebuilds the set from nothing, so a renamed shot cannot leave its
 # old file behind. Late, so a failed build or preflight wipes nothing.

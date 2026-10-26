@@ -67,10 +67,12 @@ run_app_raw() {                                     # run_app_raw ARGS...: no re
   APP_PID=$!
 }
 
-# Sends and receives through the harness relay. The relay argument goes first:
-# AppKit takes the token after a value-less flag (--local, --ask) as its value,
-# so those must come last (AutoVerify.swift). --relay also turns the app's LAN
-# route off, which is why the transfers that need the LAN use run_app_raw.
+# Sends and receives through the harness relay, with the app's LAN route on (the
+# app's default; only --disable-local turns it off). The relay argument goes
+# first: AppKit takes the token after a value-less flag (--local, --ask,
+# --disable-local) as its value, so those must come last (AutoVerify.swift).
+# Scenarios that use no relay (--local, stored transfers, Open at login) use
+# run_app_raw.
 run_app() {
   run_app_raw ${RELAY:+--relay "$RELAY"} "$@"
 }
@@ -163,23 +165,27 @@ else
 fi
 
 # --- 4: app -> CLI, custom relay ---------------------------------------------
-# --relay also sets harnessDisableLocal, killing the LAN race, so success here
-# proves traffic really went through this relay. Every relay scenario now sends
-# through the harness relay that way, so this one needs a relay of its own only
-# on the public pool.
+# --disable-local kills the LAN route, so a transfer that succeeds crossed the
+# relay. The relay's log confirms it: a second peer must have joined a room
+# while this scenario ran. Every other relay scenario sends through the harness
+# relay with the LAN on, so this one needs a relay of its own only on the public
+# pool. The value-less --disable-local goes last (see run_app).
+second_peers() { { grep -c 'room has second peer' "$TMPROOT/mac-relay.log" || true; } 2>/dev/null; }
 C=$(code rlay)
 if [ -z "$RELAY" ]; then
   start_croc_relay "$TMPROOT/mac-relay.log"
   RELAY=$RELAY_AT
   CLI_R="--relay=$RELAY"
 fi
+# RELAY_PID is set only for a relay this run started, whose log is mac-relay.log.
+if [ -n "$RELAY_PID" ]; then SECOND_BEFORE=$(second_peers); fi
 rm -f "$RESULT"
 echo "mac relay send $$" > "$DOCS/relayme.txt"
-run_app --auto-send "$DOCS/relayme.txt" --code "$C" > "$TMPROOT/mac-app-relay.log" 2>&1
+run_app --auto-send "$DOCS/relayme.txt" --code "$C" --disable-local > "$TMPROOT/mac-app-relay.log" 2>&1
 await_ready
 recv_from_app relay "$DOCS/relayme.txt" "$TMP/d4"
 if [ -n "$RELAY_PID" ]; then
-  [ -s "$TMPROOT/mac-relay.log" ] || fail "relay send: relay logged nothing"
+  [ "$(second_peers)" -gt "$SECOND_BEFORE" ] || fail "relay send: no second peer joined a room on the relay (log: $TMPROOT/mac-relay.log)"
   if [ -z "$RELAY_LOG" ]; then                      # the relay this scenario started on the public pool: stop it
     kill "$RELAY_PID" 2>/dev/null || true
     RELAY_PID=""

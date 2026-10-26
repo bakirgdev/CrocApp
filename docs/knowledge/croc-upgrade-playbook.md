@@ -19,9 +19,11 @@ How to bump the pinned croc version in `crocmobile/go.mod`. Run it as one sessio
 4. **Build.** Run `go build ./... && go vet ./...` in `crocmobile/` with `GOFLAGS=-tags=croc_no_tailcat` (`BUILDING.md`, "Format and lint"), then `./scripts/build-xcframework.sh`, then `cd CrocKit && swift build`, then build the app for both platforms.
 5. **Verify**, in this order. Each one covers ground the previous one does not (`BUILDING.md`, "Verification harnesses" has the commands):
    - `crockit-verify twice`: the Swift layer. The two-transfer case proves the fd 0, stdout, cwd and mutex restoration still composes.
-   - `./scripts/verify-interop.sh`: all 15 crocmobile to CLI scenarios.
-   - `./scripts/verify-app-mac.sh`: the 12 macOS app scenarios. This is the widest coverage of the option surface.
-   - `./scripts/verify-app-sim.sh`: iOS simulator receive and the share-extension handoff.
+   - `PUBLIC_POOL=1 ./scripts/verify-interop.sh`: all 15 crocmobile to CLI scenarios, including the public relay pool (scenario 11), which only runs with `PUBLIC_POOL=1`.
+   - `PUBLIC_POOL=1 ./scripts/verify-app-mac.sh`: the 12 macOS app scenarios. This is the widest coverage of the option surface.
+   - `PUBLIC_POOL=1 ./scripts/verify-app-sim.sh`: iOS simulator receive and the share-extension handoff.
+
+   `PUBLIC_POOL=1` sends through the public relays, which is where a croc upgrade can change relay selection or the code-to-relay mapping. A pool relay rate-limits, so wait a minute between harnesses, and a failure counts as a regression only after its log says so (`known-issues.md`, "Harnesses"). Run the same three without `PUBLIC_POOL` as well: that is what CI runs for interop and what finds a local-relay regression.
 
    Any failure: find the root cause against the upstream delta before touching wrapper semantics.
 6. **Update docs.**
