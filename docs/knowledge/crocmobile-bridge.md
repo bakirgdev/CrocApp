@@ -239,7 +239,7 @@ croc retries a dropped transfer up to 10 times (backoff from 100 ms, doubling, c
 - The receiver sends the probe only with LAN on (`DisableLocal` false), so only then does the race exist. `errors_test.go`, "receiver joined before the sender", reproduces it against an in-process relay.
 - The sender fails too. A croc v11.5.5 CLI sender with LAN on reports `could not secure channel`, which `classify` cannot tell from a real code mismatch (`wrongCode`). A sender with LAN off keeps waiting.
 - Generated-code GUI flows are sender-first. Custom codes are not: a receiver who types an agreed code before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it (`../known-issues.md`, "Accepted").
-- Harnesses start the receiver only after the sender reported its code: see "Verification harnesses".
+- Harnesses start the receiver only after the sender is in its room: see "Verification harnesses".
 
 ### Prompts beyond the accept prompt
 
@@ -277,7 +277,7 @@ The curve, hash, base port, transfers and internal DNS are not options. croc set
 |---|---|---|---|
 | PeerIP | **Receiver** only (`--ip host:port`). It connects straight to the sender's local relay and skips the public relay and discovery. It works only with a sender whose local relay is on (not `NoLocal`) and reachable. | The sender must listen there. | Nothing listening: it fails at once with `relayUnreachable` (`could not connect to 127.0.0.1:<port>: ... connection refused`), with no fallback to a relay. |
 | Multicast address | Both sides of **LAN discovery**. A sender announces `croc<port>` (`croc9009` for a CrocApp sender) on the group, a receiver announces `ok` and listens. The default is `239.255.255.250`, UDP port 9999. | Yes, for discovery: peers on different groups never hear each other. The relay path still works. | Silent: discovery finds nobody, then the relay or `PeerIP` path carries the transfer. |
-| SOCKS5, HTTP proxy | The local side's own dials only (CONNECT; SOCKS5 before HTTP). Invisible to the peer. | No | croc bypasses the proxy for local addresses (`utils.IsLocalIP`: loopback, link-local, private ranges). A proxy therefore affects only a public relay dial. With a local relay or a LAN transfer it is never used, with no error. Observed: with the public pool, connections went through a `croctest` proxy on both send and receive. |
+| SOCKS5, HTTP proxy | The local side's own dials only (CONNECT; SOCKS5 before HTTP). Invisible to the peer. | No | croc bypasses the proxy for local addresses (`utils.IsLocalIP`: loopback, link-local, private ranges). A proxy therefore affects only a public relay dial, or a relay given by name: the check runs on the address as written, so `localhost:PORT` is not local to it and does go through the proxy (the `verify-interop.sh` proxy cases rely on that). With a local relay given as an IP or a LAN transfer it is never used, with no error. Observed: with the public pool, connections went through a `croctest` proxy on both send and receive. |
 
 Two limits of the harness:
 
@@ -310,7 +310,8 @@ Sourced by `verify-interop.sh`, `verify-app-mac.sh`, `verify-app-sim.sh`, `captu
 - `logged`, which runs a build step into a log and shows its tail on failure;
 - `require_croc`;
 - `kill_jobs`, run from an EXIT trap so a failed assertion cannot leak a croc, relay or app process;
-- `await_file` and `local_ip`.
+- `await_file`, `await_log` and `local_ip`;
+- the relay helpers: `use_relay` (settles which relay the run uses and starts a local `croc relay` unless `PUBLIC_POOL=1` or `RELAY` says otherwise), `mark_relay` and `await_sender` (see "Start order in the harness" below), and `free_port`.
 
 ### `scripts/verify-interop.sh`
 
@@ -330,20 +331,23 @@ Sourced by `verify-interop.sh`, `verify-app-mac.sh`, `verify-app-sim.sh`, `captu
 | 14 | Stored transfers (see below) |
 | 15 | Advanced options, described in "Advanced options on the wire" |
 
-`RELAY=host:port` routes every transfer through one relay. It skips the pool scenario (11) and the proxy cases of scenario 15. Scenario 13 runs, because the relay carries its data and the CLI finishes without `tailcat.dev`. Scenario 15's sender IP and multicast cases still run.
+By default every transfer goes through a `croc relay` the script starts on free loopback ports. Scenario 11 needs the public pool, so it runs only with `PUBLIC_POOL=1`, which also adds the 60 s waits that keep the run under the pool's admission limit. `RELAY=host:port` routes every transfer through a relay that is already running instead, and skips scenario 11 and the proxy cases of scenario 15. Scenario 13 runs on any of them, because the relay carries its data and the CLI finishes without `tailcat.dev`. Scenario 15's sender IP and multicast cases need no relay.
+
+The proxy cases run on the local relay, which they dial as `localhost:PORT`. croc's dialer skips the proxy when `utils.IsLocalIP` accepts the address, and that function never resolves a name: `127.0.0.1:PORT` is local, `localhost:PORT` is not. The tunnel count each case asserts is what proves the proxy carried the connection (observed with croc v11.5.5). If a croc release resolves names first, those cases fail with "tunnelled no connection" and belong back on the public pool.
 
 Start order in the harness (see "Start order: sender first"):
 
-- With a croctest sender, it waits for croctest's `EVENT code` line, plus 3 s, before a CLI receiver joins.
-- When the CLI sends, it waits a fixed 3 s.
+- The relay runs with `--debug`, and logs `room has first peer` once it has admitted the first client of a room. A sender opens exactly one room before a receiver exists (its control connection; the data connections open after the receiver joins).
+- So the harness marks the count of those lines before it starts a sender (`mark_relay`) and waits for the count to grow (`await_sender`, 30 s at most, then it fails and names the relay log) before it starts the receiver. A croctest sender is also awaited on `EVENT code` first, which fires before croc dials the relay.
+- Where nothing observable says the sender is in its room, the wait is a fixed 3 s: on the public pool, with `RELAY=host:port`, and for the `-only-local` senders of scenarios 9 and 15, whose room lives inside the sender. The `--local` CLI sender of scenario 15 prints `local connection established` under `--debug`, which the harness waits on instead.
 
-Scenario 11 (pool):
+Scenario 11 (pool), only with `PUBLIC_POOL=1`:
 
 - Each of the 4 pool relays gets a custom code that maps to it, sent wrapper to CLI and CLI to wrapper, and a wrapper-generated code forced onto it with `croctest send -relay-index N`. One CLI-generated code is added (the CLI caches its probed relay, so that covers one index).
 - LAN is off on both sides (`-no-local` and `send --no-local`) so only matching relays meet. It asserts croctest's `EVENT relay <addr>` and the CLI `--debug` line `public relay index N selected: <addr>`.
 - It waits 60 s first, runs with multiplexing off (`-no-multi`, `--no-multi`), and makes one pass over the pool per kind of transfer. A relay admits 30 connections a minute from one address (`../known-issues.md`, "Accepted").
 
-Scenario 12 (file policy), which also runs under `RELAY`, so CI covers it:
+Scenario 12 (file policy), which runs on the local relay, so CI covers it:
 
 - A CLI sends a file onto an existing one and `croctest` receives with Keep Both and with Replace, answered at the prompt and preset with `-yes` (4 cases).
 - Then a zipped folder (`croc send --zip`) is received twice into one folder with each policy and each accept mode (4 cases).
@@ -354,7 +358,7 @@ Scenario 13 (large files without Tailcat):
 - A 130 MiB transfer, wrapper to CLI and CLI to wrapper, with the CLI on its default `--transport auto`. It asserts byte equality, and in the CLI `--debug` log the plain `selected croc relay data transport` line with no `tailcat-offer`, `starting Tailcat server`, `Tailcat fallback` or `selected staged` line ("Transport and Tailcat").
 - Then a CLI sender with `--transport derp` to the wrapper: the wrapper must exit non-zero within 30 s with the peer-requires-Tailcat error above, and receive nothing.
 
-Scenario 14 (stored transfers), which needs neither a relay nor the internet, so it runs under `RELAY` too:
+Scenario 14 (stored transfers), which needs neither a relay nor the internet:
 
 - It starts `croctest store-server` on a loopback port.
 - It checks wrapper upload then CLI download, wrapper revoke then CLI download fails, CLI upload then wrapper download, and CLI revoke giving `storeExpired`.
@@ -376,7 +380,7 @@ The launch arguments drive the real UI state machine (`AutoVerify` and `Transfer
 - CLI to app receive (with history)
 - app to CLI send with a custom code (`--auto-send PATH --code CODE`; the source file must live in the app container because of the sandbox)
 - local-only send (`--local`; a sandboxed relay-listener proof, the CLI receives via `--ip`)
-- send through a custom self-hosted relay (`croc relay --ports 9021,9022,9023`, then `--relay localhost:9021`)
+- send through a custom self-hosted relay (`--relay ADDRESS`, which also turns the app's LAN route off). Every relay scenario passes `--relay` now, so this one is the harness relay itself; with `PUBLIC_POOL=1` it starts a relay of its own for this scenario only
 - `--no-compress` send
 - `--ask` both-sides confirm (auto-answered by `AutoVerify` through `.confirmSend`)
 - receive onto an existing file in the app's Documents, with `--when-exists keepBoth|replace` (the answer `AutoVerify` gives the incoming sheet; prints `MAC-COLLIDE-OK`)
@@ -390,7 +394,7 @@ Traps:
 
 - The app declares document types, so bare adjacent argv tokens are document-open candidates. Pass flags only (`--code CODE`).
 - Every launch needs `-ApplePersistenceIgnoreState YES`, or a headless window restoration hangs.
-- App-as-sender scenarios wait for the `verify-code-ready.txt` marker that `AutoVerify` writes when a send reaches its code, then 3 s (see "Start order: sender first").
+- App-as-sender scenarios wait for the `verify-code-ready.txt` marker that `AutoVerify` writes when a send reaches its code, then for the app's room to show in the relay log (see "Start order in the harness" above). The `--relay ADDRESS` argument goes before any value-less flag (`--ask`, `--local`), because AppKit reads the token after such a flag as its value.
 - The container Documents folder is `~/Library/Containers/com.bakirgdev.CrocApp/Data/Documents/`.
 
 ### `crockit-verify`
@@ -406,4 +410,4 @@ A CrocKit executable for the Swift layer. Subcommands: `send`, `receive` (option
 - The macOS slice is arm64 only (golang/go#73119).
 - gomobile still writes `MinimumOSVersion = 100.0` into the iOS framework. App Store Connect accepted it on upload validation. The iOS device layout issue golang/go#66500 is closed.
 - A fresh clone must run `scripts/build-xcframework.sh` before any Swift build, because the `binaryTarget` points at the gitignored artifact.
-- Verify scripts need outbound network (public relay) and the `CROC` and `SIM` environment variables.
+- The transfer verify scripts need a v11 `croc` binary (`CROC`), and `SIM` for the simulator one. They start a local relay and need no outbound network, except with `PUBLIC_POOL=1`.

@@ -82,4 +82,4 @@ Terms a new contributor hits in this repo and cannot infer from the name: croc v
 | --- | --- |
 | design token | A named value (color, spacing, type, motion) in `design/`. It is the only allowed source of such values in app or web code: no raw hex or px (`design/AGENTS.md`). |
 | harness | A script or tool that proves a real transfer works against the croc command: `scripts/verify-interop.sh`, `scripts/verify-app-mac.sh`, `scripts/verify-app-sim.sh` and `crockit-verify`. A green build alone is not evidence. `docs/BUILDING.md`, "Verification harnesses". |
-| verify script | Any `scripts/verify-*.sh`. The transfer ones need outbound network to the public relay plus a `croc` command. CI runs `verify-interop.sh` against a local relay and `verify-design.sh`, which needs no network (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |
+| verify script | Any `scripts/verify-*.sh`. The transfer ones start a local `croc relay` and need a `croc` command (the public relay is opt-in, `PUBLIC_POOL=1`). CI runs `verify-interop.sh` and `verify-design.sh`, which needs no network (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |
