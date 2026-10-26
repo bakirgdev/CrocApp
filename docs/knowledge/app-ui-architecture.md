@@ -160,7 +160,7 @@ croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes 
 - `Models/AdvancedSettingsValidation.swift` holds the inline checks: `socks5ProxyError`, `httpProxyError`, `multicastAddressError`, `senderIPError`, `throttleError`. The app keeps no rules of its own. Each one asks the engine through CrocKit's `EngineSetting.validate(_:)` (`ValidateSetting` in `crocmobile/network.go`, the check a transfer start runs) and returns only the field's plain-words text on a refusal. `storedServerError` works the same way. Blank means the default, except for the link server. The value tables live in `network_test.go`, and `SettingsValidationTests` checks that each field reaches the engine.
 - One message per field, so the sender IP text names the port range too and the link server text covers the scheme and the host-only rule.
 - `EngineStart` passes every setting. A receive adds `peerIP`. Store send, store receive and revoke pass `ProxySettings`.
-- Multicast reaches the engine on macOS only (`#if os(macOS)`). iOS lacks the multicast entitlement, so the control is hidden and the engine keeps its default.
+- Multicast reaches the engine on every platform. iOS needs the multicast entitlement for it, which `CrocApp-iOS.entitlements` carries (`apple-platform-constraints.md`, "LAN discovery and multicast").
 - The engine reports a bad proxy, upload limit, port, multicast address or sender IP as `invalidSetting` (`validateNetworkOptions` in `crocmobile/network.go`). The `invalidSetting` failure points at Settings > Advanced, and its **Open Settings** opens Advanced settings.
 - A receive with a sender IP shows `RelayKind.directToSender` in the trust badge (`AppSettings.receiveRelayKind`), never the public pool.
 

@@ -340,7 +340,6 @@ Still to do:
 - Confirm `https://crocapp.dev/support/` and `https://crocapp.dev/privacy/` return HTTP 200.
 - Decide whether to add the croc maintainer's written reply to the review notes. The reply text is not in the repo; the notes say only that the maintainer was informed. Ask the owner before submitting.
 - State on the privacy page that getcroc.com is the croc project's site and runs its own analytics (Umami) and ads (Google AdSense), as seen in the page source. The reviewer opens that page, and the `/r/` page links to it. The app does not load it (no web view). Re-check the page before relying on this.
-- Check whether the multicast entitlement request has been answered. If it is granted, add the entitlement and the setting. If not, ship without it (`apple-platform-constraints.md`, "LAN discovery and multicast").
 - Make the Export compliance decision above: France out of availability.
 - Take the screenshots (`screenshots.md`).
 
