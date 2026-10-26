@@ -233,17 +233,19 @@ jobs:
     strategy:
       fail-fast: false
 
-      # `slice` builds only the xcframework slice the leg links. `action` is
-      # `test` on macOS, which builds the app before it runs the tests.
+      # `slices` binds only the xcframework slices a leg needs. The iOS leg
+      # also binds the device slice, which no build here links, so a change
+      # that breaks the device bind fails CI rather than the release. `action`
+      # is `test` on macOS, which builds the app before it runs the tests.
       matrix:
         include:
           - platform: macOS
             destination: platform=macOS
-            slice: macos/arm64
+            slices: macos/arm64
             action: test
           - platform: iOS Simulator
             destination: generic/platform=iOS Simulator
-            slice: iossimulator/arm64
+            slices: ios,iossimulator/arm64
             action: build
 
     steps:
@@ -251,8 +253,13 @@ jobs:
         with:
           persist-credentials: false
 
+      # Cache keys reject commas, so the slice list goes in as dashes.
       - id: xcode
-        run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
+        env:
+          SLICES: ${{ matrix.slices }}
+        run: |
+          echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
+          echo "slices=${SLICES//[,\/]/-}" >> "$GITHUB_OUTPUT"
 
       # The bind is the slowest step and its inputs rarely change: a hit skips
       # Go and the bind. go.mod carries the Go and gomobile pins, so a toolchain
@@ -262,7 +269,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: CrocKit/Croc.xcframework
-          key: xcframework-${{ matrix.platform }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('crocmobile/**', 'scripts/build-xcframework.sh') }}
+          key: xcframework-${{ steps.xcode.outputs.slices }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('crocmobile/**', 'scripts/build-xcframework.sh') }}
 
       - if: steps.xcframework.outputs.cache-hit != 'true'
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -287,7 +294,7 @@ jobs:
       - name: Build Croc.xcframework
         if: steps.xcframework.outputs.cache-hit != 'true'
         env:
-          XCFRAMEWORK_TARGETS: ${{ matrix.slice }}
+          XCFRAMEWORK_TARGETS: ${{ matrix.slices }}
         run: scripts/build-xcframework.sh
 
       # The index store only serves an IDE, so CI skips writing it.

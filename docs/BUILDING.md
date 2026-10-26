@@ -41,11 +41,11 @@ The shared schemes `CrocApp`, `CrocApp Direct` and `CrocShare` are committed und
 - `CrocApp Direct` is the Developer ID build (`RELEASING.md`, "Release channels"). It has no testables.
 - A new target needs its scheme committed there too. Per-user schemes in `xcuserdata/` stay gitignored.
 
-CI builds with these commands (run from `app/`). Add the `SWIFT_TREAT_WARNINGS_AS_ERRORS` and `GCC_TREAT_WARNINGS_AS_ERRORS` flags (see "Build settings that must not change casually") to reproduce a CI failure:
+CI builds with these commands (run from `app/`; the macOS one also runs the tests). CI also passes `COMPILER_INDEX_STORE_ENABLE=NO`. Add the `SWIFT_TREAT_WARNINGS_AS_ERRORS` and `GCC_TREAT_WARNINGS_AS_ERRORS` flags (see "Build settings that must not change casually") to reproduce a CI failure:
 
 ```bash
 xcodebuild -scheme CrocApp -destination 'platform=macOS' \
-  -derivedDataPath "$TMPDIR/dd" CODE_SIGNING_ALLOWED=NO build
+  -derivedDataPath "$TMPDIR/dd" CODE_SIGNING_ALLOWED=NO test
 xcodebuild -scheme CrocApp -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath "$TMPDIR/dd" CODE_SIGNING_ALLOWED=NO build
 ```
