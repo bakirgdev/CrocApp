@@ -144,12 +144,8 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 | SOCKS5 proxy | `--socks5` |
 | HTTP proxy | `--connect` |
 | Send speed limit | `--throttleUpload` |
-| Encryption curve | `--curve` |
-| File hash algorithm | `--hash` |
 | Sender IP, direct connect | `--ip` |
 | Multicast address (macOS) | `--multicast` |
-| Base port, parallel connections, multiplexing | `--port --transfers --no-multi` |
-| Built-in DNS resolver | `--internal-dns` |
 
 </details>
 

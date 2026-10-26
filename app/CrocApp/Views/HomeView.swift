@@ -131,7 +131,7 @@ struct SettingsScreen: View {
             Section {
                 NavigationLink("Advanced", value: AppRouter.Route.advancedSettings)
             } footer: {
-                Text("Proxies, ports, encryption curve and more. The defaults suit most people.")
+                Text("Proxies, sender IP, speed limit and more. The defaults suit most people.")
             }
             AboutSection()
         }

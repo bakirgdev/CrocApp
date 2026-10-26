@@ -56,38 +56,27 @@ Type patterns in **Patterns, one per line** to skip matching files when you send
 
 ## Advanced
 
-![CrocApp Settings on macOS showing the Advanced tab with Curve, File Hash and the proxy fields](../../screenshots/mac/settings-advanced-light.webp#gh-light-mode-only)![CrocApp Settings on macOS showing the Advanced tab with Curve, File Hash and the proxy fields](../../screenshots/mac/settings-advanced-dark.webp#gh-dark-mode-only)
+![CrocApp Settings on macOS showing the Advanced tab with the proxy fields](../../screenshots/mac/settings-advanced-light.webp#gh-light-mode-only)![CrocApp Settings on macOS showing the Advanced tab with the proxy fields](../../screenshots/mac/settings-advanced-dark.webp#gh-dark-mode-only)
 
 **Advanced** holds croc options most people never need. Every default is croc's own. Each field checks what you type and shows a message under it. If a saved value is not usable, a transfer fails with "An Advanced setting can't be used" instead of falling back to something else. **Reset to Defaults** at the bottom puts every setting back after a confirmation, and removes the saved proxies.
 
 | Setting | Default | Affects | Does the other device have to match? |
 |---|---|---|---|
-| Curve | P-256 | Receiving | No: the sender uses the receiver's choice |
-| File Hash | xxHash | Sending | No: the receiver uses the sender's choice |
 | SOCKS5 Proxy | None | This device | No |
 | HTTP Proxy | None | This device | No |
-| Built-in DNS Resolver | Off | This device | No |
 | Multicast Address (Mac only) | `239.255.255.250` | Both devices | Yes, to find each other on the local network |
-| Sender IP | None | Receiving | No, but it must be the sender's address and base port |
+| Sender IP | None | Receiving | No, but it must be the sender's address and port |
 | Send Speed Limit | No limit | Sending | No |
-| Base Port | 9009 | Sending | Only if the other device connects by sender IP |
-| Parallel Connections | 4 | Sending | No |
-| Multiplexing | On | Sending | No: the receiver follows |
-
-**Security.** **Curve** is P-256, P-384, P-521, SIEC or Ed25519. **File Hash** is xxHash, imohash, MD5 or HighwayHash.
 
 **Network.**
 
 - **SOCKS5 Proxy** and **HTTP Proxy** send this device's connections through a proxy. Enter `host:port` or an address such as `socks5://user:password@host:1080` (SOCKS5 takes `socks5://` or `socks5h://`, HTTP takes `http://` or `https://`). If both are set, SOCKS5 wins. Connections to your local network skip the proxy. They also apply to [Send as link](send-as-link.md). A proxy address can contain a password, so CrocApp keeps both in the Keychain, never in the settings file or an error message.
-- **Built-in DNS Resolver** looks up relay names with croc's own resolver instead of the system's.
 - **Multicast Address** is the group croc uses to find devices on the local network. It must be an IPv4 multicast address, `224.0.0.0` to `239.255.255.255`. iOS needs an Apple entitlement for this that CrocApp does not have, so iOS always uses the default.
-- **Sender IP** is for receiving. Enter the sender's address and port, such as `192.168.1.20:9009` or `[fe80::1]:9009`, and CrocApp connects straight to it, skipping relays and discovery. If nothing answers, the receive fails at once. It does not fall back to a relay.
+- **Sender IP** is for receiving. Enter the sender's address and port, such as `192.168.1.20:9009` or `[fe80::1]:9009`, and CrocApp connects straight to it, skipping relays and discovery. A CrocApp sender listens on port 9009 and the four ports after it. If something else on the sender's device uses 9009, croc takes the next free ports, so the port you need can be higher. If nothing answers, the receive fails at once. It does not fall back to a relay.
 
 **Performance.**
 
 - **Send Speed Limit** caps this device's sending speed in bytes per second: digits with an optional `k`, `m` or `g`, such as `500k` or `2m`.
-- **Base Port** and **Parallel Connections** set the ports the sender listens on: the base port, then one more per connection. With the defaults that is 9009 to 9013, and the last port must stay at or below 65535. They matter when the other device connects by sender IP, or when something else on your device uses those ports. A port that is already taken is skipped for the next free one, so the port a Sender IP receiver needs can be higher than the one you set. If not enough ports are free, the send stops with an error.
-- **Multiplexing** off sends over one data connection.
 
 ## The trust badge
 

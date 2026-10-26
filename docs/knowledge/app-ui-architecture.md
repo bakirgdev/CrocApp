@@ -118,11 +118,11 @@ History never holds the token or the link. A stored record's `codeHint` is the s
 
 croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes it from `SettingsScreen` (`Route.advancedSettings`, `--screen advanced`). macOS Settings is a `TabView` with **General** and **Advanced** tabs, because the Advanced controls and their footnotes would double a form that already scrolls.
 
-- `AppSettings` has one property per control under `settings.advanced.<name>`: `curve`, `hashAlgorithm`, `throttleUpload`, `noMultiplexing`, `basePort`, `transfers`, `multicastAddress`, `peerIP`, `internalDNS`. Defaults come from `EngineOptions()`, so they are croc's.
+- `AppSettings` has one property per control under `settings.advanced.<name>`: `throttleUpload`, `multicastAddress`, `peerIP`. Defaults come from `EngineOptions()`, so they are croc's. The curve, hash, ports, connection count, multiplexing and DNS are not settings (`crocmobile-bridge.md`, "Advanced options on the wire").
 - `resetAdvancedToDefaults()` backs the **Reset to Defaults** button and persists. The harness `resetToDefaults()` calls it with `persist` off.
 - **The two proxies are Keychain-only.** The `SecretStore` accounts are `advanced.socks5Proxy` and `advanced.httpProxy`. They are deleted when blank and use the same `persist` gate as `relayPassword`.
 - Proxies can carry credentials. `ProxySettings`, `EngineOptions` and `StoredSendOptions` describe themselves without the value. The Go engine never quotes a proxy in an error, and nothing logs them. `AppSettingsAdvancedTests` asserts that `UserDefaults` holds no proxy key or value.
-- `Models/AdvancedSettingsValidation.swift` holds the inline checks: `socks5ProxyError`, `httpProxyError`, `multicastAddressError`, `senderIPError`, `portsError`, `throttleError`. They mirror `crocmobile/network.go`, and the tables in `AdvancedSettingsValidationTests` match `network_test.go`. Blank always means the default.
+- `Models/AdvancedSettingsValidation.swift` holds the inline checks: `socks5ProxyError`, `httpProxyError`, `multicastAddressError`, `senderIPError`, `throttleError`. They mirror `crocmobile/network.go`, and the tables in `AdvancedSettingsValidationTests` match `network_test.go`. Blank always means the default.
 - Two checks are stricter than the engine on purpose: a proxy or sender port outside 1 to 65535, and a one-character upload limit (croc ignores it silently).
 - `TransferController.baseOptions()` passes every setting. `startReceive` adds `peerIP`. Store send, store receive and revoke pass `ProxySettings`.
 - Multicast reaches the engine on macOS only (`#if os(macOS)`). iOS lacks the multicast entitlement, so the control is hidden and the engine keeps its default.

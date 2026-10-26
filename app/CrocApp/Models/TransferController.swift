@@ -154,13 +154,7 @@ final class TransferController {
         o.noCompress = settings.noCompress
         o.transport = settings.transport
         o.ask = settings.bothSidesConfirm
-        o.curve = settings.curve
-        o.hashAlgorithm = settings.hashAlgorithm
         o.throttleUpload = settings.throttleUpload.trimmingCharacters(in: .whitespacesAndNewlines)
-        o.noMultiplexing = settings.noMultiplexing
-        o.basePort = settings.basePort
-        o.transfers = settings.transfers
-        o.internalDNS = settings.internalDNS
         o.socks5Proxy = proxies.socks5
         o.httpProxy = proxies.http
         #if os(macOS)

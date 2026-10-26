@@ -131,7 +131,7 @@ Every suite is a unit test with no network. Transfers are proven by the harnesse
 
 | Suite | Run with | Covers |
 |---|---|---|
-| `crocmobile/*_test.go` (Go `testing`, plus `Fuzz*` targets) | `go test -race ./...` in `crocmobile/` | `session_test.go`: option mapping, prompt answers and policy, progress and file-list JSON, name handling. `errors_test.go`: error classification. `network_test.go`: Advanced option validation and the process-global network state. `relay_test.go`: public relay pool and code-to-relay mapping. `store_test.go`: stored transfers (send, receive, revoke, limits) |
+| `crocmobile/*_test.go` (Go `testing`, plus `Fuzz*` targets) | `go test -race ./...` in `crocmobile/` | `session_test.go`: option mapping, prompt answers and policy, progress and file-list JSON, name handling. `errors_test.go`: error classification. `network_test.go`: Advanced option validation, the fixed relay ports and the process-global proxy state. `relay_test.go`: public relay pool and code-to-relay mapping. `store_test.go`: stored transfers (send, receive, revoke, limits) |
 | `CrocKit/Tests/CrocKitTests` (Swift Testing) | `swift test --package-path CrocKit` | `CrocOptionsMappingTests`: Swift options to the Go struct. `DelegateBridgeTests`: callbacks to the event stream. `EngineFailureTests`: failure codes. `SendPathValidationTests`: refused send paths. `StoreEngineTests`: the stored-transfer wrappers. Cancel behavior is in `CrocEngineCancelTests` |
 | `app/CrocAppTests` (Swift Testing, scheme `CrocApp`) | `xcodebuild test -scheme CrocApp` | `TransferControllerTests`: the `TransferController` state machine (phases, failure copy, engine calls, history records) driven by `FakeTransferEngine`. Settings persistence and validation, relay-password migration, stored-server validation, `TransferLink` parsing, code hints, friendly failure messages, received names and file location, History upgrade, the stored-transfer vault, the Show in Menu Bar setting, app info |
 
@@ -162,9 +162,9 @@ A green build is not evidence that a transfer works. CI runs only `scripts/verif
 12. Receive file policy: a file onto an existing one with Keep Both and with Replace, answered at the prompt and preset with `-yes`, then a zipped folder received twice with each policy and accept mode.
 13. Transport: a 130 MiB send under `auto` and under `relay`, both directions, asserting byte equality. The CLI `--debug` log must show a `tailcat-offer` under `auto` and none under `relay`.
 14. Stored transfers against a loopback `croctest store-server`: a wrapper upload downloaded by the CLI, a CLI upload downloaded by the wrapper, a revoke after which the download fails, and an existing name with Keep Both, Replace and a declined preview.
-15. Advanced options that change the wire, each against the CLI with the matching flag: curve, hash, base port (with transfers and the sender IP), multicast group, SOCKS5 and HTTP proxy, internal DNS. The curve and hash cases assert which side's setting the other adopts, a mismatch included.
+15. Advanced options that change the wire, each against the CLI with the matching flag: the sender IP (a wrapper sender on its default ports 9009 to 9013, a CLI sender on another port, a dead address), multicast group, SOCKS5 and HTTP proxy. The sender-IP and multicast cases need ports 9009 to 9013 free on the host.
 
-With `RELAY` set, every transfer uses that relay, and scenarios 11, 13, and the proxy and internal DNS parts of 15 are skipped. Scenario 14 and the rest of 15 need no public relay and still run.
+With `RELAY` set, every transfer uses that relay, and scenarios 11, 13, and the proxy part of 15 are skipped. Scenario 14 and the rest of 15 need no public relay and still run.
 
 **`verify-app-mac.sh` scenarios**
 

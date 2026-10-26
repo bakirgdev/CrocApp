@@ -1,7 +1,7 @@
 import CrocKit
 import SwiftUI
 
-/// Settings > Advanced: croc's security, network and performance options.
+/// Settings > Advanced: croc's network and performance options.
 /// The defaults are croc's own and right for most people. Every control shows
 /// its default, says which side it affects and whether the other device has to
 /// match, and checks its value inline with the same rules as the engine
@@ -11,38 +11,10 @@ struct AdvancedSettingsView: View {
     @Environment(AppSettings.self) private var settings
     @State private var confirmReset = false
 
-    private enum NumberField: Hashable {
-        case basePort, transfers
-    }
-    @FocusState private var focusedNumberField: NumberField?
-
     var body: some View {
         @Bindable var settings = settings
 
         Form {
-            Section("Security") {
-                AdvancedRow(
-                    footnote:
-                        "Applies when receiving: the sender switches to the receiver's curve, so the other device need not match. Default: P-256."
-                ) {
-                    Picker("Curve", selection: $settings.curve) {
-                        ForEach(Curve.allCases, id: \.self) { curve in
-                            Text(curve.title).tag(curve)
-                        }
-                    }
-                }
-                AdvancedRow(
-                    footnote:
-                        "Applies when sending. The receiving device uses the sender's choice, so the other device does not need to match. Default: xxHash."
-                ) {
-                    Picker("File Hash", selection: $settings.hashAlgorithm) {
-                        ForEach(HashAlgorithm.allCases, id: \.self) { hash in
-                            Text(hash.title).tag(hash)
-                        }
-                    }
-                }
-            }
-
             Section("Network") {
                 AdvancedRow(
                     footnote:
@@ -69,12 +41,6 @@ struct AdvancedSettingsView: View {
                         )
                         .urlEntry()
                     }
-                }
-                AdvancedRow(
-                    footnote:
-                        "Looks up relay names with croc's own resolver instead of the system's. Off by default. Applies to this device only."
-                ) {
-                    Toggle("Built-in DNS Resolver", isOn: $settings.internalDNS)
                 }
                 #if os(macOS)
                 AdvancedRow(
@@ -120,40 +86,6 @@ struct AdvancedSettingsView: View {
                         .addressEntry()
                     }
                 }
-                AdvancedRow(
-                    footnote:
-                        "Applies when sending. The first port of this device's local relay. A device that receives by sender IP must use this port. Default \(AppSettings.advancedDefaults.basePort).",
-                    error: basePortError
-                ) {
-                    LabeledField("Base Port") {
-                        TextField(
-                            "Base Port", value: $settings.basePort,
-                            format: .number.grouping(.never)
-                        )
-                        .numberEntry()
-                        .focused($focusedNumberField, equals: .basePort)
-                    }
-                }
-                AdvancedRow(
-                    footnote:
-                        "Applies when sending. How many extra ports follow the base port, one per connection. Default \(AppSettings.advancedDefaults.transfers).",
-                    error: transfersError
-                ) {
-                    LabeledField("Parallel Connections") {
-                        TextField(
-                            "Parallel Connections", value: $settings.transfers,
-                            format: .number.grouping(.never)
-                        )
-                        .numberEntry()
-                        .focused($focusedNumberField, equals: .transfers)
-                    }
-                }
-                AdvancedRow(
-                    footnote:
-                        "On by default. Off sends over one data connection. Applies when sending; the receiving device follows."
-                ) {
-                    Toggle("Multiplexing", isOn: multiplexing)
-                }
             }
 
             Section {
@@ -170,15 +102,6 @@ struct AdvancedSettingsView: View {
         .navigationTitle("Advanced")
         #if os(iOS)
         .scrollDismissesKeyboard(.interactively)
-        // The number pad has no Return key to dismiss it.
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                if focusedNumberField != nil {
-                    Spacer()
-                    Button("Done") { focusedNumberField = nil }
-                }
-            }
-        }
         #endif
         .confirmationDialog(
             "Reset all Advanced settings?", isPresented: $confirmReset, titleVisibility: .visible
@@ -188,24 +111,6 @@ struct AdvancedSettingsView: View {
         } message: {
             Text("This also removes the saved proxies.")
         }
-    }
-
-    /// The setting is stored negated, so the unset default is croc's.
-    private var multiplexing: Binding<Bool> {
-        Binding(
-            get: { !settings.noMultiplexing },
-            set: { settings.noMultiplexing = !$0 })
-    }
-
-    private var basePortError: String? {
-        guard settings.basePort < 1 || settings.basePort > 65535 else { return nil }
-        return AppSettings.portsError(basePort: settings.basePort, transfers: settings.transfers)
-    }
-
-    /// The port range as a whole; the base port reports its own mistakes.
-    private var transfersError: String? {
-        guard basePortError == nil else { return nil }
-        return AppSettings.portsError(basePort: settings.basePort, transfers: settings.transfers)
     }
 }
 
@@ -272,37 +177,6 @@ extension View {
         #else
         self
         #endif
-    }
-
-    fileprivate func numberEntry() -> some View {
-        #if os(iOS)
-        keyboardType(.numberPad).monospacedDigit()
-        #else
-        monospacedDigit()
-        #endif
-    }
-}
-
-extension Curve {
-    fileprivate var title: String {
-        switch self {
-        case .p256: "P-256"
-        case .p384: "P-384"
-        case .p521: "P-521"
-        case .siec: "SIEC"
-        case .ed25519: "Ed25519"
-        }
-    }
-}
-
-extension HashAlgorithm {
-    fileprivate var title: String {
-        switch self {
-        case .xxhash: "xxHash"
-        case .imohash: "imohash"
-        case .md5: "MD5"
-        case .highway: "HighwayHash"
-        }
     }
 }
 

@@ -62,10 +62,6 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 	if err != nil {
 		return croc.Options{}, err
 	}
-	ports, err := relayPorts(o)
-	if err != nil {
-		return croc.Options{}, err
-	}
 	password := o.RelayPassword
 	if password == "" {
 		password = models.DEFAULT_PASSPHRASE
@@ -77,9 +73,8 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 		RelayAddress6:    route.v6,
 		PublicRelay:      route.public,
 		RelayPassword:    password,
-		RelayPorts:       ports,
-		Curve:            o.Curve,
-		HashAlgorithm:    o.HashAlgorithm,
+		RelayPorts:       relayPorts(),
+		Curve:            crocCurve,
 		ThrottleUpload:   strings.TrimSpace(o.ThrottleUpload),
 		DisableLocal:     o.DisableLocal,
 		OnlyLocal:        o.OnlyLocal,

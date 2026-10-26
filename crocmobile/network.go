@@ -10,36 +10,28 @@ import (
 	"strings"
 
 	"github.com/schollz/croc/v11/src/comm"
-	"github.com/schollz/croc/v11/src/models"
 	"github.com/schollz/croc/v11/src/storeclient"
 )
 
-// croc CLI defaults for the Advanced options (cli.go: --port, --transfers,
-// --multicast).
+// croc CLI defaults the library does not apply itself (cli.go: --port,
+// --transfers, --curve, --multicast). Curve and ports are fixed: neither is a
+// setting, because a receiver's curve is adopted by the sender and the ports
+// only matter to a peer that dials this side directly.
 const (
-	DefaultBasePort         = 9009
-	DefaultTransfers        = 4
+	crocBasePort            = 9009
+	crocTransfers           = 4
+	crocCurve               = "p256"
 	DefaultMulticastAddress = "239.255.255.250"
 )
 
 // relayPorts is the send command's port list (cli.go send): the base port,
 // then one more per transfer. The sender's local relay listens on them.
-func relayPorts(o *Options) ([]string, error) {
-	base, n := o.BasePort, o.Transfers
-	if base == 0 {
-		base = DefaultBasePort
-	}
-	if n == 0 {
-		n = DefaultTransfers
-	}
-	if base < 1 || n < 1 || base > 65535-n {
-		return nil, invalidSetting("ports %d to %d are out of range", base, base+n)
-	}
-	ports := make([]string, n+1)
+func relayPorts() []string {
+	ports := make([]string, crocTransfers+1)
 	for i := range ports {
-		ports[i] = strconv.Itoa(base + i)
+		ports[i] = strconv.Itoa(crocBasePort + i)
 	}
-	return ports, nil
+	return ports
 }
 
 func invalidSetting(format string, args ...any) error {
@@ -126,17 +118,16 @@ func validateThrottle(value string) error {
 	return nil
 }
 
-// setNetworkGlobals points croc's process-wide proxy and DNS settings at o and
-// returns the function that puts the previous values back. croc reads these
-// at dial time, so they are only written while activeMu is held, and the
-// restore runs before the lock is released.
+// setNetworkGlobals points croc's process-wide proxy settings at o and returns
+// the function that puts the previous values back. croc reads these at dial
+// time, so they are only written while activeMu is held, and the restore runs
+// before the lock is released.
 func setNetworkGlobals(o *Options) (restore func()) {
-	socks5, httpProxy, internalDNS := comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS
+	socks5, httpProxy := comm.Socks5Proxy, comm.HttpProxy
 	comm.Socks5Proxy = strings.TrimSpace(o.Socks5Proxy)
 	comm.HttpProxy = strings.TrimSpace(o.HTTPProxy)
-	models.INTERNAL_DNS = o.InternalDNS
 	return func() {
-		comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS = socks5, httpProxy, internalDNS
+		comm.Socks5Proxy, comm.HttpProxy = socks5, httpProxy
 	}
 }
 

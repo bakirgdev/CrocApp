@@ -117,7 +117,7 @@ Highlights
 - Send as Link: share encrypted files by link or QR code with someone who is not online. You choose the lifetime and the number of downloads, and can revoke the link from History.
 - Links: opening a CrocApp link, a crocapp.dev/r/ link or a getcroc.com link fills in the code on the Receive screen. Nothing connects until you tap Receive.
 - A Keep Both or Replace choice when a received file has the same name as one you already have.
-- Advanced settings: proxies, encryption curve, file hash, send speed limit, ports and more. The defaults suit most people.
+- Advanced settings: proxies, sender IP, send speed limit and more. The defaults suit most people.
 - Mac menu bar quick send, and Shortcuts and Siri actions for sending and receiving.
 - iPad File menu: Show Receive Folder in Files (Shift Command R).
 
@@ -261,7 +261,7 @@ Keep `ITSAppUsesNonExemptEncryption` = `false` in both App Store Info.plists, an
 | 3 | Fallback only if App Store Connect still asks. Answers, using the question flow third parties report (wording may differ today, so read each question): "Does your app use encryption?" Yes. "Does your app qualify for any of the exemptions provided in Category 5, Part 2 of the U.S. Export Administration Regulations?" No (the listed exemptions are medical end-use, IP and copyright protection, authentication/signature/decryption only, banking, fixed data compression; file transfer is none of these). "Is your app going to be available on the App Store in France?" No. Type of algorithms: "standard encryption algorithms instead of, or in addition to, using or accessing the encryption within Apple's operating system", not "proprietary". |
 | 4 | If, after step 3, App Store Connect demands documentation upload for a "standard algorithm" answer with France excluded, stop and do not guess: that contradicts Apple's own table (documented) and means the flow changed. Ask Apple Developer Support. |
 
-**Must anything be filed before submitting?** For a submission that excludes France: no declaration is needed by Apple's own rule (documented: the French form "is only required if you're distributing your app on the App Store in France"). For the US side the owner's position is the open-source exemption (below). No BIS email is required on the standard-algorithm reading, but see the SIEC risk. **With France included:** a French declaration would be needed first (see "Documented facts (France)").
+**Must anything be filed before submitting?** For a submission that excludes France: no declaration is needed by Apple's own rule (documented: the French form "is only required if you're distributing your app on the App Store in France"). For the US side the owner's position is the open-source exemption (below). No BIS email is required on the standard-algorithm reading. CrocApp offers no curve choice, so the SIEC curve is not a setting of the app (see "Unknown"). **With France included:** a French declaration would be needed first (see "Documented facts (France)").
 
 ### Documented facts (Apple)
 
@@ -293,8 +293,8 @@ Keep `ITSAppUsesNonExemptEncryption` = `false` in both App Store Info.plists, an
 ### Verified locally (project facts)
 
 - The two App Store Info.plists set `ITSAppUsesNonExemptEncryption` to `false` (`../RELEASING.md`, "Export compliance"). The Direct build plist and the share extension plist do not set it.
-- Engine: croc v11.5.5 with `pake/v3` v3.2.0. Traffic encryption is AES-256-GCM (`crypt.go`, `crypto/aes`), with ChaCha20-Poly1305, PBKDF2 and Argon2 from `golang.org/x/crypto` in the same package. The session key comes from PAKE2 with a selectable curve, then HKDF-SHA256. Default curve p256 (`cli.go`). Available curves in `pake.AvailableCurves()`: p521, p256, p384, **siec**, ed25519. Tailcat (large sends) adds Tailscale's WireGuard (`tailscale/wireguard-go`) over DERP servers. TLS to getcroc.com uses the platform or Go stack (inference; not traced).
-- CrocApp exposes the curve choice, including SIEC, as a user setting (`CrocKit/Sources/CrocKit/Models.swift`, enum `Curve`; `app/CrocApp/Views/AdvancedSettingsView.swift`). Default is p256.
+- Engine: croc v11.5.5 with `pake/v3` v3.2.0. Traffic encryption is AES-256-GCM (`crypt.go`, `crypto/aes`), with ChaCha20-Poly1305, PBKDF2 and Argon2 from `golang.org/x/crypto` in the same package. The session key comes from PAKE2, then HKDF-SHA256. The curve is p256 on CrocApp's side (`crocCurve` in `crocmobile/network.go`, the croc CLI default). Available curves in `pake.AvailableCurves()`: p521, p256, p384, **siec**, ed25519. Tailcat (large sends) adds Tailscale's WireGuard (`tailscale/wireguard-go`) over DERP servers. TLS to getcroc.com uses the platform or Go stack (inference; not traced).
+- CrocApp has no curve setting: it always starts the key exchange on p256. croc still links the other curves, and a sender adopts the curve its receiver announces (`croc.go`, "initialize curve based on the recipient's choice"), so a CLI receiver can make a CrocApp sender use siec. CrocApp neither offers nor requests it (read from source, not observed on the wire).
 - The app source is public under MIT, so "publicly available" holds for the app's own code (inference that the whole build qualifies, since the Go modules are public too).
 
 ### Inference
@@ -309,10 +309,10 @@ Keep `ITSAppUsesNonExemptEncryption` = `false` in both App Store Info.plists, an
 
 - The exact current on-screen App Store Connect questions. Apple's help pages describe them but do not list them. The question text above comes from third-party forum threads and a GitHub pull request, not from Apple.
 - Whether App Store Connect accepts a French declaration receipt, an attestation, or only the form, and whether Apple's review rejects `false` when France is available.
-- Whether SIEC (and CrocApp's PAKE composition and WireGuard use) count as "non-standard cryptography" for 742.15(b)(2) notification. This is the largest open risk.
-  - SIEC is published open source but not from a standards body. WireGuard is published but not an IETF RFC.
+- Whether CrocApp's PAKE composition and WireGuard use count as "non-standard cryptography" for 742.15(b)(2) notification.
+  - WireGuard is published but not an IETF RFC.
   - The P-256, AES-GCM, ChaCha20-Poly1305, HKDF, HMAC, PBKDF2 and Argon2 parts are standard.
-  - If SIEC counts, the open-source route needs the BIS and NSA notification email (cheap and reversible). Apple's "proprietary or not accepted by standards bodies" question would then be "Yes", which requires a CCATS per Apple's table.
+  - SIEC is published open source but not from a standards body. It was the largest open risk while the app offered it as a setting. With the setting gone the question is moot for CrocApp's own behavior, because the app starts every exchange on p256. The curve code stays linked inside croc, and a CLI receiver can still request it from a CrocApp sender (read from source). Whether that residual use matters is unknown.
 - Whether other countries have import rules that matter. Apple's pages mention only France. Apple removes or restricts regions on its own for legal reasons ("Your app may not be available ... due to legal or regulatory requirements").
 - The current consolidated French decree and ANSSI's current filing steps, delays and fees.
 
@@ -320,15 +320,15 @@ Keep `ITSAppUsesNonExemptEncryption` = `false` in both App Store Info.plists, an
 
 - Apple's plist wording ("exempt from export compliance documentation requirements") and Apple's own table (standard non-OS algorithms need the French declaration) conflict when France is available. They agree when France is excluded.
 - Third-party guides say a one-month wait applies and France stays out until a complete file is received. The ANSSI pages read do not state it, but Décret 2007-663 Art. 4 and 5 do. Consistent, but the decree text read is the 2007 one.
-- A developer blog (Cryptomator, found by search, not read) says a US ERN may also be needed. Apple's current table names CCATS only for proprietary algorithms and mentions no ERN. Not resolved, and tied to the SIEC question above.
+- A developer blog (Cryptomator, found by search, not read) says a US ERN may also be needed. Apple's current table names CCATS only for proprietary algorithms and mentions no ERN. Not resolved.
 
 ### What to do and when
 
 1. Before submitting: remove France from availability, keep the key `false`, and confirm no build shows "Missing Compliance". Nothing else must be filed for the first App Store release.
 2. Track a `future` item: file the ANSSI declaration (demarches.numeriques platform), switch the key to `true` with the issued code, upload new builds, and add France back. Allow at least a month from a complete file (Décret 2007-663 Art. 4, 2007 text).
-3. Decide on SIEC. Either hide the curve from the picker (an engineering change, out of this file's scope), send the notification email to `crypt@bis.doc.gov` and `enc@nsa.gov` with `https://github.com/bakirgdev/CrocApp`, or take advice. This is the owner's judgement; Apple states the owner is responsible for the classification.
+3. SIEC needs no decision for the app's own behavior: the curve picker is gone. If the owner wants certainty about the residual case (a CLI receiver choosing siec), the options are the notification email to `crypt@bis.doc.gov` and `enc@nsa.gov` with `https://github.com/bakirgdev/CrocApp`, or advice. This is the owner's judgement; Apple states the owner is responsible for the classification.
 
-This is research, not legal advice. `../known-issues.md`, "Release", tracks the two owner actions.
+This is research, not legal advice. `../known-issues.md`, "Release", tracks the owner actions.
 
 ## Open checks before submitting
 
@@ -342,7 +342,7 @@ Still to do:
 - Decide whether to add the croc maintainer's written reply to the review notes. The reply text is not in the repo; the notes say only that the maintainer was informed. Ask the owner before submitting.
 - State on the privacy page that getcroc.com is the croc project's site and runs its own analytics (Umami) and ads (Google AdSense), as seen in the page source. The reviewer opens that page, and the `/r/` page links to it. The app does not load it (no web view). Re-check the page before relying on this.
 - Check whether the multicast entitlement request has been answered. If it is granted, add the entitlement and the setting. If not, ship without it (`apple-platform-constraints.md`, "LAN discovery and multicast").
-- Make the Export compliance decisions above: France out of availability, and SIEC.
+- Make the Export compliance decision above: France out of availability.
 - Take the screenshots (`screenshots.md`).
 
 ## Sources

@@ -23,8 +23,7 @@
 // no relay fallback.
 //
 // ADVANCED are the Options of the app's Advanced settings, named like croc's
-// own flags: -curve, -hash, -port, -transfers, -multicast, -ip, -socks5,
-// -connect, -internal-dns.
+// own flags: -multicast, -ip, -socks5, -connect.
 //
 // socks5-proxy and http-proxy run a CONNECT-only proxy without authentication
 // on a loopback port for the harness, and print "PROXY-ADDR <host:port>" once
@@ -192,15 +191,10 @@ func main() {
 	relayIndex := fs.Int("relay-index", -1, "public pool relay a generated code maps to (send)")
 	noMulti := fs.Bool("no-multi", false, "one data connection instead of one per relay port (send)")
 	transport := fs.String("transport", crocmobile.TransportAuto, "data transport: auto|relay|derp (send)")
-	curve := fs.String("curve", "p256", "PAKE curve")
-	hash := fs.String("hash", "xxhash", "file hash algorithm (send)")
-	port := fs.Int("port", crocmobile.DefaultBasePort, "base port of the local relay (send)")
-	transfers := fs.Int("transfers", crocmobile.DefaultTransfers, "data ports after the base port (send)")
 	multicast := fs.String("multicast", crocmobile.DefaultMulticastAddress, "multicast address for LAN discovery")
 	peerIP := fs.String("ip", "", "sender ip:port, skipping relays (receive)")
 	socks5 := fs.String("socks5", "", "SOCKS5 proxy")
 	connect := fs.String("connect", "", "HTTP proxy")
-	internalDNS := fs.Bool("internal-dns", false, "croc's built-in DNS resolver")
 	_ = fs.Parse(os.Args[2:])
 
 	if *policy != crocmobile.PolicyKeepBoth && *policy != crocmobile.PolicyReplace {
@@ -232,15 +226,10 @@ func main() {
 	opts.ThrottleUpload = *throttle
 	opts.NoMultiplexing = *noMulti
 	opts.Transport = *transport
-	opts.Curve = *curve
-	opts.HashAlgorithm = *hash
-	opts.BasePort = *port
-	opts.Transfers = *transfers
 	opts.MulticastAddress = *multicast
 	opts.PeerIP = *peerIP
 	opts.Socks5Proxy = *socks5
 	opts.HTTPProxy = *connect
-	opts.InternalDNS = *internalDNS
 	proxies := &crocmobile.StoreOptions{Socks5Proxy: *socks5, HTTPProxy: *connect}
 
 	var tr *crocmobile.Transfer

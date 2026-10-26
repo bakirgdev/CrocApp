@@ -3,7 +3,6 @@ package crocmobile
 import (
 	"encoding/json"
 	"io"
-	"math"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -16,31 +15,20 @@ import (
 	"testing"
 
 	"github.com/schollz/croc/v11/src/comm"
-	"github.com/schollz/croc/v11/src/models"
 	"github.com/schollz/croc/v11/src/store"
 )
 
 func TestRelayPorts(t *testing.T) {
-	tests := []struct {
-		name            string
-		base, transfers int
-		want            []string
-	}{
-		{"croc defaults", 0, 0, []string{"9009", "9010", "9011", "9012", "9013"}},
-		{"custom", 9100, 2, []string{"9100", "9101", "9102"}},
-		{"one transfer", 50000, 1, []string{"50000", "50001"}},
-		{"top of range", 65533, 2, []string{"65533", "65534", "65535"}},
+	want := []string{"9009", "9010", "9011", "9012", "9013"}
+	got := relayPorts()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("relayPorts = %v, want croc's defaults %v", got, want)
 	}
-	for _, tt := range tests {
-		got, err := relayPorts(&Options{BasePort: tt.base, Transfers: tt.transfers})
-		if err != nil || !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("%s: relayPorts = %v, %v; want %v", tt.name, got, err, tt.want)
-		}
-	}
-	for _, o := range []Options{{BasePort: -1}, {Transfers: -1}, {BasePort: 65535}, {BasePort: 65534, Transfers: 2}} {
-		if _, err := relayPorts(&o); codeOf(err) != codeInvalidSetting {
-			t.Errorf("relayPorts(%+v) err = %v, want %s", o, err, codeInvalidSetting)
-		}
+	// croc rewrites Options.RelayPorts in place during a transfer, so each
+	// call must hand out its own slice.
+	got[0] = "1"
+	if again := relayPorts(); !reflect.DeepEqual(again, want) {
+		t.Fatalf("relayPorts after a caller changed its result = %v, want %v", again, want)
 	}
 }
 
@@ -118,14 +106,13 @@ func TestInvalidSettingFailsBeforeTheLock(t *testing.T) {
 
 type networkGlobals struct {
 	socks5, httpProxy string
-	internalDNS       bool
 }
 
 func readNetworkGlobals() networkGlobals {
-	return networkGlobals{comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS}
+	return networkGlobals{comm.Socks5Proxy, comm.HttpProxy}
 }
 
-var proxiedOptions = Options{Socks5Proxy: "203.0.113.1:1080", HTTPProxy: "203.0.113.2:3128", InternalDNS: true}
+var proxiedOptions = Options{Socks5Proxy: "203.0.113.1:1080", HTTPProxy: "203.0.113.2:3128"}
 
 func assertGlobalsRestored(t *testing.T, before networkGlobals) {
 	t.Helper()
@@ -167,21 +154,19 @@ func TestNetworkGlobalsRestoredAfterPanic(t *testing.T) {
 	}
 }
 
-// A transfer holds its proxy and DNS settings for its whole run, and puts the
+// A transfer holds its proxy settings for its whole run, and puts the
 // previous ones back when it ends (here, cancelled while it waits for a peer).
 func TestNetworkGlobalsHeldForTheTransfer(t *testing.T) {
 	before := readNetworkGlobals()
 	o := proxiedOptions
 	o.OnlyLocal = true
-	o.BasePort = 47100
-	o.Transfers = 2
 	o.WorkDir = t.TempDir()
 	rec := newStoreRecorder()
 	tr, err := StartSend("", "hello", &o, rec)
 	if err != nil {
 		t.Fatalf("StartSend: %v", err)
 	}
-	want := networkGlobals{proxiedOptions.Socks5Proxy, proxiedOptions.HTTPProxy, true}
+	want := networkGlobals{proxiedOptions.Socks5Proxy, proxiedOptions.HTTPProxy}
 	if got := readNetworkGlobals(); got != want {
 		t.Errorf("during the transfer: network globals = %+v, want %+v", got, want)
 	}
@@ -289,43 +274,6 @@ func codeOf(err error) string {
 		return ""
 	}
 	return classify(err)
-}
-
-func FuzzRelayPorts(f *testing.F) {
-	f.Add(0, 0)
-	f.Add(9100, 2)
-	f.Add(50000, 1)
-	f.Add(65533, 2)
-	f.Add(65535, 0)
-	f.Add(-1, 0)
-	f.Add(0, -1)
-	f.Add(math.MaxInt, 1)
-	f.Add(1, math.MaxInt)
-	f.Fuzz(func(t *testing.T, base, transfers int) {
-		o := Options{BasePort: base, Transfers: transfers}
-		ports, err := relayPorts(&o)
-		if err != nil {
-			if codeOf(err) != codeInvalidSetting {
-				t.Fatalf("relayPorts(%+v) err = %v, want %s", o, err, codeInvalidSetting)
-			}
-			return
-		}
-		if base == 0 {
-			base = DefaultBasePort
-		}
-		if transfers == 0 {
-			transfers = DefaultTransfers
-		}
-		if len(ports) != transfers+1 {
-			t.Fatalf("relayPorts(%+v) gave %d ports, want %d", o, len(ports), transfers+1)
-		}
-		for i, p := range ports {
-			n, err := strconv.Atoi(p)
-			if err != nil || n != base+i || n < 1 || n > 65535 {
-				t.Fatalf("relayPorts(%+v)[%d] = %q, want %d within 1-65535", o, i, p, base+i)
-			}
-		}
-	})
 }
 
 var throttleSpeed = regexp.MustCompile(`^[0-9]+[kKmMgG]?$`)

@@ -17,8 +17,6 @@ type Options struct {
 	RelayAddress   string
 	RelayAddress6  string
 	RelayPassword  string
-	Curve          string
-	HashAlgorithm  string
 	ThrottleUpload string
 	Code           string // custom code phrase (send); empty = auto-generate
 	OutDir         string // receive destination (required on receive)
@@ -33,17 +31,14 @@ type Options struct {
 	Rename         bool // receive: keep both, croc names the new file "name (1).ext"; also the default when neither is set
 	AutoAccept     bool // maps to croc NoPrompt; default false (product pillar)
 	Ask            bool
-	NoMultiplexing bool
+	NoMultiplexing bool   // harness only (croctest -no-multi): one data connection per transfer; the app never sets it
 	Transport      string // send: TransportAuto (also when empty) or TransportRelay; a receive follows the sender
 
 	// Advanced options. Zero values mean croc's defaults.
-	BasePort         int    // send: first port of this side's local relay (croc --port)
-	Transfers        int    // send: data ports after BasePort (croc --transfers)
 	MulticastAddress string // IPv4 group for LAN discovery (croc --multicast)
 	PeerIP           string // receive: the sender's ip:port (croc --ip); skips relays, discovery and the public pool
 	Socks5Proxy      string // host:port or socks5:// URL (croc --socks5); wins over HTTPProxy; may carry credentials
 	HTTPProxy        string // host:port or http(s):// URL (croc --connect); may carry credentials
-	InternalDNS      bool   // resolve relay names with croc's built-in resolver (croc --internal-dns)
 }
 
 // NewOptionsDefault returns croc CLI defaults.
@@ -58,10 +53,6 @@ func NewOptionsDefault() *Options {
 		RelayAddress:     models.DEFAULT_RELAY,
 		RelayAddress6:    models.DEFAULT_RELAY6,
 		RelayPassword:    models.DEFAULT_PASSPHRASE,
-		Curve:            "p256",
-		HashAlgorithm:    "xxhash",
-		BasePort:         DefaultBasePort,
-		Transfers:        DefaultTransfers,
 		MulticastAddress: DefaultMulticastAddress,
 	}
 }
