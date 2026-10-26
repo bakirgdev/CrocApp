@@ -20,6 +20,9 @@ import Testing
         "", "batch-", "batch-not-a-uuid", "../x", "a/b", "..", ".", "/etc",
         "batch-00000000-0000-0000-0000-000000000000/..",
         "batch-00000000-0000-0000-0000-000000000000x",
+        // UUID(uuidString:) accepts a trailing NUL; the length check must not.
+        "batch-00000000-0000-0000-0000-000000000000\0",
+        "batch-00000000-0000-0000-0000-000000000000\u{301}",
         "batch- 00000000-0000-0000-0000-000000000000",
         "00000000-0000-0000-0000-000000000000",
         "Batch-00000000-0000-0000-0000-000000000000",
@@ -103,10 +106,7 @@ import Testing
         #expect(inbox.staged.map(\.lastPathComponent) == ["ok.txt"])
     }
 
-    @Test(arguments: [
-        "../x", "a/b", "", "..", "x", "batch-", "batch-not-a-uuid",
-        "batch-00000000-0000-0000-0000-000000000000/..",
-    ])
+    @Test(arguments: ["../x", "", "..", "x", "batch-", "batch-not-a-uuid"])
     func anInvalidBatchIsIgnored(batch: String) throws {
         let box = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: box.root) }
@@ -125,6 +125,30 @@ import Testing
         #expect(exists(outside))
     }
 
+    /// `purgeStaleBatches` deletes the first component of "a/b" before the
+    /// files are looked up, which would hide a missing check. A symlink is not
+    /// a directory path, so the purge leaves it and only the batch check stands
+    /// between the name and the file.
+    @Test(arguments: ["a/b", "batch-00000000-0000-0000-0000-000000000000/.."])
+    func aTraversingBatchIsIgnoredEvenWhenPurgeLeavesItsPath(batch: String) throws {
+        let box = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: box.root) }
+        // root/target/b/f.txt is reached by "a/b", root/f.txt by "<name>/..".
+        let target = box.root.appendingPathComponent("target", isDirectory: true)
+        try touch(target.appendingPathComponent("b/f.txt"))
+        try touch(box.root.appendingPathComponent("f.txt"))
+        let first = String(batch.split(separator: "/")[0])
+        try FileManager.default.createSymbolicLink(
+            at: box.inbox.appendingPathComponent(first), withDestinationURL: target)
+        try writeManifest(batch: batch, files: ["f.txt"], in: box.inbox)
+
+        let inbox = ShareInbox()
+        inbox.refresh(in: box.inbox)
+
+        #expect(inbox.staged.isEmpty)
+        #expect(exists(target.appendingPathComponent("b/f.txt")))
+    }
+
     @Test func aBatchFailingValidationClearsEarlierStaging() throws {
         let box = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: box.root) }
@@ -135,6 +159,8 @@ import Testing
         inbox.refresh(in: box.inbox)
         #expect(inbox.staged.count == 1)
 
+        // The second manifest's batch would reach root/x, which holds the file.
+        try touch(box.root.appendingPathComponent("x/a.txt"))
         try writeManifest(batch: "../x", files: ["a.txt"], in: box.inbox)
         inbox.refresh(in: box.inbox)
 

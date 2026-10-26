@@ -50,7 +50,7 @@ extra sections where a release needs them, and the project follows
 
 ### Security
 
-- A file name that uses a text-direction control (which can make a name ending in `.exe` read as `.pdf`) or a line or paragraph separator is now blocked like any other unsafe name, in an incoming transfer and in files shared to CrocApp from the iPhone or iPad share sheet.
+- An incoming file name that uses a text-direction control (which can make a name ending in `.exe` read as `.pdf`) or a line or paragraph separator is now blocked like any other unsafe name. A combining mark can no longer hide a `/` or `\` in a name from that check. A file shared to CrocApp from the iPhone or iPad share sheet under such a name is renamed `shared-file`.
 - The transfer engine is built with Go 1.27.3, which stops trusting a set of compromised intermediate certificates ([GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809)). This covers the HTTPS connections the engine makes, such as Send as link.
 
 ## [1.0.0] - 2026-10-15

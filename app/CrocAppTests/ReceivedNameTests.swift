@@ -19,6 +19,22 @@ import Testing
         #expect(ReceivedName.isUnsafe(name))
     }
 
+    /// A combining mark glues itself to the character before it, so "/" plus
+    /// U+0301 is one Character. The separator must still be seen.
+    @Test(arguments: [
+        "../\u{301}x", "/\u{301}etc/passwd", "a\\\u{301}b", "a\0\u{301}b", "a/../\u{301}b",
+    ])
+    func seesASeparatorBehindACombiningMark(name: String) {
+        #expect(ReceivedName.isUnsafe(name))
+    }
+
+    /// Only a component of exactly two dots is parent-directory traversal.
+    /// A dot component that carries a combining mark is not "..".
+    @Test(arguments: ["a/..\u{301}/b", "a/.\u{301}./b"])
+    func aMarkedDotComponentIsAnOrdinaryName(name: String) {
+        #expect(!ReceivedName.isUnsafe(name))
+    }
+
     /// Characters that let a sender change how a name reads: every
     /// bidirectional control (marks, embeddings, overrides, isolates) and the
     /// line and paragraph separators.

@@ -13,6 +13,8 @@ enum ShareHandoff {
     static let inboxDirName = "ShareInbox"
     static let manifestName = "manifest.json"
     private static let batchPrefix = "batch-"
+    /// Characters in the canonical `UUID.uuidString` form (8-4-4-4-12).
+    private static let uuidLength = 36
 
     /// Names one staged batch. The extension writes it after the batch's files
     /// are in place, so a manifest on disk always points at a complete batch.
@@ -38,8 +40,13 @@ enum ShareHandoff {
     /// before joining `Manifest.batch` to a path, because a manifest is data
     /// read out of the App Group container, not something the app wrote.
     static func isValidBatchName(_ name: String) -> Bool {
-        name.hasPrefix(batchPrefix)
-            && UUID(uuidString: String(name.dropFirst(batchPrefix.count))) != nil
+        let utf8 = name.utf8
+        guard utf8.starts(with: batchPrefix.utf8) else { return false }
+        let tail = utf8.dropFirst(batchPrefix.utf8.count)
+        // The exact length matters: `UUID(uuidString:)` also accepts a UUID
+        // followed by a NUL, which would pass for a name that is not one.
+        guard tail.count == uuidLength else { return false }
+        return UUID(uuidString: String(decoding: tail, as: UTF8.self)) != nil
     }
 
     static func manifestURL(in inbox: URL) -> URL {
