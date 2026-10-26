@@ -8,6 +8,11 @@
 # `go get tool` in crocmobile/.
 #
 # macOS slice is arm64-only: golang/go#73119 (multi-arch macos bind broken).
+# The simulator slice is arm64-only to match: the app project excludes x86_64
+# for the simulator SDK, so no build links an x86_64 simulator slice.
+# XCFRAMEWORK_TARGETS narrows the slices (gomobile -target syntax), e.g.
+# `XCFRAMEWORK_TARGETS=macos/arm64` in CI's macOS job. A narrowed framework only
+# builds that platform; rerun without it before building another.
 # The framework Info.plist keeps gomobile's MinimumOSVersion = 100.0 (an SPM
 # workaround in x/mobile); App Store Connect accepted it on the first upload.
 set -euo pipefail
@@ -36,7 +41,7 @@ go mod download
 # harnesses' croctest, CI, golangci-lint) carries the same tag, so what is tested
 # is what ships.
 gomobile bind \
-  -target ios,iossimulator,macos/arm64 \
+  -target "${XCFRAMEWORK_TARGETS:-ios,iossimulator/arm64,macos/arm64}" \
   -iosversion 26.0 -macosversion 26.0 \
   -trimpath -ldflags "-s -w" -tags croc_no_tailcat \
   -o "../$OUT" \

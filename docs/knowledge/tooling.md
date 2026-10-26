@@ -49,6 +49,11 @@ The build settings that must not change casually (Swift 6 mode, deployment targe
 - **Unit tests ride on existing jobs.**
   - `go test -race` runs in `reusable-go.yml` with `GOOS` and `GOARCH` unset for that step, because the job-level `darwin` would build a test binary the Linux runner cannot run.
   - `swift test` and `xcodebuild test` run on the macOS leg of `build`.
+- **The `build` legs cache `Croc.xcframework`.**
+  - The key is the leg's slice list, the Xcode version and a hash of `crocmobile/**` and `scripts/build-xcframework.sh`. `crocmobile/go.mod` carries the Go and gomobile pins, so a toolchain bump misses too.
+  - A hit skips `setup-go` and the bind, the slowest steps of a cold runner (150 to 176 s before the cache). A miss binds only the leg's slices through `XCFRAMEWORK_TARGETS`: `macos/arm64` on macOS, `ios,iossimulator/arm64` on the iOS leg. The device slice is linked by no CI build, but binding it there makes a change that breaks the device bind fail CI instead of the release.
+  - The macOS leg runs `xcodebuild test`, which builds the app first, so it has no separate build step. Both legs pass `COMPILER_INDEX_STORE_ENABLE=NO`.
+  - The DerivedData cache saves package resolution, not compiles: a fresh checkout gives every source a new mtime, so Xcode recompiles the app. A cache of `CrocKit/.build` would fail the same way, so there is none.
 - **The `interop (local relay)` job (`macos-26`) runs `scripts/verify-interop.sh` against a local relay.**
   - It starts `croc relay` on 127.0.0.1 with raised admission limits, because the public relays rate-limit a shared runner address.
   - It installs the v11 CLI with `go install` at the version in `crocmobile/go.mod`, because Homebrew's bottle can lag that pin and the store scenario needs `croc store`. It installs the v10 peer the same way, at the version in `scripts/croc-v10.version`.
