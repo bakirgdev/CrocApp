@@ -173,6 +173,14 @@ public struct EngineFailure: Error, Equatable, Sendable {
         case storeExpired
         /// An Advanced option (proxy, speed limit, multicast address, sender IP) failed the engine's check.
         case invalidSetting
+        /// A start while another transfer still holds the engine. `CrocEngine`
+        /// throws `CrocEngineError.transferActive` for it.
+        case transferActive
+        /// A cancelled transfer never returned; until the app relaunches, every
+        /// start fails with this code.
+        case engineStuck
+        /// This receiver joined the room before the sender (croc's local-probe race).
+        case joinedEarly
     }
 
     public let code: Code

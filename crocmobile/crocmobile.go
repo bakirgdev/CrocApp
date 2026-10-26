@@ -122,6 +122,19 @@ func (t *Transfer) Respond(accept bool, policy string) {
 	}()
 }
 
+// CancelStart cancels a StartSend or StartReceive that has not returned yet,
+// such as a generated-code send still probing the public relays. That start
+// then fails with code "cancelled". A no-op when no start is in progress: a
+// started transfer is cancelled through its Transfer.
+//
+// Not tied to a Transfer, because there is none until the start returns. A
+// caller with more than one start in flight cannot tell them apart; CrocKit
+// runs one start at a time.
+func CancelStart() {
+	defer func() { recover() }() //nolint:errcheck // gobind: a panic here must never cross into the host app
+	cancelPendingStart()
+}
+
 // StartSend begins sending. paths is newline-joined absolute paths.
 // If text is non-empty a text snippet is sent instead and paths is ignored.
 //

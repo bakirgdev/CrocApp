@@ -11,18 +11,82 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/schollz/croc/v11/src/codephrase"
 	"github.com/schollz/croc/v11/src/croc"
 	"github.com/schollz/croc/v11/src/models"
-	"github.com/schollz/croc/v11/src/tcp"
 	"github.com/schollz/croc/v11/src/utils"
 )
 
 // One transfer at a time: croc needs process-global os.Chdir/os.Stdin/os.Stdout.
 var activeMu sync.Mutex
+
+// stuckAfter is how long a cancelled session's croc call may take to return
+// before the session is reported stuck. croc v11's dials and reads follow its
+// context, its reconnect backoff is capped at 5 s and run's own teardown waits
+// are bounded at 2 s each, so a healthy cancel returns well inside it. A var so
+// tests can shorten it.
+var stuckAfter = 15 * time.Second
+
+// stuck is the session whose croc call outlived a cancel by stuckAfter. It
+// still holds activeMu, and it keeps it: forcing the lock open would let a new
+// session change cwd, stdin and stdout under a croc that is still running. So
+// every start fails with codeEngineStuck until that session returns, if ever.
+var stuck struct {
+	sync.Mutex
+	s *session
+}
+
+// lockTransfer takes activeMu for a new transfer, or says why it cannot.
+func lockTransfer() error {
+	if activeMu.TryLock() {
+		return nil
+	}
+	stuck.Lock()
+	wedged := stuck.s != nil
+	stuck.Unlock()
+	if wedged {
+		return &codedError{code: codeEngineStuck, err: errors.New("a cancelled transfer never returned")}
+	}
+	return &codedError{code: codeTransferActive, err: errors.New("another transfer is active")}
+}
+
+// pendingStart holds the context cancel of a start that has not returned yet.
+// startSession sets it only while it holds activeMu, so there is at most one.
+var pendingStart struct {
+	sync.Mutex
+	start *startCancel
+}
+
+type startCancel struct{ cancel context.CancelFunc }
+
+// beginPendingStart makes cancel reachable by CancelStart until the returned
+// func runs. That func clears only its own entry: by the time a start returns,
+// its transfer may have ended and the next start may have registered.
+func beginPendingStart(cancel context.CancelFunc) (end func()) {
+	start := &startCancel{cancel: cancel}
+	pendingStart.Lock()
+	pendingStart.start = start
+	pendingStart.Unlock()
+	return func() {
+		pendingStart.Lock()
+		if pendingStart.start == start {
+			pendingStart.start = nil
+		}
+		pendingStart.Unlock()
+	}
+}
+
+func cancelPendingStart() {
+	pendingStart.Lock()
+	defer pendingStart.Unlock()
+	if pendingStart.start != nil {
+		pendingStart.start.cancel()
+	}
+}
 
 type session struct {
 	client    *croc.Client
@@ -51,6 +115,9 @@ type session struct {
 	pollDone chan struct{} // closed when poll() returns; run() waits on it before the terminal delegate calls
 
 	storeAnswer chan storeReply // stored receive only: carries Respond to the goroutine waiting at the preview
+
+	terminal  atomic.Bool // the terminal OnDone or OnError was claimed, by run (or runStore) or by the cancel watchdog
+	watchOnce sync.Once   // starts the cancel watchdog once
 }
 
 func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, error) {
@@ -193,8 +260,8 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 	if err := validateNetworkOptions(o); err != nil {
 		return nil, err
 	}
-	if !activeMu.TryLock() {
-		return nil, errors.New("another transfer is active")
+	if err := lockTransfer(); err != nil {
+		return nil, err
 	}
 	origWD, err := os.Getwd()
 	if err != nil {
@@ -206,10 +273,16 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		restoreNetwork()
 		activeMu.Unlock()
 	}
+	// The session's context exists before the slow setup (the public relay
+	// probe), so CancelStart can stop a start that has not returned its
+	// Transfer yet. The same context then carries the transfer.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer beginPendingStart(cancel)()
 	var tempPath string
 	committed := false
 	defer func() {
 		if !committed {
+			cancel()
 			removeTempFiles()
 			if tempPath != "" {
 				os.Remove(tempPath)
@@ -225,7 +298,7 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		if secret == "" {
 			var err error
 			if generatedPublic {
-				secret, err = generatePublicCode(tcp.MeasureServerLatencyContext)
+				secret, err = generatePublicCode(ctx, relayProbe)
 			} else {
 				secret, err = codephrase.Generate()
 			}
@@ -276,7 +349,6 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			return nil, err
 		}
 		co.SendingText = text != ""
-		ctx, cancel := context.WithCancel(context.Background())
 		c, err := croc.NewCtx(ctx, co)
 		if err != nil {
 			cancel()
@@ -286,6 +358,10 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			return nil, err
 		}
 		s := &session{client: c, ctxCancel: cancel, delegate: d, sender: true, tempPath: tempPath, done: make(chan struct{}), pollDone: make(chan struct{})}
+		// A CancelStart during setup ends the start here, before the code shows.
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		// OnCodeReady runs before we commit: if the delegate panics here, the
 		// cleanup defer above must still be armed to release the lock, cwd,
 		// and temp file, rather than leaking them because we'd already
@@ -317,7 +393,7 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		go s.poll()
 		return s, nil
 	}
-	return startReceiveSession(code, o, d, origWD, release, &committed)
+	return startReceiveSession(ctx, cancel, code, o, d, origWD, release, &committed)
 }
 
 // startReceiveSession is startSession's receive-side counterpart, called as a
@@ -328,7 +404,7 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 // then the activeMu unlock) are handled by that defer once we return. Only
 // right before the async run actually starts do we flip *committed to true,
 // handing ownership of cwd and the lock to s.run/release.
-func startReceiveSession(code string, o *Options, d Delegate, origWD string, release func(), committed *bool) (*session, error) {
+func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code string, o *Options, d Delegate, origWD string, release func(), committed *bool) (*session, error) {
 	outDir := o.OutDir
 	if outDir == "" {
 		return nil, errors.New("OutDir required for receive")
@@ -344,7 +420,6 @@ func startReceiveSession(code string, o *Options, d Delegate, origWD string, rel
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithCancel(context.Background())
 	c, err := croc.NewCtx(ctx, co)
 	if err != nil {
 		cancel()
@@ -474,13 +549,15 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 	case <-time.After(2 * time.Second):
 	}
 
-	// release must outlive the terminal delegate calls: it unblocks
-	// StartSend/StartReceive for the next transfer, and if it ran before
-	// OnError/OnText/OnDone, transfer N+1 could start while transfer N is
-	// still delivering its final event. Deferred first so it runs last;
-	// the recover below is deferred second so it runs first, guaranteeing
-	// release still fires even if a delegate call panics.
-	defer release()
+	// Released before the terminal delegate calls, once every process global
+	// is restored: a consumer that starts the next transfer as soon as it sees
+	// OnDone or OnError must find the engine free. Each transfer has its own
+	// delegate, so N's last event cannot reach N+1.
+	unmarkStuck(s)
+	release()
+	if !s.terminal.CompareAndSwap(false, true) {
+		return // the cancel watchdog already reported this session stuck
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			reportPanic(s, r)
@@ -532,6 +609,49 @@ func restoreWD(dir string) {
 func (s *session) cancel() {
 	s.ctxCancel()
 	s.closePrompt()
+	s.watchOnce.Do(func() { go s.watchCancel(stuckAfter) })
+}
+
+// watchCancel reports the session stuck when croc has not returned within
+// after (stuckAfter) of a cancel. The delegate gets codeEngineStuck as its
+// terminal event, so the app can leave its cancelling state, and later starts
+// fail fast with the same code (lockTransfer). The lock is not forced open
+// (see stuck). If croc returns after all, run clears the mark and frees the
+// engine.
+func (s *session) watchCancel(after time.Duration) {
+	defer func() { recover() }() //nolint:errcheck // gobind: a goroutine panic kills the host app
+	t := time.NewTimer(after)
+	defer t.Stop()
+	select {
+	case <-s.done:
+		return
+	case <-t.C:
+	}
+	stuck.Lock()
+	select {
+	case <-s.done: // croc returned as the timer fired
+		stuck.Unlock()
+		return
+	default:
+	}
+	stuck.s = s
+	stuck.Unlock()
+	msg := fmt.Sprintf("transfer did not return %v after cancel", after)
+	log.Printf("crocmobile: %s", msg)
+	if s.terminal.CompareAndSwap(false, true) {
+		s.delegate.OnError(failureJSON(codeEngineStuck, msg))
+	}
+}
+
+// unmarkStuck clears the stuck mark of a session whose croc call returned
+// after all. Called after close(s.done), so watchCancel, which checks s.done
+// under the same lock, can never mark it afterwards.
+func unmarkStuck(s *session) {
+	stuck.Lock()
+	if stuck.s == s {
+		stuck.s = nil
+	}
+	stuck.Unlock()
 }
 
 func (s *session) respond(accept bool, policy filePolicy) {

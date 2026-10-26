@@ -17,7 +17,7 @@ CrocApp tries the local network and the relay at once and uses whichever connect
 
 ## The receiver started first
 
-If the receiver joins before the sender has started, the receive can fail with a generic "Transfer failed. Try again, or check your connection." This hits custom codes, and the croc command line sending with a fixed code. Start the sender, then the receiver.
+If the receiver joins before the sender has started, the receive fails with "The other device wasn't ready, or the connection was too slow. Start the send there first, then enter the code again." The sending device can say "The codes don't match." at the same moment. This hits custom codes, and the croc command line sending with a fixed code. Start the send again first, then the receive.
 
 ## No internet
 
@@ -67,6 +67,10 @@ To resume, start the same transfer again and choose **Replace** for the partly r
 ## Auto-accept and a sender who confirms
 
 With **Auto-Accept Transfers** on and a sender using croc's `--ask` option, the transfer can be declined, and CrocApp says the other device declined. Turn off auto-accept to avoid it.
+
+## A cancelled transfer does not stop
+
+If CrocApp says "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again.", the transfer engine kept running after you cancelled, and CrocApp cannot start another transfer until it restarts. Quit CrocApp and open it again.
 
 ## Still stuck
 

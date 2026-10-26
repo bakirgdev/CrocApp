@@ -35,21 +35,6 @@ private func failure(of events: AsyncStream<TransferEvent>) async -> EngineFailu
     return nil
 }
 
-/// Retries past the brief window in which the engine still holds the previous
-/// transfer (it is cleared from the stream's onTermination).
-private func startReceive(
-    _ engine: CrocEngine, code: String, options: EngineOptions
-) async throws -> EngineTransfer {
-    for _ in 0..<40 {
-        do {
-            return try await engine.startReceive(code: code, options: options)
-        } catch CrocEngineError.transferActive {
-            try await Task.sleep(for: .milliseconds(50))
-        }
-    }
-    return try await engine.startReceive(code: code, options: options)
-}
-
 /// A localhost socket that listens but never accepts: the kernel completes the
 /// TCP handshake, so croc connects and then waits for a relay reply that never
 /// comes. Stands in for a transfer in progress without touching the network.
@@ -90,8 +75,8 @@ private struct SilentListener {
     @Test func unreachableRelayFailsWithItsCode() async throws {
         var o = options()
         o.relayAddress = "127.0.0.1:1"
-        let transfer = try await startReceive(
-            CrocEngine(), code: "unreach-alpha-bravo", options: o)
+        let transfer = try await CrocEngine().startReceive(
+            code: "unreach-alpha-bravo", options: o)
         let f = try #require(await failure(of: transfer.events))
         #expect(f.code == .relayUnreachable, "\(f.message)")
     }
@@ -100,7 +85,7 @@ private struct SilentListener {
         let engine = CrocEngine()
         var dead = options()
         dead.relayAddress = "127.0.0.1:1"
-        let first = try await startReceive(engine, code: "stale-alpha-bravo", options: dead)
+        let first = try await engine.startReceive(code: "stale-alpha-bravo", options: dead)
         _ = await failure(of: first.events)
 
         let relay = try SilentListener()
@@ -108,7 +93,8 @@ private struct SilentListener {
         var waiting = options()
         waiting.relayAddress = "127.0.0.1:\(relay.port)"
         waiting.disableLocal = true
-        let second = try await startReceive(engine, code: "stale-charlie-delta", options: waiting)
+        // Right after the first one's terminal event, with no retry.
+        let second = try await engine.startReceive(code: "stale-charlie-delta", options: waiting)
         #expect(second.id != first.id)
         let outcome = Task { await failure(of: second.events) }
 
@@ -117,6 +103,31 @@ private struct SilentListener {
         #expect(await engine.isActive(second.id))
 
         await engine.cancel(second.id)
+        let f = try #require(await outcome.value)
+        #expect(f.code == .cancelled, "\(f.message)")
+    }
+
+    /// Go refuses a start while it runs another transfer. A second engine has
+    /// no Swift-side slot taken, so the refusal is Go's typed code.
+    @Test func goRefusalIsTransferActive() async throws {
+        let relay = try SilentListener()
+        defer { relay.close() }
+        var waiting = options()
+        waiting.relayAddress = "127.0.0.1:\(relay.port)"
+        waiting.disableLocal = true
+        let engine = CrocEngine()
+        let running = try await engine.startReceive(code: "busy-alpha-bravo", options: waiting)
+        let outcome = Task { await failure(of: running.events) }
+
+        do {
+            _ = try await CrocEngine().startReceive(code: "busy-charlie-delta", options: options())
+            Issue.record("a second start while one runs succeeded")
+        } catch CrocEngineError.transferActive {
+        } catch {
+            Issue.record("a second start while one runs threw \(error), not transferActive")
+        }
+
+        await engine.cancel(running.id)
         let f = try #require(await outcome.value)
         #expect(f.code == .cancelled, "\(f.message)")
     }

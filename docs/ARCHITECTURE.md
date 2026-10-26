@@ -82,7 +82,7 @@ Key types:
 Errors:
 
 - `OnError` receives JSON `{"code","message"}`. `StartSend` and `StartReceive` return the same JSON as their error text, because gobind gives Swift only the text.
-- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.5.5 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `other`.
+- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.5.5 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `other`.
 - The app picks its wording from the code and never reads croc's text.
 
 Network settings:
@@ -92,9 +92,9 @@ Network settings:
 
 What it deliberately does not do:
 
-- Run more than one transfer at a time. A package-global `activeMu` mutex makes a second `Start*` call return `"another transfer is active"`.
+- Run more than one transfer at a time. A package-global `activeMu` mutex makes a second `Start*` call fail with code `transferActive`. The lock is freed before the terminal `OnDone` or `OnError`, so a start made on that event succeeds.
 - Let a Go panic cross into Swift. `StartSend`, `StartReceive`, `Cancel` and `Respond` each recover. `run()` recovers around `xfer()` and around the final `OnError`, `OnText` and `OnDone` calls. `poll()` recovers on every tick. A recovered panic reports code `other` (`reportPanic` in `session.go`).
-- Guard against a hang inside `xfer()` past context cancel. That would hold `activeMu` for the life of the process (`docs/known-issues.md`, "Accepted").
+- Force the lock open when croc hangs inside `xfer()` past a cancel. A watchdog reports `engineStuck` after 15 s and later starts fail fast with it, but `activeMu` stays held until relaunch (`docs/known-issues.md`, "Accepted").
 
 Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols get a `Crocmobile` prefix in Objective-C: `CrocmobileOptions`, `CrocmobileTransfer`, `CrocmobileStartSend`. The Go interface `Delegate` is the Objective-C protocol `CrocmobileDelegate`, which Swift imports as `CrocmobileDelegateProtocol`. The full type rules and the JSON field list are in `docs/knowledge/crocmobile-bridge.md`.
 
@@ -115,7 +115,8 @@ Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols ge
   - `respond(accept:policy:)` answers the accept prompt.
   - `cancel(_ id: TransferID)` ignores a stale ID, so a late cancel cannot reach the next transfer.
   - `crocOptions(from:)` maps Swift `EngineOptions` to `CrocmobileOptions`. It is the list of settings the app can reach. A Go option not copied there is unused by the app.
-  - `CrocEngineError` is `.transferActive` or `.startFailed(EngineFailure)`.
+  - `CrocEngineError` is `.transferActive` or `.startFailed(EngineFailure)`. Go's own `transferActive` code is thrown as `.transferActive` too.
+  - A start made once the previous transfer's `.done` or `.failed` has arrived succeeds: `DelegateBridge.hasEnded` frees the slot without waiting for `onTermination`. Cancelling the task that awaits a start cancels it in Go (`CrocmobileCancelStart`).
 - `DelegateBridge.swift`: `final class DelegateBridge: NSObject, CrocmobileDelegateProtocol, @unchecked Sendable`.
   - Turns Go-thread callbacks into `AsyncStream<TransferEvent>.Continuation.yield`.
   - Decodes the JSON payloads. A malformed file list, receipt or summary becomes `.failed` with code `other`, and the stream finishes.
@@ -135,7 +136,7 @@ File: `app/CrocApp/Models/TransferController.swift`. A `@MainActor @Observable f
 - `init(settings:vault:engine:)` defaults `engine` to `CrocEngine()`. `TransferControllerTests` passes `FakeTransferEngine` (both in `app/CrocAppTests/`).
 - Intents: `startSend`, `startSendText`, `startStoreSend`, `startReceive`, `startStoreReceive`, `respond`, `cancel`, `revoke`.
 - `Phase` cases: `idle`, `starting`, `waiting`, `connecting`, `confirmSend`, `incoming`, `transferring`, `done`, `stored`, `failed`.
-- Event-handling rules (why progress must not overwrite `incoming`, the retry window after `transferActive`, copy precedence): `docs/knowledge/app-ui-architecture.md`, "TransferController".
+- Event-handling rules (why progress must not overwrite `incoming`, why `transferActive` is not retried, copy precedence): `docs/knowledge/app-ui-architecture.md`, "TransferController".
 
 ### SwiftUI views
 

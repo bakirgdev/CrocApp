@@ -32,6 +32,9 @@ const (
 	codeStoreLimit       = "storeLimit"       // stored transfer: the server's size, file-count, download, quota or rate limit
 	codeStoreExpired     = "storeExpired"     // stored transfer: the server no longer has it (expired, revoked, used up)
 	codeInvalidSetting   = "invalidSetting"   // an Advanced option (proxy, speed limit, multicast, sender IP) failed validation
+	codeTransferActive   = "transferActive"   // a start while another transfer still holds the engine
+	codeEngineStuck      = "engineStuck"      // a cancelled transfer never returned from croc; only a relaunch frees the engine
+	codeJoinedEarly      = "joinedEarly"      // this receiver joined the room before the sender (croc's local-probe race)
 	codeOther            = "other"
 )
 
@@ -93,6 +96,11 @@ func classify(err error) string {
 		return codeRefused
 	case errors.Is(err, context.Canceled):
 		return codeCancelled
+	// A receiver that joined first gets the sender's late answer to its local
+	// probe in the transfer loop, where that unencrypted frame fails to
+	// decompress (crocmobile-bridge.md, "Start order: sender first").
+	case strings.Contains(m, "problem with decoding: decompress message"):
+		return codeJoinedEarly
 	// A relay's only non-ok, non-rate-limit admission answer is "room full"; the
 	// control connection reports it as "relay admission rejected".
 	case strings.Contains(m, "room full"), strings.Contains(m, "relay admission rejected"):

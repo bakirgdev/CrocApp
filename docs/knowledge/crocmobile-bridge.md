@@ -58,7 +58,7 @@ Rules that follow from the payloads:
 
 `OnError` receives `{"code","message"}` JSON (`crocmobile/errors.go`). `StartSend` and `StartReceive` errors carry the same JSON as their text, because gobind exposes only the text (as `NSError.localizedDescription`). CrocKit decodes both into `EngineFailure`.
 
-- `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `other`.
+- `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `other`.
 - An unknown code, or a payload that is not JSON, decodes as `other` with the raw text.
 - `message` is croc's text and is for logs only. The UI maps wording from the code.
 - A recovered panic reports `other`.
@@ -76,7 +76,10 @@ How `classify` picks a code:
 | `wrongCode` | peers met with different codes: `password mismatch` (sender), `could not secure channel` (receiver), `pake not successful`, `message authentication failed` |
 | `relayUnreachable` | `croc.ErrRelayConnection`, `croc.ErrDERPConnection`, `tcp.ErrAdmissionLimited`, rate limiting, dial and DNS failures |
 | `connectionLost` | unexpected EOF, reset, broken pipe, `transfer disconnected` |
-| `noPublicRelay` | this package's own `codedError`, raised by `generatePublicCode` |
+| `joinedEarly` | text `problem with decoding: decompress message`, on a receiver that joined before the sender (see "Start order: sender first") |
+| `noPublicRelay` | this package's own `codedError`, raised by `generatePublicCode`. A start cancelled during the probe reports `cancelled` instead |
+| `transferActive` | this package's own `codedError`: a start while another transfer holds `activeMu`. CrocKit throws `CrocEngineError.transferActive` for it |
+| `engineStuck` | this package's own `codedError`: the cancel watchdog's terminal event, and every start while a stuck session holds `activeMu` (see "Cancel and teardown") |
 | `storeLimit`, `storeExpired` | stored-transfer HTTP refusals (see "Stored transfers") |
 | `invalidSetting` | an Advanced option failed validation |
 
@@ -113,7 +116,11 @@ Limits and error mapping:
 
 ## Engine behavior invariants
 
-- One transfer at a time. A second start throws `CrocEngineError.transferActive`. A start right after `done` can still throw for a moment, because the lock is released after the final delegate call. Retry once.
+- One transfer at a time. A start while another transfer holds `activeMu` fails with `transferActive`, and CrocKit throws `CrocEngineError.transferActive`.
+- A start made once the previous transfer's terminal event has arrived succeeds, with no retry:
+  - Go frees `activeMu` after it restores every process global and before `OnDone` or `OnError` (`run` in `session.go`, `runStore` in `store.go`). Each transfer has its own delegate, so the last event of one cannot reach the next.
+  - `DelegateBridge` records the terminal call (`hasEnded`). `CrocEngine` frees its slot on it instead of waiting for `onTermination`'s task. A stream finished early on a malformed payload does not count, because its Go session still runs.
+  - `TestStartFromTheTerminalEventGetsTheEngine` (a start from inside `OnError`) and `crockit-verify twice` prove it.
 - A receiver must set `outDir`. A sender sets `workDir` (writable, for text and zip temp files; the iOS cwd is `/`).
 - `os.Chdir` restore failures are logged (`restoreWD` in `session.go`), and an `os.Getwd` failure fails the start.
 - `Quiet` stays false, because `Quiet = true` replaces `os.Stderr` process-wide with `/dev/null`. croc's progress bar noise on stderr is accepted.
@@ -122,6 +129,19 @@ Limits and error mapping:
 
 - Abandoning the event stream cancels the Go session (`onTermination`).
 - `Cancel()` cancels the context and also closes the prompt pipe. After a context cancel, `GetInputContext` returns, but its read goroutine stays blocked until the pipe closes.
+
+A start is cancellable before it returns:
+
+- `startSession` creates the session's context before its slow setup, and `CancelStart()` (`CrocmobileCancelStart`) cancels it while `StartSend` or `StartReceive` has not returned. The same context then carries the transfer, so a cancel that lands late in setup is not lost.
+- The setup step that matters is the generated-code relay probe: `generatePublicCode` runs on that context, so a cancel ends it at once and the start fails with `cancelled` instead of waiting up to 1 s (`publicrelay.ProbeTimeout`).
+- `CancelStart` is process-wide, not tied to a transfer, because there is no `Transfer` yet. CrocKit calls it from the task-cancellation handler of its start, which runs one at a time on the `CrocEngine` actor. `TransferController` cancels the task awaiting the start when **Cancel** is tapped before it has an ID.
+
+The cancel watchdog (`watchCancel`, `session.go`):
+
+- A cancel arms it. If croc's call has not returned 15 s later (`stuckAfter`), the delegate gets `engineStuck` as its terminal event and the session is marked stuck. Every later start then fails at once with `engineStuck`.
+- The lock stays held. Forcing it open would let a new session change the cwd, stdin and stdout under a croc that still runs. Only a relaunch frees it (`../known-issues.md`, "Accepted").
+- A session sends one terminal event (`session.terminal`). If croc returns after all, `run` clears the mark and frees the lock without a second event.
+- Why 15 s: croc v11.5.5's dials and reads follow its context, its reconnect backoff is capped at 5 s, and `run`'s own teardown waits (the stdin drain and the poller join) are bounded at 2 s each.
 
 ### Ask (both sides confirm)
 
@@ -172,6 +192,7 @@ Generated codes on the public pool:
 
 - The code is drawn with `codephrase.GenerateForRelay` for the first relay to answer a ping. The choice is cached in memory and forgotten after a send fails with `croc.ErrRelayConnection`.
 - If no relay answers, the send fails like the CLI, with `noPublicRelay`. The app shows its own copy pointing to **Local Network Only**.
+- The probe runs on the session's context, so `CancelStart` ends it at once (see "Cancel and teardown").
 - There is deliberately no "draw a code anyway" fallback. After the relay dial fails, croc waits only about 10 s for a LAN peer (`defaultAlternateSenderRouteTimeout`), so a code shown offline would expire before the receiver could type it.
 
 ## croc v11.5.5 gotchas (verified against source)
@@ -214,8 +235,9 @@ croc retries a dropped transfer up to 10 times (backoff from 100 ms, doubling, c
 
 - On joining the room, the receiver sends a `pake1` local probe and waits 500 ms for the reply (`localProbeResponseTimeout`).
 - If the sender is not there yet, the probe times out and the receiver carries on with its main PAKE and enters the transfer loop.
-- When the sender arrives, it answers the old `pake1`. The receiver decodes that frame as a transfer message and fails with `problem with decoding: decompress message: decompress data: flate: corrupt input before offset 6`.
-- The failure was observed with the receiver started about 0.8 s before the app sender. The chain from the probe timeout to the decode error is inferred from reading the source.
+- When the sender arrives, it answers the old `pake1`. The receiver decodes that frame as a transfer message and fails with `problem with decoding: decompress message: decompress data: flate: corrupt input before offset 6`. `classify` reports it as `joinedEarly`.
+- The receiver sends the probe only with LAN on (`DisableLocal` false), so only then does the race exist. `errors_test.go`, "receiver joined before the sender", reproduces it against an in-process relay.
+- The sender fails too. A croc v11.5.5 CLI sender with LAN on reports `could not secure channel`, which `classify` cannot tell from a real code mismatch (`wrongCode`). A sender with LAN off keeps waiting.
 - Generated-code GUI flows are sender-first. Custom codes are not: a receiver who types an agreed code before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it (`../known-issues.md`, "Accepted").
 - Harnesses start the receiver only after the sender reported its code: see "Verification harnesses".
 
@@ -363,7 +385,7 @@ Traps:
 
 A CrocKit executable for the Swift layer. Subcommands: `send`, `receive` (optionally answering `y` or `n` and cancelling after a number of milliseconds) and `twice`.
 
-`twice` runs two transfers in one process, the second receiving with `.replace`. It proves that the restoration of fd 0, stdout, cwd and the mutex composes across transfers.
+`twice` runs two transfers in one process, the second receiving with `.replace`. It proves that the restoration of fd 0, stdout, cwd and the mutex composes across transfers, and that the second start succeeds right after the first one's terminal event, with no retry.
 
 ## Toolchain
 

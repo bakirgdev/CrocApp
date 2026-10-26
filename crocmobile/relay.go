@@ -8,7 +8,12 @@ import (
 	"github.com/schollz/croc/v11/src/codephrase"
 	"github.com/schollz/croc/v11/src/models"
 	"github.com/schollz/croc/v11/src/publicrelay"
+	"github.com/schollz/croc/v11/src/tcp"
 )
+
+// relayProbe pings one relay for generatePublicCode. A var so tests can stand
+// in a probe that never answers.
+var relayProbe publicrelay.Probe = tcp.MeasureServerLatencyContext
 
 // DefaultRelayAddress is croc's default IPv4 relay. A relay setting that is
 // blank or equal to it is not custom, so the public relay pool applies.
@@ -83,19 +88,23 @@ func poolRelay(code string) (string, error) {
 
 // generatePublicCode is the CLI's generated-code path for the public pool: the
 // first relay to answer a ping wins, and the code is drawn so that it maps to
-// that relay. With none answering, the send fails as the CLI's does.
-func generatePublicCode(probe publicrelay.Probe) (string, error) {
-	index, err := selectPublicRelay(probe)
+// that relay. With none answering, the send fails as the CLI's does. A
+// cancelled ctx ends the probe at once and returns the context's error.
+func generatePublicCode(ctx context.Context, probe publicrelay.Probe) (string, error) {
+	index, err := selectPublicRelay(ctx, probe)
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return "", ctxErr
+		}
 		return "", &codedError{code: codeNoPublicRelay, err: err}
 	}
 	return codephrase.GenerateForRelay(index, len(publicrelay.Relays()))
 }
 
 // selectPublicRelay is the CLI's best-relay cache (cli.go selectPublicRelay).
-func selectPublicRelay(probe publicrelay.Probe) (int, error) {
+func selectPublicRelay(ctx context.Context, probe publicrelay.Probe) (int, error) {
 	return relaycache.Get(func() (int, error) {
-		index, _, err := publicrelay.SelectFirst(context.Background(), publicrelay.Relays(), publicrelay.ProbeTimeout, probe)
+		index, _, err := publicrelay.SelectFirst(ctx, publicrelay.Relays(), publicrelay.ProbeTimeout, probe)
 		return index, err
 	})
 }

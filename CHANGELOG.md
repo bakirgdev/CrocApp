@@ -31,6 +31,12 @@ extra sections where a release needs them, and the project follows
 ### Fixed
 
 - A send whose local ports cannot be opened (another app already uses them) now fails with a message. Before, croc could stop the whole app there.
+- A new transfer started right after the last one ended now starts at once, without a short wait or a "Transfer failed" message.
+- Cancel during the first second of a send with a generated code now stops it at once, before a code appears.
+- If a cancelled transfer never stops, CrocApp now says so after 15 seconds and asks you to quit and reopen it, instead of staying on the transfer and failing every later one.
+- A receive started before the sender now says to start the send first and enter the code again, instead of a generic failure.
+- On iPhone, a transfer that auto-accept stops for an unsafe file name now plays the failure haptic.
+- Send Again could pick up the files of an earlier send when two sends followed each other quickly. Each send now keeps its own files.
 
 ### Security
 
