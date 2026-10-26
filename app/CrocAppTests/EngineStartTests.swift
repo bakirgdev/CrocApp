@@ -144,8 +144,6 @@ import Testing
         #expect(!start.autoAccept, "auto-accept never applies to a stored link")
     }
 
-    #if os(macOS)
-    /// iOS has no multicast entitlement, so only macOS passes the setting on.
     @Test func multicastReachesTheEngineWhenSet() {
         settings.multicastAddress = " 239.255.0.7 "
         guard
@@ -167,5 +165,4 @@ import Testing
         }
         #expect(blank.multicastAddress == EngineOptions().multicastAddress)
     }
-    #endif
 }

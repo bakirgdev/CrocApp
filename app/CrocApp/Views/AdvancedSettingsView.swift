@@ -42,7 +42,6 @@ struct AdvancedSettingsView: View {
                         .urlEntry()
                     }
                 }
-                #if os(macOS)
                 AdvancedRow(
                     footnote:
                         "Applies to both devices. They find each other on the local network only if both use the same address. Blank uses \(AppSettings.advancedDefaults.multicastAddress).",
@@ -56,7 +55,6 @@ struct AdvancedSettingsView: View {
                         .addressEntry()
                     }
                 }
-                #endif
                 AdvancedRow(
                     footnote:
                         "Applies when receiving. Connects straight to the sender at this address and port, skipping relays. Use the sender's base port, 9009 unless they changed it.",

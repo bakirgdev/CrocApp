@@ -31,7 +31,7 @@ Setup unless a section says otherwise: an iPhone or iPad on iOS or iPadOS 26 or 
 
 - [ ] The first transfer triggers the local-network permission prompt.
 - [ ] Deny it. A banner with a Settings shortcut appears, and a relay transfer still succeeds.
-- [ ] LAN discovery on iOS depends on the multicast entitlement (`apple-platform-constraints.md`, "Hard constraints", item 2). Without it, expect the LAN path to lose the race to the relay.
+- [ ] LAN discovery: with Local Network Only on, a transfer between the iPhone and a Mac on the same network succeeds both ways without a relay. It depends on the multicast entitlement (`apple-platform-constraints.md`, "LAN discovery and multicast") and on the Local Network permission, so allow the prompt first.
 
 ## Idle timer
 

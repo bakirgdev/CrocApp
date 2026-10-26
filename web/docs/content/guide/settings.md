@@ -67,7 +67,7 @@ Type patterns in **Patterns, one per line** to skip matching files when you send
 **Network.**
 
 - **SOCKS5 Proxy** and **HTTP Proxy** send this device's connections through a proxy. Enter `host:port` or an address such as `socks5://user:password@host:1080` (SOCKS5 takes `socks5://` or `socks5h://`, HTTP takes `http://` or `https://`). If both are set, SOCKS5 wins. Connections to your local network skip the proxy. They also apply to [Send as link](send-as-link.md). A proxy address can contain a password, so CrocApp keeps both in the Keychain, never in the settings file or an error message.
-- **Multicast Address** is the group croc uses to find devices on the local network. It must be an IPv4 multicast address, `224.0.0.0` to `239.255.255.255`. iOS needs an Apple entitlement for this that CrocApp does not have, so iOS always uses the default.
+- **Multicast Address** is the group croc uses to find devices on the local network. It must be an IPv4 multicast address, `224.0.0.0` to `239.255.255.255`.
 - **Sender IP** is for receiving. Enter the sender's address and port, such as `192.168.1.20:9009` or `[fe80::1]:9009`, and CrocApp connects straight to it, skipping relays and discovery. A CrocApp sender listens on port 9009 and the four ports after it. If something else on the sender's device uses 9009, croc takes the next free ports, so the port you need can be higher. If nothing answers, the receive fails at once. It does not fall back to a relay.
 
 **Performance.**

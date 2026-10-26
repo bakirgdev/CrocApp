@@ -23,7 +23,7 @@ Apple-side rules the app has to live inside. Each item says how it was checked:
 ### LAN discovery and multicast
 
 - croc finds LAN peers with UDP multicast (schollz/peerdiscovery). On iOS that needs the restricted entitlement `com.apple.developer.networking.multicast`, which Apple grants per team and per profile type, TestFlight included. (From Apple docs, not re-checked.)
-- The entitlement has been requested and is pending. The iOS entitlements file does not have it yet, so 1.0 ships without it, and the iOS multicast setting is hidden.
+- Apple granted it for `com.bakirgdev.CrocApp` (Multicast Networking on the App ID). `CrocApp-iOS.entitlements` carries it, so iOS runs croc's discovery and shows the Multicast Address setting. Verified on an iPhone 16 Plus with Local Network Only on both sides: Mac CLI to iPhone and iPhone to Mac CLI, byte-identical, no relay.
 - Bonjour (`NWBrowser`, `NWListener`) needs no entitlement, but the stock croc command line cannot discover a Bonjour peer because the protocols differ.
 - Without the entitlement the relay path still works. Only the LAN race is lost.
 

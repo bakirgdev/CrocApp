@@ -9,7 +9,7 @@ import ServiceManagement
 
 /// Launch-argument harness for scripted verification.
 ///   --auto-receive CODE            receive into Documents, auto-accept
-///   --auto-send PATH --code CODE   send PATH with custom code CODE
+///   --auto-send PATH --code CODE   send PATH (a relative PATH is under Documents) with custom code CODE
 ///   --auto-store-send PATH         "Send as link" PATH (to --store-server URL, allowing --store-downloads N,
 ///                                  default 1), write the link to verify-store-link.txt, then wait for
 ///                                  verify-store-revoke.go in Documents and revoke the upload
@@ -163,8 +163,12 @@ enum AutoVerify {
         } else if let i = args.firstIndex(of: "--auto-send"), i + 1 < args.count,
             let ci = args.firstIndex(of: "--code"), ci + 1 < args.count
         {
-            controller.start(
-                .sendFiles(urls: [URL(fileURLWithPath: args[i + 1])], code: args[ci + 1]))
+            // A relative path is under Documents: a device run cannot know the
+            // app's container path, only copy a file into it (devicectl).
+            let path = args[i + 1]
+            let url =
+                path.hasPrefix("/") ? URL(fileURLWithPath: path) : docs.appendingPathComponent(path)
+            controller.start(.sendFiles(urls: [url], code: args[ci + 1]))
             await watch(controller, resultURL: resultURL, autoAccept: false)
         } else if let i = args.firstIndex(of: "--auto-store-send"), i + 1 < args.count {
             if let j = args.firstIndex(of: "--store-server"), j + 1 < args.count {

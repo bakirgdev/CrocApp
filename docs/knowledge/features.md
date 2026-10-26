@@ -38,7 +38,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | HTTP proxy | `--connect` | all | shipped |
 | Upload speed limit (sender side) | `--throttleUpload` | all | shipped |
 | Sender IP, direct connect (receive side) | `--ip` | all | shipped |
-| Custom multicast address | `--multicast` | macOS only; iOS has no multicast entitlement | shipped |
+| Custom multicast address | `--multicast` | all | shipped |
 
 ## App-native features
 
