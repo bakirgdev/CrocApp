@@ -24,7 +24,7 @@ struct CodePhraseDisplay: View {
                 .foregroundStyle(Color.textSecondary)
             codeText
             Button {
-                Clipboard.copy(code)
+                Clipboard.copySecret(code)
                 copied = true
             } label: {
                 Label(

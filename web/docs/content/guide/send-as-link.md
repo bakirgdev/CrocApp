@@ -49,7 +49,7 @@ When the send finishes, CrocApp shows **Link ready**, when the link stops workin
 
 CrocApp does not show the link again after you tap **Done**, and [History](history.md) never stores it. Copy or share it first. If you lose it, revoke the link from History and send again.
 
-On iOS, **Copy Link** keeps the link off Universal Clipboard, because the link contains the key. macOS offers no such option.
+**Copy Link** asks the system to keep the link on this device, off Universal Clipboard, because the link contains the key, and to remove it from the clipboard after 5 minutes unless you copied something else since (on a Mac, CrocApp does the removing, and only while it is running).
 
 Anyone who has the whole link can open the files until it ends. Send it over a channel you would trust with the files.
 

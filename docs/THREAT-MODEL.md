@@ -31,7 +31,7 @@ Requirements CrocApp adds on top of the protocol, because the app is where files
 CrocApp does not defend against, and does not claim to:
 
 - **A compromised device.** Malware or a debugger on either device sees the files and the code phrase.
-- **Someone who has the code phrase.** Whoever holds it can complete the exchange. Share it over a channel you trust. A receive shows the file list and waits for the user to accept (auto-accept is off by default), and the optional both-sides-confirm setting (croc `--ask`) adds a confirmation on the sender.
+- **Someone who has the code phrase.** Whoever holds it can complete the exchange. Share it over a channel you trust. **Copy Code** leaves the code on the pasteboard for 5 minutes, and on Universal Clipboard, because copying on a Mac and pasting on an iPhone is a core use. Until it expires, any app that reads the pasteboard can read it. Expiry works as for the link under Send as Link, and whether it also expires on the other device is not verified. A receive shows the file list and waits for the user to accept (auto-accept is off by default), and the optional both-sides-confirm setting (croc `--ask`) adds a confirmation on the sender.
 - **Metadata visible to the network and the relay.** IP addresses, timing and the volume of data are visible to the relay operator and on-path observers. Whether the relay also sees anything derived from the code phrase (croc picks the relay room from its first word: `src/codephrase/codephrase.go:194-222`, read from source per `known-issues.md`) is not analysed here. Unknown.
 - **Anonymity.** No claim is made.
 - **A weak custom code phrase.** The app accepts any code of at least 6 bytes (`minCodeLength`, `crocmobile/crocmobile.go`). A code that is easy to guess is easy to guess online. The entropy of generated codes is croc's and is not assessed here.
@@ -126,7 +126,7 @@ Local Network Only (`OnlyLocal`) keeps the connection on the local network. The 
 - `crocmobile/store.go` uses croc's `storecrypto` (croc-store-v1): a 32-byte random key, HKDF subkeys, AES-GCM-encrypted chunks and manifest.
 - The link server receives ciphertext and the transfer ID; the key stays in the link's `#` fragment.
 - The link server origin must be `https`, or `http` on loopback only: enforced in Go (`validateStoreOrigin`, `store.go`), because App Transport Security does not cover Go sockets. The settings field asks that same check (`AppSettings.storedServerError` calls `EngineSetting.storeServer`), and `TransferLink` checks a received link again at parse time.
-- The copied link goes to the iOS pasteboard as `localOnly` so it stays off Universal Clipboard (`app/CrocApp/Support/Clipboard.swift`).
+- **Copy Link** asks the system to keep the link on this device, off Universal Clipboard, and to drop it from the pasteboard after 5 minutes. On macOS the app does the dropping, so it only happens while the app is running and only if nothing else was copied since. How each platform does it: `knowledge/app-ui-architecture.md`, "Support helpers". Not verified on hardware: the link staying off Universal Clipboard, the iOS expiry and clipboard managers skipping the copy (`knowledge/device-test-checklist.md`, "Clipboard").
 - A receipt in the Keychain lets the sender revoke the link; anyone holding the whole link can decrypt until it expires or is revoked.
 
 ### Build, update and release

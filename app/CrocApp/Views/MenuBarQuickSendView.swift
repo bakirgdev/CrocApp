@@ -70,7 +70,7 @@ struct MenuBarQuickSendView: View {
         case .stored(let receipt):
             VStack(spacing: Spacing.space3) {
                 Label("Link ready", systemImage: "checkmark.circle")
-                Button("Copy Link") { Clipboard.copy(receipt.link, thisDeviceOnly: true) }
+                Button("Copy Link") { Clipboard.copySecret(receipt.link, thisDeviceOnly: true) }
                     .buttonVariant(.secondary)
                 doneButton
             }
