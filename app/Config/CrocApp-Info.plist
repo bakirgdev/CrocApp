@@ -24,6 +24,14 @@
 	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
+	<!-- One transfer runs at a time, so iPad gets one scene. The manifest
+	     INFOPLIST_KEY_UIApplicationSceneManifest_Generation writes always
+	     says multiple scenes, so the target does not set that key. -->
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
 	<!-- croc's encryption (AES-256-GCM, PAKE) is standard and its source is
 	     public, so the app relies on the open-source exemption (EAR 742.15(b),
 	     owner decision for 1.0). `true` makes App Store Connect refuse the
