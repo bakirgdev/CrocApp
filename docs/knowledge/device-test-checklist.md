@@ -2,7 +2,7 @@
 
 A repeatable procedure for what the simulator and the verify scripts cannot check: real iPhone, iPad and Mac hardware. This file records no results. Tick items on your own copy or in the pull request.
 
-Run the whole list before each App Store submission, and run the matching section after any change to that area (background handling, share extension, links, stored transfers, menu bar, Shortcuts, transport).
+Run the whole list before each App Store submission, and run the matching section after any change to that area (background handling, share extension, links, stored transfers, menu bar, Shortcuts, large files).
 
 Setup unless a section says otherwise: an iPhone or iPad on iOS or iPadOS 26 or later, a Mac on macOS 26 or later with CrocApp, and the croc CLI v11 for the other end. Hash files with `shasum -a 256`. To hash a file received on the iPhone, copy it to the Mac first.
 
@@ -94,11 +94,10 @@ Use an iPad on iPadOS 26 with a keyboard, or the pointer to open the menu bar.
 - [ ] 2. After a receive, choose **Show Receive Folder in Files** or press ⇧⌘R. Pass: the Files app opens at the CrocApp receive folder.
 - [ ] 3. Repeat with a user-picked provider folder (such as iCloud Drive) as the receive folder. The `shareddocuments://` scheme resolves local paths only, so a silent no-op is expected. Note what happens and confirm there is no crash.
 
-## Transport and Tailcat
+## Large files without Tailcat
 
-Use an iPhone and the Mac CLI at `/opt/homebrew/bin/croc` (v11). Use a file of at least 130 MiB, because croc starts Tailcat only for sends of 128 MiB or more (`crocmobile-bridge.md`, "Engine behavior invariants"). Under Automatic, croc races Tailcat against its relay, so the CLI `--debug` log shows which side offered it.
+Use an iPhone and the Mac CLI at `/opt/homebrew/bin/croc` (v11). Use a file of at least 130 MiB, the size at which the stock CLI would try Tailcat. CrocApp is built without it (`crocmobile-bridge.md`, "Transport and Tailcat"), so the relay and the LAN carry the data, and the CLI `--debug` log shows `selected croc relay data transport` with no `tailcat-offer`.
 
-- [ ] 1. Settings > **Connection** = **Automatic**. Send the file from the iPhone to `croc --debug --yes` on the Mac, once with the app in the foreground and once switching to another app mid-transfer and back. Pass: both complete, the SHA-256 matches the source, and the CLI log contains `tailcat-offer`.
-- [ ] 2. **Connection** = **Relay Only**. Same send, foreground. Pass: the transfer completes, the SHA-256 matches, and the CLI log has no `tailcat-offer`.
-- [ ] 3. On the Mac run `croc --debug --ignore-stdin send --transport auto <file>` and receive on the iPhone, once in the foreground and once backgrounded mid-transfer. Pass: both complete and the SHA-256 matches.
-- [ ] 4. On the Mac run `croc --debug --ignore-stdin send --transport derp <file>` and receive on the iPhone. This checks whether Tailcat's own data path works on iOS. CLI to CLI the same flag can fail on some Macs (`docs/known-issues.md`, "Harnesses"), so a failure here alone is not a CrocApp defect. Note the outcome.
+- [ ] 1. Send the file from the iPhone to `croc --debug --yes` on the Mac, once with the app in the foreground and once switching to another app mid-transfer and back. Pass: both complete, the SHA-256 matches the source, the CLI log has the plain `selected croc relay data transport` line and no `tailcat-offer`.
+- [ ] 2. On the Mac run `croc --debug --ignore-stdin send <file>` and receive on the iPhone, once in the foreground and once backgrounded mid-transfer. Pass: both complete, the SHA-256 matches, and the CLI log has no `tailcat-offer`.
+- [ ] 3. On the Mac run `croc --debug --ignore-stdin send --transport derp <file>` and receive on the iPhone. Pass: the app shows a failure within seconds (`peer requires Tailcat, but Tailcat is disabled or unavailable locally`), not a spinner that never ends.

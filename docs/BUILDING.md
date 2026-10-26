@@ -60,7 +60,7 @@ The script builds gomobile and gobind from the `tool` block into `.tools/` (prep
 gomobile bind \
   -target ios,iossimulator,macos/arm64 \
   -iosversion 26.0 -macosversion 26.0 \
-  -trimpath -ldflags "-s -w" \
+  -trimpath -ldflags "-s -w" -tags croc_no_tailcat \
   -o "../CrocKit/Croc.xcframework" \
   .
 ```
@@ -68,6 +68,7 @@ gomobile bind \
 - **Targets**: `ios`, `iossimulator`, `macos/arm64`. There is no `macos/amd64` slice.
 - **`-iosversion` and `-macosversion`**: both `26.0`, matching the deployment target everywhere else.
 - **`-trimpath` and `-ldflags "-s -w"`**: both are build flags that `gomobile bind` shares with `go build` (`gomobile help bind`). `-trimpath` removes build-machine paths from the binary, and `-s -w` omits the Go symbol table and DWARF. The static archive in each slice halves (the macOS slice goes from 56.0 MB to 27.7 MB), and an unsigned Release `xcodebuild build` of the app shrinks by about 1.6 MB, because that build does not strip. An `xcodebuild archive` strips symbols itself, so a shipped app barely changes: the unsigned macOS archive executable went from 22.07 MB to 22.00 MB (measured, Xcode 27.1, Go 1.27.3, croc v11.5.5). Size comparisons therefore belong on an archive, not on a `build`.
+- **`-tags croc_no_tailcat`**: croc's build tag that compiles out Tailcat, its peer-to-peer data path (Tailscale's WireGuard, gVisor, DERP). The shipped executable halves (measured on unsigned `xcodebuild archive` executables with and without the tag, Xcode 27.1, Go 1.27.3, croc v11.5.5: macOS 21,951,912 B to 10,452,200 B, iOS 21,278,008 B to 10,313,128 B), and `auto` transport means the relay and the LAN. `go list -tags croc_no_tailcat -deps` in `crocmobile/` shows no gVisor package (42 without the tag) and no `wireguard-go`. **Every other Go build of `crocmobile/` carries the same tag**, so what is tested is what ships: `GOFLAGS=-tags=croc_no_tailcat` in `reusable-go.yml` and `go-weekly.yml`, `build-tags` in `crocmobile/.golangci.yml`, `-tags croc_no_tailcat` on the harnesses' `croctest` builds, and `TestBuildIsRelayOnly` fails a test run that lacks the tag.
 - **Output**: `CrocKit/Croc.xcframework`, removed and rebuilt on every run.
 - **Why arm64 only on macOS**: [golang/go#73119](https://github.com/golang/go/issues/73119), gomobile cannot produce a multi-arch macOS bind. The xcframework has no `x86_64` slice, so Intel Macs that can otherwise run macOS 26 (the 2019 MacBook Pro 16", 2020 iMac, 2019 Mac Pro) cannot run CrocApp. The pbxproj pins `ARCHS[sdk=macosx*] = arm64` for this reason. Removing that pin does not restore Intel support, it breaks the link.
 - **iOS device archives**: [golang/go#66500](https://github.com/golang/go/issues/66500) is a device-slice layout issue that affects App Store archives. x/mobile fixes it (CL 574055 and 575115), and the pinned x/mobile includes the fix. The framework `Info.plist` keeps gomobile's `MinimumOSVersion = 100.0` (an SwiftPM workaround in x/mobile) and App Store Connect accepts it, so the script does not patch it.
@@ -92,15 +93,18 @@ The script owns the list of paths swift-format covers: `app/CrocApp`, `app/CrocA
 
 **Trap**: `format --in-place` does not fix lint-only rules. Several enabled rules only flag and never rewrite (for example `ReplaceForEachWithForLoop`, `OnlyOneTrailingClosureArgument`, `AlwaysUseLowerCamelCase`). A clean `format` run is not evidence that `lint --strict` passes, which is why the script always runs both. The full list is in `docs/knowledge/tooling.md`, "swift-format traps".
 
-Go, from `crocmobile/`:
+Go, from `crocmobile/`. The engine ships without Tailcat, so every command needs the build tag (`golangci-lint` reads it from `.golangci.yml`). Export it once per shell:
 
 ```bash
+export GOFLAGS=-tags=croc_no_tailcat
 go build ./...
 go vet ./...
 env -u GOOS -u GOARCH go test -race ./...
 golangci-lint run ./...
 go tool govulncheck ./...
 ```
+
+A test run without the tag fails `TestBuildIsRelayOnly`, on purpose.
 
 Swift unit tests, after `scripts/build-xcframework.sh`:
 
@@ -123,7 +127,7 @@ pnpm --dir web/docs install
 scripts/assemble-site.sh _site   # landing at /, docs at /docs/
 ```
 
-CI runs the Go checks with `GOOS=darwin GOARCH=arm64` set for the whole job, so `go build` and `go vet` analyze the platform the code ships on while running on a cheap Linux runner. Only `go test` unsets them. See "Troubleshooting" for the `go install` trap this causes.
+CI runs the Go checks with `GOFLAGS=-tags=croc_no_tailcat` and `GOOS=darwin GOARCH=arm64` set for the whole job, so `go build` and `go vet` analyze the platform the code ships on while running on a cheap Linux runner. Only `go test` unsets them. See "Troubleshooting" for the `go install` trap this causes.
 
 ## Tests
 
@@ -142,7 +146,7 @@ A green build is not evidence that a transfer works. CI runs only `scripts/verif
 | Harness | Proves | Needs | Env vars |
 |---|---|---|---|
 | `scripts/verify-interop.sh` | crocmobile (through its `croctest` CLI) and the croc CLI interoperate, 15 scenarios (list below) | croc CLI, croc v10 CLI (`scripts/croc-v10.version`), outbound network unless `RELAY` is set | `CROC`, `CROC_V10`, `RELAY` |
-| `scripts/verify-app-mac.sh` | the macOS app, 12 scenarios (list below) | outbound network (scenario 8 also reaches `tailcat.dev`), croc CLI, a macOS app build | `CROC` |
+| `scripts/verify-app-mac.sh` | the macOS app, 12 scenarios (list below) | outbound network, croc CLI, a macOS app build | `CROC` |
 | `scripts/verify-app-sim.sh` | the iOS simulator, 2 scenarios (list below) | outbound network, croc CLI, an iOS Simulator | `CROC`, `SIM` |
 | `crockit-verify` (`swift run --package-path CrocKit crockit-verify send\|receive\|twice ...`) | Swift-layer send and receive, cancel fired mid-wire, and two transfers back to back in one process (proves fd0, stdout, cwd and mutex restoration compose) | outbound network, croc CLI, macOS only | optional `CROC_RELAY`, `CROC_PASS` for a private relay |
 
@@ -160,11 +164,11 @@ A green build is not evidence that a transfer works. CI runs only `scripts/verif
 10. A croc v10 peer in both directions: crocmobile reports failure code `peerVersion`.
 11. Every public pool relay in both directions with LAN off, asserting which relay each side used.
 12. Receive file policy: a file onto an existing one with Keep Both and with Replace, answered at the prompt and preset with `-yes`, then a zipped folder received twice with each policy and accept mode.
-13. Transport: a 130 MiB send under `auto` and under `relay`, both directions, asserting byte equality. The CLI `--debug` log must show a `tailcat-offer` under `auto` and none under `relay`.
+13. Large files without Tailcat: a 130 MiB transfer in each direction against a CLI on its default `--transport auto`, asserting byte equality and, in the CLI `--debug` log, the plain `selected croc relay data transport` line and no `tailcat-offer`. Then a CLI sender with `--transport derp`, which a Tailcat-free build cannot serve: the wrapper must fail within 30 s with croc's "peer requires Tailcat" error, not hang.
 14. Stored transfers against a loopback `croctest store-server`: a wrapper upload downloaded by the CLI, a CLI upload downloaded by the wrapper, a revoke after which the download fails, and an existing name with Keep Both, Replace and a declined preview.
 15. Advanced options that change the wire, each against the CLI with the matching flag: the sender IP (a wrapper sender on its default ports 9009 to 9013, a CLI sender on another port, a dead address), multicast group, SOCKS5 and HTTP proxy. The sender-IP and multicast cases need ports 9009 to 9013 free on the host.
 
-With `RELAY` set, every transfer uses that relay, and scenarios 11, 13, and the proxy part of 15 are skipped. Scenario 14 and the rest of 15 need no public relay and still run.
+With `RELAY` set, every transfer uses that relay, and scenario 11 and the proxy part of 15 are skipped. Scenarios 13 and 14 and the rest of 15 need no public relay and still run.
 
 **`verify-app-mac.sh` scenarios**
 
@@ -175,7 +179,7 @@ With `RELAY` set, every transfer uses that relay, and scenarios 11, 13, and the 
 5. `--no-compress`.
 6. `--ask`, both sides confirm.
 7. A CLI send onto an existing file, received with `--when-exists keepBoth` and `replace` (prints `MAC-COLLIDE-OK`).
-8. A 130 MiB transfer in each direction under `--transport auto` and `--transport relay` (prints `MAC-TRANSPORT-OK`).
+8. A 130 MiB transfer in each direction against a CLI on `--transport auto`, asserting the same CLI log lines as interop scenario 13 (prints `MAC-TRANSPORT-OK`).
 9. Stored transfers (prints `MAC-STORE-OK`).
 10. A send started through the menu-bar view model, with a file and with clipboard text (prints `MAC-MENUBAR-OK`). It saves and restores the text on the pasteboard.
 11. Open at login following `SMAppService.status` (prints `MAC-LOGIN-OK`). It registers the login item and unregisters it again.

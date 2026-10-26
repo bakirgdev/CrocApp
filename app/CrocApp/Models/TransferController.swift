@@ -152,7 +152,6 @@ final class TransferController {
         o.onlyLocal = settings.onlyLocal
         o.disableLocal = harnessDisableLocal
         o.noCompress = settings.noCompress
-        o.transport = settings.transport
         o.ask = settings.bothSidesConfirm
         o.throttleUpload = settings.throttleUpload.trimmingCharacters(in: .whitespacesAndNewlines)
         o.socks5Proxy = proxies.socks5

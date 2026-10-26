@@ -31,8 +31,7 @@ type Options struct {
 	Rename         bool // receive: keep both, croc names the new file "name (1).ext"; also the default when neither is set
 	AutoAccept     bool // maps to croc NoPrompt; default false (product pillar)
 	Ask            bool
-	NoMultiplexing bool   // harness only (croctest -no-multi): one data connection per transfer; the app never sets it
-	Transport      string // send: TransportAuto (also when empty) or TransportRelay; a receive follows the sender
+	NoMultiplexing bool // harness only (croctest -no-multi): one data connection per transfer; the app never sets it
 
 	// Advanced options. Zero values mean croc's defaults.
 	MulticastAddress string // IPv4 group for LAN discovery (croc --multicast)
@@ -63,15 +62,6 @@ func NewOptionsDefault() *Options {
 const (
 	PolicyKeepBoth = "keepBoth"
 	PolicyReplace  = "replace"
-)
-
-// Transports a send can use, as Options.Transport takes them. Auto lets croc
-// race its relay against Tailcat for sends of 128 MiB or more; relay never
-// starts Tailcat. croc's own "derp" (Tailcat only, no fallback) also passes
-// through, for harness probes.
-const (
-	TransportAuto  = "auto"
-	TransportRelay = "relay"
 )
 
 // minCodeLength is the shortest code phrase StartSend and StartReceive accept,

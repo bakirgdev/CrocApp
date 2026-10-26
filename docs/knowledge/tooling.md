@@ -53,6 +53,7 @@ The build settings that must not change casually (Swift 6 mode, deployment targe
   - It starts `croc relay` on 127.0.0.1 with raised admission limits, because the public relays rate-limit a shared runner address.
   - It installs the v11 CLI with `go install` at the version in `crocmobile/go.mod`, because Homebrew's bottle can lag that pin and the store scenario needs `croc store`. It installs the v10 peer the same way, at the version in `scripts/croc-v10.version`.
   - CI does not run the other harnesses or the public-pool scenario.
+- **The go job carries the engine's build tag.** `GOFLAGS=-tags=croc_no_tailcat` is set job-wide in `reusable-go.yml` (and on the fuzz job in `go-weekly.yml`), so build, vet, test, fuzz, govulncheck and golangci-lint all see the croc without Tailcat that ships. A new Go step needs nothing extra. `TestBuildIsRelayOnly` fails a test run that lacks the tag.
 - **`go install` under the go job's cross-compile env.** The go job sets `GOOS=darwin GOARCH=arm64` job-wide so `go build` and `go vet` analyze the shipping target.
   - `go install` honours that and drops a darwin binary into `$GOPATH/bin/darwin_arm64/`, which is unrunnable on the Linux host and not where `$(go env GOPATH)/bin/` looks (exit 127).
   - CI therefore builds govulncheck with `env -u GOOS -u GOARCH go build -o "$RUNNER_TEMP/govulncheck" golang.org/x/vuln/cmd/govulncheck`, then runs it with the job env intact so the analysis still targets darwin.

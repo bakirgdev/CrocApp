@@ -77,7 +77,7 @@ Relay strings use `""` for "croc default" (the `TextField` prompt reads "Public 
 
 `relayKind` is display-only: `publicDefault`, `custom`, `localOnly` or `directToSender`. It is `custom` if either address is set to something other than `RelayDefaults` (CrocKit, read from Go). `receiveRelayKind` returns `directToSender` when a sender IP is set.
 
-`Views/PowerSettingsSections.swift` holds the shared `Form` sections: relay, connection, transfer toggles, exclusions, and confirmation with the **Auto-Accept Transfers** warning footer. The connection section has the **Connection** picker (**Automatic** or **Relay Only**), which is disabled while **Local Network Only** is on. Both the macOS `SettingsView` (Settings scene, ⌘,) and the iOS `SettingsScreen` (gear toolbar, `Route.settings`) embed these sections.
+`Views/PowerSettingsSections.swift` holds the shared `Form` sections: relay, Send as link, transfer toggles, exclusions, and confirmation with the **Auto-Accept Transfers** warning footer. Both the macOS `SettingsView` (Settings scene, ⌘,) and the iOS `SettingsScreen` (gear toolbar, `Route.settings`) embed these sections.
 
 `TrustBadge(relay:)` appears in the waiting, transferring and confirm-send views. `HowItWorksView` is the plain-language explainer. Its facts come from `what-is-croc.md`.
 
@@ -290,7 +290,6 @@ Launch arguments drive the real controller, not the engine directly, so the veri
 
 `AutoVerify.swift`'s header comment lists every flag. Keep it complete when adding one. Behaviours the header does not spell out:
 
-- The header does not list `--transport auto|relay`. It sets `settings.transport` unpersisted (sender-side Connection). An unknown value is ignored.
 - `--auto-send PATH --code CODE` needs both flags. Without `--code`, nothing happens.
 - On macOS the `--auto-send` source must be container-resident (sandbox).
 - The `.confirmSend` auto-answer happens in every harness mode, with or without `--ask`.

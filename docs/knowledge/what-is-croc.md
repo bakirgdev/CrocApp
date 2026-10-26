@@ -70,9 +70,9 @@ Data is DEFLATE-compressed (HuffmanOnly; `--no-compress` disables it) and chunke
 - `auto` offers Tailcat only when the total send is at least 128 MiB (`autoTailcatThresholdBytes`), and races it against the relay, which starts 350 ms later. `derp` requires Tailcat.
 - A browser peer, an older client or a failed setup falls back to the relay ports. `derp` disables that fallback.
 - `--transport` cannot be combined with `--local` unless it is `auto`.
-- A build without Tailcat downgrades `derp` to `relay`.
+- A build without Tailcat (`-tags croc_no_tailcat`) downgrades `derp` to `relay` on a sender. Its receiver refuses a sender that requires Tailcat with `peer requires Tailcat, but Tailcat is disabled or unavailable locally`.
 - Setup fetches the DERP map from `https://tailcat.dev/derpmap.json` at runtime. Below the threshold, or with `relay`, none of those servers is contacted.
-- CrocApp exposes only `auto` and `relay` (`crocmobile-bridge.md`, "Engine behavior invariants", "Transport").
+- CrocApp is built without Tailcat and has no transport setting (`crocmobile-bridge.md`, "Transport").
 
 ### 6. Local path
 

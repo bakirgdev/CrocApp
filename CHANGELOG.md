@@ -12,6 +12,7 @@ extra sections where a release needs them, and the project follows
 
 ### Changed
 
+- The app is about half the size. The transfer engine is now croc's relay-only build, without Tailcat, the direct-connection path croc could try for large sends. The main executable went from 22.0 MB to 10.5 MB on Mac and from 21.3 MB to 10.3 MB on iPhone and iPad (measured on unsigned release archives). Transfers use croc's relay or your local network, as they did for everything under 128 MiB.
 - Buttons are easier to read in light mode: text labels and filled buttons now use the darker green, so white labels pass the 4.5:1 contrast mark, and destructive labels are no longer drawn in red text.
 - The website and docs are refreshed. The docs are reorganized around what you are doing (one Settings page in the app's own order, Verify a release under Getting started, Send as link and a keyboard shortcut reference), with a new Uninstall and data page, many accuracy fixes, and redirects from the old addresses. The home page leads with "Send files with a code phrase" and shows the iPhone app beside the Mac one.
 - The website and docs use the app icon as their favicon and home-screen icon, and a new social preview card.
@@ -24,6 +25,7 @@ extra sections where a release needs them, and the project follows
 
 ### Removed
 
+- The **Connection** setting (Automatic or Relay Only) and the "Direct path for large files" note in How It Works. With no direct-connection path in the app there is nothing to choose, and CrocApp no longer contacts `tailcat.dev` or the `*.ipn.dev` servers. A croc command-line sender that forces that path (`--transport derp`) cannot send to CrocApp: the receive fails with "peer requires Tailcat". Without that flag, large files from the command line work as before.
 - Six Advanced settings are gone: **Curve**, **File Hash**, **Base Port**, **Parallel Connections**, **Multiplexing** and **Built-in DNS Resolver**. croc picks the right curve and hash on its own (a sender takes the receiver's curve, a receiver takes the sender's hash), so two devices never need to match, and ports, connection count and DNS are croc internals. CrocApp now uses croc's defaults: curve P-256, ports 9009 to 9013. A **Sender IP** receive from a CrocApp sender uses port 9009. Proxies, **Sender IP**, **Send Speed Limit** and, on macOS, **Multicast Address** stay.
 
 ### Fixed

@@ -16,7 +16,7 @@ How to bump the pinned croc version in `crocmobile/go.mod`. Run it as one sessio
 3. **Bump.**
    - Run `cd crocmobile && go get github.com/schollz/croc/v11@vNEW && go mod tidy`. A new major changes the `/vN` import path everywhere.
    - Then run `brew upgrade croc` so the test CLI matches the pin (`brew install croc` on a fresh machine). The harnesses default `CROC` to `${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc`.
-4. **Build.** Run `go build ./... && go vet ./...` in `crocmobile/`, then `./scripts/build-xcframework.sh`, then `cd CrocKit && swift build`, then build the app for both platforms.
+4. **Build.** Run `go build ./... && go vet ./...` in `crocmobile/` with `GOFLAGS=-tags=croc_no_tailcat` (`BUILDING.md`, "Format and lint"), then `./scripts/build-xcframework.sh`, then `cd CrocKit && swift build`, then build the app for both platforms.
 5. **Verify**, in this order. Each one covers ground the previous one does not (`BUILDING.md`, "Verification harnesses" has the commands):
    - `crockit-verify twice`: the Swift layer. The two-transfer case proves the fd 0, stdout, cwd and mutex restoration still composes.
    - `./scripts/verify-interop.sh`: all 15 crocmobile to CLI scenarios.

@@ -32,7 +32,6 @@ import Testing
         #expect(!s.autoAccept)
         #expect(!s.bothSidesConfirm)
         #expect(s.whenFileExists == .keepBoth)
-        #expect(s.transport == .auto)
         #expect(s.storedServer == "https://getcroc.com")
         #expect(s.relayKind == .publicDefault)
     }
@@ -50,7 +49,6 @@ import Testing
         s.autoAccept = true
         s.bothSidesConfirm = true
         s.whenFileExists = .replace
-        s.transport = .relay
         s.storedServer = "https://store.example"
 
         let r = AppSettings(defaults: defaults, secrets: secrets)
@@ -64,7 +62,6 @@ import Testing
         #expect(r.autoAccept)
         #expect(r.bothSidesConfirm)
         #expect(r.whenFileExists == .replace)
-        #expect(r.transport == .relay)
         #expect(r.storedServer == "https://store.example")
     }
 
@@ -74,13 +71,6 @@ import Testing
         defer { cleanUp() }
         defaults.set("overwrite", forKey: "settings.whenFileExists")
         #expect(AppSettings(defaults: defaults, secrets: secrets).whenFileExists == .keepBoth)
-    }
-
-    /// A value this build does not know must not turn into Relay only.
-    @Test func unknownTransportReadsAsAuto() {
-        defer { cleanUp() }
-        defaults.set("tailcat", forKey: "settings.transport")
-        #expect(AppSettings(defaults: defaults, secrets: secrets).transport == .auto)
     }
 
     /// Every bool on at once cannot catch two settings saved under each other's key.
@@ -111,7 +101,6 @@ import Testing
         s.relayAddress = "relay.example:9009"
         s.autoAccept = true
         s.whenFileExists = .replace
-        s.transport = .relay
         s.storedServer = "https://store.example"
         s.resetToDefaults()
         s.zipFolder = true
@@ -122,8 +111,6 @@ import Testing
         #expect(!r.zipFolder)
         #expect(r.whenFileExists == .keepBoth)
         #expect(s.whenFileExists == .keepBoth, "reset restores Keep Both")
-        #expect(r.transport == .auto)
-        #expect(s.transport == .auto, "reset restores Automatic")
         #expect(r.storedServer == "https://getcroc.com")
         #expect(s.storedServer == "https://getcroc.com", "reset restores getcroc.com")
         #expect(defaults.persistentDomain(forName: suiteName)?.isEmpty ?? true)

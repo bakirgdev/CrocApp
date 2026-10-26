@@ -53,7 +53,6 @@
 | PAKE: a strong key from a short code | `lock.shield.fill` |
 | Code phrase (concept) | `key.fill` |
 | Relay | `antenna.radiowaves.left.and.right` |
-| Direct path | `point.3.connected.trianglepath.dotted` |
 | Works anywhere | `globe` |
 | History | `clock.arrow.circlepath` |
 | Transfer completed (history status) | `checkmark.circle.fill` |

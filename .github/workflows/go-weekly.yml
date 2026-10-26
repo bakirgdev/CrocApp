@@ -20,6 +20,10 @@ jobs:
 
     timeout-minutes: 15
 
+    # The engine's build tag, as in reusable-go.yml.
+    env:
+      GOFLAGS: -tags=croc_no_tailcat
+
     defaults:
       run:
         working-directory: crocmobile

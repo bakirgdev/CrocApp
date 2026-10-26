@@ -2,15 +2,16 @@
 # Interop verification: crocmobile (via croctest) <-> croc CLI v11.
 # Covers: file/folder/text both directions, decline, cancel both directions,
 # forced relay (LAN disabled), LAN-only, a croc v10 peer both directions, a
-# receive onto existing files with Keep Both and Replace, a 130 MiB send
-# in each transport mode, stored transfers against a local store server,
+# receive onto existing files with Keep Both and Replace, a 130 MiB transfer
+# in each direction that must not use Tailcat, stored transfers against a
+# local store server,
 # the Advanced options that change the wire (sender IP,
 # multicast group, proxies), and every public pool relay (custom,
 # wrapper-generated and CLI-generated codes).
 # Exits non-zero on first failure.
 #
 # RELAY=host:port runs every transfer through that relay instead of the public
-# pool, and skips the transport, proxy and pool scenarios (CI runs
+# pool, and skips the proxy and pool scenarios (CI runs
 # this against a local `croc relay`).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -49,7 +50,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-( cd crocmobile && go build -o "$CT" ./cmd/croctest )
+( cd crocmobile && go build -tags croc_no_tailcat -o "$CT" ./cmd/croctest )
 
 mkdir -p "$TMP/src/sub" "$TMP/dst"
 echo "small file" > "$TMP/src/a.txt"
@@ -509,52 +510,68 @@ else
   echo "SKIP: multicast cases (15): this host has no multicast interface to join"
 fi
 
-if [ -n "${RELAY:-}" ]; then
-  echo "SKIP: proxy cases (15): the relay at $RELAY is a local address, which croc's dialer reaches without the proxy"
-  echo "ALL INTEROP CHECKS PASSED (relay $RELAY; transport, proxy and public pool scenarios skipped)"
-  exit 0
-fi
-
-# 13. transport: a send over croc's 128 MiB Tailcat threshold in each
-# mode, both directions. Under auto the sender offers Tailcat and races it
-# against the relay; either may carry the data. Under relay no Tailcat offer is
-# made. The --debug CLI logs show the offer ("tailcat-offer") on either side.
-# Public infrastructure only (Tailcat bootstraps from tailcat.dev), so not in
-# RELAY mode.
+# 13. Large files without Tailcat. crocmobile is built with croc's
+# croc_no_tailcat tag, so a transfer of 128 MiB or more, which the stock CLI
+# would race over Tailcat against a Tailcat-capable peer, goes over the relay
+# here. The CLI runs with its default --transport auto. Its --debug log tells
+# the two cases apart (observed with croc v11.5.5):
+#  - a Tailcat-capable peer: "tailcat-offer", "starting Tailcat server", and a
+#    "selected staged croc relay data transport" or "... after Tailcat
+#    fallback" line;
+#  - this build: the plain line "selected croc relay data transport" and none
+#    of those. The CLI still logs "selected=derp" for its size decision and
+#    "Tailcat bootstrap region prepared": neither means Tailcat carried data.
+# The CLI may try to reach tailcat.dev either way; the transfer completes
+# without it, so this scenario runs under RELAY too.
+# A CLI sender that requires Tailcat (--transport derp) cannot send to this
+# build. Only a sender has --transport, so the wrapper is the receiver: it
+# fails with croc's own message, promptly, and does not hang.
 SCENARIO=13
 head -c 136314880 /dev/urandom > "$TMP/huge.bin"
-transport_send() {                                  # transport_send MODE
-  local L="$TMP/13s-$1" C
-  C=$(code "ts$1")
-  mkdir -p "$L"
-  timeout 300 "$CT" send -transport "$1" -code "$C" "$TMP/huge.bin" > "$L.log" 2>&1 &
-  sender_ready "$L.log"
-  ( cd "$L" && CROC_SECRET="$C" timeout 280 "$CROC" --debug --yes --overwrite ) > "$L.cli" 2>&1 || true
-  wait
-  cmp -s "$TMP/huge.bin" "$L/huge.bin" || fail "transport $1: wrapper send of 130 MiB"
+no_tailcat() {                                      # no_tailcat LOG LABEL: the CLI log shows a plain relay transfer
+  grep -aq "selected croc relay data transport$" "$1" || fail "$2: CLI log has no plain relay data transport line"
+  ! grep -aEq "tailcat-offer|starting Tailcat server|Tailcat fallback|selected staged" "$1" || fail "$2: CLI log shows a Tailcat offer"
 }
-transport_receive() {                               # transport_receive MODE
-  local L="$TMP/13r-$1" C
-  C=$(code "tr$1")
-  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" --debug --disable-clipboard --ignore-stdin send --transport "$1" huge.bin ) > "$L.cli" 2>&1 &
-  sleep 3
-  timeout 280 "$CT" receive -out "$L" -answer y "$C" > "$L.log" 2>&1 || true
-  wait
-  cmp -s "$TMP/huge.bin" "$L/huge.bin" || fail "transport $1: wrapper receive of 130 MiB"
-}
-transport_send auto
-grep -q "tailcat-offer" "$TMP/13s-auto.cli" || fail "transport auto: wrapper sent no Tailcat offer"
-pass "transport auto: wrapper sends 130 MiB, Tailcat offered"
-transport_send relay
-! grep -q "tailcat-offer" "$TMP/13s-relay.cli" || fail "transport relay: wrapper offered Tailcat"
-pass "transport relay: wrapper sends 130 MiB, no Tailcat offer"
-transport_receive auto
-grep -q "selected=derp" "$TMP/13r-auto.cli" || fail "transport auto: CLI did not choose Tailcat for 130 MiB"
-pass "transport auto: wrapper receives 130 MiB, Tailcat offered"
-transport_receive relay
-! grep -q "tailcat-offer" "$TMP/13r-relay.cli" || fail "transport relay: CLI offered Tailcat"
-pass "transport relay: wrapper receives 130 MiB, no Tailcat offer"
-rm -f "$TMP/huge.bin" "$TMP"/13[sr]-*/huge.bin
+L="$TMP/13s"
+C=$(code ls)
+mkdir -p "$L"
+timeout 300 "$CT" send ${CT_R:+"$CT_R"} -code "$C" "$TMP/huge.bin" > "$L.log" 2>&1 &
+sender_ready "$L.log"
+( cd "$L" && CROC_SECRET="$C" timeout 280 "$CROC" ${CLI_R:+"$CLI_R"} --debug --yes --overwrite ) > "$L.cli" 2>&1 || true
+wait
+cmp -s "$TMP/huge.bin" "$L/huge.bin" || fail "large send: wrapper send of 130 MiB, CLI receive"
+no_tailcat "$L.cli" "large send"
+pass "large files: wrapper sends 130 MiB, CLI receives it over the relay, no Tailcat offer"
+
+L="$TMP/13r"
+C=$(code lr)
+( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send huge.bin ) > "$L.cli" 2>&1 &
+sleep 3
+timeout 280 "$CT" receive ${CT_R:+"$CT_R"} -out "$L" -answer y "$C" > "$L.log" 2>&1 || true
+wait
+cmp -s "$TMP/huge.bin" "$L/huge.bin" || fail "large receive: wrapper receive of 130 MiB from the CLI"
+no_tailcat "$L.cli" "large receive"
+pass "large files: wrapper receives 130 MiB from the CLI over the relay, no Tailcat offer"
+rm -f "$TMP/huge.bin" "$TMP"/13[sr]/huge.bin
+
+L="$TMP/13d"
+C=$(code ld)
+mkdir -p "$L"
+( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send --transport derp a.txt ) > "$L.cli" 2>&1 &
+sleep 3
+started=$SECONDS
+timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$L" -answer y "$C" > "$L.log" 2>&1 && fail "derp sender: wrapper receive exited 0"
+[ $((SECONDS - started)) -lt 30 ] || fail "derp sender: wrapper receive took $((SECONDS - started)) s to fail (a hang)"
+wait
+grep -q 'EVENT error {"code":"other","message":"peer requires Tailcat, but Tailcat is disabled or unavailable locally"}' "$L.log" || fail "derp sender: wrapper receive did not report croc's peer-requires-Tailcat error"
+[ ! -e "$L/a.txt" ] || fail "derp sender: a file was received"
+pass "derp sender: CLI --transport derp to the wrapper fails with croc's peer-requires-Tailcat error, no hang"
+
+if [ -n "${RELAY:-}" ]; then
+  echo "SKIP: proxy cases (15): the relay at $RELAY is a local address, which croc's dialer reaches without the proxy"
+  echo "ALL INTEROP CHECKS PASSED (relay $RELAY; proxy and public pool scenarios skipped)"
+  exit 0
+fi
 
 # 15 proxies. croc's dialer bypasses proxies for local
 # addresses, so these need the public pool: the transfer goes through a croctest

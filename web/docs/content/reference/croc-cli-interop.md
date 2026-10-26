@@ -43,15 +43,15 @@ croc --relay myserver:9009 send file.txt
 
 In CrocApp, set the same address under **Relay** in [Settings](../guide/settings.md#relay).
 
-## Connection and `--transport`
+## Large files and `--transport`
 
-The **Connection** setting maps to croc's `--transport` flag: **Automatic** is `--transport auto` and **Relay Only** is `--transport relay`. croc applies the sender's choice and a receiver follows it, so the setting only matters when CrocApp sends. When CrocApp receives, it follows whatever the croc CLI sender used, `--transport derp` included. The app does not offer `derp`, which croc's own command line does.
+CrocApp has no `--transport` setting. It carries every transfer over croc's relay or the local network, and it never uses Tailcat, the direct connection that croc's command line can try for sends of 128 MiB or more. A command-line sender on the default `--transport auto` sends a large file to CrocApp, or receives one from it, over the relay as usual.
+
+`--transport derp` is the exception. It makes the sender use Tailcat only, which CrocApp does not have. Receiving from a sender that uses it fails with "peer requires Tailcat, but Tailcat is disabled or unavailable locally". Send again without that flag, or with `--transport relay`.
 
 ```bash
 croc send --transport relay file.txt
 ```
-
-For a send under 128 MiB, the two settings behave the same. See [Settings](../guide/settings.md#connection) for what **Automatic** does above that size.
 
 ## Settings and croc flags
 
@@ -63,7 +63,6 @@ For a send under 128 MiB, the two settings behave the same. See [Settings](../gu
 | Receive folder | `--out` |
 | **Keep Both** and **Replace** | `--rename` and `--overwrite` |
 | Relay **Address**, **IPv6 Address**, **Password** | `--relay`, `--relay6`, `--pass` |
-| **Connection**: **Automatic** or **Relay Only** | `--transport auto\|relay` |
 | **Local Network Only** | `--local` |
 | **Disable Compression** | `--no-compress` |
 | **Zip Folders Before Sending** | `--zip` |

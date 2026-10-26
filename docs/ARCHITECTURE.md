@@ -100,7 +100,7 @@ Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols ge
 
 ### `Croc.xcframework`
 
-- Built by `scripts/build-xcframework.sh` with `gomobile bind -target ios,iossimulator,macos/arm64`. One output serves both platforms.
+- Built by `scripts/build-xcframework.sh` with `gomobile bind -target ios,iossimulator,macos/arm64 -tags croc_no_tailcat`, croc's relay-only build. One output serves both platforms.
 - Gitignored. See "Build-time architecture" below.
 
 ### `CrocKit/`: Swift package
@@ -120,7 +120,7 @@ Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols ge
   - Turns Go-thread callbacks into `AsyncStream<TransferEvent>.Continuation.yield`.
   - Decodes the JSON payloads. A malformed file list, receipt or summary becomes `.failed` with code `other`, and the stream finishes.
   - When the stream finishes, `CrocEngine`'s `onTermination` cancels that transfer by ID, so the consumer needs no cancel call.
-- `Models.swift`: `EngineOptions`, `FilePolicy`, `Transport`, `ProxySettings`, `FileList`, `TransferProgress`, `Summary`, `StoredReceipt`, `EngineFailure`.
+- `Models.swift`: `EngineOptions`, `FilePolicy`, `ProxySettings`, `FileList`, `TransferProgress`, `Summary`, `StoredReceipt`, `EngineFailure`.
   - `TransferEvent` cases: `codeReady`, `connected`, `fileList`, `progress`, `text`, `stored`, `done`, `failed`.
   - `EngineFailure.Code` mirrors the Go codes. An unknown code or a malformed payload decodes as `.other` with the raw text.
 - `crockit-verify`: a macOS-only executable (`send`, `receive` and `twice` subcommands) that tests interop with the croc command. It is not shipped.
@@ -148,7 +148,7 @@ Folder: `app/CrocApp/Views/`.
 - Others: `HistoryView`, `HowItWorksView`, `OnboardingView`, `StagedFilesSheet`, `QRCodeView`, `QRScannerView`, `TrustBadge`.
 - `Models/TransferLink.swift` is the one parser for every way a link or code arrives: a bare code, a stored-transfer link, `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>`, `https://getcroc.com/?code=` and `croc://<code>`.
 - `AppRouter.open(_:)` passes the parsed link to Receive, which fills in the code and never connects by itself.
-- Views may import `CrocKit` for its value types (`Summary`, `FilePolicy`, `Transport`). They never import `Croc` and never call `CrocEngine`. They read `TransferController.phase` and call its intent methods.
+- Views may import `CrocKit` for its value types (`Summary`, `FilePolicy`). They never import `Croc` and never call `CrocEngine`. They read `TransferController.phase` and call its intent methods.
 
 ## Event and control flow
 

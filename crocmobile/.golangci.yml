@@ -5,6 +5,9 @@ version: "2"
 
 run:
   timeout: 5m
+  # The engine ships without Tailcat; lint what ships (scripts/build-xcframework.sh).
+  build-tags:
+    - croc_no_tailcat
 
 linters:
   default: standard

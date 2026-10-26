@@ -30,15 +30,6 @@ To use your own relay, run `croc relay` on a machine you control and enter its a
 
 The address is checked as you type. It must use `https` (plain `http` is allowed only for `localhost`), and it can have nothing after the host name: no path, query or fragment. The server must speak croc's stored-transfer protocol.
 
-## Connection
-
-**Connection** chooses how a send carries large files.
-
-- **Automatic** (the default): a send of 128 MiB or more also tries a direct connection between the two devices, set up through `tailcat.dev`. That path uses its own relays (`*.ipn.dev`) when the devices cannot reach each other. It starts next to croc's relay, and whichever connects first carries the transfer. Smaller sends never start it.
-- **Relay Only**: a send never contacts `tailcat.dev` or the `*.ipn.dev` servers.
-
-The data is end-to-end encrypted on every path. Only the sender's choice applies. A receive follows whatever the sender uses, so the picker has no effect when you receive, and a receive from a sender on Automatic can use those servers. The picker is disabled while **Local Network Only** is on.
-
 ## Transfer
 
 - **Local Network Only**: transfers never use a relay on the internet. If a direct local connection cannot be made, the transfer fails instead of falling back.
@@ -87,7 +78,7 @@ Waiting, confirming and transferring screens, and the home screen, show **End-to
 - "Via the public croc relay, which sees only encrypted data"
 - "Straight to the sender, no relay in between" (a receive with **Sender IP** set)
 
-The badge reads your settings. It does not report which path carried the data. A transfer that croc moved over the local network, or over the direct connection under **Automatic**, can still say "Via the public croc relay". The statement that the server sees only encrypted data holds on every path.
+The badge reads your settings. It does not report which path carried the data. A transfer that croc moved over the local network can still say "Via the public croc relay". The statement that the server sees only encrypted data holds on every path.
 
 ## About
 

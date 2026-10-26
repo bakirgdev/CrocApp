@@ -132,7 +132,6 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 | Exclude patterns, respect `.gitignore` | `--exclude --git` |
 | Auto-accept transfers, off by default | `--yes` |
 | Require confirmation on both sides | `--ask` |
-| Connection: Automatic or Relay Only | `--transport auto\|relay` |
 
 </details>
 

@@ -161,27 +161,6 @@
             </article>
 
             <article class="card">
-              <h3 class="t-headline card__title">Tailcat and DERP servers</h3>
-              <p class="t-callout card__body">
-                <strong>When:</strong> the <strong>Connection</strong> setting is <strong>Automatic</strong> by default. With it, a
-                send of 128 MiB or more also tries a direct device-to-device connection set up
-                through <code class="t-code">tailcat.dev</code>, with relays under
-                <code class="t-code">ipn.dev</code> when the devices cannot reach each other
-                directly. Whichever path connects first carries the transfer. A receive follows the
-                sender's choice, so receiving a large file from a sender on <strong>Automatic</strong>, or from the
-                croc command line with its default, can use them too. Choose <strong>Relay Only</strong> in
-                Settings and your sends never contact these servers. Smaller transfers do not
-                contact them at all.
-              </p>
-              <p class="t-callout card__body">
-                <strong>What they can see:</strong> the IP addresses of both devices, when they
-                connect, and the size and timing of encrypted packets. Transfers are end-to-end
-                encrypted on this path too.
-                These servers are not run by CrocApp.
-              </p>
-            </article>
-
-            <article class="card">
               <h3 class="t-headline card__title">github.com, update checks (Mac direct build only)</h3>
               <p class="t-callout card__body">
                 <strong>When:</strong> the Mac disk image downloaded from GitHub includes the

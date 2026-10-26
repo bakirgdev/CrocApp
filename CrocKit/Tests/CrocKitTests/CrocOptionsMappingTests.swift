@@ -138,7 +138,6 @@ import Testing
         #expect(mapped.peerIP == engine.peerIP)
         #expect(mapped.socks5Proxy == engine.socks5Proxy)
         #expect(mapped.httpProxy == engine.httpProxy)
-        #expect(mapped.transport == engine.transport || engine.transport.isEmpty)
     }
 
     @Test func defaultsAreCrocs() {

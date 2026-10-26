@@ -36,7 +36,7 @@ A line under the options names the link server. While it runs, the screen reads 
 
 The **Send as Link** switch is disabled, with a line saying why, when text is selected or a folder is staged. Switch to **Files**, remove the folders, or send them with a code. The custom code field is hidden while the switch is on, since there is no code.
 
-These [Settings](settings.md) do not apply to a link send: relay, **Connection** and **Local Network Only**. The proxies under **Advanced** do apply.
+These [Settings](settings.md) do not apply to a link send: relay and **Local Network Only**. The proxies under **Advanced** do apply.
 
 ## The result screen
 

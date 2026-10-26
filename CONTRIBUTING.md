@@ -81,7 +81,8 @@ Match the surrounding file. When in doubt, the formatter decides.
 scripts/format-swift.sh            # rewrite in place, then lint
 scripts/format-swift.sh --lint     # lint only, exactly what CI runs
 
-# Go
+# Go (from crocmobile/; the engine ships without Tailcat, see docs/BUILDING.md)
+export GOFLAGS=-tags=croc_no_tailcat
 golangci-lint run ./...
 govulncheck ./...
 ```
@@ -111,7 +112,7 @@ A build that compiles proves nothing about a transfer. CI runs formatting, lint,
 | What you changed | What to run |
 |---|---|
 | Swift under `app/` or `CrocKit/` | `scripts/format-swift.sh --lint`, the unit tests, a macOS and an iOS Simulator build |
-| Anything in `crocmobile/` | `go test -race ./...`, `golangci-lint run ./...`, then `scripts/build-xcframework.sh` |
+| Anything in `crocmobile/` | `go test -race ./...` and `golangci-lint run ./...` with `GOFLAGS=-tags=croc_no_tailcat`, then `scripts/build-xcframework.sh` |
 | `crocmobile/session.go`, `CrocKit/Sources/` or `TransferController` | the matching transfer harness, every time |
 | Anything visual | `scripts/verify-design.sh` |
 | Markdown | `scripts/verify-docs.sh` |

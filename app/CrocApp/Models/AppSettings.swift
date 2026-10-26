@@ -46,10 +46,6 @@ final class AppSettings {
     var whenFileExists: FilePolicy {
         didSet { save(whenFileExists.rawValue, "settings.whenFileExists") }
     }
-    /// Send only; a receive follows the sender.
-    var transport: Transport {
-        didSet { save(transport.rawValue, "settings.transport") }
-    }
     /// Where "Send as link" uploads. The engine refuses `http` except
     /// on loopback.
     var storedServer: String { didSet { save(storedServer, "settings.storedServer") } }
@@ -116,8 +112,6 @@ final class AppSettings {
         whenFileExists =
             d.string(forKey: "settings.whenFileExists").flatMap(FilePolicy.init(rawValue:))
             ?? .keepBoth
-        transport =
-            d.string(forKey: "settings.transport").flatMap(Transport.init(rawValue:)) ?? .auto
         storedServer = d.string(forKey: "settings.storedServer") ?? Self.defaultStoredServer
         showInMenuBar = d.object(forKey: "settings.showInMenuBar") as? Bool ?? true
         let croc = Self.advancedDefaults
@@ -166,7 +160,6 @@ final class AppSettings {
         autoAccept = false
         bothSidesConfirm = false
         whenFileExists = .keepBoth
-        transport = .auto
         storedServer = Self.defaultStoredServer
         showInMenuBar = true
         resetAdvancedToDefaults()
