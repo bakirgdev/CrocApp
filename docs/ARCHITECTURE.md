@@ -273,7 +273,7 @@ Four files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-In
 
 - macOS only, arm64. Bundle ID `com.bakirgdev.CrocApp.direct`. Product name `CrocApp.app`, the same as the App Store target, so two schemes sharing one DerivedData replace each other's build.
 - Builds `app/CrocApp/` plus `app/CrocAppDirect/` with the Swift condition `DIRECT`. Only this target compiles `app/CrocAppDirect/`.
-- Only this target links Sparkle 2.10.0 (SwiftPM). `app/CrocAppDirect/AppUpdater.swift` owns an `SPUStandardUpdaterController` and adds **Check for Updates…** to the app menu.
+- Only this target links Sparkle 2.10.1 (SwiftPM). `app/CrocAppDirect/AppUpdater.swift` owns an `SPUStandardUpdaterController` and adds **Check for Updates…** to the app menu.
 - `CrocApp-Direct-Info.plist` sets `SUFeedURL` and `SUPublicEDKey` from the `SPARKLE_FEED_URL` and `SPARKLE_PUBLIC_ED_KEY` build settings, plus `SUEnableInstallerLauncherService` (on) and `SUEnableSystemProfiling` (off).
 - Its shared scheme has an empty test action; `CrocApp` is the scheme with tests.
 - How it ships: `docs/RELEASING.md`, "Direct download (Developer ID)".

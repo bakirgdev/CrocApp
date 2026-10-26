@@ -51,7 +51,7 @@ Apple-side rules the app has to live inside. Each item says how it was checked:
 ### Build tooling
 
 - gomobile breaks now and then on new Xcode major versions. Budget time for it.
-- Verified in this repo: Xcode 27.0 and 27.1 with Go 1.27.2 build cleanly. The macOS slice of the xcframework must be arm64 only (golang/go#73119). The device framework layout problem (golang/go#66500) is fixed in the x/mobile version pinned here, and App Store Connect accepted the upload (`../RELEASING.md`, "App Store builds").
+- Verified in this repo: Xcode 27.1 with Go 1.27.3 builds cleanly. The macOS slice of the xcframework must be arm64 only (golang/go#73119). The device framework layout problem (golang/go#66500) is fixed in the x/mobile version pinned here, and App Store Connect accepted the upload (`../RELEASING.md`, "App Store builds").
 
 ### macOS app behavior (verified in this repo)
 

@@ -20,6 +20,7 @@ extra sections where a release needs them, and the project follows
 - On iPhone, a light haptic marks a finished, failed or incoming transfer and a copied or scanned code. Cancelling or declining yourself stays silent.
 - Settings labels use title case, and "Auto-accept incoming files" is now "Auto-Accept Transfers".
 - The transfer engine is croc v11.5.5. Transfers stay compatible with croc 11 on the other device.
+- The update checker in the direct-download Mac build is Sparkle 2.10.1. It fixes an update installing too early when the app sits at a path in NFC Unicode form.
 
 ### Fixed
 

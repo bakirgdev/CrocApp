@@ -60,12 +60,14 @@ The script builds gomobile and gobind from the `tool` block into `.tools/` (prep
 gomobile bind \
   -target ios,iossimulator,macos/arm64 \
   -iosversion 26.0 -macosversion 26.0 \
+  -trimpath -ldflags "-s -w" \
   -o "../CrocKit/Croc.xcframework" \
   .
 ```
 
 - **Targets**: `ios`, `iossimulator`, `macos/arm64`. There is no `macos/amd64` slice.
 - **`-iosversion` and `-macosversion`**: both `26.0`, matching the deployment target everywhere else.
+- **`-trimpath` and `-ldflags "-s -w"`**: both are build flags that `gomobile bind` shares with `go build` (`gomobile help bind`). `-trimpath` removes build-machine paths from the binary, and `-s -w` omits the Go symbol table and DWARF. The static archive in each slice halves (the macOS slice goes from 56.0 MB to 27.7 MB), and an unsigned Release `xcodebuild build` of the app shrinks by about 1.6 MB, because that build does not strip. An `xcodebuild archive` strips symbols itself, so a shipped app barely changes: the unsigned macOS archive executable went from 22.07 MB to 22.00 MB (measured, Xcode 27.1, Go 1.27.3, croc v11.5.5). Size comparisons therefore belong on an archive, not on a `build`.
 - **Output**: `CrocKit/Croc.xcframework`, removed and rebuilt on every run.
 - **Why arm64 only on macOS**: [golang/go#73119](https://github.com/golang/go/issues/73119), gomobile cannot produce a multi-arch macOS bind. The xcframework has no `x86_64` slice, so Intel Macs that can otherwise run macOS 26 (the 2019 MacBook Pro 16", 2020 iMac, 2019 Mac Pro) cannot run CrocApp. The pbxproj pins `ARCHS[sdk=macosx*] = arm64` for this reason. Removing that pin does not restore Intel support, it breaks the link.
 - **iOS device archives**: [golang/go#66500](https://github.com/golang/go/issues/66500) is a device-slice layout issue that affects App Store archives. x/mobile fixes it (CL 574055 and 575115), and the pinned x/mobile includes the fix. The framework `Info.plist` keeps gomobile's `MinimumOSVersion = 100.0` (an SwiftPM workaround in x/mobile) and App Store Connect accepts it, so the script does not patch it.
@@ -218,6 +220,7 @@ Any change to `crocmobile/session.go`, `CrocKit/Sources/` or `TransferController
 - **CI treats compiler warnings as errors.** `ci.yml` passes `SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES` to its `xcodebuild` calls and `-Xswiftc -warnings-as-errors` to `swift test`, so a warning fails the PR. The project files leave both off, so a local build with a warning still runs. Pass the same flags before pushing.
 - **The deployment target is `26.0` everywhere, never a minor.** `IPHONEOS_DEPLOYMENT_TARGET` and `MACOSX_DEPLOYMENT_TARGET` in the pbxproj, `platforms: [.iOS("26.0"), .macOS("26.0")]` in `CrocKit/Package.swift`, and `-iosversion 26.0 -macosversion 26.0` in `scripts/build-xcframework.sh`. All four move together.
 - **macOS is arm64 only.** `"ARCHS[sdk=macosx*]" = arm64` in the pbxproj. The xcframework has no `x86_64` macOS slice (golang/go#73119), so the pin makes an Intel archive fail the link cleanly instead of attempting a link that cannot succeed.
+- **`DEAD_CODE_STRIPPING = YES` on the project-level Release configuration.** Xcode resolves it to `NO` for macOS when nothing sets it, and the iOS default is already `YES`, so the pbxproj sets it for every target. The saving on macOS is small: about 5 KB for `CrocApp` and 21 KB for `CrocApp Direct` (measured). The likely reason (inferred) is that the Go engine arrives as one large archive that the linker mostly keeps.
 - **One version source, `app/Config/Version.xcconfig`.** It holds `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` and is the base configuration of the project-level Debug and Release configurations, so every target inherits it. Never set either in a target's build settings. `RELEASING.md`, "Each release", covers when to bump them.
 - **The Go toolchain pin is `>= 1.27.3` in `crocmobile/go.mod`.** After bumping it, rerun `scripts/build-xcframework.sh` to confirm the bind still works before trusting anything downstream.
 
