@@ -78,6 +78,17 @@ extension View {
     func buttonVariant(_ variant: ButtonVariant) -> some View {
         buttonStyle(ButtonVariantStyle(variant: variant))
     }
+
+    /// design/accessibility.md → Hit targets: bare text buttons still get a
+    /// 44pt target on iOS. macOS keeps its own control sizing.
+    func hitTarget() -> some View {
+        #if os(iOS)
+        frame(minWidth: ControlHeight.hitTargetMin, minHeight: ControlHeight.hitTargetMin)
+            .contentShape(Rectangle())
+        #else
+        self
+        #endif
+    }
 }
 
 #Preview("Button variants") {
