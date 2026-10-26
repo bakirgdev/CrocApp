@@ -157,14 +157,14 @@ enum AutoVerify {
         #endif
 
         if let i = args.firstIndex(of: "--auto-receive"), i + 1 < args.count {
-            controller.startReceive(code: args[i + 1], into: docs, folderIsScoped: false)
+            controller.start(.receive(code: args[i + 1], folder: docs, folderIsScoped: false))
             await watch(
                 controller, resultURL: resultURL, autoAccept: !hold, sheetPolicy: sheetPolicy)
         } else if let i = args.firstIndex(of: "--auto-send"), i + 1 < args.count,
             let ci = args.firstIndex(of: "--code"), ci + 1 < args.count
         {
-            controller.startSend(
-                urls: [URL(fileURLWithPath: args[i + 1])], customCode: args[ci + 1])
+            controller.start(
+                .sendFiles(urls: [URL(fileURLWithPath: args[i + 1])], code: args[ci + 1]))
             await watch(controller, resultURL: resultURL, autoAccept: false)
         } else if let i = args.firstIndex(of: "--auto-store-send"), i + 1 < args.count {
             if let j = args.firstIndex(of: "--store-server"), j + 1 < args.count {
@@ -176,16 +176,17 @@ enum AutoVerify {
             {
                 downloads = n
             }
-            controller.startStoreSend(
-                urls: [URL(fileURLWithPath: args[i + 1])], downloads: downloads,
-                lifetimeSeconds: 86_400)
+            controller.start(
+                .storedSend(
+                    urls: [URL(fileURLWithPath: args[i + 1])], downloads: downloads,
+                    lifetimeSeconds: 86_400))
             await watchStoreSend(controller, docs: docs, resultURL: resultURL)
         } else if let i = args.firstIndex(of: "--auto-store-receive"), i + 1 < args.count {
             guard let link = URL(string: args[i + 1]) else {
                 try? "error bad link".write(to: resultURL, atomically: true, encoding: .utf8)
                 return
             }
-            controller.startStoreReceive(link: link, into: docs, folderIsScoped: false)
+            controller.start(.storedReceive(link: link, folder: docs, folderIsScoped: false))
             await watch(
                 controller, resultURL: resultURL, autoAccept: !hold, sheetPolicy: sheetPolicy)
         } else if let i = args.firstIndex(of: "--auto-intent"), i + 1 < args.count,
@@ -203,7 +204,7 @@ enum AutoVerify {
             }
             let urls = inbox.staged
             inbox.consumeManifest()
-            controller.startSend(urls: urls, customCode: args[i + 1])
+            controller.start(.sendFiles(urls: urls, code: args[i + 1]))
             await watch(controller, resultURL: resultURL, autoAccept: false)
         }
         #endif
@@ -451,8 +452,8 @@ enum AutoVerify {
                     finish("error revoke: \(error)")
                 }
                 return
-            case .failed(let message):
-                finish("error \(message)")
+            case .failed(let failure):
+                finish("error \(failure.text)")
                 return
             default:
                 break
@@ -460,19 +461,24 @@ enum AutoVerify {
         }
     }
 
-    private static func phaseLabel(_ phase: TransferController.Phase) -> String {
-        switch phase {
+    /// scripts/capture-screenshots.sh matches these labels.
+    private static func phaseLabel(_ controller: TransferController) -> String {
+        switch controller.phase {
         case .idle: "idle"
         case .starting: "starting"
         case .waiting: "waiting"
         case .connecting: "connecting"
         case .confirmSend: "confirmSend"
         case .incoming(_, let conflicts, _): "incoming conflicts=\(conflicts.count)"
-        case .transferring(let p):
-            "transferring percent=\(p.totalSize > 0 ? Int(100 * (p.bytesFinished + p.fileSent) / p.totalSize) : 0)"
+        case .transferring:
+            if let p = controller.progress, p.totalSize > 0 {
+                "transferring percent=\(Int(100 * (p.bytesFinished + p.fileSent) / p.totalSize))"
+            } else {
+                "transferring percent=0"
+            }
         case .done: "done"
         case .stored: "stored"
-        case .failed(let message): "failed \(message)"
+        case .failed(let failure): "failed \(failure.text)"
         }
     }
 
@@ -494,7 +500,7 @@ enum AutoVerify {
         }
         while true {
             try? await Task.sleep(for: .milliseconds(200))
-            let label = phaseLabel(controller.phase)
+            let label = phaseLabel(controller)
             if label != lastLabel {
                 lastLabel = label
                 try? label.write(to: phaseURL, atomically: true, encoding: .utf8)
@@ -517,8 +523,8 @@ enum AutoVerify {
             case .done(let summary, _):
                 finish("ok success=\(summary.success)")
                 return
-            case .failed(let message):
-                finish("error \(message)")
+            case .failed(let failure):
+                finish("error \(failure.text)")
                 return
             default:
                 break

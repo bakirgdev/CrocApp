@@ -108,15 +108,14 @@ struct SendView: View {
 
             Button {
                 if linkSelected {
-                    controller.startStoreSend(
-                        urls: pickedURLs, downloads: linkDownloads,
-                        lifetimeSeconds: linkLifetime.rawValue)
+                    controller.start(
+                        .storedSend(
+                            urls: pickedURLs, downloads: linkDownloads,
+                            lifetimeSeconds: linkLifetime.rawValue))
                 } else if mode == .files {
-                    controller.startSend(
-                        urls: pickedURLs,
-                        customCode: customCodeTrimmed)
+                    controller.start(.sendFiles(urls: pickedURLs, code: customCodeTrimmed))
                 } else {
-                    controller.startSendText(text, customCode: customCodeTrimmed)
+                    controller.start(.sendText(text: text, code: customCodeTrimmed))
                 }
             } label: {
                 Label(
@@ -193,7 +192,7 @@ struct SendView: View {
 
     private var serverHost: String {
         URL(string: settings.storedServer.trimmingCharacters(in: .whitespacesAndNewlines))
-            .map(TransferController.codeHint(storedLink:)) ?? settings.storedServer
+            .map(CodeHint.storedLink) ?? settings.storedServer
     }
 
     private var canStart: Bool {

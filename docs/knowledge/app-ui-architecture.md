@@ -27,25 +27,41 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` (on in-memory sto
 
 `@MainActor @Observable`. It is the only code that uses `CrocEngine`. Many other files `import CrocKit` for its types, but only the controller starts and answers transfers.
 
-It reaches the engine through the `TransferEngine` protocol. `init(settings:vault:engine:)` defaults to `CrocEngine()`, so the app passes none. `app/CrocAppTests/TransferControllerTests.swift` passes `FakeTransferEngine`, which emits events one at a time and records every call, and checks the rules below against it. A change to one of these rules needs that test updated in the same change.
+It reaches the engine through the `TransferEngine` protocol. `init(settings:vault:engine:)` defaults to `CrocEngine()`, so the app passes none. `app/CrocAppTests/TransferControllerTests.swift` passes `FakeTransferEngine`, which emits events one at a time and records every call, and checks the rules below against it. `TransferFailureTests` and `EngineStartTests` check the failure mapping and the engine options with no engine at all. A change to one of these rules needs its test updated in the same change.
 
-`Phase`: `idle` → `starting` → `waiting(code)` / `connecting` → `confirmSend` | `incoming(FileList, conflicts, blocked)` → `transferring(TransferProgress)` → `done(Summary, receivedText?)` | `stored(StoredReceipt)` | `failed(String)`. Views switch on it. `reset()` has no guard, but the UI offers it only from a terminal phase.
+`Phase`: `idle` → `starting` → `waiting(code)` / `connecting` → `confirmSend` | `incoming(FileList, conflicts, blocked)` → `transferring` → `done(Summary, receivedText?)` | `stored(StoredReceipt)` | `failed(TransferFailure)`. Views switch on it. `reset()` has no guard, but the UI offers it only from a terminal phase.
+
+The controller is the one `@Observable` the views use. Its pure pieces live in their own files under `Models/`:
+
+| File | Holds |
+| --- | --- |
+| `TransferRequest.swift` | what a transfer starts from: a file send, a text send, a receive, a stored send or a stored receive |
+| `EngineStart.swift` | the engine call and its options, built from a request and `AppSettings` |
+| `TransferFailure.swift` | every failure's title, detail and remedy, and the precedence that picks one |
+| `HistoryDraft.swift` | the history record of the transfer in flight |
+| `CodeHint.swift`, `SecurityScopes.swift`, `TransferSpeed.swift` | the code hint, the security-scope bookkeeping, the speed smoothing |
+
+- **One start.** `start(_ request: TransferRequest)` starts every kind of transfer. While one is active it does nothing and returns false. It keeps the request, and `retry()` runs it again, only from a failure whose remedy is `.tryAgain`. `retry()` resets first, so the start is not refused as busy.
+- **Progress is not part of the phase.** `.transferring` has no payload. Each accepted tick sets `progress` and `speedBytesPerSec`, and only the first one sets the phase. `Phase` is `Equatable`, so whatever reads only the phase (the haptics in `ContentView`, `HomeView`, `AppRouter.isBusy`) does not redraw at the tick rate.
 
 ### Event handling
 
 - **`.progress` ticks (about 10 Hz) keep arriving while the accept prompt is unanswered, and must not clobber `.incoming`.** If they do, croc blocks in `GetInput` forever. The same guard protects `.confirmSend`. Ticks with `step == "waiting"` are ignored.
-- **Failure copy is picked by `EngineFailure.code`, never by text.** `friendlyMessage(for:cancelRequested:declineRequested:stored:)` checks `cancelRequested` ("Transfer cancelled.") and `declineRequested` ("You declined the transfer.") first, then maps the code.
+- **A failure is picked by `EngineFailure.code`, never by text.** `TransferFailure(_:situation:)` checks the user's own cancel ("Transfer cancelled") and decline ("You declined the transfer") first, then maps the code. Those two set `endedByUser` and have no detail, because a cancel or decline the user made is not a failure (`design/content.md`, "Errors").
 - It never shows `failure.message`: croc's wording changes per release, and a recovered panic carries a stack trace.
-- A peer's decline arrives as `.declined` ("The other device declined or cancelled the transfer."). A peer's cancel looks the same. This side's own decline, or a prompt that hits EOF, arrives as `.refused`.
-- **No retry on `transferActive`.** The engine is free once a terminal event arrives (`crocmobile-bridge.md`, "Engine behavior invariants"), so a start after `.done` or `.failed` succeeds. `transferActive` means a transfer really runs, and it gets its own copy.
+- Each failure has a `remedy`: `.tryAgain`, `.openSettings(SettingsPlace)`, or nil when retrying would not help (`design/components.md`, "StatusBlock"). `TransferFailureTests` pins the remedy of every code.
+- When payload bytes moved, the resume hint replaces the detail. A stored transfer, which cannot resume, and the user's own cancel or decline never get it.
+- A peer's decline arrives as `.declined` ("The other device declined or cancelled"). A peer's cancel looks the same. This side's own decline, or a prompt that hits EOF, arrives as `.refused`.
+- **No automatic retry on `transferActive`.** The engine is free once a terminal event arrives (`crocmobile-bridge.md`, "Engine behavior invariants"), so a start after `.done` or `.failed` succeeds. `transferActive` means a transfer really runs. Its failure offers **Try Again**, for once that one ends.
 - `handle(.failed)` does not call the engine. The stream's `onTermination` cancels and clears the transfer by its ID.
 - `TransferController` keeps that `transferID`. Every cancel (user, background expiry, auto-accept block) targets it.
 - A cancel before the ID exists cancels `startTask`, the task awaiting the engine's start, and `CrocEngine` then cancels the start in Go (`CrocmobileCancelStart`). The start runs in its own task because cancelling `streamTask` would also end the event loop. `run()` still cancels by ID once a start returns, in case it finished first.
-- The auto-accept block cancels through `cancelEngineTransfer()`, which leaves `cancelRequested` unset. `endedByUser` stays false, so the failure haptic plays: the user tapped nothing.
-- Copy precedence when several conditions apply, highest first: code `engineStuck`, `blockedAutoAccept`, `backgroundExpired`, the auto-accept-versus-remote-`--ask` case, then the cancel and decline mapping. The `catch` in `run()` repeats the `engineStuck` and `backgroundExpired` steps, so a thrown expiry keeps the resume hint.
-- `engineStuck` outranks a Cancel tap in `friendlyMessage` too. Only a relaunch frees the engine, and every later start fails with the same copy.
-- `joinedEarly` (a receiver that joined before the sender) gets copy that says to start the send first. There is no automatic retry, because the sender has failed by then too (`../known-issues.md`, "Accepted").
-- `blockedAutoAccept` is checked in `.done` as well as `.failed`. The block's cancel is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed`, because the history schema has no blocked case and "Cancelled" reads as a user action.
+- The auto-accept block cancels through `cancelEngineTransfer()`, which leaves `cancelRequested` unset. `TransferFailure.blockedAutoAccept` has `endedByUser` false, so the failure haptic plays: the user tapped nothing.
+- Precedence when several conditions apply, highest first: code `engineStuck`, `blockedAutoAccept`, `backgroundExpired`, the auto-accept-versus-remote-`--ask` case, then the user's cancel and decline, then the code. `TransferFailure.Situation` carries the controller's flags, so `handle(.failed)` and the `catch` in `run()` share the one mapping, and a thrown expiry keeps the resume hint.
+- `engineStuck` outranks a Cancel tap too. Only a relaunch frees the engine, and every later start fails the same way. It offers no **Try Again**, and `endedByUser` is false.
+- `joinedEarly` (a receiver that joined before the sender) says to start the send first. There is no automatic retry and no **Try Again**, because the sender has failed by then too (`../known-issues.md`, "Accepted"), and a generated code changes when it starts again.
+- A reset and a new start (**Try Again**) can come before the last event loop ends. The loop releases its security scopes only while `transferGeneration` still matches, so it cannot release the next transfer's.
+- `blockedAutoAccept` is checked in `.done` as well as `.failed` (`TransferFailure.blockedAutoAccept`). The block's cancel is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed`, because the history schema has no blocked case and "Cancelled" reads as a user action.
 - `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) in `.starting` or `.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips. The clock survives the `.starting` to `.connecting` handoff, because the user sees one stall.
 
 ### Code `refused` under auto-accept is not a peer decline
@@ -58,17 +74,17 @@ Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answ
 
 ### Options, security scope, progress
 
-- `baseOptions()` builds `EngineOptions` from `AppSettings`. Receive also passes `whenFileExists` (`AppSettings.whenFileExists`, key `settings.whenFileExists`, default Keep Both; an unknown stored value reads as Keep Both).
+- `EngineStart(_:settings:disableLocal:)` builds the engine call and its `EngineOptions` or `StoredSendOptions` from the request and `AppSettings`. Receive also passes `whenFileExists` (`AppSettings.whenFileExists`, key `settings.whenFileExists`, default Keep Both; an unknown stored value reads as Keep Both).
 - Receive passes `autoAccept && !bothSidesConfirm`, so confirmation wins. Engine auto-accept closes the prompt pipe, which croc reads as a decline.
-- Intent methods start security scope on send URLs and on the user-picked output folder, track them in `scopedURLs`, and release them at stream end. `startAccessingSecurityScopedResource() == false` is fine for non-scoped drops. Keep the call anyway.
-- Speed is an exponential moving average (0.25 new, 0.75 old) over `bytesFinished + fileSent` deltas, sampled at most every 0.2 s. Overall progress is `(bytesFinished + fileSent) / totalSize`. `fileSent` is per current file.
+- `start(_:)` opens security scope on send URLs and on the user-picked output folder (`SecurityScopes`), and releases it at stream end or on reset. `startAccessingSecurityScopedResource() == false` is fine for non-scoped drops. Keep the call anyway.
+- Speed (`TransferSpeed`) is an exponential moving average (0.25 new, 0.75 old) over `bytesFinished + fileSent` deltas, sampled at most every 0.2 s. Overall progress is `(bytesFinished + fileSent) / totalSize`. `fileSent` is per current file.
 - `activeRelay` is captured at start, for the trust badge.
-- `harnessDisableLocal` is a harness-only flag, not a user setting.
+- `harnessDisableLocal`, `harnessShownRelay` and `harnessShownLinkOrigin` are harness-only, not user settings, and exist only in Debug builds.
 
 ### History capture
 
-- A `PendingRecord` snapshot is set in all start intents. Send: names capped at 20, bookmarks all-or-nothing up to 200, built while the security scope is held. Receive: filled from `.fileList`. `codeHint` is backfilled at `.codeReady` for generated codes.
-- `finishRecord(status:summary:)` runs at `.done`, `.failed` and the startup `catch`. It sets `pendingRecord = nil` first, so a double terminal event is harmless, and returns right after that while **Save Transfer History** is off. It must run while `receivedText` is still set, so `isText` backfills.
+- `start(_:)` sets a `HistoryDraft` from the request. Send: names capped at 20, bookmarks all-or-nothing up to 200, built while the security scope is held. Receive: `offer(_:)` fills it from `.fileList`. `codeHint` is backfilled at `.codeReady` for generated codes.
+- `finishRecord(status:summary:)` runs at `.done`, `.failed` and the startup `catch`. It sets `pendingRecord = nil` first, so a double terminal event is harmless, and returns right after that while **Save Transfer History** is off. It must run while `receivedText` is still set, so `isText` backfills (`HistoryDraft.record(status:summary:receivedText:)`).
 - Status mapping: `done` becomes completed or failed per the summary. `failed` plus `cancelRequested` becomes cancelled. `failed` plus `declineRequested` becomes declined.
 
 ## Settings and trust
@@ -110,12 +126,12 @@ On macOS, `AppCommands` replaces the `.appInfo` group with an **About CrocApp** 
 
 `isStoredTransfer` marks a transfer that goes through a stored-transfer server instead of a croc peer. It reuses `run()`, `handle(_:)`, the `BGContinuedProcessingTask` wrap and the history record.
 
-- `startStoreSend(urls:downloads:lifetimeSeconds:)` uploads to `AppSettings.storedServer` (key `settings.storedServer`, default `https://getcroc.com`).
+- `start(.storedSend(urls:downloads:lifetimeSeconds:))` uploads to `AppSettings.storedServer` (key `settings.storedServer`, default `https://getcroc.com`).
 - The engine sends `.progress`, then `.stored(receipt)` just before `.done`. The controller puts the receipt in the vault, keeps its id and expiry for the record, and turns `.done` into `Phase.stored(receipt)`.
-- `startStoreReceive(link:into:folderIsScoped:)` takes the same path as a live receive: `.incoming` with the conflict scan, then `respond(accept:policy:)`. Auto-accept never applies, and the engine always waits.
+- `start(.storedReceive(link:folder:folderIsScoped:))` takes the same path as a live receive: `.incoming` with the conflict scan, then `respond(accept:policy:)`. Auto-accept never applies, and the engine always waits.
 - `AppSettings.storedServerError(_:)` asks the engine (`EngineSetting.storeServer`): `https`, or `http` on loopback only, and nothing after the host. Blank is refused. `TransferLink.parse` accepts a stored link only over `https`, or `http` on loopback. The engine checks the id and key lengths.
-- A stored transfer cannot resume, so no failure copy offers it. A background expiry reads "Sending was interrupted: iOS stopped it in the background. Try again." for a send, or "Receiving was interrupted: iOS stopped it in the background. Open the link again." for a receive.
-- `friendlyMessage(…, stored: true)` names the link server for `relayUnreachable` and `connectionLost`, which is how a store call reports a network failure.
+- A stored transfer cannot resume, so no failure offers the resume hint. A background expiry reads "Sending was interrupted" or "Receiving was interrupted", and its detail says to keep CrocApp open and try again, or open the link again. Both offer **Try Again**.
+- A failure whose situation `isStored` names the link server for `relayUnreachable` and `connectionLost`, which is how a store call reports a network failure.
 - `revoke(_ record:)` (throws `EngineFailure`) calls `CrocEngine.revokeStored`, which needs no free engine slot. It then drops the receipt and sets `revokedAt`. `canRevoke(_:)` is true for an unexpired, unrevoked record whose receipt this device still holds.
 - `Clipboard.copy(_, thisDeviceOnly:)` sets `UIPasteboard` with `.localOnly` on iOS, so a link (its fragment is the key) stays off Universal Clipboard. The macOS pasteboard has no such option, so **Copy Link** there is an ordinary copy.
 - The Camera app does not open CrocApp for a stored link. The Associated Domains entitlement and the apple-app-site-association file cover only `crocapp.dev/r/*`. Receiving in the app means **Paste** or **Scan QR Code**.
@@ -125,13 +141,13 @@ Views for stored transfers:
 - `SendView`: a **Send as Link** toggle, disabled with a reason line for text or a staged folder. With it on, the screen shows a **Link Lasts** picker (1 hour, 1 day by default, 7 days), a downloads stepper (1 to 100, default 1) and a server note. The custom code field is hidden and the primary button reads **Send as Link**. The screen blocks sending when `storedServerError` reports an invalid server.
 - `TransferStatusView`: `Phase.stored(receipt)` renders `storedView`: "Link ready", expiry and download count, QR, link text, **Copy Link** (`thisDeviceOnly: true`), **Share Link** and **Done**.
 - `DirectionHeader` reads Sending or Receiving for stored transfers too, never Uploading or Downloading. The view shows a caption instead of `TrustBadge` when `isStoredTransfer`.
-- `ReceiveView`: `router.pendingReceive` carrying `.stored(url)` sets `storedLink`. That replaces the code field with a **Receive from Link** row (the server host underneath) and a **Clear** button. **Receive** then calls `startStoreReceive`.
+- `ReceiveView`: `router.pendingReceive` carrying `.stored(url)` sets `storedLink`. That replaces the code field with a **Receive from Link** row (the server host underneath) and a **Clear** button. **Receive** then starts `.storedReceive`.
 - `HistoryView`: stored rows add a "Link expires", "Link expired" or "Link revoked" line. **Revoke Link** (context menu) and **Revoke** (swipe on iOS) sit behind a confirmation dialog, with an alert on failure.
 - `PowerSettingsSections`: a "Send as link" section (the header really reads that way, in sentence case) with the Link Server field, an inline `storedServerError` banner, and a **Reset** button shown only when the value differs from the default.
 
 `Models/StoredTransferVault.swift` keeps receipts (id, origin, upload token, link, expiry) in the Keychain, all in one item (`storedReceipts`, a JSON array), because `SecretStore` cannot list accounts. Expired receipts are purged when the vault opens, which is each launch. A failed Keychain write is logged, never lost silently, and leaves the receipts already stored untouched. The new receipt then lasts until the app quits. Harness runs and previews use `MemorySecretStore`.
 
-History never holds the token or the link. A stored record's `codeHint` is the server host (`codeHint(storedLink:)`).
+History never holds the token or the link. A stored record's `codeHint` is the server host (`CodeHint.storedLink(_:)`).
 
 ### Advanced settings
 
@@ -143,9 +159,9 @@ croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes 
 - Proxies can carry credentials. `ProxySettings`, `EngineOptions` and `StoredSendOptions` describe themselves without the value. The Go engine never quotes a proxy in an error, and nothing logs them. `AppSettingsAdvancedTests` asserts that `UserDefaults` holds no proxy key or value.
 - `Models/AdvancedSettingsValidation.swift` holds the inline checks: `socks5ProxyError`, `httpProxyError`, `multicastAddressError`, `senderIPError`, `throttleError`. The app keeps no rules of its own. Each one asks the engine through CrocKit's `EngineSetting.validate(_:)` (`ValidateSetting` in `crocmobile/network.go`, the check a transfer start runs) and returns only the field's plain-words text on a refusal. `storedServerError` works the same way. Blank means the default, except for the link server. The value tables live in `network_test.go`, and `SettingsValidationTests` checks that each field reaches the engine.
 - One message per field, so the sender IP text names the port range too and the link server text covers the scheme and the host-only rule.
-- `TransferController.baseOptions()` passes every setting. `startReceive` adds `peerIP`. Store send, store receive and revoke pass `ProxySettings`.
+- `EngineStart` passes every setting. A receive adds `peerIP`. Store send, store receive and revoke pass `ProxySettings`.
 - Multicast reaches the engine on macOS only (`#if os(macOS)`). iOS lacks the multicast entitlement, so the control is hidden and the engine keeps its default.
-- The engine reports a bad proxy, upload limit, port, multicast address or sender IP as `invalidSetting` (`validateNetworkOptions` in `crocmobile/network.go`). Copy for `invalidSetting` points at Settings > Advanced.
+- The engine reports a bad proxy, upload limit, port, multicast address or sender IP as `invalidSetting` (`validateNetworkOptions` in `crocmobile/network.go`). The `invalidSetting` failure points at Settings > Advanced, and its **Open Settings** opens Advanced settings.
 - A receive with a sender IP shows `RelayKind.directToSender` in the trust badge (`AppSettings.receiveRelayKind`), never the public pool.
 
 ### Menu bar and Shortcuts
@@ -154,7 +170,7 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 
 **Menu bar (macOS).**
 - `CrocAppApp` declares a `MenuBarExtra` in window style, inserted while `AppSettings.showInMenuBar` is on (`settings.showInMenuBar`, default true). The toggle is **Show in Menu Bar**.
-- `Views/MenuBarQuickSendView.swift` switches on `controller.phase`. `Models/MenuBarQuickSend.swift` holds the actions (`send(urls:)`, `sendClipboardText()`, `chooseFiles()`) and a `notice` string. Sends use a generated code.
+- `Views/MenuBarQuickSendView.swift` switches on `controller.phase`. A failure shows its title and detail in an error `StatusBanner`, with **Done**. `Models/MenuBarQuickSend.swift` holds the actions (`send(urls:)`, `sendClipboardText()`, `chooseFiles()`) and a `notice` string. Sends use a generated code.
 - `chooseFiles()` uses a modal `NSOpenPanel`, because the window-style extra closes when focus moves to a SwiftUI file importer's sheet.
 - `.incoming` shows **Open CrocApp**, because the accept prompt lives in the main window.
 - A drop lands only on the open window, never on the status item.
@@ -167,8 +183,8 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 **Intents.**
 - `Intents/` holds `SendFilesIntent`, `SendTextIntent`, `ReceiveIntent` and `CrocAppShortcuts`. All three intents set `supportedModes: .foreground`, because a transfer outlives the roughly 30 s iOS gives a background action.
 - The intents take `TransferController` (and, for receive, `OutputFolderStore`) with `@Dependency`. `CrocAppApp.init` registers both in `AppDependencyManager.shared` before any window, because an action can run right after launch.
-- `TransferController.wait(for:)` (`TransferIntentSupport.swift`) suspends until a phase transform yields a value. It re-arms `withObservationTracking` on `phase` in the same main-actor turn as the check, so no change slips between them.
-- `awaitCode()` ends at `.waiting`, so the send actions return there and not at the end of the transfer. `awaitReceive()` ends at `.done`. `.failed` becomes `TransferIntentError.failed`.
+- `TransferController.wait(for:)` (`TransferIntentSupport.swift`) checks the controller every 100 ms until a check yields a value, and returns nil once the action is cancelled. It polls instead of observing, so it ends on cancellation at once.
+- `awaitCode()` ends at `.waiting`, so the send actions return there and not at the end of the transfer. `awaitReceive()` ends at `.done`. `.failed` becomes `TransferIntentError.failed` with the failure's title and detail.
 - `ReceivedFileLocator` finds what a receive wrote. croc keeps the sender's modification dates, so it tells new files apart by creation date: `name.ext`, or its Keep Both copy `name (n).ext`, created since the action started. `controller.offeredFileNames` gives the names.
 - `IntentStaging` writes files that arrive without a usable file URL, and a received text as `Received text.txt`, under `ShortcutsFiles` in the temporary directory. A send outlives its action, so nothing is deleted on return. `SendFilesIntent` sweeps the folder at the start of the next send.
 - A shortcut does not answer the accept prompt. Auto-accept applies as usual, and Keep Both or Replace follows the setting.
@@ -190,8 +206,10 @@ The shared views route onto `design/`. A screen picks one of these instead of st
 - `Support/Inflected.swift` resolves `^[3 file](inflect: true)` markup into a plain `String`.
 - **Accept gate.** `.incoming` offers Decline only, with no Cancel. Cancel would answer the sender on the user's behalf, so `TransferStatusView.showsCancel` is false there (`design/components.md`, "AcceptGate"). Leaving the screen answers nothing and stays silent.
 - `HomeView` shows a "Files are waiting for your answer" `StatusBanner` with **Review** (`router.path = [.receive]`) while the phase is `.incoming`, so a live request is never lost.
+- **Failure.** `failedView` shows a `TransferFailure` as a `StatusBlock` title and detail, then its actions stacked, large and full width: **Try Again** (`retry()`) or **Open Settings**, prominent, with **Done** secondary, or **Done** alone (`design/components.md`, "StatusBlock").
+- **Open Settings** goes to the failure's `SettingsPlace`. On macOS it sets `AppRouter.settingsTab`, which `SettingsView`'s tabs follow, and calls `openSettings`. On iOS it pushes `.settings` (and `.advancedSettings`) onto `router.path`, so Back returns to the result. A system permission opens the system Settings, as the local network banner does.
 - **Phase cross-fade.** `TransferStatusView` animates on `phaseKind` (the phase case without its payload), not on progress ticks, so only a real phase change cross-fades. It is `nil` under Reduce Motion (`design/motion.md`, "Choreography").
-- **Haptics.** Phase haptics live in `ContentView`: one `.phoneHaptic(trigger: TransferHaptic(controller.phase, endedByUser: controller.endedByUser))` on the root. `TransferHaptic` has three cases (completed, failed, incoming), and a failure the user asked for stays silent. The fourth event, `.selection` for a copied or scanned code, fires from `CodePhraseDisplay` and `ReceiveView`. iPhone only, and silent while the **Haptics** setting is off (`phoneHaptic` checks both; `design/motion.md`, "Haptics and sound").
+- **Haptics.** Phase haptics live in `ContentView`: one `.phoneHaptic(trigger: TransferHaptic(controller.phase))` on the root. `TransferHaptic` has three cases (completed, failed, incoming), and a failure whose `endedByUser` is set (the user's own Cancel or Decline) stays silent. The fourth event, `.selection` for a copied or scanned code, fires from `CodePhraseDisplay` and `ReceiveView`. iPhone only, and silent while the **Haptics** setting is off (`phoneHaptic` checks both; `design/motion.md`, "Haptics and sound").
 - **Wording.** Status titles are sentence case ("Link ready"). Controls are Title Case (**Send as Link**, **Local Network Only**, **Auto-Accept Transfers**). Section headers, footers and descriptions stay sentence case (`design/content.md`, "Capitalization"). A stored transfer still reads Sending or Receiving, never Uploading or Downloading, and "incoming" is not user-facing (`design/content.md`, "Terminology").
 
 ## History
@@ -214,7 +232,7 @@ Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookma
 ## Support helpers
 
 - `Support/SecurityScopedBookmark.swift`: bookmark create, resolve and resolveIfReachable. `OutputFolderStore` and `HistoryView`'s resend path share it. `resolveIfReachable` starts the security scope before the existence probe, for the reason above.
-- `Support/EngineConstraints.swift`: `minCodeLength = 6`, mirroring `minCodeLength` in `crocmobile/crocmobile.go` (also used in `session.go`). The Go side counts bytes and Swift counts characters, so the UI check is the stricter one for non-ASCII codes. It exists for inline feedback before a doomed `startSend` or `startReceive` call. There is no shared source of truth across the Go/Swift boundary, so keep the two in sync by hand.
+- `Support/EngineConstraints.swift`: `minCodeLength = 6`, mirroring `minCodeLength` in `crocmobile/crocmobile.go` (also used in `session.go`). The Go side counts bytes and Swift counts characters, so the UI check is the stricter one for non-ASCII codes. It exists for inline feedback before a doomed send or receive start. There is no shared source of truth across the Go/Swift boundary, so keep the two in sync by hand.
 - `Support/DesignTokens.swift`: the app's routing layer onto `design/`. It holds `Spacing`, `Radius`, `BorderWidth`, `ControlHeight`, `IconSize`, `LayoutCap`, `Opacity`, `Tracking`, `ComponentMetrics`, `Motion` and `Shadow`, plus `Color` aliases. Where a system semantic already matches a token exactly, the alias routes there instead of duplicating an asset-catalog entry.
 
 ## Conflict scan
@@ -225,7 +243,7 @@ The shape check alone is not enough: a scan can outlive a whole fast transfer an
 
 With conflicts, the sheet offers Decline, Replace and Keep Both (Keep Both prominent) and a banner. Without conflicts, or while the scan runs, it offers a single Accept, which means Keep Both. A zipped folder arrives as one `.zip` name, so the scan sees none of its members (`docs/known-issues.md`, "Accepted").
 
-`startSend`'s bookmark creation (up to 200 `bookmarkData` calls) runs off the main actor the same way and writes back into `pendingRecord`, under the same `transferGeneration` check, so a capture that outlives its send cannot land on the next transfer's record. If a transfer terminates first, `pendingRecord` is already nil and the record carries no bookmarks, so **Send Again** hides instead of breaking. `SecurityScopedBookmark.create` is `nonisolated` for this.
+A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookmarkData` calls) runs off the main actor the same way and writes back into `pendingRecord`, under the same `transferGeneration` check, so a capture that outlives its send cannot land on the next transfer's record. If a transfer terminates first, `pendingRecord` is already nil and the record carries no bookmarks, so **Send Again** hides instead of breaking. `SecurityScopedBookmark.create` is `nonisolated` for this.
 
 ## Receive links
 
@@ -325,11 +343,11 @@ Result files, all written to the container's Documents folder (hardcoded, indepe
 
 | File | Content |
 |---|---|
-| `verify-result.txt` | `ok success=<bool>` or `error <msg>` |
+| `verify-result.txt` | `ok success=<bool>`, or `error <title>. <detail>` for a failure (`TransferFailure.text`; `scripts/verify-app-mac.sh` matches the expired-link title) |
 | `verify-code-ready.txt` | `ready`, written once when the phase first reaches `.waiting` (a send has its code); both verify scripts wait for it |
 | `verify-code.txt` | the generated or custom code |
 | `verify-history.txt` | `records=N`, written when the transfer is done or failed (`scripts/verify-app-mac.sh` reads it) |
-| `verify-phase.txt` | the current phase label |
+| `verify-phase.txt` | the current phase label; `transferring percent=N` reads `controller.progress` |
 | `verify-ready.txt` | written once a `--screen` request has settled |
 
 The result contract is shared by `scripts/verify-app-sim.sh` and `scripts/verify-app-mac.sh`.

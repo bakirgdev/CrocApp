@@ -19,7 +19,7 @@ struct ReceiveView: View {
         Group {
             // Direction matters: isActive alone rendered a running Send under
             // this screen's "Receive" title. Starting one from the fallback
-            // form is already a no-op (startReceive's `guard !isActive`).
+            // form is already a no-op (`start(_:)`'s `guard !isActive`).
             if controller.isActive, controller.direction == .receive {
                 TransferStatusView()
             } else {
@@ -117,14 +117,16 @@ struct ReceiveView: View {
 
             Button {
                 if let storedLink {
-                    controller.startStoreReceive(
-                        link: storedLink, into: outputFolder.url,
-                        folderIsScoped: outputFolder.isUserSelected)
+                    controller.start(
+                        .storedReceive(
+                            link: storedLink, folder: outputFolder.url,
+                            folderIsScoped: outputFolder.isUserSelected))
                 } else {
-                    controller.startReceive(
-                        code: code.trimmingCharacters(in: .whitespacesAndNewlines),
-                        into: outputFolder.url,
-                        folderIsScoped: outputFolder.isUserSelected)
+                    controller.start(
+                        .receive(
+                            code: code.trimmingCharacters(in: .whitespacesAndNewlines),
+                            folder: outputFolder.url,
+                            folderIsScoped: outputFolder.isUserSelected))
                 }
             } label: {
                 Label("Receive", systemImage: "arrow.down.circle.fill")
@@ -144,7 +146,7 @@ struct ReceiveView: View {
     }
 
     private func storedLinkRow(_ url: URL) -> some View {
-        let host = TransferController.codeHint(storedLink: url)
+        let host = CodeHint.storedLink(url)
         return HStack(spacing: Spacing.space3) {
             Label {
                 VStack(alignment: .leading, spacing: Spacing.space1) {

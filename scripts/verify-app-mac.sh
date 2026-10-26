@@ -363,7 +363,7 @@ await_app 60
 got=$(cat "$RESULT" 2>/dev/null || echo missing)
 echo "revoked receive result: $got"
 case "$got" in
-  "error This link has expired"*) ;;
+  "error This link no longer works"*) ;;
   *) fail "revoked upload: the app should report an expired link, got '$got'" ;;
 esac
 [ ! -e "$DOCS/storeme.bin" ] || fail "revoked upload wrote a file (app)"

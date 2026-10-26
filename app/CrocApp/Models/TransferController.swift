@@ -3,29 +3,34 @@ import Foundation
 import Observation
 
 /// The app-side state machine over a `TransferEngine` (`CrocEngine` in the
-/// app). Views render `phase` and call the intent methods; nothing else in the
-/// app touches CrocKit directly.
+/// app). Views render `phase` and call `start(_:)`, `respond`, `cancel`,
+/// `retry` and `reset`; nothing else in the app starts or answers a transfer.
 @MainActor
 @Observable
 final class TransferController {
     enum Direction { case send, receive }
 
-    enum Phase {
+    enum Phase: Equatable {
         case idle
         case starting
         case waiting(code: String)
         case connecting
         case confirmSend
         case incoming(FileList, conflicts: [String], blocked: [String])
-        case transferring(TransferProgress)
+        /// Bytes are moving. How far is `progress`, so a tick leaves the
+        /// phase alone.
+        case transferring
         case done(Summary, receivedText: String?)
         /// A stored upload finished. The receipt holds the link to share.
         case stored(StoredReceipt)
-        case failed(String)
+        case failed(TransferFailure)
     }
 
     private(set) var phase: Phase = .idle
     private(set) var direction: Direction = .send
+    /// The last accepted progress tick of the transfer in flight; nil before
+    /// the first one.
+    private(set) var progress: TransferProgress?
     private(set) var speedBytesPerSec: Double = 0
     /// The transfer goes through a stored-transfer server rather
     /// than a croc peer.
@@ -38,11 +43,15 @@ final class TransferController {
     /// settings edits don't lie in the trust UI.
     private(set) var activeRelay: AppSettings.RelayKind = .publicDefault
 
+    #if DEBUG
     /// Harness-only (AutoVerify --shown-relay): the relay the trust UI
     /// names, so a run through a local relay photographs like a default one.
     var harnessShownRelay: AppSettings.RelayKind?
 
-    #if DEBUG
+    /// Harness-only (AutoVerify --disable-local): kills the LAN race so the
+    /// custom relay path is provably exercised. Not a user setting.
+    var harnessDisableLocal = false
+
     /// Harness-only (AutoVerify --shown-link-origin): scheme and host the
     /// stored link shows and encodes, so a local store server photographs
     /// like a real one. The upload itself still goes to the configured server.
@@ -64,10 +73,6 @@ final class TransferController {
     }
     #endif
 
-    /// Harness-only (AutoVerify --disable-local): kills the LAN race so the
-    /// custom relay path is provably exercised. Not a user setting.
-    var harnessDisableLocal = false
-
     var isActive: Bool {
         if case .idle = phase { return false }
         return true
@@ -86,6 +91,9 @@ final class TransferController {
 
     private let engine: any TransferEngine
     private let background = BackgroundCoordinator()
+    /// What the transfer in flight, or the last one, started from. `retry()`
+    /// runs it again.
+    private var lastRequest: TransferRequest?
     private var backgroundExpired = false
     private var streamTask: Task<Void, Never>?
     /// The engine start in flight. Until it returns an ID, cancelling this task
@@ -94,23 +102,19 @@ final class TransferController {
     /// The engine transfer this controller started last; every cancel targets it,
     /// so a late cancel cannot reach the next transfer.
     private var transferID: TransferID?
-    private var scopedURLs: [URL] = []
+    @ObservationIgnored private var scopes = SecurityScopes()
     private var cancelRequested = false
     private var declineRequested = false
-    /// The current transfer ended because the user tapped Cancel or Decline.
-    /// A background-expiry cancel does not count. Haptics read this so a
-    /// button press never fires the failure haptic.
-    var endedByUser: Bool { (cancelRequested && !backgroundExpired) || declineRequested }
     private var receivedText: String?
     private var outDir: URL?
-    private var lastProgressBytes: Int64 = 0
-    private var lastProgressDate: Date?
+    @ObservationIgnored private var speed = TransferSpeed()
     private var sendConfirmArmed = false
     private var autoAcceptActive = false
     private var blockedAutoAccept = false
-    /// Bumped once per `run()`. The async conflict scan captures it and only
-    /// writes back if it still matches, so a scan that outlives a fast transfer
-    /// cannot deposit its stale results onto the next one's `.incoming`.
+    /// Bumped once per `run()`. The async conflict scan, the bookmark capture
+    /// and the end of the event loop capture it and act only if it still
+    /// matches, so work that outlives a fast transfer cannot land on the next
+    /// one.
     private var transferGeneration = 0
     /// True once any payload bytes moved -- gates the "resume" hint so it
     /// never appears on failures before the transfer started.
@@ -120,21 +124,7 @@ final class TransferController {
 
     /// History sink; set once at app startup. nil in previews.
     @ObservationIgnored var history: HistoryStore?
-    private var pendingRecord: PendingRecord?
-
-    /// Snapshot of what we know about the in-flight transfer, finalized into
-    /// a TransferRecord at the terminal event.
-    private struct PendingRecord {
-        var isSend: Bool
-        var isText: Bool
-        var names: [String]
-        var fileCount: Int
-        var totalBytes: Int64
-        var codeHint: String
-        var bookmarks: [Data]
-        var storedID: String?
-        var expiresAt: Date?
-    }
+    @ObservationIgnored private var pendingRecord: HistoryDraft?
 
     init(
         settings: AppSettings, vault: StoredTransferVault,
@@ -147,174 +137,51 @@ final class TransferController {
 
     // MARK: - Intents
 
-    private func baseOptions() -> EngineOptions {
-        var o = EngineOptions()
-        o.relayAddress = settings.relayAddress
-        o.relayAddress6 = settings.relayAddress6
-        o.relayPassword = settings.relayPassword
-        o.onlyLocal = settings.onlyLocal
-        o.disableLocal = harnessDisableLocal
-        o.noCompress = settings.noCompress
-        o.ask = settings.bothSidesConfirm
-        o.throttleUpload = settings.throttleUpload.trimmingCharacters(in: .whitespacesAndNewlines)
-        o.socks5Proxy = proxies.socks5
-        o.httpProxy = proxies.http
-        #if os(macOS)
-        // iOS has no multicast entitlement (concern 8): the field is hidden
-        // there and the engine keeps croc's default group.
-        let multicast = settings.multicastAddress.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !multicast.isEmpty { o.multicastAddress = multicast }
-        #endif
-        return o
-    }
-
-    /// The Advanced proxies, trimmed. Credentials may be inside: pass them on,
-    /// never log or describe them.
-    private var proxies: ProxySettings {
-        ProxySettings(
-            socks5: settings.socks5Proxy.trimmingCharacters(in: .whitespacesAndNewlines),
-            http: settings.httpProxy.trimmingCharacters(in: .whitespacesAndNewlines))
-    }
-
-    func startSend(urls: [URL], customCode: String) {
-        guard !isActive else { return }
-        direction = .send
-        isStoredTransfer = false
-        activeRelay = harnessShownRelay ?? settings.relayKind
-        sendConfirmArmed = settings.bothSidesConfirm
-        autoAcceptActive = false
-        beginFileSend(urls: urls, codeHint: Self.codeHint(customCode))
-        let paths = urls.map(\.path)
-        var options = baseOptions()
-        options.customCode = customCode
-        options.workDir = FileManager.default.temporaryDirectory.path
-        options.zipFolder = settings.zipFolder
-        options.gitIgnore = settings.useGitIgnore
-        options.exclude = settings.excludeList
-        run { try await self.engine.startSend(paths: paths, text: nil, options: options) }
-    }
-
-    /// Uploads `urls` (regular files only) encrypted to the stored-transfer
-    /// server in Settings. Ends in `.stored(receipt)`; the receipt also
-    /// goes to the vault so History can revoke it.
-    func startStoreSend(urls: [URL], downloads: Int, lifetimeSeconds: Int) {
-        guard !isActive else { return }
-        direction = .send
-        isStoredTransfer = true
-        activeRelay = harnessShownRelay ?? settings.relayKind
-        sendConfirmArmed = false
-        autoAcceptActive = false
-        let server = settings.storedServer.trimmingCharacters(in: .whitespacesAndNewlines)
-        beginFileSend(
-            urls: urls, codeHint: URL(string: server).map(Self.codeHint(storedLink:)) ?? "")
-        let paths = urls.map(\.path)
-        var options = StoredSendOptions()
-        options.server = server
-        options.downloads = downloads
-        options.lifetimeSeconds = lifetimeSeconds
-        options.proxy = proxies
-        run { try await self.engine.startStoreSend(paths: paths, options: options) }
-    }
-
-    private func beginFileSend(urls: [URL], codeHint: String) {
-        // startAccessing returns false for non-scoped URLs (e.g. some drops);
-        // keep every path regardless, only track the ones needing release.
-        scopedURLs = urls.filter { $0.startAccessingSecurityScopedResource() }
-        pendingRecord = PendingRecord(
-            isSend: true, isText: false,
-            names: urls.prefix(TransferRecord.maxNames).map(\.lastPathComponent),
-            fileCount: urls.count, totalBytes: 0,
-            codeHint: codeHint,
-            bookmarks: [])
-        // Up to maxBookmarks (200) bookmarkData calls, off the main actor so a
-        // slow volume can't stall the send tap. Security scope is held until
-        // releaseScopedURLs, so the URLs stay readable throughout. A transfer
-        // that terminates before this lands leaves pendingRecord nil and the
-        // record simply carries no bookmarks -- the same outcome as the
-        // existing all-or-nothing fallback, so "Send Again" is hidden rather
-        // than broken.
-        if urls.count <= TransferRecord.maxBookmarks {
-            // Every caller calls run() right after this, which bumps the
-            // generation for this send. A capture that lands once the next
-            // transfer has started must not attach to that one's record.
-            let generation = transferGeneration + 1
-            Task { [weak self] in
-                let all = await Task.detached(priority: .userInitiated) {
-                    urls.compactMap { SecurityScopedBookmark.create(for: $0) }
-                }.value
-                guard let self, all.count == urls.count, self.transferGeneration == generation
-                else { return }
-                self.pendingRecord?.bookmarks = all
-            }
+    /// Starts `request`. While a transfer is active this does nothing and
+    /// returns false.
+    @discardableResult
+    func start(_ request: TransferRequest) -> Bool {
+        guard !isActive else { return false }
+        lastRequest = request
+        direction = request.direction
+        isStoredTransfer = request.isStored
+        let call = EngineStart(request, settings: settings, disableLocal: disablesLocal)
+        let relay: AppSettings.RelayKind =
+            if case .receive = request { settings.receiveRelayKind } else { settings.relayKind }
+        activeRelay = shownRelay ?? relay
+        // Both-sides confirm holds a live send at .confirmSend once connected.
+        sendConfirmArmed =
+            request.direction == .send && !request.isStored && settings.bothSidesConfirm
+        autoAcceptActive = call.autoAccept
+        pendingRecord = HistoryDraft(request, storedServer: EngineStart.storedServer(settings))
+        outDir = nil
+        var sentFiles: [URL] = []
+        switch request {
+        case .sendFiles(let urls, _), .storedSend(let urls, _, _):
+            scopes.open(urls)
+            sentFiles = urls
+        case .receive(_, let folder, let folderIsScoped),
+            .storedReceive(_, let folder, let folderIsScoped):
+            outDir = folder
+            if folderIsScoped { scopes.open([folder]) }
+        case .sendText:
+            break
         }
+        run(call)
+        if !sentFiles.isEmpty { captureBookmarks(for: sentFiles) }
+        return true
     }
 
-    func startSendText(_ text: String, customCode: String) {
-        guard !isActive else { return }
-        direction = .send
-        isStoredTransfer = false
-        activeRelay = harnessShownRelay ?? settings.relayKind
-        sendConfirmArmed = settings.bothSidesConfirm
-        autoAcceptActive = false
-        pendingRecord = PendingRecord(
-            isSend: true, isText: true, names: [], fileCount: 0, totalBytes: 0,
-            codeHint: Self.codeHint(customCode), bookmarks: [])
-        var options = baseOptions()
-        options.customCode = customCode
-        options.workDir = FileManager.default.temporaryDirectory.path
-        run { try await self.engine.startSend(paths: [], text: text, options: options) }
-    }
-
-    func startReceive(code: String, into folder: URL, folderIsScoped: Bool) {
-        guard !isActive else { return }
-        direction = .receive
-        isStoredTransfer = false
-        beginReceive(
-            into: folder, folderIsScoped: folderIsScoped, codeHint: Self.codeHint(code),
-            relay: settings.receiveRelayKind)
-        var options = baseOptions()
-        options.outDir = folder.path
-        options.peerIP = settings.peerIP.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Auto-accept uses the setting; otherwise the incoming sheet's answer
-        // replaces it.
-        options.whenFileExists = settings.whenFileExists
-        // Ask forces croc's receiver prompt even under NoPrompt, and the
-        // engine's AutoAccept path closes the prompt pipe (EOF = decline),
-        // so Ask wins when both are on.
-        options.autoAccept = settings.autoAccept && !settings.bothSidesConfirm
-        autoAcceptActive = options.autoAccept
-        run { try await self.engine.startReceive(code: code, options: options) }
-    }
-
-    /// Opens a stored link: the incoming preview, then the same accept
-    /// and Keep Both / Replace answer as a live receive. Auto-accept does not
-    /// apply; the engine always waits for `respond`.
-    func startStoreReceive(link: URL, into folder: URL, folderIsScoped: Bool) {
-        guard !isActive else { return }
-        direction = .receive
-        isStoredTransfer = true
-        beginReceive(
-            into: folder, folderIsScoped: folderIsScoped, codeHint: Self.codeHint(storedLink: link),
-            relay: settings.relayKind)
-        autoAcceptActive = false
-        let path = folder.path
-        let link = link.absoluteString
-        let proxy = proxies
-        run { try await self.engine.startStoreReceive(link: link, outDir: path, proxy: proxy) }
-    }
-
-    private func beginReceive(
-        into folder: URL, folderIsScoped: Bool, codeHint: String, relay: AppSettings.RelayKind
-    ) {
-        activeRelay = harnessShownRelay ?? relay
-        sendConfirmArmed = false
-        outDir = folder
-        if folderIsScoped, folder.startAccessingSecurityScopedResource() {
-            scopedURLs.append(folder)
-        }
-        pendingRecord = PendingRecord(
-            isSend: false, isText: false, names: [], fileCount: 0, totalBytes: 0,
-            codeHint: codeHint, bookmarks: [])
+    /// Runs the last request again with the same inputs. Only a failure whose
+    /// remedy is Try Again allows it; anything else does nothing and returns
+    /// false.
+    @discardableResult
+    func retry() -> Bool {
+        guard case .failed(let failure) = phase, failure.remedy == .tryAgain,
+            let request = lastRequest
+        else { return false }
+        reset()
+        return start(request)
     }
 
     /// Whether History can offer Revoke: an unexpired, unrevoked upload whose
@@ -328,13 +195,13 @@ final class TransferController {
 
     /// Deletes a stored upload from its server and marks its record. A
     /// server that no longer has it counts as revoked. Runs alongside any
-    /// active transfer. Throws `EngineFailure`; show
-    /// `friendlyMessage(for:…, stored: true)`.
+    /// active transfer. Throws `EngineFailure`; show it as a
+    /// `TransferFailure` with `isStored` set.
     func revoke(_ record: TransferRecord) async throws {
         guard let id = record.storedID, let receipt = vault.receipt(id: id) else {
             throw EngineFailure(code: .other, message: "no receipt for this upload")
         }
-        try await engine.revokeStored(receipt, proxy: proxies)
+        try await engine.revokeStored(receipt, proxy: EngineStart.proxies(settings))
         vault.remove(id: id)
         history?.markRevoked(record)
     }
@@ -359,7 +226,7 @@ final class TransferController {
     }
 
     /// Stops the engine transfer without recording a Cancel tap, so the
-    /// auto-accept block does not read as one (`endedByUser`).
+    /// auto-accept block does not read as one (`TransferFailure.endedByUser`).
     private func cancelEngineTransfer() {
         // Before the engine has returned an ID, cancel the start itself; run()
         // also cancels by ID once one exists, in case the start finished first.
@@ -370,15 +237,17 @@ final class TransferController {
         Task { await engine.cancel(id) }
     }
 
-    /// Back to idle. Only meaningful from terminal phases; the stream has
-    /// already finished there, so cancelling streamTask is a no-op safety.
+    /// Back to idle. Only meaningful from terminal phases. No event follows a
+    /// terminal one, but the event loop may still be unwinding (Try Again
+    /// resets at once), and cancelling streamTask ends it.
     func reset() {
         streamTask?.cancel()
         streamTask = nil
-        releaseScopedURLs()
+        scopes.releaseAll()
         receivedText = nil
         storedReceipt = nil
         outDir = nil
+        progress = nil
         speedBytesPerSec = 0
         backgroundExpired = false
         phase = .idle
@@ -386,7 +255,25 @@ final class TransferController {
 
     // MARK: - Engine plumbing
 
-    private func run(_ start: @escaping () async throws -> EngineTransfer) {
+    /// The relay the trust UI names and whether the LAN route is off. Only a
+    /// harness run overrides either.
+    private var shownRelay: AppSettings.RelayKind? {
+        #if DEBUG
+        harnessShownRelay
+        #else
+        nil
+        #endif
+    }
+
+    private var disablesLocal: Bool {
+        #if DEBUG
+        harnessDisableLocal
+        #else
+        false
+        #endif
+    }
+
+    private func run(_ call: EngineStart) {
         phase = .starting
         let title =
             switch direction {
@@ -402,20 +289,22 @@ final class TransferController {
         declineRequested = false
         blockedAutoAccept = false
         transferGeneration += 1
+        let generation = transferGeneration
         sawTransferBytes = false
         receivedText = nil
         storedReceipt = nil
         offeredFileNames = []
         currentCode = nil
+        progress = nil
+        speed = TransferSpeed()
         speedBytesPerSec = 0
-        lastProgressDate = nil
-        lastProgressBytes = 0
         transferID = nil
+        let engine = engine
         streamTask = Task {
             do {
                 // Its own task, so cancelEngineTransfer() can cancel the start
                 // alone; cancelling streamTask would also end the event loop.
-                let starting = Task { try await start() }
+                let starting = Task { try await call.run(on: engine) }
                 startTask = starting
                 let transfer = try await starting.value
                 startTask = nil
@@ -427,21 +316,15 @@ final class TransferController {
                 // Startup failure before any event flowed -- still tear down
                 // the idle-timer lock / BG task requested at the top of run().
                 background.transferEnded(success: false)
-                let failure = Self.startFailure(error)
                 // Same precedence as handle(.failed): an expiry that surfaces
                 // as a thrown error must keep the resume hint, not fall back
                 // to generic copy.
-                if backgroundExpired, failure.code != .engineStuck {
-                    phase = .failed(backgroundExpiredCopy)
-                } else {
-                    phase = .failed(
-                        Self.friendlyMessage(
-                            for: failure, cancelRequested: cancelRequested,
-                            declineRequested: declineRequested, stored: isStoredTransfer))
-                }
+                phase = .failed(TransferFailure(Self.startFailure(error), situation: situation))
                 finishRecord(cancelRequested ? .cancelled : .failed, summary: nil)
             }
-            releaseScopedURLs()
+            // After a reset, a new start (Try Again) may already hold scopes,
+            // and those are not this transfer's to release.
+            if transferGeneration == generation { scopes.releaseAll() }
         }
     }
 
@@ -450,7 +333,7 @@ final class TransferController {
         case .codeReady(let code):
             currentCode = code
             if pendingRecord?.codeHint.isEmpty == true {
-                pendingRecord?.codeHint = Self.codeHint(code)
+                pendingRecord?.codeHint = CodeHint.code(code)
             }
             phase = .waiting(code: code)
         case .connected:
@@ -466,9 +349,7 @@ final class TransferController {
             let names = list.files.map(\.name)
             if pendingRecord?.isSend == false {
                 offeredFileNames = names
-                pendingRecord?.names = Array(names.prefix(TransferRecord.maxNames))
-                pendingRecord?.fileCount = list.files.count
-                pendingRecord?.totalBytes = list.totalSize
+                pendingRecord?.offer(list)
             }
             let blocked = names.filter { ReceivedName.isUnsafe($0) }
             if autoAcceptActive {
@@ -500,13 +381,19 @@ final class TransferController {
             // phase forward.
             if case .incoming = phase { return }
             if case .confirmSend = phase { return }
-            updateSpeed(p)
-            if p.bytesFinished + p.fileSent > 0 { sawTransferBytes = true }
+            let doneBytes = p.bytesFinished + p.fileSent
+            speed.record(doneBytes)
+            speedBytesPerSec = speed.bytesPerSecond
+            if doneBytes > 0 { sawTransferBytes = true }
             background.progressChanged(
-                bytesDone: p.bytesFinished + p.fileSent,
+                bytesDone: doneBytes,
                 totalBytes: p.totalSize,
                 fileName: p.fileName)
-            phase = .transferring(p)
+            progress = p
+            // Only the first tick sets the phase, so whatever observes just
+            // the phase does not redraw at the tick rate. Observation may skip
+            // an equal value on its own; this does not rely on it.
+            if phase != .transferring { phase = .transferring }
         case .text(let t):
             receivedText = t
         case .stored(var receipt):
@@ -528,7 +415,7 @@ final class TransferController {
             // bytes are already written either way; this only stops the UI and
             // the history record reporting a plain success for a blocked one.
             if blockedAutoAccept {
-                phase = .failed(Self.blockedAutoAcceptCopy)
+                phase = .failed(.blockedAutoAccept)
                 finishRecord(.failed, summary: summary)
             } else if let storedReceipt {
                 phase = .stored(storedReceipt)
@@ -539,35 +426,7 @@ final class TransferController {
             }
         case .failed(let failure):
             background.transferEnded(success: false)
-            if failure.code == .engineStuck {
-                // Only a relaunch frees the engine, so this outranks every
-                // other reason, a Cancel tap included.
-                phase = .failed(Self.engineStuckCopy)
-            } else if blockedAutoAccept {
-                phase = .failed(Self.blockedAutoAcceptCopy)
-            } else if backgroundExpired {
-                phase = .failed(backgroundExpiredCopy)
-            } else if autoAcceptActive, !cancelRequested, failure.code == .refused {
-                // This side's prompt refused without anyone answering it. croc
-                // forces the receiver prompt whenever the remote sender ran
-                // --ask, regardless of NoPrompt; engine auto-accept has already
-                // closed the prompt pipe, so GetInput hits EOF. While
-                // autoAcceptActive is true respond() is never called, so
-                // declineRequested cannot be set, and the cancel paths are
-                // excluded above -- what is left can only be this.
-                phase = .failed(
-                    "The sender asked to confirm this transfer manually, which auto-accept can't answer. Turn off Auto-Accept Transfers in Settings and try again, or ask the sender to resend without their confirmation option."
-                )
-            } else {
-                var copy = Self.friendlyMessage(
-                    for: failure, cancelRequested: cancelRequested,
-                    declineRequested: declineRequested, stored: isStoredTransfer)
-                // A stored transfer cannot resume; it starts over.
-                if sawTransferBytes && !cancelRequested && !declineRequested && !isStoredTransfer {
-                    copy += Self.resumeHint
-                }
-                phase = .failed(copy)
-            }
+            phase = .failed(TransferFailure(failure, situation: situation))
             // blockedAutoAccept outranks cancelRequested, in case Cancel was
             // also tapped: "Cancelled" in history reads as a user action.
             // .failed is the closest existing status; a dedicated case would be
@@ -586,26 +445,27 @@ final class TransferController {
         }
     }
 
-    private func updateSpeed(_ p: TransferProgress) {
-        let doneBytes = p.bytesFinished + p.fileSent
-        let now = Date()
-        guard let last = lastProgressDate else {
-            lastProgressDate = now
-            lastProgressBytes = doneBytes
-            return
-        }
-        let dt = now.timeIntervalSince(last)
-        guard dt > 0.2 else { return }
-        let instant = Double(doneBytes - lastProgressBytes) / dt
-        speedBytesPerSec =
-            speedBytesPerSec == 0 ? instant : 0.25 * instant + 0.75 * speedBytesPerSec
-        lastProgressDate = now
-        lastProgressBytes = doneBytes
+    /// What the failure copy is chosen by, besides the engine's code.
+    private var situation: TransferFailure.Situation {
+        TransferFailure.Situation(
+            direction: direction, isStored: isStoredTransfer, cancelRequested: cancelRequested,
+            declineRequested: declineRequested, backgroundExpired: backgroundExpired,
+            blockedAutoAccept: blockedAutoAccept, autoAcceptActive: autoAcceptActive,
+            bytesMoved: sawTransferBytes)
     }
 
-    private func releaseScopedURLs() {
-        for url in scopedURLs { url.stopAccessingSecurityScopedResource() }
-        scopedURLs = []
+    /// A capture that lands once the next transfer has started must not
+    /// attach to that one's record. A transfer that terminates first leaves
+    /// `pendingRecord` nil and the record carries no bookmarks, so Send Again
+    /// hides rather than breaks.
+    private func captureBookmarks(for urls: [URL]) {
+        let generation = transferGeneration
+        Task { [weak self] in
+            guard let all = await HistoryDraft.bookmarks(for: urls), let self,
+                self.transferGeneration == generation
+            else { return }
+            self.pendingRecord?.bookmarks = all
+        }
     }
 
     private static func scanConflicts(names: [String], in dir: URL) async -> [String] {
@@ -616,44 +476,15 @@ final class TransferController {
         }.value
     }
 
-    /// A stored link carries its id in the path and its key in the fragment,
-    /// so history keeps only the server's host.
-    static func codeHint(storedLink url: URL) -> String {
-        url.host(percentEncoded: false) ?? ""
-    }
-
-    /// Enough to recognise a transfer in history, not enough to reuse the
-    /// code. A generated code's first word ("wiry-…", or "7291-…" for a
-    /// legacy code) is a third of it at most; any other shape is likely a
-    /// reusable custom code, so only its first two characters are kept.
-    static func codeHint(_ code: String) -> String {
-        let t = code.trimmingCharacters(in: .whitespaces)
-        guard !t.isEmpty else { return "" }
-        let segments = t.split(separator: "-", omittingEmptySubsequences: false)
-        if segments.count >= 3, let first = segments.first, (1...5).contains(first.count) {
-            return first + "-…"
-        }
-        return String(t.prefix(2)) + "…"
-    }
-
+    /// Runs at `.done`, `.failed` and the startup `catch`. It clears the draft
+    /// first, so a double terminal event records once, and it must run while
+    /// `receivedText` is still set.
     private func finishRecord(_ status: TransferRecord.Status, summary: Summary?) {
-        guard var p = pendingRecord else { return }
+        guard let draft = pendingRecord else { return }
         pendingRecord = nil
         guard settings.saveTransferHistory else { return }
-        if let summary {
-            p.totalBytes = summary.totalSize
-            if summary.files > 0 { p.fileCount = summary.files }
-        }
-        if receivedText != nil { p.isText = true }
-        history?.add(
-            TransferRecord(
-                isSend: p.isSend, status: status, isText: p.isText,
-                fileCount: p.fileCount, totalBytes: p.totalBytes,
-                names: p.names, codeHint: p.codeHint, bookmarks: p.bookmarks,
-                storedID: p.storedID, expiresAt: p.expiresAt))
+        history?.add(draft.record(status: status, summary: summary, receivedText: receivedText))
     }
-
-    // MARK: - Error copy
 
     /// A start error as the failure the copy is chosen by.
     private static func startFailure(_ error: any Error) -> EngineFailure {
@@ -662,89 +493,6 @@ final class TransferController {
         case CrocEngineError.transferActive:
             EngineFailure(code: .transferActive, message: "another transfer is active")
         default: EngineFailure(code: .other, message: "\(error)")
-        }
-    }
-
-    /// The engine kept a cancelled transfer running and refuses every start
-    /// until the app is relaunched.
-    private static let engineStuckCopy =
-        "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again."
-
-    /// Used from both `.done` and `.failed`: a blocked transfer can terminate
-    /// either way depending on whether the cancel beat the last event.
-    private static let blockedAutoAcceptCopy =
-        "Blocked: this transfer contained unsafe file names, so auto-accept cancelled it."
-
-    /// Used from both `handle(.failed)` and `run()`'s catch. A stored
-    /// transfer cannot resume (concern 4), so it says to start over.
-    private var backgroundExpiredCopy: String {
-        switch (isStoredTransfer, direction) {
-        case (false, _): "iOS paused the transfer in the background." + Self.resumeHint
-        case (true, .send): "Sending was interrupted: iOS stopped it in the background. Try again."
-        case (true, .receive):
-            "Receiving was interrupted: iOS stopped it in the background. Open the link again."
-        }
-    }
-
-    /// Keep Both saves a partly received file as a new copy, so only Replace
-    /// resumes it.
-    private static let resumeHint =
-        " Start the same transfer again; replacing the partly received files resumes it."
-
-    /// `stored` words network failures for a stored-transfer server (a store
-    /// call reports them as `relayUnreachable`) instead of a relay or peer.
-    static func friendlyMessage(
-        for failure: EngineFailure, cancelRequested: Bool, declineRequested: Bool,
-        stored: Bool = false
-    ) -> String {
-        if failure.code == .engineStuck { return engineStuckCopy }
-        if cancelRequested { return "Transfer cancelled." }
-        if declineRequested { return "You declined the transfer." }
-        if stored, failure.code == .relayUnreachable || failure.code == .connectionLost {
-            return
-                "Couldn't reach the link server. Check your internet connection and try again."
-        }
-        // Never echo failure.message: croc adds new error text every release,
-        // and a recovered Go panic arrives with a full stack trace attached.
-        switch failure.code {
-        case .peerVersion:
-            return "The other device runs an older croc. Both sides need croc 11 or newer."
-        case .relayUnreachable:
-            return "Couldn't reach the relay. Check your internet connection."
-        case .noPublicRelay:
-            return
-                "No public relay answered. Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network."
-        case .declined:
-            return "The other device declined or cancelled the transfer."
-        case .refused:
-            return "You declined the transfer."
-        case .roomFull:
-            return "That code is already in use. Try a different code."
-        case .badPassword:
-            return "The relay rejected its password. Check the relay password in Settings."
-        case .wrongCode:
-            return "The codes don't match. Check the code on both devices and try again."
-        case .cancelled:
-            return "Transfer cancelled."
-        case .connectionLost:
-            return "Lost connection to the other device."
-        case .storeLimit:
-            return
-                "The link server refused this send: it is over the server's size, file count or download limit, or too many sends were made recently."
-        case .storeExpired:
-            return "This link has expired, was revoked, or has no downloads left."
-        case .invalidSetting:
-            return
-                "An Advanced setting can't be used. Check the proxies, addresses, ports and send speed limit in Settings > Advanced."
-        case .transferActive:
-            return "Another transfer is still running. Wait for it to end, then try again."
-        case .engineStuck:
-            return engineStuckCopy
-        case .joinedEarly:
-            return
-                "The other device wasn't ready, or the connection was too slow. Start the send there first, then enter the code again."
-        case .other:
-            return "Transfer failed. Try again, or check your connection."
         }
     }
 }

@@ -11,7 +11,7 @@ import Testing
         ("7020-alpha-beta-gamma", "7020-…"),
     ])
     func generatedShapeKeepsTheFirstWord(code: String, hint: String) {
-        #expect(TransferController.codeHint(code) == hint)
+        #expect(CodeHint.code(code) == hint)
     }
 
     @Test(arguments: [
@@ -21,11 +21,11 @@ import Testing
         ("my-secret", "my…"),
     ])
     func customCodesKeepTwoCharacters(code: String, hint: String) {
-        #expect(TransferController.codeHint(code) == hint)
+        #expect(CodeHint.code(code) == hint)
     }
 
     @Test func emptyCodeHasNoHint() {
-        #expect(TransferController.codeHint("  ") == "")
+        #expect(CodeHint.code("  ") == "")
     }
 
     /// A stored link's id is in its path and its key in the fragment.
@@ -36,7 +36,7 @@ import Testing
     ])
     func storedLinkKeepsOnlyTheHost(link: String, hint: String) throws {
         let url = try #require(URL(string: link))
-        let h = TransferController.codeHint(storedLink: url)
+        let h = CodeHint.storedLink(url)
         #expect(h == hint)
         #expect(!h.contains("AbCdEf"))
         #expect(!h.contains("c2Vj"))

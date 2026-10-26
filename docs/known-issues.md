@@ -67,7 +67,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - Until the split view ships, App Store listing copy must not promise an iPad-optimised experience.
 - **The views predate the amended design book.** What the book now specifies and the app does not do yet:
   - About 30 call sites style text with `.secondary` instead of `Color.textSecondary` (`design/colors.md` rule 4). The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
-  - The failure screen is a single long title and an **OK** button (`TransferStatusView.failedView`), where the book wants a title, a detail and actions by failure kind (`design/components.md`, "StatusBlock").
+  - The user's own cancel or decline ends on the failure `StatusBlock`, with the error glyph and tint, although `design/content.md`, "Errors", says it is not a failure. Its title stands alone with **Done**, as the book wants; `StatusBlock` has no neutral kind for it yet.
   - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/content.md`, "Terminology").
   - Not built: the Home recent transfers, the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary".
 - **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
@@ -218,23 +218,26 @@ Permanent or deferred, each with its reason.
 - **A generated-code send with no internet or no reachable pool relay fails before a code is shown.**
   - With default settings, no pool relay answers the 1 s probe (`generatePublicCode` in `crocmobile/relay.go`), so the send fails with code `noPublicRelay` (croc's `no public relay available`, the same as the v11 CLI).
   - A "draw a code anyway and let a LAN peer join" fallback does not work: after the relay dial fails, croc waits for a LAN peer for only 10 s (`defaultAlternateSenderRouteTimeout`, unexported), and a `croctest send -relay 127.0.0.1:1` with no receiver printed its code and failed about 11 s later.
-  - Workaround: turn on **Local Network Only** (`web/docs/content/troubleshooting.md`, "Relay unreachable"). The app shows "No public relay answered. Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network."
+  - Workaround: turn on **Local Network Only** (`web/docs/content/troubleshooting.md`, "Relay unreachable"). The app shows "No public relay answered" and "Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network."
 - **A receiver that joins before the sender fails, and so does the sender.**
   - The receiver's `pake1` local probe times out after 500 ms and it carries on with the main PAKE. The sender's late reply to the old probe is then decoded as a transfer message and fails with `flate: corrupt input before offset 6` (`knowledge/crocmobile-bridge.md`, "Start order: sender first").
   - Generated codes are sender-first, but custom codes are not. A receiver who types an agreed code before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it.
-  - The receiver reports `joinedEarly`: "The other device wasn't ready, or the connection was too slow. Start the send there first, then enter the code again." A sender with LAN on fails with croc's `could not secure channel` and shows "The codes don't match.", because that text is also a real mismatch.
+  - The receiver reports `joinedEarly`: "The other device wasn't ready" and "Start the send there first, or use a faster connection, then enter the code again." A sender with LAN on fails with croc's `could not secure channel` and shows "The code phrases don't match", because that code is also a real mismatch.
   - There is no automatic retry of the receive. With a croc v11.5.5 CLI sender, the sender had already failed when the receiver did, and a second receive with the same code only waited for a sender that was gone. Both sides have to start again, sender first.
   - Workaround: start the sender first, then the receiver. `verify-app-sim.sh`, `verify-app-mac.sh` and `verify-interop.sh` all delay their CLI receiver for this reason.
-  - The same error follows a slow link even when the sender was first: croc waits only 500 ms for the probe reply, so a SOCKS5 proxy, a slow mobile link or a distant relay can make the reply late. The copy therefore names both causes.
+  - The same error follows a slow link even when the sender was first: croc waits only 500 ms for the probe reply, so a SOCKS5 proxy, a slow mobile link or a distant relay can make the reply late. The detail therefore offers a fix for both causes.
   - Not verified whether `schollz/croc` has an upstream issue for it. The probe timeout and the frame decoding are croc's.
 - **Cancelling a start is best effort.**
   - `CancelStart()` reaches a start only once Go has registered its context (`lockTransfer`, `Getwd`, the network globals). A cancel that lands before that finds nothing, and the start goes on to show a code.
   - `TransferController` recovers by cancelling by transfer ID as soon as the start returns. Other callers of `CrocEngine` (such as `crockit-verify`) do not.
+- **A file name with a line break fails as an Advanced setting.**
+  - `CrocEngine.joinedPaths` refuses such a path with code `invalidSetting`, the code for a bad proxy, speed limit, multicast address or sender IP. The failure screen then says "An Advanced setting can't be used" and offers **Open Settings**, which cannot fix a file name.
+  - A fix gives the refusal its own code, or checks the names in the app before the start. Workaround: rename the file.
 - **A panic inside `Cancel` or `Respond` reports `OnError` while the transfer still runs.**
   - `reportPanic` there skips the single-final-event guard, so CrocKit drops the live session's handle and the session can later send a second final event.
   - It needs a Go panic in those calls, which none has been seen to raise. A fix claims the session's terminal flag first, or only logs the panic.
 - **A malformed callback payload ends the Swift stream before Go has finished.**
-  - `DelegateBridge` finishes the stream without marking the transfer ended, so a new start within the Go cancel's unwind time fails with "Another transfer is still running." (the removed 300 ms retry used to hide this).
+  - `DelegateBridge` finishes the stream without marking the transfer ended, so a new start within the Go cancel's unwind time fails with "Another transfer is still running" (the removed 300 ms retry used to hide this).
   - It needs a payload the bridge cannot decode, which only a bridge bug produces.
 - **A transfer with a croc 10 peer usually shows no error and waits until the user cancels.**
   - The app reports `peerVersion` ("peer uses unsupported PAKE protocol version 0; upgrade both croc clients") only when both peers reach the same relay room.

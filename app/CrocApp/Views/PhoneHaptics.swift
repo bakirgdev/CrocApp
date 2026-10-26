@@ -45,12 +45,12 @@ enum TransferHaptic: Equatable {
     case failed
     case incoming
 
-    init?(_ phase: TransferController.Phase, endedByUser: Bool = false) {
+    init?(_ phase: TransferController.Phase) {
         switch phase {
         case .done(let summary, _): self = summary.success ? .completed : .failed
         case .stored: self = .completed
-        case .failed:
-            if endedByUser { return nil }
+        case .failed(let failure):
+            if failure.endedByUser { return nil }
             self = .failed
         case .incoming: self = .incoming
         default: return nil

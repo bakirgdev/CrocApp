@@ -136,8 +136,8 @@ struct HistoryView: View {
             do {
                 try await controller.revoke(record)
             } catch let failure as EngineFailure {
-                revokeFailure = TransferController.friendlyMessage(
-                    for: failure, cancelRequested: false, declineRequested: false, stored: true)
+                revokeFailure =
+                    TransferFailure(failure, situation: .init(isStored: true)).text
             } catch {
                 revokeFailure = "Try again in a moment."
             }
@@ -146,7 +146,7 @@ struct HistoryView: View {
 
     private func resend(_ record: TransferRecord) {
         // See SecurityScopedBookmark.resolveIfReachable for why the scope
-        // must be started before the existence probe -- startSend opens its
+        // must be started before the existence probe -- the send opens its
         // own scope at send time.
         let urls = record.bookmarks.compactMap { data in
             SecurityScopedBookmark.resolveIfReachable(data)

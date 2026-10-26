@@ -1,13 +1,15 @@
 import CrocKit
 import Foundation
+import Observation
 import SwiftData
+import Synchronization
 import Testing
 
 @testable import CrocApp
 
 /// Drives `TransferController` through `FakeTransferEngine`: the phase each
-/// event leads to, the failure copy, what reaches the engine, and the history
-/// record each path leaves.
+/// event leads to, the failure it ends with, what reaches the engine, and the
+/// history record each path leaves.
 @MainActor @Suite struct TransferControllerTests {
     private let engine = FakeTransferEngine()
     private let settings: AppSettings
@@ -22,10 +24,6 @@ import Testing
         path: "CrocAppTests.\(UUID().uuidString)")
 
     private static let code = "wiry-alpha-bravo"
-    private static let blockedCopy =
-        "Blocked: this transfer contained unsafe file names, so auto-accept cancelled it."
-    private static let resumeHint =
-        " Start the same transfer again; replacing the partly received files resumes it."
 
     init() {
         settings = AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore())
@@ -38,8 +36,8 @@ import Testing
     // MARK: - Send
 
     @Test func sendGoesFromCodeToDone() async throws {
-        controller.startSend(urls: [file], customCode: "")
-        #expect(controller.phase.name == "starting")
+        #expect(controller.start(.sendFiles(urls: [file], code: "")))
+        #expect(controller.phase == .starting)
         try await waitForTransfer()
         let start = try await firstStart()
         guard case .send(let paths, let text, let options) = start else {
@@ -62,7 +60,8 @@ import Testing
         #expect(controller.currentCode == Self.code, "the code outlives .waiting")
 
         try await deliver(.progress(Self.progress(sent: 40)))
-        #expect(controller.phase.name == "transferring")
+        #expect(controller.phase == .transferring)
+        #expect(controller.progress?.fileSent == 40)
 
         try await deliver(.done(Self.summary(files: 1, totalSize: 100)))
         let done = try #require(controller.phase.result)
@@ -81,7 +80,7 @@ import Testing
 
     @Test func savingHistoryOffRecordsNoFinishedTransfer() async throws {
         settings.saveTransferHistory = false
-        controller.startSend(urls: [file], customCode: "")
+        controller.start(.sendFiles(urls: [file], code: ""))
         try await waitForTransfer()
         try await deliver(.codeReady(Self.code))
         try await deliver(.connected)
@@ -95,7 +94,7 @@ import Testing
         settings.saveTransferHistory = false
         await engine.failNextStart(
             with: .startFailed(EngineFailure(code: .relayUnreachable, message: "i/o timeout")))
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitUntil("the start to fail") { controller.phase.name == "failed" }
 
         #expect(history.recordCount() == 0)
@@ -107,7 +106,7 @@ import Testing
                 isSend: false, status: .completed, isText: false, fileCount: 2, totalBytes: 20,
                 names: ["old.txt", "older.txt"], codeHint: "wiry-…", bookmarks: []))
         settings.saveTransferHistory = false
-        controller.startSend(urls: [file], customCode: "")
+        controller.start(.sendFiles(urls: [file], code: ""))
         try await waitForTransfer()
         try await deliver(.codeReady(Self.code))
         try await deliver(.connected)
@@ -120,7 +119,7 @@ import Testing
     @Test func savingHistoryBackOnRecordsAgain() async throws {
         settings.saveTransferHistory = false
         settings.saveTransferHistory = true
-        controller.startSend(urls: [file], customCode: "")
+        controller.start(.sendFiles(urls: [file], code: ""))
         try await waitForTransfer()
         try await deliver(.codeReady(Self.code))
         try await deliver(.connected)
@@ -131,7 +130,7 @@ import Testing
 
     @Test func confirmOnBothSidesHoldsTheSendUntilAccepted() async throws {
         settings.bothSidesConfirm = true
-        controller.startSend(urls: [file], customCode: "")
+        controller.start(.sendFiles(urls: [file], code: ""))
         try await waitForTransfer()
         let start = try await firstStart()
         guard case .send(_, _, let options) = start else {
@@ -155,12 +154,14 @@ import Testing
     }
 
     @Test func aSecondStartWhileActiveStartsNothing() async throws {
-        controller.startSend(urls: [file], customCode: "")
+        controller.start(.sendFiles(urls: [file], code: ""))
         try await waitForTransfer()
         try await deliver(.codeReady(Self.code))
 
-        controller.startSend(urls: [file], customCode: "other-code-word")
-        controller.startReceive(code: "other-code-word", into: folder, folderIsScoped: false)
+        #expect(!controller.start(.sendFiles(urls: [file], code: "other-code-word")))
+        #expect(
+            !controller.start(
+                .receive(code: "other-code-word", folder: folder, folderIsScoped: false)))
         #expect(controller.phase.waitingCode == Self.code)
         #expect(controller.direction == .send)
 
@@ -172,7 +173,7 @@ import Testing
     // MARK: - Receive
 
     @Test func manualReceiveShowsTheOfferAndRecordsADecline() async throws {
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitForTransfer()
         let start = try await firstStart()
         guard case .receive(let code, let options) = start else {
@@ -200,8 +201,11 @@ import Testing
         #expect(controller.phase.name == "incoming", "the stream, not the tap, ends a decline")
 
         try await deliver(.failed(EngineFailure(code: .refused, message: "refused files")))
-        #expect(controller.phase.failureCopy == "You declined the transfer.")
-        #expect(controller.endedByUser)
+        let failure = try #require(controller.phase.failure)
+        #expect(failure == .declinedByUser)
+        #expect(failure.endedByUser)
+        #expect(failure.detail == nil, "the user's own decline is not a failure")
+        #expect(failure.remedy == nil)
 
         let record = try onlyRecord()
         #expect(!record.isSend)
@@ -217,7 +221,7 @@ import Testing
         defer { try? FileManager.default.removeItem(at: folder) }
         try Data("old".utf8).write(to: folder.appending(path: "notes.txt"))
 
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitForTransfer()
         try await deliver(.fileList(Self.fileList(["notes.txt", "new.txt"])))
 
@@ -231,7 +235,7 @@ import Testing
     @Test func confirmOnBothSidesTurnsReceiveAutoAcceptOff() async throws {
         settings.autoAccept = true
         settings.bothSidesConfirm = true
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitForTransfer()
         let start = try await firstStart()
         guard case .receive(_, let options) = start else {
@@ -249,7 +253,7 @@ import Testing
     @Test(arguments: [true, false])
     func autoAcceptCancelsAnOfferWithAnUnsafeName(endsWithDone: Bool) async throws {
         settings.autoAccept = true
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitForTransfer()
         let start = try await firstStart()
         guard case .receive(_, let options) = start else {
@@ -270,31 +274,32 @@ import Testing
         } else {
             try await deliver(.failed(EngineFailure(code: .cancelled, message: "context canceled")))
         }
-        #expect(controller.phase.failureCopy == Self.blockedCopy)
+        #expect(controller.phase.failure == .blockedAutoAccept)
         #expect(try onlyRecord().status == .failed, "a block is not a user cancel")
-        #expect(!controller.endedByUser, "the user tapped nothing, so the failure haptic plays")
+        #expect(
+            controller.phase.failure?.endedByUser == false,
+            "the user tapped nothing, so the failure haptic plays")
         #expect(await engine.cancels == [id])
     }
 
     @Test func autoAcceptExplainsASenderWhoAskedToConfirm() async throws {
         settings.autoAccept = true
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitForTransfer()
         try await deliver(.connected)
         try await deliver(.fileList(Self.fileList(["notes.txt"])))
 
         try await deliver(.failed(EngineFailure(code: .refused, message: "refused files")))
-        #expect(
-            controller.phase.failureCopy
-                == "The sender asked to confirm this transfer manually, which auto-accept can't answer. Turn off Auto-Accept Transfers in Settings and try again, or ask the sender to resend without their confirmation option."
-        )
+        let failure = try #require(controller.phase.failure)
+        #expect(failure == .autoAcceptCannotConfirm)
+        #expect(failure.remedy == .openSettings(.general))
         #expect(await engine.cancels.isEmpty)
-        #expect(!controller.endedByUser)
+        #expect(!failure.endedByUser)
         #expect(try onlyRecord().status == .failed)
     }
 
     @Test func textReceiveEndsWithTheText() async throws {
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitForTransfer()
         try await deliver(.text("hello"))
         try await deliver(.done(Self.summary(files: 0, totalSize: 5)))
@@ -306,14 +311,15 @@ import Testing
 
     @Test(arguments: [true, false])
     func resumeHintNeedsBytesToHaveMoved(bytesMoved: Bool) async throws {
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitForTransfer()
         try await deliver(.connected)
         try await deliver(.progress(Self.progress(sent: bytesMoved ? 40 : 0)))
 
         try await deliver(.failed(EngineFailure(code: .connectionLost, message: "EOF")))
-        let copy = "Lost connection to the other device." + (bytesMoved ? Self.resumeHint : "")
-        #expect(controller.phase.failureCopy == copy)
+        let failure = try #require(controller.phase.failure)
+        #expect((failure.detail == TransferFailure.resumeHint) == bytesMoved)
+        #expect(failure.remedy == .tryAgain)
         #expect(try onlyRecord().status == .failed)
     }
 
@@ -321,7 +327,7 @@ import Testing
 
     @Test func cancelBeforeTheEngineAnswersReachesTheTransferOnceStarted() async throws {
         await engine.holdNextStart()
-        controller.startSend(urls: [file], customCode: "")
+        controller.start(.sendFiles(urls: [file], code: ""))
         try await waitUntil("the start to be held") { await engine.isHoldingStart }
 
         controller.cancel()
@@ -334,7 +340,8 @@ import Testing
         try await waitUntil("the deferred cancel") { await engine.cancels == [id] }
 
         try await deliver(.failed(EngineFailure(code: .cancelled, message: "context canceled")))
-        #expect(controller.phase.failureCopy == "Transfer cancelled.")
+        #expect(controller.phase.failure == .cancelledByUser)
+        #expect(controller.phase.failure?.endedByUser == true)
         #expect(try onlyRecord().status == .cancelled)
         #expect(await engine.cancels == [id], "cancelled once")
     }
@@ -343,28 +350,27 @@ import Testing
     /// means a transfer that is really running: no retry.
     @Test func aBusyEngineFailsTheStartWithoutRetry() async throws {
         await engine.failNextStart(with: .transferActive)
-        controller.startSend(urls: [file], customCode: "")
+        controller.start(.sendFiles(urls: [file], code: ""))
         try await waitUntil("the start to fail") { controller.phase.name == "failed" }
 
-        #expect(
-            controller.phase.failureCopy
-                == "Another transfer is still running. Wait for it to end, then try again.")
+        let failure = try #require(controller.phase.failure)
+        #expect(failure.remedy == .tryAgain, "the user may try again once it ends")
+        #expect(failure.detail != nil)
         #expect(await engine.starts.count == 1)
         #expect(try onlyRecord().status == .failed)
     }
 
     @Test func aStartRightAfterTheLastEventStarts() async throws {
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitForTransfer()
         try await deliver(.failed(EngineFailure(code: .joinedEarly, message: "flate")))
         #expect(
-            controller.phase.failureCopy
-                == "The other device wasn't ready, or the connection was too slow. Start the send there first, then enter the code again."
-        )
+            controller.phase.failure?.remedy == nil,
+            "the sender's code may change, so the same code may not work")
         #expect(await engine.starts.count == 1, "no automatic retry")
 
         controller.reset()
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitUntil("the second start") { await engine.starts.count == 2 }
         try await waitForTransfer()
         #expect(await engine.transferIDs.count == 2, "the engine took it at once")
@@ -372,10 +378,10 @@ import Testing
         await engine.finish()
     }
 
-    /// The engine's watchdog ends a cancel croc never honoured. Its copy wins
-    /// over "Transfer cancelled.", because only a relaunch helps.
+    /// The engine's watchdog ends a cancel croc never honoured. Its failure
+    /// wins over the cancel, because only a relaunch helps.
     @Test func aStuckEngineAfterCancelAsksForARelaunch() async throws {
-        controller.startSend(urls: [file], customCode: "")
+        controller.start(.sendFiles(urls: [file], code: ""))
         try await waitForTransfer()
         try await deliver(.codeReady(Self.code))
         controller.cancel()
@@ -383,41 +389,140 @@ import Testing
         try await waitUntil("the engine to get the cancel") { await engine.cancels == [id] }
 
         try await deliver(.failed(EngineFailure(code: .engineStuck, message: "did not return")))
-        #expect(
-            controller.phase.failureCopy
-                == "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again.")
+        #expect(controller.phase.failure == .engineStuck)
+        #expect(controller.phase.failure?.remedy == nil)
         #expect(try onlyRecord().status == .cancelled)
 
         controller.reset()
         await engine.failNextStart(
             with: .startFailed(EngineFailure(code: .engineStuck, message: "never returned")))
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitUntil("the start to fail") { controller.phase.name == "failed" }
-        #expect(
-            controller.phase.failureCopy
-                == "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again.")
+        #expect(controller.phase.failure == .engineStuck)
+        #expect(!controller.retry(), "only a relaunch helps")
     }
 
     @Test func startFailureShowsItsCopyAndIsRecorded() async throws {
         await engine.failNextStart(
             with: .startFailed(EngineFailure(code: .relayUnreachable, message: "i/o timeout")))
-        controller.startReceive(code: Self.code, into: folder, folderIsScoped: false)
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
         try await waitUntil("the start to fail") { controller.phase.name == "failed" }
 
-        #expect(
-            controller.phase.failureCopy
-                == "Couldn't reach the relay. Check your internet connection.")
-        #expect(await engine.starts.count == 1, "only transferActive is retried")
+        let failure = try #require(controller.phase.failure)
+        #expect(failure.remedy == .tryAgain)
+        #expect(!failure.endedByUser)
+        #expect(await engine.starts.count == 1, "no automatic retry")
         let record = try onlyRecord()
         #expect(!record.isSend)
         #expect(record.status == .failed)
+    }
+
+    // MARK: - Try Again
+
+    @Test func retryRunsTheSameRequestAgain() async throws {
+        await engine.failNextStart(
+            with: .startFailed(EngineFailure(code: .relayUnreachable, message: "i/o timeout")))
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
+        try await waitUntil("the start to fail") { controller.phase.name == "failed" }
+        #expect(controller.phase.failure?.remedy == .tryAgain)
+
+        #expect(controller.retry())
+        #expect(controller.phase == .starting)
+        try await waitForTransfer()
+        let starts = await engine.starts
+        try #require(starts.count == 2)
+        for start in starts {
+            guard case .receive(let code, let options) = start else {
+                Issue.record("started \(start), not a receive")
+                continue
+            }
+            #expect(code == Self.code)
+            #expect(options.outDir == folder.path)
+        }
+        #expect(controller.direction == .receive)
+
+        try await deliver(.done(Self.summary()))
+        #expect(controller.phase.result != nil)
+        let records = try history.container.mainContext.fetch(FetchDescriptor<TransferRecord>())
+        #expect(
+            records.map(\.status).sorted { $0.rawValue < $1.rawValue } == [.completed, .failed])
+    }
+
+    @Test func retryKeepsTheSendAndItsCode() async throws {
+        controller.start(.sendFiles(urls: [file], code: "custom-code-word"))
+        try await waitForTransfer()
+        try await deliver(.connected)
+        try await deliver(.failed(EngineFailure(code: .connectionLost, message: "EOF")))
+
+        #expect(controller.retry())
+        // The last stream has ended, so the engine reads as drained until the
+        // second start replaces it.
+        try await waitUntil("the second start") { await engine.starts.count == 2 }
+        try await waitForTransfer()
+        let starts = await engine.starts
+        guard case .send(let paths, let text, let options) = starts[1] else {
+            Issue.record("started \(starts[1]), not a send")
+            return
+        }
+        #expect(paths == [file.path])
+        #expect(text == nil)
+        #expect(options.customCode == "custom-code-word")
+        await engine.finish()
+    }
+
+    /// Try Again never appears where retrying cannot help, and nothing else
+    /// can run it either.
+    @Test func retryNeedsATryAgainFailure() async throws {
+        #expect(!controller.retry(), "nothing has run yet")
+
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
+        try await waitForTransfer()
+        #expect(!controller.retry(), "a transfer is running")
+
+        try await deliver(.failed(EngineFailure(code: .wrongCode, message: "bad")))
+        #expect(controller.phase.failure?.remedy == nil)
+        #expect(!controller.retry(), "the user must change the code")
+        #expect(await engine.starts.count == 1)
+        #expect(controller.phase.name == "failed")
+    }
+
+    // MARK: - Progress
+
+    /// Ticks arrive at about 10 Hz. Only the first one changes `phase`, so a
+    /// view that reads just the phase does not redraw at that rate.
+    @Test func progressTicksChangeProgressAndNotPhase() async throws {
+        controller.start(.sendFiles(urls: [file], code: ""))
+        try await waitForTransfer()
+        try await deliver(.connected)
+        try await deliver(.progress(Self.progress(sent: 40)))
+        #expect(controller.phase == .transferring)
+
+        let phaseChanged = ChangeFlag()
+        let progressChanged = ChangeFlag()
+        withObservationTracking {
+            _ = controller.phase
+        } onChange: {
+            phaseChanged.set()
+        }
+        withObservationTracking {
+            _ = controller.progress
+        } onChange: {
+            progressChanged.set()
+        }
+        try await deliver(.progress(Self.progress(sent: 60)))
+
+        #expect(controller.progress?.fileSent == 60)
+        #expect(progressChanged.isSet)
+        #expect(!phaseChanged.isSet)
+        #expect(controller.phase == .transferring)
+        await engine.finish()
     }
 
     // MARK: - Stored transfers
 
     @Test func storedSendEndsOnItsReceipt() async throws {
         settings.storedServer = "https://store.example"
-        controller.startStoreSend(urls: [file], downloads: 2, lifetimeSeconds: 3600)
+        controller.start(.storedSend(urls: [file], downloads: 2, lifetimeSeconds: 3600))
         #expect(controller.isStoredTransfer)
         try await waitForTransfer()
         let start = try await firstStart()
@@ -431,7 +536,7 @@ import Testing
         #expect(options.lifetimeSeconds == 3600)
 
         try await deliver(.progress(Self.progress(sent: 50)))
-        #expect(controller.phase.name == "transferring")
+        #expect(controller.phase == .transferring)
 
         let receipt = StoredReceipt(
             id: "up1", origin: "https://store.example", uploadToken: "token",
@@ -532,7 +637,14 @@ import Testing
     }
 }
 
-/// `Phase` is not `Equatable`; tests compare its case name and payloads.
+/// Set from an observation's `onChange`, which may run on any thread.
+private nonisolated final class ChangeFlag: Sendable {
+    private let value = Mutex(false)
+    var isSet: Bool { value.withLock { $0 } }
+    func set() { value.withLock { $0 = true } }
+}
+
+/// Case names and payloads, for checks that ignore the rest of a phase.
 extension TransferController.Phase {
     var name: String {
         switch self {
@@ -569,8 +681,8 @@ extension TransferController.Phase {
         return receipt
     }
 
-    var failureCopy: String? {
-        guard case .failed(let copy) = self else { return nil }
-        return copy
+    var failure: TransferFailure? {
+        guard case .failed(let failure) = self else { return nil }
+        return failure
     }
 }

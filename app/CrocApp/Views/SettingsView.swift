@@ -26,9 +26,11 @@ struct SettingsView: View {
     @FocusState private var focusedControl: FocusTarget?
 
     var body: some View {
-        TabView {
-            Tab("General", systemImage: "gearshape") { general }
-            Tab("Advanced", systemImage: "slider.horizontal.3") { AdvancedSettingsView() }
+        TabView(selection: Bindable(AppRouter.shared).settingsTab) {
+            Tab("General", systemImage: "gearshape", value: .general) { general }
+            Tab("Advanced", systemImage: "slider.horizontal.3", value: .advanced) {
+                AdvancedSettingsView()
+            }
         }
     }
 

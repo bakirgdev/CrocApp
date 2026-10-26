@@ -108,7 +108,7 @@ Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols ge
 `Package.swift`: swift-tools 6.0, platforms iOS 26 and macOS 26. Targets: `Croc` (the binary target), `CrocKit`, `crockit-verify` (executable) and `CrocKitTests`.
 
 - `CrocEngine.swift`: `public actor CrocEngine`, and the `TransferEngine` protocol it conforms to.
-  - `TransferEngine` is exactly what `TransferController` calls: `startSend`, `startReceive`, `startStoreSend`, `startStoreReceive`, `respond`, `cancel` and `revokeStored`, all `async`. It exists so the app's tests can stand in a fake engine. `TransferID` and `EngineTransfer` have public initializers for the same reason.
+  - `TransferEngine` is exactly what `TransferController` calls (the starts through `EngineStart`): `startSend`, `startReceive`, `startStoreSend`, `startStoreReceive`, `respond`, `cancel` and `revokeStored`, all `async`. It exists so the app's tests can stand in a fake engine. `TransferID` and `EngineTransfer` have public initializers for the same reason.
   - Holds the one active `CrocmobileTransfer` (`activeTransfer`).
   - `startSend` and `startReceive` return an `EngineTransfer` with an `id: TransferID` and `events: AsyncStream<TransferEvent>`.
   - `startStoreSend`, `startStoreReceive` and `revokeStored` do the same for stored transfers.
@@ -135,8 +135,9 @@ File: `app/CrocApp/Models/TransferController.swift`. A `@MainActor @Observable f
 
 - The only caller of `CrocEngine`. It holds the engine as `any TransferEngine`, a `BackgroundCoordinator` and the `Phase` enum that every view switches on.
 - `init(settings:vault:engine:)` defaults `engine` to `CrocEngine()`. `TransferControllerTests` passes `FakeTransferEngine` (both in `app/CrocAppTests/`).
-- Intents: `startSend`, `startSendText`, `startStoreSend`, `startReceive`, `startStoreReceive`, `respond`, `cancel`, `revoke`.
-- `Phase` cases: `idle`, `starting`, `waiting`, `connecting`, `confirmSend`, `incoming`, `transferring`, `done`, `stored`, `failed`.
+- Intents: `start(_ request: TransferRequest)`, `retry`, `respond`, `cancel`, `reset`, `revoke`. A `TransferRequest` is a file send, a text send, a receive, a stored send or a stored receive.
+- `Phase` cases: `idle`, `starting`, `waiting`, `connecting`, `confirmSend`, `incoming`, `transferring`, `done`, `stored`, `failed`. `Phase` is `Equatable`. Progress lives in `progress`, outside the phase, so a tick does not change it.
+- Pure pieces in their own files under `Models/`: `EngineStart` (the engine call and its options, from a request and the settings), `TransferFailure` (every failure's words and remedy), `HistoryDraft`, `CodeHint`, `SecurityScopes` and `TransferSpeed`.
 - Event-handling rules (why progress must not overwrite `incoming`, why `transferActive` is not retried, copy precedence): `docs/knowledge/app-ui-architecture.md`, "TransferController".
 
 ### SwiftUI views
@@ -158,7 +159,7 @@ Event names are the `TransferEvent` cases. `Phase` is `TransferController.Phase`
 
 ### Send, happy path
 
-1. `SendView` calls `controller.startSend(urls:customCode:)`. Phase becomes `.starting`. On iOS, `BackgroundCoordinator.transferStarted` wraps the transfer. `engine.startSend` starts the Go session.
+1. `SendView` calls `controller.start(.sendFiles(urls:code:))`. Phase becomes `.starting`. On iOS, `BackgroundCoordinator.transferStarted` wraps the transfer. `engine.startSend` starts the Go session.
 2. Go calls `OnCodeReady`, Swift yields `.codeReady(code)`, and phase becomes `.waiting(code:)`. The screen shows the code, a QR code (`QRCodeView`) of the `https://crocapp.dev/r/#<code>` link, and a **Share Link** button.
 3. The peer connects: `OnConnected` gives `.connected`.
    - If the **Confirm on Both Sides** setting (`settings.bothSidesConfirm`, croc's `--ask`) is on, phase becomes `.confirmSend` instead of `.connecting`. Accept calls `respond(accept: true)`. **Cancel** calls `cancel()`.
@@ -169,7 +170,7 @@ Event names are the `TransferEvent` cases. `Phase` is `TransferController.Phase`
 
 ### Receive, happy path (with accept prompt)
 
-1. `ReceiveView` calls `controller.startReceive(code:into:folderIsScoped:)`.
+1. `ReceiveView` calls `controller.start(.receive(code:folder:folderIsScoped:))`. `EngineStart` builds its options:
    - `options.whenFileExists` comes from the settings (Keep Both by default). It applies directly only under auto-accept. Otherwise the incoming sheet's choice goes to `respond(accept:policy:)`.
    - `options.autoAccept = settings.autoAccept && !settings.bothSidesConfirm`. Confirm on Both Sides wins, because engine-level auto-accept closes the prompt pipe, which croc reads as "no".
 2. `OnFileList` gives `.fileList(FileList)`. With auto-accept off, phase becomes `.incoming(list, conflicts: [], blocked: [...])` at once.
@@ -180,14 +181,14 @@ Event names are the `TransferEvent` cases. `Phase` is `TransferController.Phase`
    - Go sets the file policy on the croc client and writes `y\n` to the pipe (once for a receive, once per file for a sender-side confirm). It then writes the policy's answers to croc's other stdin prompts and closes the pipe (`docs/knowledge/crocmobile-bridge.md`).
    - If the check found existing files, the sheet offers **Decline**, **Replace** and **Keep Both**. Otherwise it offers one **Accept** button, which means Keep Both.
    - Phase becomes `.connecting`.
-4. `OnProgress` resumes, and phase becomes `.transferring(TransferProgress)`.
+4. `OnProgress` resumes. Phase becomes `.transferring`, and each tick updates `controller.progress`.
 5. `OnDone` gives `.done`. For a text transfer, `OnText` arrives just before `OnDone`, and the text goes into `Phase.done(_, receivedText:)`.
 
 ### Decline and cancel
 
 - The user declines `.incoming`: `respond(accept: false)` writes `n\n` and sets `declineRequested`.
   - Locally, croc reports `refused files` (code `refused`). The peer gets `refusing files` (code `declined`).
-  - `TransferController.friendlyMessage(for:cancelRequested:declineRequested:stored:)` picks text by code: "You declined the transfer." locally, and "The other device declined or cancelled the transfer." on the peer.
+  - `TransferFailure(_:situation:)` picks the failure by code: "You declined the transfer" locally, and "The other device declined or cancelled" on the peer.
   - A peer's cancel and a peer's decline look the same on the wire.
 - The user cancels mid-transfer: `controller.cancel()` sets `cancelRequested` and calls `engine.cancel(transferID)`. A cancel tapped before the ID exists is applied once it does.
   - This reaches Go `Transfer.Cancel()`, then `session.cancel()`, which cancels the context and also closes the prompt pipe. A context cancel alone does not unblock a pending `GetInput` read.
