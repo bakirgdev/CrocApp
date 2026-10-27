@@ -134,12 +134,16 @@ final class HistoryStore {
         save("prune")
     }
 
+    /// A record deleted while its revoke ran (a prune, or the user) has no
+    /// context left, and writing to it would crash.
     func markRevoked(_ record: TransferRecord, at date: Date = .now) {
+        guard record.modelContext != nil else { return }
         record.revokedAt = date
         save("revoke")
     }
 
     func delete(_ record: TransferRecord) {
+        guard record.modelContext != nil else { return }
         container.mainContext.delete(record)
         save("delete")
     }

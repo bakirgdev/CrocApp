@@ -48,7 +48,8 @@ import Testing
     @Test func aRecentDateReadsRelative() {
         let calendar = englishCalendar
         let day: TimeInterval = 24 * 3600
-        #expect(now.addingTimeInterval(-day).recordText(now: now, calendar: calendar) == "yesterday")
+        #expect(
+            now.addingTimeInterval(-day).recordText(now: now, calendar: calendar) == "yesterday")
         #expect(
             now.addingTimeInterval(-3 * day).recordText(now: now, calendar: calendar)
                 == "3 days ago")
@@ -58,10 +59,21 @@ import Testing
         let calendar = englishCalendar
         let day: TimeInterval = 24 * 3600
         // `now` is 15 January 2027.
-        #expect(now.addingTimeInterval(-8 * day).recordText(now: now, calendar: calendar) == "Jan 7")
+        #expect(
+            now.addingTimeInterval(-8 * day).recordText(now: now, calendar: calendar) == "Jan 7")
         #expect(
             now.addingTimeInterval(-20 * day).recordText(now: now, calendar: calendar)
                 == "Dec 26, 2026")
+    }
+
+    @Test func theWeekBoundaryIsAbsoluteAndTheSecondBeforeItIsRelative() {
+        let calendar = englishCalendar
+        // `now` is 15 January 2027, so a week back is 8 January.
+        let weekAgo = now.addingTimeInterval(-7 * 24 * 3600)
+        #expect(!weekAgo.isWithinAWeek(of: now, calendar: calendar))
+        #expect(weekAgo.addingTimeInterval(1).isWithinAWeek(of: now, calendar: calendar))
+        #expect(weekAgo.recordText(now: now, calendar: calendar) == "Jan 8")
+        #expect(weekAgo.addingTimeInterval(1).recordText(now: now, calendar: calendar) != "Jan 8")
     }
 
     // MARK: - Search
@@ -126,11 +138,85 @@ import Testing
         let (controller, record) = revokableSetup(engine: engine)
         let actions = HistoryActions()
 
-        async let first = actions.revoke(record, with: controller)
-        async let second = actions.revoke(record, with: controller)
-        let failures = await [first, second]
+        let first = Task { await actions.revoke(record, with: controller) }
+        let second = Task { await actions.revoke(record, with: controller) }
+        let failures = await [first.value, second.value]
 
         #expect(failures == [nil, nil])
         #expect(await engine.revokes.count == 1)
+    }
+
+    @Test func revokingARecordDeletedMidwayNeitherCrashesNorMarksIt() async throws {
+        let engine = FakeTransferEngine()
+        let (controller, record) = revokableSetup(engine: engine)
+        let history = try #require(controller.history)
+        let actions = HistoryActions()
+        await engine.holdNextRevoke()
+
+        let revoke = Task { await actions.revoke(record, with: controller) }
+        while !(await engine.isHoldingRevoke) { await Task.yield() }
+        #expect(actions.isRevoking(record))
+        history.delete(record)
+        await engine.releaseRevoke()
+
+        #expect(await revoke.value == nil)
+        #expect(record.revokedAt == nil)
+        #expect(!actions.isRevoking(record))
+        #expect(history.recordCount() == 0)
+        // A second delete of the gone record is a no-op too.
+        history.delete(record)
+    }
+
+    // MARK: - Send Again
+
+    private func resendRecord(bookmarks: [Data]) -> TransferRecord {
+        TransferRecord(
+            isSend: true, status: .completed, isText: false, fileCount: 1, totalBytes: 1,
+            names: ["a.txt"], codeHint: "wiry-…", bookmarks: bookmarks)
+    }
+
+    private func temporaryFile() throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appending(path: "CrocAppResend-\(UUID().uuidString).txt")
+        try Data("hi".utf8).write(to: url)
+        return url
+    }
+
+    @Test func sendAgainWithNoBookmarkReturnsFalseAndStagesNothing() {
+        let router = AppRouter()
+        let record = resendRecord(bookmarks: [])
+
+        #expect(!HistoryActions().resend(record, router: router))
+        #expect(router.pendingSendURLs.isEmpty)
+        #expect(router.path.isEmpty)
+    }
+
+    @Test func sendAgainWithAnUnresolvableBookmarkReturnsFalseAndStagesNothing() {
+        let router = AppRouter()
+        let record = resendRecord(bookmarks: [Data("not a bookmark".utf8)])
+
+        #expect(!HistoryActions().resend(record, router: router))
+        #expect(router.pendingSendURLs.isEmpty)
+    }
+
+    @Test func sendAgainWithADeletedOriginalReturnsFalseAndStagesNothing() throws {
+        let url = try temporaryFile()
+        let bookmark = try #require(SecurityScopedBookmark.create(for: url))
+        try FileManager.default.removeItem(at: url)
+        let router = AppRouter()
+
+        #expect(!HistoryActions().resend(resendRecord(bookmarks: [bookmark]), router: router))
+        #expect(router.pendingSendURLs.isEmpty)
+    }
+
+    @Test func sendAgainWithAReachableOriginalOpensSend() throws {
+        let url = try temporaryFile()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let bookmark = try #require(SecurityScopedBookmark.create(for: url))
+        let router = AppRouter()
+
+        #expect(HistoryActions().resend(resendRecord(bookmarks: [bookmark]), router: router))
+        #expect(router.pendingSendURLs.map(\.lastPathComponent) == [url.lastPathComponent])
+        #expect(router.path == [.send])
     }
 }
