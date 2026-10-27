@@ -91,8 +91,10 @@ struct SendView: View {
         .onAppear {
             SendStaging.purgeOnce()
             consumePendingURLs()
+            consumePendingText()
         }
         .onChange(of: router.pendingSendURLs) { _, _ in consumePendingURLs() }
+        .onChange(of: router.pendingSendText) { _, _ in consumePendingText() }
         // Staged copies go with the screen, unless a transfer is reading them.
         .onDisappear {
             guard !controller.isActive else { return }
@@ -296,6 +298,14 @@ struct SendView: View {
         mode = .text
         text = typed
         return true
+    }
+
+    /// Appends rather than replaces, so text the user already typed survives.
+    private func consumePendingText() {
+        guard let pending = router.pendingSendText else { return }
+        mode = .text
+        text = AppRouter.appending(pending, to: text)
+        router.pendingSendText = nil
     }
 
     // MARK: - Files

@@ -15,6 +15,43 @@
     "%@ Change it in Settings." : {
       "comment" : "The placeholder is a sentence saying what is wrong with the link server."
     },
+    "%@, %@" : {
+      "comment" : "A sidebar row's name, then its state. Both placeholders are words.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%@, receiving %@, %@" : {
+      "comment" : "VoiceOver label of a receive that did not finish. The placeholders are Failed, Cancelled or Declined, what was received, and when.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, receiving %2$@, %3$@"
+          }
+        }
+      }
+    },
+    "%@, sending %@, %@" : {
+      "comment" : "VoiceOver label of a send that did not finish. The placeholders are Failed, Cancelled or Declined, what was sent, and when.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, sending %2$@, %3$@"
+          }
+        }
+      }
+    },
+    "%lld percent" : {
+      "comment" : "Said after a sidebar row's name. The placeholder is a number."
+    },
+    "+ %lld more" : {},
     "1 day" : {},
     "1 hour" : {},
     "7 days" : {},
@@ -37,20 +74,15 @@
     "Allow camera access in Settings to scan QR codes." : {},
     "An Advanced setting can't be used" : {},
     "Another transfer is still running" : {},
-    "Anyone who gets this link can download the files until it expires or runs out. Revoke it any time in History." : {},
-    "Applies to both devices. They find each other on the local network only if both use the same address. Blank uses %@." : {
-      "comment" : "Note under the Multicast Address field. The placeholder is the default multicast address."
-    },
-    "Applies to this device only. Ignored when a SOCKS5 proxy is set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain." : {},
-    "Applies to this device only. Takes priority over the HTTP proxy if both are set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain." : {},
-    "Applies when receiving. Connects straight to the sender at this address and port, skipping relays. Use the sender's base port, 9009 unless they changed it." : {},
-    "Applies when sending. The most this device sends per second, such as 500k, 2m or 1g. The other device is not affected." : {},
+    "Anyone who gets this link can download the files until it expires or runs out. With Save Transfer History off, this screen is the only place to revoke it." : {},
+    "Anyone who gets this link can download the files until it expires or runs out. You can also revoke it later in History." : {},
     "Ask them to send it again." : {},
     "Auto-Accept Transfers" : {},
-    "Auto-Accept Transfers skips the file preview. Leave it off unless you fully trust the sender." : {},
+    "Auto-Accept Transfers saves files without a preview, so leave it off unless you fully trust the sender." : {},
     "Auto-accept can't answer this sender" : {},
     "Auto-accept cancelled the transfer, so ask the sender to rename the files." : {},
     "Blocked: unsafe file names in this transfer." : {},
+    "Both devices need the same address to find each other on the local network, and blank uses %@." : {},
     "Both devices run PAKE (password-authenticated key exchange) to turn the code phrase into a strong encryption key. The code itself never crosses the network, and a wrong code fails immediately." : {},
     "Both sides need croc 11 or newer, so update croc there." : {
       "comment" : "croc is the name of the file-transfer tool and stays untranslated."
@@ -61,6 +93,7 @@
     "Camera scanning isn't available on this device" : {},
     "Camera unavailable" : {},
     "Cancel" : {},
+    "Cancel Transfer" : {},
     "Cancelled" : {
       "comment" : "VoiceOver label of a history row's status icon."
     },
@@ -70,10 +103,12 @@
     "Change…" : {},
     "Check for Updates…" : {},
     "Check the code phrase on both devices." : {},
+    "Check the files, and ask the sender to send any missing ones again." : {},
     "Check the proxies, addresses, ports and send speed limit in Settings > Advanced." : {
       "comment" : "Advanced is the title of a page in Settings."
     },
     "Check the relay password in Settings." : {},
+    "Check with the other device that every file arrived." : {},
     "Check with them before you send it again." : {},
     "Check your connection and try again." : {},
     "Check your internet connection and try again." : {},
@@ -84,9 +119,10 @@
     "Choose Files…" : {},
     "Clear" : {},
     "Clear All" : {},
-    "Clear all history" : {},
+    "Clear History" : {},
     "Clear all history?" : {},
     "Clear link" : {},
+    "Code Hint" : {},
     "Code or Link" : {},
     "Code phrase" : {},
     "Code scanned" : {},
@@ -95,6 +131,7 @@
     },
     "Confirm on Both Sides" : {},
     "Confirmation" : {},
+    "Connecting" : {},
     "Connecting…" : {},
     "Copied" : {},
     "Copy Code" : {},
@@ -110,6 +147,7 @@
     "Couldn't reach the link server" : {},
     "Couldn't reach the relay" : {},
     "Couldn't revoke the link" : {},
+    "Couldn't save to the Keychain" : {},
     "CrocApp" : {
       "shouldTranslate" : false
     },
@@ -117,6 +155,7 @@
     "CrocApp will ask to use your camera (to scan QR codes) and your local network (for faster nearby transfers)." : {},
     "Current file progress" : {},
     "Custom code (optional)" : {},
+    "Date" : {},
     "Decline" : {},
     "Declined" : {
       "comment" : "VoiceOver label of a history row's status icon."
@@ -125,7 +164,10 @@
       "comment" : "Placeholder of the relay password field when none is set."
     },
     "Delete" : {},
+    "Delete and Keep Link" : {},
+    "Delete this record?" : {},
     "Devices on the same network transfer directly, and the data never leaves your network. The local path and the relay race; the faster one wins." : {},
+    "Direction" : {},
     "Disable Compression" : {},
     "Discard" : {},
     "Done" : {},
@@ -136,6 +178,9 @@
     "Drop files or folders here" : {},
     "Drop files to send" : {},
     "Drop to Send" : {},
+    "Edit the field to try again before you quit CrocApp." : {
+      "comment" : "Under a Keychain field whose change was not saved. Until it is, the next launch shows the previous value."
+    },
     "Encrypted on this device. The link server only holds the encrypted files." : {},
     "End-to-end encrypted" : {},
     "Enter a speed such as 500k, 2m or 1g, or leave it blank for no limit." : {},
@@ -150,6 +195,8 @@
     "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner. Share it over a channel you trust; it expires with the transfer." : {},
     "Everything is encrypted on your device and decrypted only on the other one. Nothing in between can read it." : {},
     "Exclude from sends" : {},
+    "Expired" : {},
+    "Expires" : {},
     "Failed" : {
       "comment" : "VoiceOver label of a history row's status icon."
     },
@@ -164,13 +211,15 @@
         }
       }
     },
+    "File Names" : {},
+    "File names" : {},
     "Files" : {},
     "Files are encrypted on this device before they reach %@. Anyone with the link can receive them until it expires or runs out." : {
       "comment" : "Note under the Send as Link switch. The placeholder is the link server's host name."
     },
     "Files are encrypted with the code phrase. The relay only ever sees ciphertext." : {},
     "Files are waiting for your answer" : {},
-    "Files from anyone who has your code are saved without preview or confirmation. Keep Both saves a new copy next to an existing file; Replace overwrites it. Unsafe file names still cancel the transfer. Confirm on Both Sides overrides Auto-Accept Transfers." : {},
+    "Files from anyone who has your code are saved without a preview, unless Confirm on Both Sides is on. Replace overwrites existing files, and unsafe file names still cancel the transfer." : {},
     "Find the sender automatically" : {},
     "Finished sends and receives appear here." : {},
     "Finished transfers are listed in History, which stays on this device." : {},
@@ -185,6 +234,7 @@
     "How croc keeps transfers private" : {},
     "IPv6 Address" : {},
     "It expired, was revoked or has no downloads left, so ask the sender for a new link." : {},
+    "It no longer works for anyone." : {},
     "Keep Both" : {},
     "Link" : {
       "comment" : "VoiceOver label of the text that shows a link."
@@ -198,6 +248,7 @@
       "comment" : "The placeholder is the date and time the link stops working."
     },
     "Link ready" : {},
+    "Link revoked" : {},
     "Link revoked %@" : {
       "comment" : "The placeholder is the date and time the link was revoked."
     },
@@ -210,6 +261,7 @@
     "Lost connection to the other device" : {},
     "Menu bar" : {},
     "Multicast Address" : {},
+    "Name" : {},
     "Network" : {},
     "No limit" : {},
     "No public relay answered" : {},
@@ -223,10 +275,13 @@
     "Open CrocApp" : {},
     "Open CrocApp to accept or decline them." : {},
     "Open Settings" : {},
+    "Open Transfer" : {},
     "Open at Login" : {},
     "Open in Files" : {},
+    "Opens CrocApp at History." : {},
     "Overall progress" : {},
     "Password" : {},
+    "Paste Code…" : {},
     "Patterns, one per line" : {},
     "Performance" : {},
     "Point the camera at the QR code on the other device." : {},
@@ -236,6 +291,8 @@
     "Puts every setting on this page back to croc's default and removes the saved proxies." : {},
     "QR code for the code phrase" : {},
     "QR code for the link" : {},
+    "Quick Look" : {},
+    "Quick Look %@" : {},
     "Quit and reopen CrocApp to transfer again." : {},
     "Ready to send" : {},
     "Receive" : {},
@@ -245,6 +302,17 @@
     "Receive from Link" : {},
     "Receive with CrocApp" : {},
     "Received" : {},
+    "Received %@, %@" : {
+      "comment" : "VoiceOver label of a finished receive. The placeholders are what was received and when, as in \"Received 3 files, yesterday\".",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Received %1$@, %2$@"
+          }
+        }
+      }
+    },
     "Received %lld items." : {
       "comment" : "Spoken or shown by Shortcuts after Receive. The placeholder is how many files or text items arrived.",
       "localizations" : {
@@ -280,11 +348,11 @@
     "Receiving with CrocApp" : {
       "comment" : "Title of the iOS Live Activity while receiving."
     },
+    "Recent transfers" : {},
     "Relay" : {},
     "Remove %@" : {
       "comment" : "VoiceOver label of the button that removes a staged file. The placeholder is the file name."
     },
-    "Removes the list only. Received files stay where they are." : {},
     "Replace" : {},
     "Reset" : {
       "comment" : "Button that sets the receive folder back to the default."
@@ -300,7 +368,11 @@
     },
     "Revoke" : {},
     "Revoke Link" : {},
+    "Revoke Link and Delete" : {},
     "Revoke this link?" : {},
+    "Revoke works only until CrocApp quits" : {},
+    "Revoked" : {},
+    "Revoking link" : {},
     "SOCKS5 Proxy" : {},
     "Same Wi-Fi or different continents, transfers find the fastest path automatically." : {},
     "Save Received Files To" : {},
@@ -310,6 +382,7 @@
     "Scan the QR code on the sending device." : {
       "comment" : "Says what to do after a scanned QR code was not a CrocApp one."
     },
+    "Search file names" : {},
     "Send" : {
       "comment" : "Confirm button of the file chooser."
     },
@@ -321,13 +394,14 @@
     },
     "Send Again" : {},
     "Send Clipboard Text" : {},
+    "Send Clipboard Text…" : {},
     "Send Files" : {},
     "Send Files with CrocApp" : {},
     "Send Speed Limit" : {},
     "Send Text" : {},
     "Send Text with CrocApp" : {},
     "Send as Link" : {},
-    "Send as Link uploads encrypted files to this server. The link server holds them until the link expires and cannot read them; the key is in the link." : {},
+    "Send as Link uploads files, encrypted on your device, to this server. It cannot read them, because the key is in the link." : {},
     "Send as link" : {},
     "Send encrypted files as a link instead of with a code." : {},
     "Send fewer or smaller files, allow fewer downloads, or wait a while before sending again." : {},
@@ -343,22 +417,44 @@
     },
     "Sends files or folders with a croc code and returns the code. Keep CrocApp open until the transfer ends." : {},
     "Sends text with a croc code and returns the code. Keep CrocApp open until the transfer ends." : {},
+    "Sends this device's connections, and Send as Link, through a SOCKS5 proxy, which wins over the HTTP proxy if both are set. Your local network skips it, and the address, with any password in it, is saved in the Keychain." : {},
+    "Sends this device's connections, and Send as Link, through an HTTP proxy, unless a SOCKS5 proxy is set. Your local network skips it, and the address, with any password in it, is saved in the Keychain." : {},
     "Send…" : {},
     "Sent" : {},
+    "Sent %@, %@" : {
+      "comment" : "VoiceOver label of a finished send. The placeholders are what was sent and when, as in \"Sent 3 files, yesterday\".",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sent %1$@, %2$@"
+          }
+        }
+      }
+    },
     "Sent files" : {},
     "Settings" : {},
+    "Settings…" : {},
+    "Share" : {},
+    "Share %@" : {},
     "Share Link" : {},
+    "Share Text" : {},
     "Shared Files" : {},
+    "Show History in Spotlight" : {},
     "Show Receive Folder in Files" : {},
     "Show Receive Folder in Finder" : {},
+    "Show in Files" : {},
     "Show in Finder" : {},
     "Show in Menu Bar" : {},
+    "Size" : {},
     "Some names are already taken" : {},
+    "Spotlight on this device can find past transfers by their file names." : {},
     "Start the same transfer again; replacing the partly received files resumes it." : {
       "comment" : "Replace is the label of a button in the incoming-files prompt."
     },
     "Start the send there first, or use a faster connection, then enter the code again." : {},
     "Starting…" : {},
+    "Status" : {},
     "Straight to the sender, no relay in between" : {},
     "Strong keys from short codes" : {},
     "Support" : {},
@@ -371,6 +467,7 @@
     "That isn't a CrocApp QR code" : {
       "comment" : "Title when a scanned QR code is neither a code phrase nor a link."
     },
+    "That text is too long to send this way. Select less of it." : {},
     "The camera couldn't start. Close this and try again." : {},
     "The cancelled transfer didn't stop" : {},
     "The clipboard has no text to send." : {},
@@ -380,6 +477,8 @@
     "The code phrases don't match" : {},
     "The files are deleted from the link server and the link stops working for everyone." : {},
     "The link server refused this send" : {},
+    "The link still works. Revoke it to delete the files from the link server now, or they stay until it expires." : {},
+    "The most this device sends per second, such as 500k, 2m or 1g." : {},
     "The originals were moved or deleted since that transfer." : {},
     "The other device declined or cancelled" : {},
     "The other device is connected" : {},
@@ -392,8 +491,10 @@
     "The transfer failed" : {},
     "There is nothing to send." : {},
     "This also removes the saved proxies." : {},
+    "This device couldn't save the link to the Keychain, so revoke it before you quit if you want it ended early." : {},
     "This is taking longer than usual. Double-check the code, or the other device may not be ready." : {},
     "This link no longer works" : {},
+    "This removes the list, not the files you received." : {},
     "Those files aren't available anymore" : {},
     "Total %@ / %@" : {
       "comment" : "Total progress of a transfer: bytes done, then the total size. Both placeholders are file sizes such as 12 MB.",
@@ -408,7 +509,6 @@
     },
     "Transfer" : {},
     "Transfer cancelled" : {},
-    "Transfer code" : {},
     "Transfer complete" : {},
     "Transfer finished with errors" : {},
     "Transfer finished with problems" : {},
@@ -434,6 +534,7 @@
     },
     "Via the public croc relay, which sees only encrypted data" : {},
     "Wait for it to end, then try again." : {},
+    "Waiting" : {},
     "Waiting for connection…" : {
       "comment" : "Subtitle of the iOS Live Activity before the transfer has any progress."
     },
@@ -443,6 +544,7 @@
     "What to Send" : {},
     "When a File Already Exists" : {},
     "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay." : {},
+    "When receiving, connects straight to the sender at this address and base port (9009 unless changed), skipping relays." : {},
     "Works anywhere" : {},
     "Works until %@, for ^[%lld download](inflect: true)" : {
       "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows.",
@@ -458,6 +560,7 @@
     "You declined the transfer" : {},
     "You stay in control" : {},
     "Zip Folders Before Sending" : {},
+    "^[%lld file](inflect: true)" : {},
     "^[%lld file](inflect: true) waiting to send" : {
       "comment" : "VoiceOver label of the badge on the Send button. The placeholder is the number of queued files."
     },
@@ -475,10 +578,22 @@
     "^[%lld item](inflect: true) in this transfer share a name with a file here. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files." : {
       "comment" : "Warning in the incoming-files prompt. The placeholder is how many items clash. Keep Both and Replace are the labels of its two buttons."
     },
+    "connecting" : {
+      "comment" : "Said after a sidebar row's name."
+    },
     "iOS paused the transfer" : {},
     "iOS stopped it in the background, so keep CrocApp open and open the link again." : {},
     "iOS stopped it in the background, so keep CrocApp open and try again." : {},
-    "or add them with the buttons below" : {}
+    "needs your answer" : {
+      "comment" : "Said after a sidebar row's name."
+    },
+    "or add them with the buttons below" : {},
+    "transferring" : {
+      "comment" : "Said after a sidebar row's name."
+    },
+    "waiting for the other device" : {
+      "comment" : "Said after a sidebar row's name."
+    }
   },
   "version" : "1.0"
 }

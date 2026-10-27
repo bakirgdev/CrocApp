@@ -18,8 +18,9 @@ struct AdvancedSettingsView: View {
             Section("Network") {
                 AdvancedRow(
                     footnote:
-                        "Applies to this device only. Takes priority over the HTTP proxy if both are set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain.",
-                    error: AppSettings.socks5ProxyError(settings.socks5Proxy)
+                        "Sends this device's connections, and Send as Link, through a SOCKS5 proxy, which wins over the HTTP proxy if both are set. Your local network skips it, and the address, with any password in it, is saved in the Keychain.",
+                    error: AppSettings.socks5ProxyError(settings.socks5Proxy),
+                    notSaved: settings.unsavedSecrets.contains(.socks5Proxy)
                 ) {
                     LabeledField("SOCKS5 Proxy") {
                         TextField(
@@ -31,8 +32,9 @@ struct AdvancedSettingsView: View {
                 }
                 AdvancedRow(
                     footnote:
-                        "Applies to this device only. Ignored when a SOCKS5 proxy is set. Connections on your local network skip the proxy. Also used for Send as Link. Saved in the Keychain.",
-                    error: AppSettings.httpProxyError(settings.httpProxy)
+                        "Sends this device's connections, and Send as Link, through an HTTP proxy, unless a SOCKS5 proxy is set. Your local network skips it, and the address, with any password in it, is saved in the Keychain.",
+                    error: AppSettings.httpProxyError(settings.httpProxy),
+                    notSaved: settings.unsavedSecrets.contains(.httpProxy)
                 ) {
                     LabeledField("HTTP Proxy") {
                         TextField(
@@ -44,7 +46,7 @@ struct AdvancedSettingsView: View {
                 }
                 AdvancedRow(
                     footnote:
-                        "Applies to both devices. They find each other on the local network only if both use the same address. Blank uses \(AppSettings.advancedDefaults.multicastAddress).",
+                        "Both devices need the same address to find each other on the local network, and blank uses \(AppSettings.advancedDefaults.multicastAddress).",
                     error: AppSettings.multicastAddressError(settings.multicastAddress)
                 ) {
                     LabeledField("Multicast Address") {
@@ -57,7 +59,7 @@ struct AdvancedSettingsView: View {
                 }
                 AdvancedRow(
                     footnote:
-                        "Applies when receiving. Connects straight to the sender at this address and port, skipping relays. Use the sender's base port, 9009 unless they changed it.",
+                        "When receiving, connects straight to the sender at this address and base port (9009 unless changed), skipping relays.",
                     error: AppSettings.senderIPError(settings.peerIP)
                 ) {
                     LabeledField("Sender IP") {
@@ -73,7 +75,7 @@ struct AdvancedSettingsView: View {
             Section("Performance") {
                 AdvancedRow(
                     footnote:
-                        "Applies when sending. The most this device sends per second, such as 500k, 2m or 1g. The other device is not affected.",
+                        "The most this device sends per second, such as 500k, 2m or 1g.",
                     error: AppSettings.throttleError(settings.throttleUpload)
                 ) {
                     LabeledField("Send Speed Limit") {
@@ -87,13 +89,18 @@ struct AdvancedSettingsView: View {
             }
 
             Section {
-                Button("Reset to Defaults") { confirmReset = true }
-                    .buttonVariant(.plain)
-                    .disabled(settings.advancedIsDefault)
+                Button {
+                    confirmReset = true
+                } label: {
+                    Text("Reset to Defaults").hitTarget()
+                }
+                .buttonVariant(.plain)
+                .disabled(settings.advancedIsDefault)
             } footer: {
                 Text(
                     "Puts every setting on this page back to croc's default and removes the saved proxies."
                 )
+                .foregroundStyle(Color.textSecondary)
             }
         }
         .formStyle(.grouped)
@@ -117,6 +124,8 @@ struct AdvancedSettingsView: View {
 private struct AdvancedRow<Content: View>: View {
     let footnote: LocalizedStringKey
     var error: String?
+    /// The value's Keychain write failed (`AppSettings.unsavedSecrets`).
+    var notSaved = false
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -127,9 +136,16 @@ private struct AdvancedRow<Content: View>: View {
                 StatusBanner(kind: .error, title: error)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            if notSaved {
+                StatusBanner(
+                    kind: .error, title: AppSettings.secretNotSavedTitle,
+                    detail: AppSettings.secretNotSavedDetail
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
             Text(footnote)
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, Spacing.space2)
@@ -161,11 +177,13 @@ private struct LabeledField<Field: View>: View {
 }
 
 extension View {
-    fileprivate func urlEntry() -> some View {
+    /// A host or URL field: no autocapitalization or autocorrection, and the
+    /// URL keyboard. Shared with the relay and link server fields.
+    func urlEntry() -> some View {
         #if os(iOS)
-        textInputAutocapitalization(.never).keyboardType(.URL)
+        textInputAutocapitalization(.never).keyboardType(.URL).autocorrectionDisabled()
         #else
-        self
+        autocorrectionDisabled()
         #endif
     }
 

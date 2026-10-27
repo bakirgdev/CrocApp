@@ -6,10 +6,31 @@ import SwiftUI
 struct OnboardingView: View {
     let done: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     // components.md → OnboardingSheet: mark glyph 56, scaled with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var markSize: CGFloat = 56
+    // components.md → OnboardingSheet: bullet glyphs at --icon-size-lg.
+    @ScaledMetric(relativeTo: .title3) private var bulletGlyphSize: CGFloat = IconSize.large
+    /// The glyph column's minimum width, as a multiple of the glyph size.
+    private static let glyphColumnRatio: CGFloat = 1.25
 
     var body: some View {
+        // Scrolls when the text is large enough that the column is taller than
+        // the sheet. Content that fits is centered, as before.
+        ScrollView {
+            column
+                .padding(Spacing.space8)
+                .frame(maxWidth: .infinity)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .defaultScrollAnchor(.center, for: .alignment)
+        #if os(macOS)
+        .frame(width: LayoutCap.contentMaxWidth)
+        #endif
+    }
+
+    private var column: some View {
         VStack(spacing: Spacing.space7) {
             Image(systemName: "arrow.left.arrow.right.circle.fill")
                 .font(.system(size: markSize))
@@ -44,7 +65,7 @@ struct OnboardingView: View {
                 "CrocApp will ask to use your camera (to scan QR codes) and your local network (for faster nearby transfers)."
             )
             .font(.footnote)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.textSecondary)
             .multilineTextAlignment(.center)
             .frame(maxWidth: LayoutCap.contentMaxWidth)
             #endif
@@ -58,25 +79,30 @@ struct OnboardingView: View {
             .controlSize(.large)
             .frame(maxWidth: LayoutCap.contentMaxWidth)
         }
-        .padding(Spacing.space8)
-        #if os(macOS)
-        .frame(width: LayoutCap.contentMaxWidth)
-        #endif
     }
 
     private func bullet(
         _ icon: String, _ title: LocalizedStringKey, _ text: LocalizedStringKey
     ) -> some View {
-        HStack(alignment: .top, spacing: Spacing.space4) {
+        // The glyph sits above the text at accessibility sizes: a glyph column
+        // would leave the text a few characters per line.
+        let stacked = dynamicTypeSize.isAccessibilitySize
+        let layout =
+            stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space3))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: Spacing.space4))
+        return layout {
             Image(systemName: icon)
-                .font(.title3)
+                .font(.system(size: bulletGlyphSize))
                 .foregroundStyle(Color.accentFill)
                 // minWidth, not a fixed width: a fixed frame clips the glyph
-                // at accessibility text sizes.
-                .frame(minWidth: IconSize.large)
+                // at accessibility text sizes. The width has headroom over the
+                // glyph so every bullet's text starts at the same x: the globe
+                // is about 1.1 times its size. Stacked, there is no column.
+                .frame(minWidth: stacked ? nil : bulletGlyphSize * Self.glyphColumnRatio)
             VStack(alignment: .leading, spacing: Spacing.space1) {
                 Text(title).font(.headline)
-                Text(text).font(.callout).foregroundStyle(.secondary)
+                Text(text).font(.callout).foregroundStyle(Color.textSecondary)
             }
         }
         .accessibilityElement(children: .combine)

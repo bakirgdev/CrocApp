@@ -29,11 +29,19 @@ Turn the icon off with **Show in Menu Bar**, or start CrocApp at login with **Op
 
 ## Keyboard shortcuts
 
-These work on Mac and on iPad with a keyboard. **Send…** and **Receive…** are disabled while a transfer is running.
+These work on Mac and on iPad with a keyboard. The toolbar's History, How It Works and Settings buttons each have a menu item with a shortcut. **Send…**, **Send Clipboard Text…**, **Receive…** and **Paste Code…** are disabled while a transfer is running.
 
 | Command | Shortcut |
 |---|---|
 | **Send…** (File menu) | ⌘1 |
+| **Send Clipboard Text…** (File menu) | ⌥⌘1 |
 | **Receive…** (File menu) | ⌘2 |
+| **Paste Code…** (File menu) | ⌥⌘2 |
+| **History** (File menu) | ⌘3 |
 | **Show Receive Folder in Finder** (Mac) or **Show Receive Folder in Files** (iPad) | ⇧⌘R |
-| Settings (Mac) | ⌘, |
+| **Cancel Transfer** (Transfer menu), while a transfer can be cancelled | ⌘. |
+| **Copy Code** (Transfer menu), while a code is showing | ⇧⌘C |
+| **How It Works** (Help menu) | ⌘? |
+| **Settings…** (the Settings window on Mac, the app menu on iPad) | ⌘, |
+
+**Send Clipboard Text…** opens **Send** with the text on the clipboard in the **Text** tab. **Paste Code…** opens **Receive** with the code phrase or link on the clipboard in the code field. Neither starts a transfer: you tap **Send** or **Receive**. On iPad, iPadOS may ask you to allow CrocApp to paste the first time.

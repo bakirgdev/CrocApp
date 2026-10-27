@@ -39,6 +39,49 @@
 	<array>
 		<string>_crocapp._tcp</string>
 	</array>
+	<!-- The Services menu entry "Send with CrocApp" (SendServicesProvider):
+	     one entry for selected files, one for selected text. NSMessage names
+	     the provider's method; NSPortName is the product name, which is
+	     "CrocApp" for every Mac build. NSRequiredContext is an empty dictionary
+	     on purpose: a service without the key is registered but never shown.
+	     The title is localized through ServicesMenu.xcstrings. -->
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Send with CrocApp</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>sendFiles</string>
+			<key>NSPortName</key>
+			<string>CrocApp</string>
+			<key>NSRequiredContext</key>
+			<dict/>
+			<key>NSSendFileTypes</key>
+			<array>
+				<string>public.item</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Send with CrocApp</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>sendText</string>
+			<key>NSPortName</key>
+			<string>CrocApp</string>
+			<key>NSRequiredContext</key>
+			<dict/>
+			<key>NSSendTypes</key>
+			<array>
+				<string>NSStringPboardType</string>
+			</array>
+		</dict>
+	</array>
 	<key>SUFeedURL</key>
 	<string>$(SPARKLE_FEED_URL)</string>
 	<key>SUPublicEDKey</key>

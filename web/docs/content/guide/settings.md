@@ -8,7 +8,7 @@ description: Every CrocApp setting in the order the app lists them, with default
 
 ![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-light.webp#gh-light-mode-only)![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-dark.webp#gh-dark-mode-only)
 
-On a Mac, open Settings with ⌘, and use the **General** and **Advanced** tabs. On iOS, tap the gear on the home screen. **Advanced** is a row at the bottom of that screen.
+On a Mac, open Settings with ⌘, and use the **General** and **Advanced** tabs. On iPad, choose **Settings** in the sidebar. On iPhone, or in a narrow iPad window, tap the gear on the home screen. **Advanced** is a row at the bottom of that screen.
 
 Settings stay on the device. There is no sync and no account. Defaults suit most people.
 
@@ -21,6 +21,7 @@ The **Menu bar** section has **Show in Menu Bar** (on by default) and **Open at 
 ## History and haptics
 
 - **Save Transfer History** (on by default): finished transfers are listed in [History](history.md), which stays on this device. Turn it off and new transfers are no longer recorded. What is already in History stays until you delete it, and the History screen says "History is off" while it is empty. A [Send as link](send-as-link.md) upload sent while this is off leaves no row, so you cannot revoke that link later. It stops working when it expires.
+- **Show History in Spotlight** (off by default): Spotlight on this device can find past transfers by their file names. It needs **Save Transfer History** on. Turn it off, or turn off **Save Transfer History**, and CrocApp removes what it added to Spotlight. Code phrases are never added.
 - **Haptics** (iPhone only, on by default): a short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer. Turn it off to silence all of them. Each event still shows on screen.
 
 ## Relay
@@ -91,4 +92,4 @@ The badge reads your settings. It does not report which path carried the data. A
 
 ## What is stored
 
-Settings are stored on the device. The relay password, the two proxies and Send as link receipts are in the Keychain. Nothing in Settings, no transfer content and no code phrase is sent anywhere except as part of a transfer you start. See [Uninstall and data](../uninstall.md) for where it all lives.
+Settings are stored on the device. The relay password, the two proxies and Send as link receipts are in the Keychain. If the relay password or a proxy cannot be saved there, its field shows "Couldn't save to the Keychain": the new value works until you quit CrocApp, so edit the field to try again. Nothing in Settings, no transfer content and no code phrase is sent anywhere except as part of a transfer you start. See [Uninstall and data](../uninstall.md) for where it all lives.

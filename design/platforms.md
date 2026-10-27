@@ -21,11 +21,11 @@ The app has two layouts and picks one by width, never by device. Width is the ho
 
 **Sidebar.** Rows in this order: Send, Receive, History, and on iPad Settings (glyphs in `iconography.md`). The system's sidebar style, selection and material; we draw nothing on it (`materials.md`). The row of the active transfer's direction shows its state (`components.md` → SidebarRow). How It Works stays a toolbar button on the detail and pushes inside the detail column, as Advanced settings does.
 
-**Columns.** Two, no content column. The sidebar takes the system's default width on every platform, with no override: three short rows need no width control, and the system owns how it shows, hides and resizes it. The detail takes the rest.
+**Columns.** Two, no content column. The sidebar takes the system's default width on iPad, and the system owns how it shows, hides and resizes it on both platforms. On the Mac the default is 144, which cuts "Receive" to an ellipsis beside its Review badge (measured with the real rows), so the Mac sidebar asks for a minimum of 200, an ideal of 240 and a maximum of 320, and the user can still drag it. The detail takes the rest.
 
 **The cap inside the detail.** The detail column fills the window; its content does not. Each detail screen caps its content at `--content-max-width` and centers it, so extra width is margin on both sides and text never lengthens (`spacing-layout.md` → Layout cap). The cap sits on the screen's content, never on the split view, the sidebar or a toolbar. Forms, lists and the transfer screens all take it. A sheet presents as a form sheet at its own width.
 
-**A live request is never lost** (`components.md` → AcceptGate). In regular width the Receive row carries a Review badge, and every detail screen except the gate shows the same info banner at its top, because the sidebar can be hidden.
+**A live request is never lost** (`components.md` → AcceptGate). In regular width the Receive row carries a Review badge, and every detail screen except the gate shows the same info banner at its top, because the sidebar can be hidden. "Except the gate" means the row of the transfer's direction is selected and nothing is pushed over it: a screen pushed on top of the gate carries the banner. The banner's **Review** selects that row and answers nothing. A send that asks both sides to confirm is the same kind of question: the Send row carries the badge, and the banner uses the confirm screen's own words ("The other device is connected").
 
 ## Windows and scenes
 
@@ -41,19 +41,38 @@ The baseline every screen is designed at: compact width, touch only, no hover, s
 
 Regular width gets the sidebar layout, compact width the iPhone layout (above).
 
-- **Menu bar.** `AppCommands` reaches iPad through the hardware-keyboard menu bar, so every menu action has a keyboard-reachable equivalent.
+- **Menu bar.** `AppCommands` reaches iPad through the hardware-keyboard menu bar, so every menu action has a keyboard-reachable equivalent. The commands are the Mac's (macOS → Menu bar commands), plus **Settings…** (⌘,) in the app menu, because the iPad has no Settings scene.
 - **Pointer.** A trackpad gives iPad hover (below) and pointer effects on bare icon buttons. Nothing may require a pointer, because most iPads have none.
 - **Sheets** present as form sheets in regular width. Their content does not change.
 
 ## macOS
 
-- **Windows.** The main window opens at 880×700, minimum 720×560. The minimum is `--content-max-width` plus 240 for the sidebar: SwiftUI sized a three-row sidebar at 144 in a bare window on macOS 27, and 240 leaves room for its trailing state (not measured with the real rows: re-measure when the sidebar ships and raise the minimum if it needs more). The opening width is 240 plus 640, which leaves the 480 column 80 of margin on each side. Settings opens at 480×780, minimum 480×420: it is one form, not a split view.
+- **Windows.** The main window opens at 880×700, minimum 720×560. The minimum is `--content-max-width` plus 240 for the sidebar at its ideal width (Layout by width → Columns), so the detail never drops under the column at the sidebar's default. The opening width is 240 plus 640, which leaves the 480 column 80 of margin on each side. A window frame saved by an earlier build wins over the opening size, and the minimum clamps it. Settings opens at 480×780, minimum 480×420: it is one form, not a split view.
 - **No tab bar and no third column.** The sidebar is the system's: the user can hide it.
 - **Settings** is the Settings scene (⌘,), a grouped `Form` (`components.md` → System controls).
 - **Menu bar extra.** A 300-wide window for quick sends (`components.md` → MenuBarQuickSend). Its icon and the Dock tile carry the transfer's state (System surfaces).
 - **Drop is window-wide**, with the overlay (`components.md` → DropZone).
 - **No camera, no QR scan, no local-network prompt.** Absent, not disabled, and no placeholder.
-- **Menu bar is a real surface.** Anything the toolbar can do, the menu can do, with a shortcut. Right-click menus are additive shortcuts.
+- **Menu bar is a real surface.** Anything the toolbar can do, the menu can do, with a shortcut. Right-click menus are additive shortcuts. The commands are below.
+
+### Menu bar commands
+
+Labels follow `content.md` → Capitalization: Title Case, and an ellipsis only where the command opens something to finish. Every command that moves the user goes through `AppRouter` (`swiftui.md` → Navigation), so it lands in either layout.
+
+| Menu | Command | Shortcut | Enabled | What it does |
+|---|---|---|---|---|
+| File | **Send…** | ⌘1 | no transfer is active | opens Send |
+| File | **Send Clipboard Text…** | ⌥⌘1 | no transfer is active | opens Send with the pasteboard's text in the Text tab. Never starts a send |
+| File | **Receive…** | ⌘2 | no transfer is active | opens Receive |
+| File | **Paste Code…** | ⌥⌘2 | no transfer is active | opens Receive with the pasteboard's code phrase or link in the code field. Never connects, the same rule as a deep link |
+| File | **History** | ⌘3 | always | opens History (the toolbar's clock) |
+| File | **Show Receive Folder in Finder** (Files on iPad) | ⇧⌘R | always | opens the receive folder |
+| Transfer | **Cancel Transfer** | ⌘. | the phase offers Cancel: starting, waiting, connecting, a send's confirm, transferring. Never at the accept gate (`components.md` → AcceptGate) | cancels the transfer |
+| Transfer | **Copy Code** | ⇧⌘C | a send is waiting and shows its code | copies the code phrase |
+| Help | **How It Works** | ⌘? | always | pushes How It Works on the screen that is open (the toolbar's lock) |
+| App (iPad) | **Settings…** | ⌘, | always | opens Settings. On the Mac the system's own **Settings…** item opens the Settings scene |
+
+The two clipboard commands read the pasteboard when chosen. iOS may ask the user to allow that paste. A command that finds nothing usable still opens its screen, empty. **Clear** in History has no menu item (`docs/known-issues.md`).
 
 ## Web
 

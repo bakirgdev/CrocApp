@@ -113,6 +113,8 @@ swift test --package-path CrocKit
 (cd app && xcodebuild test -scheme CrocApp -destination 'platform=macOS')
 ```
 
+`scripts/verify-swift.sh` runs both, rebuilding the xcframework first when it is missing or older than `crocmobile/`. The SDLC commit gate runs it (`docs/knowledge/tooling.md`, "In use").
+
 Design and docs, no toolchain needed:
 
 ```bash
@@ -137,7 +139,7 @@ Every suite is a unit test with no network. Transfers are proven by the harnesse
 |---|---|---|
 | `crocmobile/*_test.go` (Go `testing`, plus `Fuzz*` targets) | `go test -race ./...` in `crocmobile/` | `session_test.go`: option mapping, prompt answers and policy, progress and file-list JSON, name handling, the transfer lock and the cancel watchdog. `errors_test.go`: error classification. `network_test.go`: Advanced option validation and `ValidateSetting` (the value tables for every setting the app checks), the fixed relay ports and the process-global proxy state. `relay_test.go`: public relay pool, code-to-relay mapping, and `CancelStart` during the relay probe. `store_test.go`: stored transfers (send, receive, revoke, limits) |
 | `CrocKit/Tests/CrocKitTests` (Swift Testing) | `swift test --package-path CrocKit` | `CrocOptionsMappingTests`: Swift options to the Go struct. `DelegateBridgeTests`: callbacks to the event stream. `EngineFailureTests`: failure codes. `EngineSettingTests`: `EngineSetting.validate` reaches a real engine check for every case. `SendPathValidationTests`: refused send paths. `StoreEngineTests`: the stored-transfer wrappers. Cancel behavior is in `CrocEngineCancelTests` |
-| `app/CrocAppTests` (Swift Testing, scheme `CrocApp`) | `xcodebuild test -scheme CrocApp` | `TransferControllerTests`: the `TransferController` state machine (phases, failure copy, engine calls, history records) driven by `FakeTransferEngine`. Settings persistence (on `MemorySettingsStorage`, so no suite writes a preferences file), the Save Transfer History gate, `SettingsValidationTests` (each settings field asks the engine and shows its own text), `TransferLink` parsing, code hints, friendly failure messages, received names and file location, History upgrade, the stored-transfer vault, the Show in Menu Bar setting, app info |
+| `app/CrocAppTests` (Swift Testing, scheme `CrocApp`) | `xcodebuild test -scheme CrocApp` | `TransferControllerTests`: the `TransferController` state machine (phases, failure copy, engine calls, history records) driven by `FakeTransferEngine`. Settings persistence (on `MemorySettingsStorage`, so no suite writes a preferences file), the Save Transfer History gate, `SettingsValidationTests` (each settings field asks the engine and shows its own text), `TransferLink` parsing, code hints, friendly failure messages, received names and file location, the share-extension manifest filter (`ShareInboxTests`), History upgrade, the stored-transfer vault, the Show in Menu Bar setting, app info |
 
 ## Verification harnesses
 
@@ -207,7 +209,7 @@ The harness starts the relay as `$CROC --debug relay --host 127.0.0.1` on five f
 - `scripts/verify-app-mac.sh` and `scripts/capture-screenshots.sh` pass `-allowProvisioningUpdates` to their macOS `xcodebuild`.
 - Xcode needs an account in team `HBSU359M33`.
 - On a new Mac, also pass `-allowProvisioningDeviceRegistration` once, so the Mac is registered as a development device.
-- A contributor outside that team cannot sign these builds. Unsigned builds (`CODE_SIGNING_ALLOWED=NO`, what CI does) still work.
+- A contributor outside that team cannot sign these builds. Unsigned builds (`CODE_SIGNING_ALLOWED=NO`, what CI does) still build and pass the tests, but an unsigned Mac app cannot use the Keychain: the relay password, the proxies and Send as Link receipts do not persist (`docs/known-issues.md`, "App and UI").
 
 **Trap**: a harness case that tests an answer given mid-transfer must start the transfer with the opposite or default setting, or it proves only the start options. `croctest -policy` sets the Options only under `-yes`, and `AutoVerify --when-exists` answers the sheet without touching `settings.whenFileExists`.
 

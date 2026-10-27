@@ -4,8 +4,16 @@ import AppKit
 /// Receives open events: file drops (Dock icon, Finder "Open With") go to the
 /// Send flow, receive links (crocapp:// and universal links) to Receive.
 /// SwiftUI has no scene-level equivalent for application(_:open:) in a
-/// non-document app, hence the delegate adaptor.
+/// non-document app, hence the delegate adaptor. It also registers the
+/// Services provider.
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private let servicesProvider = SendServicesProvider()
+
+    /// The Services menu entry "Send with CrocApp" (`SendServicesProvider`).
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.servicesProvider = servicesProvider
+    }
+
     /// A SwiftUI `Window` as the main scene quits the app when it closes. This
     /// app outlives its window: a transfer keeps running and the menu-bar item
     /// stays (the old `WindowGroup` behavior).

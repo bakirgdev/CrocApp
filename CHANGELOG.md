@@ -12,15 +12,28 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- Past transfers are offered to Shortcuts and Siri: a **Find Transfers** action filters them by date, direction, status or file name, and a found transfer opens CrocApp at History. They answer with nothing while **Save Transfer History** is off.
+- **Show History in Spotlight** in Settings (off by default). Turn it on and Spotlight can find past transfers by their file names; turn it off, or turn off **Save Transfer History**, and CrocApp removes every transfer it added to Spotlight. Code phrases and code hints never go to Spotlight.
+- **Send with CrocApp** in the Services menu on a Mac. Select files in Finder, or text in any app, choose it from the app menu's Services submenu, and CrocApp opens at Send with the selection staged. Nothing is sent until you press Send. Text over 1 MiB is refused.
+- History rows open a detail screen with the status, date, size, file names and link, and **Send Again**, **Revoke Link** and **Delete**. On a Mac, double-click a row or press Return.
+- Deleting a History row whose Send as Link link still works asks whether to revoke the link first, so the files do not stay on the link server with no way to revoke them. **Delete** is disabled while that link is being revoked.
 - **Add Photos** on iPhone and iPad sends photos and videos from your library under their own file names, without a Photos permission prompt. **Send** waits while they load, and leaving the screen before they finish discards the copies.
 - Send takes pasted and dropped images and text as well as files. On a Mac, ⌘V on the Send screen stages them, and on an iPad with a keyboard it works from iOS 27.
 - Receive scans a QR code that is not from CrocApp with a message saying so, and keeps the camera running instead of closing.
 - **Save Transfer History** in Settings (on by default). Turn it off and finished transfers are no longer listed in History. What is already there stays until you delete it, and History says "History is off" while it is empty.
 - **Haptics** in Settings on iPhone (on by default). Turn it off to silence every tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer.
+- **Recent transfers** on the iPhone home screen (and on iPad in a narrow window): your latest three transfers, finished, failed, cancelled or declined, sit below Send and Receive, and a tap opens History. With no transfers yet it says so, and with **Save Transfer History** off the list is not shown.
+- **Revoke Link** on the **Link ready** screen, so you can end a link right after sending it. It works with **Save Transfer History** off too, where History never lists the link. If this device could not save the link to the Keychain, the screen warns that revoking works only until CrocApp quits.
+- The result of a receive lists the files and folders that arrived, with their sizes. Tap a file for Quick Look, use its share button, or use the context menu for **Show in Finder** (**Show in Files** on iOS, for the default folder). On a Mac and iPad you can also drag a file out.
 - iPhone and iPad find a device on the same network the way a Mac does, so a transfer between them can stay on your local network, including with **Local Network Only**. **Multicast Address** is now in Advanced settings on iOS too.
+- A sidebar on iPad and Mac. **Send**, **Receive** and **History** sit beside the screen they open, and **Settings** joins them on iPad (the Mac keeps its Settings window, ⌘,). The layout follows the window width as you resize it: a wide window gets the sidebar, and iPhone, Slide Over and a narrow Split View keep the single-column Home. While a transfer runs, its row says **Connecting**, **Waiting** or the percent, and when the other device is waiting for your answer the row shows **Review** and every other screen shows the same banner, so a hidden sidebar never hides it. Opening a link, dropping a file or an incoming request never switches the screen you are on.
+- New menu bar commands, each with a shortcut: **History** (⌘3), **How It Works** (⌘?), **Cancel Transfer** (⌘.) while a transfer can be cancelled, and **Copy Code** (⇧⌘C) while a code is showing. **Send Clipboard Text…** (⌥⌘1) and **Paste Code…** (⌥⌘2) fill in Send and Receive from the clipboard and never start a transfer themselves. iPad shows them in the hardware-keyboard menu bar, with **Settings…** (⌘,).
 
 ### Changed
 
+- The relay password, the proxies and Send as link receipts stay on this device: they are never synced, and a backup restored to a new device does not bring them back. On iPhone and iPad this applies to each one from the next time it is saved. If the relay password or a proxy cannot be saved to the Keychain, its field now says so instead of seeming saved.
+- The home screen's banner for a transfer that waits for your answer now fades in and moves into place, and Send and Receive slide down with it instead of jumping. It appears at once with Reduce Motion on. The home page now sits on the grouped background and scrolls with large text.
+- The welcome screen scrolls instead of clipping at the largest text sizes. It and How It Works have larger glyphs with the text aligned beside them, and at the largest sizes the glyph moves above the text so the words keep the full width. Their secondary text is darker, so it clears the 4.5:1 contrast mark.
 - Send and Receive keep the caret where a keyboard is likely: in the code field on a Mac, and on an iPad with a hardware keyboard. Return starts a receive, and the code field waits until you finish typing before it says a code is too short.
 - The Send and Receive screens scroll at the largest text sizes, and the Text box shows a focus ring while you type in it.
 - An empty file now reads "0 bytes" in the send list.
@@ -31,12 +44,16 @@ extra sections where a release needs them, and the project follows
 - The website and docs are refreshed. The docs are reorganized around what you are doing (one Settings page in the app's own order, Verify a release under Getting started, Send as link and a keyboard shortcut reference), with a new Uninstall and data page, many accuracy fixes, and redirects from the old addresses. The home page leads with "Send files with a code phrase" and shows the iPhone app beside the Mac one.
 - The website and docs use the app icon as their favicon and home-screen icon, and a new social preview card.
 - The screen that asks you to accept a transfer shows a Receiving header, the encryption badge and the file list as rows. Its Cancel button is gone: Decline answers the other device, leaving the screen gives no answer, and Home shows a banner to return to a request that is still waiting.
+- A transfer you cancel or decline, and a link you revoke, ends on a neutral grey mark instead of a red failure. A transfer that croc finishes without marking it successful now reads **Transfer finished with problems**, with the next step, instead of **Transfer complete**.
+- A file name from another device is drawn with any hidden or text-direction character shown as its code point (for example `\u{202E}`) in the file list, the progress screen, the result and History, so a name cannot pretend to be another one. A name with such a character is still blocked.
 - Send as Link now says Sending and Receiving like every other transfer, and copying the code shows "Copied".
 - On iPhone, a light haptic marks a finished, failed or incoming transfer and a copied or scanned code. Cancelling or declining yourself stays silent.
 - Settings labels use title case, and "Auto-accept incoming files" is now "Auto-Accept Transfers".
+- **Copy Code** and **Copy Link** now ask the system to remove what they copied from the clipboard after 5 minutes, unless you copied something else since. On a Mac, CrocApp does the removing itself, and only while it is running. It also marks the copy with the nspasteboard.org convention, so clipboard managers that follow it skip the copy. **Copy Link** now asks to stay on this device on a Mac too, as it already did on iPhone and iPad.
 - The transfer engine is croc v11.5.5. Transfers stay compatible with croc 11 on the other device.
 - The update checker in the direct-download Mac build is Sparkle 2.10.1. It fixes an update installing too early when the app sits at a path in NFC Unicode form.
 - CrocApp has one main window on Mac and iPad. One transfer runs at a time, so a second window could only mirror the first and walk its own screens. On iPad the app no longer opens a second window of itself. On Mac, closing the window leaves CrocApp running in the menu bar, and a link, the Dock icon or **Open CrocApp** brings the window back.
+- The Mac window opens wider (880 by 700) with a minimum of 720 by 560, to fit the sidebar. A window saved at the old size grows to the new minimum.
 
 ### Removed
 
@@ -56,6 +73,7 @@ extra sections where a release needs them, and the project follows
 
 ### Security
 
+- An incoming file name that uses a text-direction control (which can make a name ending in `.exe` read as `.pdf`) or a line or paragraph separator is now blocked like any other unsafe name. A combining mark can no longer hide a `/` or `\` in a name from that check. A file shared to CrocApp from the iPhone or iPad share sheet under such a name is renamed `shared-file`.
 - The transfer engine is built with Go 1.27.3, which stops trusting a set of compromised intermediate certificates ([GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809)). This covers the HTTPS connections the engine makes, such as Send as link.
 
 ## [1.0.0] - 2026-10-15

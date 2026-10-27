@@ -12,7 +12,7 @@ CrocApp is a native SwiftUI app for iOS, iPadOS and macOS 26. It embeds [croc](h
 - `TransferController` is the only code that calls `CrocEngine`.
 - Everything above that is SwiftUI views reacting to one `@Observable` state machine.
 
-The SwiftUI sources build three targets. `app/Shared/` is a folder group compiled into all three (today only `ShareHandoff.swift`, the share-handoff contract):
+The SwiftUI sources build three targets. `app/Shared/` is a folder group compiled into all three (`ShareHandoff.swift`, the share-handoff contract, and `ReceivedName.swift`, the rule for a file name that arrives from outside, which the extension applies when it stages a file):
 
 | Target | Platforms | Channel |
 | --- | --- | --- |
@@ -144,7 +144,7 @@ File: `app/CrocApp/Models/TransferController.swift`. A `@MainActor @Observable f
 
 Folder: `app/CrocApp/Views/`.
 
-- `HomeView` is the only `NavigationStack`. It uses value-based `AppRouter.Route` links.
+- `ContentView` picks the layout from the horizontal size class. Compact width shows `HomeView`, which owns the one `NavigationStack`. Regular width shows `RegularLayout`, a `NavigationSplitView` whose detail has one `NavigationStack` per sidebar row. Both use value-based `AppRouter.Route` links and the one `AppRouter.path` (`docs/knowledge/app-ui-architecture.md`, "Layout by width").
 - `SendView` and `ReceiveView` show an input form when `controller.isActive` is false, otherwise `TransferStatusView`.
 - `TransferStatusView` draws every non-idle `Phase`. `IncomingRequestView` (same file) is the accept screen.
 - `SettingsScreen` (iOS, a route) and `SettingsView` (macOS `Settings` scene) both embed `PowerSettingsSections`.
@@ -227,7 +227,7 @@ Persistence:
 | Output folder | `UserDefaults` key `outputFolderBookmark` | `OutputFolderStore`; security-scoped bookmark on macOS |
 | Transfer history | SwiftData, `TransferRecord` `@Model` | `HistoryStore`; in memory under the harness |
 | Stored-upload receipts | Keychain, one item `storedReceipts` | `StoredTransferVault`; removed on revoke and when expired; in memory under the harness |
-| Share-extension handoff | App Group container `group.com.bakirgdev.CrocApp` | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads; the names and the manifest type are `app/Shared/ShareHandoff.swift`, compiled into both |
+| Share-extension handoff | App Group container `group.com.bakirgdev.CrocApp` | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads; the names, the manifest type and the batch-name check are `app/Shared/ShareHandoff.swift`, compiled into both |
 | Onboarding seen flag | `UserDefaults` via `@AppStorage("onboarding.seen")` | Read in `ContentView` |
 
 ## Platform split
@@ -241,8 +241,8 @@ One shared source tree, with `#if os(iOS)` and `#if os(macOS)` kept to dedicated
 | Local-network check | `LocalNetworkChecker` (Bonjour self-probe) | Same file, same probe |
 | Receive links | `.onOpenURL` in `CrocAppApp` | `.onOpenURL` too, plus `AppDelegate.application(_:open:)`; file URLs go to Send; both parse with `TransferLink` and call `AppRouter.open(_:)` |
 | QR scan | `QRScannerView` (VisionKit `DataScannerViewController`); whole file is `#if os(iOS)` | Not offered (QR generation in `QRCodeView` works on both) |
-| Settings | `SettingsScreen` (`Route.settings`, gear icon in the toolbar) | `SettingsView` (native `Settings` scene, command-comma) |
-| Menu commands | None | `AppCommands`: **Send…** (command-1), **Receive…** (command-2), **Show Receive Folder in Finder** or **Show Receive Folder in Files** (shift-command-R); in `CrocApp Direct` only, **Check for Updates…** right after **About CrocApp** |
+| Settings | `SettingsScreen` (`Route.settings`: the gear icon in the toolbar in compact width, a sidebar row on iPad in regular width) | `SettingsView` (native `Settings` scene, command-comma) |
+| Menu commands | `AppCommands` in the hardware-keyboard menu bar of an iPad: the same File, Transfer and Help items, **Show Receive Folder in Files**, and **Settings…** (command-comma) | `AppCommands`: **Send…** (command-1), **Send Clipboard Text…**, **Receive…** (command-2), **Paste Code…**, **History** (command-3), **Show Receive Folder in Finder** (shift-command-R), **Cancel Transfer** (command-period), **Copy Code**, **How It Works**; in `CrocApp Direct` only, **Check for Updates…** right after **About CrocApp** |
 | Menu bar | None | `MenuBarExtra` window (`MenuBarQuickSendView`), shown while **Show in Menu Bar** is on |
 
 macOS also enforces a Local Network privacy prompt of its own. How it is enforced (a Network Extension packet filter instead of TCC) is inferred from Apple's behavior, not verified here. See `docs/knowledge/apple-platform-constraints.md`.

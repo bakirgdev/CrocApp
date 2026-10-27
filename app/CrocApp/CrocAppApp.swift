@@ -45,6 +45,8 @@ struct CrocAppApp: App {
         // Shortcuts actions can run right after launch, before any window.
         AppDependencyManager.shared.add(dependency: controller)
         AppDependencyManager.shared.add(dependency: outputFolder)
+        // History for Shortcuts and Spotlight; a harness run's history is not the user's.
+        HistoryEntityStore.install(for: history, settings: settings, indexed: !harness)
         #if os(macOS)
         _quickSend = State(initialValue: MenuBarQuickSend(controller: controller))
         #endif
@@ -90,7 +92,7 @@ struct CrocAppApp: App {
     @SceneBuilder private var mainScene: some Scene {
         #if os(macOS)
         Window("CrocApp", id: Self.mainWindowID) { mainContent }
-            .defaultSize(width: 560, height: 700)
+            .defaultSize(width: 880, height: 700)
             .commands { appCommands }
         #else
         WindowGroup(id: Self.mainWindowID) { mainContent }
@@ -111,7 +113,7 @@ struct CrocAppApp: App {
                 if let link = TransferLink.parse(url.absoluteString) { router.open(link) }
             }
             #if os(macOS)
-        .frame(minWidth: 480, minHeight: 560)
+        .frame(minWidth: 720, minHeight: 560)
             #endif
     }
 

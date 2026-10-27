@@ -173,7 +173,16 @@ import Testing
             .backgroundExpired(stored: false, direction: .send),
             .backgroundExpired(stored: true, direction: .send),
             .backgroundExpired(stored: true, direction: .receive),
+            .finishedWithProblems(direction: .send), .finishedWithProblems(direction: .receive),
         ]
+    }
+
+    /// design/content.md → Errors: a failure says what to do. Only the user's
+    /// own cancel or decline, which is not a failure, has no detail.
+    @Test func everyFailureButTheUsersOwnGivesANextStep() {
+        for f in everyFailure where !f.endedByUser {
+            #expect(f.detail != nil, "\(f.title)")
+        }
     }
 
     /// design/content.md → Errors: a title of six words at most with no

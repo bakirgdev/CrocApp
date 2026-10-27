@@ -22,6 +22,7 @@ struct TrustBadge: View {
     @ScaledMetric(relativeTo: .subheadline) private var fullGlyph: CGFloat = 19
     @ScaledMetric(relativeTo: .subheadline) private var fullCircle: CGFloat =
         ComponentMetrics.trustBadgeFullCircle
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         switch variant {
@@ -54,8 +55,17 @@ struct TrustBadge: View {
 
     // MARK: - Full
 
+    // At accessibility text sizes the circle beside the words leaves them too
+    // narrow, and "End-to-end" breaks mid-word; the circle goes above them
+    // instead (accessibility.md → Dynamic Type).
+    private var fullLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space4))
+            : AnyLayout(HStackLayout(spacing: Spacing.space4))
+    }
+
     private var full: some View {
-        HStack(spacing: Spacing.space4) {
+        fullLayout {
             ZStack {
                 Circle()
                     .fill(Color.statusSuccess)
@@ -76,7 +86,7 @@ struct TrustBadge: View {
                     .font(.footnote)
                     .foregroundStyle(Color.textSecondary)
             }
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, Spacing.space5)
         .padding(.vertical, Spacing.space4)

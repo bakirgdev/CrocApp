@@ -13,6 +13,7 @@ import Testing
 @MainActor @Suite struct TransferControllerTests {
     private let engine = FakeTransferEngine()
     private let settings: AppSettings
+    private let vaultSecrets = FakeSecretStore()
     private let vault: StoredTransferVault
     private let history: HistoryStore
     private let controller: TransferController
@@ -27,7 +28,7 @@ import Testing
 
     init() {
         settings = AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore())
-        vault = StoredTransferVault(secrets: FakeSecretStore())
+        vault = StoredTransferVault(secrets: vaultSecrets)
         history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
         controller = TransferController(settings: settings, vault: vault, engine: engine)
         controller.history = history
@@ -552,6 +553,92 @@ import Testing
         #expect(record.storedID == "up1")
         #expect(record.expiresAt == receipt.expiresAt)
         #expect(record.codeHint == "store.example")
+    }
+
+    @Test func startRecordsWhenTheTransferStarted() async {
+        #expect(controller.startedAt == nil)
+        let before = Date.now
+        controller.start(.sendFiles(urls: [file], code: ""))
+        let startedAt = controller.startedAt
+        #expect(startedAt.map { $0 >= before && $0 <= .now } == true)
+        await engine.finish()
+    }
+
+    @Test func storedReceiptSavedFollowsTheVaultWrite() async throws {
+        #expect(controller.storedReceiptSaved)
+        vaultSecrets.failWrites = true
+        try await runStoredSend()
+        #expect(controller.phase.storedReceipt == Self.receipt)
+        #expect(!controller.storedReceiptSaved, "the Keychain write failed")
+        #expect(vault.receipt(id: Self.receipt.id) == Self.receipt, "kept for this launch")
+    }
+
+    @Test func storedReceiptSavedStaysTrueWhenTheVaultSaves() async throws {
+        try await runStoredSend()
+        #expect(controller.storedReceiptSaved)
+    }
+
+    @Test func startResetsStoredReceiptSaved() async throws {
+        vaultSecrets.failWrites = true
+        try await runStoredSend()
+        #expect(!controller.storedReceiptSaved)
+
+        controller.reset()
+        #expect(controller.start(.sendFiles(urls: [file], code: "")))
+        #expect(controller.storedReceiptSaved)
+        await engine.finish()
+    }
+
+    // MARK: - Revoke from the link screen
+
+    @Test func revokingTheShownLinkRemovesItAndMarksItsRecord() async throws {
+        try await runStoredSend()
+        let record = try onlyRecord()
+        #expect(record.revokedAt == nil)
+
+        try await controller.revoke(Self.receipt)
+
+        #expect(await engine.revokes == [Self.receipt])
+        #expect(vault.receipt(id: Self.receipt.id) == nil)
+        #expect(record.revokedAt != nil)
+    }
+
+    @Test func revokingNeedsNoHistoryRecord() async throws {
+        settings.saveTransferHistory = false
+        try await runStoredSend()
+        #expect(history.recordCount() == 0)
+
+        try await controller.revoke(Self.receipt)
+
+        #expect(await engine.revokes == [Self.receipt])
+        #expect(vault.receipt(id: Self.receipt.id) == nil)
+        #expect(history.recordCount() == 0)
+    }
+
+    @Test func aFailedRevokeKeepsTheLinkAndItsRecord() async throws {
+        try await runStoredSend()
+        let record = try onlyRecord()
+        await engine.failRevokes(with: EngineFailure(code: .relayUnreachable, message: "timeout"))
+
+        await #expect(throws: EngineFailure.self) { try await controller.revoke(Self.receipt) }
+
+        #expect(vault.receipt(id: Self.receipt.id) == Self.receipt)
+        #expect(record.revokedAt == nil)
+    }
+
+    private static let receipt = StoredReceipt(
+        id: "up1", origin: "https://store.example", uploadToken: "token",
+        link: "https://store.example/s/up1#v1.key",
+        expiresAt: Date(timeIntervalSince1970: 2_000_000_000), downloads: 2)
+
+    /// A stored send taken to its link screen, with its history record.
+    private func runStoredSend() async throws {
+        settings.storedServer = "https://store.example"
+        controller.start(.storedSend(urls: [file], downloads: 2, lifetimeSeconds: 3600))
+        try await waitForTransfer()
+        try await deliver(.stored(Self.receipt))
+        try await deliver(.done(Self.summary()))
+        try #require(controller.phase.storedReceipt == Self.receipt)
     }
 
     // MARK: - Helpers

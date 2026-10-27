@@ -166,6 +166,40 @@ import Testing
 
         #expect(secrets.items.isEmpty)
     }
+
+    @Test func aFailedPasswordWriteIsShownUntilAWriteSucceeds() {
+        let s = makeSettings()
+        secrets.failWrites = true
+
+        s.relayPassword = "hunter2"
+
+        #expect(s.unsavedSecrets == [.relayPassword])
+        #expect(secrets.items["relayPassword"] == nil)
+        #expect(s.relayPassword == "hunter2", "the edit still applies for this launch")
+
+        secrets.failWrites = false
+        s.relayPassword = "hunter3"
+
+        #expect(s.unsavedSecrets.isEmpty)
+        #expect(secrets.items["relayPassword"] == "hunter3")
+    }
+
+    @Test func aFailedDeleteIsShownToo() {
+        secrets.items["relayPassword"] = "stored"
+        let s = makeSettings()
+        secrets.failWrites = true
+
+        s.relayPassword = ""
+
+        #expect(s.unsavedSecrets == [.relayPassword])
+        #expect(makeSettings().relayPassword == "stored", "the next launch reads the old value")
+
+        secrets.failWrites = false
+        s.relayPassword = ""
+
+        #expect(s.unsavedSecrets.isEmpty)
+        #expect(secrets.items.isEmpty)
+    }
 }
 
 @Suite struct MemorySettingsStorageTests {

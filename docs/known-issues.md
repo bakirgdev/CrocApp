@@ -59,16 +59,21 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 
 ## Design system
 
-- **iPad shows the iPhone layout stretched: the layout is specified, not built.**
-  - `design/platforms.md`, "Layout by width", specifies a `NavigationSplitView` for regular width (sidebar rows Send, Receive, History, plus Settings on iPad; the Mac keeps its Settings scene) and keeps Home plus `NavigationStack` for compact width. The implementation is pending.
-  - Today the app is one `NavigationStack` and `TARGETED_DEVICE_FAMILY` is `1,2`. On an iPad Pro 13-inch the screens are the phone screens at tablet size, with content capped by `LayoutCap.contentMaxWidth` and wide empty margins.
-  - The `ipad/` screenshots and the 13-inch App Store set show exactly that.
-  - Until the split view ships, App Store listing copy must not promise an iPad-optimised experience.
+- **The sidebar layout does not keep a screen's state when the selection or the layout changes.**
+  - Staged files and typed text on Send, and a code typed on Receive, live in the screen's `@State`. Choosing another sidebar row rebuilds the detail and clears them, and so does a window or Split View change that flips the layout between Home and the sidebar (a screen pushed in the detail goes too).
+  - The compact layout loses the same state when the user pops back to Home, so this is not new, but the sidebar makes it a one-click loss.
+  - Left because the screens own that state. Moving it into a model that outlives the screen would fix both layouts.
+- **The menu bar has no Clear History item.** The History screen's **Clear** toolbar button keeps its confirmation dialog in `HistoryView`'s own state, so `AppCommands` cannot reach it. A fix would publish the action with a focused value.
+- **A Mac list or form screen draws its scroll edge only as wide as the capped column.** `HistoryView` and the settings screens sit in a 480-wide column in the detail, and macOS 26 draws the hairline and, in dark mode, a slightly lighter band under the toolbar across that column only. The cap is the book's (`design/spacing-layout.md`, "Layout cap"). `scrollContentBackground` and `scrollEdgeEffectStyle` did not remove it, and `contentMargins` does nothing on a Mac list.
+- **`HomeView` and the sidebar detail each switch on `Route` to build a screen.** `Route.destination` (`Views/RegularLayout.swift`) is the shared copy, and `HomeView` still has its own because it was not touched.
+- **An iPhone Plus or Max in landscape reports regular width**, so by the book's rule (width, never device) it gets the sidebar. Not checked: no simulator was rotated to landscape.
 - **The views predate the amended design book.** What the book now specifies and the app does not do yet:
-  - About 30 call sites style text with `.secondary` instead of `Color.textSecondary` (`design/colors.md` rule 4). The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
+  - Call sites in the other views still style text with `.secondary` instead of `Color.textSecondary` (`design/colors.md` rule 4); `HomeView`, `RecentTransfersSection`, `OnboardingView` and `HowItWorksView` follow it. The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
   - The user's own cancel or decline ends on the failure `StatusBlock`, with the error glyph and tint, although `design/content.md`, "Errors", says it is not a failure. Its title stands alone with **Done**, as the book wants; `StatusBlock` has no neutral kind for it yet.
   - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/content.md`, "Terminology").
-  - Not built: the Home recent transfers, the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary".
+  - Not built: the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary" (only the Insert of Home's pending-request banner is).
+  - A Home recent-transfer row opens the History list, not the record's own detail (`design/components.md`, "Home"). History's detail screen exists, but no route opens it from outside the History list yet.
+  - On macOS, Home's grouped `Form` draws a section card behind the badge, banner and the two actions, because `.listRowBackground(Color.clear)` has no effect in a grouped macOS form. iOS draws no card there. Seen in a Debug build with `--screen home`; the regular-width layout (`design/platforms.md`, "Layout by width") is meant to replace Home on the Mac.
 - **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
   - It is synchronous file I/O on the main actor, run by `SendView` when it builds the row. A network or iCloud volume could make it hitch.
   - Not measured. A fix would read the size once when files are staged.
@@ -146,15 +151,31 @@ Permanent or deferred, each with its reason.
 
 ### App and UI
 
+- **Unsigned Mac builds cannot use the Keychain.**
+  - The data-protection keychain needs the `com.apple.application-identifier` entitlement, which a signed build gets from its provisioning profile. A build with `CODE_SIGNING_ALLOWED=NO` (CI, or a contributor outside team `HBSU359M33`) reads nothing, and every write or delete fails with `errSecMissingEntitlement`. The relay password, the proxies and Send as Link receipts do not persist; a relay password or proxy field shows "Couldn't save to the Keychain".
+  - No test or harness needs it: they inject in-memory secret stores. An unsigned iOS Simulator build was not checked.
 - **`dropDestination(for:action:isTargeted:)` stays at `ContentView.swift`, `SendView.swift` and `MenuBarQuickSendView.swift`.**
   - The Xcode 27 SDK marks it deprecated only for a future OS (`deprecated: 100000.0`), so builds emit no warning.
   - The replacement `dropDestination(for:isEnabled:action:)` takes a `Void` action (a drop cannot be rejected) and has no `isTargeted`. Its highlight API `onDropSessionUpdated` is iOS 27 / macOS 26 only, and the deployment target is iOS 26.0.
   - Revisit when the minimum OS reaches 27.
+- **Keychain items written by earlier builds stay behind.**
+  - Mac: `KeychainStore` reads, writes and deletes only in the data-protection keychain (`kSecUseDataProtectionKeychain`). Earlier Mac builds (the withdrawn 0.9.9 and 1.0.0 disk images, and development builds) wrote to the login keychain. CrocApp no longer reads those items, and clearing a field in Settings does not delete them.
+  - Not a new exposure: they stay as they were stored, in the login keychain under the access control they were created with.
+  - No migration code, by owner decision: the app has no users. Remove them by hand in Keychain Access (search for `com.bakirgdev.CrocApp`), or with `security delete-generic-password -s com.bakirgdev.CrocApp -a <account>` for each account: `relayPassword`, `advanced.socks5Proxy`, `advanced.httpProxy`, `storedReceipts`.
+  - iPhone and iPad: an item that an earlier TestFlight or development build wrote keeps `kSecAttrAccessibleAfterFirstUnlock`, so a backup can still restore it to another device, until that setting (or the receipt list) is next saved.
 - **Photos that fail to load are counted, not named.** The banner says how many items could not be added and suggests checking the connection, because the likeliest cause is a photo that lives in iCloud. The picker gives no reason per item.
 - **A staged copy outlives a crash until the next launch.** `SendStaging` sweeps its folder on the first Send screen of a launch. Anything a crash leaves behind uses disk space until then.
 - **The macOS focus-ring change on the Send screen is not verified by eye.** The paste target switches its ring off and back on for its children (`SendView.swift`, `SendPasteTarget`). Check the buttons still show a ring under keyboard navigation.
 - **`OutputFolderStore.select` silently does nothing if bookmarking fails.** It is rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
+- **A name with an LRM, RLM or ALM mark blocks the whole transfer.**
+  - `ReceivedName` blocks every Unicode bidi control, which includes the left-to-right, right-to-left and Arabic letter marks. Some Hebrew and Arabic names may contain them, and the transfer is then blocked (Accept disabled, or cancelled under auto-accept).
+  - It is the conservative choice, left until a real name needs the marks. Not verified: how common such names are.
+  - Would change: allow the three marks (U+200E, U+200F, U+061C) and keep blocking the embeddings, overrides and isolates.
+- **History rows an earlier build recorded can still show a blocked name raw.**
+  - Since the shown form (`ReceivedName.shown`), `HistoryDraft.offer` records a name with every text-direction control, line separator and control character written as its code point, and the accept sheet, progress line and result draw the same form. A record an earlier build wrote kept the name as the sender sent it, and `HistoryView` draws `record.names` as stored (read from the code, not run).
+  - Only a transfer that carried such a name is affected, and nothing was saved or opened under it.
+  - Would change: run `ReceivedName.shown` when History draws a name, or when the store opens.
 - **Gesture-level flows are not machine-verified.**
   - Drag-and-drop, camera QR and taps have no XCUITest coverage, by decision.
   - Unit tests cover non-UI logic (Go `go test -race`, Swift Testing in `CrocKitTests` and `CrocAppTests`, all in CI). The harnesses cover transfers. UI flows are verified by hand.
@@ -189,6 +210,19 @@ Permanent or deferred, each with its reason.
   - This is a development-procedure note, not an app defect.
   - Enforcement reportedly engages only for builds resident in `/Applications` (one developer-forum thread, not Apple documentation; strong inference, not verified here). A Debug build launched from DerivedData can sit at `.ready` and read as falsely granted.
   - Copy the app to `/Applications` before trying to reproduce a denial.
+
+- **History offers Revoke for a link that expires while the screen is open.**
+  - The Expires line and relative dates refresh every minute, but whether **Revoke Link** is offered (`TransferController.canRevoke`) is read when the view next updates, so a link that expires on screen keeps the button until then. Tapping it fails with the usual "Couldn't revoke the link" alert.
+  - Left because it needs a clock-driven refresh of the whole menu and swipe actions for a rare case. Revisit if the alert shows up in reports.
+
+- **History entities, Spotlight indexing and the Mac Send service are only partly verified.**
+  - **Verified:** the entity store, the two switches and the index calls by unit tests with a recording index. The real `CSSearchableIndex`, under a throwaway name, returns an indexed entity and no longer returns it once removed (`HistorySpotlightIndexTests`). On a Mac the Services entry is listed by `pbs -dump_pboard`, and `NSPerformService` with a file URL staged the file in Send in a running Direct build.
+  - **Not verified:** the Spotlight search UI, Shortcuts' Find Transfers and Open Transfer in the Shortcuts app, and any iPhone or iPad. `NSPerformService("Send with CrocApp")` with text reached the files entry instead of the text entry, because both entries share the menu title and the call picks by title, not by pasteboard type. Whether the real Services menu offers and runs the text entry for a text selection was not checked.
+  - **The entity id does not survive a reinstall or a reset store.** It is the JSON of SwiftData's `PersistentIdentifier`, which carries the store's identifier (`HistoryEntityID`). A saved shortcut that holds an old id finds nothing. Spotlight is unaffected, because the index is rebuilt in full at each launch. A stable id needs a UUID attribute on `TransferRecord`, which is a schema migration; left.
+  - **Open Transfer opens the History list, not the record.** No route carries a record yet.
+  - **A failed index call can leave a stale name in Spotlight** until the next History change or launch, which rebuild the index. The failure is logged (category `spotlight`).
+  - **Shortcuts reads History while Save Transfer History is on, whatever Show History in Spotlight says.** Only the Spotlight index has the extra switch.
+  - A service takes at most 1 MiB of text (`SendServicesProvider.maxTextBytes`); a larger selection is refused. Files have no limit there.
 
 ### Engine and croc behaviour
 
