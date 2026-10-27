@@ -18,8 +18,11 @@
     "1 day" : {},
     "1 hour" : {},
     "7 days" : {},
-    "A code is at least %lld characters." : {
+    "A code phrase needs at least %lld characters." : {
       "comment" : "The placeholder is the minimum number of characters a code needs."
+    },
+    "A photo in iCloud needs a connection to download. Check yours and try again." : {
+      "comment" : "Says what to do after picked photos could not be loaded."
     },
     "A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer." : {},
     "About" : {},
@@ -27,6 +30,7 @@
     "Accept" : {},
     "Add Files" : {},
     "Add Folder" : {},
+    "Add Photos" : {},
     "Address" : {},
     "Advanced" : {},
     "Allow CrocApp in System Settings > General > Login Items." : {},
@@ -85,6 +89,7 @@
     "Clear link" : {},
     "Code or Link" : {},
     "Code phrase" : {},
+    "Code scanned" : {},
     "Completed" : {
       "comment" : "VoiceOver label of a history row's status icon."
     },
@@ -96,6 +101,9 @@
     "Copy Link" : {},
     "Copy Received Text" : {},
     "Copy Text" : {},
+    "Couldn't add ^[%lld item](inflect: true)" : {
+      "comment" : "Title when photos or videos picked for Send could not be loaded."
+    },
     "Couldn't change Open at login: %@" : {
       "comment" : "Open at Login is a switch in Settings. The placeholder is the system's reason."
     },
@@ -146,6 +154,7 @@
       "comment" : "VoiceOver label of a history row's status icon."
     },
     "File %lld of %lld" : {
+      "comment" : "Progress through a transfer of several files: this file's number, then how many files there are.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -153,8 +162,7 @@
             "value" : "File %1$lld of %2$lld"
           }
         }
-      },
-      "comment" : "Progress through a transfer of several files: this file's number, then how many files there are."
+      }
     },
     "Files" : {},
     "Files are encrypted on this device before they reach %@. Anyone with the link can receive them until it expires or runs out." : {
@@ -193,6 +201,7 @@
     "Link revoked %@" : {
       "comment" : "The placeholder is the date and time the link was revoked."
     },
+    "Link scanned" : {},
     "Local Network Only" : {},
     "Local network access is off" : {},
     "Local network only: nothing leaves your network" : {},
@@ -220,6 +229,7 @@
     "Password" : {},
     "Patterns, one per line" : {},
     "Performance" : {},
+    "Point the camera at the QR code on the other device." : {},
     "Privacy Policy" : {},
     "Proxies, sender IP, speed limit and more. The defaults suit most people." : {},
     "Public relay pool" : {},
@@ -297,6 +307,9 @@
     "Save Transfer History" : {},
     "Scan Code" : {},
     "Scan QR Code" : {},
+    "Scan the QR code on the sending device." : {
+      "comment" : "Says what to do after a scanned QR code was not a CrocApp one."
+    },
     "Send" : {
       "comment" : "Confirm button of the file chooser."
     },
@@ -355,6 +368,9 @@
     "Text to send" : {},
     "That code is already in use" : {},
     "That is not a croc code or a CrocApp link." : {},
+    "That isn't a CrocApp QR code" : {
+      "comment" : "Title when a scanned QR code is neither a code phrase nor a link."
+    },
     "The camera couldn't start. Close this and try again." : {},
     "The cancelled transfer didn't stop" : {},
     "The clipboard has no text to send." : {},
@@ -380,6 +396,7 @@
     "This link no longer works" : {},
     "Those files aren't available anymore" : {},
     "Total %@ / %@" : {
+      "comment" : "Total progress of a transfer: bytes done, then the total size. Both placeholders are file sizes such as 12 MB.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -387,8 +404,7 @@
             "value" : "Total %1$@ / %2$@"
           }
         }
-      },
-      "comment" : "Total progress of a transfer: bytes done, then the total size. Both placeholders are file sizes such as 12 MB."
+      }
     },
     "Transfer" : {},
     "Transfer cancelled" : {},
@@ -410,6 +426,7 @@
       "comment" : "Auto-Accept Transfers is the label of a switch in Settings."
     },
     "Turn on Save Transfer History in Settings to list finished transfers here." : {},
+    "Type or paste the text to send." : {},
     "Unsafe file names were blocked" : {},
     "Version" : {},
     "Via custom relay %@, which sees only encrypted data" : {
@@ -428,6 +445,7 @@
     "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay." : {},
     "Works anywhere" : {},
     "Works until %@, for ^[%lld download](inflect: true)" : {
+      "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -435,8 +453,7 @@
             "value" : "Works until %1$@, for ^[%2$lld download](inflect: true)"
           }
         }
-      },
-      "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows."
+      }
     },
     "You declined the transfer" : {},
     "You stay in control" : {},
@@ -445,6 +462,7 @@
       "comment" : "VoiceOver label of the badge on the Send button. The placeholder is the number of queued files."
     },
     "^[%lld file](inflect: true) • %@" : {
+      "comment" : "Summary of a finished transfer: the number of files, then their total size such as 24 MB.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -452,8 +470,7 @@
             "value" : "^[%1$lld file](inflect: true) • %2$@"
           }
         }
-      },
-      "comment" : "Summary of a finished transfer: the number of files, then their total size such as 24 MB."
+      }
     },
     "^[%lld item](inflect: true) in this transfer share a name with a file here. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files." : {
       "comment" : "Warning in the incoming-files prompt. The placeholder is how many items clash. Keep Both and Replace are the labels of its two buttons."
