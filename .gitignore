@@ -2,8 +2,17 @@
 .DS_Store
 ._*
 
+# Editors (Xcode keeps its per-user state in xcuserdata/)
+xcuserdata/
+.vscode/
+.idea/
+*.swp
+*~
+
 # Secrets and signing material
+# A committed template (.env.example, .envrc.example) needs a ! line after .env*.
 .env*
+*.pem
 *.p8
 *.p12
 *.cer
@@ -11,37 +20,34 @@
 *.mobileprovision
 *.provisionprofile
 
-# Xcode
+# Xcode and Swift Package Manager
 DerivedData/
-xcuserdata/
-
-# Swift Package Manager
 .build/
 .swiftpm/
 
-# gomobile toolchain and its output
+# Go and gomobile
 /.tools/
 CrocKit/Croc.xcframework/
+/crocmobile/croctest
+/crocmobile/cmd/croctest/croctest
 
-# croctest built in place
-crocmobile/cmd/croctest/croctest
-
-# Node / Docusaurus
+# Node and Docusaurus
 node_modules/
 .docusaurus/
 
-# Build output
+# Build output: web/docs/build/, build/screenshots/, the Pages artifact, release DMGs
 build/
 /_site/
 /dist/
 
-# Copied from design/ and web/landing/ at build time
+# Copies of tracked files: made by the docs build, or by hand for a local landing preview
 web/landing/tokens.css
 web/docs/src/css/tokens.css
 web/docs/static/img/mascot.webp
 
 # Local tooling
 *.log
-.claude/settings.local.json
 /buildServer.json
+/.playwright-mcp/
+.claude/settings.local.json
 .claude/worktrees/
