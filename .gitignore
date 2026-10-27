@@ -44,3 +44,4 @@ web/docs/static/img/mascot.webp
 *.log
 .claude/settings.local.json
 /buildServer.json
+.claude/worktrees/
