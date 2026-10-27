@@ -23,8 +23,17 @@ struct CodeField: View {
     /// what counts as a valid paste (e.g. ReceiveView's deeplink parsing).
     /// Nil hides the paste button entirely.
     var onPaste: ((String) -> Void)?
+    /// Return was pressed. The field has already marked a wrong value as wrong.
+    var onSubmit: (() -> Void)?
+    var submitLabel: SubmitLabel = .done
+    /// Puts the caret here when the field appears (`HardwareKeyboard.isExpected`).
+    var focusesOnAppear = false
 
     @FocusState private var isFocused: Bool
+    /// The user has said they are done with a value that is wrong: Return, or
+    /// leaving the field. Until then a short code is just unfinished, so the
+    /// field stays calm while it is typed (components.md → CodeField).
+    @State private var hasSettled = false
 
     /// What `invalidMessage` says for a code shorter than the engine accepts.
     static var tooShortMessage: String {
@@ -38,14 +47,27 @@ struct CodeField: View {
     private static let leadingPadding: CGFloat = 14
     private static let trailingPadding: CGFloat = 6
 
+    private var showsInvalid: Bool { isInvalid && hasSettled }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.space2) {
             field
-            if isInvalid, let invalidMessage {
+            if showsInvalid, let invalidMessage {
                 Text(invalidMessage)
                     .font(.footnote)
                     .foregroundStyle(Color.textSecondary)
             }
+        }
+        // A fixed value is right again at once, so the next mistake starts calm.
+        .onChange(of: isInvalid) { _, invalid in
+            if !invalid { hasSettled = false }
+        }
+        .onChange(of: isFocused) { _, focused in
+            if !focused, isInvalid { hasSettled = true }
+        }
+        .task {
+            guard focusesOnAppear else { return }
+            isFocused = true
         }
     }
 
@@ -56,7 +78,12 @@ struct CodeField: View {
                 .font(.subheadline.monospaced())
                 .tracking(Tracking.code)
                 .focused($isFocused)
-                .accessibilityHint(isInvalid ? (invalidMessage ?? "") : "")
+                .submitLabel(submitLabel)
+                .onSubmit {
+                    if isInvalid { hasSettled = true }
+                    onSubmit?()
+                }
+                .accessibilityHint(showsInvalid ? (invalidMessage ?? "") : "")
                 .autocorrectionDisabled()
                 #if os(iOS)
             .textInputAutocapitalization(.never)
@@ -88,7 +115,7 @@ struct CodeField: View {
 
     // components.md → CodeField: separator idle, accent focused, error invalid.
     private var borderColor: Color {
-        if isInvalid { return .statusError }
+        if showsInvalid { return .statusError }
         if isFocused { return .accentFill }
         return .separatorToken
     }

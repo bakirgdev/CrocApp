@@ -1,5 +1,10 @@
+import OSLog
 import SwiftUI
 import UniformTypeIdentifiers
+
+#if os(iOS)
+import PhotosUI
+#endif
 
 /// Send flow (files, folders, text/clipboard, custom code).
 struct SendView: View {
@@ -7,6 +12,7 @@ struct SendView: View {
     @Environment(AppRouter.self) private var router
     @Environment(AppSettings.self) private var settings
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     enum Mode: CaseIterable {
         case files
@@ -30,12 +36,30 @@ struct SendView: View {
     @State private var sendAsLink = false
     @State private var linkLifetime = LinkLifetime.day
     @State private var linkDownloads = 1
+    #if os(iOS)
+    @State private var showPhotoPicker = false
+    @State private var photoItems: [PhotosPickerItem] = []
+    @State private var isLoadingPhotos = false
+    #endif
+    /// Photos or videos the last pick could not bring in.
+    @State private var photoFailures = 0
 
-    /// Cap on the staged-files list and the text editor; the floor is the
-    /// DropZone's, so the Files tab does not change height as files arrive.
+    private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "send")
+
+    // components.md → DropZone, "Staged list and text box": both keep the
+    // DropZone's floor (so the Files tab does not change height as files
+    // arrive) and grow to this cap, then scroll.
     private static let queueMaxHeight: CGFloat = 280
-    /// The accent border a drag draws over the staged list (DropZone: 2pt).
-    private let dropBorderWidth: CGFloat = 2
+
+    // The system's own text inset inside a TextEditor, which the placeholder
+    // copies. Not a token: it is whatever the platform draws.
+    private static let placeholderInsetX: CGFloat = 5
+    private static let placeholderInsetY: CGFloat = 8
+
+    // motion.md → Choreography, rule 4: a choice that swaps a block.
+    private var swapAnimation: Animation? {
+        reduceMotion ? nil : Motion.easeOut(Motion.durationBase)
+    }
 
     /// How long a stored upload stays on the server.
     private enum LinkLifetime: Int, CaseIterable {
@@ -63,8 +87,16 @@ struct SendView: View {
             }
         }
         .navigationTitle("Send")
-        .onAppear { consumePendingURLs() }
+        .onAppear {
+            SendStaging.purgeOnce()
+            consumePendingURLs()
+        }
         .onChange(of: router.pendingSendURLs) { _, _ in consumePendingURLs() }
+        // Staged copies go with the screen, unless a transfer is reading them.
+        .onDisappear {
+            guard !controller.isActive else { return }
+            pickedURLs.forEach(SendStaging.discard)
+        }
     }
 
     // At accessibility text sizes the form is taller than a phone screen, so it
@@ -93,9 +125,9 @@ struct SendView: View {
             .labelsHidden()
 
             if mode == .files {
-                filesSection
+                filesSection.transition(.opacity)
             } else {
-                textSection
+                textSection.transition(.opacity)
             }
 
             linkOptions
@@ -110,6 +142,7 @@ struct SendView: View {
                 ) { pasted in
                     customCode = pasted
                 }
+                .transition(.opacity)
             }
 
             Button {
@@ -134,6 +167,9 @@ struct SendView: View {
             .controlSize(.large)
             .disabled(!canStart)
         }
+        .animation(swapAnimation, value: mode)
+        .animation(swapAnimation, value: linkSelected)
+        .modifier(SendPasteTarget { stage($0) })
     }
 
     private var customCodeTrimmed: String {
@@ -183,27 +219,32 @@ struct SendView: View {
                 .disabled(linkUnavailableReason != nil)
                 .accessibilityHint(linkToggleHint)
             if let reason = linkUnavailableReason {
-                Text(reason).font(.caption).foregroundStyle(.secondary)
+                Text(reason).font(.caption).foregroundStyle(Color.textSecondary)
+                    .transition(.opacity)
             } else if linkSelected {
-                Picker("Link Lasts", selection: $linkLifetime) {
-                    ForEach(LinkLifetime.allCases, id: \.self) { Text($0.label) }
+                VStack(alignment: .leading, spacing: Spacing.space3) {
+                    Picker("Link Lasts", selection: $linkLifetime) {
+                        ForEach(LinkLifetime.allCases, id: \.self) { Text($0.label) }
+                    }
+                    Stepper(value: $linkDownloads, in: 1...100) {
+                        Text("Downloads allowed: \(linkDownloads)")
+                    }
+                    if let problem = storedServerProblem {
+                        StatusBanner(kind: .error, title: problem)
+                    } else {
+                        Text(
+                            "Files are encrypted on this device before they reach \(serverHost). Anyone with the link can receive them until it expires or runs out."
+                        )
+                        .font(.caption)
+                        .foregroundStyle(Color.textSecondary)
+                    }
                 }
-                Stepper(value: $linkDownloads, in: 1...100) {
-                    Text("Downloads allowed: \(linkDownloads)")
-                }
-                if let problem = storedServerProblem {
-                    StatusBanner(kind: .error, title: problem)
-                } else {
-                    Text(
-                        "Files are encrypted on this device before they reach \(serverHost). Anyone with the link can receive them until it expires or runs out."
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                }
+                .transition(.opacity)
             } else {
                 Text("Send encrypted files as a link instead of with a code.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
+                    .transition(.opacity)
             }
         }
     }
@@ -231,6 +272,26 @@ struct SendView: View {
         router.pendingSendURLs = []
     }
 
+    /// Takes what was dropped, pasted or picked. It only stages: starting is
+    /// always the Send button. Files win over text, because a copied file
+    /// often carries its name as text too.
+    @discardableResult
+    private func stage(_ payloads: [SendPayload]) -> Bool {
+        let intake = SendIntake(payloads)
+        let newFiles = intake.files.filter { !pickedURLs.contains($0) }
+        if !newFiles.isEmpty {
+            mode = .files
+            pickedURLs.append(contentsOf: newFiles)
+            return true
+        }
+        guard intake.files.isEmpty, let typed = intake.text(appendedTo: text) else {
+            return false
+        }
+        mode = .text
+        text = typed
+        return true
+    }
+
     // MARK: - Files
 
     private var filesSection: some View {
@@ -250,6 +311,7 @@ struct SendView: View {
                                 isLast: index == pickedURLs.count - 1
                             ) {
                                 pickedURLs.removeAll { $0 == url }
+                                SendStaging.discard(url)
                             }
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
@@ -266,17 +328,14 @@ struct SendView: View {
                         // a list in the way gets the same accent border.
                         if isDropTargeted {
                             RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                                .strokeBorder(Color.accentFill, lineWidth: dropBorderWidth)
+                                .strokeBorder(Color.accentFill, lineWidth: DropZone.strokeWidth)
                         }
                     }
                 }
             }
-            .dropDestination(for: URL.self) { urls, _ in
-                let files = urls.filter(\.isFileURL)
-                guard !files.isEmpty else { return false }
-                let newFiles = files.filter { !pickedURLs.contains($0) }
-                pickedURLs.append(contentsOf: newFiles)
-                return !newFiles.isEmpty
+            // Files, and on iPad the images and text another app drags out.
+            .dropDestination(for: SendPayload.self) { payloads, _ in
+                stage(payloads)
             } isTargeted: {
                 isDropTargeted = $0
             }
@@ -286,12 +345,6 @@ struct SendView: View {
                 HStack { importButtons }
                 VStack { importButtons }
             }
-        }
-    }
-
-    @ViewBuilder private var importButtons: some View {
-        Button("Add Files") { showFileImporter = true }
-            .buttonVariant(.secondary)
             .fileImporter(
                 isPresented: $showFileImporter,
                 allowedContentTypes: [.item],
@@ -301,8 +354,6 @@ struct SendView: View {
                     pickedURLs.append(contentsOf: urls.filter { !pickedURLs.contains($0) })
                 }
             }
-        Button("Add Folder") { showFolderImporter = true }
-            .buttonVariant(.secondary)
             .fileImporter(
                 isPresented: $showFolderImporter,
                 allowedContentTypes: [.folder]
@@ -311,7 +362,80 @@ struct SendView: View {
                     pickedURLs.append(url)
                 }
             }
+            #if os(iOS)
+            .photosPicker(
+                isPresented: $showPhotoPicker,
+                selection: $photoItems,
+                selectionBehavior: .ordered,
+                matching: .any(of: [.images, .videos]),
+                // The files as they are, not a re-encoded copy.
+                preferredItemEncoding: .current
+            )
+            .onChange(of: photoItems) { _, items in
+                guard !items.isEmpty else { return }
+                Task { await addPhotos(items) }
+            }
+            #endif
+
+            if photoFailures > 0 {
+                StatusBanner(
+                    kind: .error,
+                    title: inflected(
+                        AttributedString(
+                            localized: "Couldn't add ^[\(photoFailures) item](inflect: true)",
+                            comment: "Title when photos or videos picked for Send could not be loaded.")),
+                    detail: String(
+                        localized: "Check your internet connection and try again.",
+                        comment: "Says what to do after picked photos could not be loaded."))
+            }
+        }
     }
+
+    @ViewBuilder private var importButtons: some View {
+        Button("Add Files") { showFileImporter = true }
+            .buttonVariant(.secondary)
+        Button("Add Folder") { showFolderImporter = true }
+            .buttonVariant(.secondary)
+        #if os(iOS)
+        Button {
+            showPhotoPicker = true
+        } label: {
+            Label {
+                Text("Add Photos")
+            } icon: {
+                if isLoadingPhotos { ProgressView() }
+            }
+        }
+        .buttonVariant(.secondary)
+        .disabled(isLoadingPhotos)
+        #endif
+    }
+
+    #if os(iOS)
+    /// Brings each picked photo or video in as a file with its own name. The
+    /// picker runs out of process and hands over only what was picked, so the
+    /// app asks for no photo library permission.
+    private func addPhotos(_ items: [PhotosPickerItem]) async {
+        isLoadingPhotos = true
+        photoFailures = 0
+        var payloads: [SendPayload] = []
+        for item in items {
+            do {
+                if let payload = try await item.loadTransferable(type: SendPayload.self) {
+                    payloads.append(payload)
+                } else {
+                    photoFailures += 1
+                }
+            } catch {
+                Self.log.error("photo load failed: \(String(describing: error), privacy: .public)")
+                photoFailures += 1
+            }
+        }
+        stage(payloads)
+        photoItems = []
+        isLoadingPhotos = false
+    }
+    #endif
 
     // MARK: - Text
 
@@ -321,9 +445,21 @@ struct SendView: View {
                 .accessibilityLabel("Text to send")
                 .font(.body.monospaced())
                 .frame(minHeight: DropZone.minHeight, maxHeight: Self.queueMaxHeight)
+                .overlay(alignment: .topLeading) {
+                    if text.isEmpty {
+                        // TextEditor has no placeholder. The system draws its
+                        // own text inset, so this one copies it.
+                        Text("Type or paste the text to send.")
+                            .font(.body.monospaced())
+                            .foregroundStyle(Color.textSecondary)
+                            .padding(.horizontal, Self.placeholderInsetX)
+                            .padding(.vertical, Self.placeholderInsetY)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                    }
+                }
                 .overlay {
-                    // Not a named component; nearest token to the prior 8pt radius.
-                    RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
+                    RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                         .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
                 }
             PasteButton(payloadType: String.self) { strings in
@@ -332,5 +468,43 @@ struct SendView: View {
                 }
             }
         }
+    }
+}
+
+/// Lets the screen take a paste: ⌘V on a Mac, and on an iPad's hardware keyboard
+/// from iOS 27, where SwiftUI gained the API. Before that an iPad pastes with the
+/// buttons only.
+///
+/// Edit > Paste is enabled only while the view that accepts it has focus, so on a
+/// Mac the screen takes the focus when it appears. The field and the editor on it
+/// take it from the screen when clicked and paste into themselves.
+private struct SendPasteTarget: ViewModifier {
+    let action: ([SendPayload]) -> Void
+    @FocusState private var hasFocus: Bool
+
+    #if os(macOS)
+    // Not `pasteDestination(for:)`: it imports every payload once to validate it
+    // and again to deliver it, and each import of an image copies a file.
+    // `onPasteCommand` is not available on iOS, which has only `pasteDestination`.
+    private func paste(_ providers: [NSItemProvider]) {
+        Task { action(await SendPayload.load(providers)) }
+    }
+    #endif
+
+    @ViewBuilder func body(content: Content) -> some View {
+        #if os(macOS)
+        content
+            .focusable()
+            .focused($hasFocus)
+            .focusEffectDisabled()
+            .onPasteCommand(of: SendPayload.pasteTypes, perform: paste)
+            .task { hasFocus = true }
+        #else
+        if #available(iOS 27.0, *) {
+            content.pasteDestination(for: SendPayload.self, action: action)
+        } else {
+            content
+        }
+        #endif
     }
 }
