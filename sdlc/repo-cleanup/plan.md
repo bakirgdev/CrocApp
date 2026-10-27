@@ -194,6 +194,8 @@ Not asked of the owner (D9: stop only for high-stakes decisions; each follows th
 
 ## Changes
 
+- 2026-10-27, build, step 5: the image check skips every URL with a scheme (`data:`, `mailto:`, `https:`) and `//host`, not only `^https?:`, and splits on commas only for `srcset`. The verifier found false findings on a `data:` URI and `mailto:` in probes. R5 still holds. Commit 4f0e0a1.
+
 ## SDLC feedback
 
 - The spec phase's accepted `spec.md` fails `scripts/verify-docs.sh` (inline-code probe paths that do not exist on purpose), and `SDLC_VERIFY` runs that script in the commit gate, so the build phase could not have committed any code; neither the spec gatekeeper nor `/sdlc-spec` runs the project's check command over the new artifact. Why it hurts: a build session stalls on a gate failure caused by the SDLC's own files. Suggested changes: `/sdlc-setup` (`.claude/skills/sdlc-setup/SKILL.md`) makes the project's doc checker skip `sdlc/**` when it installs `SDLC_VERIFY`, and `.claude/agents/sdlc-gatekeeper.md` runs `$SDLC_VERIFY` (or at least the doc checks) on every artifact it gates.
