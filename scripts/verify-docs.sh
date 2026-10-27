@@ -14,8 +14,8 @@
 #      planning IDs (R12, F31, O9, B23, W4), which go stale (docs/AGENTS.md,
 #      "Writing rules"), and section-number citations, which rot on every
 #      re-order.
-#   4. Images. The URL in an HTML `src="..."` or `srcset="..."` attribute
-#      resolves like a relative link (URLs with a scheme, such as https:, data:
+#   4. Images. The URL in an HTML `src` or `srcset` attribute (double or single
+#      quotes) resolves like a relative link (URLs with a scheme, such as https:, data:
 #      and mailto:, and //host URLs are skipped).
 #   5. Unused screenshots. Every PNG in assets/screenshots/ is shown by a
 #      markdown image, or is the source of a web WebP copy at the same relative
@@ -68,12 +68,13 @@ while IFS= read -r f; do
         print file "\t" FNR "\tlink\t" substr(line, RSTART + 2, RLENGTH - 3)
         line = substr(line, RSTART + RLENGTH)
       }
-      # HTML image attributes: src="x" and srcset="x 1x, y 2x" (data-src does not match)
-      while (match(s, /[ \t](src|srcset)="[^"]*"/)) {
+      # HTML image attributes: src and srcset ("x 1x, y 2x") in double or single
+      # quotes, also at the start of a line (data-src does not match)
+      while (match(s, /(^|[ \t])(src|srcset)=("[^"]*"|\047[^\047]*\047)/)) {
         a = substr(s, RSTART, RLENGTH)
         s = substr(s, RSTART + RLENGTH)
-        isset = (a ~ /^[ \t]+srcset=/)
-        sub(/^[ \t]+(src|srcset)="/, "", a); sub(/"$/, "", a)
+        isset = (a ~ /^[ \t]*srcset=/)
+        sub(/^[ \t]*(src|srcset)=./, "", a); sub(/.$/, "", a)
         # only srcset holds a comma-separated list; a src may contain commas (data: URIs)
         n = isset ? split(a, cand, ",") : split(a, cand, "\n")
         for (i = 1; i <= n; i++) {
@@ -126,6 +127,7 @@ awk -F'\t' -v top='^(\\.github|app|assets|CrocKit|crocmobile|design|docs|scripts
       target = path == "" ? file : normalize(dir "/" path)
       if (path != "" && !have(target)) { print file "\t" n "\tbroken link: " t; next }
       if (anchor != "" && target ~ /\.md$/) print file "\t" n "\t#" target "#" anchor "#" t
+      print file "\t" n "\t@" target
       next
     }
     # Only spans that are a bare path: no spaces, globs or placeholders.

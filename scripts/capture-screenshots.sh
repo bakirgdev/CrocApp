@@ -137,6 +137,7 @@ case "${1:-}" in
     # shot goes in by copying its pair into assets/screenshots/ and running
     # cwebp on it once, into the web folder, at the size its page needs.
     command -v cwebp > /dev/null || fail "cwebp is missing (brew install webp)"
+    [ -d "$PUBLISHED" ] || fail "$PUBLISHED is missing: the published PNGs are tracked, restore them with git"
     refreshed=0
     total=0
     while IFS= read -r f; do
