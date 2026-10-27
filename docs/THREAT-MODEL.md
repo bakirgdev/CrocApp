@@ -178,6 +178,10 @@ Saltzer and Schroeder, with the evidence for each.
 
 The path traversal, injection, overflow and time-of-check rows cover glob `*` in names, line breaks and text-direction controls in names, trailing-space names, a reconnect swapping the file list after accept, and impossible declared sizes. Receive does not overwrite existing files by default.
 
+### Send staging
+
+Photos, dropped and pasted images are copied into `SendStaging` under the temporary directory (`app-ui-architecture.md`, "Support helpers"). The folder is deleted by path, so the delete is the sensitive step. `SendStaging.discard` resolves the staging root once and builds the delete target from it plus the one slot name the caller's path carries, never from the caller's path. It refuses a symlink in the slot's place, and it needs a slot with an item below it, so a path that merely looks staged cannot remove the root, a sibling folder or a symlink's target. The check and the delete share one function, so what passes the check is exactly what is deleted. `SendStagingTests` covers a symlinked slot, a path outside the root, `..` segments and the root itself.
+
 ## Residual risks and accepted issues
 
 | Risk | Status |

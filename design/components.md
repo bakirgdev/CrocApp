@@ -91,13 +91,19 @@ macOS overlay: the whole window takes `--color-scrim`, and a centered `.glassEff
 
 **A drop target is not an input.** Every DropZone ships beside a real file-picker button.
 
+#### Staged list and text box
+
+On the Send screen the DropZone is replaced by what the user has staged, and the Files tab must not change height as files arrive. Both the staged list (FileRows in a `List`) and the Text tab's editor keep the DropZone's min height as their floor and grow to a 280 cap, then scroll. While a drag is over the list, it draws the DropZone's 2pt `--color-accent` stroke at `--radius-lg`. The text editor has a `--border-hairline` `--color-separator` border at `--radius-md` that turns `--color-accent` while it has focus, and its placeholder is `--color-text-secondary` in the editor's own font.
+
+Photos and videos picked on iPhone and iPad are copied into a staging folder under their own names. A pick that is still loading disables **Send**, and a pick cancelled before it finishes leaves no copy behind. Photos that cannot be loaded show a StatusBanner with the count (`content.md` → Errors).
+
 ### CodeField
 
 Monospaced entry for `word-word-word`, used everywhere a code phrase is typed, including a custom code on Send.
 
 Wrapper: height `--control-height-lg`, padding `0 6px 0 14px`, fill `--color-surface-base`, `--radius-md`, `--border-hairline` border: `--color-separator` idle, `--color-accent` focused, `--color-status-error` invalid. Disabled dims to `--opacity-disabled-container`.
 
-Input: `--font-mono` at `--type-code-body`, `--tracking-code`, no autocapitalization, autocorrection or spell check. Trailing system `PasteButton`, seated in the wrapper's 6px trailing inset. The system owns its glyph and its size: SwiftUI exposes only its border shape, label style and tint. Invalid shows a one-line `--type-footnote` message under the field, never the word "invalid".
+Input: `--font-mono` at `--type-code-body`, `--tracking-code`, no autocapitalization, autocorrection or spell check. Trailing system `PasteButton`, seated in the wrapper's 6px trailing inset. The system owns its glyph and its size: SwiftUI exposes only its border shape, label style and tint. Invalid shows a one-line `--type-footnote` message under the field, never the word "invalid". A code that is still too short is unfinished, not wrong: the border and the message wait until the user presses Return or leaves the field, and clear as soon as the value is right.
 
 ### CodePhraseDisplay and QRFrame
 
@@ -252,6 +258,8 @@ QR capture, iOS only: a sheet with a Cancel-only toolbar and the live camera.
 | resolving permission | indeterminate `ProgressView` | none |
 | denied | EmptyState, `video.slash` | "Open Settings" |
 | restricted, unsupported or failed to start | EmptyState, `video.slash` | none |
+
+While the camera runs, a one-line hint in a `.glassEffect()` pill at `--radius-md` says what to point it at. A QR code that is neither a code phrase nor a link replaces the hint with an error StatusBanner ("That isn't a CrocApp QR code", "Scan the QR code on the sending device.") that enters with the Insert motion (`swiftui.md` → Motion) and leaves when the code leaves the frame. The scanner keeps running, and only the first code phrase or link closes the sheet.
 
 No Settings button where Settings cannot fix it (`content.md` → Errors).
 

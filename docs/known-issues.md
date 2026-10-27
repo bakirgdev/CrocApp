@@ -163,6 +163,9 @@ Permanent or deferred, each with its reason.
   - Not a new exposure: they stay as they were stored, in the login keychain under the access control they were created with.
   - No migration code, by owner decision: the app has no users. Remove them by hand in Keychain Access (search for `com.bakirgdev.CrocApp`), or with `security delete-generic-password -s com.bakirgdev.CrocApp -a <account>` for each account: `relayPassword`, `advanced.socks5Proxy`, `advanced.httpProxy`, `storedReceipts`.
   - iPhone and iPad: an item that an earlier TestFlight or development build wrote keeps `kSecAttrAccessibleAfterFirstUnlock`, so a backup can still restore it to another device, until that setting (or the receipt list) is next saved.
+- **Photos that fail to load are counted, not named.** The banner says how many items could not be added and suggests checking the connection, because the likeliest cause is a photo that lives in iCloud. The picker gives no reason per item.
+- **A staged copy outlives a crash until the next launch.** `SendStaging` sweeps its folder on the first Send screen of a launch. Anything a crash leaves behind uses disk space until then.
+- **The macOS focus-ring change on the Send screen is not verified by eye.** The paste target switches its ring off and back on for its children (`SendView.swift`, `SendPasteTarget`). Check the buttons still show a ring under keyboard navigation.
 - **`OutputFolderStore.select` silently does nothing if bookmarking fails.** It is rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **A name with an LRM, RLM or ALM mark blocks the whole transfer.**

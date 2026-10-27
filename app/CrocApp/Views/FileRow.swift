@@ -200,7 +200,12 @@ struct FileRow: View {
     }
 
     private var sizeText: String? {
-        size?.formatted(.byteCount(style: .file))
+        size.map(Self.sizeText)
+    }
+
+    /// "0 bytes" for an empty file: the formatter's default spells it "Zero KB".
+    static func sizeText(_ size: Int64) -> String {
+        size.formatted(.byteCount(style: .file, spellsOutZero: false))
     }
 
     // components.md → FileRow: last `pinnedTailLength` characters (extension

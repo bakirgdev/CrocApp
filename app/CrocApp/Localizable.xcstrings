@@ -55,8 +55,11 @@
     "1 day" : {},
     "1 hour" : {},
     "7 days" : {},
-    "A code is at least %lld characters." : {
+    "A code phrase needs at least %lld characters." : {
       "comment" : "The placeholder is the minimum number of characters a code needs."
+    },
+    "A photo in iCloud needs a connection to download. Check yours and try again." : {
+      "comment" : "Says what to do after picked photos could not be loaded."
     },
     "A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer." : {},
     "About" : {},
@@ -64,6 +67,7 @@
     "Accept" : {},
     "Add Files" : {},
     "Add Folder" : {},
+    "Add Photos" : {},
     "Address" : {},
     "Advanced" : {},
     "Allow CrocApp in System Settings > General > Login Items." : {},
@@ -121,6 +125,7 @@
     "Code Hint" : {},
     "Code or Link" : {},
     "Code phrase" : {},
+    "Code scanned" : {},
     "Completed" : {
       "comment" : "VoiceOver label of a history row's status icon."
     },
@@ -133,6 +138,9 @@
     "Copy Link" : {},
     "Copy Received Text" : {},
     "Copy Text" : {},
+    "Couldn't add ^[%lld item](inflect: true)" : {
+      "comment" : "Title when photos or videos picked for Send could not be loaded."
+    },
     "Couldn't change Open at login: %@" : {
       "comment" : "Open at Login is a switch in Settings. The placeholder is the system's reason."
     },
@@ -244,6 +252,7 @@
     "Link revoked %@" : {
       "comment" : "The placeholder is the date and time the link was revoked."
     },
+    "Link scanned" : {},
     "Local Network Only" : {},
     "Local network access is off" : {},
     "Local network only: nothing leaves your network" : {},
@@ -275,6 +284,7 @@
     "Paste Code…" : {},
     "Patterns, one per line" : {},
     "Performance" : {},
+    "Point the camera at the QR code on the other device." : {},
     "Privacy Policy" : {},
     "Proxies, sender IP, speed limit and more. The defaults suit most people." : {},
     "Public relay pool" : {},
@@ -369,6 +379,9 @@
     "Save Transfer History" : {},
     "Scan Code" : {},
     "Scan QR Code" : {},
+    "Scan the QR code on the sending device." : {
+      "comment" : "Says what to do after a scanned QR code was not a CrocApp one."
+    },
     "Search file names" : {},
     "Send" : {
       "comment" : "Confirm button of the file chooser."
@@ -451,6 +464,9 @@
     "Text to send" : {},
     "That code is already in use" : {},
     "That is not a croc code or a CrocApp link." : {},
+    "That isn't a CrocApp QR code" : {
+      "comment" : "Title when a scanned QR code is neither a code phrase nor a link."
+    },
     "That text is too long to send this way. Select less of it." : {},
     "The camera couldn't start. Close this and try again." : {},
     "The cancelled transfer didn't stop" : {},
@@ -510,6 +526,7 @@
       "comment" : "Auto-Accept Transfers is the label of a switch in Settings."
     },
     "Turn on Save Transfer History in Settings to list finished transfers here." : {},
+    "Type or paste the text to send." : {},
     "Unsafe file names were blocked" : {},
     "Version" : {},
     "Via custom relay %@, which sees only encrypted data" : {

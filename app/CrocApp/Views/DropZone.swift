@@ -15,13 +15,15 @@ struct DropZone: View {
     var size: Size = .regular
     let isTargeted: Bool
 
-    // components.md → DropZone: min height 168 (menu bar 96), glyph 44
-    // (34 compact, iconography.md → Sizes in use), scaled with Dynamic Type.
+    // components.md → DropZone: min height 168 (menu bar 96), 2pt stroke dashed
+    // 6 on 4 off, glyph 44 (34 compact, iconography.md → Sizes in use), scaled
+    // with Dynamic Type. SendView reuses the height and the stroke for the staged
+    // list and its drag-over border.
     static let minHeight: CGFloat = 168
+    static let strokeWidth: CGFloat = 2
     private static let compactMinHeight: CGFloat = 96
     private static let dashLength: CGFloat = 6
     private static let dashGap: CGFloat = 4
-    private static let strokeWidth: CGFloat = 2
     @ScaledMetric(relativeTo: .largeTitle) private var regularGlyph: CGFloat = 44
     @ScaledMetric(relativeTo: .title) private var compactGlyph: CGFloat = 34
 

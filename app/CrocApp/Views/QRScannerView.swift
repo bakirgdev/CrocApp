@@ -9,9 +9,15 @@ import VisionKit
 /// checked as a separate capability gate: it is false on simulator and
 /// unsupported hardware regardless of authorization, so both checks stay.
 struct QRScannerSheet: View {
-    let onScan: (String) -> Void
+    /// Called once, with the first QR code that is a code phrase or a link.
+    /// Anything else keeps the camera running (components.md → ScannerSheet).
+    let onScan: (TransferLink) -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var startFailed = false
+    /// A QR code is in view that CrocApp cannot receive.
+    @State private var showsRejection = false
+    @State private var hasScanned = false
     @State private var authStatus: AVAuthorizationStatus = CameraPermission.status
 
     var body: some View {
@@ -53,7 +59,10 @@ struct QRScannerSheet: View {
                     systemImage: "video.slash",
                     description: Text("The camera couldn't start. Close this and try again."))
             } else {
-                QRScannerView(onScan: onScan) { startFailed = true }
+                QRScannerView(onScan: scanned, onLost: { showsRejection = false }) {
+                    startFailed = true
+                }
+                .overlay(alignment: .bottom) { guidance }
             }
         } else {
             ContentUnavailableView(
@@ -61,6 +70,58 @@ struct QRScannerSheet: View {
                 systemImage: "video.slash",
                 description: Text("Enter the code phrase instead."))
         }
+    }
+
+    private func scanned(_ payload: String) {
+        guard !hasScanned else { return }
+        guard let link = TransferLink.parse(payload) else {
+            showsRejection = true
+            return
+        }
+        hasScanned = true
+        onScan(link)
+    }
+
+    /// What to do, or why the QR code in view does not work. The two share a
+    /// slot, so nothing moves when one replaces the other.
+    private var guidance: some View {
+        Group {
+            if showsRejection {
+                StatusBanner(
+                    kind: .error,
+                    title: String(
+                        localized: "That isn't a CrocApp QR code",
+                        comment: "Title when a scanned QR code is neither a code phrase nor a link."
+                    ),
+                    detail: String(
+                        localized: "Scan the QR code on the sending device.",
+                        comment: "Says what to do after a scanned QR code was not a CrocApp one.")
+                )
+                .transition(rejectionTransition)
+            } else {
+                Text("Point the camera at the QR code on the other device.")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Spacing.space5)
+                    .padding(.vertical, Spacing.space4)
+                    .glassEffect(
+                        .regular, in: .rect(cornerRadius: Radius.md, style: .continuous))
+            }
+        }
+        .padding(Spacing.space5)
+        .animation(
+            reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: showsRejection)
+    }
+
+    /// swiftui.md → Motion, "Insert".
+    private var rejectionTransition: AnyTransition {
+        reduceMotion
+            ? .identity
+            : .asymmetric(
+                insertion: .opacity.combined(with: .offset(y: -Spacing.space3))
+                    .animation(Motion.easeOut(Motion.durationBase)),
+                removal: .opacity.animation(Motion.easeStandard(Motion.durationFast)))
     }
 
     // Settings can fix a denial, so offer the shortcut there -- mirrors the
@@ -95,6 +156,8 @@ struct QRScannerSheet: View {
 
 private struct QRScannerView: UIViewControllerRepresentable {
     let onScan: (String) -> Void
+    /// Nothing is in view any more.
+    let onLost: () -> Void
     let onStartFailure: () -> Void
 
     func makeUIViewController(context: Context) -> DataScannerViewController {
@@ -117,7 +180,7 @@ private struct QRScannerView: UIViewControllerRepresentable {
         }
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator(onScan: onScan) }
+    func makeCoordinator() -> Coordinator { Coordinator(onScan: onScan, onLost: onLost) }
 
     // ReceiveView presents this as an interactively-dismissible sheet, so
     // updateUIViewController's startScanning may not be the last word --
@@ -130,7 +193,11 @@ private struct QRScannerView: UIViewControllerRepresentable {
 
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
         let onScan: (String) -> Void
-        init(onScan: @escaping (String) -> Void) { self.onScan = onScan }
+        let onLost: () -> Void
+        init(onScan: @escaping (String) -> Void, onLost: @escaping () -> Void) {
+            self.onScan = onScan
+            self.onLost = onLost
+        }
 
         func dataScanner(
             _ dataScanner: DataScannerViewController,
@@ -140,9 +207,16 @@ private struct QRScannerView: UIViewControllerRepresentable {
             for item in addedItems {
                 if case .barcode(let barcode) = item, let payload = barcode.payloadStringValue {
                     onScan(payload)
-                    return
                 }
             }
+        }
+
+        func dataScanner(
+            _ dataScanner: DataScannerViewController,
+            didRemove removedItems: [RecognizedItem],
+            allItems: [RecognizedItem]
+        ) {
+            if allItems.isEmpty { onLost() }
         }
     }
 }
