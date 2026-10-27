@@ -144,7 +144,8 @@ final class HistoryStore {
             return try container.mainContext.fetch(descriptor).first
         } catch {
             Self.log.error(
-                "history stored-record fetch failed: \(String(describing: error), privacy: .public)")
+                "history stored-record fetch failed: \(String(describing: error), privacy: .public)"
+            )
             return nil
         }
     }

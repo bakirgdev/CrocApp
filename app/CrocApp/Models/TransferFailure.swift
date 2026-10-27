@@ -139,7 +139,9 @@ extension TransferFailure {
         TransferFailure(
             title: String(localized: "Transfer finished with problems"),
             detail: direction == .receive
-                ? String(localized: "Check the files, and ask the sender to send any missing ones again.")
+                ? String(
+                    localized: "Check the files, and ask the sender to send any missing ones again."
+                )
                 : String(localized: "Check with the other device that every file arrived."),
             remedy: nil)
     }
