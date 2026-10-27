@@ -86,6 +86,8 @@ final class HistoryStore {
 
     let container: ModelContainer
     @ObservationIgnored var observer: (any HistoryChangeObserver)?
+    /// Replaces the context save; a test sets it to make a save fail.
+    @ObservationIgnored var saveOverride: (() throws -> Void)?
 
     init(container: ModelContainer) {
         self.container = container
@@ -201,7 +203,7 @@ final class HistoryStore {
     @discardableResult
     private func save(_ operation: String) -> Bool {
         do {
-            try container.mainContext.save()
+            try saveOverride?() ?? container.mainContext.save()
             return true
         } catch {
             Self.log.error(

@@ -21,7 +21,10 @@ nonisolated struct SpotlightHistoryIndex: HistoryIndexing {
 
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "spotlight")
 
-    private var index: CSSearchableIndex { CSSearchableIndex(name: Self.indexName) }
+    /// The name the app uses; a test passes its own so it never touches this one.
+    var name = Self.indexName
+
+    private var index: CSSearchableIndex { CSSearchableIndex(name: name) }
 
     func index(_ entities: [HistoryEntity]) async throws {
         guard !entities.isEmpty, available else { return }

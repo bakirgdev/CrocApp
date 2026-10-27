@@ -51,6 +51,7 @@ A row's label names the thing, in Title Case, as a noun phrase: never "Enable" o
 | Row | Footer |
 |---|---|
 | **Save Transfer History** | Finished transfers are listed in History, which stays on this device. |
+| **Show History in Spotlight** (off by default; disabled while Save Transfer History is off) | Spotlight on this device can find past transfers by their file names. |
 | Section "Notifications": **Incoming Transfers**, **Finished Transfers** | Shown only while CrocApp is in the background. |
 | **Haptics** (iPhone only) | A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer. |
 

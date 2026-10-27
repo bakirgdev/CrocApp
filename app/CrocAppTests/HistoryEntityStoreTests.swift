@@ -9,7 +9,7 @@ import Testing
 /// Records what the store asks of the Spotlight index. The real index is never
 /// touched: a test run must not put rows in the developer's Spotlight.
 private final class RecordingIndex: HistoryIndexing {
-    enum Call: Equatable {
+    enum Call: Hashable {
         case index(names: [String])
         case remove(count: Int)
         case removeAll
@@ -42,13 +42,18 @@ private final class RecordingIndex: HistoryIndexing {
     func removeAll() async throws { try record(.removeAll) }
 }
 
-/// The Save Transfer History setting governs everything History offers outside
-/// the app: the Spotlight index follows the store while it is on, and is gone
-/// while it is off.
+/// Save Transfer History governs everything History offers outside the app, and
+/// Show History in Spotlight governs the index: the index follows the store
+/// while both are on, and is gone while either is off. The tests start with
+/// Spotlight on; the default is pinned separately.
 @MainActor @Suite struct HistoryEntityStoreTests {
     private let settings = AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore())
     private let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
     private let index = RecordingIndex()
+
+    init() {
+        settings.indexHistoryInSpotlight = true
+    }
 
     /// A store wired to `history`, started, and settled. `index` is what the
     /// app passes: the system index, or nil for a harness run.
@@ -169,7 +174,92 @@ private final class RecordingIndex: HistoryIndexing {
         #expect(index.calls.last == .remove(count: 1))
     }
 
+    // MARK: - The Spotlight setting
+
+    @Test func spotlightIndexingIsOffByDefault() {
+        let fresh = AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore())
+        #expect(!fresh.indexHistoryInSpotlight)
+    }
+
+    @Test func nothingIsIndexedWhileSpotlightIsOff() async {
+        settings.indexHistoryInSpotlight = false
+        addRecord("before.txt")
+        let store = await started()
+        #expect(index.calls == [.removeAll], "launch only clears the index")
+        addRecord("hidden.txt")
+        await store.settled()
+        #expect(index.calls == [.removeAll])
+        #expect(store.all().count == 2, "Shortcuts still sees History")
+    }
+
+    @Test func turningSpotlightOffRemovesWhatIsIndexedAndStopsIndexing() async {
+        addRecord("a.txt")
+        let store = await started()
+        let before = index.calls.count
+        settings.indexHistoryInSpotlight = false
+        await settle(store, after: before + 1)
+        #expect(Array(index.calls.dropFirst(before)) == [.removeAll])
+        addRecord("b.txt")
+        await store.settled()
+        #expect(Array(index.calls.dropFirst(before)) == [.removeAll])
+    }
+
+    @Test func turningSpotlightOnIndexesTheExistingRecords() async {
+        settings.indexHistoryInSpotlight = false
+        addRecord("a.txt")
+        addRecord("b.txt", daysAgo: 1)
+        let store = await started()
+        let before = index.calls.count
+        settings.indexHistoryInSpotlight = true
+        await settle(store, after: before + 2)
+        #expect(
+            Array(index.calls.dropFirst(before))
+                == [.removeAll, .index(names: ["a.txt", "b.txt"])])
+    }
+
+    @Test func spotlightOnDoesNotIndexWhileHistoryIsOff() async {
+        settings.saveTransferHistory = false
+        addRecord("a.txt")
+        let store = await started()
+        let before = index.calls.count
+        settings.indexHistoryInSpotlight = false
+        settings.indexHistoryInSpotlight = true
+        await settle(store, after: before + 1)
+        #expect(Set(index.calls.dropFirst(before)) == [.removeAll], "never an index call")
+    }
+
     // MARK: - Failure
+
+    @Test func aFailedRemovalIsRetriedWithAFullRebuildAtTheNextChange() async {
+        let store = await started()
+        let record = addRecord("gone.txt")
+        await store.settled()
+        index.failNext(1)
+        history.delete(record)
+        await store.settled()
+        let before = index.calls.count
+        addRecord("next.txt")
+        await store.settled()
+        #expect(
+            Array(index.calls.dropFirst(before))
+                == [.removeAll, .index(names: ["next.txt"])],
+            "the retry replaces the index with what History holds")
+        let after = index.calls.count
+        addRecord("again.txt")
+        await store.settled()
+        #expect(Array(index.calls.dropFirst(after)) == [.index(names: ["again.txt"])])
+    }
+
+    @Test func aFailedSaveIsNotAnnouncedToTheIndex() async {
+        let store = await started()
+        let before = index.calls.count
+        history.saveOverride = { throw RecordingIndex.Failure() }
+        let record = addRecord("unsaved.txt")
+        history.delete(record)
+        history.clear()
+        await store.settled()
+        #expect(index.calls.count == before, "no index call for a change that never saved")
+    }
 
     @Test func aFailedIndexCallDoesNotStopTheNextOne() async {
         let store = await started()
@@ -177,7 +267,8 @@ private final class RecordingIndex: HistoryIndexing {
         addRecord("first.txt")
         addRecord("second.txt")
         await store.settled()
-        #expect(index.calls.suffix(2) == [.index(names: ["first.txt"]), .index(names: ["second.txt"])])
+        #expect(
+            index.calls.suffix(2) == [.index(names: ["first.txt"]), .index(names: ["second.txt"])])
         #expect(history.recordCount() == 2, "History keeps the record")
     }
 

@@ -56,6 +56,12 @@ final class AppSettings {
     var saveTransferHistory: Bool {
         didSet { save(saveTransferHistory, "settings.saveTransferHistory") }
     }
+    /// Off by default: History's file names reach the system Spotlight index
+    /// only on the user's say-so. Needs `saveTransferHistory` too; turning
+    /// either off empties the index (`HistoryEntityStore`).
+    var indexHistoryInSpotlight: Bool {
+        didSet { save(indexHistoryInSpotlight, "settings.indexHistoryInSpotlight") }
+    }
     /// iPhone only. Off silences every haptic; the screen still shows each event.
     var haptics: Bool { didSet { save(haptics, "settings.haptics") } }
 
@@ -137,6 +143,8 @@ final class AppSettings {
             storage, "settings.storedServer", default: Self.defaultStoredServer)
         showInMenuBar = Self.read(storage, "settings.showInMenuBar", default: true)
         saveTransferHistory = Self.read(storage, "settings.saveTransferHistory", default: true)
+        indexHistoryInSpotlight = Self.read(
+            storage, "settings.indexHistoryInSpotlight", default: false)
         haptics = Self.read(storage, "settings.haptics", default: true)
         let croc = Self.advancedDefaults
         throttleUpload = Self.read(

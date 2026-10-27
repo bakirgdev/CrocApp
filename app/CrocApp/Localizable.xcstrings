@@ -203,6 +203,7 @@
         }
       }
     },
+    "File Names" : {},
     "File names" : {},
     "Files" : {},
     "Files are encrypted on this device before they reach %@. Anyone with the link can receive them until it expires or runs out." : {
@@ -251,6 +252,7 @@
     "Lost connection to the other device" : {},
     "Menu bar" : {},
     "Multicast Address" : {},
+    "Name" : {},
     "Network" : {},
     "No limit" : {},
     "No public relay answered" : {},
@@ -264,8 +266,10 @@
     "Open CrocApp" : {},
     "Open CrocApp to accept or decline them." : {},
     "Open Settings" : {},
+    "Open Transfer" : {},
     "Open at Login" : {},
     "Open in Files" : {},
+    "Opens CrocApp at History." : {},
     "Overall progress" : {},
     "Password" : {},
     "Paste Code…" : {},
@@ -423,6 +427,7 @@
     "Share Link" : {},
     "Share Text" : {},
     "Shared Files" : {},
+    "Show History in Spotlight" : {},
     "Show Receive Folder in Files" : {},
     "Show Receive Folder in Finder" : {},
     "Show in Files" : {},
@@ -430,11 +435,13 @@
     "Show in Menu Bar" : {},
     "Size" : {},
     "Some names are already taken" : {},
+    "Spotlight on this device can find past transfers by their file names." : {},
     "Start the same transfer again; replacing the partly received files resumes it." : {
       "comment" : "Replace is the label of a button in the incoming-files prompt."
     },
     "Start the send there first, or use a faster connection, then enter the code again." : {},
     "Starting…" : {},
+    "Status" : {},
     "Straight to the sender, no relay in between" : {},
     "Strong keys from short codes" : {},
     "Support" : {},
@@ -444,6 +451,7 @@
     "Text to send" : {},
     "That code is already in use" : {},
     "That is not a croc code or a CrocApp link." : {},
+    "That text is too long to send this way. Select less of it." : {},
     "The camera couldn't start. Close this and try again." : {},
     "The cancelled transfer didn't stop" : {},
     "The clipboard has no text to send." : {},

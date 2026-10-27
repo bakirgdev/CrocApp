@@ -82,8 +82,9 @@ import Testing
 
         let attributes = found.attributeSet
         var seen = [found.id, found.name, found.summary] + found.fileNames
-        seen += [attributes.title, attributes.displayName, attributes.contentDescription].compactMap(
-            \.self)
+        seen += [attributes.title, attributes.displayName, attributes.contentDescription]
+            .compactMap(
+                \.self)
         seen += attributes.keywords ?? []
         #expect(seen.contains("report.pdf"))
         for text in seen {
