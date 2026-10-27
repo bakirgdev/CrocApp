@@ -8,7 +8,7 @@ description: "CrocApp's local-only transfer history: what it records, what it ne
 
 ![The History screen on macOS listing past transfers with their direction, file counts, and status](../../screenshots/mac/history-light.webp#gh-light-mode-only)![The History screen on macOS listing past transfers with their direction, file counts, and status](../../screenshots/mac/history-dark.webp#gh-dark-mode-only)
 
-CrocApp keeps a list of past transfers on your device. Open it from the clock icon on the home screen. It has no sync, no export and no server.
+CrocApp keeps a list of past transfers on your device. Open it from **History** in the sidebar (iPad and Mac), or from the clock icon on the home screen on iPhone and in a narrow window. It has no sync, no export and no server.
 
 ## What is recorded
 

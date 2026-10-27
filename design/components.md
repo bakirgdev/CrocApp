@@ -163,7 +163,7 @@ Composition: direction header (Receiving), TrustBadge pill, the file list as `Fi
 There is no Cancel and no "Not now" here: either would answer the sender on the user's behalf or promise a deferral the protocol cannot deliver. The sender's own timeout is the only thing that ends the wait.
 
 1. **Navigating away never responds**: not on backgrounding, not on a timeout of our own.
-2. **A live request is never lost.** While one is pending and the user is elsewhere, an `info` StatusBanner with a Review action sits on Home and returns to the gate. In regular width the same banner heads every detail screen except the gate, and the Receive SidebarRow carries a Review badge (`platforms.md` → Layout by width). A notification offers the same Review and nothing more (`platforms.md` → Notifications). Persistent, not a toast.
+2. **A live request is never lost.** While one is pending and the user is elsewhere, an `info` StatusBanner with a Review action sits on Home and returns to the gate. In regular width the same banner heads every detail screen except the gate, and the SidebarRow of the transfer's direction carries a Review badge (`platforms.md` → Layout by width). A both-sides confirm on a send is the same question and gets the same treatment. A notification offers the same Review and nothing more (`platforms.md` → Notifications). Persistent, not a toast.
 3. **The copy separates them.** Decline is worded as telling the other device no. Nothing describes leaving as an action.
 
 Auto-accept, when the user turns it on in Settings, skips this gate; it is off by default on every platform (`platforms.md`).
@@ -223,10 +223,10 @@ Regular width only. A system sidebar row (`Label`, the system's selection and ma
 |---|---|---|
 | starting, connecting | "Connecting", `--type-caption1` `--color-text-secondary` | "Send, connecting" |
 | waiting (a sender with a code, nobody joined) | "Waiting", the same style | "Send, waiting for the other device" |
-| confirmSend, incoming | a **Review** badge: capsule `--color-accent-solid`, label `--color-on-accent`, `--type-footnote` semibold, padding `--space-1` `--space-3` | "Receive, needs your answer" |
-| transferring | the integer percent, `--type-caption1` secondary, tabular, numeric text; the direction word when the total is unknown | "Send, 42 percent" |
+| confirmSend (a send), incoming (a receive) | a **Review** badge on the row of the transfer's direction: capsule `--color-accent-solid`, label `--color-on-accent`, `--type-footnote` semibold, padding `--space-1` `--space-3` | "Receive, needs your answer", or "Send, needs your answer" |
+| transferring | the integer percent, `--type-caption1` secondary, tabular, numeric text; the direction word when the total is unknown | "Send, 42 percent"; "Send, transferring" when the total is unknown |
 
-Selecting the row shows its screen (the gate, the waiting screen, the progress). The app never selects a row or changes the detail on its own: a request that arrives while the user reads History steals nothing and answers nothing. A change is announced once per phase, never per progress tick. Contrast of the state text on the sidebar material is the system's to keep: check it with Accessibility Inspector (not verified).
+Selecting the row shows its screen (the gate, the waiting screen, the progress). The app never selects a row or changes the detail on its own: a request that arrives while the user reads History steals nothing and answers nothing. A change is announced once per phase, never per progress tick, with the row's spoken words (the percent is read when VoiceOver is on the row, and never announced). The state is not part of the row's own accessibility element: the label carries it, so the row stays the system's selectable row. Contrast of the state text on the sidebar material is the system's to keep: check it with Accessibility Inspector (not verified).
 
 ### OnboardingSheet
 
@@ -280,7 +280,7 @@ Background `assets/dmg-background.tiff`: a 1x and 2x multi-representation TIFF (
 |---|---|---|
 | SegmentedControl | `Picker` + `.pickerStyle(.segmented)` | segment labels Title Case |
 | Toggle | `Toggle` | system tint; no custom switch |
-| Sidebar | `NavigationSplitView` sidebar, `List(selection:)` of `Label` rows | the system's width, style, selection and material (`platforms.md`); the trailing state is SidebarRow |
+| Sidebar | `NavigationSplitView` sidebar, `List(selection:)` of `Label` rows | the system's style, selection and material, and its width on iPad (`platforms.md` → Layout by width); the trailing state is SidebarRow |
 | Settings rows | `Form` + `.formStyle(.grouped)`, `LabeledContent`, `Toggle`, `Picker`, `NavigationLink` | trailing paths truncate in the middle. A footer we write takes `--color-text-secondary` explicitly (`colors.md` rule 4). Labels and footers for Save Transfer History, Notifications and Haptics: `content.md` → Settings. Haptics exists on iPhone only |
 | SettingsForm | macOS Settings scene (⌘,), the same `Form` | default focus on a real visible button, never a text field. Advanced, Power and About are sections of it |
 | Sheet toolbar | `.toolbar` with `.cancellationAction` / `.confirmationAction` | a destructive confirm is labelled by the sheet's copy, not painted red |

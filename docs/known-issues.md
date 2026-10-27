@@ -59,11 +59,14 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 
 ## Design system
 
-- **iPad shows the iPhone layout stretched: the layout is specified, not built.**
-  - `design/platforms.md`, "Layout by width", specifies a `NavigationSplitView` for regular width (sidebar rows Send, Receive, History, plus Settings on iPad; the Mac keeps its Settings scene) and keeps Home plus `NavigationStack` for compact width. The implementation is pending.
-  - Today the app is one `NavigationStack` and `TARGETED_DEVICE_FAMILY` is `1,2`. On an iPad Pro 13-inch the screens are the phone screens at tablet size, with content capped by `LayoutCap.contentMaxWidth` and wide empty margins.
-  - The `ipad/` screenshots and the 13-inch App Store set show exactly that.
-  - Until the split view ships, App Store listing copy must not promise an iPad-optimised experience.
+- **The sidebar layout does not keep a screen's state when the selection or the layout changes.**
+  - Staged files and typed text on Send, and a code typed on Receive, live in the screen's `@State`. Choosing another sidebar row rebuilds the detail and clears them, and so does a window or Split View change that flips the layout between Home and the sidebar (a screen pushed in the detail goes too).
+  - The compact layout loses the same state when the user pops back to Home, so this is not new, but the sidebar makes it a one-click loss.
+  - Left because the screens own that state. Moving it into a model that outlives the screen would fix both layouts.
+- **The menu bar has no Clear History item.** The History screen's **Clear** toolbar button keeps its confirmation dialog in `HistoryView`'s own state, so `AppCommands` cannot reach it. A fix would publish the action with a focused value.
+- **A Mac list or form screen draws its scroll edge only as wide as the capped column.** `HistoryView` and the settings screens sit in a 480-wide column in the detail, and macOS 26 draws the hairline and, in dark mode, a slightly lighter band under the toolbar across that column only. The cap is the book's (`design/spacing-layout.md`, "Layout cap"). `scrollContentBackground` and `scrollEdgeEffectStyle` did not remove it, and `contentMargins` does nothing on a Mac list.
+- **`HomeView` and the sidebar detail each switch on `Route` to build a screen.** `Route.destination` (`Views/RegularLayout.swift`) is the shared copy, and `HomeView` still has its own because it was not touched.
+- **An iPhone Plus or Max in landscape reports regular width**, so by the book's rule (width, never device) it gets the sidebar. Not checked: no simulator was rotated to landscape.
 - **The views predate the amended design book.** What the book now specifies and the app does not do yet:
   - About 30 call sites style text with `.secondary` instead of `Color.textSecondary` (`design/colors.md` rule 4). The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
   - The user's own cancel or decline ends on the failure `StatusBlock`, with the error glyph and tint, although `design/content.md`, "Errors", says it is not a failure. Its title stands alone with **Done**, as the book wants; `StatusBlock` has no neutral kind for it yet.
