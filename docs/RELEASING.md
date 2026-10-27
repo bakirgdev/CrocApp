@@ -91,7 +91,11 @@ The release key is plain text that the owner keeps (made with `openssl`, see "On
 
 This proves that a Release `CrocApp Direct` build installs a newer one. It uses a throwaway Ed25519 key, never the release key, and a feed on localhost. Sparkle accepts an `http` localhost feed and only logs a warning about HTTPS, so no ATS exception is needed.
 
-Sparkle's tools come with the package, at `<DerivedData>/SourcePackages/artifacts/sparkle/Sparkle/bin/`. Work in a scratch directory with a `feed/` folder.
+Sparkle's tools come with the package, at `<DerivedData>/SourcePackages/artifacts/sparkle/Sparkle/bin/`. Work in a scratch directory with a `feed/` folder, made from inside the checkout:
+
+```bash
+REPO=$(git rev-parse --show-toplevel) && cd "$(mktemp -d)" && mkdir feed
+```
 
 1. Make a throwaway key (raw 32-byte seed and public key, base64):
    ```bash
@@ -99,10 +103,10 @@ Sparkle's tools come with the package, at `<DerivedData>/SourcePackages/artifact
    openssl pkey -in key.pem -outform DER | tail -c 32 | base64 > priv.b64
    openssl pkey -in key.pem -pubout -outform DER | tail -c 32 | base64 > pub.b64
    ```
-2. Build twice, as build 1 and build 2, from `app/`:
+2. Build twice, as build 1 and build 2, from the scratch directory:
    ```bash
    for N in 1 2; do
-     xcodebuild -scheme 'CrocApp Direct' -configuration Release -destination 'platform=macOS' \
+     xcodebuild -project "$REPO/app/CrocApp.xcodeproj" -scheme 'CrocApp Direct' -configuration Release -destination 'platform=macOS' \
        -derivedDataPath "dd$N" -allowProvisioningUpdates CURRENT_PROJECT_VERSION=$N \
        "SPARKLE_PUBLIC_ED_KEY=$(cat pub.b64)" SPARKLE_FEED_URL=http://127.0.0.1:8765/appcast.xml build
    done

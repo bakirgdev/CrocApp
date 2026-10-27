@@ -119,7 +119,7 @@ Design and docs, no toolchain needed:
 
 ```bash
 scripts/verify-design.sh   # token mirrors, contrast, no literals (design/AGENTS.md)
-scripts/verify-docs.sh     # links, repo paths and stale markers in the markdown (docs/AGENTS.md)
+scripts/verify-docs.sh     # links, images, repo paths, stale markers, unused screenshots (docs/AGENTS.md)
 ```
 
 The website (landing page and docs site) builds into one artifact. Broken links and anchors fail it, and CI runs the same script in the `site build` job:

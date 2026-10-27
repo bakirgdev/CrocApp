@@ -1,9 +1,9 @@
 # Screenshots
 
-Every image in `assets/screenshots/` comes out of `scripts/capture-screenshots.sh`, driving real Debug builds of the shipping app. Nothing is a mockup, a crop, or a retouch. The script header is the manifest; `scripts/capture-screenshots.sh --list` prints every output file and size without touching the display.
+Every screenshot comes out of `scripts/capture-screenshots.sh`, driving real Debug builds of the shipping app. Nothing is a mockup, a crop, or a retouch. The script writes to `build/screenshots/` (gitignored); git keeps only the published pairs in `assets/screenshots/`. The script header is the manifest; `scripts/capture-screenshots.sh --list` prints every output file and size without touching the display.
 
 ```
-assets/screenshots/
+build/screenshots/
   mac/SCREEN-{light,dark}.png      per-window capture, 2x, real window shape
   iphone/SCREEN-{light,dark}.png   iPhone 17 Pro Max simulator, 1320x2868, 9:41 status bar
   ipad/SCREEN-{light,dark}.png     iPad Pro 13-inch (M5) simulator, 2064x2752, 9:41 status bar
@@ -15,10 +15,10 @@ assets/screenshots/
 ## Running it
 
 ```
-scripts/capture-screenshots.sh                 # everything; empties assets/screenshots/ first
+scripts/capture-screenshots.sh                 # everything; empties build/screenshots/ first
 scripts/capture-screenshots.sh ipad            # one device (mac, iphone, ipad, iphone63, duo)
 scripts/capture-screenshots.sh mac history     # devices and screens combine; both appearances
-scripts/capture-screenshots.sh --copy-web      # refresh the web copies, no display needed
+scripts/capture-screenshots.sh --copy-web      # publish the pairs git keeps, then refresh the web copies; no display needed
 ```
 
 - A run takes over the display and flips the system appearance twice, restoring it on exit including on failure.
@@ -26,12 +26,13 @@ scripts/capture-screenshots.sh --copy-web      # refresh the web copies, no disp
 - It creates simulators named "CrocApp Shots <device>" (iPhone and iPad for the main set, then iPhone 17 Pro and iPhone Duo one at a time for the store-only classes, each deleted as soon as its pass ends), starts a croc relay and, for `stored-link`, a store server, and removes all of them on exit.
 - Needs Go (the store server comes from `crocmobile/cmd/croctest`) and a v11 `croc` (default `/opt/homebrew/bin/croc`, override with `CROC`; crocmobile embeds v11.5.5).
 
-After a run, refresh the web copies with `--copy-web`. The pages use WebP, not PNG, so it rebuilds with `cwebp` (`brew install webp`; the script fails if it is missing) every `.webp` already present under `web/docs/screenshots/` and `web/landing/assets/img/screenshots/`:
+After a run, publish with `--copy-web`. The pages use WebP, not PNG, so it rebuilds with `cwebp` (`brew install webp`; the script fails if it is missing) every `.webp` already present under `web/docs/screenshots/` and `web/landing/assets/img/screenshots/`:
 
+- It first copies each PNG in `assets/screenshots/` from the same path under `build/screenshots/` when a capture is there. A PNG with no capture is kept and named in the output, so it runs on a fresh clone.
 - Each file's source is `assets/screenshots/` plus the same relative path with `.png`. A `.webp` with no matching source fails the run.
 - Each file keeps its current pixel size (read with `sips`), so the landing hero stays 840x1050 (Mac) and 660x1434 (iPhone), matching the `width` and `height` attributes in `index.html`. A source whose aspect ratio no longer matches the file fails the run: resize the file once by hand with the same `cwebp` flags and the new size, update the page's attributes, then re-run.
 - Flags are `-q 85 -m 6`, with `-resize W H` only when the size differs from the source.
-- To publish a new shot, run `cwebp` on its source into the web folder once, at the size the page needs; later runs keep it fresh.
+- To publish a new shot, copy its pair from `build/screenshots/` into `assets/screenshots/`, then run `cwebp` on the PNG into the web folder once, at the size the page needs; later runs keep both fresh.
 
 ## The screens
 
@@ -71,7 +72,7 @@ From Apple's screenshot specifications, https://developer.apple.com/help/app-sto
 | `ipad-13` | 2064x2752 | 13" display, required because the app runs on iPad | iPad Pro 13-inch (M5) simulator |
 | `mac` | 2880x1800 | 16:10, one of four accepted sizes | the window composed on a canvas |
 
-All are native simulator pixels: nothing is scaled or cropped to reach a size.
+All are native simulator pixels: nothing is scaled or cropped to reach a size. A submission starts with a capture and uploads from `build/screenshots/app-store/<class>/`; git does not keep these sets.
 
 - **iPhone Duo.** `simctl io <udid> enumerate` lists two panels, screen 1 (`LCD`, 1398x2034, the outer display) and screen 3 (`LCD-1`, 2007x2853, the inner display).
   - `screenshot --display=1` captures the outer one at exactly Apple's size (set `DUO_OUTER_DISPLAY` if a runtime numbers them differently).
@@ -175,7 +176,7 @@ For any future screenshot work:
 
 ## Where they are used
 
-Ten pairs are referenced by the web or the README; the rest and the whole `app-store/` set are captured and unused by the web (`../known-issues.md`, "Docs site").
+Git keeps these ten pairs in `assets/screenshots/` and nothing else; every other capture and the App Store sets stay in `build/screenshots/`, and any capture makes them again. `scripts/verify-docs.sh` fails on a tracked PNG that nothing shows.
 
 - Root `README.md`: `mac/send-code`, `iphone/receive-incoming`, `mac/settings`, via `<picture>` elements that swap on the viewer's GitHub theme.
 - Docs site: WebP copies under `web/docs/screenshots/` (outside `static/`, so Docusaurus ships only the hashed copy), referenced by relative path, one pair per page:
