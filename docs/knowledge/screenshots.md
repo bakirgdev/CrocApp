@@ -28,7 +28,7 @@ scripts/capture-screenshots.sh --copy-web      # publish the pairs git keeps, th
 
 After a run, publish with `--copy-web`. The pages use WebP, not PNG, so it rebuilds with `cwebp` (`brew install webp`; the script fails if it is missing) every `.webp` already present under `web/docs/screenshots/` and `web/landing/assets/img/screenshots/`:
 
-- It first copies each PNG in `assets/screenshots/` from the same path under `build/screenshots/` when a capture is there. A PNG with no capture is kept and named in the output, so it runs on a fresh clone.
+- It first copies each PNG in `assets/screenshots/` from the same path under `build/screenshots/` when a capture is there. A PNG with no capture is kept and named in the output, so it runs on a fresh clone. An empty or unreadable capture (a failed shot leaves one) fails the run before anything is copied.
 - Each file's source is `assets/screenshots/` plus the same relative path with `.png`. A `.webp` with no matching source fails the run.
 - Each file keeps its current pixel size (read with `sips`), so the landing hero stays 840x1050 (Mac) and 660x1434 (iPhone), matching the `width` and `height` attributes in `index.html`. A source whose aspect ratio no longer matches the file fails the run: resize the file once by hand with the same `cwebp` flags and the new size, update the page's attributes, then re-run.
 - Flags are `-q 85 -m 6`, with `-resize W H` only when the size differs from the source.
@@ -81,7 +81,7 @@ All are native simulator pixels: nothing is scaled or cropped to reach a size. A
   - The outer display lays the app out sideways (status bar and back button in a strip along one edge); that is how the simulator renders it, and the shot is kept as is.
   - The Duo runs on the newest runtime (iOS 27.1), the others on whichever newest runtime supports their device type.
 
-**Mac.** A window capture is typically 1120x1400 (a 560x700 pt window at 2x), not 16:10, and a stretched window would be dishonest. `imgtool compose` (`scripts/screenshots/imgtool.swift`) draws the untouched window at 1x, centred, with a soft shadow, on a gradient canvas of exactly 2880x1800: pale blue-grey for light shots, deep blue-grey for dark ones. Needs a Retina main display so the capture comes out at 2x.
+**Mac.** A main-window capture is 1440x1400 (a 720x700 pt window at 2x; 720 pt is the window's minimum width) and a Settings capture is 960 px wide, not 16:10; some published main-window pairs are older and 1120 px wide (`docs/known-issues.md`), and a stretched window would be dishonest. `imgtool compose` (`scripts/screenshots/imgtool.swift`) draws the untouched window at 1x, centred, with a soft shadow, on a gradient canvas of exactly 2880x1800: pale blue-grey for light shots, deep blue-grey for dark ones. Needs a Retina main display so the capture comes out at 2x.
 
 **No alpha.** Window captures and simulator screenshots carry an alpha channel. `imgtool` draws into a `noneSkipLast` bitmap context, which writes a PNG with no alpha channel at all (flattening over a colour alone would keep the channel). The last step of every run runs `sips -g pixelWidth -g pixelHeight -g hasAlpha` on every store file and fails on a wrong size, an alpha channel, a missing file, or more than ten files per device.
 

@@ -138,6 +138,15 @@ case "${1:-}" in
     # cwebp on it once, into the web folder, at the size its page needs.
     command -v cwebp > /dev/null || fail "cwebp is missing (brew install webp)"
     [ -d "$PUBLISHED" ] || fail "$PUBLISHED is missing: the published PNGs are tracked, restore them with git"
+    # Every capture is checked before any is copied: a failed snap() leaves
+    # its empty file behind, and copying it would overwrite a tracked PNG.
+    while IFS= read -r f; do
+      rel=${f#"$PUBLISHED"/}
+      [ -e "$OUT/$rel" ] || continue
+      if [ ! -s "$OUT/$rel" ] || ! sips -g pixelWidth "$OUT/$rel" 2> /dev/null | grep -Eq 'pixelWidth: [0-9]+$'; then
+        fail "$OUT/$rel is empty or not a PNG: capture that screen again, nothing was copied"
+      fi
+    done < <(find "$PUBLISHED" -name '*.png' | sort)
     refreshed=0
     total=0
     while IFS= read -r f; do
