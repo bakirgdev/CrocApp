@@ -164,10 +164,10 @@ Permanent or deferred, each with its reason.
   - `ReceivedName` blocks every Unicode bidi control, which includes the left-to-right, right-to-left and Arabic letter marks. Some Hebrew and Arabic names may contain them, and the transfer is then blocked (Accept disabled, or cancelled under auto-accept).
   - It is the conservative choice, left until a real name needs the marks. Not verified: how common such names are.
   - Would change: allow the three marks (U+200E, U+200F, U+061C) and keep blocking the embeddings, overrides and isolates.
-- **A blocked file name is still drawn as the sender wrote it.**
-  - `IncomingRequestView` lists the offered names, and `HistoryDraft.offer` stores them in the history record before `ReceivedName.isUnsafe` runs. A name with a text-direction control therefore reads spoofed in the sheet, next to the "Blocked" banner, and can read spoofed in the History row of that transfer (read from the code, not run).
-  - Nothing is saved or opened under that name: Accept is disabled, and auto-accept cancels.
-  - Would change: show a blocked name with the scalars `ReceivedName` rejects escaped or removed, and record that form.
+- **History rows an earlier build recorded can still show a blocked name raw.**
+  - Since the shown form (`ReceivedName.shown`), `HistoryDraft.offer` records a name with every text-direction control, line separator and control character written as its code point, and the accept sheet, progress line and result draw the same form. A record an earlier build wrote kept the name as the sender sent it, and `HistoryView` draws `record.names` as stored (read from the code, not run).
+  - Only a transfer that carried such a name is affected, and nothing was saved or opened under it.
+  - Would change: run `ReceivedName.shown` when History draws a name, or when the store opens.
 - **Gesture-level flows are not machine-verified.**
   - Drag-and-drop, camera QR and taps have no XCUITest coverage, by decision.
   - Unit tests cover non-UI logic (Go `go test -race`, Swift Testing in `CrocKitTests` and `CrocAppTests`, all in CI). The harnesses cover transfers. UI flows are verified by hand.
