@@ -15,6 +15,12 @@ final class ShareInbox {
 
     func refresh() {
         guard let inbox = ShareHandoff.inboxURL else { return }
+        refresh(in: inbox)
+    }
+
+    // Split out so tests can point it at a temp directory instead of the
+    // App Group container.
+    func refresh(in inbox: URL) {
         let manifest = readManifest(in: inbox)
         purgeStaleBatches(in: inbox, keeping: manifest?.batch)
         guard let manifest else {
@@ -60,17 +66,26 @@ final class ShareInbox {
     }
 
     /// nil when there is no manifest. A manifest that exists but cannot be
-    /// read or decoded is logged, then treated as absent.
+    /// read or decoded, or whose batch name is not one `ShareStager` writes,
+    /// is logged, then treated as absent: its batch is never joined to a path.
     private func readManifest(in inbox: URL) -> ShareHandoff.Manifest? {
         let url = ShareHandoff.manifestURL(in: inbox)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        let manifest: ShareHandoff.Manifest
         do {
-            return try JSONDecoder().decode(ShareHandoff.Manifest.self, from: Data(contentsOf: url))
+            manifest = try JSONDecoder().decode(
+                ShareHandoff.Manifest.self, from: Data(contentsOf: url))
         } catch {
             Self.log.error(
                 "share manifest unreadable: \(String(describing: error), privacy: .public)")
             return nil
         }
+        guard ShareHandoff.isValidBatchName(manifest.batch) else {
+            Self.log.error(
+                "share manifest names an invalid batch: \(manifest.batch, privacy: .private)")
+            return nil
+        }
+        return manifest
     }
 
     /// Best effort: a leftover file costs disk space or re-offers a share

@@ -30,6 +30,7 @@ extra sections where a release needs them, and the project follows
 - Send as Link now says Sending and Receiving like every other transfer, and copying the code shows "Copied".
 - On iPhone, a light haptic marks a finished, failed or incoming transfer and a copied or scanned code. Cancelling or declining yourself stays silent.
 - Settings labels use title case, and "Auto-accept incoming files" is now "Auto-Accept Transfers".
+- **Copy Code** and **Copy Link** now ask the system to remove what they copied from the clipboard after 5 minutes, unless you copied something else since. On a Mac, CrocApp does the removing itself, and only while it is running. It also marks the copy with the nspasteboard.org convention, so clipboard managers that follow it skip the copy. **Copy Link** now asks to stay on this device on a Mac too, as it already did on iPhone and iPad.
 - The transfer engine is croc v11.5.5. Transfers stay compatible with croc 11 on the other device.
 - The update checker in the direct-download Mac build is Sparkle 2.10.1. It fixes an update installing too early when the app sits at a path in NFC Unicode form.
 - CrocApp has one main window on Mac and iPad. One transfer runs at a time, so a second window could only mirror the first and walk its own screens. On iPad the app no longer opens a second window of itself. On Mac, closing the window leaves CrocApp running in the menu bar, and a link, the Dock icon or **Open CrocApp** brings the window back.
@@ -52,6 +53,7 @@ extra sections where a release needs them, and the project follows
 
 ### Security
 
+- An incoming file name that uses a text-direction control (which can make a name ending in `.exe` read as `.pdf`) or a line or paragraph separator is now blocked like any other unsafe name. A combining mark can no longer hide a `/` or `\` in a name from that check. A file shared to CrocApp from the iPhone or iPad share sheet under such a name is renamed `shared-file`.
 - The transfer engine is built with Go 1.27.3, which stops trusting a set of compromised intermediate certificates ([GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809)). This covers the HTTPS connections the engine makes, such as Send as link.
 
 ## [1.0.0] - 2026-10-15

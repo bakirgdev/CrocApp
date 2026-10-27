@@ -135,13 +135,12 @@ On macOS, `AppCommands` replaces the `.appInfo` group with an **About CrocApp** 
 - A stored transfer cannot resume, so no failure offers the resume hint. A background expiry reads "Sending was interrupted" or "Receiving was interrupted", and its detail says to keep CrocApp open and try again, or open the link again. Both offer **Try Again**.
 - A failure whose situation `isStored` names the link server for `relayUnreachable` and `connectionLost`, which is how a store call reports a network failure.
 - `revoke(_ record:)` (throws `EngineFailure`) calls `CrocEngine.revokeStored`, which needs no free engine slot. It then drops the receipt and sets `revokedAt`. `canRevoke(_:)` is true for an unexpired, unrevoked record whose receipt this device still holds.
-- `Clipboard.copy(_, thisDeviceOnly:)` sets `UIPasteboard` with `.localOnly` on iOS, so a link (its fragment is the key) stays off Universal Clipboard. The macOS pasteboard has no such option, so **Copy Link** there is an ordinary copy.
 - The Camera app does not open CrocApp for a stored link. The Associated Domains entitlement and the apple-app-site-association file cover only `crocapp.dev/r/*`. Receiving in the app means **Paste** or **Scan QR Code**.
 
 Views for stored transfers:
 
 - `SendView`: a **Send as Link** toggle, disabled with a reason line for text or a staged folder. With it on, the screen shows a **Link Lasts** picker (1 hour, 1 day by default, 7 days), a downloads stepper (1 to 100, default 1) and a server note. The custom code field is hidden and the primary button reads **Send as Link**. The screen blocks sending when `storedServerError` reports an invalid server.
-- `TransferStatusView`: `Phase.stored(receipt)` renders `storedView`: "Link ready", expiry and download count, QR, link text, **Copy Link** (`thisDeviceOnly: true`), **Share Link** and **Done**.
+- `TransferStatusView`: `Phase.stored(receipt)` renders `storedView`: "Link ready", expiry and download count, QR, link text, **Copy Link** (`copySecret`, `thisDeviceOnly: true`), **Share Link** and **Done**.
 - `DirectionHeader` reads Sending or Receiving for stored transfers too, never Uploading or Downloading. The view shows a caption instead of `TrustBadge` when `isStoredTransfer`.
 - `ReceiveView`: `router.pendingReceive` carrying `.stored(url)` sets `storedLink`. That replaces the code field with a **Receive from Link** row (the server host underneath) and a **Clear** button. **Receive** then starts `.storedReceive`.
 - `HistoryView`: stored rows add a "Link expires", "Link expired" or "Link revoked" line. **Revoke Link** (context menu) and **Revoke** (swipe on iOS) sit behind a confirmation dialog, with an alert on failure.
@@ -235,6 +234,14 @@ Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookma
 
 - `Support/SecurityScopedBookmark.swift`: bookmark create, resolve and resolveIfReachable. `OutputFolderStore` and `HistoryView`'s resend path share it. `resolveIfReachable` starts the security scope before the existence probe, for the reason above.
 - `Support/EngineConstraints.swift`: `minCodeLength = 6`, mirroring `minCodeLength` in `crocmobile/crocmobile.go` (also used in `session.go`). The Go side counts bytes and Swift counts characters, so the UI check is the stricter one for non-ASCII codes. It exists for inline feedback before a doomed send or receive start. There is no shared source of truth across the Go/Swift boundary, so keep the two in sync by hand.
+- `Support/Clipboard.swift`: two copy paths.
+  - `Clipboard.copy(_)` is a plain copy with no expiry, for **Copy Received Text** and **Copy Text**.
+  - `Clipboard.copySecret(_, thisDeviceOnly:)` is for a credential. It leaves the pasteboard after `Clipboard.secretLifetime` (5 minutes).
+  - **Copy Code** uses it with Universal Clipboard on, because copying on a Mac and pasting on an iPhone is a core use. **Copy Link** uses it with `thisDeviceOnly: true`, because the link's fragment is the key.
+  - iOS: `UIPasteboard.setItems(_:options:)` with `.expirationDate`, plus `.localOnly` for the link. `Clipboard.secretOptions(thisDeviceOnly:now:)` builds the options, so a unit test can read them.
+  - macOS has no expiry. The copy carries `org.nspasteboard.ConcealedType` (clipboard managers that follow nspasteboard.org skip it) and uses `.currentHostOnly` for the link.
+  - The macOS clear runs in the app, after the lifetime, only while the app is running, and only if `changeCount` has not moved, so a later copy is never wiped.
+  - Not verified on hardware: the expiry on a device, the link staying off Universal Clipboard, a clipboard manager honoring the marker, and whether the code also expires on the other device. `device-test-checklist.md`, "Clipboard", lists the checks. `ClipboardTests` cover the options and the macOS clear against a private `NSPasteboard`.
 - `Support/DesignTokens.swift`: the app's routing layer onto `design/`. It holds `Spacing`, `Radius`, `BorderWidth`, `ControlHeight`, `IconSize`, `LayoutCap`, `Opacity`, `Tracking`, `ComponentMetrics`, `Motion` and `Shadow`, plus `Color` aliases. Where a system semantic already matches a token exactly, the alias routes there instead of duplicating an asset-catalog entry.
 
 ## Conflict scan
@@ -270,7 +277,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 - `recheckIfDenied()` re-probes from `.denied` when `scenePhase` goes `.active` (for example after the user granted access in Settings). It never re-probes `.granted` or unresolved states and never stacks a second in-flight probe.
 - Denial shows a banner plus **Open Settings** in `TransferStatusView`. Denial only resolves at the 8 s timeout, because a first `.waiting` may just be the pending permission prompt.
 - Testing a macOS denial is awkward (`docs/known-issues.md`, "Accepted").
-- `Models/ShareInbox.swift` and `Views/StagedFilesSheet.swift` pick up batches staged by the share extension from the App Group (`ShareInbox/batch-<UUID>/` plus `manifest.json`). The group ID, directory and file names and the `Manifest` type are `app/Shared/ShareHandoff.swift`, one file compiled into `CrocApp`, `CrocApp Direct` and `CrocShare` (a synchronized folder group listed on all three targets), so the writer and the reader cannot drift. The group ID is also in the entitlements files, which cannot import Swift. `ShareInbox` logs (category `share`) a manifest it cannot decode and any file removal that fails, and stays best effort. The manifest is consumed on the user's decision, the batch files outlive the send, and `purgeStaleBatches` runs at idle.
+- `Models/ShareInbox.swift` and `Views/StagedFilesSheet.swift` pick up batches staged by the share extension from the App Group (`ShareInbox/batch-<UUID>/` plus `manifest.json`). The group ID, directory and file names, the `Manifest` type and the batch-name generator and validator are `app/Shared/ShareHandoff.swift`, compiled with `app/Shared/ReceivedName.swift` into `CrocApp`, `CrocApp Direct` and `CrocShare` (a synchronized folder group listed on all three targets), so the writer and the reader cannot drift. The group ID is also in the entitlements files, which cannot import Swift. `ShareInbox` treats a manifest as untrusted data: one it cannot decode, or whose batch is not `batch-` and a UUID, is logged (category `share`) and treated as absent, so the batch name is never joined to a path, and a file name `ReceivedName.isUnsafe` rejects is dropped. It also logs any file removal that fails, and stays best effort. `ShareInbox.refresh(in:)` takes the inbox directory so `ShareInboxTests` can use a temp directory instead of the App Group container. The manifest is consumed on the user's decision, the batch files outlive the send, and `purgeStaleBatches` runs at idle.
 - The whole `scenePhase` refresh is gated on `!controller.isActive`. An ungated refresh once purged a live batch mid-send.
 - `app/CrocShare/` is an iOS-only app extension. The pbxproj entry is hand-built, and `platformFilter = ios` on the dependency and the embed keeps macOS clean.
 - File-copy staging happens inside the `loadFileRepresentation` handler, because of the roughly 120 MB extension memory cap. It never wipes existing batches.
@@ -286,6 +293,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 
 - `Models/AppRouter.swift` is an `@Observable` singleton (`shared`). `path: [Route]` drives `HomeView`'s `NavigationStack`.
 - `pendingSendURLs` is consumed by `SendView` (`onAppear` plus `onChange`, deduplicated against `pickedURLs`, then cleared).
+- `pendingSendText` (set by `openSend(text:)`) is consumed the same way: `SendView` switches to text mode and appends it to any typed text. Both only stage; nothing sends until the user taps Send.
 - `isBusy` reads `controller.isActive` through a weak controller reference that `CrocAppApp.init` attaches with `attach(controller:)`, so a dock drop mid-transfer queues without navigating.
 - It is a singleton because `AppDelegate` and `Commands` sit outside the environment graph.
 - Three drop entry points, one guard policy:

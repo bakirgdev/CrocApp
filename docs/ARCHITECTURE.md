@@ -12,7 +12,7 @@ CrocApp is a native SwiftUI app for iOS, iPadOS and macOS 26. It embeds [croc](h
 - `TransferController` is the only code that calls `CrocEngine`.
 - Everything above that is SwiftUI views reacting to one `@Observable` state machine.
 
-The SwiftUI sources build three targets. `app/Shared/` is a folder group compiled into all three (today only `ShareHandoff.swift`, the share-handoff contract):
+The SwiftUI sources build three targets. `app/Shared/` is a folder group compiled into all three (`ShareHandoff.swift`, the share-handoff contract, and `ReceivedName.swift`, the rule for a file name that arrives from outside, which the extension applies when it stages a file):
 
 | Target | Platforms | Channel |
 | --- | --- | --- |
@@ -227,7 +227,7 @@ Persistence:
 | Output folder | `UserDefaults` key `outputFolderBookmark` | `OutputFolderStore`; security-scoped bookmark on macOS |
 | Transfer history | SwiftData, `TransferRecord` `@Model` | `HistoryStore`; in memory under the harness |
 | Stored-upload receipts | Keychain, one item `storedReceipts` | `StoredTransferVault`; removed on revoke and when expired; in memory under the harness |
-| Share-extension handoff | App Group container `group.com.bakirgdev.CrocApp` | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads; the names and the manifest type are `app/Shared/ShareHandoff.swift`, compiled into both |
+| Share-extension handoff | App Group container `group.com.bakirgdev.CrocApp` | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads; the names, the manifest type and the batch-name check are `app/Shared/ShareHandoff.swift`, compiled into both |
 | Onboarding seen flag | `UserDefaults` via `@AppStorage("onboarding.seen")` | Read in `ContentView` |
 
 ## Platform split

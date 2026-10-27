@@ -44,7 +44,7 @@ CrocApp never overwrites a file unless you say so. When a name is already taken,
 - **Keep Both** (the default) saves the new file as `name (1).ext`, then `name (2).ext`, and so on.
 - **Replace** overwrites the existing file. A partly received file resumes where it stopped.
 
-A file that already exists with identical content is left alone under either choice. A file with an unsafe name (one that tries to escape the destination folder) blocks the buttons.
+A file that already exists with identical content is left alone under either choice. A file with an unsafe name blocks the buttons. A name is unsafe when it tries to escape the destination folder, contains a line break, or uses a text-direction control that can hide its real ending (for example a name that reads `invoice.pdf` but ends in `.exe`).
 
 A folder sent as a zip arrives as one `.zip` name, so CrocApp cannot tell which of its files exist. The sheet then offers only **Accept**, which behaves as **Keep Both**: existing files stay and matching files in the archive are skipped. To get the sender's copies, move your old folder away first.
 
