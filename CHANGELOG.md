@@ -14,6 +14,8 @@ extra sections where a release needs them, and the project follows
 
 - **Save Transfer History** in Settings (on by default). Turn it off and finished transfers are no longer listed in History. What is already there stays until you delete it, and History says "History is off" while it is empty.
 - **Haptics** in Settings on iPhone (on by default). Turn it off to silence every tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer.
+- **Revoke Link** on the **Link ready** screen, so you can end a link right after sending it. It works with **Save Transfer History** off too, where History never lists the link. If this device could not save the link to the Keychain, the screen warns that revoking works only until CrocApp quits.
+- The result of a receive lists the files and folders that arrived, with their sizes. Tap a file for Quick Look, use its share button, or use the context menu for **Show in Finder** (**Show in Files** on iOS, for the default folder). On a Mac and iPad you can also drag a file out.
 - iPhone and iPad find a device on the same network the way a Mac does, so a transfer between them can stay on your local network, including with **Local Network Only**. **Multicast Address** is now in Advanced settings on iOS too.
 
 ### Changed
@@ -27,6 +29,8 @@ extra sections where a release needs them, and the project follows
 - The website and docs are refreshed. The docs are reorganized around what you are doing (one Settings page in the app's own order, Verify a release under Getting started, Send as link and a keyboard shortcut reference), with a new Uninstall and data page, many accuracy fixes, and redirects from the old addresses. The home page leads with "Send files with a code phrase" and shows the iPhone app beside the Mac one.
 - The website and docs use the app icon as their favicon and home-screen icon, and a new social preview card.
 - The screen that asks you to accept a transfer shows a Receiving header, the encryption badge and the file list as rows. Its Cancel button is gone: Decline answers the other device, leaving the screen gives no answer, and Home shows a banner to return to a request that is still waiting.
+- A transfer you cancel or decline, and a link you revoke, ends on a neutral grey mark instead of a red failure. A transfer that croc finishes without marking it successful now reads **Transfer finished with problems**, with the next step, instead of **Transfer complete**.
+- A file name from another device is drawn with any hidden or text-direction character shown as its code point (for example `\u{202E}`) in the file list, the progress screen, the result and History, so a name cannot pretend to be another one. A name with such a character is still blocked.
 - Send as Link now says Sending and Receiving like every other transfer, and copying the code shows "Copied".
 - On iPhone, a light haptic marks a finished, failed or incoming transfer and a copied or scanned code. Cancelling or declining yourself stays silent.
 - Settings labels use title case, and "Auto-accept incoming files" is now "Auto-Accept Transfers".

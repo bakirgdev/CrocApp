@@ -44,7 +44,7 @@ CrocApp never overwrites a file unless you say so. When a name is already taken,
 - **Keep Both** (the default) saves the new file as `name (1).ext`, then `name (2).ext`, and so on.
 - **Replace** overwrites the existing file. A partly received file resumes where it stopped.
 
-A file that already exists with identical content is left alone under either choice. A file with an unsafe name blocks the buttons. A name is unsafe when it tries to escape the destination folder, contains a line break, or uses a text-direction control that can hide its real ending (for example a name that reads `invoice.pdf` but ends in `.exe`).
+A file that already exists with identical content is left alone under either choice. A file with an unsafe name blocks the buttons. A name is unsafe when it tries to escape the destination folder, contains a line break, or uses a text-direction control that can hide its real ending (for example a name that reads `invoice.pdf` but ends in `.exe`). CrocApp draws such a character as its code point, such as `\u{202E}`, in the file list, the progress screen, the result and [History](history.md), so you see what was sent.
 
 A folder sent as a zip arrives as one `.zip` name, so CrocApp cannot tell which of its files exist. The sheet then offers only **Accept**, which behaves as **Keep Both**: existing files stay and matching files in the archive are skipped. To get the sender's copies, move your old folder away first.
 
@@ -56,7 +56,11 @@ Auto-accept is off by default, so you always see the file list first. Turning on
 
 ## After the transfer
 
-CrocApp shows **Transfer complete**, or a message if something went wrong. Open the folder with **Show in Finder** (Mac) or **Open in Files** (iOS). On iOS, **Open in Files** appears only when the destination is the default Documents folder. If you picked another folder, open it from the Files app.
+CrocApp shows **Transfer complete** and lists the files and folders that arrived, with their sizes. A folder is one row, however many files it holds. If a name was taken and you chose **Keep Both**, the row shows the copy CrocApp saved, such as `name (1).ext`. Tap a file for Quick Look. Its share button, and the row's context menu, share it. The context menu also has **Show in Finder** (Mac) or **Show in Files** (iOS). On a Mac and iPad you can drag a file out of the list to copy it elsewhere.
+
+If croc finishes without marking the transfer successful, CrocApp says **Transfer finished with problems**. Check the files and ask the sender for any that are missing. A transfer you cancel or decline shows a grey mark, not an error.
+
+Open the folder with **Show in Finder** (Mac) or **Open in Files** (iOS). On iOS, **Open in Files** and **Show in Files** appear only when the destination is the default Documents folder. If you picked another folder, open it from the Files app.
 
 A received text snippet shows as **Received text** with **Copy Text**.
 

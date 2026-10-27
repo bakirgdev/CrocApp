@@ -20,7 +20,7 @@ croc's command line has the same feature, so the two work together.
 | How many devices can receive? | One | As many downloads as you allow |
 | Folders and text? | Yes | No, files only |
 | Where do the files rest? | Nowhere: they travel through a relay or directly | On the link server until the link ends |
-| How do I end it early? | Cancel while it runs | [Revoke](#history-and-revoking) before it expires |
+| How do I end it early? | Cancel while it runs | [Revoke](#revoking) before it expires |
 
 Use a code when both people are available now, or for folders and text. Use a link when the other device is not around, or when several people need the same files.
 
@@ -46,8 +46,11 @@ When the send finishes, CrocApp shows **Link ready**, when the link stops workin
 - the link itself
 - **Copy Link**
 - **Share Link**, which opens the share sheet
+- **Revoke Link**, which ends the link at once (see [Revoking](#revoking))
 
 CrocApp does not show the link again after you tap **Done**, and [History](history.md) never stores it. Copy or share it first. If you lose it, revoke the link from History and send again.
+
+If this device could not save the link's receipt to the Keychain, the screen adds **Revoke works only until CrocApp quits**. The link still works. Revoke it before you quit if you want it ended early.
 
 **Copy Link** asks the system to keep the link on this device, off Universal Clipboard, because the link contains the key, and to remove it from the clipboard after 5 minutes unless you copied something else since (on a Mac, CrocApp does the removing, and only while it is running).
 
@@ -67,11 +70,13 @@ The phone's Camera app does not open CrocApp for these links, because they point
 
 Opening the link in a browser shows the link server's own page. For the default server, that is a getcroc.com page run by croc's author, not by CrocApp. The key is in the part of the link after the `#`, which browsers do not send to a server, so the page decrypts in your browser. This depends on the page the link server serves. See [Receiving in a browser](../security-and-privacy.md#receiving-in-a-browser).
 
-## History and revoking
+## Revoking
 
-A link send appears in [History](history.md) with the link server's host name and one of **Link expires**, **Link expired** or **Link revoked**, each with a time.
+To end a live link early, choose **Revoke Link** on the **Link ready** screen, or later in [History](history.md). A confirmation reads "Revoke this link?" and says the files are deleted from the link server and the link stops working for everyone. The screen then reads **Link revoked**.
 
-To end a live link early, choose **Revoke Link**. On a Mac, use the row's context menu. On iOS, touch and hold the row, or swipe it left and tap **Revoke**. A confirmation reads "Revoke this link?" and says the files are deleted from the link server and the link stops working for everyone.
+The result screen is the only place to revoke a link sent with **Save Transfer History** off, because History does not list it. After you tap **Done**, revoke from History.
+
+A link send appears in [History](history.md) with the link server's host name and one of **Link expires**, **Link expired** or **Link revoked**, each with a time. On a Mac, use the row's context menu to revoke. On iOS, touch and hold the row, or swipe it left and tap **Revoke**.
 
 **Revoke Link** appears only while the link is live and this device still holds the receipt for the send. Deleting a History row, or clearing History, removes the place you revoke from, so revoke first if you want the link ended.
 

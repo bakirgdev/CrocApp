@@ -61,9 +61,13 @@ Details:
 - **Send as Link.**
   - Files only, up to 100 files and 1 GiB.
   - The link lasts 1 hour, 1 day or 7 days, with 1 to 100 downloads, on the server set in Settings (`https://getcroc.com` by default).
-  - The result screen shows the link and a QR code. Receiving from a pasted or scanned link goes through the normal incoming preview.
+  - The result screen shows the link and a QR code, and offers **Revoke Link**, which works with Save Transfer History off. It warns when this device could not save the receipt to the Keychain, because revoke then works only until the app quits. Receiving from a pasted or scanned link goes through the normal incoming preview.
   - History shows the expiry and offers **Revoke Link** (context menu) and **Revoke** (swipe on iOS).
   - Device checks are in `device-test-checklist.md`, "Stored transfers".
+- **Received files list.**
+  - A finished receive lists the top-level files and folders it wrote, with sizes. A Keep Both copy shows under its new name.
+  - Tap for Quick Look, share, reveal in Finder or Files, and drag out on Mac and iPad. Names are drawn in their shown form.
+  - A transfer croc did not mark successful reads as a failure, and the user's own Cancel or Decline and a revoked link read as neutral (`StatusBlock` kinds).
 - **Menu bar quick send.**
   - A `MenuBarExtra` window with a drop zone, **Choose Files…** and **Send Clipboard Text**, then the code, QR and progress of the one shared transfer. Codes are always generated.
   - The **Show in Menu Bar** setting is on by default and **Open at Login** (`SMAppService`) is off by default.
