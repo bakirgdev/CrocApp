@@ -15,12 +15,12 @@ struct PowerSettingsSections: View {
                 "Address", text: $settings.relayAddress,
                 prompt: Text("Public relay pool")
             )
-            .autocorrectionDisabled()
+            .urlEntry()
             TextField(
                 "IPv6 Address", text: $settings.relayAddress6,
                 prompt: Text("Public relay pool")
             )
-            .autocorrectionDisabled()
+            .urlEntry()
             SecureField(
                 "Password", text: $settings.relayPassword,
                 prompt: Text("Default")
@@ -41,18 +41,16 @@ struct PowerSettingsSections: View {
                 "Link Server", text: $settings.storedServer,
                 prompt: Text(AppSettings.defaultStoredServer)
             )
-            .autocorrectionDisabled()
-            #if os(iOS)
-            .textInputAutocapitalization(.never)
-            .keyboardType(.URL)
-            #endif
+            .urlEntry()
             .accessibilityHint(AppSettings.storedServerError(settings.storedServer) ?? "")
             if let error = AppSettings.storedServerError(settings.storedServer) {
                 StatusBanner(kind: .error, title: error)
             }
             if settings.storedServer != AppSettings.defaultStoredServer {
-                Button("Reset to \(AppSettings.defaultStoredServer)") {
+                Button {
                     settings.storedServer = AppSettings.defaultStoredServer
+                } label: {
+                    Text("Reset to \(AppSettings.defaultStoredServer)").hitTarget()
                 }
                 .buttonVariant(.plain)
             }
@@ -60,8 +58,9 @@ struct PowerSettingsSections: View {
             Text("Send as link")
         } footer: {
             Text(
-                "Send as Link uploads encrypted files to this server. The link server holds them until the link expires and cannot read them; the key is in the link."
+                "Send as Link uploads files, encrypted on your device, to this server. It cannot read them, because the key is in the link."
             )
+            .foregroundStyle(Color.textSecondary)
         }
 
         Section {
@@ -72,12 +71,16 @@ struct PowerSettingsSections: View {
             Text("Transfer")
         } footer: {
             Text("Local-only transfers never touch a relay on the internet.")
+                .foregroundStyle(Color.textSecondary)
         }
 
         Section {
             TextField("Patterns, one per line", text: $settings.excludePatterns, axis: .vertical)
                 .lineLimit(3...6)
                 .autocorrectionDisabled()
+                #if os(iOS)
+            .textInputAutocapitalization(.never)
+                #endif
             Toggle("Respect .gitignore", isOn: $settings.useGitIgnore)
         } header: {
             Text("Exclude from sends")
@@ -95,17 +98,18 @@ struct PowerSettingsSections: View {
         } header: {
             Text("Confirmation")
         } footer: {
+            // A Section footer is not a StatusBanner surface, so a status
+            // color here would tint body text (colors.md → Contrast, rule 2).
             if settings.autoAccept {
-                // A Section footer is not a StatusBanner surface; Section
-                // already styles footers as secondary, so a status color
-                // here would tint body text (colors.md → Contrast, rule 2).
                 Text(
-                    "Files from anyone who has your code are saved without preview or confirmation. Keep Both saves a new copy next to an existing file; Replace overwrites it. Unsafe file names still cancel the transfer. Confirm on Both Sides overrides Auto-Accept Transfers."
+                    "Files from anyone who has your code are saved without a preview, unless Confirm on Both Sides is on. Replace overwrites existing files, and unsafe file names still cancel the transfer."
                 )
+                .foregroundStyle(Color.textSecondary)
             } else {
                 Text(
-                    "Auto-Accept Transfers skips the file preview. Leave it off unless you fully trust the sender."
+                    "Auto-Accept Transfers saves files without a preview, so leave it off unless you fully trust the sender."
                 )
+                .foregroundStyle(Color.textSecondary)
             }
         }
     }

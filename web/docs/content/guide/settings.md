@@ -8,7 +8,7 @@ description: Every CrocApp setting in the order the app lists them, with default
 
 ![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-light.webp#gh-light-mode-only)![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-dark.webp#gh-dark-mode-only)
 
-On a Mac, open Settings with ⌘, and use the **General** and **Advanced** tabs. On iOS, tap the gear on the home screen. **Advanced** is a row at the bottom of that screen.
+On a Mac, open Settings with ⌘, and use the **General** and **Advanced** tabs. On iPad, choose **Settings** in the sidebar. On iPhone, or in a narrow iPad window, tap the gear on the home screen. **Advanced** is a row at the bottom of that screen.
 
 Settings stay on the device. There is no sync and no account. Defaults suit most people.
 

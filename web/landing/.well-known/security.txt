@@ -1,0 +1,6 @@
+Contact: https://github.com/bakirgdev/CrocApp/security/advisories/new
+Contact: mailto:bakirgdev@gmail.com
+Expires: 2027-08-01T00:00:00.000Z
+Policy: https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md
+Preferred-Languages: en
+Canonical: https://crocapp.dev/.well-known/security.txt

@@ -8,7 +8,7 @@ description: One send and one receive in CrocApp, using the app's on-screen labe
 
 ![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](../../screenshots/mac/send-code-light.webp#gh-light-mode-only)![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](../../screenshots/mac/send-code-dark.webp#gh-dark-mode-only)
 
-The home screen has two buttons, **Send** and **Receive**. On the first launch, CrocApp shows a short welcome screen first. Tap **Get Started** to continue. CrocApp may then ask for camera access (to scan QR codes) and local network access (for faster nearby transfers).
+The home screen has two buttons, **Send** and **Receive**, with your latest transfers listed below them. On iPad and Mac, a wide window shows Send and Receive as rows in a sidebar instead, next to **History** (and **Settings** on iPad), and the steps below are the same. On the first launch, CrocApp shows a short welcome screen first. Tap **Get Started** to continue. CrocApp may then ask for camera access (to scan QR codes) and local network access (for faster nearby transfers).
 
 ## Send
 
