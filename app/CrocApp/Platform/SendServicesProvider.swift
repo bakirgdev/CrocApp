@@ -12,6 +12,12 @@ import AppKit
 /// names in step. AppKit calls them on the main thread, with the service's
 /// pasteboard.
 final class SendServicesProvider: NSObject {
+    /// The most selected text a service stages, in UTF-8 bytes. A selection
+    /// can be a whole document, and the Send screen's editor is not built for
+    /// that; the limit stops a stray Select All from hanging it. Files have no
+    /// such limit here: the send validates them.
+    static let maxTextBytes = 1_048_576
+
     private let router: AppRouter
 
     init(router: AppRouter = .shared) {
@@ -35,7 +41,8 @@ final class SendServicesProvider: NSObject {
         error: AutoreleasingUnsafeMutablePointer<NSString>
     ) {
         guard stageText(from: pasteboard) else {
-            error.pointee = Self.nothingToSend as NSString
+            error.pointee =
+                (Self.isTooLong(pasteboard) ? Self.tooLong : Self.nothingToSend) as NSString
             return
         }
         NSApp.activate()
@@ -52,13 +59,23 @@ final class SendServicesProvider: NSObject {
         return true
     }
 
-    /// False when the pasteboard holds no text, or only whitespace.
+    /// False when the pasteboard holds no text, only whitespace, or more than
+    /// `maxTextBytes`.
     func stageText(from pasteboard: NSPasteboard) -> Bool {
         guard let text = pasteboard.string(forType: .string),
-            !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            text.utf8.count <= Self.maxTextBytes
         else { return false }
         router.openSend(text: text)
         return true
+    }
+
+    private static func isTooLong(_ pasteboard: NSPasteboard) -> Bool {
+        (pasteboard.string(forType: .string)?.utf8.count ?? 0) > maxTextBytes
+    }
+
+    private static var tooLong: String {
+        String(localized: "That text is too long to send this way. Select less of it.")
     }
 
     /// Shown by the system when a service has nothing to work on; the same

@@ -53,6 +53,29 @@ import Testing
         #expect(router.path.isEmpty)
     }
 
+    @Test func textOverTheLimitIsRefusedAndTheLimitItselfIsAccepted() {
+        pasteboard.clearContents()
+        pasteboard.setString(
+            String(repeating: "a", count: SendServicesProvider.maxTextBytes), forType: .string)
+        #expect(provider.stageText(from: pasteboard))
+        let atLimit = router.pendingSendText
+
+        pasteboard.clearContents()
+        pasteboard.setString(
+            String(repeating: "a", count: SendServicesProvider.maxTextBytes + 1), forType: .string)
+        #expect(!provider.stageText(from: pasteboard))
+        #expect(router.pendingSendText == atLimit, "the refused text is not staged")
+    }
+
+    @Test func theLimitCountsBytesNotCharacters() {
+        // "é" is two UTF-8 bytes: half the limit in characters is over it.
+        pasteboard.clearContents()
+        pasteboard.setString(
+            String(repeating: "é", count: SendServicesProvider.maxTextBytes / 2 + 1),
+            forType: .string)
+        #expect(!provider.stageText(from: pasteboard))
+    }
+
     @Test func aRunningTransferKeepsItsScreenAndTheSelectionWaits() {
         let controller = TransferController(
             settings: AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore()),
@@ -87,6 +110,46 @@ import Testing
         pasteboard.setString("words", forType: .string)
         #expect(provider.stageText(from: pasteboard))
         #expect(!controller.isActive)
+    }
+}
+
+/// The `NSServices` entries are the system's only link to the provider: a
+/// renamed method or a plist that drifted would leave the menu item doing
+/// nothing, with no build error.
+@MainActor @Suite struct SendServicesRegistrationTests {
+    nonisolated private static let plists = [
+        "CrocApp-macOS-Info.plist", "CrocApp-Direct-Info.plist",
+    ]
+
+    private func services(in name: String) throws -> [[String: Any]] {
+        // app/CrocAppTests/<this file> -> app/Config/<plist>
+        let url = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .appending(path: "Config/\(name)")
+        let data = try Data(contentsOf: url)
+        let plist = try PropertyListSerialization.propertyList(from: data, format: nil)
+        let info = try #require(plist as? [String: Any])
+        return try #require(info["NSServices"] as? [[String: Any]])
+    }
+
+    @Test(arguments: plists) func eachMessageNamesAMethodOfTheProvider(plist: String) throws {
+        let entries = try services(in: plist)
+        let messages = entries.compactMap { $0["NSMessage"] as? String }
+        #expect(Set(messages) == ["sendFiles", "sendText"])
+        for message in messages {
+            // AppKit derives the selector `<message>:userData:error:`.
+            let selector = Selector("\(message):userData:error:")
+            #expect(
+                SendServicesProvider.instancesRespond(to: selector),
+                "\(plist): no @objc method for NSMessage \(message)")
+        }
+    }
+
+    @Test(arguments: plists) func theMenuItemAndPortMatchTheApp(plist: String) throws {
+        for entry in try services(in: plist) {
+            let item = entry["NSMenuItem"] as? [String: String]
+            #expect(item?["default"] == "Send with CrocApp")
+            #expect(entry["NSPortName"] as? String == "CrocApp")
+        }
     }
 }
 #endif
