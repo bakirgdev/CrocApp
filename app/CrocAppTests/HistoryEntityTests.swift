@@ -114,8 +114,45 @@ import Testing
         #expect(identifier == record.persistentModelID)
     }
 
+    /// An index entry is updated and removed by this text, so the same record
+    /// must always give the same text, however the identifier was rebuilt.
+    @Test func theIdTextSurvivesBeingDecodedAndEncodedAgain() throws {
+        let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
+        let record = TransferRecord(
+            isSend: true, status: .completed, isText: false, fileCount: 1, totalBytes: 1,
+            names: ["x"], codeHint: "", bookmarks: [])
+        history.add(record)
+        let text = try #require(HistoryEntityID.string(for: record.persistentModelID))
+        let decoded = try #require(HistoryEntityID.identifier(from: text))
+        #expect(HistoryEntityID.string(for: decoded) == text)
+    }
+
     @Test func textThatIsNotAnIdFindsNothing() {
         #expect(HistoryEntityID.identifier(from: "not an id") == nil)
         #expect(HistoryEntityID.identifier(from: "") == nil)
+    }
+}
+
+/// Opening a transfer from Spotlight or Shortcuts: History opens, and a
+/// running transfer keeps the screen.
+@MainActor @Suite struct OpenHistoryTests {
+    @Test func historyOpens() {
+        let router = AppRouter()
+        router.openHistory()
+        #expect(router.path == [.history])
+    }
+
+    @Test func aBusyRouterStaysOnTheTransfer() {
+        let controller = TransferController(
+            settings: AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore()),
+            vault: StoredTransferVault(secrets: FakeSecretStore()),
+            engine: FakeTransferEngine())
+        let router = AppRouter()
+        router.attach(controller: controller)
+        #expect(
+            controller.start(
+                .sendFiles(urls: [URL(filePath: "/CrocAppTests.missing/notes.txt")], code: "")))
+        router.openHistory()
+        #expect(router.path.isEmpty)
     }
 }

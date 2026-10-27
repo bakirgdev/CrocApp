@@ -49,11 +49,17 @@ final class HistoryEntityStore: HistoryChangeObserver {
     {
         let store = HistoryEntityStore(
             container: history.container, settings: settings,
-            index: indexed ? SpotlightHistoryIndex() : nil)
+            index: indexed && !isHostingTests ? SpotlightHistoryIndex() : nil)
         history.observer = store
         AppDependencyManager.shared.add(dependency: store)
         store.start()
         return store
+    }
+
+    /// A unit-test run launches the real app as its host. That launch must not
+    /// write the developer's Spotlight index.
+    static var isHostingTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
     func start() {
@@ -66,8 +72,12 @@ final class HistoryEntityStore: HistoryChangeObserver {
     var isEnabled: Bool { settings.saveTransferHistory }
 
     func entities(for ids: [String]) -> [HistoryEntity] {
-        let wanted = Set(ids)
-        return all().filter { wanted.contains($0.id) }
+        // Compared as identifiers, not as text: an id kept by Spotlight or a
+        // saved shortcut may have been written by another OS version.
+        let wanted = Set(ids.compactMap(HistoryEntityID.identifier))
+        return all().filter {
+            HistoryEntityID.identifier(from: $0.id).map(wanted.contains) ?? false
+        }
     }
 
     func suggested() -> [HistoryEntity] {

@@ -1,0 +1,18 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Send with CrocApp" : {
+      "comment" : "Title of the Services menu item (Mac) that stages the selected files or text in Send. The name CrocApp stays as it is.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Send with CrocApp"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

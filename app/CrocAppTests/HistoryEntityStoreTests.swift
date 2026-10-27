@@ -181,6 +181,10 @@ private final class RecordingIndex: HistoryIndexing {
         #expect(history.recordCount() == 2, "History keeps the record")
     }
 
+    @Test func theTestHostLeavesTheSystemIndexAlone() {
+        #expect(HistoryEntityStore.isHostingTests)
+    }
+
     @Test func aHarnessRunHasNoIndexAndStillWorks() async {
         let store = await started(index: nil)
         addRecord("a.txt")

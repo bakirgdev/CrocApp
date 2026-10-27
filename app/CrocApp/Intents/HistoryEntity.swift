@@ -183,8 +183,12 @@ nonisolated enum HistoryEntityID {
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "spotlight")
 
     static func string(for id: PersistentIdentifier) -> String? {
+        // Sorted keys: the same record must give the same text every time, or
+        // an index entry could never be updated or removed by id.
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
         do {
-            return String(data: try JSONEncoder().encode(id), encoding: .utf8)
+            return String(data: try encoder.encode(id), encoding: .utf8)
         } catch {
             log.error("entity id encode failed: \(String(describing: error), privacy: .public)")
             return nil
