@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Writes every screenshot in assets/screenshots/ from real Debug builds: no
-# mockups, no device frames, no real transfer codes, nothing sent over the
-# internet. SCREENS below is the manifest; `--list` prints it with every output
-# file and its expected size.
+# Writes every screenshot to build/screenshots/ (gitignored) from real Debug
+# builds: no mockups, no device frames, no real transfer codes, nothing sent
+# over the internet. Git keeps only the published pairs in assets/screenshots/,
+# which --copy-web refreshes from the captures. SCREENS below is the manifest;
+# `--list` prints it with every output file and its expected size.
 #
-#   assets/screenshots/mac/SCREEN-{light,dark}.png      per-window capture, 2x, real window shape
-#   assets/screenshots/iphone/SCREEN-{light,dark}.png   iPhone 17 Pro Max, 1320x2868, 9:41 status bar
-#   assets/screenshots/ipad/SCREEN-{light,dark}.png     iPad Pro 13-inch (M5), 2064x2752, 9:41 status bar
-#   assets/screenshots/app-store/CLASS/NN-SCREEN-{light,dark}.png
+#   build/screenshots/mac/SCREEN-{light,dark}.png      per-window capture, 2x, real window shape
+#   build/screenshots/iphone/SCREEN-{light,dark}.png   iPhone 17 Pro Max, 1320x2868, 9:41 status bar
+#   build/screenshots/ipad/SCREEN-{light,dark}.png     iPad Pro 13-inch (M5), 2064x2752, 9:41 status bar
+#   build/screenshots/app-store/CLASS/NN-SCREEN-{light,dark}.png
 #       Apple's exact sizes, no alpha, numbered in upload order (STORE_SCREENS),
 #       odd numbers light and even numbers dark. iphone-6.9, ipad-13 and mac
 #       come from the main captures; iphone-6.3 (iPhone 17 Pro) and
@@ -29,11 +30,11 @@
 # System Events (the preflight names what is missing).
 #
 # Usage: capture-screenshots.sh [DEVICE...] [SCREEN...]
-#   no arguments    everything, after emptying assets/screenshots/
+#   no arguments    everything, after emptying build/screenshots/
 #   DEVICE          mac, iphone, ipad, iphone63 or duo: only those devices
 #   SCREEN          only those screens, both appearances, plus the store file
 #   --list          print the manifest and exit
-#   --copy-web      rebuild the web WebP copies from assets/screenshots/ and exit (needs cwebp)
+#   --copy-web      publish: refresh assets/screenshots/ from build/screenshots/, then rebuild the web WebP copies from it, and exit (needs cwebp)
 # Environment: CROC (default: the Homebrew croc, v11 like crocmobile),
 # PHONE_TYPE, PHONE63_TYPE, PAD_TYPE and DUO_TYPE (simulator device type ids),
 # DUO_OUTER_DISPLAY (simctl display id of the Duo's outer screen), RUNTIME (simulator
@@ -45,7 +46,9 @@ DD_MAC=$(derived_data mac)
 DD_SIM=$(derived_data sim)
 
 BUNDLE=com.bakirgdev.CrocApp
-OUT=assets/screenshots
+OUT=build/screenshots
+# Tracked, published subset: read and written only by --copy-web.
+PUBLISHED=assets/screenshots
 TOOLS=scripts/screenshots
 PHONE_TYPE="${PHONE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max}"
 PHONE63_TYPE="${PHONE63_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro}"
@@ -127,17 +130,32 @@ case "${1:-}" in
     exit 0
     ;;
   --copy-web)
-    # Rebuilds the WebP files a web surface already uses from their PNG sources
-    # (same relative path under assets/screenshots/), at each file's current
-    # pixel size. A new shot goes in by running cwebp on it once, into the web
-    # folder, at the size its page needs.
+    # Refreshes each published PNG from its capture under build/screenshots/
+    # (kept as is when there is none, so a fresh clone works), then rebuilds
+    # the WebP files a web surface already uses from the PNGs (same relative
+    # path under assets/screenshots/), at each file's current pixel size. A new
+    # shot goes in by copying its pair into assets/screenshots/ and running
+    # cwebp on it once, into the web folder, at the size its page needs.
     command -v cwebp > /dev/null || fail "cwebp is missing (brew install webp)"
+    refreshed=0
+    total=0
+    while IFS= read -r f; do
+      rel=${f#"$PUBLISHED"/}
+      total=$((total + 1))
+      if [ -f "$OUT/$rel" ]; then
+        cp "$OUT/$rel" "$f"
+        refreshed=$((refreshed + 1))
+      else
+        echo "kept $f (no capture at $OUT/$rel)"
+      fi
+    done < <(find "$PUBLISHED" -name '*.png' | sort)
+    echo "refreshed $refreshed of $total PNGs in $PUBLISHED from $OUT"
     for dir in web/docs/screenshots web/landing/assets/img/screenshots; do
       n=0
       while IFS= read -r f; do
         rel=${f#"$dir"/}
-        src="$OUT/${rel%.webp}.png"
-        [ -f "$src" ] || fail "$f has no source $src"
+        src="$PUBLISHED/${rel%.webp}.png"
+        [ -f "$src" ] || fail "$f has no source $src: publish its PNG pair first (docs/knowledge/screenshots.md, \"Where they are used\")"
         w=$(sips -g pixelWidth "$f" | awk '/pixelWidth/ {print $2}')
         h=$(sips -g pixelHeight "$f" | awk '/pixelHeight/ {print $2}')
         sw=$(sips -g pixelWidth "$src" | awk '/pixelWidth/ {print $2}')
@@ -775,7 +793,7 @@ check_png() {                                       # check_png FILE WIDTH HEIGH
 # Every store file has Apple's size and no alpha, a class holds exactly its
 # slots (at most ten), and a run of a whole device has written every file.
 verify_outputs() {
-  local d s width height file n
+  local d s width height file n dir
   for d in $RUN_DEVICES; do
     read -r width height <<< "$(store_dims "$d")"
     for s in $RUN_SCREENS; do
@@ -784,7 +802,9 @@ verify_outputs() {
       [ -e "$file" ] || fail "missing store file $file"
       check_png "$file" "$width" "$height"
     done
-    n=$(find "$OUT/app-store/$(store_class "$d")" -name '*.png' | wc -l)
+    dir="$OUT/app-store/$(store_class "$d")"
+    n=0
+    if [ -d "$dir" ]; then n=$(find "$dir" -name '*.png' | wc -l); fi
     [ "$n" -le 10 ] || fail "$n store files for $d, Apple allows ten"
     is_main "$d" || continue
     for s in $RUN_SCREENS; do
@@ -826,6 +846,7 @@ DISABLE_LOCAL=1
 # old file behind. Late, so a failed build or preflight wipes nothing.
 if [ -z "$PICK_SCREENS" ]; then
   if [ -z "$PICK_DEVICES" ]; then
+    mkdir -p "$OUT"
     find "$OUT" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
   else
     for d in $RUN_DEVICES; do

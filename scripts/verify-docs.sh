@@ -14,11 +14,17 @@
 #      planning IDs (R12, F31, O9, B23, W4), which go stale (docs/AGENTS.md,
 #      "Writing rules"), and section-number citations, which rot on every
 #      re-order.
+#   4. Images. The URL in an HTML `src="..."` or `srcset="..."` attribute
+#      resolves like a relative link (http(s) URLs are skipped).
+#   5. Unused screenshots. Every PNG in assets/screenshots/ is shown by a
+#      markdown image, or is the source of a web WebP copy at the same relative
+#      path (web/docs/screenshots/, web/landing/assets/img/screenshots/).
 #
 #   scripts/verify-docs.sh     # findings as path:line: message, exit 1 on any
 #
 # Fenced code blocks are skipped. Known limits: reference-style links and link
-# titles are not checked, and anchors follow GitHub's slug rule for ASCII
+# titles are not checked, an image attribute whose value spans lines is not
+# checked, and anchors follow GitHub's slug rule for ASCII
 # headings only, without the `-1` suffix a repeated heading gets. Pure bash and POSIX awk, so CI runs it on a
 # bare runner. Exit 0 clean, 1 findings.
 set -euo pipefail
@@ -56,9 +62,21 @@ while IFS= read -r f; do
       }
       # markdown links, outside code spans
       gsub(/`[^`]*`/, "", line)
+      s = line
       while (match(line, /\]\([^) ]+\)/)) {
         print file "\t" FNR "\tlink\t" substr(line, RSTART + 2, RLENGTH - 3)
         line = substr(line, RSTART + RLENGTH)
+      }
+      # HTML image attributes: src="x" and srcset="x 1x, y 2x" (data-src does not match)
+      while (match(s, /[ \t](src|srcset)="[^"]*"/)) {
+        a = substr(s, RSTART, RLENGTH)
+        s = substr(s, RSTART + RLENGTH)
+        sub(/^[ \t]+(src|srcset)="/, "", a); sub(/"$/, "", a)
+        n = split(a, cand, ",")
+        for (i = 1; i <= n; i++) {
+          split(cand[i], word, " ")
+          if (word[1] != "") print file "\t" FNR "\timage\t" word[1]
+        }
       }
     }' "$f"
 done < "$TMP/files" > "$TMP/candidates"
@@ -88,6 +106,16 @@ awk -F'\t' -v top='^(\\.github|app|assets|CrocKit|crocmobile|design|docs|scripts
   {
     file = $1; n = $2; kind = $3; t = $4
     dir = file; if (!sub(/\/[^\/]*$/, "", dir)) dir = "."
+    if (kind == "image") {
+      if (t ~ /^https?:/) next
+      path = t
+      if (match(path, /[#?]/)) path = substr(path, 1, RSTART - 1)
+      if (path == "") next
+      target = normalize(dir "/" path)
+      if (!have(target)) print file "\t" n "\tbroken image: " t
+      print file "\t" n "\t@" target
+      next
+    }
     if (kind == "link") {
       if (t ~ /^(https?|mailto):/) next
       path = t; anchor = ""
@@ -145,9 +173,29 @@ while IFS=$'\t' read -r f n msg; do
       anchors "$target" > "$TMP/anchors"
       grep -qxF -- "$anchor" "$TMP/anchors" || finding "$f" "$n" "no heading for anchor: ${rest#*#}"
       ;;
+    @*) echo "${msg#@}" >> "$TMP/shown" ;;
     *) finding "$f" "$n" "$msg" ;;
   esac
 done < "$TMP/resolved"
+
+# Screenshots: a tracked or new PNG in assets/screenshots/ must be shown by a
+# markdown image or be the source of a web WebP copy at the same relative path.
+: >> "$TMP/shown"
+while IFS= read -r w; do
+  case $w in
+    web/docs/screenshots/*) rel=${w#web/docs/screenshots/} ;;
+    *) rel=${w#web/landing/assets/img/screenshots/} ;;
+  esac
+  echo "assets/screenshots/${rel%.webp}.png" >> "$TMP/shown"
+done < <(git ls-files --cached --others --exclude-standard 'web/docs/screenshots/*.webp' 'web/landing/assets/img/screenshots/*.webp')
+sort -u "$TMP/shown" -o "$TMP/shown"
+while IFS= read -r png; do
+  [ -f "$png" ] || continue
+  if ! grep -qxF -- "$png" "$TMP/shown"; then
+    echo "$png: unused screenshot: no markdown image or web WebP copy shows it. Publish it or git rm it (docs/knowledge/screenshots.md, \"Where they are used\")"
+    findings=$((findings + 1))
+  fi
+done < <(git ls-files --cached --others --exclude-standard 'assets/screenshots/*.png')
 
 # Stale markers: only where docs/AGENTS.md applies. CHANGELOG.md keeps its
 # dated release headings, which release.yml parses.
@@ -179,4 +227,4 @@ if [ "$findings" -gt 0 ]; then
   echo "FAIL: $findings finding(s). Fix the doc, or the path it names; never the check."
   exit 1
 fi
-echo "PASS: links, repo paths and stale markers in $(wc -l < "$TMP/files" | tr -d ' ') markdown files"
+echo "PASS: links, images, repo paths, stale markers and screenshot use in $(wc -l < "$TMP/files" | tr -d ' ') markdown files"
