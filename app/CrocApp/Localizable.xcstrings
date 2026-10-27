@@ -26,6 +26,28 @@
         }
       }
     },
+    "%@, receiving %@, %@" : {
+      "comment" : "VoiceOver label of a receive that did not finish. The placeholders are Failed, Cancelled or Declined, what was received, and when.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, receiving %2$@, %3$@"
+          }
+        }
+      }
+    },
+    "%@, sending %@, %@" : {
+      "comment" : "VoiceOver label of a send that did not finish. The placeholders are Failed, Cancelled or Declined, what was sent, and when.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, sending %2$@, %3$@"
+          }
+        }
+      }
+    },
     "%lld percent" : {
       "comment" : "Said after a sidebar row's name. The placeholder is a number."
     },
@@ -256,6 +278,17 @@
     "Receive from Link" : {},
     "Receive with CrocApp" : {},
     "Received" : {},
+    "Received %@, %@" : {
+      "comment" : "VoiceOver label of a finished receive. The placeholders are what was received and when, as in \"Received 3 files, yesterday\".",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Received %1$@, %2$@"
+          }
+        }
+      }
+    },
     "Received %lld items." : {
       "comment" : "Spoken or shown by Shortcuts after Receive. The placeholder is how many files or text items arrived.",
       "localizations" : {
@@ -291,6 +324,7 @@
     "Receiving with CrocApp" : {
       "comment" : "Title of the iOS Live Activity while receiving."
     },
+    "Recent transfers" : {},
     "Relay" : {},
     "Remove %@" : {
       "comment" : "VoiceOver label of the button that removes a staged file. The placeholder is the file name."
@@ -354,6 +388,17 @@
     "Sends text with a croc code and returns the code. Keep CrocApp open until the transfer ends." : {},
     "Send…" : {},
     "Sent" : {},
+    "Sent %@, %@" : {
+      "comment" : "VoiceOver label of a finished send. The placeholders are what was sent and when, as in \"Sent 3 files, yesterday\".",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sent %1$@, %2$@"
+          }
+        }
+      }
+    },
     "Sent files" : {},
     "Settings" : {},
     "Settings…" : {},
@@ -465,6 +510,7 @@
     "You declined the transfer" : {},
     "You stay in control" : {},
     "Zip Folders Before Sending" : {},
+    "^[%lld file](inflect: true)" : {},
     "^[%lld file](inflect: true) waiting to send" : {
       "comment" : "VoiceOver label of the badge on the Send button. The placeholder is the number of queued files."
     },
