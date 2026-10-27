@@ -203,6 +203,10 @@ Permanent or deferred, each with its reason.
   - Enforcement reportedly engages only for builds resident in `/Applications` (one developer-forum thread, not Apple documentation; strong inference, not verified here). A Debug build launched from DerivedData can sit at `.ready` and read as falsely granted.
   - Copy the app to `/Applications` before trying to reproduce a denial.
 
+- **History offers Revoke for a link that expires while the screen is open.**
+  - The Expires line and relative dates refresh every minute, but whether **Revoke Link** is offered (`TransferController.canRevoke`) is read when the view next updates, so a link that expires on screen keeps the button until then. Tapping it fails with the usual "Couldn't revoke the link" alert.
+  - Left because it needs a clock-driven refresh of the whole menu and swipe actions for a rare case. Revisit if the alert shows up in reports.
+
 ### Engine and croc behaviour
 
 - **When both relay addresses are customised, both are sent.**

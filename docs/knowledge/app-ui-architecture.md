@@ -143,7 +143,7 @@ Views for stored transfers:
 - `TransferStatusView`: `Phase.stored(receipt)` renders `storedView`: "Link ready", expiry and download count, QR, link text, **Copy Link** (`copySecret`, `thisDeviceOnly: true`), **Share Link** and **Done**.
 - `DirectionHeader` reads Sending or Receiving for stored transfers too, never Uploading or Downloading. The view shows a caption instead of `TrustBadge` when `isStoredTransfer`.
 - `ReceiveView`: `router.pendingReceive` carrying `.stored(url)` sets `storedLink`. That replaces the code field with a **Receive from Link** row (the server host underneath) and a **Clear** button. **Receive** then starts `.storedReceive`.
-- `HistoryView`: stored rows add a "Link expires", "Link expired" or "Link revoked" line. **Revoke Link** (context menu) and **Revoke** (swipe on iOS) sit behind a confirmation dialog, with an alert on failure.
+- `HistoryView`: stored rows add a "Link expires", "Link expired" or "Link revoked" line. **Revoke Link** (context menu) and **Revoke** (swipe on iOS) sit behind a confirmation dialog, with an alert on failure. Deleting such a row asks whether to revoke first (see History).
 - `PowerSettingsSections`: a "Send as link" section (the header really reads that way, in sentence case) with the Link Server field, an inline `storedServerError` banner, and a **Reset** button shown only when the value differs from the default.
 
 `Models/StoredTransferVault.swift` keeps receipts (id, origin, upload token, link, expiry) in the Keychain, all in one item (`storedReceipts`, a JSON array), because `SecretStore` cannot list accounts. Expired receipts are purged when the vault opens, which is each launch. A failed Keychain write is logged, never lost silently, and leaves the receipts already stored untouched. The new receipt then lasts until the app quits. Harness runs and previews use `MemorySecretStore`.
@@ -219,12 +219,16 @@ The shared views route onto `design/`. A screen picks one of these instead of st
 
 Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookmarks`), and the store keeps at most 300 records (`maxRecords`). `HistoryStore.add()` deletes the oldest records beyond that.
 
-`HistoryStore` is `@MainActor @Observable` and wraps `container.mainContext`. It exposes `add`, `delete`, `clear`, `recordCount` and `markRevoked`. The container is in memory when `AutoVerify.isHarnessRun`. It is injected twice: as `.environment(history)` and as `.modelContainer(history.container)`.
+`HistoryStore` is `@MainActor @Observable` and wraps `container.mainContext`. It exposes `add`, `delete`, `clear`, `recordCount` and `markRevoked`. `delete` and `markRevoked` return early for a record whose `modelContext` is nil, because a record that a prune or a delete removed must not be written to or deleted again (a revoke that finishes after its record is gone is the case). The container is in memory when `AutoVerify.isHarnessRun`. It is injected twice: as `.environment(history)` and as `.modelContainer(history.container)`.
 
 `Views/HistoryView.swift` (`Route.history`, clock toolbar icon on both platforms):
 - `@Query` sorted newest first.
 - With no records, "No transfers yet" with **Send** and **Receive**, or "History is off" with **Open Settings** while **Save Transfer History** is off (`openSettings` on macOS, `Route.settings` pushed on iOS).
-- Swipe and context delete.
+- A row opens `HistoryDetailView` (push by `NavigationLink`; on macOS double-click or Return, via `navigationDestination(item:)`, which resets `opened` when its record is gone). The detail is a grouped `Form` of status, rows, file names and the actions. It renders nothing for a record with no `modelContext` and dismisses, so a prune past 300 while it is open cannot crash it.
+- `HistoryActions` (`Models/HistoryActions.swift`) is the state both screens share: which revokes run, `revoke` and `resend`. `RecordDialogs` (in `HistoryView.swift`) holds the Revoke confirmation and failure alert, the Delete confirmation and the Send Again alert for every path: swipe, context menu, the macOS Delete key and the detail button.
+- **Delete** is immediate, except for a record whose link can still be revoked (`controller.canRevoke`): then a dialog offers **Revoke Link and Delete**, **Delete and Keep Link** or Cancel. A failed revoke keeps the record. Delete is disabled while that record's revoke runs.
+- On macOS the Delete key, the context menu and `record(in:)` use only the rows in `shown`, the selection is cleared when the search changes, and the menu appears for one row only.
+- Code hints are `.privacySensitive()`. Relative dates and the link expiry text sit in `TimelineView(.everyMinute)`, so "yesterday" and Expires or Expired stay current.
 - **Clear** behind a confirmation.
 - **Send Again** for send records that carry bookmarks: resolve the bookmarks, then `router.openSend`.
 

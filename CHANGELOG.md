@@ -12,6 +12,9 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- History rows open a detail screen with the status, date, size, file names and link, and **Send Again**, **Revoke Link** and **Delete**. On a Mac, double-click a row or press Return.
+- Deleting a History row whose Send as Link link still works asks whether to revoke the link first, so the files do not stay on the link server with no way to revoke them. **Delete** is disabled while that link is being revoked.
+
 - **Save Transfer History** in Settings (on by default). Turn it off and finished transfers are no longer listed in History. What is already there stays until you delete it, and History says "History is off" while it is empty.
 - **Haptics** in Settings on iPhone (on by default). Turn it off to silence every tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer.
 - iPhone and iPad find a device on the same network the way a Mac does, so a transfer between them can stay on your local network, including with **Local Network Only**. **Multicast Address** is now in Advanced settings on iOS too.

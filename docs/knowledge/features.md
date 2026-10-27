@@ -62,7 +62,7 @@ Details:
   - Files only, up to 100 files and 1 GiB.
   - The link lasts 1 hour, 1 day or 7 days, with 1 to 100 downloads, on the server set in Settings (`https://getcroc.com` by default).
   - The result screen shows the link and a QR code. Receiving from a pasted or scanned link goes through the normal incoming preview.
-  - History shows the expiry and offers **Revoke Link** (context menu) and **Revoke** (swipe on iOS).
+  - History shows the expiry and offers **Revoke Link** (context menu, detail) and **Revoke** (swipe on iOS). Deleting a row whose link still works asks whether to revoke it first.
   - Device checks are in `device-test-checklist.md`, "Stored transfers".
 - **Menu bar quick send.**
   - A `MenuBarExtra` window with a drop zone, **Choose Files…** and **Send Clipboard Text**, then the code, QR and progress of the one shared transfer. Codes are always generated.
