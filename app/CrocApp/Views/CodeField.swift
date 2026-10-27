@@ -38,7 +38,8 @@ struct CodeField: View {
     /// What `invalidMessage` says for a code shorter than the engine accepts.
     static var tooShortMessage: String {
         String(
-            localized: "A code is at least \(EngineConstraints.minCodeLength) characters.",
+            localized:
+                "A code phrase needs at least \(EngineConstraints.minCodeLength) characters.",
             comment: "The placeholder is the minimum number of characters a code needs.")
     }
 

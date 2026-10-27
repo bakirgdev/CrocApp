@@ -43,6 +43,7 @@ struct SendView: View {
     #endif
     /// Photos or videos the last pick could not bring in.
     @State private var photoFailures = 0
+    @FocusState private var textFocused: Bool
 
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "send")
 
@@ -56,7 +57,7 @@ struct SendView: View {
     private static let placeholderInsetX: CGFloat = 5
     private static let placeholderInsetY: CGFloat = 8
 
-    // motion.md → Choreography, rule 4: a choice that swaps a block.
+    // motion.md → Choreography, rule 1: a choice that swaps a block.
     private var swapAnimation: Animation? {
         reduceMotion ? nil : Motion.easeOut(Motion.durationBase)
     }
@@ -173,7 +174,7 @@ struct SendView: View {
     }
 
     private var customCodeTrimmed: String {
-        customCode.trimmingCharacters(in: .whitespaces)
+        customCode.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Why "Send as link" cannot be used for what is staged, or nil.
@@ -255,14 +256,19 @@ struct SendView: View {
     }
 
     private var canStart: Bool {
-        if linkSelected {
-            return !pickedURLs.isEmpty
-                && AppSettings.storedServerError(settings.storedServer) == nil
-        }
-        let codeOK =
-            customCode.isEmpty || customCodeTrimmed.count >= EngineConstraints.minCodeLength
-        let payloadOK = mode == .files ? !pickedURLs.isEmpty : !text.isEmpty
-        return codeOK && payloadOK
+        var isLoadingPhotos = false
+        #if os(iOS)
+        isLoadingPhotos = self.isLoadingPhotos
+        #endif
+        return SendReadiness(
+            sendsAsLink: linkSelected,
+            isFilesMode: mode == .files,
+            hasFiles: !pickedURLs.isEmpty,
+            hasText: !text.isEmpty,
+            storedServerIsValid: AppSettings.storedServerError(settings.storedServer) == nil,
+            customCode: customCodeTrimmed,
+            isLoadingPhotos: isLoadingPhotos
+        ).canStart
     }
 
     private func consumePendingURLs() {
@@ -371,10 +377,9 @@ struct SendView: View {
                 // The files as they are, not a re-encoded copy.
                 preferredItemEncoding: .current
             )
-            .onChange(of: photoItems) { _, items in
-                guard !items.isEmpty else { return }
-                Task { await addPhotos(items) }
-            }
+            // A task tied to the pick: it is cancelled with the screen or when
+            // the pick changes, and cancelling discards what it staged.
+            .task(id: photoItems) { await addPhotos(photoItems) }
             #endif
 
             if photoFailures > 0 {
@@ -383,9 +388,11 @@ struct SendView: View {
                     title: inflected(
                         AttributedString(
                             localized: "Couldn't add ^[\(photoFailures) item](inflect: true)",
-                            comment: "Title when photos or videos picked for Send could not be loaded.")),
+                            comment:
+                                "Title when photos or videos picked for Send could not be loaded.")),
                     detail: String(
-                        localized: "Check your internet connection and try again.",
+                        localized:
+                            "A photo in iCloud needs a connection to download. Check yours and try again.",
                         comment: "Says what to do after picked photos could not be loaded."))
             }
         }
@@ -416,24 +423,17 @@ struct SendView: View {
     /// picker runs out of process and hands over only what was picked, so the
     /// app asks for no photo library permission.
     private func addPhotos(_ items: [PhotosPickerItem]) async {
+        guard !items.isEmpty else { return }
         isLoadingPhotos = true
         photoFailures = 0
-        var payloads: [SendPayload] = []
-        for item in items {
-            do {
-                if let payload = try await item.loadTransferable(type: SendPayload.self) {
-                    payloads.append(payload)
-                } else {
-                    photoFailures += 1
-                }
-            } catch {
-                Self.log.error("photo load failed: \(String(describing: error), privacy: .public)")
-                photoFailures += 1
-            }
-        }
-        stage(payloads)
+        defer { isLoadingPhotos = false }
+        guard
+            let loaded = await SendLoading.load(
+                items, using: { try await $0.loadTransferable(type: SendPayload.self) })
+        else { return }
+        photoFailures = loaded.failures
+        stage(loaded.payloads)
         photoItems = []
-        isLoadingPhotos = false
     }
     #endif
 
@@ -442,6 +442,7 @@ struct SendView: View {
     private var textSection: some View {
         VStack(spacing: Spacing.space4) {
             TextEditor(text: $text)
+                .focused($textFocused)
                 .accessibilityLabel("Text to send")
                 .font(.body.monospaced())
                 .frame(minHeight: DropZone.minHeight, maxHeight: Self.queueMaxHeight)
@@ -460,7 +461,9 @@ struct SendView: View {
                 }
                 .overlay {
                     RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                        .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
+                        .strokeBorder(
+                            textFocused ? Color.accentFill : Color.separatorToken,
+                            lineWidth: BorderWidth.hairline)
                 }
             PasteButton(payloadType: String.self) { strings in
                 if let pasted = strings.first {
@@ -493,7 +496,10 @@ private struct SendPasteTarget: ViewModifier {
 
     @ViewBuilder func body(content: Content) -> some View {
         #if os(macOS)
+        // The environment value reaches every child, so it is switched back on
+        // for them: only this screen-level focus target hides its ring.
         content
+            .focusEffectDisabled(false)
             .focusable()
             .focused($hasFocus)
             .focusEffectDisabled()
