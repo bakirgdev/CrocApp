@@ -67,6 +67,15 @@ final class TransferRecord {
     }
 }
 
+/// Told once a change to the store has been saved, so a Spotlight index can
+/// follow it (`HistoryEntityStore`). Never told of a change that failed to save.
+@MainActor
+protocol HistoryChangeObserver: AnyObject {
+    func historyDidAdd(_ record: TransferRecord)
+    func historyDidRemove(_ ids: [PersistentIdentifier])
+    func historyDidClear()
+}
+
 /// Thin MainActor wrapper over the ModelContainer so TransferController can
 /// write records without importing SwiftData views, and so harness runs can
 /// swap in an in-memory store (AutoVerify must never pollute real history).
@@ -76,6 +85,9 @@ final class HistoryStore {
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "history")
 
     let container: ModelContainer
+    @ObservationIgnored var observer: (any HistoryChangeObserver)?
+    /// Replaces the context save; a test sets it to make a save fail.
+    @ObservationIgnored var saveOverride: (() throws -> Void)?
 
     init(container: ModelContainer) {
         self.container = container
@@ -107,7 +119,7 @@ final class HistoryStore {
 
     func add(_ record: TransferRecord) {
         container.mainContext.insert(record)
-        save("add")
+        if save("add") { observer?.historyDidAdd(record) }
         pruneToRetentionCap()
     }
 
@@ -130,8 +142,9 @@ final class HistoryStore {
                 "history prune fetch failed: \(String(describing: error), privacy: .public)")
             return
         }
+        let ids = stale.map(\.persistentModelID)
         for record in stale { container.mainContext.delete(record) }
-        save("prune")
+        if save("prune") { observer?.historyDidRemove(ids) }
     }
 
     /// The record of the stored upload `storedID`, or nil when history holds
@@ -160,17 +173,20 @@ final class HistoryStore {
 
     func delete(_ record: TransferRecord) {
         guard record.modelContext != nil else { return }
+        let id = record.persistentModelID
         container.mainContext.delete(record)
-        save("delete")
+        if save("delete") { observer?.historyDidRemove([id]) }
     }
 
     func clear() {
+        var deleted = false
         do {
             try container.mainContext.delete(model: TransferRecord.self)
+            deleted = true
         } catch {
             Self.log.error("history clear failed: \(String(describing: error), privacy: .public)")
         }
-        save("clear")
+        if save("clear"), deleted { observer?.historyDidClear() }
     }
 
     func recordCount() -> Int {
@@ -182,13 +198,18 @@ final class HistoryStore {
         }
     }
 
-    private func save(_ operation: String) {
+    /// False when the save failed, so a caller does not announce a change
+    /// that never reached the store.
+    @discardableResult
+    private func save(_ operation: String) -> Bool {
         do {
-            try container.mainContext.save()
+            try saveOverride?() ?? container.mainContext.save()
+            return true
         } catch {
             Self.log.error(
                 "history \(operation, privacy: .public) save failed: \(String(describing: error), privacy: .public)"
             )
+            return false
         }
     }
 }

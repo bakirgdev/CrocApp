@@ -26,6 +26,10 @@ For each finished or failed transfer:
 
 File contents are never recorded.
 
+## Shortcuts and Spotlight
+
+Past transfers are available to the Shortcuts app through a **Find Transfers** action (see [Shortcuts and Siri](shortcuts.md)). That action returns nothing while **Save Transfer History** is off. To find a transfer from Spotlight, turn on **Show History in Spotlight** in [Settings](settings.md). It is off by default, because it makes file names searchable outside CrocApp. Neither one shows a code phrase.
+
 ## Send Again
 
 For a past send, the row's context menu (or a swipe on iOS) offers **Send Again**, which stages the same files in a new send. If the originals were moved or deleted, CrocApp says so instead of sending nothing.

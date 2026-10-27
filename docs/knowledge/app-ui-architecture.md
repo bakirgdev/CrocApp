@@ -141,6 +141,8 @@ A failed settings write to `secrets` is never silent. This covers the relay pass
 
 **Save Transfer History** (`saveTransferHistory`, key `settings.saveTransferHistory`, default on). `TransferController.finishRecord` returns before it builds the record while the setting is off, so a finished, failed, cancelled or declined transfer leaves nothing in History. Records already there stay until the user deletes them. A **Send as Link** upload made while it is off has no History row, so it cannot be revoked from History: the receipt stays in the Keychain vault until it expires. `HistoryView` shows "History is off" with **Open Settings** instead of the empty list while the setting is off and no records exist (`design/components.md`, "HistoryRow").
 
+**Show History in Spotlight** (`indexHistoryInSpotlight`, key `settings.indexHistoryInSpotlight`, default **off**). Off by default because the Spotlight index puts file names outside the app, so it needs its own visible switch next to Save Transfer History (`docs/THREAT-MODEL.md`, "Privacy"). It also needs Save Transfer History on: `GeneralSettingsSections` disables the row while that is off, and `HistoryEntityStore` indexes only while both are on. Turning either off empties the index; turning Spotlight on (with history on) indexes every record. It does not gate Shortcuts, which follows Save Transfer History alone.
+
 **Haptics** (`haptics`, key `settings.haptics`, default on, iPhone only). `phoneHaptic` (`Views/PhoneHaptics.swift`) is the one place that checks it, together with the iPhone idiom, so every call site honors it. The modifier reads `AppSettings` from the environment on iOS, so a view that uses `phoneHaptic` needs it there (the WindowGroup provides it). `Views/GeneralSettingsSections.swift` holds the two rows, shared by the macOS General tab and the iOS `SettingsScreen`; the Haptics row only exists on iPhone.
 
 Relay strings use `""` for "croc default" (the `TextField` prompt reads "Public relay pool") and reach the engine as stored, password included. Go resolves them (`crocmobile/relay.go`): blank means croc's default, and with no custom relay and Local Network Only off, the relay comes from upstream's public pool by code.
@@ -224,6 +226,17 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - `ReceivedFileLocator` finds what a receive wrote. croc keeps the sender's modification dates, so it tells new files apart by creation date: `name.ext`, or its Keep Both copy `name (n).ext`, created since the action started. `controller.offeredFileNames` gives the names.
 - `IntentStaging` writes files that arrive without a usable file URL, and a received text as `Received text.txt`, under `ShortcutsFiles` in the temporary directory. A send outlives its action, so nothing is deleted on return. `SendFilesIntent` sweeps the folder at the start of the next send.
 - A shortcut does not answer the accept prompt. Auto-accept applies as usual, and Keep Both or Replace follows the setting.
+
+**History entities and Spotlight.**
+- `Intents/HistoryEntity.swift` is the `AppEntity` and `IndexedEntity` for a record: name, direction, status, date, file names, size. Never the code phrase or code hint. `HistoryEntityQuery` answers Shortcuts (by id, by name, and a Find Transfers action with date, direction, status and name filters). `OpenTransferIntent` opens History (the list, not the record: no route carries a record yet, `known-issues.md`, "History entities").
+- `Models/HistoryEntityStore.swift` is the one object both read. It is registered with `AppDependencyManager` and set as `HistoryStore.observer`, which tells it after each saved add, delete, prune and clear. A change that fails to save is never announced (`HistoryStore.saveOverride` lets a test force one).
+- The index is changed by one queued operation at a time. It is rebuilt in full (remove all, index all) at launch and whenever Save Transfer History or Show History in Spotlight changes. A failed index call sets `needsRebuild`, and the next change rebuilds in full instead of applying a delta.
+- `Models/HistorySpotlightIndex.swift` wraps a named `CSSearchableIndex` (`CrocAppHistory`) behind `HistoryIndexing`, which the tests replace. Under a unit-test host and in a harness run the store gets no index, so the developer's Spotlight is never written.
+- The entity id is the JSON of the record's SwiftData `PersistentIdentifier` (`HistoryEntityID`). It survives a relaunch, not a reinstall or a reset store (`known-issues.md`).
+
+**Send with CrocApp (Services menu, macOS).**
+- `Platform/SendServicesProvider.swift` is `NSApp.servicesProvider`, set in `AppDelegate`. `sendFiles` and `sendText` are the `NSMessage` values of the two `NSServices` entries in `Config/CrocApp-macOS-Info.plist` and `CrocApp-Direct-Info.plist`; `SendServicesRegistrationTests` ties both plists to the selectors. They stage through `AppRouter.openSend(with:)` and `openSend(text:)`, so a service never starts a transfer and never navigates during one.
+- Text is capped at `maxTextBytes` (1 MiB of UTF-8); a larger selection is refused with a message. The menu title is localized by `ServicesMenu.xcstrings`.
 
 **Menu bar commands.**
 - `Views/AppCommands.swift` is the menu bar on the Mac and the hardware-keyboard menu bar on iPad. Anything a toolbar button does has an item with a shortcut (`design/platforms.md`, "macOS", lists them all).
@@ -379,6 +392,7 @@ The app ships in English only and is ready for more languages. The catalogs exis
 | `app/CrocApp/Localizable.xcstrings` | `CrocApp`, `CrocApp Direct` | every string of the app and of `app/CrocAppDirect/`, and the App Intents titles, descriptions and parameter summaries |
 | `app/CrocApp/AppShortcuts.xcstrings` | the same | the three Siri phrases of `CrocAppShortcuts` |
 | `app/CrocApp/InfoPlist.xcstrings` | the same | the camera and local-network permission texts |
+| `app/CrocApp/ServicesMenu.xcstrings` | the macOS and Direct apps | the title of the **Send with CrocApp** Services menu item (`NSMenuItem` in the two Info plists). Edited by hand |
 | `app/CrocShare/Localizable.xcstrings` | `CrocShare` | the share extension's few strings. An extension is its own bundle, so it has its own catalog |
 
 ### What is localized, and how
@@ -432,8 +446,9 @@ sync app/CrocShare/Localizable.xcstrings "$B/Debug-iphonesimulator/CrocShare.bui
 
 The file name is the table name, so each catalog takes only its own table. A sync keeps comments, translations and `shouldTranslate`, and removes an untranslated key no code uses any more.
 
-Two things no build writes, so edit them by hand:
+Three things no build writes, so edit them by hand:
 
+- `ServicesMenu.xcstrings` holds the one `NSServices` menu title. The system looks the plist's `default` title up in the `ServicesMenu` table, which is the file name. Keep the key equal to the plist text. It is not synced from code, so `xcstringstool sync` never touches it.
 - `InfoPlist.xcstrings` holds `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription`. Apple's Xcode 16.3 release notes say the IDE extracts Info.plist keys into this catalog on its own. `xcodebuild` writes nothing there (verified), and the IDE was not run, so both keys are seeded with their current text. Keep a changed permission text in step with `app/Config/CrocApp-Info.plist` or the `INFOPLIST_KEY_` setting.
 - The plural variation of `Received %lld items.`, which `ReceiveIntent` uses for its dialog. `LocalizationTests` pins that 1 and 3 render as "1 item" and "3 items".
 
