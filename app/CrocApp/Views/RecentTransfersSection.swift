@@ -20,7 +20,7 @@ struct RecentTransferSummary: Equatable {
 
     init(_ record: TransferRecord, now: Date = .now, calendar: Calendar = .current) {
         title = Self.title(for: record, locale: calendar.locale ?? .current)
-        statusWord = record.status == .completed ? nil : record.status.word
+        statusWord = record.status.word
         dateText = Self.dateText(for: record.date, now: now, calendar: calendar)
         spokenLabel = Self.spokenLabel(
             record, title: title, statusWord: statusWord, dateText: dateText)
@@ -86,11 +86,12 @@ struct RecentTransferSummary: Equatable {
 }
 
 extension TransferRecord.Status {
-    /// The status as a word. HistoryRow keeps its own copy of these strings,
+    /// The status as a word, `nil` for a completed record: the row names only
+    /// what went wrong. HistoryRow keeps its own copy of these strings,
     /// private to its file.
-    fileprivate var word: String {
+    fileprivate var word: String? {
         switch self {
-        case .completed: String(localized: "Completed")
+        case .completed: nil
         case .failed: String(localized: "Failed")
         case .cancelled: String(localized: "Cancelled")
         case .declined: String(localized: "Declined")
@@ -106,8 +107,21 @@ struct RecentTransfersSection: View {
     /// "Up to three records".
     static let limit = 3
 
+    /// What the section draws.
+    enum Content: Equatable {
+        /// Save Transfer History is off: nothing, even with older records.
+        case hidden
+        case empty
+        case rows
+    }
+
+    static func content(saveHistory: Bool, recordCount: Int) -> Content {
+        guard saveHistory else { return .hidden }
+        return recordCount == 0 ? .empty : .rows
+    }
+
     /// The newest `limit` records, so Home never loads the whole history.
-    private static var latest: FetchDescriptor<TransferRecord> {
+    static var latest: FetchDescriptor<TransferRecord> {
         var descriptor = FetchDescriptor<TransferRecord>(
             sortBy: [SortDescriptor(\.date, order: .reverse)])
         descriptor.fetchLimit = limit
@@ -122,15 +136,17 @@ struct RecentTransfersSection: View {
     @ScaledMetric(relativeTo: .largeTitle) private var emptyGlyphSize: CGFloat = 34
 
     var body: some View {
-        if settings.saveTransferHistory {
-            if records.isEmpty {
-                emptyState
-            } else {
-                Section {
-                    ForEach(records) { RecentTransferRow(record: $0) }
-                } header: {
-                    Text("Recent transfers").foregroundStyle(Color.textSecondary)
-                }
+        switch Self.content(saveHistory: settings.saveTransferHistory, recordCount: records.count)
+        {
+        case .hidden:
+            EmptyView()
+        case .empty:
+            emptyState
+        case .rows:
+            Section {
+                ForEach(records) { RecentTransferRow(record: $0) }
+            } header: {
+                Text("Recent transfers").foregroundStyle(Color.textSecondary)
             }
         }
     }
@@ -157,19 +173,21 @@ struct RecentTransfersSection: View {
 /// screen.
 private struct RecentTransferRow: View {
     let record: TransferRecord
-    private let summary: RecentTransferSummary
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // components.md → HistoryRow: direction glyph at --icon-size-md, scaled.
     @ScaledMetric(relativeTo: .title3) private var glyphSize: CGFloat = IconSize.medium
 
     private var isLargeText: Bool { dynamicTypeSize.isAccessibilitySize }
 
-    init(record: TransferRecord) {
-        self.record = record
-        summary = RecentTransferSummary(record)
+    var body: some View {
+        // The summary is rebuilt each minute so "2 min ago" does not go stale
+        // while Home stays open.
+        TimelineView(.everyMinute) { context in
+            row(RecentTransferSummary(record, now: context.date))
+        }
     }
 
-    var body: some View {
+    private func row(_ summary: RecentTransferSummary) -> some View {
         NavigationLink(value: AppRouter.Route.history) {
             // The glyph sits above the text at accessibility sizes so the text
             // keeps the row's width (the same switch HistoryRow makes).
@@ -179,7 +197,7 @@ private struct RecentTransferRow: View {
                 : AnyLayout(HStackLayout(spacing: Spacing.space3))
             layout {
                 directionGlyph
-                textColumn
+                textColumn(summary)
             }
             .frame(minHeight: ControlHeight.hitTargetMin)
         }
@@ -200,12 +218,12 @@ private struct RecentTransferRow: View {
             .accessibilityHidden(true)
     }
 
-    private var textColumn: some View {
+    private func textColumn(_ summary: RecentTransferSummary) -> some View {
         VStack(alignment: .leading, spacing: Spacing.space1) {
             Text(summary.title)
                 .lineLimit(isLargeText ? 3 : 1)
                 .truncationMode(.middle)
-            metadata
+            metadata(summary)
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
         }
@@ -213,7 +231,7 @@ private struct RecentTransferRow: View {
 
     /// One line at regular sizes; stacked at accessibility sizes, where one
     /// line would truncate.
-    private var metadata: some View {
+    private func metadata(_ summary: RecentTransferSummary) -> some View {
         let layout =
             isLargeText
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space1))
