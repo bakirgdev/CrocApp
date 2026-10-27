@@ -77,6 +77,7 @@ Never a fixed `.font(.system(size:))`: text takes a style, and a glyph size a co
 | --- | --- |
 | Compact or regular | `@Environment(\.horizontalSizeClass)` at the root: `.compact` is Home in a `NavigationStack`, `.regular` is a two-column `NavigationSplitView`. SwiftUI reports macOS as always regular |
 | Sidebar | a `List(selection:)` of `Label` rows. No `navigationSplitViewColumnWidth`, no style override and the default column visibility: the system owns widths, hiding and the material |
+| Home | `Form` + `.formStyle(.grouped)` in the `NavigationStack`: one row with `.listRowBackground(Color.clear)`, `.listRowSeparator(.hidden)` and zero insets holds the badge, the banner and the two actions, then the Recent transfers `Section`. The banner's transition is the Insert expression under Motion, and the row's container carries the matching animation |
 | Detail | one `NavigationStack` per sidebar item, so Advanced settings and How It Works push inside the detail |
 | The cap | `.frame(maxWidth: LayoutCap.contentMaxWidth)` on each detail screen's content, never on the split view or the sidebar |
 | Navigation state | the sidebar selection and each detail's path live on `AppRouter.shared`, because the app has one main window (`platforms.md` → Windows and scenes). The transfer, settings and history stay app-level too |

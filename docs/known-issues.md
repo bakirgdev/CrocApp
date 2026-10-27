@@ -65,10 +65,12 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - The `ipad/` screenshots and the 13-inch App Store set show exactly that.
   - Until the split view ships, App Store listing copy must not promise an iPad-optimised experience.
 - **The views predate the amended design book.** What the book now specifies and the app does not do yet:
-  - About 30 call sites style text with `.secondary` instead of `Color.textSecondary` (`design/colors.md` rule 4). The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
+  - Call sites in the other views still style text with `.secondary` instead of `Color.textSecondary` (`design/colors.md` rule 4); `HomeView`, `RecentTransfersSection`, `OnboardingView` and `HowItWorksView` follow it. The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
   - The user's own cancel or decline ends on the failure `StatusBlock`, with the error glyph and tint, although `design/content.md`, "Errors", says it is not a failure. Its title stands alone with **Done**, as the book wants; `StatusBlock` has no neutral kind for it yet.
   - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/content.md`, "Terminology").
-  - Not built: the Home recent transfers, the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary".
+  - Not built: the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary" (only the Insert of Home's pending-request banner is).
+  - A Home recent-transfer row opens the History list, not the record's own detail (`design/components.md`, "Home"). The detail screen is not built yet.
+  - On macOS, Home's grouped `Form` draws a section card behind the badge, banner and the two actions, because `.listRowBackground(Color.clear)` has no effect in a grouped macOS form. iOS draws no card there. Seen in a Debug build with `--screen home`; the regular-width layout (`design/platforms.md`, "Layout by width") is meant to replace Home on the Mac.
 - **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
   - It is synchronous file I/O on the main actor, run by `SendView` when it builds the row. A network or iCloud volume could make it hitch.
   - Not measured. A fix would read the size once when files are staged.

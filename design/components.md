@@ -202,6 +202,8 @@ The compact root (`platforms.md` → Layout by width): one column capped at `--c
 3. The two actions: Send `prominent`, Receive `secondary`, large and full width, min height 100 (a component constant, not a control size), `.fill` glyph, label `--type-title2` bold.
 4. **Recent transfers**, always below the two actions.
 
+The page is a grouped `Form` (`swiftui.md` → Navigation), so the page fill, the section and its header are the system's and the page scrolls on its own. Blocks 1 to 3 share one row with no fill and no separator. When the banner takes its slot it enters with Insert (`motion.md` → Vocabulary) and the two actions slide down with it, so nothing jumps.
+
 **Recent transfers.** Up to three records, newest first, in one grouped section headed "Recent transfers" (the system's section header, `--color-text-secondary`). A row is a HistoryRow cut to what a glance needs:
 
 - leading direction glyph at `--icon-size-md`, `--color-accent` when completed and `--color-text-secondary` otherwise;
@@ -209,7 +211,9 @@ The compact root (`platforms.md` → Layout by width): one column capped at `--c
 - metadata `--type-caption1` secondary on one line: the relative date (`content.md` → Dates). A record that did not complete leads with its status word ("Failed", "Cancelled", "Declined"), because a glyph color alone is not a status;
 - the system disclosure chevron, padding `--space-3` `--space-4`, gap `--space-3`, min height `--hit-target-min`. No size and no code hint.
 
-A tap opens the record's detail in History. The row speaks as one label: "Sent 3 files, yesterday".
+At accessibility sizes the glyph sits above the text and the metadata stacks, the switch HistoryRow makes, so the text keeps the row's width.
+
+A tap opens the record's detail in History. The row speaks as one label: "Sent 3 files, yesterday". A record that did not complete says so first: "Declined, receiving Contract-Draft.pdf, 2 days ago".
 
 - **No history yet:** an EmptyState replaces the section, glyph `clock.arrow.circlepath` at 34 (compact), title "No transfers yet", description "Finished sends and receives appear here." It has no button: the two actions above it are the actions.
 - **Save Transfer History off:** the section is **hidden, not empty**. An empty state would promise rows that will never come.
@@ -232,11 +236,11 @@ Selecting the row shows its screen (the gate, the waiting screen, the progress).
 
 First-run explainer: three points, then gone forever. Never a tour, never a pager.
 
-Centered column, gap `--space-7`, padding `--space-8`, capped at `--content-max-width`. Mark glyph `arrow.left.arrow.right.circle.fill` at 56 (scaled with Dynamic Type) in `--color-accent`. Title `--type-title2`. Three bullets at gap `--space-5`: glyph at `--icon-size-lg` in `--color-accent`, `--type-headline` title, `--type-callout` secondary body, gap `--space-4`. Glyph frames take a minimum width, never a fixed one. One full-width large `prominent` button closes it. System permission prompts come after it dismisses, one at a time.
+Centered column, gap `--space-7`, padding `--space-8`, capped at `--content-max-width`. Mark glyph `arrow.left.arrow.right.circle.fill` at 56 (scaled with Dynamic Type) in `--color-accent`. Title `--type-title2`. Three bullets at gap `--space-5`: glyph at `--icon-size-lg` in `--color-accent`, `--type-headline` title, `--type-callout` secondary body, gap `--space-4`. Glyph frames take a minimum width, never a fixed one, with 1.25 times the glyph as headroom so every bullet's text starts at one x. The column scrolls when the text is large (content that fits stays centered), and at accessibility sizes each bullet's glyph sits above its text. One full-width large `prominent` button closes it. System permission prompts come after it dismisses, one at a time.
 
 ### HowItWorksList
 
-The trust screen. TrustBadge `full` on top, then labelled paragraphs at gap `--space-6`, capped at `--content-max-width`: glyph at `--icon-size-lg`, title `--type-headline`, body `--type-callout` secondary, inner gap `--space-2`. No card, tint or accent wash beyond the badge: this screen has to read plain and true. Claims capped by `content.md` → Claims.
+The trust screen. TrustBadge `full` on top, then labelled paragraphs at gap `--space-6`, capped at `--content-max-width`: glyph at `--icon-size-lg`, title `--type-headline`, body `--type-callout` secondary, inner gap `--space-2`. No card, tint or accent wash beyond the badge: this screen has to read plain and true. The glyph frame is the OnboardingSheet's (minimum width with headroom, glyph above the text at accessibility sizes). Claims capped by `content.md` → Claims.
 
 ### ScannerSheet
 

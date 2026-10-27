@@ -10,6 +10,8 @@ description: "CrocApp's local-only transfer history: what it records, what it ne
 
 CrocApp keeps a list of past transfers on your device. Open it from the clock icon on the home screen. It has no sync, no export and no server.
 
+The home screen also lists your latest three transfers under **Recent transfers**, newest first. A transfer that did not finish starts its line with **Failed**, **Cancelled** or **Declined**. Tap a row to open History. With no transfers yet it says **No transfers yet**, and with **Save Transfer History** off the list is not shown.
+
 ## What is recorded
 
 **Save Transfer History** in [Settings](settings.md) is on by default. Turn it off and nothing new is recorded. Entries already here stay until you delete them.
