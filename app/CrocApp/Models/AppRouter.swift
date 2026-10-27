@@ -17,8 +17,8 @@ final class AppRouter {
     var path: [Route] = []
     /// URLs waiting for SendView to pick up into its staged list.
     var pendingSendURLs: [URL] = []
-    /// Text waiting for SendView to stage in its text mode (Services menu,
-    /// Send Clipboard). Like the URLs, it only stages: it never sends.
+    /// Text waiting for SendView to stage in its text mode. Like the URLs,
+    /// it only stages: it never sends.
     var pendingSendText: String?
     /// A receive link waiting for ReceiveView to prefill from it. Opening a
     /// link never connects: the user taps Receive.
@@ -54,9 +54,17 @@ final class AppRouter {
         if !isBusy, path != [.send] { path = [.send] }
     }
 
+    /// Text staged while SendView is away accumulates, like the URLs; empty
+    /// text stages nothing.
     func openSend(text: String) {
-        pendingSendText = text
+        guard !text.isEmpty else { return }
+        pendingSendText = Self.appending(text, to: pendingSendText ?? "")
         if !isBusy, path != [.send] { path = [.send] }
+    }
+
+    /// Staged text goes after what is already there, on its own line.
+    nonisolated static func appending(_ new: String, to existing: String) -> String {
+        existing.isEmpty ? new : existing + "\n" + new
     }
 
     /// Same busy rule as openSend: a link that arrives mid-transfer is kept

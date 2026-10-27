@@ -239,7 +239,7 @@ struct SendView: View {
     private func consumePendingText() {
         guard let pending = router.pendingSendText else { return }
         mode = .text
-        text = text.isEmpty ? pending : text + "\n" + pending
+        text = AppRouter.appending(pending, to: text)
         router.pendingSendText = nil
     }
 
