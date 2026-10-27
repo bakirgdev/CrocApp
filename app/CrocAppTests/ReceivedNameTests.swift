@@ -63,4 +63,50 @@ import Testing
     func allowsLegitimateFormatCharacters(name: String) {
         #expect(!ReceivedName.isUnsafe(name))
     }
+
+    // MARK: - Shown form
+
+    /// A name `isUnsafe` blocks is still drawn and recorded, so the sender's
+    /// bytes must show as code points, never act on the reader.
+    @Test(arguments: [
+        ("invoice\u{202E}fdp.exe", "invoice\\u{202E}fdp.exe"),
+        ("a\u{2066}b\u{2069}", "a\\u{2066}b\\u{2069}"),
+        ("a\u{200F}b", "a\\u{200F}b"),
+        ("a\nb", "a\\u{000A}b"),
+        ("a\0b\u{7F}", "a\\u{0000}b\\u{007F}"),
+        ("a\u{85}b", "a\\u{0085}b"),
+        ("a\u{2028}b\u{2029}", "a\\u{2028}b\\u{2029}"),
+        ("folder/inv\u{202E}fdp.exe", "folder/inv\\u{202E}fdp.exe"),
+    ])
+    func showsHiddenScalarsAsCodePoints(name: String, shown: String) {
+        #expect(ReceivedName.shown(name) == shown)
+    }
+
+    @Test(arguments: [
+        "file.txt", "folder/file.txt", "", "..", "a\\b", "Café.txt", "日本語.txt",
+        "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}.png",
+        "\u{0645}\u{06CC}\u{200C}\u{062E}\u{0648}\u{0627}\u{0647}\u{0645}.txt",
+        "\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}.png",
+    ])
+    func leavesAnyOtherNameUnchanged(name: String) {
+        #expect(ReceivedName.shown(name) == name)
+    }
+
+    /// `isUnsafe` and `shown` read one predicate, so a name blocked for how
+    /// it reads never draws raw.
+    @Test(arguments: [
+        "\u{202E}", "\u{200E}", "\u{061C}", "\u{2067}", "\n", "\u{2028}", "\u{2029}",
+    ])
+    func blockedScalarsAreTheEscapedOnes(scalar: String) {
+        let name = "a\(scalar)b"
+        #expect(ReceivedName.isUnsafe(name))
+        #expect(ReceivedName.shown(name) != name)
+        #expect(scalar.unicodeScalars.allSatisfy(ReceivedName.isSpoofingScalar))
+    }
+
+    @Test func formatCharactersRealNamesNeedAreNotSpoofing() {
+        #expect(!ReceivedName.isSpoofingScalar("\u{200D}"))
+        #expect(!ReceivedName.isSpoofingScalar("\u{200C}"))
+        #expect(!ReceivedName.isSpoofingScalar("\u{E0067}"))
+    }
 }

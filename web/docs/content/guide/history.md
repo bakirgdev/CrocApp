@@ -19,7 +19,7 @@ On iPhone, and on iPad in a narrow window, the home screen also lists your lates
 For each finished or failed transfer:
 
 - the direction (sent or received), and whether it was text
-- up to 20 file names, the file count and the total size
+- up to 20 file names, the file count and the total size. A name from another device is kept with any hidden or text-direction character written as its code point, such as `\u{202E}`
 - a **code hint**: the first word of a code shaped like a generated one (for example `wiry-…`), or only the first two characters of any other code. The full phrase is never stored
 - the date and the status: **Completed**, **Failed**, **Cancelled** or **Declined**
 - for sends, bookmarks to the original files (up to 200) that make **Send Again** possible
@@ -32,7 +32,7 @@ For a past send, the row's context menu (or a swipe on iOS) offers **Send Again*
 
 ## Links you sent
 
-A [Send as link](send-as-link.md) row shows the link server's host and when the link expires, then **Link expired** or **Link revoked**. Use **Revoke Link** in the row's context menu, in its detail or, on iOS, with a swipe to end a live link. The link itself is never stored here.
+A [Send as link](send-as-link.md) row shows the link server's host and when the link expires, then **Link expired** or **Link revoked**. Use **Revoke Link** in the row's context menu, in its detail or, on iOS, with a swipe to end a live link. You can also revoke it from the **Link ready** screen right after sending, which is the only place to do so with **Save Transfer History** off. The link itself is never stored here.
 
 ## Delete
 

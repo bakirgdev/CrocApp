@@ -69,8 +69,11 @@ struct StatusBanner: View {
                 if let actionTitle, let action {
                     Button(actionTitle, action: action)
                         .buttonVariant(.plain)
+                        .hitTarget()
                 }
             }
+            // A banner fills its column, like the buttons it sits beside.
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, Spacing.space5)
         .padding(.vertical, Spacing.space4)
@@ -89,5 +92,18 @@ struct StatusBanner: View {
             let message = [title, detail].compactMap { $0 }.joined(separator: ". ")
             AccessibilityNotification.Announcement(message).post()
         }
+    }
+}
+
+extension AnyTransition {
+    /// design/motion.md → Vocabulary, Insert: a banner fades in while moving
+    /// `--space-3` down into place, and fades out quicker. Nothing moves under
+    /// Reduce Motion.
+    static func statusBannerInsert(reduceMotion: Bool) -> AnyTransition {
+        guard !reduceMotion else { return .identity }
+        return .asymmetric(
+            insertion: .opacity.combined(with: .offset(y: -Spacing.space3))
+                .animation(Motion.easeOut(Motion.durationBase)),
+            removal: .opacity.animation(Motion.easeStandard(Motion.durationFast)))
     }
 }

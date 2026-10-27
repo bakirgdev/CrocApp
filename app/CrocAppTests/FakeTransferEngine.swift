@@ -34,6 +34,7 @@ actor FakeTransferEngine: TransferEngine {
     private(set) var cancelledStarts = 0
 
     private var startErrors: [CrocEngineError] = []
+    private var revokeFailure: EngineFailure?
     private var holdsNextStart = false
     private var heldStart: CheckedContinuation<Void, Never>?
     private var holdsNextRevoke = false
@@ -79,12 +80,13 @@ actor FakeTransferEngine: TransferEngine {
         cancels.append(id)
     }
 
-    func revokeStored(_ receipt: StoredReceipt, proxy: ProxySettings) async {
+    func revokeStored(_ receipt: StoredReceipt, proxy: ProxySettings) async throws {
         revokes.append(receipt)
         if holdsNextRevoke {
             holdsNextRevoke = false
             await withCheckedContinuation { heldRevoke = $0 }
         }
+        if let revokeFailure { throw revokeFailure }
     }
 
     // MARK: - Test controls
@@ -92,6 +94,11 @@ actor FakeTransferEngine: TransferEngine {
     /// The next start throws `error`. Queued errors are thrown one per start.
     func failNextStart(with error: CrocEngineError) {
         startErrors.append(error)
+    }
+
+    /// Every revoke is recorded, then throws `failure`.
+    func failRevokes(with failure: EngineFailure) {
+        revokeFailure = failure
     }
 
     /// The next start is recorded, then suspends until `releaseStart()`.
