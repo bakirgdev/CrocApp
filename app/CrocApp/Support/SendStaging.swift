@@ -54,17 +54,58 @@ nonisolated enum SendStaging {
 
     /// True for a file `stage(copying:)` made.
     static func isStaged(_ url: URL) -> Bool {
-        // Components, not a string prefix: a directory URL's path ends in "/".
-        let root = root.resolvingSymlinksInPath().standardizedFileURL.pathComponents
-        let path = url.resolvingSymlinksInPath().standardizedFileURL.pathComponents
-        return path.count > root.count && path.starts(with: root)
+        slotFolder(for: url, under: root) != nil
     }
 
     /// Deletes a staged file with its folder. Anything else is left alone, so
     /// a file the user picked is never removed.
     static func discard(_ url: URL) {
-        guard isStaged(url) else { return }
-        remove(url.deletingLastPathComponent())
+        discard(url, under: root)
+    }
+
+    /// The folder `discard` would delete for `url`, or nil when `url` is not a
+    /// file staged under `root`.
+    ///
+    /// The check and the delete share this one answer, so a path that passes
+    /// can never lead to a different delete. The folder is built from the
+    /// resolved root plus the one slot name the caller's path carries, never
+    /// from the caller's own path, and it must be a real directory: a symlink
+    /// in the slot's place is refused rather than followed or removed. The
+    /// path needs a slot and an item below it, so the root and a bare slot
+    /// are never a target.
+    static func slotFolder(for url: URL, under root: URL) -> URL? {
+        let rawRoot = root.standardizedFileURL.pathComponents
+        let resolvedRoot = root.resolvingSymlinksInPath().standardizedFileURL
+        let resolvedRootComponents = resolvedRoot.pathComponents
+        // Components, not a string prefix: a directory URL's path ends in "/".
+        let given = url.standardizedFileURL.pathComponents
+        let rootCount: Int
+        if given.starts(with: rawRoot) {
+            rootCount = rawRoot.count
+        } else if given.starts(with: resolvedRootComponents) {
+            rootCount = resolvedRootComponents.count
+        } else {
+            return nil
+        }
+        guard given.count >= rootCount + 2 else { return nil }
+        let slot = given[rootCount]
+        guard slot != "/", slot != ".", slot != ".." else { return nil }
+
+        // No trailing slash: lstat would follow a symlink that has one.
+        let folder = resolvedRoot.appending(path: slot, directoryHint: .notDirectory)
+        guard
+            let values = try? folder.resourceValues(forKeys: [
+                .isSymbolicLinkKey, .isDirectoryKey,
+            ]),
+            values.isSymbolicLink == false, values.isDirectory == true
+        else { return nil }
+        return folder
+    }
+
+    /// `discard(_:)` against an explicit root, so tests need not touch the real one.
+    static func discard(_ url: URL, under root: URL) {
+        guard let folder = slotFolder(for: url, under: root) else { return }
+        remove(folder)
     }
 
     /// Sweeps what an earlier launch left behind. Runs once per launch, from the
