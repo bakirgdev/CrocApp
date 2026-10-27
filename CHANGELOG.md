@@ -12,12 +12,18 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- **Add Photos** on iPhone and iPad sends photos and videos from your library under their own file names, without a Photos permission prompt. **Send** waits while they load, and leaving the screen before they finish discards the copies.
+- Send takes pasted and dropped images and text as well as files. On a Mac, ⌘V on the Send screen stages them, and on an iPad with a keyboard it works from iOS 27.
+- Receive scans a QR code that is not from CrocApp with a message saying so, and keeps the camera running instead of closing.
 - **Save Transfer History** in Settings (on by default). Turn it off and finished transfers are no longer listed in History. What is already there stays until you delete it, and History says "History is off" while it is empty.
 - **Haptics** in Settings on iPhone (on by default). Turn it off to silence every tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer.
 - iPhone and iPad find a device on the same network the way a Mac does, so a transfer between them can stay on your local network, including with **Local Network Only**. **Multicast Address** is now in Advanced settings on iOS too.
 
 ### Changed
 
+- Send and Receive keep the caret where a keyboard is likely: in the code field on a Mac, and on an iPad with a hardware keyboard. Return starts a receive, and the code field waits until you finish typing before it says a code is too short.
+- The Send and Receive screens scroll at the largest text sizes, and the Text box shows a focus ring while you type in it.
+- An empty file now reads "0 bytes" in the send list.
 - A failed transfer now says what happened and what to do, and offers the one action that can help. **Try Again** runs the same transfer again when it could now succeed (a dropped connection, an unreachable relay or link server, iOS stopping it in the background). **Open Settings** goes where the fix is when a setting is the cause (a rejected relay password, an Advanced setting that cannot be used, auto-accept meeting a sender who confirms). Otherwise there is only **Done**. Shortcuts and the menu bar show the same words.
 
 - The app is about half the size. The transfer engine is now croc's relay-only build, without Tailcat, the direct-connection path croc could try for large sends. The main executable went from 22.0 MB to 10.5 MB on Mac and from 21.3 MB to 10.3 MB on iPhone and iPad (measured on unsigned release archives). Transfers use croc's relay or your local network, as they did for everything under 128 MiB.

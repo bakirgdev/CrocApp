@@ -150,6 +150,9 @@ Permanent or deferred, each with its reason.
   - The Xcode 27 SDK marks it deprecated only for a future OS (`deprecated: 100000.0`), so builds emit no warning.
   - The replacement `dropDestination(for:isEnabled:action:)` takes a `Void` action (a drop cannot be rejected) and has no `isTargeted`. Its highlight API `onDropSessionUpdated` is iOS 27 / macOS 26 only, and the deployment target is iOS 26.0.
   - Revisit when the minimum OS reaches 27.
+- **Photos that fail to load are counted, not named.** The banner says how many items could not be added and suggests checking the connection, because the likeliest cause is a photo that lives in iCloud. The picker gives no reason per item.
+- **A staged copy outlives a crash until the next launch.** `SendStaging` sweeps its folder on the first Send screen of a launch. Anything a crash leaves behind uses disk space until then.
+- **The macOS focus-ring change on the Send screen is not verified by eye.** The paste target switches its ring off and back on for its children (`SendView.swift`, `SendPasteTarget`). Check the buttons still show a ring under keyboard navigation.
 - **`OutputFolderStore.select` silently does nothing if bookmarking fails.** It is rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **Gesture-level flows are not machine-verified.**

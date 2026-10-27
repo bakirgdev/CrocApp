@@ -45,6 +45,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Feature | Platform | Status |
 |---|---|---|
 | Share extension (send from any app) | iOS and iPadOS | shipped |
+| Add Photos, paste and drop of images and text on Send. Photos keep their names, ask no library permission, and stage in a folder that is deleted with the row or the screen | iOS and iPadOS (Photos), all (paste, drop). Paste from a hardware keyboard on iPad needs iOS 27 | shipped |
 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` (universal link), and `https://getcroc.com/?code=`. One parser, `TransferLink`. Opening a link prefills Receive and never connects. | all | shipped |
 | Trust UI: encryption badge, "How it works", active-relay indicator | all | shipped |
 | Failure screen: what happened, what to do, and **Try Again** or **Open Settings** when one can help | all | shipped |

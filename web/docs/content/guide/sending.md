@@ -14,7 +14,10 @@ Tap or click **Send** on the home screen. The **What to Send** picker switches b
 
 - **Add Files** opens a picker. Select as many files as you like.
 - **Add Folder** picks a whole folder.
+- **Add Photos** (iPhone and iPad) picks photos and videos from your library. They keep their file names, and CrocApp asks for no Photos permission. **Send** stays off until they finish loading.
 - Remove an item from the list with its **x** button.
+
+You can also drop or paste an image or text onto the screen. On a Mac, press ⌘V; on an iPad with a keyboard, ⌘V works from iOS 27, and the **Paste** button on the Text tab works everywhere.
 
 On a Mac you can also drag files or folders onto the window at any point: a **Drop to Send** overlay appears. Dropping on the Dock icon, or choosing CrocApp in Finder's **Open With**, starts a send the same way. If a transfer is already running, the files wait, and a count appears on the **Send** button.
 
