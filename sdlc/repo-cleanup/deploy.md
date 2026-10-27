@@ -1,9 +1,9 @@
 ---
 slug: repo-cleanup
 phase: deploy
-status: draft
-approved_by:
-approved_at:
+status: accepted
+approved_by: sdlc-gatekeeper
+approved_at: 2026-10-27
 ---
 
 # Deploy: Repo cleanup: screenshots out of git, assets and .gitignore audit
@@ -76,49 +76,48 @@ rebuilt 4 files in web/landing/assets/img/screenshots
 The `4b90864` wording ("not a readable image") was rechecked by `sdlc-verifier` on `cbadd69` (under `## Checks`).
 
 ## SDLC feedback
-Issues A, B and C go to `bakirgdev/ai-native-sdlc`, one issue per theme: A is autonomous mode and the harness, B is gate and review agent checklists, C is skill text and templates.
+Issues filed in `bakirgdev/ai-native-sdlc`, one per theme: #1 autonomous mode and the harness, #2 gate and review agent checklists, #3 skill text and templates. Outcomes approved by the owner.
 
 | Artifact | Feedback | Outcome | URL, slug or reason |
 | --- | --- | --- | --- |
-| intent | Background sessions stall on MCP tool approvals; the plan gate blocks the untracked `.claude/settings.local.json` | issue | A |
-| intent | Gatekeeper does not spot-check repo facts in the intent | issue | B |
-| spec | Harness worktree isolation conflicts with committing on `sdlc/<slug>`; isolated subagents' Bash refused | issue | A |
-| spec | `/sdlc-spec` step 4 grills in autonomous mode | issue | A |
-| spec | Gatekeeper does not check handed-on commands against the documented invocation | issue | B |
-| spec | Gatekeeper spec item lacks "policy skills applied" and repo-fact spot-checks | issue | B |
-| plan | Accepted spec failed `verify-docs.sh` in the commit gate; setup should skip `sdlc/**`, gatekeeper should run the check command | issue | B, C |
-| plan | Autonomous phases need a per-task worktree (repeat) | issue | A |
-| plan | Gatekeeper misses relocated paths in "no change needed" claims | issue | B |
-| plan | Gatekeeper should spot-check line numbers and run read-only proofs | issue | B |
-| plan | `/sdlc-plan` step 5 grills in autonomous mode | issue | A |
-| build | Worktree guard refuses compound git commands; plan proofs should be single commands | issue | A |
-| build | Commit gate does not fire on a detached HEAD (repeat of the worktree item) | issue | A |
-| build | build.md template `## Deviations` vs plan.md `## Changes` | issue | C |
-| build | build.md template has no slot for literal requirement proofs | issue | C |
-| build | Gatekeeper build item misses behavior deviations inside named files | issue | B |
-| build | Gatekeeper build item misses process steps the plan requires | issue | B |
-| test | Worktree guard refuses ordinary compound commands | issue | A |
-| test | `/sdlc-test` should enter a worktree only after `sdlc-verifier` returns | issue | A |
-| test | Test-first needs a probe alternative when no harness exists | issue | C |
+| intent | Background sessions stall on MCP tool approvals; the plan gate blocks the untracked `.claude/settings.local.json` | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| intent | Gatekeeper does not spot-check repo facts in the intent | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| spec | Harness worktree isolation conflicts with committing on `sdlc/<slug>`; isolated subagents' Bash refused | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| spec | `/sdlc-spec` step 4 grills in autonomous mode | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| spec | Gatekeeper does not check handed-on commands against the documented invocation | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| spec | Gatekeeper spec item lacks "policy skills applied" and repo-fact spot-checks | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| plan | Accepted spec failed `verify-docs.sh` in the commit gate; setup should skip `sdlc/**`, gatekeeper should run the check command | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2, https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
+| plan | Autonomous phases need a per-task worktree (repeat) | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| plan | Gatekeeper misses relocated paths in "no change needed" claims | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| plan | Gatekeeper should spot-check line numbers and run read-only proofs | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| plan | `/sdlc-plan` step 5 grills in autonomous mode | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| build | Worktree guard refuses compound git commands; plan proofs should be single commands | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| build | Commit gate does not fire on a detached HEAD (repeat of the worktree item) | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| build | build.md template `## Deviations` vs plan.md `## Changes` | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
+| build | build.md template has no slot for literal requirement proofs | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
+| build | Gatekeeper build item misses behavior deviations inside named files | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| build | Gatekeeper build item misses process steps the plan requires | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| test | Worktree guard refuses ordinary compound commands | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| test | `/sdlc-test` should enter a worktree only after `sdlc-verifier` returns | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| test | Test-first needs a probe alternative when no harness exists | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
 | test | This project has no test harness for its shell scripts | task | `shell-script-tests` |
-| test | `sdlc-verifier` runs no hostile inputs against new checks | issue | B |
+| test | `sdlc-verifier` runs no hostile inputs against new checks | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
 | deploy (reviewer) | Scripts CI runs on Linux (`awk`, `sed`) are probed only on macOS; REVIEW.md should require a CI or GNU/mawk run | task | `review-md-tuning` |
-| deploy (reviewer) | `sdlc-reviewer` find mode re-reports tradeoffs already decided in test.md and plan.md | issue | B |
-| deploy (reviewer) | `sdlc-reviewer` verify mode: severity for findings that arrive without one, `REJECTED` vs `DROPPED` | issue | B |
-| deploy (reviewer) | Gatekeeper test item does not cross-check recovery commands between docs and artifacts | issue | B |
-| deploy (reviewer) | `/sdlc-deploy` should require quoting probe output for a fixed script finding | issue | C |
+| deploy (reviewer) | `sdlc-reviewer` find mode re-reports tradeoffs already decided in test.md and plan.md | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| deploy (reviewer) | `sdlc-reviewer` verify mode: severity for findings that arrive without one, `REJECTED` vs `DROPPED` | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| deploy (reviewer) | Gatekeeper test item does not cross-check recovery commands between docs and artifacts | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| deploy (reviewer) | `/sdlc-deploy` should require quoting probe output for a fixed script finding | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
 | deploy (reviewer) | REVIEW.md Docs row: a measured value stated as fixed should rate Important | task | `review-md-tuning` |
 | deploy (reviewer) | REVIEW.md Docs row: a fact restated outside its home should rate Nit | task | `review-md-tuning` |
 | deploy (noise) | Two "Check accuracy" findings on `verify-docs.sh` (`:67`, `:130`) ended `unimportant`: extractor edge cases for markdown forms the repo does not use. REVIEW.md should rate those Nit unless a tracked file uses the form | task | `review-md-tuning` |
-| deploy | `/sdlc-deploy` step 2 names `CLAUDE.md` but not `AGENTS.md` or nested context files; the guess set the tier to `high` | issue | C |
-| deploy | A `/code-review max` finder ran `git checkout -q -- .` in the live checkout (tree was clean, nothing lost) | issue | C |
-| deploy (gatekeeper) | Step 3's "fix test-first" cannot apply to a docs-only Important finding; say a quoted read of the corrected text is the proof | issue | C |
-| deploy (gatekeeper) | "Run `sdlc-verifier` again" should say after the last commit that changes code, scripts included | issue | B, C |
-| deploy (gatekeeper) | Gatekeeper Bash allows only `git`/`ls`, but the deploy check needs read-only `gh pr view`/`gh pr checks` | issue | B |
-| deploy (gatekeeper) | Worktree guard refused `git diff $(git merge-base ...)` (repeat) | issue | A |
-| deploy (gatekeeper) | The deploy gate flags outcomes still waiting on the owner on every run; run it after the grilling round, or allow `proposed` outcomes while `status: draft` | issue | C |
+| deploy | `/sdlc-deploy` step 2 names `CLAUDE.md` but not `AGENTS.md` or nested context files; the guess set the tier to `high` | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
+| deploy | A `/code-review max` finder ran `git checkout -q -- .` in the live checkout (tree was clean, nothing lost) | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
+| deploy (gatekeeper) | Step 3's "fix test-first" cannot apply to a docs-only Important finding; say a quoted read of the corrected text is the proof | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
+| deploy (gatekeeper) | "Run `sdlc-verifier` again" should say after the last commit that changes code, scripts included | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2, https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
+| deploy (gatekeeper) | Gatekeeper Bash allows only `git`/`ls`, but the deploy check needs read-only `gh pr view`/`gh pr checks` | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/2 |
+| deploy (gatekeeper) | Worktree guard refused `git diff $(git merge-base ...)` (repeat) | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/1 |
+| deploy (gatekeeper) | The deploy gate flags outcomes still waiting on the owner on every run; run it after the grilling round, or allow `proposed` outcomes while `status: draft` | issue | https://github.com/bakirgdev/ai-native-sdlc/issues/3 |
 
-Outcomes are proposed and wait for the owner's yes; issue URLs are added when the issues are filed.
 
 ## Checks
 PR #82 on `cbadd69`, `gh pr checks 82`: every check passes or skips by area, no review comments, `mergeStateStatus: CLEAN`. The `docs checks` job runs `verify-docs.sh` on `ubuntu-26.04`, so the new awk constructs work outside macOS awk.
