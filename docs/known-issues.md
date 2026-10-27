@@ -125,6 +125,11 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - The four `overrides` in `web/docs/pnpm-workspace.yaml` are open-ended `>=` floors.
   - `pnpm audit --prod` reports one High advisory with no fix: `braces@3.0.3` (GHSA-vfj7-8cjw-p6xm, stack exhaustion), reached through `chokidar` and `micromatch` inside Docusaurus core. It is build-time only, and no attacker input reaches the glob handling.
   - Re-run the audit on each Docusaurus upgrade.
+- **The published Mac Send pair is older than the app window.**
+  - `assets/screenshots/mac/send-code-{light,dark}.png` are 1120 px wide. A fresh capture is 1440 px wide, because the main window has a 720 pt minimum width.
+  - `capture-screenshots.sh --copy-web` therefore stops at its aspect-ratio check after a Mac capture, with the refreshed PNGs already copied. `git restore assets/screenshots` undoes it.
+  - Fix it by publishing a new pair and resizing the images on the pages that show it by hand. Other published pairs may be stale in the same way and were not checked.
+- **`verify-docs.sh` exits 1 with no output when the last markdown file in sort order is deleted but not staged.** The file-list loop ends on a failed `[ -f ]`, and `set -e` stops the script. Staging the deletion, or deleting a file that sorts earlier, avoids it.
 
 ## Accepted
 
