@@ -35,4 +35,4 @@ Before and after screenshots, light and dark, on every affected platform.
 - [ ] Tokens, SF Symbols and the system font only
 - [ ] Both themes checked
 - [ ] `scripts/verify-design.sh` passes
-- [ ] Screenshots recaptured if the UI changed (`scripts/capture-screenshots.sh`)
+- [ ] Screenshots recaptured and published if the UI changed (`scripts/capture-screenshots.sh`, then `--copy-web`)
