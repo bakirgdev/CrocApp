@@ -48,7 +48,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` (universal link), and `https://getcroc.com/?code=`. One parser, `TransferLink`. Opening a link prefills Receive and never connects. | all | shipped |
 | Trust UI: encryption badge, "How it works", active-relay indicator | all | shipped |
 | Failure screen: what happened, what to do, and **Try Again** or **Open Settings** when one can help | all | shipped |
-| **Recent transfers** on Home: the latest three records below Send and Receive, hidden while **Save Transfer History** is off. A row opens History (the record's own detail is not built yet). Home exists only at compact width, so a wide iPad window and the Mac show the History sidebar row instead; the dates refresh each minute | iPhone, and iPad at compact width | shipped |
+| **Recent transfers** on Home: the latest three records below Send and Receive, hidden while **Save Transfer History** is off. A row opens the History list, not the record's detail. Home exists only at compact width, so a wide iPad window and the Mac show the History sidebar row instead; the dates refresh each minute | iPhone, and iPad at compact width | shipped |
 | Waiting-screen QR and **Share Link** encode `https://crocapp.dev/r/#<code>` (see below) | all | shipped |
 | Send as Link (stored transfers; see below) | all | shipped |
 | **Haptics** setting (on by default): a short tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer | iPhone only | shipped |
@@ -65,7 +65,7 @@ Details:
   - Files only, up to 100 files and 1 GiB.
   - The link lasts 1 hour, 1 day or 7 days, with 1 to 100 downloads, on the server set in Settings (`https://getcroc.com` by default).
   - The result screen shows the link and a QR code. Receiving from a pasted or scanned link goes through the normal incoming preview.
-  - History shows the expiry and offers **Revoke Link** (context menu) and **Revoke** (swipe on iOS).
+  - History shows the expiry and offers **Revoke Link** (context menu, detail) and **Revoke** (swipe on iOS). Deleting a row whose link still works asks whether to revoke it first.
   - Device checks are in `device-test-checklist.md`, "Stored transfers".
 - **Menu bar quick send.**
   - A `MenuBarExtra` window with a drop zone, **Choose Files…** and **Send Clipboard Text**, then the code, QR and progress of the one shared transfer. Codes are always generated.

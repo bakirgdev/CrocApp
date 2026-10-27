@@ -32,11 +32,17 @@ For a past send, the row's context menu (or a swipe on iOS) offers **Send Again*
 
 ## Links you sent
 
-A [Send as link](send-as-link.md) row shows the link server's host and when the link expires, then **Link expired** or **Link revoked**. Use **Revoke Link** in the row's context menu to end a live link. The link itself is never stored here.
+A [Send as link](send-as-link.md) row shows the link server's host and when the link expires, then **Link expired** or **Link revoked**. Use **Revoke Link** in the row's context menu, in its detail or, on iOS, with a swipe to end a live link. The link itself is never stored here.
 
 ## Delete
 
 - **Delete** in a row's context menu (or a swipe on iOS) removes that entry.
 - **Clear** in the toolbar, then **Clear All**, removes the whole list.
 
-Both remove the list only. Files you already received stay where they were saved. Revoke a live link before you delete its row, because the row is where you revoke from.
+Both remove the list only. Files you already received stay where they were saved.
+
+Deleting a row whose link still works asks first: **Revoke Link and Delete** ends the link and deletes the row, and **Delete and Keep Link** deletes the row only. The link then keeps working until it expires, and you can no longer revoke it from here. Other rows delete at once.
+
+## Row details
+
+Open a row (click or tap it, or press Return on a Mac) to see its status, date, size, files and link, and to use **Send Again**, **Revoke Link** or **Delete** from there. Code hints are hidden when the screen is captured or screen-shared. Dates such as "yesterday" and a link's **Expires** line update while the screen is open.

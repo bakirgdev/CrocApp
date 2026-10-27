@@ -72,7 +72,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - The user's own cancel or decline ends on the failure `StatusBlock`, with the error glyph and tint, although `design/content.md`, "Errors", says it is not a failure. Its title stands alone with **Done**, as the book wants; `StatusBlock` has no neutral kind for it yet.
   - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/content.md`, "Terminology").
   - Not built: the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary" (only the Insert of Home's pending-request banner is).
-  - A Home recent-transfer row opens the History list, not the record's own detail (`design/components.md`, "Home"). The detail screen is not built yet.
+  - A Home recent-transfer row opens the History list, not the record's own detail (`design/components.md`, "Home"). History's detail screen exists, but no route opens it from outside the History list yet.
   - On macOS, Home's grouped `Form` draws a section card behind the badge, banner and the two actions, because `.listRowBackground(Color.clear)` has no effect in a grouped macOS form. iOS draws no card there. Seen in a Debug build with `--screen home`; the regular-width layout (`design/platforms.md`, "Layout by width") is meant to replace Home on the Mac.
 - **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
   - It is synchronous file I/O on the main actor, run by `SendView` when it builds the row. A network or iCloud volume could make it hitch.
@@ -207,6 +207,10 @@ Permanent or deferred, each with its reason.
   - This is a development-procedure note, not an app defect.
   - Enforcement reportedly engages only for builds resident in `/Applications` (one developer-forum thread, not Apple documentation; strong inference, not verified here). A Debug build launched from DerivedData can sit at `.ready` and read as falsely granted.
   - Copy the app to `/Applications` before trying to reproduce a denial.
+
+- **History offers Revoke for a link that expires while the screen is open.**
+  - The Expires line and relative dates refresh every minute, but whether **Revoke Link** is offered (`TransferController.canRevoke`) is read when the view next updates, so a link that expires on screen keeps the button until then. Tapping it fails with the usual "Couldn't revoke the link" alert.
+  - Left because it needs a clock-driven refresh of the whole menu and swipe actions for a rare case. Revisit if the alert shows up in reports.
 
 ### Engine and croc behaviour
 

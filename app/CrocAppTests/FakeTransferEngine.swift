@@ -36,6 +36,8 @@ actor FakeTransferEngine: TransferEngine {
     private var startErrors: [CrocEngineError] = []
     private var holdsNextStart = false
     private var heldStart: CheckedContinuation<Void, Never>?
+    private var holdsNextRevoke = false
+    private var heldRevoke: CheckedContinuation<Void, Never>?
 
     /// Counts started transfers; a stream whose number is not this one is stale.
     private var stream = 0
@@ -77,8 +79,12 @@ actor FakeTransferEngine: TransferEngine {
         cancels.append(id)
     }
 
-    func revokeStored(_ receipt: StoredReceipt, proxy: ProxySettings) {
+    func revokeStored(_ receipt: StoredReceipt, proxy: ProxySettings) async {
         revokes.append(receipt)
+        if holdsNextRevoke {
+            holdsNextRevoke = false
+            await withCheckedContinuation { heldRevoke = $0 }
+        }
     }
 
     // MARK: - Test controls
@@ -94,6 +100,18 @@ actor FakeTransferEngine: TransferEngine {
     }
 
     var isHoldingStart: Bool { heldStart != nil }
+
+    /// The next revoke is recorded, then suspends until `releaseRevoke()`.
+    func holdNextRevoke() {
+        holdsNextRevoke = true
+    }
+
+    var isHoldingRevoke: Bool { heldRevoke != nil }
+
+    func releaseRevoke() {
+        heldRevoke?.resume()
+        heldRevoke = nil
+    }
 
     func releaseStart() {
         heldStart?.resume()
