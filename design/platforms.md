@@ -129,6 +129,18 @@ On a completed receive the files list below the StatusBlock as `FileRow`s (`comp
 
 Every action is also in the row's context menu, which is additive (`components.md` → System controls).
 
+## Keyboard focus
+
+Where the caret and the keyboard focus land when a screen appears.
+
+| Device | On arrival |
+| --- | --- |
+| Mac | The first text field takes the caret (Receive's code field), because a Mac always has a keyboard. Send's screen takes keyboard focus instead, so Edit > Paste and ⌘V reach it |
+| iPad with a hardware keyboard | The first text field takes the caret |
+| iPad without one, and iPhone | Nothing is focused. The software keyboard covers half the screen and opens only when the user taps a field |
+
+`HardwareKeyboard.isExpected` answers the question in code. A focus target that exists only to catch a paste hides its own focus ring and never the ring of the controls inside it (`accessibility.md` → Focus).
+
 ## Hover
 
 Hover exists on macOS, iPad with a pointer, and the web. Never on touch.
