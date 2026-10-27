@@ -145,12 +145,32 @@ final class HistoryStore {
         if save("prune") { observer?.historyDidRemove(ids) }
     }
 
+    /// The record of the stored upload `storedID`, or nil when history holds
+    /// none (deleted, cleared, or Save Transfer History was off).
+    func record(storedID: String) -> TransferRecord? {
+        var descriptor = FetchDescriptor<TransferRecord>(
+            predicate: #Predicate { $0.storedID == storedID })
+        descriptor.fetchLimit = 1
+        do {
+            return try container.mainContext.fetch(descriptor).first
+        } catch {
+            Self.log.error(
+                "history stored-record fetch failed: \(String(describing: error), privacy: .public)"
+            )
+            return nil
+        }
+    }
+
+    /// A record deleted while its revoke ran (a prune, or the user) has no
+    /// context left, and writing to it would crash.
     func markRevoked(_ record: TransferRecord, at date: Date = .now) {
+        guard record.modelContext != nil else { return }
         record.revokedAt = date
         save("revoke")
     }
 
     func delete(_ record: TransferRecord) {
+        guard record.modelContext != nil else { return }
         let id = record.persistentModelID
         container.mainContext.delete(record)
         if save("delete") { observer?.historyDidRemove([id]) }

@@ -37,7 +37,7 @@ nonisolated enum ReceivedName {
     // a name across lines, is blocked. Every bidi control goes, including the
     // LRM, RLM and ALM marks some Hebrew and Arabic names use: that is the
     // conservative side of the trade-off (`docs/known-issues.md`).
-    private static func isSpoofingScalar(_ scalar: Unicode.Scalar) -> Bool {
+    static func isSpoofingScalar(_ scalar: Unicode.Scalar) -> Bool {
         let properties = scalar.properties
         if properties.isBidiControl { return true }
         switch properties.generalCategory {

@@ -43,9 +43,12 @@ struct HistoryDraft {
         self.codeHint = codeHint
     }
 
-    /// A receive learns its names, count and size from the offer.
+    /// A receive learns its names, count and size from the offer. A name
+    /// comes from the sender and is checked only after this, so the record
+    /// keeps it in its shown form (`ReceivedName.shown`), never raw.
     mutating func offer(_ list: FileList) {
-        names = Array(list.files.map(\.name).prefix(TransferRecord.maxNames))
+        names = Array(
+            list.files.map { ReceivedName.shown($0.name) }.prefix(TransferRecord.maxNames))
         fileCount = list.files.count
         totalBytes = list.totalSize
     }
@@ -78,5 +81,24 @@ struct HistoryDraft {
             urls.compactMap { SecurityScopedBookmark.create(for: $0) }
         }.value
         return all.count == urls.count ? all : nil
+    }
+}
+
+extension ReceivedName {
+    /// A name from another device as the app draws and records it: every
+    /// character that would change how it reads, or hide in it, is written
+    /// as its code point, so "invoice\u{202E}fdp.exe" shows as typed here
+    /// rather than as "invoiceexe.pdf" (design/components.md → FileRow).
+    /// Any other name comes back unchanged.
+    nonisolated static func shown(_ name: String) -> String {
+        var shown = ""
+        for scalar in name.unicodeScalars {
+            if isSpoofingScalar(scalar) {
+                shown += String(format: "\\u{%04X}", scalar.value)
+            } else {
+                shown.unicodeScalars.append(scalar)
+            }
+        }
+        return shown
     }
 }
