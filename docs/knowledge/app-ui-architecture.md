@@ -293,6 +293,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 
 - `Models/AppRouter.swift` is an `@Observable` singleton (`shared`). `path: [Route]` drives `HomeView`'s `NavigationStack`.
 - `pendingSendURLs` is consumed by `SendView` (`onAppear` plus `onChange`, deduplicated against `pickedURLs`, then cleared).
+- `pendingSendText` (set by `openSend(text:)`) is consumed the same way: `SendView` switches to text mode and appends it to any typed text. Both only stage; nothing sends until the user taps Send.
 - `isBusy` reads `controller.isActive` through a weak controller reference that `CrocAppApp.init` attaches with `attach(controller:)`, so a dock drop mid-transfer queues without navigating.
 - It is a singleton because `AppDelegate` and `Commands` sit outside the environment graph.
 - Three drop entry points, one guard policy:

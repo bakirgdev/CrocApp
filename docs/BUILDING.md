@@ -113,6 +113,8 @@ swift test --package-path CrocKit
 (cd app && xcodebuild test -scheme CrocApp -destination 'platform=macOS')
 ```
 
+`scripts/verify-swift.sh` runs both, rebuilding the xcframework first when it is missing or older than `crocmobile/`. The SDLC commit gate runs it (`docs/knowledge/tooling.md`, "In use").
+
 Design and docs, no toolchain needed:
 
 ```bash
