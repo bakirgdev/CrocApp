@@ -607,7 +607,8 @@ private struct SpeedText: View {
             .foregroundStyle(Color.textPrimary)
             .contentTransition(reduceMotion ? .identity : .numericText())
             .animation(
-                reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: bytesPerSecond)
+                reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: bytesPerSecond
+            )
             .task {
                 while !Task.isCancelled {
                     bytesPerSecond = controller.speedBytesPerSec
@@ -763,6 +764,7 @@ private struct StoredLinkView: View {
                 }
                 .disabled(isRevoking)
                 resultAction("Done") { controller.reset() }
+                    .disabled(isRevoking)
             }
         }
     }
@@ -870,7 +872,8 @@ struct IncomingRequestView: View {
             }
         }
         .animation(
-            reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: conflicts.isEmpty)
+            reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: conflicts.isEmpty
+        )
         // A phase change moves no VoiceOver focus, so say what arrived
         // (accessibility.md → Announcements). Low priority queues it behind
         // the blocked banner's own announcement instead of cutting it off.

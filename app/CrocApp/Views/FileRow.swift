@@ -55,13 +55,13 @@ struct FileRow: View {
         self.onRemove = nil
     }
 
-    /// An item a completed receive wrote. Its name is the one on disk, which
-    /// passed `ReceivedName` before anything was saved.
+    /// An item a completed receive wrote. Its name passed `ReceivedName`
+    /// before anything was saved, and is still drawn in its shown form.
     init(
         received item: ReceivedItem, isFirst: Bool = false, isLast: Bool = false,
         quickLook: @escaping () -> Void, reveal: (() -> Void)?
     ) {
-        self.name = item.url.lastPathComponent
+        self.name = ReceivedName.shown(item.url.lastPathComponent)
         self.size = item.size
         self.symbolName = Self.symbolName(
             extension: item.url.pathExtension, isFolder: item.isFolder)

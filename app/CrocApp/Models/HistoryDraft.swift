@@ -47,7 +47,8 @@ struct HistoryDraft {
     /// comes from the sender and is checked only after this, so the record
     /// keeps it in its shown form (`ReceivedName.shown`), never raw.
     mutating func offer(_ list: FileList) {
-        names = Array(list.files.map { ReceivedName.shown($0.name) }.prefix(TransferRecord.maxNames))
+        names = Array(
+            list.files.map { ReceivedName.shown($0.name) }.prefix(TransferRecord.maxNames))
         fileCount = list.files.count
         totalBytes = list.totalSize
     }
@@ -92,7 +93,7 @@ extension ReceivedName {
     nonisolated static func shown(_ name: String) -> String {
         var shown = ""
         for scalar in name.unicodeScalars {
-            if isHidden(scalar) {
+            if isSpoofingScalar(scalar) {
                 shown += String(format: "\\u{%04X}", scalar.value)
             } else {
                 shown.unicodeScalars.append(scalar)
@@ -100,17 +101,4 @@ extension ReceivedName {
         }
         return shown
     }
-
-    /// The scalars `isUnsafe` blocks because nobody can see them: bidi
-    /// controls, controls, line and paragraph separators. It repeats the
-    /// private `isSpoofingScalar`; `HistoryDraftTests` checks the two agree.
-    nonisolated static func isHidden(_ scalar: Unicode.Scalar) -> Bool {
-        let properties = scalar.properties
-        if properties.isBidiControl { return true }
-        switch properties.generalCategory {
-        case .control, .lineSeparator, .paragraphSeparator: return true
-        default: return false
-        }
-    }
 }
-
