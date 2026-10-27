@@ -31,7 +31,8 @@ extension Date {
     }
 }
 
-/// A record's date as `Date.recordText` writes it.
+/// A record's date as `Date.recordText` writes it, rewritten every minute so
+/// "yesterday" and "3 days ago" do not go stale while the screen is open.
 struct DateText: View {
     let date: Date
 
@@ -40,6 +41,8 @@ struct DateText: View {
     }
 
     var body: some View {
-        Text(verbatim: date.recordText())
+        TimelineView(.everyMinute) { context in
+            Text(verbatim: date.recordText(now: context.date))
+        }
     }
 }

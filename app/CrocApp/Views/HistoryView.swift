@@ -23,6 +23,7 @@ struct HistoryView: View {
     @State private var confirmClear = false
     @State private var resendUnavailable = false
     @State private var revokeCandidate: TransferRecord?
+    @State private var deleteCandidate: TransferRecord?
     #if os(macOS)
     /// The selected row, which the Delete key removes.
     @State private var selection: PersistentIdentifier?
@@ -49,8 +50,8 @@ struct HistoryView: View {
                 Text("This removes the list, not the files you received.")
             }
             .recordDialogs(
-                revokeCandidate: $revokeCandidate, resendUnavailable: $resendUnavailable,
-                actions: actions)
+                revokeCandidate: $revokeCandidate, deleteCandidate: $deleteCandidate,
+                resendUnavailable: $resendUnavailable, actions: actions, onDelete: delete)
     }
 
     @ViewBuilder private var content: some View {
@@ -109,25 +110,35 @@ struct HistoryView: View {
             ForEach(shown) { HistoryRow(record: $0, isRevoking: actions.isRevoking($0)) }
         }
         .contextMenu(forSelectionType: PersistentIdentifier.self) { ids in
-            if let record = record(in: ids) { menu(for: record) }
+            // Selection is single, so this is one row or none; a menu for
+            // several rows would have to say what it acts on.
+            if ids.count == 1, let record = record(in: ids) { menu(for: record) }
         } primaryAction: { ids in
             opened = ids.first
         }
         .onDeleteCommand {
-            guard let record = record(in: selection.map { [$0] } ?? []) else { return }
-            selection = nil
-            history.delete(record)
+            guard let record = record(in: selection.map { [$0] } ?? []),
+                !actions.isRevoking(record)
+            else { return }
+            requestDelete(record)
         }
+        .onChange(of: query) { selection = nil }
         .navigationDestination(item: $opened) { id in
             if let record = record(in: [id]) {
                 HistoryDetailView(record: record, actions: actions)
+            } else {
+                // Deleted while open: leave the destination instead of
+                // showing an empty screen.
+                Color.clear.onAppear { opened = nil }
             }
         }
         .frame(maxWidth: LayoutCap.contentMaxWidth)
     }
 
+    /// A row that is on screen: a hidden row (filtered out by the search)
+    /// is never the target of a key press or a menu.
     private func record(in ids: some Collection<PersistentIdentifier>) -> TransferRecord? {
-        records.first { ids.contains($0.persistentModelID) }
+        shown.first { ids.contains($0.persistentModelID) }
     }
     #else
     private var list: some View {
@@ -143,7 +154,8 @@ struct HistoryView: View {
                 }
                 .contextMenu { menu(for: record) }
                 .swipeActions(edge: .trailing) {
-                    Button("Delete", role: .destructive) { history.delete(record) }
+                    Button("Delete", role: .destructive) { requestDelete(record) }
+                        .disabled(actions.isRevoking(record))
                     if controller.canRevoke(record) {
                         Button("Revoke") { revokeCandidate = record }
                             .tint(Color.statusError)
@@ -170,7 +182,25 @@ struct HistoryView: View {
             Button("Revoke Link", role: .destructive) { revokeCandidate = record }
                 .disabled(actions.isRevoking(record))
         }
-        Button("Delete", role: .destructive) { history.delete(record) }
+        Button("Delete", role: .destructive) { requestDelete(record) }
+            .disabled(actions.isRevoking(record))
+    }
+
+    /// A record with a link that still works asks first, so the files do not
+    /// outlive the only row that can revoke them. Any other record goes at once.
+    private func requestDelete(_ record: TransferRecord) {
+        if controller.canRevoke(record) {
+            deleteCandidate = record
+        } else {
+            delete(record)
+        }
+    }
+
+    private func delete(_ record: TransferRecord) {
+        #if os(macOS)
+        if selection == record.persistentModelID { selection = nil }
+        #endif
+        history.delete(record)
     }
 
     private func showSettings() {
@@ -246,7 +276,7 @@ private struct HistoryRow: View {
                     Text(record.totalBytes.formatted(.byteCount(style: .file)))
                 }
                 if !record.codeHint.isEmpty {
-                    Text(record.codeHint).monospaced()
+                    Text(record.codeHint).monospaced().privacySensitive()
                 }
             }
             .font(.caption)
@@ -258,10 +288,15 @@ private struct HistoryRow: View {
                 }
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
-            } else if let linkState = record.linkState {
-                Text(linkState)
-                    .font(.caption)
-                    .foregroundStyle(Color.textSecondary)
+            } else if record.storedID != nil {
+                // The link's expiry passes while the row is on screen.
+                TimelineView(.everyMinute) { context in
+                    if let linkState = record.linkState(now: context.date) {
+                        Text(linkState)
+                            .font(.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -299,7 +334,7 @@ extension TransferRecord {
     }
 
     /// Where a stored upload's link stands. Revoked beats expired.
-    var linkState: String? {
+    func linkState(now: Date = .now) -> String? {
         guard storedID != nil else { return nil }
         if let revokedAt {
             return String(
@@ -309,7 +344,7 @@ extension TransferRecord {
         }
         guard let expiresAt else { return nil }
         let when = expiresAt.formatted(date: .abbreviated, time: .shortened)
-        return expiresAt > .now
+        return expiresAt > now
             ? String(
                 localized: "Link expires \(when)",
                 comment: "The placeholder is the date and time the link stops working.")
@@ -352,11 +387,14 @@ extension TransferRecord.Status {
 }
 
 /// The dialogs a record's actions raise, shared by the list and the detail:
-/// the Revoke confirmation and its failure, and the Send Again alert.
+/// the Revoke and Delete confirmations, the revoke failure, and the Send
+/// Again alert. `onDelete` is each screen's own way of deleting a record.
 private struct RecordDialogs: ViewModifier {
     @Binding var revokeCandidate: TransferRecord?
+    @Binding var deleteCandidate: TransferRecord?
     @Binding var resendUnavailable: Bool
     let actions: HistoryActions
+    let onDelete: (TransferRecord) -> Void
     @Environment(TransferController.self) private var controller
     @State private var revokeFailure: String?
 
@@ -370,6 +408,17 @@ private struct RecordDialogs: ViewModifier {
             } message: { _ in
                 Text(
                     "The files are deleted from the link server and the link stops working for everyone."
+                )
+            }
+            .confirmationDialog(
+                "Delete this record?", isPresented: deleteDialogShown, presenting: deleteCandidate
+            ) { record in
+                Button("Revoke Link and Delete", role: .destructive) { revokeThenDelete(record) }
+                Button("Delete and Keep Link", role: .destructive) { onDelete(record) }
+                Button("Cancel", role: .cancel) {}
+            } message: { _ in
+                Text(
+                    "The link still works. Revoke it to delete the files from the link server now, or they stay until it expires."
                 )
             }
             .alert("Couldn't revoke the link", isPresented: revokeFailureShown) {
@@ -388,6 +437,10 @@ private struct RecordDialogs: ViewModifier {
         Binding(get: { revokeCandidate != nil }, set: { if !$0 { revokeCandidate = nil } })
     }
 
+    private var deleteDialogShown: Binding<Bool> {
+        Binding(get: { deleteCandidate != nil }, set: { if !$0 { deleteCandidate = nil } })
+    }
+
     private var revokeFailureShown: Binding<Bool> {
         Binding(get: { revokeFailure != nil }, set: { if !$0 { revokeFailure = nil } })
     }
@@ -395,16 +448,25 @@ private struct RecordDialogs: ViewModifier {
     private func revoke(_ record: TransferRecord) {
         Task { revokeFailure = await actions.revoke(record, with: controller) }
     }
+
+    /// The record stays when the revoke fails, so the failure can be retried.
+    private func revokeThenDelete(_ record: TransferRecord) {
+        Task {
+            revokeFailure = await actions.revoke(record, with: controller)
+            if revokeFailure == nil { onDelete(record) }
+        }
+    }
 }
 
 extension View {
     func recordDialogs(
-        revokeCandidate: Binding<TransferRecord?>, resendUnavailable: Binding<Bool>,
-        actions: HistoryActions
+        revokeCandidate: Binding<TransferRecord?>, deleteCandidate: Binding<TransferRecord?>,
+        resendUnavailable: Binding<Bool>, actions: HistoryActions,
+        onDelete: @escaping (TransferRecord) -> Void
     ) -> some View {
         modifier(
             RecordDialogs(
-                revokeCandidate: revokeCandidate, resendUnavailable: resendUnavailable,
-                actions: actions))
+                revokeCandidate: revokeCandidate, deleteCandidate: deleteCandidate,
+                resendUnavailable: resendUnavailable, actions: actions, onDelete: onDelete))
     }
 }

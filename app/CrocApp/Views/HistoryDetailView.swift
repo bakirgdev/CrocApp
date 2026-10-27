@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// One record, opened from History. A grouped `Form` titled by the row's
@@ -14,13 +15,37 @@ struct HistoryDetailView: View {
 
     @State private var resendUnavailable = false
     @State private var revokeCandidate: TransferRecord?
+    @State private var deleteCandidate: TransferRecord?
     /// The record is deleted once this screen is gone, not while it is up: a
     /// deleted model read by a screen still on display is a crash.
     @State private var deleteWhenClosed = false
 
     private var isRevoking: Bool { actions.isRevoking(record) }
+    /// A pruned or deleted record has no context. Reading any of its
+    /// properties after that is a crash, so nothing below renders for it.
+    private var isGone: Bool { record.modelContext == nil }
 
     var body: some View {
+        Group {
+            if isGone {
+                Color.clear
+            } else {
+                form
+            }
+        }
+        .onChange(of: isGone, initial: true) { _, gone in
+            if gone { dismiss() }
+        }
+        .recordDialogs(
+            revokeCandidate: $revokeCandidate, deleteCandidate: $deleteCandidate,
+            resendUnavailable: $resendUnavailable, actions: actions, onDelete: { _ in delete() }
+        )
+        .onDisappear {
+            if deleteWhenClosed { history.delete(record) }
+        }
+    }
+
+    private var form: some View {
         Form {
             summarySection
             if !record.names.isEmpty { fileNamesSection }
@@ -32,13 +57,6 @@ struct HistoryDetailView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
-        .recordDialogs(
-            revokeCandidate: $revokeCandidate, resendUnavailable: $resendUnavailable,
-            actions: actions
-        )
-        .onDisappear {
-            if deleteWhenClosed { history.delete(record) }
-        }
     }
 
     private var summarySection: some View {
@@ -62,7 +80,7 @@ struct HistoryDetailView: View {
             if !record.codeHint.isEmpty {
                 // A stored send's hint is the link server's host.
                 let label: LocalizedStringKey = record.storedID == nil ? "Code Hint" : "Link Server"
-                valueRow(label) { Text(record.codeHint).monospaced() }
+                valueRow(label) { Text(record.codeHint).monospaced().privacySensitive() }
             }
             linkRow
         }
@@ -82,8 +100,11 @@ struct HistoryDetailView: View {
             if let revokedAt = record.revokedAt {
                 valueRow("Revoked") { Text(revokedAt, format: Self.dateTime) }
             } else if let expiresAt = record.expiresAt {
-                let label: LocalizedStringKey = expiresAt > .now ? "Expires" : "Expired"
-                valueRow(label) { Text(expiresAt, format: Self.dateTime) }
+                // The expiry passes while the screen is open.
+                TimelineView(.everyMinute) { context in
+                    let label: LocalizedStringKey = expiresAt > context.date ? "Expires" : "Expired"
+                    valueRow(label) { Text(expiresAt, format: Self.dateTime) }
+                }
             }
         }
     }
@@ -122,10 +143,11 @@ struct HistoryDetailView: View {
                 .buttonVariant(.destructiveTinted)
                 .disabled(isRevoking)
             }
-            Button(role: .destructive, action: delete) {
+            Button(role: .destructive, action: requestDelete) {
                 Text("Delete").frame(maxWidth: .infinity)
             }
             .buttonVariant(.destructiveTinted)
+            .disabled(isRevoking)
         }
         .controlSize(.large)
     }
@@ -136,6 +158,16 @@ struct HistoryDetailView: View {
         HStack(spacing: Spacing.space3) {
             if isRevoking { ProgressView().controlSize(.small) }
             Text("Revoke Link")
+        }
+    }
+
+    /// A record with a link that still works asks first (HistoryView does
+    /// the same for the list's paths).
+    private func requestDelete() {
+        if controller.canRevoke(record) {
+            deleteCandidate = record
+        } else {
+            delete()
         }
     }
 
