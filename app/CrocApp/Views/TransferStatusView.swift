@@ -206,8 +206,7 @@ struct TransferStatusView: View {
             openSettings()
             #else
             // Pushed on top, so Back returns to this result.
-            router.path.append(
-                contentsOf: place == .advanced ? [.settings, .advancedSettings] : [.settings])
+            router.push(place == .advanced ? [.settings, .advancedSettings] : [.settings])
             #endif
         }
     }

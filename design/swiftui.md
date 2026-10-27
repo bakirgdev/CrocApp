@@ -76,10 +76,10 @@ Never a fixed `.font(.system(size:))`: text takes a style, and a glyph size a co
 | Design (`platforms.md` → Layout by width) | App |
 | --- | --- |
 | Compact or regular | `@Environment(\.horizontalSizeClass)` at the root: `.compact` is Home in a `NavigationStack`, `.regular` is a two-column `NavigationSplitView`. SwiftUI reports macOS as always regular |
-| Sidebar | a `List(selection:)` of `Label` rows. No `navigationSplitViewColumnWidth`, no style override and the default column visibility: the system owns widths, hiding and the material |
+| Sidebar | a `List(selection:)` of `Label` rows. No style override and the default column visibility: the system owns hiding and the material. The width is the system's on iPad; the Mac's is `navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 320)` (`platforms.md` → Layout by width) |
 | Home | `Form` + `.formStyle(.grouped)` in the `NavigationStack`: one row with `.listRowBackground(Color.clear)`, `.listRowSeparator(.hidden)` and zero insets holds the badge, the banner and the two actions, then the Recent transfers `Section`. The banner's transition is the Insert expression under Motion, and the row's container carries the matching animation |
 | Detail | one `NavigationStack` per sidebar item, so Advanced settings and How It Works push inside the detail |
-| The cap | `.frame(maxWidth: LayoutCap.contentMaxWidth)` on each detail screen's content, never on the split view or the sidebar |
+| The cap | `.frame(maxWidth: LayoutCap.contentMaxWidth)` on a screen's own column (Send, Receive, How It Works), never on the split view, the sidebar or a toolbar. A list or form screen has no column of its own, so the detail gives it `safeAreaPadding(.horizontal)` of half the width above the cap: the list stays full width, and `contentMargins` is not used (it mis-centers on iPad and does nothing on a Mac list). Never both on one screen |
 | Navigation state | the sidebar selection and each detail's path live on `AppRouter.shared`, because the app has one main window (`platforms.md` → Windows and scenes). The transfer, settings and history stay app-level too |
 
 The Mac Settings scene stays a `Settings` scene. Its window sizes are literals from `platforms.md`, allowed in the scene declarations.
@@ -133,7 +133,8 @@ Everything else is mapped in `components.md`: drawn components name their measur
 
 - component constants named in `components.md` (12 QR padding, 22% banner border, 168 drop zone), as private `let`s or `ComponentMetrics`;
 - `Color.white` for the QR frame, which is white in both themes;
-- window sizes from `platforms.md` in the scene declarations.
+- window sizes from `platforms.md` in the scene declarations;
+- the Mac sidebar's column width from `platforms.md` → Layout by width.
 
 ## Not mirrored
 

@@ -8,9 +8,9 @@ description: "CrocApp's local-only transfer history: what it records, what it ne
 
 ![The History screen on macOS listing past transfers with their direction, file counts, and status](../../screenshots/mac/history-light.webp#gh-light-mode-only)![The History screen on macOS listing past transfers with their direction, file counts, and status](../../screenshots/mac/history-dark.webp#gh-dark-mode-only)
 
-CrocApp keeps a list of past transfers on your device. Open it from the clock icon on the home screen. It has no sync, no export and no server.
+CrocApp keeps a list of past transfers on your device. Open it from **History** in the sidebar (iPad and Mac), or from the clock icon on the home screen on iPhone and in a narrow window. It has no sync, no export and no server.
 
-The home screen also lists your latest three transfers under **Recent transfers**, newest first. A transfer that did not finish starts its line with **Failed**, **Cancelled** or **Declined**. Tap a row to open History. With no transfers yet it says **No transfers yet**, and with **Save Transfer History** off the list is not shown.
+On iPhone, and on iPad in a narrow window, the home screen also lists your latest three transfers under **Recent transfers**, newest first. A transfer that did not finish starts its line with **Failed**, **Cancelled** or **Declined**. Tap a row to open History. With no transfers yet it says **No transfers yet**, and with **Save Transfer History** off the list is not shown.
 
 ## What is recorded
 

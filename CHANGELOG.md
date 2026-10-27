@@ -14,8 +14,10 @@ extra sections where a release needs them, and the project follows
 
 - **Save Transfer History** in Settings (on by default). Turn it off and finished transfers are no longer listed in History. What is already there stays until you delete it, and History says "History is off" while it is empty.
 - **Haptics** in Settings on iPhone (on by default). Turn it off to silence every tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer.
-- **Recent transfers** on the home screen: your latest three transfers, finished, failed, cancelled or declined, sit below Send and Receive, and a tap opens History. With no transfers yet it says so, and with **Save Transfer History** off the list is not shown.
+- **Recent transfers** on the iPhone home screen (and on iPad in a narrow window): your latest three transfers, finished, failed, cancelled or declined, sit below Send and Receive, and a tap opens History. With no transfers yet it says so, and with **Save Transfer History** off the list is not shown.
 - iPhone and iPad find a device on the same network the way a Mac does, so a transfer between them can stay on your local network, including with **Local Network Only**. **Multicast Address** is now in Advanced settings on iOS too.
+- A sidebar on iPad and Mac. **Send**, **Receive** and **History** sit beside the screen they open, and **Settings** joins them on iPad (the Mac keeps its Settings window, ⌘,). The layout follows the window width as you resize it: a wide window gets the sidebar, and iPhone, Slide Over and a narrow Split View keep the single-column Home. While a transfer runs, its row says **Connecting**, **Waiting** or the percent, and when the other device is waiting for your answer the row shows **Review** and every other screen shows the same banner, so a hidden sidebar never hides it. Opening a link, dropping a file or an incoming request never switches the screen you are on.
+- New menu bar commands, each with a shortcut: **History** (⌘3), **How It Works** (⌘?), **Cancel Transfer** (⌘.) while a transfer can be cancelled, and **Copy Code** (⇧⌘C) while a code is showing. **Send Clipboard Text…** (⌥⌘1) and **Paste Code…** (⌥⌘2) fill in Send and Receive from the clipboard and never start a transfer themselves. iPad shows them in the hardware-keyboard menu bar, with **Settings…** (⌘,).
 
 ### Changed
 
@@ -36,6 +38,7 @@ extra sections where a release needs them, and the project follows
 - The transfer engine is croc v11.5.5. Transfers stay compatible with croc 11 on the other device.
 - The update checker in the direct-download Mac build is Sparkle 2.10.1. It fixes an update installing too early when the app sits at a path in NFC Unicode form.
 - CrocApp has one main window on Mac and iPad. One transfer runs at a time, so a second window could only mirror the first and walk its own screens. On iPad the app no longer opens a second window of itself. On Mac, closing the window leaves CrocApp running in the menu bar, and a link, the Dock icon or **Open CrocApp** brings the window back.
+- The Mac window opens wider (880 by 700) with a minimum of 720 by 560, to fit the sidebar. A window saved at the old size grows to the new minimum.
 
 ### Removed
 

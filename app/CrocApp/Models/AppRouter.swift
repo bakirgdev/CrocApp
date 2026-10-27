@@ -5,6 +5,12 @@ import Observation
 /// dock-icon drop, menu commands). Singleton: NSApplicationDelegate and menu
 /// Commands live outside the SwiftUI environment graph and need a stable
 /// reference.
+///
+/// One `path` serves both layouts (design/platforms.md → Layout by width). In
+/// compact width it is the `NavigationStack` path under Home. In regular width
+/// its first element is the sidebar row and the rest are the screens pushed in
+/// that row's detail, so every entry point that sets `path` lands correctly in
+/// either layout.
 @MainActor
 @Observable
 final class AppRouter {
@@ -14,7 +20,45 @@ final class AppRouter {
         case send, receive, settings, advancedSettings, howItWorks, history
     }
 
+    /// A row of the regular-width sidebar, in the order it is drawn.
+    enum SidebarItem: Hashable, CaseIterable, Identifiable {
+        case send, receive, history, settings
+
+        var id: Self { self }
+
+        /// The Mac keeps Settings in its Settings scene, never as a row.
+        static var rows: [SidebarItem] {
+            #if os(macOS)
+            [.send, .receive, .history]
+            #else
+            allCases
+            #endif
+        }
+
+        var route: Route {
+            switch self {
+            case .send: .send
+            case .receive: .receive
+            case .history: .history
+            case .settings: .settings
+            }
+        }
+
+        init?(route: Route) {
+            guard let item = Self.rows.first(where: { $0.route == route }) else { return nil }
+            self = item
+        }
+
+        /// The row a transfer of `direction` shows its state on.
+        init(direction: TransferController.Direction) {
+            self = direction == .send ? .send : .receive
+        }
+    }
+
     var path: [Route] = []
+    /// Set by `ContentView` from the size class: whether the sidebar layout
+    /// is the one on screen.
+    var isRegularWidth = false
     /// URLs waiting for SendView to pick up into its staged list.
     var pendingSendURLs: [URL] = []
     /// Text waiting for SendView to stage in its text mode. Like the URLs,
@@ -47,6 +91,28 @@ final class AppRouter {
     /// tracks the access transitively through this computed property.
     var isBusy: Bool { controller?.isActive ?? false }
 
+    // MARK: - Regular width
+
+    /// The sidebar row the path starts at. A path that starts anywhere else (a
+    /// screen pushed from Home before the window grew, a route the Mac has no
+    /// row for) leaves Send selected.
+    var selection: SidebarItem {
+        get { path.first.flatMap { SidebarItem(route: $0) } ?? .send }
+        set { path = [newValue.route] }
+    }
+
+    /// The screens pushed inside the selected row's detail.
+    var detailPath: [Route] {
+        get { startsAtRow ? Array(path.dropFirst()) : path }
+        set { path = (startsAtRow ? Array(path.prefix(1)) : []) + newValue }
+    }
+
+    private var startsAtRow: Bool {
+        path.first.flatMap { SidebarItem(route: $0) } != nil
+    }
+
+    // MARK: - Entry points
+
     func openSend(with urls: [URL]) {
         for url in urls where !pendingSendURLs.contains(url) {
             pendingSendURLs.append(url)
@@ -76,5 +142,31 @@ final class AppRouter {
 
     func openReceive() {
         if path != [.receive] { path = [.receive] }
+    }
+
+    // MARK: - Menu commands
+
+    // The user chose these, so they navigate even mid-transfer; going to
+    // another screen answers nothing and cancels nothing.
+
+    func showHistory() { path = [.history] }
+
+    /// A row on iPad, a push from Home in compact width. The Mac has its
+    /// Settings scene instead.
+    func showSettings() { path = [.settings] }
+
+    /// Pushed on whatever is open, in the detail column or the stack, so Back
+    /// returns to it.
+    func showHowItWorks() {
+        if path.last != .howItWorks { push([.howItWorks]) }
+    }
+
+    /// Pushes `routes` on whatever is open, so Back returns to it. In regular
+    /// width a path that does not start at a row (an empty one at launch)
+    /// first takes the row the sidebar shows, or a pushed `.settings` would be
+    /// read as the Settings row and replace the screen it was pushed from.
+    func push(_ routes: [Route]) {
+        if isRegularWidth, !startsAtRow { path.insert(selection.route, at: 0) }
+        path.append(contentsOf: routes)
     }
 }
