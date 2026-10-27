@@ -43,6 +43,9 @@ struct ContentView: View {
             reduceMotion ? nil : Motion.easeOut(Motion.durationFast), value: isDropTargeted)
             #endif
             .phoneHaptic(trigger: TransferHaptic(controller.phase)) { _, new in new?.feedback }
+            .onChange(of: horizontalSizeClass, initial: true) { _, sizeClass in
+                router.isRegularWidth = sizeClass != .compact
+            }
             .task {
                 if AutoVerify.forcesOnboarding || (!onboardingSeen && !AutoVerify.isHarnessRun) {
                     showOnboarding = true

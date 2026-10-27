@@ -56,6 +56,9 @@ final class AppRouter {
     }
 
     var path: [Route] = []
+    /// Set by `ContentView` from the size class: whether the sidebar layout
+    /// is the one on screen.
+    var isRegularWidth = false
     /// URLs waiting for SendView to pick up into its staged list.
     var pendingSendURLs: [URL] = []
     /// Text waiting for SendView to stage in its text mode. Like the URLs,
@@ -155,6 +158,15 @@ final class AppRouter {
     /// Pushed on whatever is open, in the detail column or the stack, so Back
     /// returns to it.
     func showHowItWorks() {
-        if path.last != .howItWorks { path.append(.howItWorks) }
+        if path.last != .howItWorks { push([.howItWorks]) }
+    }
+
+    /// Pushes `routes` on whatever is open, so Back returns to it. In regular
+    /// width a path that does not start at a row (an empty one at launch)
+    /// first takes the row the sidebar shows, or a pushed `.settings` would be
+    /// read as the Settings row and replace the screen it was pushed from.
+    func push(_ routes: [Route]) {
+        if isRegularWidth, !startsAtRow { path.insert(selection.route, at: 0) }
+        path.append(contentsOf: routes)
     }
 }

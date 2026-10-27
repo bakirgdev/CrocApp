@@ -88,6 +88,27 @@ import Testing
         #expect(router.pendingSendText == "hello")
     }
 
+    @Test func aPushOnAnEmptyRegularPathKeepsTheShownRow() {
+        router.isRegularWidth = true
+        router.push([.settings, .advancedSettings])
+        #expect(router.path == [.send, .settings, .advancedSettings])
+        #expect(router.selection == .send, "the result it was pushed from stays selected")
+        #expect(router.detailPath == [.settings, .advancedSettings])
+    }
+
+    @Test func aPushInCompactWidthGoesOnTheStackUnderHome() {
+        router.push([.settings])
+        #expect(router.path == [.settings])
+    }
+
+    @Test func aPushInARowsDetailStaysInThatRow() {
+        router.isRegularWidth = true
+        router.path = [.receive]
+        router.push([.settings])
+        #expect(router.path == [.receive, .settings])
+        #expect(router.selection == .receive)
+    }
+
     @Test func menuCommandsNavigate() {
         router.showHistory()
         #expect(router.selection == .history)
