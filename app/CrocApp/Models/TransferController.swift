@@ -84,6 +84,15 @@ final class TransferController {
     /// current or last receive. Shortcuts uses them to hand the files back.
     private(set) var offeredFileNames: [String] = []
 
+    /// When the current or last transfer started. The receive result screen
+    /// tells a file this receive wrote from an older one by it.
+    private(set) var startedAt: Date?
+
+    /// False when the receipt of the link on the `.stored` screen could not
+    /// be saved to the Keychain. The vault keeps it until the app quits, so
+    /// Revoke works only until then.
+    private(set) var storedReceiptSaved = true
+
     /// The code of the send in flight, once croc has made one. Unlike `phase`
     /// it survives the move to `.connecting`, so a caller that looks late
     /// cannot miss it.
@@ -143,6 +152,7 @@ final class TransferController {
     func start(_ request: TransferRequest) -> Bool {
         guard !isActive else { return false }
         lastRequest = request
+        startedAt = .now
         direction = request.direction
         isStoredTransfer = request.isStored
         let call = EngineStart(request, settings: settings, disableLocal: disablesLocal)
@@ -204,6 +214,18 @@ final class TransferController {
         try await engine.revokeStored(receipt, proxy: EngineStart.proxies(settings))
         vault.remove(id: id)
         history?.markRevoked(record)
+    }
+
+    /// Revokes the link the `.stored` screen shows. Unlike `revoke(_ record:)`
+    /// it needs no history record, so a link sent with Save Transfer History
+    /// off can be revoked too; a record, if there is one, is marked. Throws
+    /// `EngineFailure`.
+    func revoke(_ receipt: StoredReceipt) async throws {
+        try await engine.revokeStored(receipt, proxy: EngineStart.proxies(settings))
+        vault.remove(id: receipt.id)
+        if let record = history?.record(storedID: receipt.id) {
+            history?.markRevoked(record)
+        }
     }
 
     /// Answer the accept/decline prompt raised by `.incoming` or `.confirmSend`.
@@ -299,6 +321,7 @@ final class TransferController {
         sawTransferBytes = false
         receivedText = nil
         storedReceipt = nil
+        storedReceiptSaved = true
         offeredFileNames = []
         currentCode = nil
         progress = nil
@@ -410,8 +433,8 @@ final class TransferController {
             #endif
             storedReceipt = receipt
             // A failed write is logged by the vault; the link still works,
-            // only a revoke after relaunch is lost.
-            vault.add(receipt)
+            // only a revoke after relaunch is lost, and the screen says so.
+            storedReceiptSaved = vault.add(receipt)
             pendingRecord?.storedID = receipt.id
             pendingRecord?.expiresAt = receipt.expiresAt
         case .done(let summary):

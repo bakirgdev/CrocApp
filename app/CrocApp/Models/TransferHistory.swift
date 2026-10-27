@@ -134,6 +134,21 @@ final class HistoryStore {
         save("prune")
     }
 
+    /// The record of the stored upload `storedID`, or nil when history holds
+    /// none (deleted, cleared, or Save Transfer History was off).
+    func record(storedID: String) -> TransferRecord? {
+        var descriptor = FetchDescriptor<TransferRecord>(
+            predicate: #Predicate { $0.storedID == storedID })
+        descriptor.fetchLimit = 1
+        do {
+            return try container.mainContext.fetch(descriptor).first
+        } catch {
+            Self.log.error(
+                "history stored-record fetch failed: \(String(describing: error), privacy: .public)")
+            return nil
+        }
+    }
+
     func markRevoked(_ record: TransferRecord, at date: Date = .now) {
         record.revokedAt = date
         save("revoke")

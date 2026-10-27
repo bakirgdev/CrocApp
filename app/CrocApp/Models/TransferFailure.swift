@@ -133,6 +133,24 @@ extension TransferFailure {
             comment: "Auto-Accept Transfers is the label of a switch in Settings."),
         remedy: .openSettings(.general))
 
+    /// The transfer ran to its end, but croc did not mark it successful, so
+    /// some files may be missing or incomplete.
+    static func finishedWithProblems(direction: TransferController.Direction) -> TransferFailure {
+        TransferFailure(
+            title: String(localized: "Transfer finished with problems"),
+            detail: direction == .receive
+                ? String(localized: "Check the files, and ask the sender to send any missing ones again.")
+                : String(localized: "Check with the other device that every file arrived."),
+            remedy: nil)
+    }
+
+    /// The next step after the other device said no or stopped the transfer.
+    private static func askAgain(_ direction: TransferController.Direction) -> String {
+        direction == .receive
+            ? String(localized: "Ask them to send it again.")
+            : String(localized: "Check with them before you send it again.")
+    }
+
     /// Keep Both saves a partly received file as a new copy, so only Replace
     /// resumes it.
     static let resumeHint = String(
@@ -203,14 +221,12 @@ extension TransferFailure {
             // A peer's cancel arrives the same way.
             return TransferFailure(
                 title: String(localized: "The other device declined or cancelled"),
-                detail: direction == .receive
-                    ? String(localized: "Ask them to send it again.")
-                    : String(localized: "Check with them before you send it again."),
-                remedy: nil)
+                detail: askAgain(direction), remedy: nil)
         case .refused:
             // This side's own prompt said no without a Decline tap (an EOF).
             return TransferFailure(
-                title: String(localized: "You declined the transfer"), detail: nil, remedy: nil)
+                title: String(localized: "You declined the transfer"),
+                detail: askAgain(direction), remedy: nil)
         case .roomFull:
             return TransferFailure(
                 title: String(localized: "That code is already in use"),
@@ -227,8 +243,12 @@ extension TransferFailure {
                 detail: String(localized: "Check the code phrase on both devices."),
                 remedy: nil)
         case .cancelled:
+            // Every cancel this device makes has its own case in init, so
+            // this one came from the other side, as when a croc receiver
+            // refuses a name (docs/known-issues.md).
             return TransferFailure(
-                title: String(localized: "Transfer cancelled"), detail: nil, remedy: nil)
+                title: String(localized: "Transfer cancelled"), detail: askAgain(direction),
+                remedy: nil)
         case .connectionLost:
             return TransferFailure(
                 title: String(localized: "Lost connection to the other device"),
