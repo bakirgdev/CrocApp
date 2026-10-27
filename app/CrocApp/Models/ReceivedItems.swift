@@ -20,8 +20,8 @@ nonisolated enum ReceivedItems {
     /// The top-level items of `names` (paths relative to `folder`), in the
     /// order offered: a folder once for every name inside it, a file at the
     /// name it was saved under. Keep Both saves a taken name as
-    /// "name (n).ext", so a file resolves as `ReceivedFileLocator` resolves
-    /// one: the newest such copy created since `since`, else the name itself.
+    /// "name (n).ext" (`ReceivedFileLocator.keepBothOriginal`), so a file
+    /// resolves as `ReceivedFileLocator` resolves one: the newest such copy created since `since`, else the name itself.
     /// An item that is not there is left out.
     static func locate(names: [String], in folder: URL, since: Date) -> [ReceivedItem] {
         var tops: [String] = []
@@ -48,7 +48,7 @@ nonisolated enum ReceivedItems {
         var copiesByName: [String: [URL]] = [:]
         for entry in entries {
             byName[entry.lastPathComponent] = entry
-            if let original = keepBothOriginal(of: entry.lastPathComponent) {
+            if let original = ReceivedFileLocator.keepBothOriginal(of: entry.lastPathComponent) {
                 copiesByName[original, default: []].append(entry)
             }
         }
@@ -68,17 +68,6 @@ nonisolated enum ReceivedItems {
             let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init)
             return ReceivedItem(url: url, isFolder: false, size: size)
         }
-    }
-
-    /// The name a Keep Both copy was made from: "a.txt" for "a (2).txt",
-    /// "README" for "README (2)". nil for a name that is not such a copy.
-    static func keepBothOriginal(of name: String) -> String? {
-        let url = URL(filePath: name)
-        let ext = url.pathExtension
-        guard let match = url.deletingPathExtension().lastPathComponent
-            .wholeMatch(of: /(.+) \(\d+\)/)
-        else { return nil }
-        return ext.isEmpty ? String(match.1) : "\(match.1).\(ext)"
     }
 
     private static func creation(_ url: URL) -> Date {

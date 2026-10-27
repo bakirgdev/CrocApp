@@ -115,7 +115,7 @@ enum IntentStaging {
 /// Finds what a receive wrote. croc keeps the sender's modification dates, so
 /// the files that arrived are told apart by creation date: a Keep Both copy
 /// ("name (1).ext") is new, while a Replace overwrites the file at its name.
-enum ReceivedFileLocator {
+nonisolated enum ReceivedFileLocator {
     static func locate(names: [String], in folder: URL, since: Date) -> [URL] {
         let offered = Set(names)
         return names.compactMap { name in
@@ -145,11 +145,19 @@ enum ReceivedFileLocator {
 
     /// `name.ext` itself or its numbered Keep Both copy `name (n).ext`.
     static func isCopy(_ file: String, stem: String, suffix: String) -> Bool {
-        guard file.hasPrefix(stem), file.hasSuffix(suffix),
-            file.count >= stem.count + suffix.count
-        else { return false }
-        let middle = String(file.dropFirst(stem.count).dropLast(suffix.count))
-        return middle.isEmpty || middle.wholeMatch(of: /\ \(\d+\)/) != nil
+        file == stem + suffix || keepBothOriginal(of: file) == stem + suffix
+    }
+
+    /// The name a Keep Both copy was made from: "a.txt" for "a (2).txt",
+    /// "README" for "README (2)". nil for a name that is not such a copy.
+    static func keepBothOriginal(of name: String) -> String? {
+        let url = URL(filePath: name)
+        let ext = url.pathExtension
+        guard
+            let match = url.deletingPathExtension().lastPathComponent
+                .wholeMatch(of: /(.+) \(\d+\)/)
+        else { return nil }
+        return ext.isEmpty ? String(match.1) : "\(match.1).\(ext)"
     }
 
     private static func creation(_ url: URL) -> Date {
