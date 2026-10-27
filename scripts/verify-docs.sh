@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2016  # awk programs in single quotes: awk expands them, not the shell
 # Keeps the repository's markdown pointing at things that exist (docs/AGENTS.md,
-# "Keeping docs true"). Checks every .md file outside web/docs/content/,
-# which the Docusaurus build checks itself, .claude/** and sdlc/**, plus new
+# "Keeping docs true"). Checks every .md file outside web/docs/content/
+# (the Docusaurus build checks it itself), .claude/** and sdlc/**, plus new
 # ones not yet committed:
 #
 #   1. Relative links. `[text](path)` and `[text](path#anchor)` resolve to a
@@ -15,7 +15,8 @@
 #      "Writing rules"), and section-number citations, which rot on every
 #      re-order.
 #   4. Images. The URL in an HTML `src="..."` or `srcset="..."` attribute
-#      resolves like a relative link (http(s) URLs are skipped).
+#      resolves like a relative link (URLs with a scheme, such as https:, data:
+#      and mailto:, and //host URLs are skipped).
 #   5. Unused screenshots. Every PNG in assets/screenshots/ is shown by a
 #      markdown image, or is the source of a web WebP copy at the same relative
 #      path (web/docs/screenshots/, web/landing/assets/img/screenshots/).
@@ -24,9 +25,9 @@
 #
 # Fenced code blocks are skipped. Known limits: reference-style links and link
 # titles are not checked, an image attribute whose value spans lines is not
-# checked, and anchors follow GitHub's slug rule for ASCII
-# headings only, without the `-1` suffix a repeated heading gets. Pure bash and POSIX awk, so CI runs it on a
-# bare runner. Exit 0 clean, 1 findings.
+# checked, and anchors follow GitHub's slug rule for ASCII headings only,
+# without the `-1` suffix a repeated heading gets. Pure bash and POSIX awk, so
+# CI runs it on a bare runner. Exit 0 clean, 1 findings.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 export LC_ALL=C
@@ -71,8 +72,10 @@ while IFS= read -r f; do
       while (match(s, /[ \t](src|srcset)="[^"]*"/)) {
         a = substr(s, RSTART, RLENGTH)
         s = substr(s, RSTART + RLENGTH)
+        isset = (a ~ /^[ \t]+srcset=/)
         sub(/^[ \t]+(src|srcset)="/, "", a); sub(/"$/, "", a)
-        n = split(a, cand, ",")
+        # only srcset holds a comma-separated list; a src may contain commas (data: URIs)
+        n = isset ? split(a, cand, ",") : split(a, cand, "\n")
         for (i = 1; i <= n; i++) {
           split(cand[i], word, " ")
           if (word[1] != "") print file "\t" FNR "\timage\t" word[1]
@@ -107,7 +110,7 @@ awk -F'\t' -v top='^(\\.github|app|assets|CrocKit|crocmobile|design|docs|scripts
     file = $1; n = $2; kind = $3; t = $4
     dir = file; if (!sub(/\/[^\/]*$/, "", dir)) dir = "."
     if (kind == "image") {
-      if (t ~ /^https?:/) next
+      if (t ~ /^([a-zA-Z][a-zA-Z0-9+.-]*:|\/\/)/) next
       path = t
       if (match(path, /[#?]/)) path = substr(path, 1, RSTART - 1)
       if (path == "") next
