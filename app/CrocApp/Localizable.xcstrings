@@ -15,6 +15,20 @@
     "%@ Change it in Settings." : {
       "comment" : "The placeholder is a sentence saying what is wrong with the link server."
     },
+    "%@, %@" : {
+      "comment" : "A sidebar row's name, then its state. Both placeholders are words.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%lld percent" : {
+      "comment" : "Said after a sidebar row's name. The placeholder is a number."
+    },
     "1 day" : {},
     "1 hour" : {},
     "7 days" : {},
@@ -57,6 +71,7 @@
     "Camera scanning isn't available on this device" : {},
     "Camera unavailable" : {},
     "Cancel" : {},
+    "Cancel Transfer" : {},
     "Cancelled" : {
       "comment" : "VoiceOver label of a history row's status icon."
     },
@@ -90,6 +105,7 @@
     },
     "Confirm on Both Sides" : {},
     "Confirmation" : {},
+    "Connecting" : {},
     "Connecting…" : {},
     "Copied" : {},
     "Copy Code" : {},
@@ -222,6 +238,7 @@
     "Open in Files" : {},
     "Overall progress" : {},
     "Password" : {},
+    "Paste Code…" : {},
     "Patterns, one per line" : {},
     "Performance" : {},
     "Privacy Policy" : {},
@@ -312,6 +329,7 @@
     },
     "Send Again" : {},
     "Send Clipboard Text" : {},
+    "Send Clipboard Text…" : {},
     "Send Files" : {},
     "Send Files with CrocApp" : {},
     "Send Speed Limit" : {},
@@ -338,6 +356,7 @@
     "Sent" : {},
     "Sent files" : {},
     "Settings" : {},
+    "Settings…" : {},
     "Share Link" : {},
     "Shared Files" : {},
     "Show Receive Folder in Files" : {},
@@ -421,6 +440,7 @@
     },
     "Via the public croc relay, which sees only encrypted data" : {},
     "Wait for it to end, then try again." : {},
+    "Waiting" : {},
     "Waiting for connection…" : {
       "comment" : "Subtitle of the iOS Live Activity before the transfer has any progress."
     },
@@ -462,10 +482,22 @@
     "^[%lld item](inflect: true) in this transfer share a name with a file here. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files." : {
       "comment" : "Warning in the incoming-files prompt. The placeholder is how many items clash. Keep Both and Replace are the labels of its two buttons."
     },
+    "connecting" : {
+      "comment" : "Said after a sidebar row's name."
+    },
     "iOS paused the transfer" : {},
     "iOS stopped it in the background, so keep CrocApp open and open the link again." : {},
     "iOS stopped it in the background, so keep CrocApp open and try again." : {},
-    "or add them with the buttons below" : {}
+    "needs your answer" : {
+      "comment" : "Said after a sidebar row's name."
+    },
+    "or add them with the buttons below" : {},
+    "transferring" : {
+      "comment" : "Said after a sidebar row's name."
+    },
+    "waiting for the other device" : {
+      "comment" : "Said after a sidebar row's name."
+    }
   },
   "version" : "1.0"
 }

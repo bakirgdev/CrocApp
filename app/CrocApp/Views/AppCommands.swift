@@ -70,7 +70,7 @@ struct AppCommands: Commands {
                 .keyboardShortcut(".")
                 .disabled(!controller.phase.canCancel)
             Button("Copy Code") {
-                if let code = controller.phase.shownCode { Clipboard.copy(code) }
+                if let code = controller.phase.shownCode { Clipboard.copySecret(code) }
             }
             .keyboardShortcut("c", modifiers: [.command, .shift])
             .disabled(controller.phase.shownCode == nil)
