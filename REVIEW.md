@@ -51,6 +51,6 @@ A person approves changes to these paths. `/sdlc-deploy` treats them as `high` r
 - Secret storage: the Keychain code in `app/CrocApp/Models/AppSettings.swift`
 - `.github/workflows/` (all workflows, `release.yml` above all)
 - `scripts/build-appstore.sh`, `scripts/build-devid.sh`, `scripts/build-dmg.sh`
-- Sparkle and signing config
+- Sparkle and signing config (`app/Config/CrocApp-Direct-Info.plist`, `app/Config/ExportOptions-*.plist`)
 - `SECURITY.md`, `docs/THREAT-MODEL.md`
 - `.claude/`
