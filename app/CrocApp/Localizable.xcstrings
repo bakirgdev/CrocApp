@@ -33,7 +33,8 @@
     "Allow camera access in Settings to scan QR codes." : {},
     "An Advanced setting can't be used" : {},
     "Another transfer is still running" : {},
-    "Anyone who gets this link can download the files until it expires or runs out. Revoke it any time in History." : {},
+    "Anyone who gets this link can download the files until it expires or runs out. With Save Transfer History off, this screen is the only place to revoke it." : {},
+    "Anyone who gets this link can download the files until it expires or runs out. You can also revoke it later in History." : {},
     "Applies to both devices. They find each other on the local network only if both use the same address. Blank uses %@." : {
       "comment" : "Note under the Multicast Address field. The placeholder is the default multicast address."
     },
@@ -66,10 +67,12 @@
     "Change…" : {},
     "Check for Updates…" : {},
     "Check the code phrase on both devices." : {},
+    "Check the files, and ask the sender to send any missing ones again." : {},
     "Check the proxies, addresses, ports and send speed limit in Settings > Advanced." : {
       "comment" : "Advanced is the title of a page in Settings."
     },
     "Check the relay password in Settings." : {},
+    "Check with the other device that every file arrived." : {},
     "Check with them before you send it again." : {},
     "Check your connection and try again." : {},
     "Check your internet connection and try again." : {},
@@ -181,6 +184,7 @@
     "How croc keeps transfers private" : {},
     "IPv6 Address" : {},
     "It expired, was revoked or has no downloads left, so ask the sender for a new link." : {},
+    "It no longer works for anyone." : {},
     "Keep Both" : {},
     "Link" : {
       "comment" : "VoiceOver label of the text that shows a link."
@@ -194,6 +198,7 @@
       "comment" : "The placeholder is the date and time the link stops working."
     },
     "Link ready" : {},
+    "Link revoked" : {},
     "Link revoked %@" : {
       "comment" : "The placeholder is the date and time the link was revoked."
     },
@@ -230,6 +235,8 @@
     "Puts every setting on this page back to croc's default and removes the saved proxies." : {},
     "QR code for the code phrase" : {},
     "QR code for the link" : {},
+    "Quick Look" : {},
+    "Quick Look %@" : {},
     "Quit and reopen CrocApp to transfer again." : {},
     "Ready to send" : {},
     "Receive" : {},
@@ -295,6 +302,7 @@
     "Revoke" : {},
     "Revoke Link" : {},
     "Revoke this link?" : {},
+    "Revoke works only until CrocApp quits" : {},
     "SOCKS5 Proxy" : {},
     "Same Wi-Fi or different continents, transfers find the fastest path automatically." : {},
     "Save Received Files To" : {},
@@ -338,10 +346,14 @@
     "Sent" : {},
     "Sent files" : {},
     "Settings" : {},
+    "Share" : {},
+    "Share %@" : {},
     "Share Link" : {},
+    "Share Text" : {},
     "Shared Files" : {},
     "Show Receive Folder in Files" : {},
     "Show Receive Folder in Finder" : {},
+    "Show in Files" : {},
     "Show in Finder" : {},
     "Show in Menu Bar" : {},
     "Some names are already taken" : {},
@@ -380,6 +392,7 @@
     "The transfer failed" : {},
     "There is nothing to send." : {},
     "This also removes the saved proxies." : {},
+    "This device couldn't save the link to the Keychain, so revoke it before you quit if you want it ended early." : {},
     "This is taking longer than usual. Double-check the code, or the other device may not be ready." : {},
     "This link no longer works" : {},
     "Those files aren't available anymore" : {},
@@ -396,7 +409,6 @@
     },
     "Transfer" : {},
     "Transfer cancelled" : {},
-    "Transfer code" : {},
     "Transfer complete" : {},
     "Transfer finished with errors" : {},
     "Transfer finished with problems" : {},
