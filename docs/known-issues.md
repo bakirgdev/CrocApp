@@ -126,7 +126,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - `pnpm audit --prod` reports one High advisory with no fix: `braces@3.0.3` (GHSA-vfj7-8cjw-p6xm, stack exhaustion), reached through `chokidar` and `micromatch` inside Docusaurus core. It is build-time only, and no attacker input reaches the glob handling.
   - Re-run the audit on each Docusaurus upgrade.
 - **The published Mac Send pair is older than the app window.**
-  - `assets/screenshots/mac/send-code-{light,dark}.png` are 1120 px wide. A fresh capture is 1440 px wide, because the main window has a 720 pt minimum width.
+  - `assets/screenshots/mac/send-code-{light,dark}.png` are 1120 px wide. A fresh capture is at least 1440 px wide, because the main window has a 720 pt minimum width (1440 px measured on one machine; the 880 pt default or a saved frame makes it wider).
   - `capture-screenshots.sh --copy-web` therefore stops at its aspect-ratio check after a Mac capture, with the refreshed PNGs and some WebPs already rewritten. `git restore assets/screenshots web` undoes it.
   - Left because a new pair needs a hand-resized image on each page that shows it, which is design work outside the cleanup that found it.
   - Fix it by publishing a new pair and resizing the images on the pages that show it by hand.

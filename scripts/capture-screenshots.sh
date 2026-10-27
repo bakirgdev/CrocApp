@@ -144,7 +144,7 @@ case "${1:-}" in
       rel=${f#"$PUBLISHED"/}
       [ -e "$OUT/$rel" ] || continue
       if [ ! -s "$OUT/$rel" ] || ! sips -g pixelWidth "$OUT/$rel" 2> /dev/null | grep -Eq 'pixelWidth: [0-9]+$'; then
-        fail "$OUT/$rel is empty or not a PNG: capture that screen again, nothing was copied"
+        fail "$OUT/$rel is empty or not a readable image: capture that screen again, nothing was copied"
       fi
     done < <(find "$PUBLISHED" -name '*.png' | sort)
     refreshed=0
