@@ -5,4 +5,4 @@ branch: sdlc/repo-cleanup
 gate_mode: auto
 run_mode: autonomous
 pr: auto
-risk: medium
+risk: high
