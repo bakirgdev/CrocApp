@@ -18,7 +18,7 @@ struct AdvancedSettingsView: View {
             Section("Network") {
                 AdvancedRow(
                     footnote:
-                        "Sends this device's connections through a SOCKS5 proxy, which wins over the HTTP proxy if both are set.",
+                        "Sends this device's connections, and Send as Link, through a SOCKS5 proxy, which wins over the HTTP proxy if both are set. Your local network skips it, and the address, with any password in it, is saved in the Keychain.",
                     error: AppSettings.socks5ProxyError(settings.socks5Proxy),
                     notSaved: settings.unsavedSecrets.contains(.socks5Proxy)
                 ) {
@@ -32,7 +32,7 @@ struct AdvancedSettingsView: View {
                 }
                 AdvancedRow(
                     footnote:
-                        "Sends this device's connections through an HTTP proxy, unless a SOCKS5 proxy is set.",
+                        "Sends this device's connections, and Send as Link, through an HTTP proxy, unless a SOCKS5 proxy is set. Your local network skips it, and the address, with any password in it, is saved in the Keychain.",
                     error: AppSettings.httpProxyError(settings.httpProxy),
                     notSaved: settings.unsavedSecrets.contains(.httpProxy)
                 ) {

@@ -57,8 +57,10 @@ struct PowerSettingsSections: View {
         } header: {
             Text("Send as link")
         } footer: {
-            Text("Send as Link uploads files, encrypted on your device, to this server.")
-                .foregroundStyle(Color.textSecondary)
+            Text(
+                "Send as Link uploads files, encrypted on your device, to this server. It cannot read them, because the key is in the link."
+            )
+            .foregroundStyle(Color.textSecondary)
         }
 
         Section {
@@ -77,7 +79,7 @@ struct PowerSettingsSections: View {
                 .lineLimit(3...6)
                 .autocorrectionDisabled()
                 #if os(iOS)
-                .textInputAutocapitalization(.never)
+            .textInputAutocapitalization(.never)
                 #endif
             Toggle("Respect .gitignore", isOn: $settings.useGitIgnore)
         } header: {
@@ -100,7 +102,7 @@ struct PowerSettingsSections: View {
             // color here would tint body text (colors.md → Contrast, rule 2).
             if settings.autoAccept {
                 Text(
-                    "Files from anyone who has your code are saved without a preview, unless Confirm on Both Sides is on."
+                    "Files from anyone who has your code are saved without a preview, unless Confirm on Both Sides is on. Replace overwrites existing files, and unsafe file names still cancel the transfer."
                 )
                 .foregroundStyle(Color.textSecondary)
             } else {
