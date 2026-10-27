@@ -17,12 +17,16 @@ extra sections where a release needs them, and the project follows
 
 - **Save Transfer History** in Settings (on by default). Turn it off and finished transfers are no longer listed in History. What is already there stays until you delete it, and History says "History is off" while it is empty.
 - **Haptics** in Settings on iPhone (on by default). Turn it off to silence every tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer.
+- **Recent transfers** on the iPhone home screen (and on iPad in a narrow window): your latest three transfers, finished, failed, cancelled or declined, sit below Send and Receive, and a tap opens History. With no transfers yet it says so, and with **Save Transfer History** off the list is not shown.
 - iPhone and iPad find a device on the same network the way a Mac does, so a transfer between them can stay on your local network, including with **Local Network Only**. **Multicast Address** is now in Advanced settings on iOS too.
+- A sidebar on iPad and Mac. **Send**, **Receive** and **History** sit beside the screen they open, and **Settings** joins them on iPad (the Mac keeps its Settings window, ⌘,). The layout follows the window width as you resize it: a wide window gets the sidebar, and iPhone, Slide Over and a narrow Split View keep the single-column Home. While a transfer runs, its row says **Connecting**, **Waiting** or the percent, and when the other device is waiting for your answer the row shows **Review** and every other screen shows the same banner, so a hidden sidebar never hides it. Opening a link, dropping a file or an incoming request never switches the screen you are on.
+- New menu bar commands, each with a shortcut: **History** (⌘3), **How It Works** (⌘?), **Cancel Transfer** (⌘.) while a transfer can be cancelled, and **Copy Code** (⇧⌘C) while a code is showing. **Send Clipboard Text…** (⌥⌘1) and **Paste Code…** (⌥⌘2) fill in Send and Receive from the clipboard and never start a transfer themselves. iPad shows them in the hardware-keyboard menu bar, with **Settings…** (⌘,).
 
 ### Changed
 
 - The relay password, the proxies and Send as link receipts stay on this device: they are never synced, and a backup restored to a new device does not bring them back. On iPhone and iPad this applies to each one from the next time it is saved. If the relay password or a proxy cannot be saved to the Keychain, its field now says so instead of seeming saved.
-
+- The home screen's banner for a transfer that waits for your answer now fades in and moves into place, and Send and Receive slide down with it instead of jumping. It appears at once with Reduce Motion on. The home page now sits on the grouped background and scrolls with large text.
+- The welcome screen scrolls instead of clipping at the largest text sizes. It and How It Works have larger glyphs with the text aligned beside them, and at the largest sizes the glyph moves above the text so the words keep the full width. Their secondary text is darker, so it clears the 4.5:1 contrast mark.
 - A failed transfer now says what happened and what to do, and offers the one action that can help. **Try Again** runs the same transfer again when it could now succeed (a dropped connection, an unreachable relay or link server, iOS stopping it in the background). **Open Settings** goes where the fix is when a setting is the cause (a rejected relay password, an Advanced setting that cannot be used, auto-accept meeting a sender who confirms). Otherwise there is only **Done**. Shortcuts and the menu bar show the same words.
 
 - The app is about half the size. The transfer engine is now croc's relay-only build, without Tailcat, the direct-connection path croc could try for large sends. The main executable went from 22.0 MB to 10.5 MB on Mac and from 21.3 MB to 10.3 MB on iPhone and iPad (measured on unsigned release archives). Transfers use croc's relay or your local network, as they did for everything under 128 MiB.
@@ -37,6 +41,7 @@ extra sections where a release needs them, and the project follows
 - The transfer engine is croc v11.5.5. Transfers stay compatible with croc 11 on the other device.
 - The update checker in the direct-download Mac build is Sparkle 2.10.1. It fixes an update installing too early when the app sits at a path in NFC Unicode form.
 - CrocApp has one main window on Mac and iPad. One transfer runs at a time, so a second window could only mirror the first and walk its own screens. On iPad the app no longer opens a second window of itself. On Mac, closing the window leaves CrocApp running in the menu bar, and a link, the Dock icon or **Open CrocApp** brings the window back.
+- The Mac window opens wider (880 by 700) with a minimum of 720 by 560, to fit the sidebar. A window saved at the old size grows to the new minimum.
 
 ### Removed
 

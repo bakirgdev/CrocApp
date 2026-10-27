@@ -48,12 +48,15 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` (universal link), and `https://getcroc.com/?code=`. One parser, `TransferLink`. Opening a link prefills Receive and never connects. | all | shipped |
 | Trust UI: encryption badge, "How it works", active-relay indicator | all | shipped |
 | Failure screen: what happened, what to do, and **Try Again** or **Open Settings** when one can help | all | shipped |
+| **Recent transfers** on Home: the latest three records below Send and Receive, hidden while **Save Transfer History** is off. A row opens History (the record's own detail is not built yet). Home exists only at compact width, so a wide iPad window and the Mac show the History sidebar row instead; the dates refresh each minute | iPhone, and iPad at compact width | shipped |
 | Waiting-screen QR and **Share Link** encode `https://crocapp.dev/r/#<code>` (see below) | all | shipped |
 | Send as Link (stored transfers; see below) | all | shipped |
 | **Haptics** setting (on by default): a short tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer | iPhone only | shipped |
 | Menu bar quick send (see below) | macOS only | shipped |
 | Shortcuts and Siri actions (see below) | all | shipped |
 | **Show Receive Folder in Finder** (macOS) or **Show Receive Folder in Files** (iPadOS) in the File menu | iPadOS (Files) and macOS (Finder) | shipped |
+| Sidebar layout: **Send**, **Receive**, **History** (and **Settings** on iPad) beside the screen, whenever the window is wide enough for two columns. A narrow window, Slide Over and iPhone keep Home | iPad and macOS | shipped |
+| Menu bar commands for everything a toolbar button does, with shortcuts (see below) | macOS; iPad with a hardware keyboard | shipped |
 
 Details:
 
@@ -69,6 +72,12 @@ Details:
   - The **Show in Menu Bar** setting is on by default and **Open at Login** (`SMAppService`) is off by default.
   - Covered by unit tests and by `scripts/verify-app-mac.sh` (menu-bar send, clipboard send, Open at Login). The checks that need a real Mac are in `device-test-checklist.md`, "Menu bar on a Mac".
 - **Shortcuts and Siri.** **Send Files with CrocApp**, **Send Text with CrocApp** and **Receive with CrocApp** (App Intents), also offered as App Shortcuts. They run in the foreground. The send actions return the code and Receive returns the files. Not verified on a device. That the Finder Quick Action works is inferred, not tested (`device-test-checklist.md`, "Shortcuts actions").
+- **Sidebar layout.**
+  - A sidebar of **Send**, **Receive** and **History**, and **Settings** on iPad (the Mac keeps its Settings window). **How It Works** is a toolbar button that opens inside the screen.
+  - The layout follows the window width, live: a Mac window, an iPad at full width or in a wide Split View gets the sidebar, and iPhone, Slide Over and a narrow Split View get Home.
+  - While a transfer runs, its row says **Connecting**, **Waiting**, or the percent. When a request waits for an answer the row carries a **Review** badge and every other screen shows the same banner at its top, so a hidden sidebar never hides it.
+  - Design: `design/platforms.md`, "Layout by width". Code and measurements: `app-ui-architecture.md`, "Layout by width".
+- **Menu bar commands.** **Send…** (⌘1), **Send Clipboard Text…** (⌥⌘1), **Receive…** (⌘2), **Paste Code…** (⌥⌘2), **History** (⌘3), **Show Receive Folder** (⇧⌘R), **Cancel Transfer** (⌘.), **Copy Code** (⇧⌘C), **How It Works** (⌘?), and **Settings…** (⌘,) on iPad. The two clipboard commands only fill in Send and Receive, and a transfer starts when you tap the button. iPad has them in the hardware-keyboard menu bar, not verified on a device.
 - **File menu item.** On iPadOS the hand-off to the Files app is not verified on a device. A user-picked provider folder is expected to do nothing there.
 
 ## Skipped

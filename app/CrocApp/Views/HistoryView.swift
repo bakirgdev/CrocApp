@@ -207,7 +207,7 @@ struct HistoryView: View {
         #if os(macOS)
         openSettings()
         #else
-        router.path.append(.settings)
+        router.push([.settings])
         #endif
     }
 
