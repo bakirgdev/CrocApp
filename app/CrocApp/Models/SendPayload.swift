@@ -87,3 +87,73 @@ nonisolated struct SendIntake: Equatable {
         return existing.isEmpty ? text : existing + "\n" + text
     }
 }
+
+/// Brings a batch of picked items in as payloads, and owns what happens to the
+/// staged copies when the batch is abandoned.
+nonisolated enum SendLoading {
+    struct Loaded {
+        var payloads: [SendPayload]
+        /// Items that could not be brought in.
+        var failures: Int
+    }
+
+    private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "send")
+
+    /// Loads every item in order. If the surrounding task is cancelled (the
+    /// screen went away, or the pick changed), everything staged so far is
+    /// discarded and the result is nil: nobody is left to own those files.
+    static func load<Item: Sendable>(
+        _ items: [Item],
+        using loadItem: @Sendable (Item) async throws -> SendPayload?
+    ) async -> Loaded? {
+        var loaded = Loaded(payloads: [], failures: 0)
+        for item in items {
+            if Task.isCancelled { break }
+            do {
+                if let payload = try await loadItem(item) {
+                    loaded.payloads.append(payload)
+                } else {
+                    loaded.failures += 1
+                }
+            } catch is CancellationError {
+                break
+            } catch {
+                log.error("photo load failed: \(String(describing: error), privacy: .public)")
+                loaded.failures += 1
+            }
+        }
+        guard !Task.isCancelled else {
+            discard(loaded.payloads)
+            return nil
+        }
+        return loaded
+    }
+
+    /// Deletes the staged copy behind each file payload. Files the user owns
+    /// are left alone (`SendStaging.discard`).
+    static func discard(_ payloads: [SendPayload]) {
+        for case .file(let url) in payloads { SendStaging.discard(url) }
+    }
+}
+
+/// Whether the Send button may be pressed. Pure, so the rules are tested
+/// without the view.
+struct SendReadiness {
+    var sendsAsLink: Bool
+    var isFilesMode: Bool
+    var hasFiles: Bool
+    var hasText: Bool
+    var storedServerIsValid: Bool
+    /// The custom code as typed, trimmed.
+    var customCode: String
+    var isLoadingPhotos: Bool
+
+    var canStart: Bool {
+        // Picked photos are still being copied in: starting now would send
+        // without them.
+        guard !isLoadingPhotos else { return false }
+        if sendsAsLink { return hasFiles && storedServerIsValid }
+        let codeOK = customCode.isEmpty || customCode.count >= EngineConstraints.minCodeLength
+        return codeOK && (isFilesMode ? hasFiles : hasText)
+    }
+}
