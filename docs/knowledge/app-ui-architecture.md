@@ -11,7 +11,9 @@ CrocAppApp owns @State TransferController + AppSettings + OutputFolderStore
   + HistoryStore + LocalNetworkChecker + AppRouter.shared (+ MenuBarQuickSend on macOS)
   → .environment on the one main scene's content (CrocAppApp.mainContent)
   (macOS Settings scene gets only outputFolder + settings, no router/controller/localNetwork)
-ContentView → HomeView (sole NavigationStack, path: $router.path, value-based links)
+ContentView → by horizontal size class (see "Layout by width"):
+  compact: HomeView (its NavigationStack, path: $router.path, value-based links)
+  regular: RegularLayout (NavigationSplitView: sidebar List, one NavigationStack per row, path: $router.detailPath)
   → SendView | ReceiveView | SettingsScreen | HistoryView | HowItWorksView
   each transfer screen: controller.isActive and a matching direction ? TransferStatusView() : input form
 TransferStatusView renders every non-idle phase; IncomingRequestView = accept gate
@@ -22,6 +24,35 @@ QRCodeView (cross-platform gen) / QRScannerView.swift (whole file #if os(iOS), V
 Localization: the app ships in English only, but every user-facing string reaches a String Catalog. See "Localization" below.
 
 Construction order in `CrocAppApp.init` matters: `AppSettings` (on in-memory storage and secrets for a harness run), then the `HistoryStore` container (in memory for a harness run), then `StoredTransferVault`, then `TransferController(settings:vault:)`, then `controller.history = history`.
+
+## Layout by width
+
+`ContentView` reads `@Environment(\.horizontalSizeClass)` and shows `HomeView` for `.compact` and `RegularLayout` for anything else. It never asks the device. The size class changes live, so a window resize or an iPad Split View change swaps the layout. SwiftUI reports `.regular` on macOS (measured on macOS 27), so every Mac window gets the sidebar. The design is `design/platforms.md`, "Layout by width".
+
+**One path, two readings.** `AppRouter.path` is the only navigation state. `HomeView` hands it to its `NavigationStack`. In regular width its first element is the sidebar row and the rest are the screens pushed in that row's detail:
+
+| Member | Reads |
+| --- | --- |
+| `selection` | the row the path starts at; **Send** when the path is empty or starts at a route that is no row (How It Works, Advanced settings, **Settings** on the Mac) |
+| `detailPath` | the rest of the path, or all of it when the path starts at no row |
+| setting `selection` | `path = [row.route]`, which pops the detail |
+
+Every entry point sets `path` and so lands in either layout: `openSend(with:)`, `openSend(text:)`, `openReceive()`, `open(_:)`, the staged-files sheet, the Mac window drop, the Dock drop, App Intents, `crocapp://` links and `AutoVerify`. The busy rule is unchanged: a drop, a link or staged text mid-transfer is kept and moves nobody. The sidebar rows and the menu bar are user actions, so they navigate when a transfer runs. Nothing but the user changes the selection: a request that arrives while History is open leaves History open.
+
+**Files.**
+- `Views/RegularLayout.swift`: `NavigationSplitView`, the sidebar `List(selection:)`, `DetailStack` (one `NavigationStack` per row, rebuilt with `.id(selection)`, with the **How It Works** toolbar button) and `Route.destination`, the screen a route pushes. `HomeView` keeps its own copy of that switch, because the views it hosts are owned elsewhere.
+- `Views/SidebarRow.swift`: the row and its spoken label.
+- `Models/SidebarRowState.swift`: the row's state, derived from the phase and progress. It also holds three `TransferController.Phase` questions: `needsAnswer`, `canCancel` and `shownCode`.
+
+**The sidebar state.** Only the row of the active transfer's direction (`SidebarItem(direction:)`) has one: Connecting, Waiting, a **Review** badge for `.incoming` and `.confirmSend`, or the percent of the whole transfer (the direction word while the total is unknown). A finished or failed transfer leaves every row at rest. The row speaks one label ("Send, 42 percent"), and `RegularLayout` posts an announcement when the state's kind changes, never on a progress tick, because it watches the kind and the percent is not part of it. The trailing view is hidden from VoiceOver and the label sits on the `Label`, so the row stays the system's one selectable element (with `.accessibilityElement(children: .ignore)` an accessibility press from System Events did not select the row on macOS; VoiceOver itself was not run).
+
+**The banner.** `DetailScreen`, applied to the root screen and every pushed screen of a detail, shows the `StatusBanner` for a pending request (`phase.needsAnswer`) unless the gate is on screen: the row of the transfer's direction is selected and nothing is pushed over it. **Review** selects that row. A both-sides confirm on a send uses the strings of the confirm screen, because the Home banner has none for it.
+
+**The cap.** Send, Receive and How It Works cap their own column (`LayoutCap`) and the detail leaves them alone. The detail caps the list and form screens (`Route.isFullWidthList`: History, Settings, Advanced settings) with `safeAreaPadding(.horizontal)` of half the width above the cap, measured with `onGeometryChange`. On iPad that keeps the grouped background full width and the margin is the page. `contentMargins` on a list put it off-centre on iPad (measured), and on macOS it did nothing. On the Mac the list is a column of its own, so the scroll edge under the toolbar is as wide as the column. Do not add a `safeAreaPadding` or a `contentMargins` to a screen that caps itself.
+
+**The Mac window.** The sidebar's default width is 144, which truncates "Receive" beside its Review badge, so the sidebar column takes `min 200, ideal 240, max 320` on macOS (`platforms.md`, "macOS"). The iPad sidebar is the system's.
+
+**Limits.** A screen's `@State` (staged files, typed text) is not kept when the selection changes or when the layout flips, and a pushed screen is not kept when the layout flips (`known-issues.md`).
 
 ## TransferController
 
@@ -190,9 +221,12 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - `IntentStaging` writes files that arrive without a usable file URL, and a received text as `Received text.txt`, under `ShortcutsFiles` in the temporary directory. A send outlives its action, so nothing is deleted on return. `SendFilesIntent` sweeps the folder at the start of the next send.
 - A shortcut does not answer the accept prompt. Auto-accept applies as usual, and Keep Both or Replace follows the setting.
 
-**File menu.**
-- `Views/AppCommands.swift` shows **Send…** (⌘1), **Receive…** (⌘2) and a Show Receive Folder item (⇧⌘R) in the File menu on both platforms.
-- On macOS the item is **Show Receive Folder in Finder**.
+**Menu bar commands.**
+- `Views/AppCommands.swift` is the menu bar on the Mac and the hardware-keyboard menu bar on iPad. Anything a toolbar button does has an item with a shortcut (`design/platforms.md`, "macOS", lists them all).
+- File: **Send…** (⌘1), **Send Clipboard Text…** (⌥⌘1), **Receive…** (⌘2), **Paste Code…** (⌥⌘2), **History** (⌘3) and the Show Receive Folder item (⇧⌘R). Transfer: **Cancel Transfer** (⌘.) and **Copy Code** (⇧⌘C). Help: **How It Works** (⌘?). iPad adds **Settings…** (⌘,) to the app menu; the Mac's comes from the Settings scene.
+- **Send…**, **Send Clipboard Text…**, **Receive…** and **Paste Code…** are disabled while a transfer is active. **Cancel Transfer** is enabled while `phase.canCancel`, which excludes the accept gate, and **Copy Code** while `phase.shownCode` is set. **History**, **Settings…** and **How It Works** always work and navigate through `AppRouter.showHistory()`, `showSettings()` and `showHowItWorks()` (the last pushes on what is open).
+- **Send Clipboard Text…** reads the pasteboard text and calls `openSend(text:)`; **Paste Code…** parses the pasteboard with `TransferLink.parse` and calls `open(_:)`. Neither starts a transfer. Reading the pasteboard from a menu command is a programmatic read, so iOS shows its Allow Paste prompt (not verified on a device).
+- On macOS the Show Receive Folder item is **Show Receive Folder in Finder**.
 - On iPadOS it is **Show Receive Folder in Files**. It opens `shareddocuments://` plus the percent-encoded receive-folder path with `UIApplication.open`, which is the Files app's scheme for a local folder.
 - The iPad hand-off is not verified on a device. A user-picked provider folder (such as iCloud Drive) is expected to do nothing, because that scheme resolves local paths only.
 
@@ -291,7 +325,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 
 ## Platform layer, macOS
 
-- `Models/AppRouter.swift` is an `@Observable` singleton (`shared`). `path: [Route]` drives `HomeView`'s `NavigationStack`.
+- `Models/AppRouter.swift` is an `@Observable` singleton (`shared`). `path: [Route]` is the one navigation state: `HomeView`'s `NavigationStack` path in compact width, the sidebar row plus the detail's pushed screens in regular width ("Layout by width").
 - `pendingSendURLs` is consumed by `SendView` (`onAppear` plus `onChange`, deduplicated against `pickedURLs`, then cleared).
 - `pendingSendText` (set by `openSend(text:)`) is consumed the same way: `SendView` switches to text mode and appends it to any typed text. Both only stage; nothing sends until the user taps Send.
 - `isBusy` reads `controller.isActive` through a weak controller reference that `CrocAppApp.init` attaches with `attach(controller:)`, so a dock drop mid-transfer queues without navigating.
@@ -303,8 +337,8 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 - The dock drop works because `Config/CrocApp-macOS-Info.plist` declares `public.item` document types with the Viewer role and rank None.
 - Side effect: the app is listed in Finder's "Open With" for everything. `INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]=YES` is required, or Xcode auto-injects an invalid `NO`.
 - `Views/SettingsView.swift` has a **General** tab (output-folder **Change…** and **Reset**, **Show in Finder**, the menu bar section, the power sections, About) and an **Advanced** tab.
-- `Views/AppCommands.swift` provides **Send…** ⌘1 and **Receive…** ⌘2 (both disabled while a transfer is active), and the Show Receive Folder item ⇧⌘R.
-- **One main window.** `CrocAppApp.mainScene` is a single-instance `Window("CrocApp", id: "main")` with `.defaultSize(560×700)`, content `minWidth 480` and `minHeight 560`. One transfer runs at a time, so a second window could only mirror the first with a navigation path of its own; `AppRouter.shared` is the one path.
+- `Views/AppCommands.swift` provides the File, Transfer and Help commands ("Menu bar and Shortcuts").
+- **One main window.** `CrocAppApp.mainScene` is a single-instance `Window("CrocApp", id: "main")` with `.defaultSize(880×700)`, content `minWidth 720` and `minHeight 560` (the sidebar layout, `platforms.md`, "macOS"). A frame saved by an earlier build (`NSWindow Frame main` in the app's defaults) wins over the default size, and the minimum clamps it. One transfer runs at a time, so a second window could only mirror the first with a navigation path of its own; `AppRouter.shared` is the one path.
 - Apple's `Window` quits the app when it closes. `AppDelegate.applicationShouldTerminateAfterLastWindowClosed` returns false, so a running transfer and the menu-bar item outlive the window. Measured on macOS 27: with the delegate method missing, `performClose` on the window ended the process; with it, the process stayed and the window was `isVisible == false`.
 - The window comes back from a reopen (`open -a`, the event a Dock click sends; the Dock click itself was not tried), from a link, and from **Open CrocApp** in the menu-bar window. `openWindow(id:)` opens a closed `Window` scene and orders an open one to the front (Apple's `OpenWindowAction`), so `MenuBarQuickSendView.openMainWindow` is `NSApp.activate()` plus `openWindow(id:)`. Measured with the window closed: `open -a` and a link each made it visible again, and `openWindow(id:)` called from the menu-bar scene did too. With it open there was still one window. The menu-bar button itself was not clicked.
 - The old `.handlesExternalEvents(preferring: [], allowing: ["*"])` is gone, because a `Window` is never duplicated by an opened URL.

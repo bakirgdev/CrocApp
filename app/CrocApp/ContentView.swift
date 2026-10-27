@@ -5,6 +5,7 @@ struct ContentView: View {
     @Environment(LocalNetworkChecker.self) private var localNetwork
     @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var shareInbox = ShareInbox()
     @State private var showStagedSheet = false
     @AppStorage("onboarding.seen") private var onboardingSeen = false
@@ -17,7 +18,7 @@ struct ContentView: View {
     #endif
 
     var body: some View {
-        HomeView()
+        layout
             #if os(macOS)
         .dropDestination(for: URL.self) { urls, _ in
             // Anywhere-on-window drop routes to the Send screen; the
@@ -123,6 +124,17 @@ struct ContentView: View {
                     }
                 }
             )
+    }
+
+    /// design/platforms.md → Layout by width: compact is Home and one stack,
+    /// anything else the sidebar. SwiftUI reports `.regular` on macOS, where
+    /// every window gets the sidebar.
+    @ViewBuilder private var layout: some View {
+        if horizontalSizeClass == .compact {
+            HomeView()
+        } else {
+            RegularLayout()
+        }
     }
 
     #if os(macOS)

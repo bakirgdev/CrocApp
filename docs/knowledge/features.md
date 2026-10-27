@@ -54,6 +54,8 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Menu bar quick send (see below) | macOS only | shipped |
 | Shortcuts and Siri actions (see below) | all | shipped |
 | **Show Receive Folder in Finder** (macOS) or **Show Receive Folder in Files** (iPadOS) in the File menu | iPadOS (Files) and macOS (Finder) | shipped |
+| Sidebar layout: **Send**, **Receive**, **History** (and **Settings** on iPad) beside the screen, whenever the window is wide enough for two columns. A narrow window, Slide Over and iPhone keep Home | iPad and macOS | shipped |
+| Menu bar commands for everything a toolbar button does, with shortcuts (see below) | macOS; iPad with a hardware keyboard | shipped |
 
 Details:
 
@@ -69,6 +71,12 @@ Details:
   - The **Show in Menu Bar** setting is on by default and **Open at Login** (`SMAppService`) is off by default.
   - Covered by unit tests and by `scripts/verify-app-mac.sh` (menu-bar send, clipboard send, Open at Login). The checks that need a real Mac are in `device-test-checklist.md`, "Menu bar on a Mac".
 - **Shortcuts and Siri.** **Send Files with CrocApp**, **Send Text with CrocApp** and **Receive with CrocApp** (App Intents), also offered as App Shortcuts. They run in the foreground. The send actions return the code and Receive returns the files. Not verified on a device. That the Finder Quick Action works is inferred, not tested (`device-test-checklist.md`, "Shortcuts actions").
+- **Sidebar layout.**
+  - A sidebar of **Send**, **Receive** and **History**, and **Settings** on iPad (the Mac keeps its Settings window). **How It Works** is a toolbar button that opens inside the screen.
+  - The layout follows the window width, live: a Mac window, an iPad at full width or in a wide Split View gets the sidebar, and iPhone, Slide Over and a narrow Split View get Home.
+  - While a transfer runs, its row says **Connecting**, **Waiting**, or the percent. When a request waits for an answer the row carries a **Review** badge and every other screen shows the same banner at its top, so a hidden sidebar never hides it.
+  - Design: `design/platforms.md`, "Layout by width". Code and measurements: `app-ui-architecture.md`, "Layout by width".
+- **Menu bar commands.** **Send…** (⌘1), **Send Clipboard Text…** (⌥⌘1), **Receive…** (⌘2), **Paste Code…** (⌥⌘2), **History** (⌘3), **Show Receive Folder** (⇧⌘R), **Cancel Transfer** (⌘.), **Copy Code** (⇧⌘C), **How It Works** (⌘?), and **Settings…** (⌘,) on iPad. The two clipboard commands only fill in Send and Receive, and a transfer starts when you tap the button. iPad has them in the hardware-keyboard menu bar, not verified on a device.
 - **File menu item.** On iPadOS the hand-off to the Files app is not verified on a device. A user-picked provider folder is expected to do nothing there.
 
 ## Skipped
