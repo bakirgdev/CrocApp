@@ -54,6 +54,8 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | **Haptics** setting (on by default): a short tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer | iPhone only | shipped |
 | Menu bar quick send (see below) | macOS only | shipped |
 | Shortcuts and Siri actions (see below) | all | shipped |
+| Past transfers as Shortcuts entities (**Find Transfers**, **Open Transfer**), and in Spotlight behind **Show History in Spotlight** (off by default) | all | shipped, not verified in the system UI |
+| **Send with CrocApp** in the Services menu (selected files and text) | macOS | shipped |
 | **Show Receive Folder in Finder** (macOS) or **Show Receive Folder in Files** (iPadOS) in the File menu | iPadOS (Files) and macOS (Finder) | shipped |
 | Sidebar layout: **Send**, **Receive**, **History** (and **Settings** on iPad) beside the screen, whenever the window is wide enough for two columns. A narrow window, Slide Over and iPhone keep Home | iPad and macOS | shipped |
 | Menu bar commands for everything a toolbar button does, with shortcuts (see below) | macOS; iPad with a hardware keyboard | shipped |
@@ -76,6 +78,8 @@ Details:
   - The **Show in Menu Bar** setting is on by default and **Open at Login** (`SMAppService`) is off by default.
   - Covered by unit tests and by `scripts/verify-app-mac.sh` (menu-bar send, clipboard send, Open at Login). The checks that need a real Mac are in `device-test-checklist.md`, "Menu bar on a Mac".
 - **Shortcuts and Siri.** **Send Files with CrocApp**, **Send Text with CrocApp** and **Receive with CrocApp** (App Intents), also offered as App Shortcuts. They run in the foreground. The send actions return the code and Receive returns the files. Not verified on a device. That the Finder Quick Action works is inferred, not tested (`device-test-checklist.md`, "Shortcuts actions").
+- **History in Shortcuts and Spotlight.** A transfer is an entity with a name, direction, status, date, file names and size, never a code or its hint. Shortcuts gets **Find Transfers** (filters: date, direction, status, name) and **Open Transfer**, which opens History. Both answer with nothing while **Save Transfer History** is off. Spotlight indexing is a separate setting, **Show History in Spotlight**, off by default because it puts file names in a system index; turning it or Save Transfer History off removes what was indexed. Spotlight indexing and the entities were exercised by unit tests and a real-index test; the Spotlight search UI and a device were not (`known-issues.md`, "History entities").
+- **Send with CrocApp (Mac Services menu).** Selected files in Finder, or selected text in any app, stage in Send and bring CrocApp forward. Never starts a transfer. Text over 1 MiB is refused. Listed in the system's Services after a registration refresh (`known-issues.md`).
 - **Sidebar layout.**
   - A sidebar of **Send**, **Receive** and **History**, and **Settings** on iPad (the Mac keeps its Settings window). **How It Works** is a toolbar button that opens inside the screen.
   - The layout follows the window width, live: a Mac window, an iPad at full width or in a wide Split View gets the sidebar, and iPhone, Slide Over and a narrow Split View get Home.

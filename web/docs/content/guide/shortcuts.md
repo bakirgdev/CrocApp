@@ -30,6 +30,14 @@ Received text comes back as a file named `Received text.txt`.
 
 The action does not accept or decline for you. The prompt appears in CrocApp unless **Auto-Accept Transfers** is on in [Settings](settings.md#confirmation). If a received file has the same name as an existing one, the **When a File Already Exists** setting decides (Keep Both or Replace), and the action returns the new copies.
 
+## Find past transfers
+
+**Find Transfers** lists your [History](history.md) in a shortcut: filter by date, direction (sent or received), status or file name, and sort by date. Each result has a name, direction, status, date, file names and size, and opening one opens CrocApp at History. It returns nothing while **Save Transfer History** is off. It never returns a code phrase.
+
+## Send from the Mac Services menu
+
+On a Mac, select files in Finder or text in any app, then choose **Send with CrocApp** from the app menu's **Services** submenu (or the right-click menu). CrocApp comes forward at Send with the selection ready. Nothing is sent until you press Send. Text longer than 1 MiB is refused. If the item is missing, open System Settings > Keyboard > Keyboard Shortcuts > Services and check that it is on.
+
 ## One transfer at a time
 
 CrocApp runs one transfer at a time. If one is already running, the action fails with "CrocApp is already sending or receiving. Wait for it to finish."

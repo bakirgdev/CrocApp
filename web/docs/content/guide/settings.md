@@ -21,6 +21,7 @@ The **Menu bar** section has **Show in Menu Bar** (on by default) and **Open at 
 ## History and haptics
 
 - **Save Transfer History** (on by default): finished transfers are listed in [History](history.md), which stays on this device. Turn it off and new transfers are no longer recorded. What is already in History stays until you delete it, and the History screen says "History is off" while it is empty. A [Send as link](send-as-link.md) upload sent while this is off leaves no row, so you cannot revoke that link later. It stops working when it expires.
+- **Show History in Spotlight** (off by default): Spotlight on this device can find past transfers by their file names. It needs **Save Transfer History** on. Turn it off, or turn off **Save Transfer History**, and CrocApp removes what it added to Spotlight. Code phrases are never added.
 - **Haptics** (iPhone only, on by default): a short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer. Turn it off to silence all of them. Each event still shows on screen.
 
 ## Relay

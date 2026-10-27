@@ -12,6 +12,9 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- Past transfers are offered to Shortcuts and Siri: a **Find Transfers** action filters them by date, direction, status or file name, and a found transfer opens CrocApp at History. They answer with nothing while **Save Transfer History** is off.
+- **Show History in Spotlight** in Settings (off by default). Turn it on and Spotlight can find past transfers by their file names; turn it off, or turn off **Save Transfer History**, and CrocApp removes every transfer it added to Spotlight. Code phrases and code hints never go to Spotlight.
+- **Send with CrocApp** in the Services menu on a Mac. Select files in Finder, or text in any app, choose it from the app menu's Services submenu, and CrocApp opens at Send with the selection staged. Nothing is sent until you press Send. Text over 1 MiB is refused.
 - History rows open a detail screen with the status, date, size, file names and link, and **Send Again**, **Revoke Link** and **Delete**. On a Mac, double-click a row or press Return.
 - Deleting a History row whose Send as Link link still works asks whether to revoke the link first, so the files do not stay on the link server with no way to revoke them. **Delete** is disabled while that link is being revoked.
 

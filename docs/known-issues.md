@@ -212,6 +212,15 @@ Permanent or deferred, each with its reason.
   - The Expires line and relative dates refresh every minute, but whether **Revoke Link** is offered (`TransferController.canRevoke`) is read when the view next updates, so a link that expires on screen keeps the button until then. Tapping it fails with the usual "Couldn't revoke the link" alert.
   - Left because it needs a clock-driven refresh of the whole menu and swipe actions for a rare case. Revisit if the alert shows up in reports.
 
+- **History entities, Spotlight indexing and the Mac Send service are only partly verified.**
+  - **Verified:** the entity store, the two switches and the index calls by unit tests with a recording index. The real `CSSearchableIndex`, under a throwaway name, returns an indexed entity and no longer returns it once removed (`HistorySpotlightIndexTests`). On a Mac the Services entry is listed by `pbs -dump_pboard`, and `NSPerformService` with a file URL staged the file in Send in a running Direct build.
+  - **Not verified:** the Spotlight search UI, Shortcuts' Find Transfers and Open Transfer in the Shortcuts app, and any iPhone or iPad. `NSPerformService("Send with CrocApp")` with text reached the files entry instead of the text entry, because both entries share the menu title and the call picks by title, not by pasteboard type. Whether the real Services menu offers and runs the text entry for a text selection was not checked.
+  - **The entity id does not survive a reinstall or a reset store.** It is the JSON of SwiftData's `PersistentIdentifier`, which carries the store's identifier (`HistoryEntityID`). A saved shortcut that holds an old id finds nothing. Spotlight is unaffected, because the index is rebuilt in full at each launch. A stable id needs a UUID attribute on `TransferRecord`, which is a schema migration; left.
+  - **Open Transfer opens the History list, not the record.** No route carries a record yet.
+  - **A failed index call can leave a stale name in Spotlight** until the next History change or launch, which rebuild the index. The failure is logged (category `spotlight`).
+  - **Shortcuts reads History while Save Transfer History is on, whatever Show History in Spotlight says.** Only the Spotlight index has the extra switch.
+  - A service takes at most 1 MiB of text (`SendServicesProvider.maxTextBytes`); a larger selection is refused. Files have no limit there.
+
 ### Engine and croc behaviour
 
 - **When both relay addresses are customised, both are sent.**
