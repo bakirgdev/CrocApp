@@ -195,6 +195,7 @@ Not asked of the owner (D9: stop only for high-stakes decisions; each follows th
 ## Changes
 
 - 2026-10-27, build, step 5: the image check skips every URL with a scheme (`data:`, `mailto:`, `https:`) and `//host`, not only `^https?:`, and splits on commas only for `srcset`. The verifier found false findings on a `data:` URI and `mailto:` in probes. R5 still holds. Commit 4f0e0a1.
+- 2026-10-27, test, step 5 and step 3: `verify-docs.sh` also treats the target of a markdown link or `![](...)` image as showing a screenshot (R6; before, a PNG shown only by `![](...)` was a false "unused" finding), and matches `src`/`srcset` at the start of a line and in single quotes (R5). `capture-screenshots.sh --copy-web` fails first when `assets/screenshots/` is missing. R5 and R6 still hold. Commit fa90f86.
 
 ## SDLC feedback
 
