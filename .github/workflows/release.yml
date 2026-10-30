@@ -200,9 +200,13 @@ jobs:
           mkdir -p "$feed"
           cp "dist/CrocApp-$VERSION-arm64.dmg" "$feed/"
 
-          assets=$(gh release view --json assets --jq '.assets[].name')
-          if grep -qx appcast.xml <<< "$assets"; then
-            gh release download --pattern appcast.xml --dir "$feed"
+          # The first release has no earlier feed: `gh release view` fails
+          # when the repository has no release at all.
+          if [ -n "$(gh release list --limit 1 --exclude-drafts --exclude-pre-releases --json tagName --jq '.[].tagName')" ]; then
+            assets=$(gh release view --json assets --jq '.assets[].name')
+            if grep -qx appcast.xml <<< "$assets"; then
+              gh release download --pattern appcast.xml --dir "$feed"
+            fi
           fi
 
           # Sparkle offers an update only when CFBundleVersion goes up, and App
