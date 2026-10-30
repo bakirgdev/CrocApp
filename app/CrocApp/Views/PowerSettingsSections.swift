@@ -99,7 +99,7 @@ struct PowerSettingsSections: View {
             Text("Confirmation")
         } footer: {
             // A Section footer is not a StatusBanner surface, so a status
-            // color here would tint body text (colors.md → Contrast, rule 2).
+            // color here would tint body text (principles.md → Contrast, rule 2).
             if settings.autoAccept {
                 Text(
                     "Files from anyone who has your code are saved without a preview, unless Confirm on Both Sides is on. Replace overwrites existing files, and unsafe file names still cancel the transfer."

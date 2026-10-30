@@ -1,6 +1,6 @@
 # docs/
 
-Contributor and internals documentation: how CrocApp is built, how it works inside, how it ships, and what is known to be wrong with it. `README.md` indexes every file. How to use the app lives on the docs site (`web/docs/content/`); every visual and copy rule lives in `design/`.
+Contributor and internals documentation: how CrocApp is built, how it works inside, how it ships, and what is known to be wrong with it. `README.md` indexes every file. How to use the app lives on the docs site (`web/docs/content/`); every visual and copy principle lives in `design/`.
 
 ## Where a fact goes
 
@@ -23,7 +23,7 @@ One fact has one home. Everywhere else links to that home instead of restating i
 - **Check before writing.** Read the code, config or upstream source a claim is about. Mark anything not checked as "not verified", "inferred" or "unknown", in those words.
 - **Cite by file and heading text**, as in `BUILDING.md`, "Verification harnesses". Never by section number or line number.
 - **Plain English for a developer new to this repo.** One idea per sentence. A bullet stays a few lines; split anything longer, and use a table when rows compare. Define a term on first use or link `GLOSSARY.md`. Commas, colons or parentheses, not em dashes.
-- **UI words match the app exactly**: the control's label in bold, in the app's capitalization (`design/content.md`, "Capitalization").
+- **UI words match the app exactly**: the control's label in bold, in the app's capitalization (`design/voice.md`, "Capitalization").
 - **Headings are stable.** Other files cite them, so renaming one means updating every citation (`git grep` the old text).
 
 ## Keeping docs true

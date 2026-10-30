@@ -5,7 +5,7 @@ import Testing
 
 /// The failure each engine code and each controller-side reason ends in: its
 /// remedy, whether the user caused it, and the copy rules of
-/// design/content.md → Errors. Copy itself is pinned only where a script
+/// design/voice.md → Errors. Copy itself is pinned only where a script
 /// matches it.
 @MainActor @Suite struct TransferFailureTests {
     private func failure(
@@ -177,7 +177,7 @@ import Testing
         ]
     }
 
-    /// design/content.md → Errors: a failure says what to do. Only the user's
+    /// design/voice.md → Errors: a failure says what to do. Only the user's
     /// own cancel or decline, which is not a failure, has no detail.
     @Test func everyFailureButTheUsersOwnGivesANextStep() {
         for f in everyFailure where !f.endedByUser {
@@ -185,7 +185,7 @@ import Testing
         }
     }
 
-    /// design/content.md → Errors: a title of six words at most with no
+    /// design/voice.md → Errors: a title of six words at most with no
     /// period, and a detail of one sentence with one.
     @Test func everyFailureFollowsTheCopyRules() {
         for f in everyFailure {

@@ -16,7 +16,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 - **The Accessibility Inspector and VoiceOver audit has not run on any 1.0 view.**
   - It needs Accessibility Inspector and VoiceOver on iOS and macOS, so no automated session can do it.
   - Views to cover: the Keep Both / Replace sheet, the **When a File Already Exists** picker, the waiting screen's QR code, Share Link and relay note, Send as Link and its result screen, the stored-link row on Receive, History (Revoke and the row layout), the stored-server field, the Advanced settings page, and the menu-bar window.
-  - Checked so far without the tools: a code pass over every 1.0 view against `design/accessibility.md`, and the iPhone 17 Pro simulator at the largest accessibility text size. The sheet's buttons stack, status screens scroll, the code wraps, and the picker reads in full. Long names in the incoming list are middle-truncated by design.
+  - Checked so far without the tools: a code pass over every 1.0 view against `design/principles.md`, and the iPhone 17 Pro simulator at the largest accessibility text size. The sheet's buttons stack, status screens scroll, the code wraps, and the picker reads in full. Long names in the incoming list are middle-truncated by design.
   - Still to check by ear: whether VoiceOver reads an Advanced field's hint and its visible footnote or error twice, whether a decorative QR image with a label is exposed as an image, and Full Keyboard Access focus in the menu-bar window when its content changes.
   - Not looked at: the macOS layout of the changed views.
   - Not measured: the rendered size of the code field's system `PasteButton` against the 44 pt hit target. SwiftUI lets the app set only its border shape, label style and tint, so the system decides its size.
@@ -28,6 +28,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 
 ## Harnesses
 
+- **The app unit suite times out when the Mac is busy.** Run beside a docs-site build and a browser, about 15 `TransferControllerTests` and `ClipboardSecretTests` cases failed at about 68 s each; the same commit passed every case when `scripts/verify-swift.sh` ran alone. The tests wait on the main actor, so a starved main thread runs into Swift Testing's time limit. Run the suite with nothing heavy beside it, and re-run once before treating a timeout as a regression.
 - **No harness proves a LAN-discovery transfer on a custom multicast address.**
   - croc drops discovery packets from its own host's addresses, so two peers on one machine never find each other (CLI to CLI included).
   - The multicast case in `scripts/verify-interop.sh` instead listens on the group and asserts what each side announces.
@@ -50,22 +51,22 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - The compact layout loses the same state when the user pops back to Home, so this is not new, but the sidebar makes it a one-click loss.
   - Left because the screens own that state. Moving it into a model that outlives the screen would fix both layouts.
 - **The menu bar has no Clear History item.** The History screen's **Clear** toolbar button keeps its confirmation dialog in `HistoryView`'s own state, so `AppCommands` cannot reach it. A fix would publish the action with a focused value.
-- **A Mac list or form screen draws its scroll edge only as wide as the capped column.** `HistoryView` and the settings screens sit in a 480-wide column in the detail, and macOS 26 draws the hairline and, in dark mode, a slightly lighter band under the toolbar across that column only. The cap is the book's (`design/spacing-layout.md`, "Layout cap"). `scrollContentBackground` and `scrollEdgeEffectStyle` did not remove it, and `contentMargins` does nothing on a Mac list.
+- **A Mac list or form screen draws its scroll edge only as wide as the capped column.** `HistoryView` and the settings screens sit in a 480-wide column in the detail, and macOS 26 draws the hairline and, in dark mode, a slightly lighter band under the toolbar across that column only. The cap is the book's (`design/principles.md`, "Spacing and layout"). `scrollContentBackground` and `scrollEdgeEffectStyle` did not remove it, and `contentMargins` does nothing on a Mac list.
 - **`HomeView` and the sidebar detail each switch on `Route` to build a screen.** `Route.destination` (`Views/RegularLayout.swift`) is the shared copy, and `HomeView` still has its own because it was not touched.
 - **An iPhone Plus or Max in landscape reports regular width**, so by the book's rule (width, never device) it gets the sidebar. Not checked: no simulator was rotated to landscape.
 - **The views predate the amended design book.** What the book now specifies and the app does not do yet:
-  - Call sites in the other views still style text with `.secondary` instead of `Color.textSecondary` (`design/colors.md` rule 4); `HomeView`, `RecentTransfersSection`, `OnboardingView` and `HowItWorksView` follow it. The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
-  - The user's own cancel or decline ends on the failure `StatusBlock`, with the error glyph and tint, although `design/content.md`, "Errors", says it is not a failure. Its title stands alone with **Done**, as the book wants; `StatusBlock` has no neutral kind for it yet.
-  - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/content.md`, "Terminology").
-  - Not built: the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the extra motions in `design/motion.md`, "Vocabulary" (only the Insert of Home's pending-request banner is).
+  - Call sites in the other views still style text with `.secondary` instead of `Color.textSecondary` (`design/principles.md`, Contrast); `HomeView`, `RecentTransfersSection`, `OnboardingView` and `HowItWorksView` follow it. The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
+  - The user's own cancel or decline ends on the failure `StatusBlock`, with the error glyph and tint, although `design/voice.md`, "Errors", says it is not a failure. Its title stands alone with **Done**, as the book wants; `StatusBlock` has no neutral kind for it yet.
+  - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/voice.md`, "Terminology").
+  - Not built: the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the symbol-replace, numeric-text and waiting-pulse motions (only the fade-in of Home's pending-request banner is).
   - A Home recent-transfer row opens the History list, not the record's own detail (`design/components.md`, "Home"). History's detail screen exists, but no route opens it from outside the History list yet.
-  - On macOS, Home's grouped `Form` draws a section card behind the badge, banner and the two actions, because `.listRowBackground(Color.clear)` has no effect in a grouped macOS form. iOS draws no card there. Seen in a Debug build with `--screen home`; the regular-width layout (`design/platforms.md`, "Layout by width") is meant to replace Home on the Mac.
+  - On macOS, Home's grouped `Form` draws a section card behind the badge, banner and the two actions, because `.listRowBackground(Color.clear)` has no effect in a grouped macOS form. iOS draws no card there. Seen in a Debug build with `--screen home`; the regular-width layout (`design/principles.md`, "Platform adaptation") is meant to replace Home on the Mac.
 - **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
   - It is synchronous file I/O on the main actor, run by `SendView` when it builds the row. A network or iCloud volume could make it hitch.
   - Not measured. A fix would read the size once when files are staged.
 - **A little on-screen text cannot be translated yet.**
   - The `/s` after a transfer speed (`TransferStatusView.speedText`) and the receive-folder labels "Downloads/CrocApp" and "Documents" (`OutputFolderStore.defaultDisplayName`) are English text built by hand. `byteCount` already localizes the size itself.
-  - `CodeField.tooShortMessage` counts "characters" with `EngineConstraints.minCodeLength`, which is 6. It is not inflected (`design/content.md`, "Numbers"), so a minimum of 1 would read "1 characters". Every other count noun is inflected.
+  - `CodeField.tooShortMessage` counts "characters" with `EngineConstraints.minCodeLength`, which is 6. It is not inflected (`design/voice.md`, "Numbers"), so a minimum of 1 would read "1 characters". Every other count noun is inflected.
   - Fixing the speed needs a format string, and the folder labels need the system's folder names. Left because the app has one language so far (`knowledge/app-ui-architecture.md`, "Localization").
 
 ## Landing page
@@ -75,7 +76,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - The App Store and Mac App Store cards say "Coming soon" and show unlinked badges, because those apps are not released.
   - They become links when the apps ship, with real alt text (the markup carries a comment saying so).
 - **The hero mockup uses `--content-max-width`.**
-  - `design/web.md` allows this for an element that depicts the app.
+  - `design/implementation.md` allows this for an element that depicts the app.
   - The exception is narrow and easy to over-apply.
 - **The release status in `llms.txt` and `index.html` is hand-maintained and nothing checks it.**
   - `llms.txt`, the JSON-LD `softwareVersion` and the "available now" copy have to be edited on every release (`RELEASING.md`, "Each release").

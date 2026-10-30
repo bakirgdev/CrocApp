@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The five button variants. design/components.md → Button; the SwiftUI
-/// translation is design/swiftui.md → Components. Views never style a button
+/// translation is design/implementation.md → Components. Views never style a button
 /// ad hoc: they pick a variant.
 enum ButtonVariant {
     case prominent
@@ -79,7 +79,7 @@ extension View {
         buttonStyle(ButtonVariantStyle(variant: variant))
     }
 
-    /// design/accessibility.md → Hit targets: bare text buttons still get a
+    /// design/principles.md → Accessibility: bare text buttons still get a
     /// 44pt target on iOS. macOS keeps its own control sizing.
     func hitTarget() -> some View {
         #if os(iOS)

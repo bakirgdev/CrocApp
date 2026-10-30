@@ -25,8 +25,8 @@ scripts/assemble-site.sh          # writes ./_site/, landing at /, docs at /docs
 
 ## Content and styling rules
 
-- Page copy is bound by `design/content.md` (terminology, capitalization, the approved security claims) and `design/brand.md`. Headings and sidebar titles are sentence case; app controls are quoted in bold, Title Case, exactly as the app spells them.
-- Theme styling lives in `web/docs/src/css/custom.css`, mapped onto `design/tokens.css` with no literals (`design/web.md` → Docs site). The code theme is `src/prismTheme.ts`, the same token mapping. The navbar collapses at Docusaurus's own 996px breakpoint, not ours, so do not set `display` on a `.navbar__item` outside a `min-width: 997px` media query.
+- Page copy is bound by `design/voice.md` (terminology, capitalization, the approved security claims) and `design/brand.md`. Headings and sidebar titles are sentence case; app controls are quoted in bold, Title Case, exactly as the app spells them.
+- Theme styling lives in `web/docs/src/css/custom.css`, mapped onto `design/tokens.css` with no raw colors (`design/implementation.md` → Docs site). The code theme is `src/prismTheme.ts`, the same token mapping. The navbar collapses at Docusaurus's own 996px breakpoint, not ours, so do not set `display` on a `.navbar__item` outside a `min-width: 997px` media query.
 - Screenshots come from `scripts/capture-screenshots.sh --copy-web` into `web/docs/screenshots/{mac,iphone}/` as WebP (not under `static/`, so Docusaurus hashes them). A page references them by relative path as a light and dark pair on one line, each with a `#gh-light-mode-only` or `#gh-dark-mode-only` fragment: `![Send screen on macOS](../../screenshots/mac/send-files-light.webp#gh-light-mode-only)`. `custom.css` shows the one that matches the theme toggle. Every image carries `width` and `height`, so the page does not shift while it loads. The alt text must not contain an apostrophe. The phone-width cap in `custom.css` keys off the alt text, so an iPhone shot's alt must say "on iOS".
 
 ## Adding a page

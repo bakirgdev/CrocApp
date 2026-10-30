@@ -2,7 +2,7 @@ import type {PrismTheme} from 'prism-react-renderer';
 
 // Every value is a CSS custom property from design/tokens.css. prism-react-renderer
 // writes these as inline styles, and the tokens are light-dark() pairs, so one
-// object serves both color modes. design/web.md → Docs site.
+// object serves both color modes. design/implementation.md → Docs site.
 const prismTheme: PrismTheme = {
   plain: {
     color: 'var(--color-text-primary)',

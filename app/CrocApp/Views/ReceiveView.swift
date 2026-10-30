@@ -185,7 +185,7 @@ struct ReceiveView: View {
         }
     }
 
-    /// motion.md → Haptics and sound: a scan is announced as what it decoded.
+    /// principles.md → Haptics: a scan is announced as what it decoded.
     private static func scannedAnnouncement(_ link: TransferLink) -> String {
         switch link {
         case .code: String(localized: "Code scanned")

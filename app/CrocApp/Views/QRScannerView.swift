@@ -114,7 +114,7 @@ struct QRScannerSheet: View {
             reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: showsRejection)
     }
 
-    /// swiftui.md → Motion, "Insert".
+    /// implementation.md → Materials, motion and haptics, "Insert".
     private var rejectionTransition: AnyTransition {
         reduceMotion
             ? .identity

@@ -20,7 +20,7 @@ import Testing
             expiresAt: expiresAt)
     }
 
-    // MARK: - Dates (design/content.md → Dates)
+    // MARK: - Dates (design/voice.md → Dates)
 
     @Test func aDateInsideTheLastWeekIsRelative() {
         let sixDays = now.addingTimeInterval(-6 * 24 * 3600)

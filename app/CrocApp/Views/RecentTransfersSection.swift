@@ -5,7 +5,7 @@ import SwiftUI
 /// the view so a test can pin the wording (design/components.md → Home).
 struct RecentTransferSummary: Equatable {
     /// A date inside this window reads relative ("yesterday"); an older one
-    /// reads as a short absolute date (design/content.md → Dates).
+    /// reads as a short absolute date (design/voice.md → Dates).
     static let relativeWindow: TimeInterval = 7 * 24 * 60 * 60
 
     /// The file's name, "3 files", or "Text snippet". One line: HistoryRow's

@@ -126,7 +126,7 @@ swift test --package-path CrocKit
 Design and docs, no toolchain needed:
 
 ```bash
-scripts/verify-design.sh   # token mirrors, contrast, no literals (design/AGENTS.md)
+scripts/verify-design.sh   # token mirrors, contrast, no raw web colors (design/AGENTS.md)
 scripts/verify-docs.sh     # links, repo paths and stale markers in the markdown (docs/AGENTS.md)
 ```
 

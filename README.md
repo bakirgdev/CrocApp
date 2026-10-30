@@ -12,8 +12,8 @@
   <a href="https://www.bestpractices.dev/projects/15633"><img src="https://www.bestpractices.dev/projects/15633/badge" alt="OpenSSF Best Practices"></a>
   <a href="https://github.com/bakirgdev/CrocApp/releases/latest"><img src="https://img.shields.io/github/v/release/bakirgdev/CrocApp?color=555" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/platform-iOS%2026%20%7C%20iPadOS%2026%20%7C%20macOS%2026-555" alt="Platforms">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1E9E6A" alt="MIT License"></a>
-  <a href="https://crocapp.dev"><img src="https://img.shields.io/badge/site-crocapp.dev-1E9E6A" alt="Website"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-5C6B2E" alt="MIT License"></a>
+  <a href="https://crocapp.dev"><img src="https://img.shields.io/badge/site-crocapp.dev-5C6B2E" alt="Website"></a>
 </p>
 
 ## What it is

@@ -1,6 +1,6 @@
 # Brand
 
-The brandbook. Anyone making something that carries the CrocApp name (a screen, a page, a release image, a store listing, a post) starts here. The detailed rules live in the files this one points at.
+Anyone making something that carries the CrocApp name (a screen, a page, a release image, a store listing, a post) starts here. Tone and copy are `voice.md`; values are `tokens.css`.
 
 ## Positioning
 
@@ -11,57 +11,35 @@ Approved boilerplate, used verbatim:
 | Length | Text |
 |---|---|
 | Name | CrocApp |
-| Subtitle (≤ 30) | Send files with a code phrase |
+| Subtitle (at most 30 characters) | Send files with a code phrase |
 | One line | Send files, folders and text to another device with a short code phrase. Free, open source and end-to-end encrypted. |
 | Long | the App Store description in `docs/knowledge/app-store-listing.md` |
 
-## Personality
-
-**Trustworthy, private, fast, calm.** In that order when they conflict.
-
-- Calm over exciting: no urgency, no confetti, no exclamation marks.
-- Plain language over jargon: "end-to-end encrypted", not "PAKE-derived symmetric channel". The detail lives on How It Works, one tap deeper.
-- Never overstate security. Claims come only from the approved list in `content.md` → Claims.
-- Direction is always explicit: "Sending" and "Receiving" as words, never color or position alone.
-- Nothing is accepted without an explicit yes, unless the user turned on auto-accept.
-- Errors say what happened and what to do, a short title then one sentence, without blame: "The other device declined", "Ask them to send it again."
-
-Copy mechanics (case, terminology, numbers) are `content.md`.
-
-## Logo
+## Logo and icon
 
 **The app icon is the logo.** There is no separate logotype.
 
-- Source: `assets/CrocAppIcon.icon` (Icon Composer). The mascot's body, belly and outline layers sit on a mint gradient, with dark and tinted variants. `app/CrocApp/AppIcon.icon` is the copy Xcode builds; keep the two identical (`assets/AGENTS.md`).
-- The icon's gradient is the one gradient in the brand, because Icon Composer's Liquid Glass material is built from it. No other surface takes a gradient.
-- Show the icon only as the platform renders it, in its system mask. Never redraw, recolor, rotate, crop, outline or add a shadow to it, never put type or a badge on it, and never set it on a busy photo.
-- Clear space around the icon: at least a quarter of its width. Smallest size: 16px (the favicon).
-- **Wordmark**: the word "CrocApp" set in the system font (`--font-sans`, `--weight-bold`) in `--color-text-primary`. It sits beside the icon or the mascot, never inside it. Social cards pair it with the accent `lock` glyph.
+- Source: `assets/CrocAppIcon.icon` (Icon Composer). The mascot's body, belly and outline layers sit on a pale khaki gradient in light and a deep olive gradient in dark, with a tinted variant. `app/CrocApp/AppIcon.icon` is the copy Xcode builds; keep the two identical (`assets/AGENTS.md`).
+- Show the icon as the platform renders it, in its system mask. Do not redraw, recolor, rotate, crop or outline it, put type or a badge on it, or set it on a busy photo. Leave clear space of at least a quarter of its width, and do not go below 16px (the favicon).
+- **Wordmark**: the word "CrocApp" in the system font (`--font-sans`, `--weight-bold`) in `--color-text-primary`, beside the icon or the mascot, never inside it.
 
 ## Mascot
 
-The croc character in `assets/mascot.png` (1024px source, never edited, never served).
+The croc character in `assets/mascot.png` (1024px source, never edited, never served) is the palette source and may appear anywhere: onboarding, empty states, About, the landing page, the docs and social cards. Keep it out of a transfer's critical path, where it would compete with the code phrase and the progress.
 
-- A personality accent, not a UI element. Allowed: the landing footer and 404 page, the docs navbar mark, web empty states, social cards. **Never inside the app**, and never in a transfer flow.
-- Never recolor, flip, crop, stretch or add effects. It carries its own outline, so it works on both themes.
-- Smallest size: 32px. On web it renders from the one derivative, `web/landing/assets/img/mascot-web.webp` (128px), at `--mascot-size-web` or the navbar height.
-- Re-cut the derivative from the source rather than editing it: `sips -Z 128` then `cwebp -q 88 -alpha_q 100 -m 6`. The docs site copies the same file; there is no second derivative.
+- Do not recolor, flip, crop, stretch or add effects. It carries its own outline, so it works on both themes. Smallest size 32px.
+- On web it renders from the one derivative `web/landing/assets/img/mascot-web.webp` (128px) at `--mascot-size-web` or the navbar height. Re-cut it from the source: `sips -Z 128` then `cwebp -q 88 -alpha_q 100 -m 6`. The docs site copies the same file.
 
-## Color at a glance
+## Palette
 
-One accent: croc green, `#1E9E6A` light and `#2DC585` dark. No secondary brand hue. Status colors are Apple's system semantics, not brand colors: never repaint success green to match the accent, because the difference is the point. Everything else is Apple's neutral ladder.
+Taken from the mascot: **olive** is the brand color (500 `#83974F` is the mascot's body, 900 `#28350D` its ink), **khaki** (`--khaki-400`, the belly) is the second color, and dark olive is the ink. The accent aliases pick olive steps per theme (`principles.md`, "Color"). Khaki belongs to the icon, the mascot and illustration. The app and web UI stay olive plus Apple's neutrals and status colors.
 
-Accent is for primary actions, selection, links, file-type glyphs and progress. Never for large washes, gradients or decoration. Full palette, aliases and contrast: `colors.md`.
-
-## Type at a glance
-
-SF Pro and SF Mono through the system font, never a shipped font file, never a serif. The code phrase is always mono. A serif headline or a teal-to-green gradient means a generated mockup has drifted off-system: redo it against the tokens. Scale: `typography.md`.
+Type is the system font, SF Mono for code. Glyphs are SF Symbols in the app and Lucide on the web, with no illustration style beyond the mascot.
 
 ## Imagery
 
-- **Screenshots** come only from `scripts/capture-screenshots.sh`, in light and dark pairs, never hand-edited, cropped or retouched (`docs/knowledge/screenshots.md`). Pages show them unframed; we never draw a device bezel of our own.
-- **Social cards** are hand-made, in the layout below, and do not change without changing both.
-- **Glyphs** are SF Symbols in the app and Lucide on the web (`iconography.md`). No illustration style beyond the mascot.
+- **Screenshots** come only from `scripts/capture-screenshots.sh`, in light and dark pairs, never hand-edited, cropped or retouched (`docs/knowledge/screenshots.md`). Pages show them unframed, with no device bezel of our own.
+- **Social cards** are hand-made in the layout in the table below and change only together.
 
 ## Assets
 
@@ -70,23 +48,23 @@ SF Pro and SF Mono through the system font, never a shipped font file, never a s
 | App icon | `assets/CrocAppIcon.icon` | the logo; the app builds `app/CrocApp/AppIcon.icon` |
 | Mascot | `assets/mascot.png` | source for every mascot derivative |
 | Mascot, web | `web/landing/assets/img/mascot-web.webp` | landing, docs navbar, web empty states |
-| Favicons | `assets/favicons/` (source set), `web/landing/assets/img/favicon/` (served copy) | the app icon at web sizes: `favicon.ico` (16, 32, 48), `favicon-96x96.png`, `apple-touch-icon.png` (180), `web-app-manifest-{192x192,512x512}.png`, `site.webmanifest`. The docs site references the landing copy. Recipe below |
+| Favicons | `assets/favicons/` (source set), `web/landing/assets/img/favicon/` (served copy) | the app icon at web sizes: `favicon.ico`, `favicon-96x96.png`, `apple-touch-icon.png`, `web-app-manifest-{192x192,512x512}.png`, `site.webmanifest`. The docs site references the landing copy |
 | Screenshots | `web/docs/screenshots/`, `web/landing/assets/img/screenshots/` (WebP, tracked), from `assets/screenshots/{mac,iphone,ipad}/<screen>-{light,dark}.png` (capture output, gitignored) | README, docs, landing hero |
 | App Store screenshots | `assets/screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` (generated at submission, gitignored) | App Store Connect |
 | Social card | `web/landing/assets/img/og.jpg` | 1200×630, light: wordmark, accent `lock`, headline "Send files with a code phrase", the line "Encrypted end-to-end", the site URL, mascot on the trailing side |
-| GitHub social preview | `assets/github-social-preview.png` | 1280×640, the same layout in dark values (`--bg-secondary`, `--label-1`, `--label-2-text`, `--green-400`) with the repo URL; uploaded by hand in the repo settings |
-| Disk image background | `assets/dmg-background.tiff` | `components.md` → DiskImage |
+| GitHub social preview | `assets/github-social-preview.png` | 1280×640, the same layout in dark values with the repo URL; uploaded by hand in the repo settings |
+| Disk image background | `assets/dmg-background.tiff` | `docs/RELEASING.md`, "Disk image" |
 | App Store badges | `web/landing/assets/img/app-store.svg`, `mac-app-store.svg` | Apple's artwork, below |
 
 ### Favicon recipe
 
 Favicons are the app icon, not the bare mascot. Regenerate them whenever the icon changes:
 
-1. Render the icon: `ictool assets/CrocAppIcon.icon --export-image --output-file icon.png --platform iOS --rendition Default --width 1024 --height 1024 --scale 1` (`ictool` path in `assets/AGENTS.md`). The render is the masked squircle with transparent corners; the macOS platform renders the same pixels.
-2. Make an opaque touch master from it, because iOS and Android fill transparent corners with black: scale the render to 1198px (`sips -z 1198 1198`), center-crop to 1024 (`sips -c 1024 1024`), then fill the few remaining transparent corner pixels with the icon's own corner colors. The mascot stays inside the crop.
-3. On [realfavicongenerator.net](https://realfavicongenerator.net), upload the step 1 render as the main icon and set: regular icon "Use the icon as is", no dark icon; Apple touch icon "Use a dedicated icon" with the step 2 master, "Use the icon as is", app name `CrocApp`; web app manifest "Use a dedicated icon" with the step 2 master, "Use the icon as is", name and short name `CrocApp`, background and theme color `#FFFFFF`; Windows tile left at its default; favicon path `/`, no version, metadata injection skipped. Download the zip.
-4. Keep `favicon.ico`, `favicon-96x96.png`, `apple-touch-icon.png` and the two `web-app-manifest-*` PNGs. Drop `favicon.svg` (it only wraps a PNG) and the generated `site.webmanifest`: ours keeps `id`, `description`, `scope`, relative icon paths and `purpose: "any"`, with `theme_color` and `background_color` equal to `--bg-base` light (`#FFFFFF`). The mascot overflows the 80% maskable safe zone, so the icons are not `maskable`.
-5. Put the set in `assets/favicons/`, copy the same files to `web/landing/assets/img/favicon/`.
+1. Render the icon at 1024: `ictool assets/CrocAppIcon.icon --export-image --output-file icon.png --platform iOS --rendition Default --width 1024 --height 1024 --scale 1` (`ictool` path in `assets/AGENTS.md`). The render is the masked squircle with transparent corners.
+2. Run `swift scripts/favicons.swift icon.png assets/favicons`. It writes `favicon.ico`, `favicon-96x96.png`, and the opaque `apple-touch-icon.png` and `web-app-manifest-*` PNGs (iOS and Android fill transparent corners with black, so the script scales the render over the icon's own background gradient).
+3. Copy the set to `web/landing/assets/img/favicon/`.
+
+`site.webmanifest` is hand-kept: it carries `id`, `description`, `scope`, relative icon paths and `purpose: "any"`, with `theme_color` and `background_color` equal to `--bg-base` in light (`scripts/verify-design.sh` checks). The mascot overflows the maskable safe zone, so the icons are not `maskable`.
 
 ## Naming
 
@@ -108,7 +86,7 @@ Apple product names follow Apple's rules: singular, never possessive, never all 
 From Apple's [marketing guidelines](https://developer.apple.com/app-store/marketing/guidelines/) (re-check before shipping new artwork):
 
 - Use only Apple's badge artwork. Never modify, recolor, invert, angle or animate it; the gray border of the black badge is part of the artwork.
-- The black badge is preferred, in both themes. Use Apple's white badge only where the black one is visually heavy, and never when another platform's badge sits beside it.
+- The black badge is preferred, in both themes. Use the white badge only where the black one is visually heavy, and never when another platform's badge sits beside it.
 - Minimum height 40px onscreen (`--store-badge-height-web`). Clear space at least a quarter of the badge height, with nothing inside it.
-- The App Store badge comes first in any row of badges and sits in a subordinate position to the page's own message.
+- The App Store badge comes first in any row of badges and sits subordinate to the page's own message.
 - Never translate "App Store" or build a localized badge; Apple supplies the localizations.

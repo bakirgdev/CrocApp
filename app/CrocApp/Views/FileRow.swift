@@ -114,7 +114,7 @@ struct FileRow: View {
         .frame(minHeight: ComponentMetrics.fileRowMinHeight)
         .background(Color.surfaceCard, in: rowShape)
         .overlay(alignment: .bottom) {
-            // spacing-layout.md → Borders: every row but the last draws the
+            // principles.md → Spacing and layout: every row but the last draws the
             // inset hairline separator; the last omits it so corners stay clean.
             if !isLast {
                 Rectangle()
@@ -190,7 +190,7 @@ struct FileRow: View {
         )
     }
 
-    // design/iconography.md → Shared meanings: folder, image, text, generic file.
+    // design/implementation.md → Icons: folder, image, text, generic file.
     private static func symbolName(extension ext: String, isFolder: Bool) -> String {
         if isFolder { return "folder" }
         guard let type = UTType(filenameExtension: ext) else { return "doc" }
@@ -232,8 +232,8 @@ struct FileRow: View {
     }
 }
 
-/// A received row's context menu and drag-out (design/platforms.md →
-/// Received files). The menu repeats the row's own actions; it adds none.
+/// A received row's context menu and drag-out (docs/knowledge/app-ui-architecture.md →
+/// System surfaces). The menu repeats the row's own actions; it adds none.
 private struct ReceivedRowActions: ViewModifier {
     let received: FileRow.Received?
 

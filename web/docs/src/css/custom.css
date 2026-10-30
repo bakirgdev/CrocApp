@@ -5,8 +5,8 @@
  * same attribute Docusaurus toggles, so every light-dark() pair resolves and
  * dark needs no second block.
  *
- * Map Infima variables to tokens here. No raw hex, px or rem in this file
- * (design/web.md → The only literals web may write).
+ * Map Infima variables to tokens here. No raw colors in this file
+ * (design/implementation.md → Raw colors on web).
  *
  * future.v4 puts Infima and the classic theme in cascade layers and this file
  * is unlayered, so a declaration here beats theirs whatever its specificity,
@@ -153,7 +153,7 @@ h3 {
   letter-spacing: var(--tracking-headline);
 }
 
-/* The sticky nav is the one glass surface (design/web.md → Glass). Solid card
+/* The sticky nav is the one glass surface (design/implementation.md → Web). Solid card
    fill first, glass only where the browser can blur. Unprefixed only: the
    Lightning CSS minifier drops the unprefixed twin when both are written and
    leaves Chromium without a blur; it adds the Safari prefix itself. */
@@ -178,7 +178,7 @@ h3 {
 }
 
 /* Measure. Long lines of body text are the one thing a docs theme reliably
-   gets wrong; design/spacing-layout.md caps prose at --content-max-width-prose-web. */
+   gets wrong; design/principles.md caps prose at --content-max-width-prose-web. */
 .markdown > p,
 .markdown > ul,
 .markdown > ol,
@@ -225,7 +225,7 @@ h3 {
 
 /* Prose links on a fill surface. Inline code (an `a > code` link) and striped
    table rows paint --color-fill-tertiary, on which --color-accent-text is
-   4.28:1; the on-tint step clears AA there (colors.md rules 1 and 6). */
+   4.28:1; the on-tint step clears AA there (principles.md, Contrast). */
 .markdown table a,
 .markdown a:has(> code) {
   color: var(--color-accent-text-on-tint);
@@ -256,7 +256,7 @@ h3 {
 }
 
 /* The current page sits on an accent tint, so its label takes the on-tint step
-   (colors.md rules 1 and 6). The current heading in the TOC sits on the page,
+   (principles.md, Contrast). The current heading in the TOC sits on the page,
    where the plain accent-text step is enough. */
 .menu__link--active {
   color: var(--color-accent-text-on-tint);
@@ -266,7 +266,7 @@ h3 {
   color: var(--color-accent-text);
 }
 
-/* Hit targets (design/accessibility.md). */
+/* Hit targets (design/principles.md). */
 .menu__link,
 .table-of-contents__link,
 .footer__link-item {
@@ -292,7 +292,7 @@ h3 {
 }
 
 /* Admonitions: the status tint carries the kind, the text stays primary
-   (colors.md rule 2), and a link on a tint takes the on-tint accent step
+   (principles.md, Contrast), and a link on a tint takes the on-tint accent step
    (rules 1 and 6). Docusaurus maps note to secondary, tip to success. */
 .alert--secondary,
 .alert--info {
@@ -326,7 +326,7 @@ h3 {
 }
 
 /* The theme upper-cases admonition titles; the eyebrow is the only uppercase
-   label in the system (design/content.md → Capitalization). The titles are
+   label in the system (design/voice.md → Capitalization). The titles are
    single words (Note, Tip, Warning), so capitalize is enough. */
 .alert [class*='admonitionHeading'] {
   text-transform: capitalize;

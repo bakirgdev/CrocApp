@@ -366,7 +366,7 @@ extension TransferRecord.Status {
         }
     }
 
-    /// design/iconography.md → App only: the history status glyphs.
+    /// design/implementation.md → Icons: the history status glyphs.
     var symbolName: String {
         switch self {
         case .completed: "checkmark.circle.fill"
@@ -376,7 +376,7 @@ extension TransferRecord.Status {
         }
     }
 
-    /// A fill color for the glyph, never for text (colors.md → Contrast, rule 2).
+    /// A fill color for the glyph, never for text (principles.md → Contrast, rule 2).
     var glyphColor: Color {
         switch self {
         case .completed: Color.statusSuccess

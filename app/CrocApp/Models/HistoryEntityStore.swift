@@ -8,7 +8,7 @@ import SwiftData
 ///
 /// Two settings govern them. **Save Transfer History** governs both: while it
 /// is off every query answers with nothing, the same rule as the widget's empty
-/// line (`design/platforms.md`, "Widgets"), and nothing is indexed. Records
+/// line (`docs/knowledge/app-ui-architecture.md`, "System surfaces"), and nothing is indexed. Records
 /// saved before the user turned it off stay in History until deleted, as that
 /// setting's footer promises, but they are not offered outside the app.
 /// **Show History in Spotlight** (off by default) governs the index alone:

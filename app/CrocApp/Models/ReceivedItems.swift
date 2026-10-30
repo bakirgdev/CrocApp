@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 
 /// One top-level item a completed receive wrote, as the result screen lists it
-/// (design/platforms.md → Received files).
+/// (docs/knowledge/app-ui-architecture.md → System surfaces).
 nonisolated struct ReceivedItem: Hashable, Identifiable, Sendable {
     let url: URL
     let isFolder: Bool

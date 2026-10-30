@@ -6,7 +6,7 @@ import Observation
 /// Commands live outside the SwiftUI environment graph and need a stable
 /// reference.
 ///
-/// One `path` serves both layouts (design/platforms.md → Layout by width). In
+/// One `path` serves both layouts (design/principles.md → Platform adaptation). In
 /// compact width it is the `NavigationStack` path under Home. In regular width
 /// its first element is the sidebar row and the rest are the screens pushed in
 /// that row's detail, so every entry point that sets `path` lands correctly in

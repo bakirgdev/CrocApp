@@ -12,7 +12,7 @@ struct QRCodeView: View {
     @State private var image: CGImage?
 
     // White in both themes: scanners need the contrast whatever the appearance
-    // (design/swiftui.md → Allowed literals).
+    // (design/implementation.md → Raw colors on web).
     private let frameFill = Color.white
 
     var body: some View {

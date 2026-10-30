@@ -16,7 +16,7 @@ struct AboutSection: View {
 }
 
 extension View {
-    /// 44 pt target on iOS (design/accessibility.md); macOS rows keep their
+    /// 44 pt target on iOS (design/principles.md); macOS rows keep their
     /// natural height.
     fileprivate func linkRow() -> some View {
         #if os(iOS)

@@ -48,8 +48,8 @@ struct CodePhraseDisplay: View {
 /// A `secondary` Copy button that flips to `checkmark` and "Copied" for two
 /// seconds after each copy, then flips back the same way. design/components.md
 /// → CodePhraseDisplay and QRFrame, step 3: Copy Code, Copy Link and Copy Text
-/// all use it. The copy fires `.selection` and is announced (motion.md →
-/// Haptics and sound; accessibility.md → Announcements).
+/// all use it. The copy fires `.selection` and is announced (principles.md →
+/// Haptics; principles.md → Accessibility).
 struct CopyButton: View {
     let title: LocalizedStringKey
     let copy: () -> Void
@@ -96,7 +96,7 @@ struct CopyButton: View {
             Text(text)
         } icon: {
             Image(systemName: systemImage)
-                // motion.md → Vocabulary, Symbol replace: the system draws the
+                // principles.md → Motion: the system draws the
                 // effect; a content transition only runs inside an animated
                 // transaction, which the token curve supplies.
                 .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))

@@ -5,7 +5,7 @@ Thanks for taking the time. CrocApp is free, MIT-licensed, and open to any pull 
 Two things make this repo different from a typical SwiftUI app, and most review friction comes from missing them:
 
 1. **A green build is not evidence a transfer works.** Real behavior is proven by live-transfer harnesses in `scripts/`, not by the compiler.
-2. **Anything visual is bound to `design/`.** Tokens only, SF Symbols only, system font only.
+2. **Anything visual is bound to `design/`.** Tokens and system styles, SF Symbols only in the app, system font only.
 
 | | |
 |---|---|
@@ -93,12 +93,12 @@ govulncheck ./...
 
 ## Design rules
 
-Anything visual, in the app, the web or elsewhere, follows [`design/AGENTS.md`](design/AGENTS.md). In short, fixed design principles (brandbook), like: design tokens instead of raw hex, px, pt, or durations; SF Symbols only; system font only; a light and a dark value for every surface.
+Anything visual, in the app, the web or elsewhere, follows [`design/AGENTS.md`](design/AGENTS.md). In short, fixed design principles (brandbook), like: design tokens and system text styles instead of raw colors and fixed sizes; the system control first; SF Symbols only in the app; system font only; a light and a dark value for every surface.
 
 One script enforces it, and CI runs it on any change to `design/`, app Swift or color sets, or web CSS. Run it yourself after touching a value:
 
 ```bash
-scripts/verify-design.sh   # tokens.css = DesignTokens.swift = color sets, every contrast ratio in design/colors.md, and no hex, px or raw system colors in app or web code
+scripts/verify-design.sh   # tokens.css = DesignTokens.swift = color sets, every contrast ratio in `design/principles.md`, and no raw colors in web code
 ```
 
 A failure means your change or `design/` is wrong. Fix one of them, never the check.

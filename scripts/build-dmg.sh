@@ -36,7 +36,7 @@ mkdir -p "$OUT"
 rm -f "$DMG"
 cp -R "$APP" "$STAGE/CrocApp.app"
 
-# Window and icon geometry come from design/components.md -> DiskImage. Changing
+# Window and icon geometry come from docs/RELEASING.md, "Disk image". Changing
 # a number here without changing it there leaves the spec lying.
 create-dmg \
   --volname "CrocApp $VERSION" \

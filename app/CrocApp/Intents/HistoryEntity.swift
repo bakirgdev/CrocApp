@@ -6,7 +6,7 @@ import SwiftData
 
 /// A past transfer as Shortcuts and Spotlight see it: file names, direction,
 /// status, date and size. Never the code phrase and never the code hint
-/// (`design/platforms.md`, "System surfaces"), so nothing a bystander could
+/// (`docs/knowledge/app-ui-architecture.md`, "System surfaces"), so nothing a bystander could
 /// reuse leaves the History screen.
 ///
 /// The id is the record's SwiftData identifier (`HistoryEntityID`), which
@@ -38,7 +38,7 @@ struct HistoryEntity: AppEntity, IndexedEntity {
 
     /// The line under the name: direction, a status that is not the usual
     /// one, and the size when there is one. `3 files • 24 MB` is the result
-    /// screen's separator (`design/content.md`, "Numbers").
+    /// screen's separator (`design/voice.md`, "Numbers").
     let summary: String
 
     init(

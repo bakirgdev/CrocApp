@@ -27,7 +27,7 @@ Construction order in `CrocAppApp.init` matters: `AppSettings` (on in-memory sto
 
 ## Layout by width
 
-`ContentView` reads `@Environment(\.horizontalSizeClass)` and shows `HomeView` for `.compact` and `RegularLayout` for anything else. It never asks the device. The size class changes live, so a window resize or an iPad Split View change swaps the layout. SwiftUI reports `.regular` on macOS (measured on macOS 27), so every Mac window gets the sidebar. The design is `design/platforms.md`, "Layout by width".
+`ContentView` reads `@Environment(\.horizontalSizeClass)` and shows `HomeView` for `.compact` and `RegularLayout` for anything else. It never asks the device. The size class changes live, so a window resize or an iPad Split View change swaps the layout. SwiftUI reports `.regular` on macOS (measured on macOS 27), so every Mac window gets the sidebar. The design is `design/principles.md`, "Platform adaptation".
 
 **One path, two readings.** `AppRouter.path` is the only navigation state. `HomeView` hands it to its `NavigationStack`. In regular width its first element is the sidebar row and the rest are the screens pushed in that row's detail:
 
@@ -50,7 +50,7 @@ Every entry point sets `path` and so lands in either layout: `openSend(with:)`, 
 
 **The cap.** Send, Receive and How It Works cap their own column (`LayoutCap`) and the detail leaves them alone. The detail caps the list and form screens (`Route.isFullWidthList`: History, Settings, Advanced settings) with `safeAreaPadding(.horizontal)` of half the width above the cap, measured with `onGeometryChange`. On iPad that keeps the grouped background full width and the margin is the page. `contentMargins` on a list put it off-centre on iPad (measured), and on macOS it did nothing. On the Mac the list is a column of its own, so the scroll edge under the toolbar is as wide as the column. Do not add a `safeAreaPadding` or a `contentMargins` to a screen that caps itself.
 
-**The Mac window.** The sidebar's default width is 144, which truncates "Receive" beside its Review badge, so the sidebar column takes `min 200, ideal 240, max 320` on macOS (`platforms.md`, "macOS"). The iPad sidebar is the system's.
+**The Mac window.** The sidebar's default width is 144, which truncates "Receive" beside its Review badge, so the sidebar column takes `min 200, ideal 240, max 320` on macOS ("Windows and keyboard focus", below). The iPad sidebar is the system's.
 
 **Limits.** A screen's `@State` (staged files, typed text) is not kept when the selection changes or when the layout flips, and a pushed screen is not kept when the layout flips (`known-issues.md`).
 
@@ -79,7 +79,7 @@ The controller is the one `@Observable` the views use. Its pure pieces live in t
 ### Event handling
 
 - **`.progress` ticks (about 10 Hz) keep arriving while the accept prompt is unanswered, and must not clobber `.incoming`.** If they do, croc blocks in `GetInput` forever. The same guard protects `.confirmSend`. Ticks with `step == "waiting"` are ignored.
-- **A failure is picked by `EngineFailure.code`, never by text.** `TransferFailure(_:situation:)` checks the user's own cancel ("Transfer cancelled") and decline ("You declined the transfer") first, then maps the code. Those two set `endedByUser` and have no detail, because a cancel or decline the user made is not a failure (`design/content.md`, "Errors").
+- **A failure is picked by `EngineFailure.code`, never by text.** `TransferFailure(_:situation:)` checks the user's own cancel ("Transfer cancelled") and decline ("You declined the transfer") first, then maps the code. Those two set `endedByUser` and have no detail, because a cancel or decline the user made is not a failure (`design/voice.md`, "Errors").
 - It never shows `failure.message`: croc's wording changes per release, and a recovered panic carries a stack trace.
 - Each failure has a `remedy`: `.tryAgain`, `.openSettings(SettingsPlace)`, or nil when retrying would not help (`design/components.md`, "StatusBlock"). `TransferFailureTests` pins the remedy of every code.
 - When payload bytes moved, the resume hint replaces the detail. A stored transfer, which cannot resume, and the user's own cancel or decline never get it.
@@ -239,7 +239,7 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - Text is capped at `maxTextBytes` (1 MiB of UTF-8); a larger selection is refused with a message. The menu title is localized by `ServicesMenu.xcstrings`.
 
 **Menu bar commands.**
-- `Views/AppCommands.swift` is the menu bar on the Mac and the hardware-keyboard menu bar on iPad. Anything a toolbar button does has an item with a shortcut (`design/platforms.md`, "macOS", lists them all).
+- `Views/AppCommands.swift` is the menu bar on the Mac and the hardware-keyboard menu bar on iPad. Anything a toolbar button does has an item with a shortcut (the commands are below), and right-click menus are additive.
 - File: **Send…** (⌘1), **Send Clipboard Text…** (⌥⌘1), **Receive…** (⌘2), **Paste Code…** (⌥⌘2), **History** (⌘3) and the Show Receive Folder item (⇧⌘R). Transfer: **Cancel Transfer** (⌘.) and **Copy Code** (⇧⌘C). Help: **How It Works** (⌘?). iPad adds **Settings…** (⌘,) to the app menu; the Mac's comes from the Settings scene.
 - **Send…**, **Send Clipboard Text…**, **Receive…** and **Paste Code…** are disabled while a transfer is active. **Cancel Transfer** is enabled while `phase.canCancel`, which excludes the accept gate, and **Copy Code** while `phase.shownCode` is set. **History**, **Settings…** and **How It Works** always work and navigate through `AppRouter.showHistory()`, `showSettings()` and `showHowItWorks()` (the last pushes on what is open). A screen pushed on what is open goes through `AppRouter.push(_:)`: in regular width a path that does not start at a row (the empty path at launch) first takes the row the sidebar shows, so a pushed Settings never replaces the screen it came from.
 - **Send Clipboard Text…** reads the pasteboard text and calls `openSend(text:)`; **Paste Code…** parses the pasteboard with `TransferLink.parse` and calls `open(_:)`. Neither starts a transfer. Reading the pasteboard from a menu command is a programmatic read, so iOS shows its Allow Paste prompt (not verified on a device).
@@ -247,26 +247,106 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - On iPadOS it is **Show Receive Folder in Files**. It opens `shareddocuments://` plus the percent-encoded receive-folder path with `UIApplication.open`, which is the Files app's scheme for a local folder.
 - The iPad hand-off is not verified on a device. A user-picked provider folder (such as iCloud Drive) is expected to do nothing, because that scheme resolves local paths only.
 
+## Accept gate
+
+The incoming request is a phase of the transfer screen, not a sheet or an alert, so it cannot be dismissed by accident. It shows the direction header, the trust badge pill, the file list, a banner for each overwrite conflict and blocked-unsafe item, then **Decline** (destructive) and **Accept** (prominent; **Keep Both** and **Replace** when a name is taken). Nothing auto-advances and nothing is preselected.
+
+| Exit | What the other device learns | What the app does |
+| --- | --- | --- |
+| Decline | that you said no | responds, then the terminal phase |
+| Accept | that you said yes | responds, then the transfer |
+| Navigating away | nothing | nothing: the request stays live |
+
+- There is no Cancel and no "Not now": either would answer the sender on the user's behalf or promise a deferral the protocol cannot deliver. Only the sender's own timeout ends the wait. Navigating away never responds, not on backgrounding either.
+- A live request is never lost. While one is pending and the user is elsewhere, an info banner with **Review** sits on Home, and in regular width on every detail screen except the gate, next to the **Review** badge on the sidebar row. A both-sides confirm on a send is the same question and gets the same treatment. The banner is persistent, never a toast.
+- Decline is worded as telling the other device no. Nothing describes leaving as an action.
+- Auto-accept skips the gate. It is off by default on every platform, and only the user turns it on.
+
+## System surfaces
+
+What the app puts outside its windows. **On any glanceable surface, never show** a code phrase (it is the whole secret), a link (its `#` fragment is the key), the contents of a file or text, or a history record's code hint. A glanceable surface is one a bystander can read: a notification, a widget, a control, the Live Activity, the menu bar and the Dock. Styling is the system's: system chrome and text styles, the accent only as a fill or a glyph tint, never a custom glass or shadow. The rule is also a security requirement (`THREAT-MODEL.md`, "Privacy").
+
+| Surface | iPhone | iPad | Mac |
+| --- | --- | --- | --- |
+| Notification | yes | yes | yes |
+| Home Screen and Lock Screen widget, Control Center control | yes | yes | no |
+| Live Activity (the system draws it while a transfer runs in the background: title, file name, progress, Cancel) | yes | yes | no |
+| Menu bar icon, Dock tile | no | no | yes |
+
+**Notifications** are local only.
+- Two kinds, each its own setting: an incoming transfer waiting for an answer, and a transfer that finished or failed.
+- Posted only while the app is not active, and removed when the request is answered, the sender gives up or the app becomes active.
+- Interruption level is active, never time sensitive or critical, and there is no sound.
+- Incoming has one foreground action, **Review**, which opens the accept screen (as does a tap). There is no Accept, because the file list must be on screen before a yes, and no Decline, because that would answer from a Lock Screen with nothing in view. Finished has no action; a tap opens the result.
+- A cancel or decline the user made posts nothing.
+- Permission is asked in context, on the first send or the first open of Receive, never at launch or in onboarding. When denied, both settings are disabled and say why.
+- Each category carries a generic body for when the user hides previews.
+
+**Widgets.** Two, in the system container with system text styles. **Quick Actions** (small) offers Send and Receive, each opening its screen and starting nothing. **Recent Transfers** (medium) lists up to three records with direction glyph, name or count and relative date, and a tap opens the record in History. Only direction, status, display name or count and date cross to the widget, and file names are marked private so the system redacts them while the device is locked. With no transfers, or with Save Transfer History off, the widget shows its empty line. Direction glyphs join the accented group.
+
+**Control Center controls.** **Send** and **Receive**, also placeable on the Lock Screen and the Action button. A tap opens the app on that screen with nothing prefilled and nothing started, because a control that started a transfer would send or open a receive without a look. No state, number or code.
+
+**Menu bar icon (Mac).** One monochrome template glyph with no animation: `arrow.up.arrow.down.circle` at rest, its `.fill` while starting, waiting, connecting or transferring (with the tabular integer percent beside it when the total is known), and `exclamationmark.circle.fill` when a request waits or a failure is not yet dismissed. The accessibility label is "CrocApp" and the state in words, never a code phrase.
+
+**Dock tile (Mac).** A "1" badge while a request waits, cleared when answered; never a file count or a failure. While transferring with a known total, a determinate bar along the icon's lower edge that never moves backwards and takes no animation. Not verified against icon art on a Dock.
+
+**Received files.** After a completed receive the files list below the result as file rows. Quick Look is the primary action (a tap, or Space with a keyboard), and the app never opens, runs or interprets a received file itself. Each row has a trailing `ShareLink` and drags out as a copy of the file on iPad and Mac (iPhone has no drag between apps). A folder has no Quick Look: its action is the folder button. A text payload is not a row but a selectable text block with **Copy Text** and **Share**. Every action is also in the row's context menu.
+
+**Copy.** Titles and bodies for these surfaces. A notification shows a count and a size, written as the result screen writes them (`3 files • 24 MB`; a text payload is "Text snippet"), and never file names: a name is the first thing a bystander reads on a Lock Screen.
+
+| Surface | Title | Body |
+| --- | --- | --- |
+| Notification: a request waits | Files are waiting for your answer | `3 files • 24 MB` |
+| the same, previews hidden | | Open CrocApp to review. |
+| Notification action | **Review** | |
+| Notification: a send finished | Sending complete | `3 files • 24 MB` |
+| Notification: a receive finished | Receiving complete | `3 files • 24 MB` |
+| Notification: a link is ready | Link ready | Open CrocApp to copy or share it. |
+| Notification: a transfer failed | the failure's title | the failure's detail (`design/voice.md`, "Errors") |
+| a result, previews hidden | | Open CrocApp to see the result. |
+| Widget, no transfers | No transfers yet | |
+| Widget, Save Transfer History off | History is off | |
+| Widget and control labels | Send, Receive | |
+
+### Settings copy
+
+A row's label names the thing, in Title Case, as a noun phrase, never "Enable" or "Allow". A footer is one sentence in sentence case that says what the row changes.
+
+| Row | Footer |
+| --- | --- |
+| **Save Transfer History** | Finished transfers are listed in History, which stays on this device. |
+| **Show History in Spotlight** (off by default; disabled while Save Transfer History is off) | Spotlight on this device can find past transfers by their file names. |
+| Section "Notifications": **Incoming Transfers**, **Finished Transfers** | Shown only while CrocApp is in the background. |
+| **Haptics** (iPhone only) | A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer. |
+
+When the system has notifications off for CrocApp, both Notifications rows are disabled and the footer reads "Notifications are off for CrocApp in Settings." ("System Settings" on a Mac) with an **Open Settings** button. "Incoming" appears only in the label **Incoming Transfers** and the notification kind it names, because nothing is being received before the user says yes.
+
+## Windows and keyboard focus
+
+One main window on Mac and one scene on iPad: the transfer is app-wide and runs one at a time, so a second window could only mirror the first. The Mac main window is a single-instance `Window` scene and iPad turns multiple scenes off (`UIApplicationSupportsMultipleScenes` NO), so the sidebar selection and each detail's path live in `AppRouter.shared`. Closing the Mac window leaves the app running: the menu bar item stays and a running transfer finishes. A Dock click, a receive link or **Open CrocApp** brings the window back. The main window opens at 880×700 (minimum 720×560), Settings at 480×780 (minimum 480×420), and the Mac menu bar window is 300 wide.
+
+On arrival, a Mac and an iPad with a hardware keyboard put the caret in the first text field (Receive's code field); Send's screen takes keyboard focus instead so ⌘V reaches it. An iPad without a keyboard and an iPhone focus nothing, because the software keyboard covers half the screen. `HardwareKeyboard.isExpected` answers the question in code. A focus target that exists only to catch a paste hides its own ring and never the ring of the controls inside it. Macs have no camera, QR scan or local-network prompt: those are absent, not disabled.
+
 ## Transfer screen presentation
 
 The shared views route onto `design/`. A screen picks one of these instead of styling ad hoc.
 
-- `Views/ButtonVariants.swift`: `.buttonVariant(_:)` with `prominent`, `secondary`, `destructive`, `destructiveTinted`, `plain` (`design/components.md`, "Button"; `design/swiftui.md`, "Components"). It is a `PrimitiveButtonStyle`, so the label color sits on the label itself. `prominent` fills with `Color.accentSolid`, not `Color.accent`, so the white label clears 4.5:1 in light mode (`design/colors.md`, rule 3). The pending-count badge on Home uses it too. Disabled buttons get only the system dimming, never an extra opacity on the label. The same file holds `.hitTarget()`, the 44 pt iOS hit area for bare text buttons (`design/accessibility.md`, "Hit targets"); use it instead of a private copy.
+- `Views/ButtonVariants.swift`: `.buttonVariant(_:)` with `prominent`, `secondary`, `destructive`, `destructiveTinted`, `plain` (`design/components.md`, "Button"; `design/implementation.md`, "Components"). It is a `PrimitiveButtonStyle`, so the label color sits on the label itself. `prominent` fills with `Color.accentSolid`, not `Color.accent`, so the white label clears 4.5:1 in light mode (`design/principles.md`, Contrast). The pending-count badge on Home uses it too. Disabled buttons get only the system dimming, never an extra opacity on the label. The same file holds `.hitTarget()`, the 44 pt iOS hit area for bare text buttons (`design/principles.md`, "Accessibility"); use it instead of a private copy.
 - Filled `.destructive` is for Decline on the accept gate and the Clear History confirmation only. Cancel (waiting, transferring, confirm-send, menu bar) and Discard (`StagedFilesSheet`) are `.destructiveTinted`.
 - `DropZone`, `CodePhraseDisplay` (eyebrow, code, **Copy Code**; `compact` for the 300-wide menu bar column), `DirectionHeader` (arrow plus Sending or Receiving).
-- `ForwardProgressBar` never moves backwards, and `resetKey` snaps it when the measured thing changes (`design/motion.md`, "Choreography").
+- `ForwardProgressBar` never moves backwards, and `resetKey` snaps it when the measured thing changes (`design/principles.md`, "Motion").
 - `Support/Inflected.swift` resolves `^[3 file](inflect: true)` markup into a plain `String`.
 - **Accept gate.** `.incoming` offers Decline only, with no Cancel. Cancel would answer the sender on the user's behalf, so `TransferStatusView.showsCancel` is false there (`design/components.md`, "AcceptGate"). Leaving the screen answers nothing and stays silent.
-- `HomeView` shows a "Files are waiting for your answer" `StatusBanner` with **Review** (`router.path = [.receive]`) while the phase is `.incoming`, so a live request is never lost. The banner enters with the Insert transition and the container animates on `hasPendingRequest`, both `nil`/`.identity` under Reduce Motion (`design/motion.md`, "Vocabulary"). The transition expression is private to `HomeView`; hoist it into `Motion` when a second view needs it.
+- `HomeView` shows a "Files are waiting for your answer" `StatusBanner` with **Review** (`router.path = [.receive]`) while the phase is `.incoming`, so a live request is never lost. The banner enters with the Insert transition and the container animates on `hasPendingRequest`, both `nil`/`.identity` under Reduce Motion (`design/principles.md`, "Motion"). The transition expression is private to `HomeView`; hoist it into `Motion` when a second view needs it.
 - **Home is a grouped `Form`.** The badge, banner and the two actions are one row with a clear background, no separator and zero insets, so the actions keep their 100 pt minimum height (`actionMinHeight`) and the page scrolls at large text. `RecentTransfersSection` is the section below it (`design/components.md`, "Home").
-- **Recent transfers** (`Views/RecentTransfersSection.swift`): Home exists only at compact width (`ContentView.layout`), so the section never shows on the Mac or in a regular-width iPad window, where History is a sidebar row. `@Query` with a `FetchDescriptor` whose `fetchLimit` is 3 (newest first), so Home never loads the whole history. With **Save Transfer History** off it draws nothing, even when older records exist. With it on and no records it draws the EmptyState. Each row is a `NavigationLink(value: AppRouter.Route.history)` that opens the History list; it does not open the record's detail, which needs a route that carries the record. `RecentTransferSummary` holds the wording (title, status word, date, spoken label) and is unit tested. Its date reads relative inside a week and as a short absolute date after (`design/content.md`, "Dates"), unlike `HistoryRow`, which still uses the relative style for every age. Each row rebuilds its summary inside a `TimelineView(.everyMinute)`, so a relative date stays current while Home is open. `RecentTransfersSection.content(saveHistory:recordCount:)` decides hidden, empty or rows and is unit tested with the fetch limit and order (`RecentTransfersSectionTests`).
+- **Recent transfers** (`Views/RecentTransfersSection.swift`): Home exists only at compact width (`ContentView.layout`), so the section never shows on the Mac or in a regular-width iPad window, where History is a sidebar row. `@Query` with a `FetchDescriptor` whose `fetchLimit` is 3 (newest first), so Home never loads the whole history. With **Save Transfer History** off it draws nothing, even when older records exist. With it on and no records it draws the EmptyState. Each row is a `NavigationLink(value: AppRouter.Route.history)` that opens the History list; it does not open the record's detail, which needs a route that carries the record. `RecentTransferSummary` holds the wording (title, status word, date, spoken label) and is unit tested. Its date reads relative inside a week and as a short absolute date after (`design/voice.md`, "Dates"), unlike `HistoryRow`, which still uses the relative style for every age. Each row rebuilds its summary inside a `TimelineView(.everyMinute)`, so a relative date stays current while Home is open. `RecentTransfersSection.content(saveHistory:recordCount:)` decides hidden, empty or rows and is unit tested with the fetch limit and order (`RecentTransfersSectionTests`).
 - **Done.** `doneView` builds its `StatusBlock` with `StatusBlock(summary:receivedText:direction:)`: a summary croc did not mark successful becomes `TransferFailure.finishedWithProblems`. A receive then lists `ReceivedFilesList`: `ReceivedItems.locate` runs off the main actor over `offeredFileNames` and `startedAt`, and returns a folder once and a file at the name it was saved under (the newest Keep Both copy created since `startedAt`, as `ReceivedFileLocator` resolves one, through the shared `ReceivedFileLocator.keepBothOriginal`). A row is `FileRow(received:)`: tap for Quick Look, a share control, a context menu (**Quick Look**, **Share**, **Show in Finder** or **Show in Files**) and drag-out on Mac and iPad. A folder row has only the reveal action. A user-picked folder is read under its security scope, which the list takes itself because the controller released it. The name is drawn in its shown form.
-- **`StatusBlock` kinds.** `.success`, `.error` and `.neutral`. `.neutral` (grey fill, `slash.circle`) is the user's own Cancel or Decline (`TransferFailure.endedByUser`) and a revoked link, which are not failures (`design/content.md`, "Errors").
+- **`StatusBlock` kinds.** `.success`, `.error` and `.neutral`. `.neutral` (grey fill, `slash.circle`) is the user's own Cancel or Decline (`TransferFailure.endedByUser`) and a revoked link, which are not failures (`design/voice.md`, "Errors").
 - **Failure.** `failedView` shows a `TransferFailure` as a `StatusBlock` title and detail, then its actions stacked, large and full width: **Try Again** (`retry()`) or **Open Settings**, prominent, with **Done** secondary, or **Done** alone (`design/components.md`, "StatusBlock").
 - **Open Settings** goes to the failure's `SettingsPlace`. On macOS it sets `AppRouter.settingsTab`, which `SettingsView`'s tabs follow, and calls `openSettings`. On iOS it pushes `.settings` (and `.advancedSettings`) onto `router.path`, so Back returns to the result. A system permission opens the system Settings, as the local network banner does.
-- **Phase cross-fade.** `TransferStatusView` animates on `phaseKind` (the phase case without its payload), not on progress ticks, so only a real phase change cross-fades. It is `nil` under Reduce Motion (`design/motion.md`, "Choreography").
-- **Haptics.** Phase haptics live in `ContentView`: one `.phoneHaptic(trigger: TransferHaptic(controller.phase))` on the root. `TransferHaptic` has three cases (completed, failed, incoming), and a failure whose `endedByUser` is set (the user's own Cancel or Decline) stays silent. The fourth event, `.selection` for a copied or scanned code, fires from `CodePhraseDisplay` and `ReceiveView`. iPhone only, and silent while the **Haptics** setting is off (`phoneHaptic` checks both; `design/motion.md`, "Haptics and sound").
-- **Wording.** Status titles are sentence case ("Link ready"). Controls are Title Case (**Send as Link**, **Local Network Only**, **Auto-Accept Transfers**). Section headers, footers and descriptions stay sentence case (`design/content.md`, "Capitalization"). A stored transfer still reads Sending or Receiving, never Uploading or Downloading, and "incoming" is not user-facing (`design/content.md`, "Terminology").
+- **Phase cross-fade.** `TransferStatusView` animates on `phaseKind` (the phase case without its payload), not on progress ticks, so only a real phase change cross-fades. It is `nil` under Reduce Motion (`design/principles.md`, "Motion").
+- **Haptics.** Phase haptics live in `ContentView`: one `.phoneHaptic(trigger: TransferHaptic(controller.phase))` on the root. `TransferHaptic` has three cases (completed, failed, incoming), and a failure whose `endedByUser` is set (the user's own Cancel or Decline) stays silent. The fourth event, `.selection` for a copied or scanned code, fires from `CodePhraseDisplay` and `ReceiveView`. iPhone only, and silent while the **Haptics** setting is off (`phoneHaptic` checks both; `design/principles.md`, "Haptics").
+- **Wording.** Status titles are sentence case ("Link ready"). Controls are Title Case (**Send as Link**, **Local Network Only**, **Auto-Accept Transfers**). Section headers, footers and descriptions stay sentence case (`design/voice.md`, "Capitalization"). A stored transfer still reads Sending or Receiving, never Uploading or Downloading, and "incoming" is not user-facing (`design/voice.md`, "Terminology").
 
 ## History
 
@@ -364,7 +444,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 - Side effect: the app is listed in Finder's "Open With" for everything. `INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace[sdk=macosx*]=YES` is required, or Xcode auto-injects an invalid `NO`.
 - `Views/SettingsView.swift` has a **General** tab (output-folder **Change…** and **Reset**, **Show in Finder**, the menu bar section, the power sections, About) and an **Advanced** tab.
 - `Views/AppCommands.swift` provides the File, Transfer and Help commands ("Menu bar and Shortcuts").
-- **One main window.** `CrocAppApp.mainScene` is a single-instance `Window("CrocApp", id: "main")` with `.defaultSize(880×700)`, content `minWidth 720` and `minHeight 560` (the sidebar layout, `platforms.md`, "macOS"). A frame saved by an earlier build (`NSWindow Frame main` in the app's defaults) wins over the default size, and the minimum clamps it. One transfer runs at a time, so a second window could only mirror the first with a navigation path of its own; `AppRouter.shared` is the one path.
+- **One main window.** `CrocAppApp.mainScene` is a single-instance `Window("CrocApp", id: "main")` with `.defaultSize(880×700)`, content `minWidth 720` and `minHeight 560` (the sidebar layout, "Windows and keyboard focus"). A frame saved by an earlier build (`NSWindow Frame main` in the app's defaults) wins over the default size, and the minimum clamps it. One transfer runs at a time, so a second window could only mirror the first with a navigation path of its own; `AppRouter.shared` is the one path.
 - Apple's `Window` quits the app when it closes. `AppDelegate.applicationShouldTerminateAfterLastWindowClosed` returns false, so a running transfer and the menu-bar item outlive the window. Measured on macOS 27: with the delegate method missing, `performClose` on the window ended the process; with it, the process stayed and the window was `isVisible == false`.
 - The window comes back from a reopen (`open -a`, the event a Dock click sends; the Dock click itself was not tried), from a link, and from **Open CrocApp** in the menu-bar window. `openWindow(id:)` opens a closed `Window` scene and orders an open one to the front (Apple's `OpenWindowAction`), so `MenuBarQuickSendView.openMainWindow` is `NSApp.activate()` plus `openWindow(id:)`. Measured with the window closed: `open -a` and a link each made it visible again, and `openWindow(id:)` called from the menu-bar scene did too. With it open there was still one window. The menu-bar button itself was not clicked.
 - The old `.handlesExternalEvents(preferring: [], allowing: ["*"])` is gone, because a `Window` is never duplicated by an opened URL.
@@ -458,7 +538,7 @@ Three things no build writes, so edit them by hand:
 1. In Xcode, open each catalog and add the language, which also adds it to the project's regions.
 2. Translate. Keep every placeholder (`%@`, `%lld`, `${applicationName}`), and move it where the grammar needs it. Give each count key plural variations: `^[%lld file](inflect: true)` only works for the languages Apple's automatic grammar agreement supports (not checked which), and the other languages need explicit variations.
 3. Translate the three phrases in `AppShortcuts.xcstrings`, each with `${applicationName}`, and the two permission texts in `InfoPlist.xcstrings`.
-4. Test with the scheme's **App Language** option, or the launch argument `-AppleLanguages (xx)`. Check the longest strings against `design/spacing-layout.md`: a translation is often longer than the English.
+4. Test with the scheme's **App Language** option, or the launch argument `-AppleLanguages (xx)`. Check the longest strings against `design/principles.md`: a translation is often longer than the English.
 5. The docs site (`web/docs/`), the landing page and the store listing (`app-store-listing.md`) are separate and not in the catalogs.
 
 ## SwiftUI and Xcode API facts

@@ -20,7 +20,7 @@ struct HomeView: View {
         return false
     }
 
-    /// motion.md → Vocabulary, Insert: the banner fades in while travelling
+    /// principles.md → Motion: the banner fades in while travelling
     /// down into place, and leaves with opacity alone. Instant under Reduce
     /// Motion.
     private var bannerTransition: AnyTransition {

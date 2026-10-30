@@ -6,8 +6,8 @@ import UIKit
 
 /// The Save Transfer History, Show History in Spotlight and Haptics rows, shared by the macOS Settings
 /// scene and the iOS settings screen. Labels and footers are fixed by
-/// design/content.md → Settings; a footer we write takes
-/// `Color.textSecondary` (design/colors.md, rule 4).
+/// docs/knowledge/app-ui-architecture.md → Settings copy; a footer we write takes
+/// `Color.textSecondary` (design/principles.md, Contrast).
 struct GeneralSettingsSections: View {
     @Environment(AppSettings.self) private var settings
 
@@ -31,7 +31,7 @@ struct GeneralSettingsSections: View {
 
         #if os(iOS)
         // iPhone only: iPad's haptics are inconsistent across models
-        // (design/motion.md, "Haptics and sound").
+        // (design/principles.md, "Haptics").
         if UIDevice.current.userInterfaceIdiom == .phone {
             Section {
                 Toggle("Haptics", isOn: $settings.haptics)

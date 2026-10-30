@@ -40,7 +40,7 @@ struct TransferStatusView: View {
     }
 
     /// The phase case without its payload: the cross-fade keys on this, not on
-    /// every progress tick (design/motion.md → Choreography).
+    /// every progress tick (design/principles.md → Motion).
     private enum PhaseKind: Hashable {
         case idle, starting, waiting, connecting, confirmSend, incoming
         case transferring, done, stored, failed
@@ -81,7 +81,7 @@ struct TransferStatusView: View {
                 // content, which would squeeze wrapping text into ellipses.
                 // A running transfer reads down from its header, so nothing
                 // above the header, the badge or the code phrase ever changes
-                // and none of them moves (motion.md → Choreography, rule 2).
+                // and none of them moves (principles.md → Motion).
                 // A result sits in the middle.
                 content
                     .fixedSize(horizontal: false, vertical: true)
@@ -146,7 +146,7 @@ struct TransferStatusView: View {
     }
 
     /// The direction header and the trust badge, which persist from the start
-    /// of a transfer to its result (motion.md → Choreography, rule 2).
+    /// of a transfer to its result (principles.md → Motion).
     private var header: some View {
         VStack(spacing: Spacing.space5) {
             DirectionHeader(direction: controller.direction, pulses: phaseKind == .waiting)
@@ -322,8 +322,8 @@ struct TransferStatusView: View {
                     .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
             }
-            // The header's pulsing arrow says the app is alive (motion.md →
-            // Vocabulary, Pulse); this says what it waits for.
+            // The header's pulsing arrow says the app is alive (principles.md →
+            // Motion); this says what it waits for.
             Text("Waiting for the other device…")
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
@@ -346,7 +346,7 @@ struct TransferStatusView: View {
     private var confirmSendView: some View {
         VStack(spacing: Spacing.space5) {
             // Decorative glyph in a status color: allowed as a fill, never as
-            // a label (colors.md → Contrast, rule 2).
+            // a label (principles.md → Contrast, rule 2).
             Image(systemName: "person.crop.circle.badge.checkmark")
                 .font(.system(size: confirmGlyphSize))
                 .foregroundStyle(Color.statusInfo)
@@ -425,7 +425,7 @@ struct TransferStatusView: View {
         }
     }
 
-    /// motion.md → Vocabulary, Numeric text; digits swap instantly under
+    /// principles.md → Motion; digits swap instantly under
     /// Reduce Motion.
     private var numericTransition: ContentTransition {
         reduceMotion ? .identity : .numericText()
@@ -483,8 +483,8 @@ struct TransferStatusView: View {
         }
     }
 
-    /// The selectable text and its two actions (platforms.md → Received
-    /// files: a text payload is not a row).
+    /// The selectable text and its two actions (docs/knowledge/app-ui-architecture.md →
+    /// System surfaces: a text payload is not a row).
     private func receivedTextBlock(_ text: String) -> some View {
         VStack(spacing: Spacing.space5) {
             ScrollView {
@@ -591,8 +591,8 @@ private func resultAction(
     .controlSize(.large)
 }
 
-/// The live speed, refreshed at most once a second (motion.md → Vocabulary,
-/// rule 3: a roll that restarts five times a second reads as a blur). It
+/// The live speed, refreshed at most once a second (principles.md → Motion: a roll
+/// that restarts five times a second reads as a blur). It
 /// samples the controller on its own clock instead of observing it, so a
 /// progress tick does not redraw it.
 private struct SpeedText: View {
@@ -617,15 +617,15 @@ private struct SpeedText: View {
     }
 
     /// An unknown or zero speed is an em dash, never "0 B/s": a zero reads as
-    /// a stall (content.md → Numbers).
+    /// a stall (voice.md → Numbers).
     private var text: String {
         guard bytesPerSecond > 0 else { return "—" }
         return "\(Int64(bytesPerSecond).formatted(.byteCount(style: .file)))/s"
     }
 }
 
-/// What a completed receive wrote, as `FileRow`s (platforms.md → Received
-/// files). Quick Look previews a file; the app never opens one itself.
+/// What a completed receive wrote, as `FileRow`s (docs/knowledge/app-ui-architecture.md →
+/// System surfaces). Quick Look previews a file; the app never opens one itself.
 private struct ReceivedFilesList: View {
     let folder: URL
     let names: [String]
@@ -874,7 +874,7 @@ struct IncomingRequestView: View {
             reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: conflicts.isEmpty
         )
         // A phase change moves no VoiceOver focus, so say what arrived
-        // (accessibility.md → Announcements). Low priority queues it behind
+        // (principles.md → Accessibility). Low priority queues it behind
         // the blocked banner's own announcement instead of cutting it off.
         .onAppear {
             var message = AttributedString(

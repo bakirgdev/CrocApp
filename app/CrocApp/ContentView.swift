@@ -129,7 +129,7 @@ struct ContentView: View {
             )
     }
 
-    /// design/platforms.md → Layout by width: compact is Home and one stack,
+    /// design/principles.md → Platform adaptation: compact is Home and one stack,
     /// anything else the sidebar. SwiftUI reports `.regular` on macOS, where
     /// every window gets the sidebar.
     @ViewBuilder private var layout: some View {

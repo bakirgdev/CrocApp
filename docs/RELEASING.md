@@ -88,6 +88,14 @@ Two build settings on the `CrocApp Direct` target configure Sparkle:
 
 The release key is plain text that the owner keeps (made with `openssl`, see "One-time setup"), not a keychain item, so Sparkle's `generate_keys` is not used. The owner's copy is the `SPARKLE_ED_PRIVATE_KEY` secret.
 
+## Disk image
+
+The macOS download's Finder window is the first CrocApp anyone sees. `scripts/build-dmg.sh` passes this geometry to `create-dmg`, so change the script and this section together.
+
+- **Window** 660×400, icons 128, the app at (165, 170) and the Applications alias at (495, 170).
+- **Background** `assets/dmg-background.tiff`, a 1x and 2x multi-representation TIFF (`tiffutil -cathidpicheck bg.png bg@2x.png -out dmg-background.tiff`) filled with `--bg-secondary` dark. Positions are centers measured from the image top, which Finder draws under the 32pt title bar: the title "CrocApp" (title3 semibold, `--label-1` dark) at y 44, a Lucide `arrow-right` midway between the icons at y 170 (44×44, stroke 1.5, `--label-2-text` dark), one label plate under each icon at y 254 (140×26, radius 13, `rgba(235,235,245,0.85)`), and the hint "Drag CrocApp onto Applications" (footnote, `--label-2-text` dark) at y 316.
+- **Dark only, with label plates.** Finder shows one fixed image regardless of appearance, and with a background picture set it draws icon labels black in both appearances (verified on macOS 27). The plates keep those labels readable on the dark fill; a plate center sits 84pt below its icon center, where Finder puts a 128pt icon's label. Keep everything inside the top 340pt, because Finder clips at about 368pt under the title bar, and 340 with the path bar on. No mascot or accent.
+
 ## Testing a Sparkle update locally
 
 This proves that a Release `CrocApp Direct` build installs a newer one. It uses a throwaway Ed25519 key, never the release key, and a feed on localhost. Sparkle accepts an `http` localhost feed and only logs a warning about HTTPS, so no ATS exception is needed.
