@@ -273,7 +273,7 @@ enum AutoVerify {
         func fail(_ message: String) {
             try? "error \(message)".write(to: resultURL, atomically: true, encoding: .utf8)
         }
-        let quickSend = MenuBarQuickSend(controller: controller)
+        let quickSend = MenuBarQuickSend(controller: controller, outputFolder: OutputFolderStore())
         if let i = args.firstIndex(of: "--auto-menubar-send"), i + 1 < args.count {
             guard quickSend.send(urls: [URL(fileURLWithPath: args[i + 1])]) else {
                 fail("menu-bar send did not start")

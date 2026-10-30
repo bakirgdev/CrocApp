@@ -9,12 +9,36 @@ import Observation
 @Observable
 final class MenuBarQuickSend {
     private let controller: TransferController
+    private let outputFolder: OutputFolderStore
 
     /// Why the last tap did nothing, for the window to show.
     private(set) var notice: String?
 
-    init(controller: TransferController) {
+    init(controller: TransferController, outputFolder: OutputFolderStore) {
         self.controller = controller
+        self.outputFolder = outputFolder
+    }
+
+    /// Receives with a code or any link CrocApp opens (`TransferLink`) into the
+    /// configured folder, as the Receive intent does. Returns false when
+    /// nothing was started, and says why in `notice`.
+    @discardableResult
+    func receive(_ input: String) -> Bool {
+        guard !controller.isActive else { return false }
+        guard let link = TransferLink.parse(input) else {
+            notice = String(localized: "Enter a code phrase or a download link.")
+            return false
+        }
+        notice = nil
+        let folder = outputFolder.url
+        let scoped = outputFolder.isUserSelected
+        switch link {
+        case .code(let code):
+            controller.start(.receive(code: code, folder: folder, folderIsScoped: scoped))
+        case .stored(let url):
+            controller.start(.storedReceive(link: url, folder: folder, folderIsScoped: scoped))
+        }
+        return true
     }
 
     /// Sends files and folders with a generated code. Returns false when

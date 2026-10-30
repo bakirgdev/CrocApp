@@ -58,7 +58,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - Call sites in the other views still style text with `.secondary` instead of `Color.textSecondary` (`design/principles.md`, Contrast); `HomeView`, `RecentTransfersSection`, `OnboardingView` and `HowItWorksView` follow it. The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
   - The user's own cancel or decline ends on the failure `StatusBlock`, with the error glyph and tint, although `design/voice.md`, "Errors", says it is not a failure. Its title stands alone with **Done**, as the book wants; `StatusBlock` has no neutral kind for it yet.
   - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/voice.md`, "Terminology").
-  - Not built: the Notifications settings, local notifications, widgets, the Control Center control, the menu bar icon states, the Dock badge and progress, Quick Look and drag-out of received files, and the symbol-replace, numeric-text and waiting-pulse motions (only the fade-in of Home's pending-request banner is).
+  - Not built: widgets, the Control Center control, Quick Look and drag-out of received files, and the symbol-replace, numeric-text and waiting-pulse motions (only the fade-in of Home's pending-request banner is).
   - A Home recent-transfer row opens the History list, not the record's own detail (`design/components.md`, "Home"). History's detail screen exists, but no route opens it from outside the History list yet.
   - On macOS, Home's grouped `Form` draws a section card behind the badge, banner and the two actions, because `.listRowBackground(Color.clear)` has no effect in a grouped macOS form. iOS draws no card there. Seen in a Debug build with `--screen home`; the regular-width layout (`design/principles.md`, "Platform adaptation") is meant to replace Home on the Mac.
 - **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
@@ -196,7 +196,7 @@ Permanent or deferred, each with its reason.
   - In-app **Scan QR Code** and Paste work.
 - **The menu-bar window cannot take a drop on the icon itself.**
   - `MenuBarQuickSendView`'s drop zone exists only while the window is open, so the user clicks the icon first and then drops.
-  - A `MenuBarExtra` has no drop target on its status item. The **Choose Files...** button needs no drag.
+  - A `MenuBarExtra` has no drop target on its status item: SwiftUI's `MenuBarExtra` documentation (Xcode 27.2 SDK) lists no drop or drag API for it. The **Choose Files...** button needs no drag.
 - **A Shortcuts send action returns at the code, not at the end of the transfer.**
   - `SendFilesIntent` and `SendTextIntent` finish when `awaitCode()` sees `.waiting`. A shortcut that goes on to quit CrocApp, or a user who closes it, ends the transfer before the receiver has the files. The dialog says "Keep CrocApp open until the transfer ends."
   - The code has to reach the receiver while the sender is still waiting, so the action cannot wait for the end. Receive does wait for the end.
