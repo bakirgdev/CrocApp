@@ -4,7 +4,7 @@ import SwiftUI
 import UIKit
 #endif
 
-/// The Save Transfer History, Show History in Spotlight and Haptics rows, shared by the macOS Settings
+/// The Save Transfer History, Show History in Spotlight, Notifications and Haptics rows, shared by the macOS Settings
 /// scene and the iOS settings screen. Labels and footers are fixed by
 /// docs/knowledge/app-ui-architecture.md → Settings copy; a footer we write takes
 /// `Color.textSecondary` (design/principles.md, Contrast).
@@ -27,6 +27,17 @@ struct GeneralSettingsSections: View {
         } footer: {
             Text("Spotlight on this device can find past transfers by their file names.")
                 .foregroundStyle(Color.textSecondary)
+        }
+
+        Section {
+            Toggle("Notifications", isOn: $settings.notificationsEnabled)
+            Toggle("Show File Names in Notifications", isOn: $settings.notificationsShowFileNames)
+                .disabled(!settings.notificationsEnabled)
+        } footer: {
+            Text(
+                "When CrocApp is in the background, a transfer that finishes, fails or needs your answer sends a notification. It never shows a code phrase or link, and shows file names only if you turn that on. CrocApp asks the system for permission when you start your first transfer."
+            )
+            .foregroundStyle(Color.textSecondary)
         }
 
         #if os(iOS)

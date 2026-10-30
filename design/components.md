@@ -124,7 +124,7 @@ QR capture, iOS only: a sheet with a Cancel-only toolbar and the live camera, wi
 
 ### MenuBarQuickSend
 
-The macOS menu bar window: a compact DropZone, the code in mono, one progress bar with the direction header, and the same buttons as the main window. Everything it does, the main window does too.
+The macOS menu bar window: a compact DropZone, a compact CodeField with **Receive**, the code in mono, one progress bar with the direction header, and the same buttons as the main window. Everything it does, the main window does too.
 
 ---
 
