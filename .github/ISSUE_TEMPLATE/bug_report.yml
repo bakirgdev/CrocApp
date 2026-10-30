@@ -66,7 +66,7 @@ body:
     attributes:
       label: App and OS version
       description: The app version and build from Settings, under About (or the commit SHA for a source build), plus the OS version.
-      placeholder: "1.0.0 (2), macOS 27.0.1"
+      placeholder: "1.1.0 (3), macOS 27.0.1"
     validations:
       required: true
 

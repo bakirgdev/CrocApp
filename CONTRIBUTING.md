@@ -43,7 +43,7 @@ Issues labeled `help wanted` or `good first issue` are open for anyone to pick u
 
 ## Setup
 
-Requires **macOS 26**, **Xcode 27**, and **Go 1.27.3** (or newer).
+Requires a Mac with macOS 26 or newer, Xcode and Go. [`docs/BUILDING.md`](docs/BUILDING.md), "Prerequisites", lists the exact versions and where each is pinned.
 
 ```bash
 git clone https://github.com/bakirgdev/CrocApp.git
@@ -53,6 +53,19 @@ cd CrocApp
 Also needed: `croc` CLI (`brew install croc`; `croc --version` must match the pin in `crocmobile/go.mod`, otherwise `go install github.com/schollz/croc/v11@<pin>`) and, only for `PUBLIC_POOL=1` harness runs, outbound network access to the public relay (the harnesses otherwise start a local relay).
 
 The first build, the full toolchain table and every check are in [`docs/BUILDING.md`](docs/BUILDING.md). How the code fits together: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+### Editor setup
+
+Xcode needs nothing extra. For another editor with SourceKit-LSP (VS Code, Zed, Neovim), generate a `buildServer.json` once, after one Xcode or `xcodebuild` build of the scheme:
+
+```bash
+brew install xcode-build-server
+xcode-build-server config -project app/CrocApp.xcodeproj -scheme CrocApp
+```
+
+The file holds absolute paths for your machine, so it is gitignored. Run the command again after you move the clone, rename the scheme or switch Xcode. For Go, `gopls` in `crocmobile/` works as is; set `GOFLAGS=-tags=croc_no_tailcat` so it sees the same files the build does. `.editorconfig` sets the shell script style that `shfmt` checks.
+
+The committed `.mcp.json` gives AI agents the Xcode MCP bridge (`xcrun mcpbridge`) and `gopls` (`go install golang.org/x/tools/gopls@latest`). It holds no tokens and never may: a server that needs one reads it from an environment variable.
 
 ## Commits
 
@@ -84,7 +97,7 @@ scripts/format-swift.sh --lint     # lint only, exactly what CI runs
 # Go (from crocmobile/; the engine ships without Tailcat, see docs/BUILDING.md)
 export GOFLAGS=-tags=croc_no_tailcat
 golangci-lint run ./...
-govulncheck ./...
+go tool govulncheck ./...
 ```
 
 - **Comments explain why, never what.** Do not delete existing comments unless the code they describe is going away.
@@ -119,6 +132,10 @@ A build that compiles proves nothing about a transfer. CI runs formatting, lint,
 
 The commands, and what each harness covers and needs, are in [`docs/BUILDING.md`](docs/BUILDING.md) under "Format and lint" and "Verification harnesses".
 
+### Translations
+
+The app ships in English only. Every new user-facing string goes through a String Catalog (`docs/knowledge/app-ui-architecture.md`, "Localization"), so a later language needs no code change. Pull requests that add a language are not accepted yet: open an issue first, because each language needs a maintainer who keeps it current.
+
 ### Tests
 
 Non-UI logic gets unit tests: Go's `testing` in `crocmobile/`, Swift Testing in `CrocKit/Tests/` and `app/CrocAppTests/`. Tests that write settings or secrets use an injected store (`MemorySettingsStorage`, `FakeSecretStore`), never the real `UserDefaults` or Keychain. Never use `UserDefaults(suiteName:)`: it leaves a `CrocAppTests.*.plist` behind in the sandbox container. There is no XCUITest: gestures, the camera and taps are checked by hand, and transfers by the harnesses. A unit test never replaces a harness run.
@@ -150,7 +167,7 @@ Bulk-generated pull requests that the author has not read, does not understand, 
 
 ## Opening a pull request
 
-1. Fork the repo and branch off `main`.
+1. Fork the repo and branch off `main`. Name the branch `<type>/<short-slug>` with a Conventional Commits type, for example `fix/receive-progress` or `feat/saved-codes`.
 2. Add or update automated tests for new or changed behavior: Go tests in `crocmobile/`, Swift tests in `CrocKit/Tests/` or `app/CrocAppTests/`. A bug fix comes with a test that fails without it, where one is practical.
 3. Rebase on the current `main` before opening, so the diff is clean.
 4. Open the PR against `main` with a Conventional Commits title, and fill in [the template](.github/pull_request_template.md).

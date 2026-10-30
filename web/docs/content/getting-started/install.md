@@ -16,13 +16,13 @@ The disk image for Mac is available now. The App Store and Mac App Store version
 
 | Channel | For | Where |
 |---|---|---|
-| Disk image | Mac | `CrocApp-<version>-arm64.dmg` on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest), version 1.0.0 or later |
+| Disk image | Mac | `CrocApp-<version>-arm64.dmg` on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest) |
 | App Store | iPhone and iPad | Coming |
 | Mac App Store | Mac | Coming |
 
 ### Disk image
 
-Open the disk image and drag **CrocApp** onto **Applications**. Use version 1.0.0 or later. The 0.9.x disk images are not notarized and use croc 10. From 1.0.0 on, Apple has notarized the app, so macOS shows only its standard first-launch confirmation.
+Open the disk image and drag **CrocApp** onto **Applications**. Apple notarizes every release, so macOS shows only its standard first-launch confirmation.
 
 To check a download before you run it, see [Verify a release](verify-downloads.md).
 

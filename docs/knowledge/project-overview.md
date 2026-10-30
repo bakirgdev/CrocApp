@@ -6,7 +6,7 @@ CrocApp is a free, open-source, native SwiftUI app for [croc](https://github.com
 
 ## Status
 
-Version 1.0.0 is out as a notarized direct download for the Mac (Sparkle updates). The iOS, iPadOS and Mac App Store builds exist in TestFlight only and are not submitted. The first App Store release will be 1.1.0. `../ROADMAP.md` lists what comes next, and `../RELEASING.md` covers the channels.
+The first public release is 1.1.0: a notarized direct download for the Mac (Sparkle updates), followed by the iOS, iPadOS and Mac App Store builds, which exist in TestFlight only until then. `../ROADMAP.md` lists what comes next, and `../RELEASING.md` covers the channels.
 
 ## Why
 

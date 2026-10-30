@@ -1,6 +1,6 @@
 # Review rules
 
-What reviewers (people, the managed Code Review service) weigh in this repo. Rules for every review, including local `/code-review`, live in `AGENTS.md`.
+What reviewers (people, the managed Code Review service) weigh in this repo. The verification, docs and design rules in the root `AGENTS.md` apply to every review too, including local `/code-review`.
 
 ## What failure means here
 
@@ -48,7 +48,7 @@ A person approves changes to these paths.
 
 - `crocmobile/session.go` and `CrocKit/Sources/` (encrypted-transfer path, PAKE handshake)
 - `*.entitlements`
-- Secret storage: the Keychain code in `app/CrocApp/Models/AppSettings.swift`
+- Secret storage: `app/CrocApp/Support/KeychainStore.swift` and its callers (`AppSettings`, `StoredTransferVault`)
 - `.github/workflows/` (all workflows, `release.yml` above all)
 - `scripts/build-appstore.sh`, `scripts/build-devid.sh`, `scripts/build-dmg.sh`
 - Sparkle and signing config (`app/Config/CrocApp-Direct-Info.plist`, `app/Config/ExportOptions-*.plist`)

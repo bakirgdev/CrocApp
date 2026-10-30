@@ -20,6 +20,19 @@ The SwiftUI sources build three targets. `app/Shared/` is a folder group compile
 | `CrocApp Direct` | macOS, arm64 | Direct download (notarized DMG with Sparkle updates) |
 | `CrocShare` | iOS | Share extension |
 
+## Why a Go bridge
+
+CrocApp links croc's own Go code through gomobile and keeps that bridge as the design. The alternatives all lose on the one property the app promises, that a code phrase works between CrocApp and the croc CLI in both directions:
+
+| Alternative | Why it loses |
+| --- | --- |
+| Run the croc binary as a subprocess | iOS forbids spawning processes. On the Mac it would leave progress, the file list and the accept prompt to parsing terminal output |
+| Rewrite croc's protocol in Swift | A second implementation of PAKE, the relay handshake and the file protocol has to track every upstream change by hand, and any drift breaks interop silently. Crypto code written twice is audited twice |
+| Port only part of croc, such as the relay client | Still a protocol reimplementation, with the same drift risk, for a smaller saving |
+| Wait for an official croc library for Apple platforms | croc ships no such library; `crocmobile/` is that layer |
+
+The cost of the bridge is real and bounded: the engine is most of an executable of about 10 MB (`docs/BUILDING.md`, "What build-xcframework.sh does"), croc's process-global state needs the transfer lock and the stdio restoration in `crocmobile/` (`docs/knowledge/crocmobile-bridge.md`), and an upgrade is a version bump plus the harnesses (`docs/knowledge/croc-upgrade-playbook.md`).
+
 ## Layer diagram
 
 ```
@@ -54,7 +67,7 @@ Notes on the arrows:
 
 ### croc (dependency, not this repo's code)
 
-- `schollz/croc/v11` v11.5.5, pinned in `crocmobile/go.mod`.
+- `schollz/croc/v11`, pinned in `crocmobile/go.mod`.
 - CrocApp does not fork or reimplement it (see `docs/knowledge/project-overview.md`).
 - Upgrades are a version bump plus a rebuild of the xcframework: `docs/knowledge/croc-upgrade-playbook.md`.
 
@@ -258,7 +271,7 @@ The main app target picks its entitlements file by SDK in the project (`CODE_SIG
   - `files.user-selected.read-write`
   - `files.downloads.read-write`, for the default output folder `~/Downloads/CrocApp`
   - `com.apple.developer.associated-domains` (`applinks:crocapp.dev`)
-- `app/CrocApp/CrocApp-iOS.entitlements`: `application-groups` (`group.com.bakirgdev.CrocApp`, for the share-extension handoff) and `associated-domains` (`applinks:crocapp.dev`).
+- `app/CrocApp/CrocApp-iOS.entitlements`: `application-groups` (`group.com.bakirgdev.CrocApp`, for the share-extension handoff) `associated-domains` (`applinks:crocapp.dev`), and `networking.multicast` (croc's local-network discovery).
 - `app/CrocAppDirect/CrocAppDirect.entitlements`: the macOS set above, plus Sparkle's mach-lookup exceptions `$(PRODUCT_BUNDLE_IDENTIFIER)-spks` and `-spki`.
 - `app/CrocShare/CrocShare.entitlements`: the same App Group and nothing else.
 
@@ -284,7 +297,7 @@ Four files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-In
 
 ### Sandbox limits that shaped the design
 
-- Security-scoped URLs: every send or receive intent in `TransferController` calls `startAccessingSecurityScopedResource()` on URLs the user picked and tracks them in `scopedURLs` until the stream ends. `OutputFolderStore` and `HistoryView`'s bookmark path do the same before any `fileExists` or `stat` call, because the sandbox denies `stat` on a scope that is not open.
+- Security-scoped URLs: every send or receive intent in `TransferController` calls `startAccessingSecurityScopedResource()` on URLs the user picked and tracks them in `scopes` (`SecurityScopes`) until the stream ends. `OutputFolderStore` and `HistoryView`'s bookmark path do the same before any `fileExists` or `stat` call, because the sandbox denies `stat` on a scope that is not open.
 - App Group container: the only channel between `CrocShare` and the app. `CrocShare` is a separate process with a memory cap of about 120 MB and no room for long work.
   - It copies attachment bytes inside the synchronous `loadFileRepresentation` callback, because the source temp file is deleted when the callback returns.
   - It never deletes existing batches, because one may be mid-send.
