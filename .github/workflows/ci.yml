@@ -193,7 +193,7 @@ jobs:
 
     if: needs.changes.outputs.interop == 'true'
 
-    runs-on: ubuntu-26.04
+    runs-on: macos-26
 
     timeout-minutes: 20
 

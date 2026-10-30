@@ -39,7 +39,7 @@ To run it locally you need:
 - Notary credentials, one of:
   - a keychain profile, default `crocapp-notary` (set `NOTARY_KEYCHAIN_PROFILE` to use another name);
   - `NOTARY_KEY` (path to the `.p8`), `NOTARY_KEY_ID` and `NOTARY_ISSUER`, the form CI uses.
-- `brew install create-dmg`.
+- `brew install create-dmg` (CI uses the release pinned in `release.yml`).
 
 ### The release workflow
 
