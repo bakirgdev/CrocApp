@@ -1,60 +1,40 @@
 # design/
 
-Canonical design system for every CrocApp surface: the SwiftUI apps (iOS, iPadOS, macOS), the landing page, the docs site, and the release artwork (app icon, DMG window, social cards). Every color, size, type style, motion value, component, glyph and word of UI copy is defined here. Nothing visual is invented at a call site.
+The design system for every CrocApp surface: the SwiftUI apps (iOS, iPadOS, macOS), the landing page, the docs site and the release artwork. It follows current Apple practice (iOS and macOS 26, Liquid Glass, Dynamic Type) and gives principles first, with few hard rules. Values live in `tokens.css`; nothing visual is invented at a call site.
 
 ## Layout
 
-| Path | Owns |
+| File | Owns |
 | --- | --- |
-| `brand.md` | The brandbook: positioning, voice, logo and mascot, color and type at a glance, imagery, naming, attribution, App Store badges |
-| `content.md` | Copy mechanics: capitalization, sentences, errors, settings and system-surface copy, numbers, terminology, the approved security claims |
-| `colors.md` | Palette, semantic aliases, verified contrast and the seven contrast rules |
-| `typography.md` | Font stacks, the app type scale, the web display scale, tracking |
-| `spacing-layout.md` | 4pt grid, radii, control sizes, layout caps, web layout, breakpoints, borders |
-| `materials.md` | Liquid Glass, reduced transparency, elevation, focus |
-| `motion.md` | Easing, durations, the motion vocabulary, phase choreography, haptics, the no-audio rule |
-| `components.md` | Every component: which system control it is, or the exact measurements when we draw it |
-| `iconography.md` | SF Symbols (app) to Lucide (web) mapping, sizes, stroke weights |
-| `accessibility.md` | The binding accessibility floor for all surfaces |
-| `platforms.md` | What legitimately differs between iPhone, iPad, macOS and the web: layout by width, windows, system surfaces (notifications, widgets, the menu bar, the Dock) |
-| `swiftui.md` | Token to SwiftUI translation |
-| `web.md` | Token to landing page and docs site translation |
-| `tokens.css` | Every token as a CSS custom property |
+| `principles.md` | Color, contrast, type, spacing and layout, shape, materials and Liquid Glass, motion, haptics, the accessibility floor, platform adaptation, and the few hard bans |
+| `tokens.css` | Every token as a CSS custom property: the canonical values |
+| `components.md` | Which system control or drawn component each piece of UI is, and short usage guidance |
+| `voice.md` | Personality, copy patterns, terminology, numbers, the approved security claims |
+| `brand.md` | Logo and icon, mascot, palette summary, assets, favicon recipe, naming, legal, store badges |
+| `implementation.md` | Token to SwiftUI API and to web CSS, glyph mapping, what the app does not mirror, the web color rule |
 
-Topic files define values. `swiftui.md` and `web.md` translate them and never redefine one.
+## How to use it
 
-## Skills
+Load `apple-design` before any design work, plus `swiftui-expert-skill` and `mobile-ios-design` for SwiftUI views (install and conflict rules: root `AGENTS.md`, "Skills"). When a skill and this directory disagree, this directory wins.
 
-Load `apple-design` before any design work (this directory, a view, a stylesheet, artwork), plus `swiftui-expert-skill` and `mobile-ios-design` for SwiftUI views. Install and conflict rules are in the root `AGENTS.md` → Skills. When a skill and this directory disagree, this directory wins: the skills teach springs and overshoot, and `motion.md` rules both out.
+Reach for the system control first, system semantic colors where they pass contrast, text styles for type, and `--space-*` and `--radius-*` for the rest. The app follows the system's animations. Draw something custom only when no system control does the job.
 
 ## Mirrors and checks
 
-The markdown is canonical. Two hand-written mirrors carry it into code:
+`tokens.css` is canonical. Two hand-written mirrors carry it into code:
 
 | Mirror | Consumed by |
 | --- | --- |
-| `tokens.css` | landing page, docs site |
-| `app/CrocApp/Support/DesignTokens.swift` + `app/CrocApp/Assets.xcassets` color sets | the app |
+| `design/tokens.css` itself | landing page and docs site (`scripts/assemble-site.sh` and the `tokens` npm script of `web/docs` copy it; never edit a copy) |
+| `app/CrocApp/Support/DesignTokens.swift` and the color sets in `app/CrocApp/Assets.xcassets` | the app |
 
-Change a value in a markdown file and in both mirrors in the same commit. `design/tokens.css` is the only committed CSS copy: `scripts/assemble-site.sh` copies it for the landing page and `web/docs`'s `tokens` npm script for the docs site. Never edit a copy.
+Change a value in `tokens.css` and in both app mirrors in the same commit. CI runs `scripts/verify-design.sh` on any change to `design/`, app Swift or color sets, or the web CSS, scripts and manifest it lints. It enforces:
 
-One script enforces this directory, and CI runs it on any change to `design/`, `app/` Swift or color sets, or the web CSS, scripts and manifest it lints:
+- **Parity.** Every shared token equals its Swift constant or color set (colors within 1/255 per channel, in both themes), and each shared token is either mirrored or listed under `implementation.md`, "Not mirrored".
+- **Contrast.** Every ratio in `principles.md`, "Contrast" is recomputed from `tokens.css` and must match the table, the stated guidance holds as invariants (WCAG thresholds never relax), and the focus ring and the web manifest colors stay as specified.
+- **No raw colors in web code.** Hex, color functions and named colors in web CSS, HTML and scripts are findings.
 
-```bash
-scripts/verify-design.sh   # mirror parity (tokens.css = DesignTokens.swift = color sets), contrast (every ratio colors.md claims plus the seven rules) and the no-literals lint
-```
-
-Run it after touching any value. A failure means the change or this directory is wrong; fix one of them, never the check.
-
-## Rules
-
-1. **Tokens, not literals.** No raw hex, px, pt or duration in app or site code. If a value is missing, add the token here first. The few allowed literals are listed in `web.md` and `swiftui.md`.
-2. **System first.** Where Apple ships the control (`Toggle`, `Picker`, `Form`, `ProgressView`, toolbars, alerts), the app uses it and this directory only says which one and what to set. We draw a component only when no system control does the job.
-3. **SF Symbols only in the app.** Lucide exists only because SF Symbols cannot ship to the web. See `iconography.md`.
-4. **System font only.** SF Pro and SF Mono through the system font APIs. Apple's font files are not redistributable; never ship one.
-5. **Both themes, always.** Every surface has a light and a dark value: `light-dark()` on web, the asset catalog in the app. The one exception is `components.md` → DiskImage.
-6. **Light is the constrained theme.** Check contrast there first. The seven rules in `colors.md` → Contrast bind every surface.
-7. **One accent, no gradients in UI.** `brand.md` → Color at a glance.
+A failure means the change or this directory is wrong; fix one of them, never the check. The check does not lint Swift: reviewers keep views on tokens and text styles.
 
 ## Naming
 
@@ -62,27 +42,25 @@ Run it after touching any value. A failure means the change or this directory is
 
 | Layer | Pattern | Example | Rule |
 | --- | --- | --- | --- |
-| base palette | the thing itself | `--green-600`, `--label-2`, `--fill-3` | literal values. **Never consumed by a component**; aliases point at them |
-| semantic alias | `--color-<role>` | `--color-accent-text-on-tint` | what it is for, never what it looks like. The layer you consume |
-| scale step | category + step | `--space-5`, `--radius-lg` | the step is a position in the scale, not the value |
-| web-only | a `web` name segment | `--gutter-web`, `--btn-pad-x-lg-web`, `--type-web-hero-size` | the app never mirrors it. Every token without `web` in its name is shared, and the app mirrors it unless `swiftui.md` → Not mirrored says why not |
+| base palette | the thing itself | `--olive-600`, `--label-2`, `--fill-3` | literal values, never consumed by a component; aliases point at them |
+| semantic alias | `--color-<role>` | `--color-accent-text` | what it is for, never what it looks like. The layer you consume |
+| scale step | category and step | `--space-5`, `--radius-lg` | the step is a position in the scale, not the value |
+| web-only | a `web` name segment | `--gutter-web`, `--type-web-hero-size` | the app never mirrors it. Every token without `web` is shared and mirrored unless `implementation.md`, "Not mirrored" says why not |
 
-Never encode a value in a name (`--green-600`, not `--green-dark`).
+Never encode a value in a name: `--olive-600`, not `--olive-dark`.
 
 ## Adding or removing a token
 
-1. **Check it is really missing.** Most missing values are an existing token at the wrong layer.
-2. Add it to the topic file that owns it, with the role it plays.
-3. Add it to `tokens.css` in the matching group.
-4. If it is shared, add it to `DesignTokens.swift` or a color set and to the parity table in `scripts/verify-design.sh`. If the app deliberately does not mirror it, add it to `swiftui.md` → Not mirrored instead.
-5. If it is a color, run `scripts/verify-design.sh` and add a row to `colors.md` → Contrast for anything that reads on top of it.
-6. A component measurement used by one component is a component constant in `components.md`, not a token.
+1. Check it is really missing. Most missing values are an existing token at the wrong layer.
+2. Add it to `tokens.css` in the matching group, with a comment for the role it plays when that is not obvious.
+3. If it is shared, add it to `DesignTokens.swift` or a color set and to the parity table in `scripts/verify-design.sh`. If the app deliberately does not mirror it, add it to `implementation.md`, "Not mirrored".
+4. If it is a color, run `scripts/verify-design.sh` and add a row to `principles.md`, "Contrast" (and the script's table) for anything that reads on top of it.
+5. A measurement used by one component is a constant in that component, not a token.
 
-A token is live when the app or a site consumes it, or when it is a step in a scale. **Scales stay whole** (spacing, radius, type, weight, tracking, control height, icon size, icon stroke, glass, Apple's label/fill/background ladders) so nobody reaches for the wrong rung. Any other token with no consumer is dead: delete it from every file in the same commit.
+A token is live when the app or a site consumes it, or when it is a step in a scale. Scales stay whole (spacing, radius, type, weight, tracking, control height, icon size, icon stroke, glass, Apple's label, fill and background ladders). Any other token with no consumer is dead: delete it everywhere in the same commit.
 
 ## Editing
 
-- Values are cross-referenced. Changing one means grepping `design/` and both mirrors for it.
-- `scripts/build-dmg.sh` takes its geometry from `components.md` → DiskImage; change both together.
-- Verified facts name what they were checked against (the Lucide version, the iOS 26 SDK, the tool that computed a contrast ratio), never a date. Re-verifying against something newer means updating that name.
-- Cite design sections by name (`components.md` → AcceptGate), never by line number. Line numbers rot.
+- Cite sections by name (`components.md`, "AcceptGate"), never by line number, and grep the old heading text when renaming one.
+- Verified facts name what they were checked against (the Lucide version, the SDK, the tool that computed a ratio), never a date.
+- Run `scripts/verify-docs.sh` after editing markdown here, and `scripts/verify-design.sh` after touching a value.

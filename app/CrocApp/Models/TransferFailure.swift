@@ -2,7 +2,7 @@ import CrocKit
 import Foundation
 
 /// Why a transfer ended without its result: the words the failure screen
-/// shows (design/content.md → Errors) and the action it offers
+/// shows (design/voice.md → Errors) and the action it offers
 /// (design/components.md → StatusBlock). All failure copy lives in this file.
 /// The words are resolved `String`s (`String(localized:)`) because their
 /// consumers need one: VoiceOver announcements, Shortcuts errors, the harness.
@@ -23,7 +23,7 @@ struct TransferFailure: Equatable {
     /// the other device said no. Done alone.
     let remedy: Remedy?
     /// The user's own Cancel or Decline ended the transfer, so it ends
-    /// silently (design/motion.md → Haptics and sound). A background expiry or
+    /// silently (design/principles.md → Haptics). A background expiry or
     /// the auto-accept block also cancels, but the user tapped nothing.
     var endedByUser = false
 

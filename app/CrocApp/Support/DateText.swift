@@ -10,7 +10,7 @@ extension Date {
         return self > weekAgo
     }
 
-    /// A past date written as design/content.md → Dates asks: relative inside
+    /// A past date written as design/voice.md → Dates asks: relative inside
     /// a week ("yesterday", "3 days ago"), a short absolute date after ("Oct
     /// 20", with the year when it is not this year). Never a raw timestamp.
     func recordText(now: Date = .now, calendar: Calendar = .current) -> String {

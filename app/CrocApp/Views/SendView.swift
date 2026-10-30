@@ -57,7 +57,7 @@ struct SendView: View {
     private static let placeholderInsetX: CGFloat = 5
     private static let placeholderInsetY: CGFloat = 8
 
-    // motion.md → Choreography, rule 1: a choice that swaps a block.
+    // principles.md → Motion: a choice that swaps a block.
     private var swapAnimation: Animation? {
         reduceMotion ? nil : Motion.easeOut(Motion.durationBase)
     }

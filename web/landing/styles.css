@@ -1,6 +1,6 @@
 /* CrocApp landing page. Loaded after tokens.css, which supplies every value
-   here. No raw hex, px or duration below the reset: a missing value is a
-   missing token: add it to design/*.md and design/tokens.css first. */
+   here. No raw colors below the reset: a missing value is a missing token,
+   so add it to design/tokens.css first (design/AGENTS.md). */
 
 /* Reset and utilities */
 
@@ -30,7 +30,7 @@ svg {
 }
 
 /* A <use> instance cannot inherit these from the symbol, and an <svg> with a
-   viewBox and no dimensions falls back to 300x150. iconography.md. */
+   viewBox and no dimensions falls back to 300x150. implementation.md. */
 svg {
   width: var(--icon-size-md);
   height: var(--icon-size-md);
@@ -235,8 +235,7 @@ html {
 }
 
 /* Breakpoints are literals by necessity: a custom property does not resolve
-   inside a media condition. design/spacing-layout.md → Breakpoints is the only
-   place these numbers are defined.
+   inside a media condition. This is the only place these widths are defined.
 
    Dropping every link on a phone would take Download with it, and the footer
    carries Docs at every width. */
@@ -349,7 +348,7 @@ html {
 }
 
 .btn--secondary {
-  /* On its own tint --green-700 is 4.31:1, so this needs the darker step. */
+  /* On its own tint --olive-700 is 5.09:1 (AA); the darker step adds margin. */
   color: var(--color-accent-text-on-tint);
   background: var(--color-accent-tint);
 }
@@ -459,7 +458,7 @@ html {
 }
 
 /* Success-on-success-tint is 1.98:1, so the tint carries the signal and the
-   label stays primary: colors.md rule 2. */
+   label stays primary: principles.md, Contrast. */
 .pill--trust {
   background: var(--color-status-success-tint);
 }
@@ -685,7 +684,7 @@ html {
 
 /* Content sections */
 
-/* iconography.md: glyphs under 20px carry a heavier stroke. */
+/* implementation.md: glyphs under 20px carry a heavier stroke. */
 .pill__icon,
 .btn--sm .btn__icon,
 .featlist svg {
@@ -743,7 +742,7 @@ html {
 }
 
 /* The cells still say Yes three times, so the tint adds nothing a reader
-   needs: colors.md rule 2. */
+   needs: principles.md, Contrast. */
 .compare tbody tr:last-child {
   background: var(--color-accent-tint);
 }

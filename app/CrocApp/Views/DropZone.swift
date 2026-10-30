@@ -16,7 +16,7 @@ struct DropZone: View {
     let isTargeted: Bool
 
     // components.md → DropZone: min height 168 (menu bar 96), 2pt stroke dashed
-    // 6 on 4 off, glyph 44 (34 compact, iconography.md → Sizes in use), scaled
+    // 6 on 4 off, glyph 44 (34 compact, implementation.md → Icons), scaled
     // with Dynamic Type. SendView reuses the height and the stroke for the staged
     // list and its drag-over border.
     static let minHeight: CGFloat = 168
@@ -54,7 +54,7 @@ struct DropZone: View {
             maxWidth: .infinity,
             minHeight: size == .regular ? Self.minHeight : Self.compactMinHeight
         )
-        // --color-fill-tertiary is the system fill ladder (swiftui.md → Not mirrored).
+        // --color-fill-tertiary is the system fill ladder (implementation.md → Not mirrored).
         .background(
             isTargeted ? AnyShapeStyle(Color.accentTint) : AnyShapeStyle(.fill.tertiary),
             in: shape

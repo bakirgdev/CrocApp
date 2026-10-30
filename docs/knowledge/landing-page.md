@@ -37,6 +37,10 @@ The policy forbids inline script and style, `data:` images and any remote host, 
 
 Screenshots are WebP, one file per theme, and the hero uses `<picture>` with a `<source media="(prefers-color-scheme: dark)" data-theme-source>` so only the variant that matches the OS downloads. A manual theme pin cannot reach a `<source>` before parse, so `app.js` rewrites that `media` to `all` or `not all` on load and on toggle. Trade-off: a pin that disagrees with the OS fetches the OS variant first, then the pinned one (`known-issues.md`, "Landing page"). Every image has `width` and `height`; the Mac hero image has `fetchpriority="high"` and the rest are `loading="lazy"`. `scripts/capture-screenshots.sh --copy-web` writes the WebP files and needs `cwebp` (`brew install webp`).
 
+## Head
+
+Every landing page links `site.webmanifest`, the 96px PNG, `favicon.ico` and the apple-touch icon (the set is the app icon, `design/brand.md`, "Favicon recipe"; the docs site reuses it), and sets description, Open Graph and Twitter tags with `og.jpg`. The indexable pages (home, privacy, support) add a canonical link, and `404.html` and `r/` add `noindex`. The two `<meta name="theme-color">` literals are `--bg-base` light and dark, and the theme toggle rewrites them. The docs site's tagline, `<title>` and social image repeat the landing headline.
+
 ## Crawler files
 
 - `llms.txt` is hand-written to the llmstxt.org shape: an H1, a blockquote, then H2 sections of `- [Title](url): note` lines. It links every docs page, so a docs page added, renamed or removed is edited here too.
@@ -45,7 +49,7 @@ Screenshots are WebP, one file per theme, and the hero uses `<picture>` with a `
 
 ## Rules
 
-- Visual and copy rules are `design/web.md` and `design/content.md`. Colors, spacing and type come from the tokens, with no literals in the page or its stylesheet (`scripts/verify-design.sh` checks).
+- Visual and copy rules are `design/principles.md`, `design/implementation.md`, "Web", and `design/voice.md`. Colors come from the tokens, with no raw color in the page or its stylesheet (`scripts/verify-design.sh` checks).
 - Run `scripts/verify-design.sh` after touching `styles.css` or the page, and `scripts/verify-docs.sh` after touching a path this file names.
 
 ## Hand-maintained

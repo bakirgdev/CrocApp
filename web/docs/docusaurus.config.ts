@@ -20,7 +20,7 @@ const config: Config = {
     v4: true,
   },
 
-  // The theme-color values are the two literals web may write (design/web.md):
+  // The theme-color values are the two literals web may write (design/implementation.md):
   // browser chrome cannot take a custom property. They are --bg-base light and dark.
   headTags: [
     {

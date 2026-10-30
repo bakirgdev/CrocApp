@@ -10,7 +10,7 @@ What reviewers (people, the managed Code Review service) weigh in this repo. Rul
 | Settings, secrets, persistence | it loses user data or exposes a secret | a write deletes the old value before the new one is saved, a secret leaves the Keychain or device, a failed save is hidden |
 | CI and release (`.github/`, `scripts/`) | it breaks the gate or ships wrong | a step cannot run, `ci pass` can go green without its checks, a release is signed, tagged or versioned wrongly |
 | Docs | it lies | a claim does not match the code, or a "verified" claim names no version |
-| UI and design | it breaks `design/` | a literal replaces a token, a theme or contrast rule fails, copy ignores `design/content.md` |
+| UI and design | it breaks `design/` | a raw color replaces a token, a theme or contrast rule fails, copy ignores `design/voice.md` |
 
 Style and wording are Nit at most.
 
@@ -23,7 +23,7 @@ Report at most 5.
 - Lockfiles and resolved pins: `crocmobile/go.sum`, `web/docs/pnpm-lock.yaml`, `Package.resolved`.
 - `project.pbxproj` diffs that only register files.
 - `*.xcstrings` catalogs, unless the change is to an English source string.
-- Anything CI already enforces: link and path validity (`scripts/verify-docs.sh`), token parity, contrast and the no-literals lint (`scripts/verify-design.sh`), swift-format, golangci, `ci pass`.
+- Anything CI already enforces: link and path validity (`scripts/verify-docs.sh`), token parity, contrast and the raw-color lint (`scripts/verify-design.sh`), swift-format, golangci, `ci pass`.
 
 ## Evidence
 
@@ -37,7 +37,7 @@ Report at most 5.
 2. A user-visible change updates `CHANGELOG.md` under `## [Unreleased]` and the matching page in `web/docs/content/`.
 3. The docs named in the "You changed" table of `AGENTS.md` are updated.
 4. New app text is localizable (String Catalogs).
-5. New values come from `design/` tokens, not literals.
+5. New colors come from `design/` tokens, not literals.
 6. Every action is pinned to a full commit SHA with a `# vX.Y.Z` comment.
 7. A new file that CI reads is in the `changes` regex of the job that reads it.
 8. A write path never deletes the old value before the new one is saved.

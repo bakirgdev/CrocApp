@@ -8,7 +8,7 @@ import UIKit
 
 /// The menu bar, on the Mac and in the iPadOS 26 hardware-keyboard menu bar.
 /// Anything a toolbar button can do, a menu item can do with a shortcut
-/// (design/platforms.md → macOS, "Menu bar is a real surface").
+/// (design/principles.md → Platform adaptation: the menu bar is a real surface).
 /// The receive folder opens in Finder on the Mac and in Files on iPad.
 struct AppCommands: Commands {
     let router: AppRouter

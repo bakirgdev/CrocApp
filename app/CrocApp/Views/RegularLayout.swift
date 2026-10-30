@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The regular-width layout: a sidebar of Send, Receive, History (and Settings
-/// on iPad) and a detail column (design/platforms.md → Layout by width). Chosen
+/// on iPad) and a detail column (design/principles.md → Platform adaptation). Chosen
 /// by `ContentView` from the horizontal size class, never by device.
 ///
 /// The sidebar selection and each detail's pushed screens live in `AppRouter`,
@@ -57,7 +57,7 @@ struct RegularLayout: View {
         #if os(macOS)
         // The Mac's default sidebar is 144 wide, which cuts "Receive" to an
         // ellipsis beside its Review badge. 240 is the sidebar the window
-        // minimum is budgeted for (platforms.md → macOS).
+        // minimum is budgeted for (docs/knowledge/app-ui-architecture.md → Windows and keyboard focus).
         .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 320)
         #endif
     }
@@ -120,7 +120,7 @@ private struct DetailStack: View {
 
 extension View {
     /// What every screen in the detail column gets: its content capped and
-    /// centered (design/spacing-layout.md → Layout cap), and the live-request
+    /// centered (design/principles.md → Spacing and layout), and the live-request
     /// banner at its top (components.md → AcceptGate).
     fileprivate func detailScreen(_ route: AppRouter.Route) -> some View {
         modifier(DetailScreen(route: route))
@@ -168,7 +168,7 @@ private struct DetailScreen: ViewModifier {
             .onGeometryChange(for: CGFloat.self, of: { $0.size.width }, action: { width = $0 })
     }
 
-    /// motion.md → Vocabulary, Insert.
+    /// principles.md → Motion.
     private static func insert(reduceMotion: Bool) -> AnyTransition {
         guard !reduceMotion else { return .identity }
         return .asymmetric(

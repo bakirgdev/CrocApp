@@ -87,7 +87,7 @@ struct HistoryDetailView: View {
     }
 
     /// A label and its value. The value takes `Color.textSecondary`: the
-    /// system's own secondary style is 3.44:1 (colors.md → Contrast, rule 4).
+    /// system's own secondary style is 3.44:1 (principles.md → Contrast, rule 4).
     private func valueRow(
         _ label: LocalizedStringKey, @ViewBuilder value: () -> some View
     ) -> some View {

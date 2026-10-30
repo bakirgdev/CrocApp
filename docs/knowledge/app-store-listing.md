@@ -52,7 +52,7 @@ Free, open source, no account. Send files, folders or text to another device wit
 
 ## Description
 
-Length: 2921 characters. The security statements follow the approved list in `design/content.md`, "Claims".
+Length: 2921 characters. The security statements follow the approved list in `design/voice.md`, "Claims".
 
 ```text
 CrocApp sends files, folders and text from one device to another with a short code phrase such as cape-junky-widow. No account, no sign-up, and the two devices do not need to be on the same network.
@@ -98,7 +98,7 @@ The description does not claim VoiceOver support. Add it only after the accessib
 - Words already in the name or subtitle (`crocapp`, `send`, `files`, `code`, `phrase`) and the category (`utilities`) are left out because Apple already indexes them.
 - `croc` is a deliberate keep: the name is one token, and the protocol name is what people search.
 - `airdrop` is left out on purpose (another company's trademark).
-- `secure`, `p2p` and `peer` are search terms people type; keywords are never shown, so `design/content.md`, "Terminology", which binds displayed copy, does not apply to them.
+- `secure`, `p2p` and `peer` are search terms people type; keywords are never shown, so `design/voice.md`, "Terminology", which binds displayed copy, does not apply to them.
 
 ```text
 croc,transfer,share,encrypted,secure,private,qr,p2p,wormhole,folder,lan,nearby,e2ee,drop,peer,text

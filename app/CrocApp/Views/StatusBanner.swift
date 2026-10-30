@@ -27,7 +27,7 @@ struct StatusBanner: View {
             }
         }
 
-        // design/iconography.md → Shared meanings: info/warning/error/success.
+        // design/implementation.md → Icons: info/warning/error/success.
         var symbolName: String {
             switch self {
             case .info: "info.circle"
@@ -50,7 +50,7 @@ struct StatusBanner: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.space3) {
-            // Decorative: the title carries the meaning (colors.md → Contrast, rule 2).
+            // Decorative: the title carries the meaning (principles.md → Contrast, rule 2).
             Image(systemName: kind.symbolName)
                 .font(.system(size: glyphSize, weight: .semibold))
                 .foregroundStyle(kind.color)
@@ -96,7 +96,7 @@ struct StatusBanner: View {
 }
 
 extension AnyTransition {
-    /// design/motion.md → Vocabulary, Insert: a banner fades in while moving
+    /// design/principles.md → Motion: a banner fades in while moving
     /// `--space-3` down into place, and fades out quicker. Nothing moves under
     /// Reduce Motion.
     static func statusBannerInsert(reduceMotion: Bool) -> AnyTransition {

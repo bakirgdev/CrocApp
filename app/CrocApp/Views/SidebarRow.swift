@@ -105,7 +105,7 @@ extension AppRouter.SidebarItem {
         }
     }
 
-    /// design/iconography.md: the outline direction glyphs, History and Settings.
+    /// design/implementation.md: the outline direction glyphs, History and Settings.
     var symbol: String {
         switch self {
         case .send: "arrow.up.circle"

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A determinate bar that animates at `--dur-base` `--ease-out` and never moves
-/// backwards. design/motion.md → Choreography. `resetKey` names what the bar
+/// backwards. design/principles.md → Motion. `resetKey` names what the bar
 /// measures (the current file, the total size): when it changes, the bar snaps
 /// to the new fraction and moves forward from there.
 struct ForwardProgressBar: View {

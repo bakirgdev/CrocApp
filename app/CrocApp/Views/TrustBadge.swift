@@ -57,7 +57,7 @@ struct TrustBadge: View {
 
     // At accessibility text sizes the circle beside the words leaves them too
     // narrow, and "End-to-end" breaks mid-word; the circle goes above them
-    // instead (accessibility.md → Dynamic Type).
+    // instead (principles.md → Accessibility).
     private var fullLayout: AnyLayout {
         dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space4))
@@ -103,7 +103,7 @@ struct TrustBadge: View {
         .accessibilityElement(children: .combine)
     }
 
-    // Claim only what is true (content.md → Claims): never more than that.
+    // Claim only what is true (voice.md → Claims): never more than that.
     private var relayLine: LocalizedStringKey {
         switch relay {
         case .localOnly:

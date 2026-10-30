@@ -6,7 +6,7 @@ import SwiftUI
 struct DirectionHeader: View {
     let direction: TransferController.Direction
     /// The sender waits for the other device: the arrow pulses, and only then
-    /// (design/motion.md → Vocabulary, Pulse).
+    /// (design/principles.md → Motion).
     var pulses = false
 
     @ScaledMetric(relativeTo: .headline) private var glyphSize: CGFloat = IconSize.small

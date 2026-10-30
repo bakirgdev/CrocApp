@@ -9,14 +9,14 @@ struct StatusBlock: View {
         case success
         case error
         /// The user's own Cancel or Decline, or a link they revoked: not a
-        /// failure (content.md → Errors), so neither red nor green.
+        /// failure (voice.md → Errors), so neither red nor green.
         case neutral
 
         var fill: AnyShapeStyle {
             switch self {
             case .success: AnyShapeStyle(Color.statusSuccessTint)
             case .error: AnyShapeStyle(Color.statusErrorTint)
-            // --color-fill-tertiary is the system fill ladder (swiftui.md → Not mirrored).
+            // --color-fill-tertiary is the system fill ladder (implementation.md → Not mirrored).
             case .neutral: AnyShapeStyle(.fill.tertiary)
             }
         }
@@ -29,7 +29,7 @@ struct StatusBlock: View {
             }
         }
 
-        // design/iconography.md → Shared meanings: success and error; App
+        // design/implementation.md → Icons: success and error; App
         // only: cancelled.
         var symbolName: String {
             switch self {

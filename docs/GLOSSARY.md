@@ -8,7 +8,7 @@ Terms a new contributor hits in this repo and cannot infer from the name: croc v
 | --- | --- |
 | `--ask` | croc flag that makes both sides confirm before a transfer starts. The app calls it **Confirm on Both Sides**. It uses the same prompt-pipe trick as receive (`docs/knowledge/crocmobile-bridge.md`). |
 | classic mode | croc's `--classic` flag. It is the only mode where `--code` takes a custom secret directly, and it is insecure by design. CrocApp does not support it. |
-| code phrase | The `word-word-word` string (three random words from the EFF short wordlist) that both devices use to find each other and derive the session key. A custom one comes from `CROC_SECRET`, at least 6 characters (`docs/knowledge/what-is-croc.md`). croc calls it the "secret"; the UI says only "code phrase" (`design/content.md`, "Terminology"). |
+| code phrase | The `word-word-word` string (three random words from the EFF short wordlist) that both devices use to find each other and derive the session key. A custom one comes from `CROC_SECRET`, at least 6 characters (`docs/knowledge/what-is-croc.md`). croc calls it the "secret"; the UI says only "code phrase" (`design/voice.md`, "Terminology"). |
 | compression | croc compresses file data with DEFLATE (HuffmanOnly) by default. `--no-compress` turns it off. |
 | `CROC_SECRET` | Environment variable that sets a custom code phrase. Outside classic mode it is the only way to do that, for both send and receive. |
 | `--ignore-stdin` | croc flag for non-interactive runs. The library option `IgnoreStdin` is always true in `crocmobile/session.go`, because the app supplies its own prompt pipe. |
@@ -80,6 +80,6 @@ Terms a new contributor hits in this repo and cannot infer from the name: croc v
 
 | Term | Means |
 | --- | --- |
-| design token | A named value (color, spacing, type, motion) in `design/`. It is the only allowed source of such values in app or web code: no raw hex or px (`design/AGENTS.md`). |
+| design token | A named value (color, spacing, type, motion) in `design/`. It is the only allowed source of such values in app or web code: no raw hex in web code (`design/AGENTS.md`). |
 | harness | A script or tool that proves a real transfer works against the croc command: `scripts/verify-interop.sh`, `scripts/verify-app-mac.sh`, `scripts/verify-app-sim.sh` and `crockit-verify`. A green build alone is not evidence. `docs/BUILDING.md`, "Verification harnesses". |
 | verify script | Any `scripts/verify-*.sh`. The transfer ones start a local `croc relay` and need a `croc` command (the public relay is opt-in, `PUBLIC_POOL=1`). CI runs `verify-interop.sh` and `verify-design.sh`, which needs no network (`docs/knowledge/tooling.md`, `CONTRIBUTING.md`). |

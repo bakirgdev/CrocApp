@@ -5,7 +5,7 @@ import SwiftUI
 import UIKit
 #endif
 
-/// The four haptic events in design/motion.md → Haptics and sound. iPhone only:
+/// The four haptic events in design/principles.md → Haptics. iPhone only:
 /// iPad's haptics are inconsistent across models and macOS has none.
 extension View {
     /// `.sensoryFeedback(trigger:_:)` that stays silent off iPhone and while

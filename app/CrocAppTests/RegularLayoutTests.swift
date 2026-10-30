@@ -4,8 +4,8 @@ import Testing
 
 @testable import CrocApp
 
-/// One `AppRouter.path` drives both layouts (design/platforms.md → Layout by
-/// width): the stack under Home in compact width, the sidebar row and its
+/// One `AppRouter.path` drives both layouts (design/principles.md → Platform
+/// adaptation): the stack under Home in compact width, the sidebar row and its
 /// detail's pushed screens in regular width.
 @MainActor @Suite struct AppRouterLayoutTests {
     private let router = AppRouter()
