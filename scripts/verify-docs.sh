@@ -22,6 +22,8 @@
 # bare runner. Exit 0 clean, 1 findings.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib.sh
+help_flag "$@"
 export LC_ALL=C
 
 TMP=$(mktemp -d)
@@ -33,8 +35,8 @@ git ls-files --cached --others --exclude-standard '*.md' ':!:web/docs/content/**
 done > "$TMP/files"
 # Every tracked file plus every directory above one: the set a path may name.
 # Untracked files count too, so a new doc can be linked before its first commit.
-git ls-files --cached --others --exclude-standard |
-  awk '{ print; while (sub("/[^/]*$", "")) print $0 "/" }' | sort -u > "$TMP/tracked"
+git ls-files --cached --others --exclude-standard \
+  | awk '{ print; while (sub("/[^/]*$", "")) print $0 "/" }' | sort -u > "$TMP/tracked"
 
 # One line per candidate: file<TAB>line<TAB>kind<TAB>target. Kinds: link, code.
 while IFS= read -r f; do
@@ -105,7 +107,10 @@ awk -F'\t' -v top='^(\\.github|app|assets|CrocKit|crocmobile|design|docs|scripts
   }' "$TMP/tracked" "$TMP/candidates" > "$TMP/resolved"
 
 findings=0
-finding() { echo "$1:$2: $3"; findings=$((findings + 1)); }
+finding() {
+  echo "$1:$2: $3"
+  findings=$((findings + 1))
+}
 
 # GitHub's heading anchors for a markdown file, one per line.
 anchors() {
@@ -133,8 +138,8 @@ while IFS=$'\t' read -r f n msg; do
       # ends in a slash, so try both: a fresh clone has no build outputs.
       p=${msg#\?}
       p=${p%/}
-      git check-ignore -q -- "$p" 2>/dev/null || git check-ignore -q -- "$p/" 2>/dev/null ||
-        finding "$f" "$n" "no such path: \`$p\`"
+      git check-ignore -q -- "$p" 2> /dev/null || git check-ignore -q -- "$p/" 2> /dev/null \
+        || finding "$f" "$n" "no such path: \`$p\`"
       ;;
     \#*)
       rest=${msg#\#}

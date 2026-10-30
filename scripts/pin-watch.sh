@@ -10,13 +10,17 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
+help_flag "$@"
 
 stale=0
 rows=""
-row() {                                             # row NAME FILE PINNED LATEST
+row() { # row NAME FILE PINNED LATEST
   local mark="current"
   [ -n "$4" ] || fail "no upstream version found for $1"
-  if [ "$3" != "$4" ]; then mark="**differs**"; stale=1; fi
+  if [ "$3" != "$4" ]; then
+    mark="**differs**"
+    stale=1
+  fi
   rows+="| $1 | \`$2\` | $3 | $4 | $mark |"$'\n'
 }
 
@@ -49,6 +53,13 @@ row "croc v10 test peer" scripts/croc-v10.version "$v10_pin" \
 lint_pin=$(awk '/golangci-lint-action/ {f=1} f && $1 == "version:" {print $2; exit}' .github/workflows/reusable-go.yml)
 row golangci-lint .github/workflows/reusable-go.yml "$lint_pin" "$(gh api repos/golangci/golangci-lint/releases/latest --jq .tag_name)"
 
+# Tools a workflow downloads by checksum: the *_VERSION env value next to the download.
+pinned_env() { awk -v k="$1:" '$1 == k {print $2; exit}' "$2"; }
+row shfmt .github/workflows/ci.yml "$(pinned_env SHFMT_VERSION .github/workflows/ci.yml)" \
+  "$(gh api repos/mvdan/sh/releases/latest --jq .tag_name)"
+row create-dmg .github/workflows/release.yml "$(pinned_env CREATE_DMG_VERSION .github/workflows/release.yml)" \
+  "$(gh api repos/create-dmg/create-dmg/releases/latest --jq .tag_name)"
+
 ubuntu_pin=$(grep -ho 'ubuntu-[0-9][0-9]\.[0-9][0-9]' .github/workflows/*.yml | sort -u | tail -1)
 ubuntu_latest=$(toolsets ubuntu | sed -nE 's/^toolset-([0-9]{2})([0-9]{2})\.json$/ubuntu-\1.\2/p' | sort -V | tail -1)
 row "Ubuntu runner" ".github/workflows/" "$ubuntu_pin" "$ubuntu_latest"
@@ -60,7 +71,7 @@ row "macOS runner" ".github/workflows/" "$macos_pin" \
 row "Xcode runner" ".github/workflows/" "$(grep -ho 'xcode-[0-9][0-9]*' .github/workflows/*.yml | sort -u | tail -1)" \
   "$(echo "$macos_toolsets" | sed -nE 's/^toolset-(xcode-[0-9]+)\.json$/\1/p' | sort -V | tail -1)"
 
-cat <<EOF
+cat << EOF
 | Pin | File | Pinned | Newest stable | |
 |---|---|---|---|---|
 $rows

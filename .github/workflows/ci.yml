@@ -68,7 +68,7 @@ jobs:
             out build '^(app|CrocKit|crocmobile)/|^scripts/build-xcframework\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
             out design '^design/|^app/.*\.swift$|^app/CrocApp/Assets\.xcassets/|^web/landing/.*\.(css|html|js)$|^web/landing/assets/img/favicon/site\.webmanifest$|^web/docs/src/(css/|prismTheme\.ts$)|^scripts/(lib|verify-design)\.sh$|^\.github/workflows/ci\.yml$'
             out interop '^(crocmobile|CrocKit)/|^scripts/(lib|verify-interop)\.sh$|^scripts/croc-v10\.version$|^\.github/workflows/ci\.yml$'
-            out scripts '^scripts/.*\.sh$|^\.github/workflows/ci\.yml$'
+            out scripts '^scripts/.*\.sh$|^\.editorconfig$|^\.github/workflows/ci\.yml$'
             out site '^web/(landing|docs)/|^design/tokens\.css$|^scripts/assemble-site\.sh$|^\.github/workflows/(ci|github-pages)\.yml$'
           } | tee -a "$GITHUB_OUTPUT"
 
@@ -104,7 +104,7 @@ jobs:
 
       - run: scripts/verify-design.sh
 
-  # The runner image ships shellcheck, so there is nothing to install or pin.
+  # The runner image ships shellcheck; shfmt comes pinned below.
   shellcheck:
     needs: changes
 
@@ -120,6 +120,18 @@ jobs:
           persist-credentials: false
 
       - run: shellcheck --version && shellcheck -x scripts/*.sh
+
+      # Style from .editorconfig. Pinned by checksum; pin-watch reports new releases.
+      - name: shfmt
+        env:
+          SHFMT_VERSION: v3.14.1
+          SHFMT_SHA256: 76e77641faa025814b77f153b29796b8e6fa2fca03e0c76a691608b86c7ea7bf
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/shfmt" \
+            "https://github.com/mvdan/sh/releases/download/$SHFMT_VERSION/shfmt_${SHFMT_VERSION}_linux_amd64"
+          echo "$SHFMT_SHA256  $RUNNER_TEMP/shfmt" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/shfmt"
+          "$RUNNER_TEMP/shfmt" -d scripts
 
   # Unconditional: renaming or deleting any file can break a path a doc names,
   # and the check takes under a second.
@@ -181,7 +193,7 @@ jobs:
 
     if: needs.changes.outputs.interop == 'true'
 
-    runs-on: macos-26
+    runs-on: ubuntu-26.04
 
     timeout-minutes: 20
 

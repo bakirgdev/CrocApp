@@ -17,8 +17,13 @@
 # workaround in x/mobile); App Store Connect accepted it on the first upload.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib.sh
+help_flag "$@"
 
-command -v go >/dev/null || { echo "error: go not installed (brew install go)" >&2; exit 1; }
+command -v go > /dev/null || {
+  echo "error: go not installed (brew install go)" >&2
+  exit 1
+}
 
 # Rebuilt every run, never skipped when present: an "install only if missing"
 # check is what lets a stale binary outlive its pin, and Go's build cache makes

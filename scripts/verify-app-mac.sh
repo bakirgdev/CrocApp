@@ -15,6 +15,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
+help_flag "$@"
 
 CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 require_croc
@@ -26,7 +27,7 @@ HISTORY="$DOCS/verify-history.txt"
 READY="$DOCS/verify-code-ready.txt"
 DD=$(derived_data mac)
 
-RECV_DIR="$HOME/Downloads/CrocApp"                 # the Receive action's real folder
+RECV_DIR="$HOME/Downloads/CrocApp" # the Receive action's real folder
 RECV_NAME="intent-recv-$$.txt"
 
 TMP=$(mktemp -d)
@@ -46,7 +47,7 @@ cleanup() {
 trap cleanup EXIT
 
 use_relay "$TMPROOT/mac-relay.log"
-CLI_R=${RELAY:+--relay=$RELAY}                     # one word, empty on the public pool: the CLI takes --relay before its command
+CLI_R=${RELAY:+--relay=$RELAY} # one word, empty on the public pool: the CLI takes --relay before its command
 
 logged "$TMPROOT/mac-build.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
   -destination 'platform=macOS' -derivedDataPath "$DD" -allowProvisioningUpdates build
@@ -60,7 +61,7 @@ rm -f "$RESULT" "$HISTORY" "$DOCS/macfile.txt"
 # The app declares document types, so a bare argv token next to a path is
 # treated as a document to open -- pass everything as a flag. Window-state
 # restoration hangs a headless launch, hence -ApplePersistenceIgnoreState.
-run_app_raw() {                                     # run_app_raw ARGS...: no relay argument
+run_app_raw() { # run_app_raw ARGS...: no relay argument
   rm -f "$READY"
   mark_relay
   "$BIN" -ApplePersistenceIgnoreState YES "$@" &
@@ -82,31 +83,31 @@ run_app() {
 # relay; the relay's own log says when the app is in its room (lib.sh,
 # await_sender). A `local` send opens its room in the app's own process, where
 # nothing outside can see it: the sleep is the only signal left.
-await_ready() {                                     # await_ready [local]
+await_ready() { # await_ready [local]
   await_file "$READY" 60 || fail "app never reported its code (no $READY)"
   if [ "${1:-}" = local ]; then sleep 3; else await_sender; fi
 }
 
-await_app() {                                       # await_app SECONDS
+await_app() { # await_app SECONDS
   await_file "$RESULT" "$1" || true
-  kill "$APP_PID" 2>/dev/null || true
-  wait "$APP_PID" 2>/dev/null || true   # reap quietly; unreaped kills print "Terminated: 15"
+  kill "$APP_PID" 2> /dev/null || true
+  wait "$APP_PID" 2> /dev/null || true # reap quietly; unreaped kills print "Terminated: 15"
 }
 
-check_result() {                                    # check_result LABEL
+check_result() { # check_result LABEL
   local got
-  got=$(cat "$RESULT" 2>/dev/null || echo missing)
+  got=$(cat "$RESULT" 2> /dev/null || echo missing)
   echo "$1 result: $got"
   [ "$got" = "ok success=true" ] || fail "$1: expected 'ok success=true', got '$got'"
 }
 
 # The app is already running as sender: receive with the CLI, gate, diff.
-recv_from_app() {                                   # recv_from_app LABEL SRC DST [croc-args...]
+recv_from_app() { # recv_from_app LABEL SRC DST [croc-args...]
   local label=$1 src=$2 dst=$3
   shift 3
   mkdir -p "$dst"
-  ( cd "$dst" && CROC_SECRET="$C" timeout "${RECV_TIMEOUT:-120}" "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes "$@" ) \
-      > "$TMPROOT/mac-cli-$label.log" 2>&1 || fail "$label: croc receive exited $? (log: $TMPROOT/mac-cli-$label.log)"
+  (cd "$dst" && CROC_SECRET="$C" timeout "${RECV_TIMEOUT:-120}" "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes "$@") \
+    > "$TMPROOT/mac-cli-$label.log" 2>&1 || fail "$label: croc receive exited $? (log: $TMPROOT/mac-cli-$label.log)"
   await_app 30
   check_result "$label"
   cmp -s "$src" "$dst/${src##*/}" || fail "$label: received bytes differ"
@@ -120,8 +121,8 @@ code() { echo "$1$$-mac"; }
 C=$(code recv)
 echo "mac transfer $$" > "$TMP/macfile.txt"
 mark_relay
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send macfile.txt ) \
-    > "$TMPROOT/mac-cli-send.log" 2>&1 &
+(cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send macfile.txt) \
+  > "$TMPROOT/mac-cli-send.log" 2>&1 &
 await_sender
 run_app --auto-receive "$C" > "$TMPROOT/mac-app-recv.log" 2>&1
 await_app 120
@@ -129,7 +130,7 @@ check_result receive
 cmp -s "$TMP/macfile.txt" "$DOCS/macfile.txt" || fail "receive: received bytes differ"
 # --auto-* launches get an in-memory ModelContainer, so records=1 proves the
 # transfer was recorded and that the harness isolation still holds.
-got=$(cat "$HISTORY" 2>/dev/null || echo missing)
+got=$(cat "$HISTORY" 2> /dev/null || echo missing)
 echo "history result: $got"
 [ "$got" = "records=1" ] || fail "history: expected 'records=1', got '$got'"
 echo MAC-RECEIVE-OK
@@ -170,7 +171,7 @@ fi
 # while this scenario ran. Every other relay scenario sends through the harness
 # relay with the LAN on, so this one needs a relay of its own only on the public
 # pool. The value-less --disable-local goes last (see run_app).
-second_peers() { { grep -c 'room has second peer' "$TMPROOT/mac-relay.log" || true; } 2>/dev/null; }
+second_peers() { { grep -c 'room has second peer' "$TMPROOT/mac-relay.log" || true; } 2> /dev/null; }
 C=$(code rlay)
 if [ -z "$RELAY" ]; then
   start_croc_relay "$TMPROOT/mac-relay.log"
@@ -186,8 +187,8 @@ await_ready
 recv_from_app relay "$DOCS/relayme.txt" "$TMP/d4"
 if [ -n "$RELAY_PID" ]; then
   [ "$(second_peers)" -gt "$SECOND_BEFORE" ] || fail "relay send: no second peer joined a room on the relay (log: $TMPROOT/mac-relay.log)"
-  if [ -z "$RELAY_LOG" ]; then                      # the relay this scenario started on the public pool: stop it
-    kill "$RELAY_PID" 2>/dev/null || true
+  if [ -z "$RELAY_LOG" ]; then # the relay this scenario started on the public pool: stop it
+    kill "$RELAY_PID" 2> /dev/null || true
     RELAY_PID=""
     RELAY=""
     CLI_R=""
@@ -214,14 +215,16 @@ echo MAC-NOCOMP-OK
 # the send with "refusing files".
 C=$(code ask7)
 rm -f "$RESULT"
-rm -rf "$DOCS/askdir"; mkdir -p "$DOCS/askdir"
+rm -rf "$DOCS/askdir"
+mkdir -p "$DOCS/askdir"
 echo "mac ask send 1 $$" > "$DOCS/askdir/askme1.txt"
 echo "mac ask send 2 $$" > "$DOCS/askdir/askme2.txt"
 run_app --auto-send "$DOCS/askdir" --code "$C" --ask > "$TMPROOT/mac-app-ask.log" 2>&1
 await_ready
-DST="$TMP/d6"; mkdir -p "$DST"
+DST="$TMP/d6"
+mkdir -p "$DST"
 printf 'y\ny\n' > "$TMP/ask-answers"
-( cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --yes < "$TMP/ask-answers" ) > "$TMPROOT/mac-cli-ask.log" 2>&1 \
+(cd "$DST" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --yes < "$TMP/ask-answers") > "$TMPROOT/mac-cli-ask.log" 2>&1 \
   || fail "ask send: croc receive exited $? (log: $TMPROOT/mac-cli-ask.log)"
 await_app 30
 check_result "ask send"
@@ -232,15 +235,15 @@ echo MAC-ASK-OK
 # --when-exists is the answer AutoVerify gives the incoming sheet; the setting
 # stays Keep Both, so a Replace proves the late answer reaches croc. Keep Both
 # leaves the existing file and adds "collide (1).txt"; Replace overwrites it.
-collide() {                                         # collide POLICY
+collide() { # collide POLICY
   local policy=$1
   C=$(code "cl${policy:0:1}")
   rm -f "$RESULT" "$DOCS/collide.txt" "$DOCS/collide (1).txt"
   echo "existing file" > "$DOCS/collide.txt"
   echo "mac collide $policy $$" > "$TMP/collide.txt"
   mark_relay
-  ( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send collide.txt ) \
-      > "$TMPROOT/mac-cli-collide-$policy.log" 2>&1 &
+  (cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send collide.txt) \
+    > "$TMPROOT/mac-cli-collide-$policy.log" 2>&1 &
   await_sender
   run_app --auto-receive "$C" --when-exists "$policy" > "$TMPROOT/mac-app-collide-$policy.log" 2>&1
   await_app 120
@@ -266,7 +269,7 @@ echo MAC-COLLIDE-OK
 # The observed log lines are in docs/knowledge/crocmobile-bridge.md,
 # "Transport and Tailcat".
 head -c 136314880 /dev/urandom > "$TMP/bigrecv.bin"
-no_tailcat() {                                      # no_tailcat LOG LABEL
+no_tailcat() { # no_tailcat LOG LABEL
   grep -aq "selected croc relay data transport$" "$1" || fail "$2: CLI log has no plain relay data transport line"
   ! grep -aEq "tailcat-offer|starting Tailcat server|Tailcat fallback|selected staged" "$1" || fail "$2: CLI log shows a Tailcat offer"
 }
@@ -285,8 +288,8 @@ big_app_receive() {
   C=$(code xrecv)
   rm -f "$RESULT" "$DOCS/bigrecv.bin"
   mark_relay
-  ( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send bigrecv.bin ) \
-      > "$log" 2>&1 &
+  (cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send bigrecv.bin) \
+    > "$log" 2>&1 &
   cli_pid=$!
   await_sender
   run_app --auto-receive "$C" > "$TMPROOT/mac-app-xr.log" 2>&1
@@ -311,7 +314,7 @@ echo MAC-TRANSPORT-OK
 # The source sits in a subfolder because the second instance receives into
 # Documents itself.
 CT="$TMP/croctest"
-( cd crocmobile && go build -tags croc_no_tailcat -o "$CT" ./cmd/croctest )
+(cd crocmobile && go build -tags croc_no_tailcat -o "$CT" ./cmd/croctest)
 mkdir -p "$TMP/store9" "$DOCS/store-src"
 "$CT" store-server "$TMP/store9" > "$TMP/9srv.log" 2>&1 &
 STORE=""
@@ -327,7 +330,7 @@ rm -f "$RESULT" "$STORE_LINK" "$DOCS/verify-store-revoke.go" "$DOCS/storeme.bin"
 head -c 5242880 /dev/urandom > "$DOCS/store-src/storeme.bin"
 
 run_app_raw --auto-store-send "$DOCS/store-src/storeme.bin" --store-server "$STORE" --store-downloads 3 \
-    > "$TMPROOT/mac-app-store-send.log" 2>&1
+  > "$TMPROOT/mac-app-store-send.log" 2>&1
 SENDER_PID=$APP_PID
 await_file "$STORE_LINK" 60 || fail "stored upload: the app never wrote its link"
 LINK=$(cat "$STORE_LINK")
@@ -335,7 +338,7 @@ LINK=$(cat "$STORE_LINK")
 
 mkdir -p "$TMP/d9cli"
 CROC_STORE_TOKEN="$LINK" timeout 60 "$CROC" --yes --out "$TMP/d9cli" > "$TMPROOT/mac-cli-store.log" 2>&1 \
-    || fail "stored upload -> CLI download failed (see $TMPROOT/mac-cli-store.log)"
+  || fail "stored upload -> CLI download failed (see $TMPROOT/mac-cli-store.log)"
 cmp "$DOCS/store-src/storeme.bin" "$TMP/d9cli/storeme.bin" || fail "stored upload -> CLI download: file differs"
 
 rm -f "$RESULT"
@@ -350,17 +353,17 @@ await_file "$RESULT" 30 || fail "stored revoke: the app wrote no result"
 got=$(cat "$RESULT")
 echo "stored revoke result: $got"
 [ "$got" = "ok success=true revoked=true" ] || fail "stored revoke: got '$got'"
-kill "$SENDER_PID" 2>/dev/null || true
-wait "$SENDER_PID" 2>/dev/null || true
+kill "$SENDER_PID" 2> /dev/null || true
+wait "$SENDER_PID" 2> /dev/null || true
 
 mkdir -p "$TMP/d9gone"
 CROC_STORE_TOKEN="$LINK" timeout 60 "$CROC" --yes --out "$TMP/d9gone" > "$TMPROOT/mac-cli-store-gone.log" 2>&1 \
-    && fail "revoked upload still downloads (CLI)"
+  && fail "revoked upload still downloads (CLI)"
 [ -z "$(ls -A "$TMP/d9gone")" ] || fail "revoked upload wrote files (CLI)"
 rm -f "$RESULT" "$DOCS/storeme.bin"
 run_app_raw --auto-store-receive "$LINK" > "$TMPROOT/mac-app-store-gone.log" 2>&1
 await_app 60
-got=$(cat "$RESULT" 2>/dev/null || echo missing)
+got=$(cat "$RESULT" 2> /dev/null || echo missing)
 echo "revoked receive result: $got"
 case "$got" in
   "error This link no longer works"*) ;;
@@ -390,8 +393,8 @@ run_app --auto-menubar-clipboard > "$TMPROOT/mac-app-menubar-clip.log" 2>&1
 await_ready
 C=$(cat "$DOCS/verify-code.txt")
 mkdir -p "$TMP/d10t"
-( cd "$TMP/d10t" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes ) \
-    > "$TMPROOT/mac-cli-menubar-clip.log" 2>&1 || fail "menubar-clipboard: croc receive exited $? (log: $TMPROOT/mac-cli-menubar-clip.log)"
+(cd "$TMP/d10t" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes) \
+  > "$TMPROOT/mac-cli-menubar-clip.log" 2>&1 || fail "menubar-clipboard: croc receive exited $? (log: $TMPROOT/mac-cli-menubar-clip.log)"
 await_app 30
 check_result menubar-clipboard
 grep -qF "$CLIP" "$TMPROOT/mac-cli-menubar-clip.log" || fail "menu-bar clipboard text did not reach the CLI"
@@ -406,8 +409,8 @@ echo MAC-MENUBAR-OK
 rm -f "$RESULT"
 run_app_raw --auto-login-item > "$TMPROOT/mac-app-login.log" 2>&1
 await_file "$RESULT" 30 || fail "login item check wrote no result"
-kill "$APP_PID" 2>/dev/null || true
-wait "$APP_PID" 2>/dev/null || true
+kill "$APP_PID" 2> /dev/null || true
+wait "$APP_PID" 2> /dev/null || true
 got=$(cat "$RESULT")
 echo "login item result: $got"
 case "$got" in
@@ -437,8 +440,8 @@ run_app --auto-intent send-text --intent-arg "$INTENT_TEXT" > "$TMPROOT/mac-app-
 await_ready
 C=$(cat "$DOCS/verify-code.txt")
 mkdir -p "$TMP/d12t"
-( cd "$TMP/d12t" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes ) \
-    > "$TMPROOT/mac-cli-intent-text.log" 2>&1 || fail "intent-send-text: croc receive exited $? (log: $TMPROOT/mac-cli-intent-text.log)"
+(cd "$TMP/d12t" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes) \
+  > "$TMPROOT/mac-cli-intent-text.log" 2>&1 || fail "intent-send-text: croc receive exited $? (log: $TMPROOT/mac-cli-intent-text.log)"
 await_app 30
 check_result intent-send-text
 grep -qF "$INTENT_TEXT" "$TMPROOT/mac-cli-intent-text.log" || fail "Send Text action: text did not reach the CLI"
@@ -447,12 +450,12 @@ C=$(code intr)
 rm -f "$RESULT" "$HISTORY"
 echo "mac intent receive $$" > "$TMP/$RECV_NAME"
 mark_relay
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send "$RECV_NAME" ) \
-    > "$TMPROOT/mac-cli-intent-send.log" 2>&1 &
+(cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send "$RECV_NAME") \
+  > "$TMPROOT/mac-cli-intent-send.log" 2>&1 &
 await_sender
 run_app --auto-intent receive --intent-arg "$C" > "$TMPROOT/mac-app-intent-recv.log" 2>&1
 await_app 120
-got=$(cat "$RESULT" 2>/dev/null || echo missing)
+got=$(cat "$RESULT" 2> /dev/null || echo missing)
 echo "intent receive result: $got"
 cmp -s "$TMP/$RECV_NAME" "$RECV_DIR/$RECV_NAME" || fail "Receive action: file differs"
 [ "$got" = "ok success=true files=$RECV_NAME" ] || fail "Receive action: expected the file name back, got '$got'"

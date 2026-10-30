@@ -17,7 +17,10 @@ cd "$(dirname "$0")/.."
 . scripts/lib.sh
 
 case ${1:-} in
-  -h | --help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  -h | --help)
+    sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
+    exit 0
+    ;;
   "") ;;
   *) fail "unknown argument '$1' (try --help)" ;;
 esac
@@ -26,8 +29,8 @@ XCF=CrocKit/Croc.xcframework
 LOGS="$TMPROOT/verify-swift"
 mkdir -p "$LOGS"
 
-if [ ! -d "$XCF/macos-arm64" ] ||
-  [ -n "$(find crocmobile scripts/build-xcframework.sh -type f -newer "$XCF/Info.plist" \
+if [ ! -d "$XCF/macos-arm64" ] \
+  || [ -n "$(find crocmobile scripts/build-xcframework.sh -type f -newer "$XCF/Info.plist" \
     -not -path 'crocmobile/cmd/croctest/croctest' -print -quit)" ]; then
   echo "Rebuilding $XCF (missing or older than crocmobile/)"
   logged "$LOGS/xcframework.log" scripts/build-xcframework.sh

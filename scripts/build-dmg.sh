@@ -12,13 +12,21 @@
 # already carries is what ships. See scripts/build-devid.sh.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib.sh
+help_flag "$@"
 
 APP=${1:?usage: build-dmg.sh <CrocApp.app> <version> [out-dir]}
 VERSION=${2:?usage: build-dmg.sh <CrocApp.app> <version> [out-dir]}
 OUT=${3:-dist}
 
-[ -d "$APP" ] || { echo "error: no app bundle at $APP" >&2; exit 1; }
-command -v create-dmg >/dev/null || { echo "error: create-dmg not installed (brew install create-dmg)" >&2; exit 1; }
+[ -d "$APP" ] || {
+  echo "error: no app bundle at $APP" >&2
+  exit 1
+}
+command -v create-dmg > /dev/null || {
+  echo "error: create-dmg not installed (brew install create-dmg)" >&2
+  exit 1
+}
 
 DMG="$OUT/CrocApp-$VERSION-arm64.dmg"
 STAGE=$(mktemp -d)
@@ -42,6 +50,9 @@ create-dmg \
   --no-internet-enable \
   "$DMG" "$STAGE"
 
-[ -s "$DMG" ] || { echo "error: create-dmg wrote nothing to $DMG" >&2; exit 1; }
+[ -s "$DMG" ] || {
+  echo "error: create-dmg wrote nothing to $DMG" >&2
+  exit 1
+}
 echo "dmg: $DMG"
 echo DMG-OK
