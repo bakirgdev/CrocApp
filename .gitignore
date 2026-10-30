@@ -35,10 +35,18 @@ build/
 /_site/
 /dist/
 
+# Screenshot captures: only their WebP copies under web/ are tracked
+/assets/screenshots/
+
 # Copied from design/ and web/landing/ at build time
 web/landing/tokens.css
 web/docs/src/css/tokens.css
 web/docs/static/img/mascot.webp
+
+# Editors
+.idea/
+.vscode/
+*.swp
 
 # Local tooling
 *.log

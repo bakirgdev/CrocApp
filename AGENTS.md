@@ -58,7 +58,3 @@ Check what is installed with `npx skills ls -g`. When a skill's advice conflicts
 ## Editing AGENTS.md files
 
 Every `AGENTS.md` in this repo (root or in sub-dirs) is written and updated through the `claude-md-management:claude-md-improver` skill, or the closest equivalent your agent has. Run it on the file you change: audit it against the real state of its directory, then apply targeted edits. Keep each file short, current and specific to its directory. Don't restate what the code or another doc already says.
-
-## SDLC flow
-
-`.claude/` holds the AI-native SDLC (skills `/sdlc-*`, hooks, agents). Where those files say CLAUDE.md, read this file. Task artifacts live in `sdlc/<slug>/` on branch `sdlc/<slug>`. Setup, check command and limits: `docs/knowledge/tooling.md`, "In use".

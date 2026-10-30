@@ -1,6 +1,6 @@
 # Review rules
 
-What reviewers (`sdlc-reviewer`, the managed Code Review service) weigh in this repo. Rules for every review, including local `/code-review`, live in `AGENTS.md`.
+What reviewers (people, the managed Code Review service) weigh in this repo. Rules for every review, including local `/code-review`, live in `AGENTS.md`.
 
 ## What failure means here
 
@@ -44,7 +44,7 @@ Report at most 5.
 
 ## Always human
 
-A person approves changes to these paths. `/sdlc-deploy` treats them as `high` risk.
+A person approves changes to these paths.
 
 - `crocmobile/session.go` and `CrocKit/Sources/` (encrypted-transfer path, PAKE handshake)
 - `*.entitlements`
@@ -53,4 +53,3 @@ A person approves changes to these paths. `/sdlc-deploy` treats them as `high` r
 - `scripts/build-appstore.sh`, `scripts/build-devid.sh`, `scripts/build-dmg.sh`
 - Sparkle and signing config (`app/Config/CrocApp-Direct-Info.plist`, `app/Config/ExportOptions-*.plist`)
 - `SECURITY.md`, `docs/THREAT-MODEL.md`
-- `.claude/`
