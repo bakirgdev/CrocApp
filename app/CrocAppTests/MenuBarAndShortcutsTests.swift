@@ -1,3 +1,4 @@
+import CrocKit
 import Foundation
 import Testing
 
@@ -132,10 +133,40 @@ import ServiceManagement
 
     @Test func sendRefusesAnythingButFiles() {
         let controller = makeController()
-        let quickSend = MenuBarQuickSend(controller: controller)
+        let quickSend = MenuBarQuickSend(controller: controller, outputFolder: OutputFolderStore())
         #expect(!quickSend.send(urls: []))
         #expect(!quickSend.send(urls: [URL(string: "https://example.com/a")!]))
         #expect(!controller.isActive)
+    }
+}
+#endif
+
+#if os(macOS)
+import AppKit
+
+@Suite struct MenuBarIconTests {
+    private func icon(_ phase: TransferController.Phase) -> MenuBarIcon {
+        MenuBarIcon(phase: phase, progress: nil)
+    }
+
+    @Test func everyPhaseHasARealSymbolAndNoCode() {
+        let failure = TransferFailure(title: "T", detail: nil, remedy: nil)
+        let phases: [TransferController.Phase] = [
+            .idle, .starting, .waiting(code: "wiry-alpha-bravo"), .connecting, .confirmSend,
+            .transferring, .failed(failure),
+            .done(testSummary(success: true), receivedText: nil),
+            .done(testSummary(success: false), receivedText: nil),
+        ]
+        for phase in phases {
+            let icon = icon(phase)
+            #expect(NSImage(systemSymbolName: icon.symbol, accessibilityDescription: nil) != nil)
+            #expect(!icon.label.contains("wiry"))
+        }
+    }
+
+    @Test func idleIsPlainAndActiveIsFilled() {
+        #expect(icon(.idle).symbol == "arrow.up.arrow.down.circle")
+        #expect(icon(.connecting).symbol == "arrow.up.arrow.down.circle.fill")
     }
 }
 #endif

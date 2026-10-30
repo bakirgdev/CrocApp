@@ -17,6 +17,7 @@ struct CrocAppApp: App {
     @State private var outputFolder: OutputFolderStore
     @State private var localNetwork = LocalNetworkChecker()
     @State private var router = AppRouter.shared
+    @State private var notifier: TransferNotifier
 
     static let mainWindowID = "main"
 
@@ -48,11 +49,29 @@ struct CrocAppApp: App {
         // History for Shortcuts and Spotlight; a harness run's history is not the user's.
         HistoryEntityStore.install(for: history, settings: settings, indexed: !harness)
         #if os(macOS)
-        _quickSend = State(initialValue: MenuBarQuickSend(controller: controller))
+        _quickSend = State(
+            initialValue: MenuBarQuickSend(controller: controller, outputFolder: outputFolder))
         #endif
+        let center = SystemNotificationCenter()
+        let notifier = TransferNotifier(
+            controller: controller, settings: settings, center: center,
+            isAppActive: { SystemNotificationCenter.isAppActive },
+            setDockBadge: Self.setDockBadge)
+        _notifier = State(initialValue: notifier)
+        // A harness run must not ask for permission or badge the Dock.
+        if !harness {
+            center.install()
+            notifier.start()
+        }
         // AppRouter.shared is constructed before this init runs; attach the
         // controller now so AppRouter.isBusy can read isActive live.
         AppRouter.shared.attach(controller: controller)
+    }
+
+    private static func setDockBadge(_ badge: String?) {
+        #if os(macOS)
+        NSApp.dockTile.badgeLabel = badge
+        #endif
     }
 
     var body: some Scene {
@@ -60,12 +79,19 @@ struct CrocAppApp: App {
 
         #if os(macOS)
         MenuBarExtra(
-            "CrocApp", systemImage: "arrow.up.arrow.down.circle",
             isInserted: Binding(
                 get: { settings.showInMenuBar }, set: { settings.showInMenuBar = $0 })
         ) {
             MenuBarQuickSendView(quickSend: quickSend)
                 .environment(controller)
+        } label: {
+            let icon = MenuBarIcon(phase: controller.phase, progress: controller.progress)
+            HStack(spacing: Spacing.space1) {
+                Image(systemName: icon.symbol)
+                if let percent = icon.percent { Text(verbatim: "\(percent)%").monospacedDigit() }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(icon.label)
         }
         .menuBarExtraStyle(.window)
 
