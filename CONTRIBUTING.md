@@ -36,7 +36,7 @@ This project follows the [Contributor Covenant 3.0](CODE_OF_CONDUCT.md). Taking 
 | Report a vulnerability | [Private advisory](https://github.com/bakirgdev/CrocApp/security/advisories/new), never a public issue. See [SECURITY.md](SECURITY.md) |
 | Report a transfer, relay, or crypto bug that also reproduces with the `croc` CLI | [Upstream croc](https://github.com/schollz/croc/issues) |
 
-Issues labeled `help wanted` are open for anyone to pick up.
+Issues labeled `help wanted` or `good first issue` are open for anyone to pick up. Area labels (`macos`, `ios`, `ipados`, `engine`, `ui`, `docs-site`, `ci`) say which part of the project an issue touches.
 
 > [!TIP]
 > For a large feature or a refactor that touches the transfer engine, open an issue or a discussion first. Not for approval, just so you do not spend a weekend on something that collides with work already in flight.

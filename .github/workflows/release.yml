@@ -149,6 +149,8 @@ jobs:
           # each failure stops the step: on argv they would show in `ps`.
           quote() { local v=${1//\\/\\\\}; printf '"%s"' "${v//\"/\\\"}"; }
           sec() { printf '%s\n' "$1" | security -i; }
+          # A newline would end the `security -i` command early.
+          case "$DEVID_P12_PASSWORD" in *$'\n'*) echo "error: DEVID_P12_PASSWORD contains a newline"; exit 1 ;; esac
           kc="$RUNNER_TEMP/signing.keychain-db"
           kc_password=$(openssl rand -base64 32)
           sec "create-keychain -p $(quote "$kc_password") $(quote "$kc")"

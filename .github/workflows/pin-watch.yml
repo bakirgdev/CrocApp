@@ -40,7 +40,7 @@ jobs:
           title="Pinned versions to update"
           rc=0
           scripts/pin-watch.sh > "$RUNNER_TEMP/report.md" || rc=$?
-          [ "$rc" -le 1 ] || exit "$rc"
+          [ "$rc" -eq 0 ] || [ "$rc" -eq 10 ] || exit "$rc"
           cat "$RUNNER_TEMP/report.md" >> "$GITHUB_STEP_SUMMARY"
           issue=$(gh issue list --state open --label dependencies --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
           if [ "$rc" -eq 0 ]; then

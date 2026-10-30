@@ -4,7 +4,8 @@
 # prints a markdown report. The weekly pin-watch workflow keeps one issue in
 # step with it.
 #
-#   scripts/pin-watch.sh     # report on stdout; exit 0 when every pin is current, 1 otherwise
+#   scripts/pin-watch.sh     # report on stdout; exit 0 when every pin is current, 10 when one
+#                            # differs, anything else on failure
 #
 # Needs curl, jq and an authenticated gh (GH_TOKEN in CI).
 set -euo pipefail
@@ -77,4 +78,6 @@ cat << EOF
 $rows
 How to bump each one: \`docs/knowledge/tooling.md\`, "Keeping versions current".
 EOF
-exit "$stale"
+# 10, not 1: `fail` and a failed `gh api` under set -e exit 1, and the workflow
+# must not mistake an outage for a stale pin and overwrite the issue.
+exit $((stale ? 10 : 0))
