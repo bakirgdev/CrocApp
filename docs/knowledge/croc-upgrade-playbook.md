@@ -2,7 +2,7 @@
 
 How to bump the pinned croc version in `crocmobile/go.mod`. Run it as one session whenever upstream releases.
 
-**Pinned: v11.5.5.**
+**Pinned: v11.5.5.** v11.6 is held: its small-file bundles hide receive progress from the bridge (GitHub issue 87; `.github/dependabot.yml` ignores it until then).
 
 ## Steps
 
