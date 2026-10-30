@@ -202,6 +202,43 @@ Not planned yet. If you want to see CrocApp on other platforms, show your intere
 
 </details>
 
+## Build from source
+
+You need a Mac with macOS 26 or newer, Xcode and Go ([exact versions](docs/BUILDING.md#prerequisites)).
+
+```bash
+git clone https://github.com/bakirgdev/CrocApp.git
+cd CrocApp
+scripts/build-xcframework.sh   # builds the Go engine into CrocKit/Croc.xcframework
+open app/CrocApp.xcodeproj     # run the CrocApp scheme
+```
+
+Signing, tests and the transfer harnesses: [`docs/BUILDING.md`](docs/BUILDING.md).
+
+## Project layout
+
+| Path | What it holds |
+|---|---|
+| `app/` | The SwiftUI app for iPhone, iPad and Mac, its share extension, the direct-download target and the unit tests |
+| `CrocKit/` | Swift package that wraps the Go engine in a Swift API |
+| `crocmobile/` | Go wrapper around croc, bound by gomobile into `Croc.xcframework` |
+| `design/` | Design principles and tokens for every surface |
+| `docs/` | Contributor docs: architecture, building, releasing, threat model |
+| `web/landing/`, `web/docs/` | The crocapp.dev landing page and docs site |
+| `scripts/` | Build, verification and release scripts |
+| `assets/` | Icon source, mascot, favicons, disk image background and social preview |
+
+## Docs
+
+| Read | For |
+|---|---|
+| [crocapp.dev/docs](https://crocapp.dev/docs/) | Using the app |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Setup, conventions and opening a pull request |
+| [`docs/README.md`](docs/README.md) | Index of the contributor docs |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How the layers fit together |
+| [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) | Trust boundaries and what CrocApp defends against |
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed in each release |
+
 ## Contributing
 
 Pull requests are welcome: bugs, features, docs, design, landing page. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, commit conventions, design rules, etc. Questions and ideas go to [Discussions](https://github.com/bakirgdev/CrocApp/discussions). Everyone follows the [Code of Conduct](CODE_OF_CONDUCT.md). How decisions are made: [`GOVERNANCE.md`](GOVERNANCE.md). Where the project is headed: [`docs/ROADMAP.md`](docs/ROADMAP.md).

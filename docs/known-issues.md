@@ -13,10 +13,10 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 - **Export compliance needs two owner actions in App Store Connect.**
   - The position (`ITSAppUsesNonExemptEncryption` is `false`, France excluded from availability) is in `RELEASING.md`, "Export compliance". Owner actions: remove France from availability, and file a `future` issue to add it back after an ANSSI declaration.
   - The research behind this is in `knowledge/app-store-listing.md`, "Export compliance". It is not legal advice, and the exact App Store Connect questions could not be fetched.
-- **The Accessibility Inspector and VoiceOver audit has not run on any 1.0 view.**
+- **The Accessibility Inspector and VoiceOver audit has not run on any view.**
   - It needs Accessibility Inspector and VoiceOver on iOS and macOS, so no automated session can do it.
   - Views to cover: the Keep Both / Replace sheet, the **When a File Already Exists** picker, the waiting screen's QR code, Share Link and relay note, Send as Link and its result screen, the stored-link row on Receive, History (Revoke and the row layout), the stored-server field, the Advanced settings page, and the menu-bar window.
-  - Checked so far without the tools: a code pass over every 1.0 view against `design/principles.md`, and the iPhone 17 Pro simulator at the largest accessibility text size. The sheet's buttons stack, status screens scroll, the code wraps, and the picker reads in full. Long names in the incoming list are middle-truncated by design.
+  - Checked so far without the tools: a code pass over every view against `design/principles.md`, and the iPhone 17 Pro simulator at the largest accessibility text size. The sheet's buttons stack, status screens scroll, the code wraps, and the picker reads in full. Long names in the incoming list are middle-truncated by design.
   - Still to check by ear: whether VoiceOver reads an Advanced field's hint and its visible footnote or error twice, whether a decorative QR image with a label is exposed as an image, and Full Keyboard Access focus in the menu-bar window when its content changes.
   - Not looked at: the macOS layout of the changed views.
   - Not measured: the rendered size of the code field's system `PasteButton` against the 44 pt hit target. SwiftUI lets the app set only its border shape, label style and tint, so the system decides its size.
@@ -146,7 +146,7 @@ Permanent or deferred, each with its reason.
   - The replacement `dropDestination(for:isEnabled:action:)` takes a `Void` action (a drop cannot be rejected) and has no `isTargeted`. Its highlight API `onDropSessionUpdated` is iOS 27 / macOS 26 only, and the deployment target is iOS 26.0.
   - Revisit when the minimum OS reaches 27.
 - **Keychain items written by earlier builds stay behind.**
-  - Mac: `KeychainStore` reads, writes and deletes only in the data-protection keychain (`kSecUseDataProtectionKeychain`). Earlier Mac builds (the withdrawn 0.9.9 and 1.0.0 disk images, and development builds) wrote to the login keychain. CrocApp no longer reads those items, and clearing a field in Settings does not delete them.
+  - Mac: `KeychainStore` reads, writes and deletes only in the data-protection keychain (`kSecUseDataProtectionKeychain`). Earlier Mac builds (withdrawn pre-release disk images and development builds) wrote to the login keychain. CrocApp no longer reads those items, and clearing a field in Settings does not delete them.
   - Not a new exposure: they stay as they were stored, in the login keychain under the access control they were created with.
   - No migration code, by owner decision: the app has no users. Remove them by hand in Keychain Access (search for `com.bakirgdev.CrocApp`), or with `security delete-generic-password -s com.bakirgdev.CrocApp -a <account>` for each account: `relayPassword`, `advanced.socks5Proxy`, `advanced.httpProxy`, `storedReceipts`.
   - iPhone and iPad: an item that an earlier TestFlight or development build wrote keeps `kSecAttrAccessibleAfterFirstUnlock`, so a backup can still restore it to another device, until that setting (or the receipt list) is next saved.

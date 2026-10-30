@@ -39,7 +39,7 @@ Moving or deleting a page also needs a redirect, or the old URL, which search en
 
 ## Versions
 
-The site has one version and `docusaurus.config.ts` configures none, so there is no version dropdown and no `versioned_docs/`. `web/docs/package.json` carries the release version (`1.0.0`). When a later release changes behavior that an older version's readers still need described, run `pnpm --dir web/docs run docusaurus docs:version 1.0` and add the dropdown to the navbar then. Release notes are not a docs page: the navbar and footer link to GitHub Releases.
+The site has one version and `docusaurus.config.ts` configures none, so there is no version dropdown and no `versioned_docs/`. `web/docs/package.json` carries the release version, bumped with `app/Config/Version.xcconfig`. When a later release changes behavior that an older version's readers still need described, run `pnpm --dir web/docs run docusaurus docs:version <version>` and add the dropdown to the navbar then. Release notes are not a docs page: the navbar and footer link to GitHub Releases.
 
 ## Broken links fail the build
 

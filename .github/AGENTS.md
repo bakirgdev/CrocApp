@@ -11,8 +11,10 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 | `workflows/go-weekly.yml` | Monday run of the Go checks, so new govulncheck findings surface without a code change, plus `go test -fuzz` for 30 s per `Fuzz*` target (a failing input is uploaded as the `fuzz-failures` artifact); files or updates one `security` issue on failure |
 | `workflows/github-pages.yml` | on push to main (site paths only): builds `_site` and deploys it. The pre-merge check of the same build is the `site build` job in `ci.yml`; keep its `site` regex and this `paths:` list in step |
 | `workflows/reusable-*.yml` | `workflow_call` only. Edit the check here, never in a caller |
+| `workflows/codeql.yml` | CodeQL advanced setup (Actions, JavaScript/TypeScript, Go with `croc_no_tailcat`) on PRs and pushes touching those paths, plus a Tuesday cron. Swift is not analyzed (`docs/known-issues.md`). The repo's default setup stays off, or SARIF uploads fail |
+| `workflows/pin-watch.yml` | Monday run of `scripts/pin-watch.sh`; keeps one "Pinned versions to update" issue in step with the report |
 | `workflows/scorecard.yml` | OpenSSF Scorecard: Wednesday cron, `branch_protection_rule`, dispatch |
-| `dependabot.yml` | github-actions, gomod `/crocmobile`, swift `/app` (reads the Xcode project's `Package.resolved`) weekly; npm `/web/docs` monthly. Minor and patch grouped, majors one PR each |
+| `dependabot.yml` | github-actions, gomod `/crocmobile`, swift `/app` (reads the Xcode project's `Package.resolved`), npm `/web/docs`, all weekly. Minor and patch grouped, majors one PR each. croc `>=11.6.0` is ignored while the pin is held (`docs/knowledge/croc-upgrade-playbook.md`) |
 
 ## Rules
 

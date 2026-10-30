@@ -20,6 +20,19 @@ The SwiftUI sources build three targets. `app/Shared/` is a folder group compile
 | `CrocApp Direct` | macOS, arm64 | Direct download (notarized DMG with Sparkle updates) |
 | `CrocShare` | iOS | Share extension |
 
+## Why a Go bridge
+
+CrocApp links croc's own Go code through gomobile and keeps that bridge as the design. The alternatives all lose on the one property the app promises, that a code phrase works between CrocApp and the croc CLI in both directions:
+
+| Alternative | Why it loses |
+| --- | --- |
+| Run the croc binary as a subprocess | iOS forbids spawning processes. On the Mac it would leave progress, the file list and the accept prompt to parsing terminal output |
+| Rewrite croc's protocol in Swift | A second implementation of PAKE, the relay handshake and the file protocol has to track every upstream change by hand, and any drift breaks interop silently. Crypto code written twice is audited twice |
+| Port only part of croc, such as the relay client | Still a protocol reimplementation, with the same drift risk, for a smaller saving |
+| Wait for an official croc library for Apple platforms | croc ships no such library; `crocmobile/` is that layer |
+
+The cost of the bridge is real and bounded: the engine is most of an executable of about 10 MB (`docs/BUILDING.md`, "What build-xcframework.sh does"), croc's process-global state needs the transfer lock and the stdio restoration in `crocmobile/` (`docs/knowledge/crocmobile-bridge.md`), and an upgrade is a version bump plus the harnesses (`docs/knowledge/croc-upgrade-playbook.md`).
+
 ## Layer diagram
 
 ```
@@ -54,7 +67,7 @@ Notes on the arrows:
 
 ### croc (dependency, not this repo's code)
 
-- `schollz/croc/v11` v11.5.5, pinned in `crocmobile/go.mod`.
+- `schollz/croc/v11`, pinned in `crocmobile/go.mod`.
 - CrocApp does not fork or reimplement it (see `docs/knowledge/project-overview.md`).
 - Upgrades are a version bump plus a rebuild of the xcframework: `docs/knowledge/croc-upgrade-playbook.md`.
 

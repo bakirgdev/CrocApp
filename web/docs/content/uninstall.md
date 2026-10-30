@@ -31,7 +31,7 @@ You can leave this out if you do not care about leftovers. Each step is in the a
 
 Keychain items for a revoked link are removed on revoke, and for an expired link at the next launch. On Mac, deleting the app leaves the other Keychain items in place, and they are not in your login keychain, so steps 1 and 3 are the way to remove them. This was checked on a development build, not on the App Store or disk image build. Where they show in Keychain Access or the Passwords app is not verified. On iPhone and iPad, whether they survive deleting the app is not verified, which is why step 3 comes first.
 
-CrocApp 1.0.0 and earlier kept these items in the login keychain on Mac, and newer versions do not read or remove them. If you used one of those versions, remove them in Keychain Access: search for `com.bakirgdev.CrocApp`.
+Pre-release builds before 1.1.0 kept these items in the login keychain on Mac, and CrocApp does not read or remove them. If you used one of those builds, remove them in Keychain Access: search for `com.bakirgdev.CrocApp`.
 
 ## iPhone and iPad
 
