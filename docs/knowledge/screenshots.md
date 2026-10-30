@@ -1,6 +1,6 @@
 # Screenshots
 
-Every image in `assets/screenshots/` comes out of `scripts/capture-screenshots.sh`, driving real Debug builds of the shipping app. Nothing is a mockup, a crop, or a retouch. The script header is the manifest; `scripts/capture-screenshots.sh --list` prints every output file and size without touching the display.
+Every image in `assets/screenshots/` (gitignored capture output) comes out of `scripts/capture-screenshots.sh`, driving real Debug builds of the shipping app. Nothing is a mockup, a crop, or a retouch. The script header is the manifest; `scripts/capture-screenshots.sh --list` prints every output file and size without touching the display.
 
 ```
 assets/screenshots/
@@ -175,9 +175,9 @@ For any future screenshot work:
 
 ## Where they are used
 
-Ten pairs are referenced by the web or the README; the rest and the whole `app-store/` set are captured and unused by the web (`../known-issues.md`, "Docs site").
+`assets/screenshots/` is gitignored: git keeps only the WebP copies the README and the two sites use. The `app-store/` set is generated again at each submission. After a capture, `--copy-web` refreshes the tracked copies.
 
-- Root `README.md`: `mac/send-code`, `iphone/receive-incoming`, `mac/settings`, via `<picture>` elements that swap on the viewer's GitHub theme.
+- Root `README.md`: the docs-site WebP copies of `mac/send-code`, `iphone/receive-incoming`, `mac/settings`, via `<picture>` elements that swap on the viewer's GitHub theme.
 - Docs site: WebP copies under `web/docs/screenshots/` (outside `static/`, so Docusaurus ships only the hashed copy), referenced by relative path, one pair per page:
 
   | Pair | Page |

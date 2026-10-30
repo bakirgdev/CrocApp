@@ -28,7 +28,7 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
 # Tracked and new docs still on disk (a deletion not yet staged is not a doc).
-git ls-files --cached --others --exclude-standard '*.md' ':!:web/docs/content/**' ':!:.claude/**' | sort -u | while IFS= read -r f; do
+git ls-files --cached --others --exclude-standard '*.md' ':!:web/docs/content/**' | sort -u | while IFS= read -r f; do
   [ -f "$f" ] && echo "$f"
 done > "$TMP/files"
 # Every tracked file plus every directory above one: the set a path may name.

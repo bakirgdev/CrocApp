@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the Swift unit suites: CrocKit (`swift test`) and the app (`xcodebuild
-# test`, scheme CrocApp, on this Mac). Part of SDLC_VERIFY in
-# .claude/settings.json, so the SDLC commit gate runs it on every code commit.
+# test`, scheme CrocApp, on this Mac). Run it before pushing a Swift change;
+# CI runs the same suites in the macOS leg of `build`.
 #
 #   scripts/verify-swift.sh     # exit 0 when both suites pass
 #
