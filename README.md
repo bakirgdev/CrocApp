@@ -145,7 +145,7 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 | HTTP proxy | `--connect` |
 | Send speed limit | `--throttleUpload` |
 | Sender IP, direct connect | `--ip` |
-| Multicast address (macOS) | `--multicast` |
+| Multicast address | `--multicast` |
 
 </details>
 

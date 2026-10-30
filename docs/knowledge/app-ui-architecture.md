@@ -219,7 +219,7 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - For `.requiresApproval` it shows an **Open Settings** button (`SMAppService.openSystemSettingsLoginItems()`).
 
 **Intents.**
-- `Intents/` holds `SendFilesIntent`, `SendTextIntent`, `ReceiveIntent` and `CrocAppShortcuts`. All three intents set `supportedModes: .foreground`, because a transfer outlives the roughly 30 s iOS gives a background action.
+- `Intents/` holds `SendFilesIntent`, `SendTextIntent`, `ReceiveIntent`, `OpenTransferIntent`, the History entity and its query, and `CrocAppShortcuts`. Every intent sets `supportedModes: .foreground`, because a transfer outlives the roughly 30 s iOS gives a background action.
 - The intents take `TransferController` (and, for receive, `OutputFolderStore`) with `@Dependency`. `CrocAppApp.init` registers both in `AppDependencyManager.shared` before any window, because an action can run right after launch.
 - `TransferController.wait(for:)` (`TransferIntentSupport.swift`) checks the controller every 100 ms until a check yields a value, and returns nil once the action is cancelled. It polls instead of observing, so it ends on cancellation at once.
 - `awaitCode()` ends at `.waiting`, so the send actions return there and not at the end of the transfer. `awaitReceive()` ends at `.done`. `.failed` becomes `TransferIntentError.failed` with the failure's title and detail.

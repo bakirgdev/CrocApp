@@ -7,18 +7,18 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | Tool | Config | Where it runs |
 |---|---|---|
 | swift-format (Xcode 27 toolchain, Swift 6.4) | `.swift-format` (rules) + `scripts/format-swift.sh` (source set) | local + CI |
-| golangci-lint 2.x (CI pins v2.15.0 in `reusable-go.yml`) | `crocmobile/.golangci.yml` | local + CI |
+| golangci-lint 2.x (CI pins the version in `reusable-go.yml`) | `crocmobile/.golangci.yml` | local + CI |
 | govulncheck (`tool` block in `crocmobile/go.mod`) | none | CI go job + weekly schedule |
 | `go build ./...` + `go vet ./...` | none | CI (go job, alongside lint/vuln) |
 | `go test -race ./...` (Go `testing`) | `crocmobile/*_test.go` | local + CI (go job, `GOOS`/`GOARCH` unset) |
 | Swift Testing (Xcode's built-in) | `CrocKit/Tests/CrocKitTests/`, `app/CrocAppTests/` (shared `CrocApp` scheme) | local + CI (macOS leg of `build`) |
 | xcbeautify | none | CI only (`ci.yml`; `release.yml` does not use it) |
-| create-dmg 1.3.0 (Homebrew locally; `release.yml` downloads the release tarball and checks its SHA-256) | none; called by `scripts/build-dmg.sh` | local + `release.yml` |
+| create-dmg (Homebrew locally; `release.yml` downloads the release tarball and checks its SHA-256) | none; called by `scripts/build-dmg.sh` | local + `release.yml` |
 | croc v10 CLI (the v10 peer of `verify-interop.sh` scenario 10) | `scripts/croc-v10.version` (read by the script and the `interop` job) | local + CI |
-| Node 26.13.0 | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
-| pnpm 12.16.1 | `packageManager` in `web/docs/package.json` (CI: `pnpm/action-setup` reads it) | docs site, local + CI |
-| Docusaurus 3.10, React 19.3, TypeScript 7 | `web/docs/package.json`, `pnpm-lock.yaml`; `pnpm-workspace.yaml` holds `overrides` for transitive advisories | docs site, local + CI (`pnpm run typecheck` in the `site build` job and `github-pages.yml`). `@docusaurus/plugin-client-redirects` writes the old-URL redirects (`docs-site.md`) |
-| Sparkle 2.10.1 (SwiftPM, `CrocApp Direct` only; auto-update for the direct-download build) | `Package.resolved` under `app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/`, minimum in the `XCRemoteSwiftPackageReference` in `project.pbxproj`; Dependabot (`swift`, `/app`) reads the Xcode project's `Package.resolved` and opens the bump | `CrocApp Direct` build, local + CI (unsigned build step) |
+| Node | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
+| pnpm | `packageManager` in `web/docs/package.json` (CI: `pnpm/action-setup` reads it) | docs site, local + CI |
+| Docusaurus, React, TypeScript | `web/docs/package.json`, `pnpm-lock.yaml`; `pnpm-workspace.yaml` holds `overrides` for transitive advisories | docs site, local + CI (`pnpm run typecheck` in the `site build` job and `github-pages.yml`). `@docusaurus/plugin-client-redirects` writes the old-URL redirects (`docs-site.md`) |
+| Sparkle (SwiftPM, `CrocApp Direct` only; auto-update for the direct-download build) | `Package.resolved` under `app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/`, minimum in the `XCRemoteSwiftPackageReference` in `project.pbxproj`; Dependabot (`swift`, `/app`) reads the Xcode project's `Package.resolved` and opens the bump | `CrocApp Direct` build, local + CI (unsigned build step) |
 | MCP servers `xcode` (`xcrun mcpbridge`) and `gopls` (`gopls mcp`) for AI sessions | `.mcp.json` (Claude Code asks each user to approve them); `gopls` starts in `crocmobile/` because the Go module lives there, not at the repo root | local AI sessions. Use `xcode` to build, run tests, render previews and read diagnostics; it needs the project open in Xcode with MCP enabled, and never replaces the harnesses (`BUILDING.md`, "Verification harnesses"). Use `gopls` for symbol search and references in `crocmobile/` |
 | `scripts/verify-design.sh` (pure bash and awk, no toolchain) | none; also lints the landing and docs CSS, `app.js`, `theme-init.js`, `prismTheme.ts` and `site.webmanifest` (the `design` filter in `ci.yml` covers those paths). Holds the token parity and contrast tables (the ratios must also appear in `design/principles.md`, "Contrast") and the raw-color lint | local + CI (`contrast` job, shown as `design checks`) |
 | `cwebp` (Homebrew `webp`) | none; called by `scripts/capture-screenshots.sh --copy-web` to write the web WebP files | local only |
@@ -96,7 +96,7 @@ The Swift language mode (6) and the deployment targets (26.0) are not version pi
   - A bare `NewOptions` on type `Options` leaves an empty suffix and emits `- (nullable instancetype)init` on `CrocmobileOptions`, which clashes with `NSObject`'s `nonnull init`.
   - The constructor is named `NewOptionsDefault`, which yields the selector `initDefault`. Do not rename it back, and do not add a `New<Type>` func whose suffix is empty.
 - **macOS app build has no signing identity.** The runner has no `Mac Development` cert, so the `build (macOS)` job passes `CODE_SIGNING_ALLOWED=NO` to `xcodebuild`. That app cannot use the Keychain, which no test needs: the suites inject in-memory secret stores (`app/CrocApp/Support/KeychainStore.swift`). The iOS Simulator destination never signs, so it needs nothing.
-- **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `github-pages.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and sets `cancel-in-progress` only for pull requests, so deploys on `main` queue instead of cancelling each other.
+- **A cancelled Pages run strands the `github-pages` environment lock**, and the next push queues behind a deployment that never completes. `github-pages.yml` has an `if: cancelled()` step calling `POST /repos/:repo/pages/deployments/:sha/cancel` to release it, and sets `cancel-in-progress: false`, so deploys on `main` queue instead of cancelling each other.
 - **Scheduled workflows are disabled after 60 days of repo inactivity.** `go-weekly.yml` stops firing silently; `workflow_dispatch` restarts it.
 
 ## swift-format traps
@@ -117,7 +117,7 @@ The Swift language mode (6) and the deployment targets (26.0) are not version pi
 ## golangci-lint traps
 
 - `errcheck` flags the deliberate ignores in `session.go`: `os.Chdir(origWD)` on cleanup paths and `syscall.Dup2(savedStdinFd, syscall.Stdin)` restoring fd0. These are written as `_ = f()` so intent is visible at the call site rather than hidden in a config blocklist.
-- The two `defer func() { recover() }()` guards carry `//nolint:errcheck`. Do not rewrite them as `_ = recover()`: `recover` only works when called directly by the deferred function, and this codepath exists because a goroutine panic kills the gomobile host app.
+- The `defer func() { recover() }()` guards in `session.go` carry `//nolint:errcheck`. Do not rewrite them as `_ = recover()`: `recover` only works when called directly by the deferred function, and this codepath exists because a goroutine panic kills the gomobile host app.
 - `Close`/`Remove` are already in errcheck's default exclusions, which is why the many `pr.Close()` calls are silent.
 
 ## Shell and harness traps

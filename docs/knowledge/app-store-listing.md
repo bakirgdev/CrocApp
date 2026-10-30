@@ -108,7 +108,7 @@ croc,transfer,share,encrypted,secure,private,qr,p2p,wormhole,folder,lan,nearby,e
 
 Not verified: whether App Store Connect shows or requires this field for an app's first version. Apple's version-information page, the only Apple source recorded here, does not say. Paste the text below if the field appears, and leave it empty if it does not. Later releases replace it with that release's changes, taken from the `[x.y.z]` section of `CHANGELOG.md`.
 
-Length: 1217 characters.
+Length: 1188 characters.
 
 ```text
 CrocApp is on the App Store for iPhone, iPad and Mac.

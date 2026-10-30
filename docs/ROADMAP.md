@@ -14,7 +14,7 @@ Shipped work is in [`CHANGELOG.md`](../CHANGELOG.md). Release status is in [`kno
 |---|---|
 | Track croc releases | Bump the pinned croc version following the [upgrade playbook](knowledge/croc-upgrade-playbook.md), so code phrases keep working between CrocApp and the croc CLI |
 | Security fixes | Handled as described in [`SECURITY.md`](../SECURITY.md) |
-| Dependency updates | Dependabot PRs (weekly; monthly for the docs site), plus a weekly Go vulnerability check and fuzz run in CI |
+| Dependency updates | Dependabot PRs (weekly), plus a weekly Go vulnerability check and fuzz run in CI |
 | Newer Apple OS releases | Keep CrocApp working on them. The minimum stays iOS, iPadOS and macOS 26.0 |
 | Known issues | Tracked in [`known-issues.md`](known-issues.md) |
 

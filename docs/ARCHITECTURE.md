@@ -271,7 +271,7 @@ The main app target picks its entitlements file by SDK in the project (`CODE_SIG
   - `files.user-selected.read-write`
   - `files.downloads.read-write`, for the default output folder `~/Downloads/CrocApp`
   - `com.apple.developer.associated-domains` (`applinks:crocapp.dev`)
-- `app/CrocApp/CrocApp-iOS.entitlements`: `application-groups` (`group.com.bakirgdev.CrocApp`, for the share-extension handoff) and `associated-domains` (`applinks:crocapp.dev`).
+- `app/CrocApp/CrocApp-iOS.entitlements`: `application-groups` (`group.com.bakirgdev.CrocApp`, for the share-extension handoff) `associated-domains` (`applinks:crocapp.dev`), and `networking.multicast` (croc's local-network discovery).
 - `app/CrocAppDirect/CrocAppDirect.entitlements`: the macOS set above, plus Sparkle's mach-lookup exceptions `$(PRODUCT_BUNDLE_IDENTIFIER)-spks` and `-spki`.
 - `app/CrocShare/CrocShare.entitlements`: the same App Group and nothing else.
 
@@ -297,7 +297,7 @@ Four files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-In
 
 ### Sandbox limits that shaped the design
 
-- Security-scoped URLs: every send or receive intent in `TransferController` calls `startAccessingSecurityScopedResource()` on URLs the user picked and tracks them in `scopedURLs` until the stream ends. `OutputFolderStore` and `HistoryView`'s bookmark path do the same before any `fileExists` or `stat` call, because the sandbox denies `stat` on a scope that is not open.
+- Security-scoped URLs: every send or receive intent in `TransferController` calls `startAccessingSecurityScopedResource()` on URLs the user picked and tracks them in `scopes` (`SecurityScopes`) until the stream ends. `OutputFolderStore` and `HistoryView`'s bookmark path do the same before any `fileExists` or `stat` call, because the sandbox denies `stat` on a scope that is not open.
 - App Group container: the only channel between `CrocShare` and the app. `CrocShare` is a separate process with a memory cap of about 120 MB and no room for long work.
   - It copies attachment bytes inside the synchronous `loadFileRepresentation` callback, because the source temp file is deleted when the callback returns.
   - It never deletes existing batches, because one may be mid-send.
