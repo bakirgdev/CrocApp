@@ -14,7 +14,7 @@ The exact toolchain and the steps from a fresh clone to a running app, plus how 
 | golangci-lint | `2.x`; CI pins `v2.15.0` | `.github/workflows/reusable-go.yml`; rules in `crocmobile/.golangci.yml` (`version: "2"` schema) | `brew install golangci-lint` |
 | govulncheck | the `golang.org/x/vuln` version in the `tool` block of `crocmobile/go.mod` | `.github/workflows/reusable-go.yml` | `cd crocmobile && go tool govulncheck ./...` |
 | create-dmg | unpinned | `.github/workflows/release.yml` installs it with `brew` | `brew install create-dmg`; only `scripts/build-dmg.sh` needs it |
-| Node, pnpm | Node `26.12.0`, pnpm `12.14.0`; only the docs site (`web/docs/`) needs them | `web/docs/.nvmrc`, `packageManager` in `web/docs/package.json` | `brew install fnm pnpm`, then `fnm use` in `web/docs/`; `pnpm --dir web/docs install` (`knowledge/docs-site.md`) |
+| Node, pnpm | Node `26.13.0`, pnpm `12.16.1`; only the docs site (`web/docs/`) needs them | `web/docs/.nvmrc`, `packageManager` in `web/docs/package.json` | `brew install fnm pnpm`, then `fnm use` in `web/docs/`; `pnpm --dir web/docs install` (`knowledge/docs-site.md`) |
 | cwebp | unpinned; only `scripts/capture-screenshots.sh --copy-web` needs it, to write the web WebP files | none | `brew install webp` |
 | croc CLI | `v11.5.5`, the version the embedded engine uses | `crocmobile/go.mod` (`github.com/schollz/croc/v11`) | `brew install croc` (lands at `$HOMEBREW_PREFIX/bin/croc`, the harnesses' default). `croc --version` must match the pin; if the bottle lags, use `go install github.com/schollz/croc/v11@<pin>` and point `CROC` at it; only `scripts/verify-*.sh` and `crockit-verify` need it |
 

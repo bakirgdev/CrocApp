@@ -1,0 +1,52 @@
+name: Weekly pin watch
+
+# Pins Dependabot cannot see (scripts/pin-watch.sh). Keeps one open issue in
+# step with the report and closes it once every pin is current.
+on:
+  schedule:
+    # Off the hour: GitHub delays or drops scheduled runs at :00 under load.
+    - cron: "37 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pin-watch
+  cancel-in-progress: true
+
+jobs:
+  pin-watch:
+    name: pin watch
+
+    runs-on: ubuntu-26.04
+
+    timeout-minutes: 5
+
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Report and sync the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          title="Pinned versions to update"
+          rc=0
+          scripts/pin-watch.sh > "$RUNNER_TEMP/report.md" || rc=$?
+          [ "$rc" -le 1 ] || exit "$rc"
+          cat "$RUNNER_TEMP/report.md" >> "$GITHUB_STEP_SUMMARY"
+          issue=$(gh issue list --state open --label dependencies --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+          if [ "$rc" -eq 0 ]; then
+            [ -z "$issue" ] || gh issue close "$issue" --comment "Every pin is current."
+          elif [ -n "$issue" ]; then
+            gh issue edit "$issue" --body-file "$RUNNER_TEMP/report.md"
+          else
+            gh issue create --title "$title" --label dependencies --body-file "$RUNNER_TEMP/report.md"
+          fi

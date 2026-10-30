@@ -48,11 +48,12 @@ updates:
       prefix: "build"
       include: "scope"
 
-  # Monthly: the docs site churns weekly and none of it ships in the app.
+  # Pins Dependabot cannot see are checked by .github/workflows/pin-watch.yml.
   - package-ecosystem: "npm"
     directory: "/web/docs"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
+      day: "monday"
     groups:
       docs-site-deps:
         patterns: ["*"]
