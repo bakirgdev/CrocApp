@@ -22,6 +22,11 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    # croc 11.6 bundles small files and stops updating the receiver's progress
+    # fields mid-bundle; held until croc exposes bundle progress (issue #87).
+    ignore:
+      - dependency-name: "github.com/schollz/croc/v11"
+        versions: [">=11.6.0"]
     groups:
       go-deps:
         patterns: ["*"]
