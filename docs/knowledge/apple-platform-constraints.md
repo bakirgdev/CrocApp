@@ -29,7 +29,7 @@ Apple-side rules the app has to live inside. Each item says how it was checked:
 
 ### Other hard limits
 
-- **Share extension**: about 120 MB memory, no long-running work, no `BGContinuedProcessingTask`. The pattern is `NSItemProvider.loadFileRepresentation`, a stream copy into the App Group container, then the main app runs the transfer. (From Apple docs, not re-checked.)
+- **Share extension**: about 120 MB memory, no long-running work, no `BGContinuedProcessingTask`. The pattern is `NSItemProvider.loadFileRepresentation`, a stream copy into the App Group container, then the main app runs the transfer. (From Apple docs, not re-checked.) On macOS the extension is sandboxed, may launch its host app, and uses a team-prefixed App Group ID, which needs no provisioning profile (Apple, "Accessing app group containers in your existing macOS app"). A Developer ID profile that does include the App Groups capability is still required for the Direct app (`RELEASING.md`).
 - **No process spawning on iOS**, so croc is linked as a library only.
 - **Mac App Store requires the sandbox.** The app uses `com.apple.security.network.client` and `.server` (the server entitlement is for the local relay listener), plus `files.user-selected.read-write` and `files.downloads.read-write`. Verified in this repo (`app/CrocApp/CrocApp.entitlements`). The direct download needs notarization and the hardened runtime; the sandbox is optional there.
 - **Wi-Fi Aware** (iOS and iPadOS 26) gives AirDrop-class direct Wi-Fi but does not exist on macOS 26. It could only be an optional iOS-to-iOS fast path, never the main transport. (From Apple docs, not re-checked.)

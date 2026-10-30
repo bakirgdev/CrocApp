@@ -53,13 +53,14 @@ VERSION=$(sed -nE 's/^MARKETING_VERSION = ([^ ]+)$/\1/p' app/Config/Version.xcco
 rm -rf "$WORK"
 mkdir -p "$WORK" "$OUT"
 
-# Only the app target signs here: Sparkle is a binary package, so the manual
-# settings below reach no other target. The export re-signs everything nested.
+# The profile is set on the CrocApp Direct target in the project, not here: a
+# command-line setting would also reach CrocShare Direct, which has a different
+# bundle ID and needs no profile (its team-prefixed App Group is not restricted).
+# The export re-signs everything nested.
 logged "$WORK/archive.log" xcodebuild -project app/CrocApp.xcodeproj -scheme 'CrocApp Direct' \
   -configuration Release -destination 'generic/platform=macOS' -derivedDataPath "$WORK/dd" \
   -archivePath "$ARCHIVE" archive ARCHS=arm64 \
-  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$SIGNER" DEVELOPMENT_TEAM="$TEAM" \
-  PROVISIONING_PROFILE_SPECIFIER="$PROFILE"
+  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$SIGNER" DEVELOPMENT_TEAM="$TEAM"
 echo "archive: OK"
 
 logged "$WORK/export.log" xcodebuild -exportArchive -archivePath "$ARCHIVE" \

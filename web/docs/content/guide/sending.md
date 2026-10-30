@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 title: Send
-description: How to send files, folders and text in CrocApp, from the app, a drop, the share sheet or Finder.
+description: How to send files, folders and text in CrocApp, from the app, a drop, the share sheet or Finder's Share menu.
 ---
 
 # Send
@@ -50,6 +50,7 @@ You cannot start a second send or receive while one is running. Finish or cancel
 
 ## Other ways to send
 
+- **Finder's Share menu (Mac).** Select files or folders in Finder, choose **Share**, then **CrocApp**. CrocApp opens with the **Shared Files** sheet, where **Send** starts the transfer and **Discard** drops them. If CrocApp is not in the Share menu, turn it on in System Settings, Extensions, Sharing (or **More…** in the Share menu).
 - **Share sheet (iOS).** Share files into CrocApp from any app. A **Shared Files** sheet lists what arrived, with **Discard** and **Send**.
 - **Mac menu bar.** Send without opening the main window. See [Mac menu bar and keyboard shortcuts](menu-bar.md).
 - **Shortcuts and Siri.** See [Shortcuts and Siri](shortcuts.md).

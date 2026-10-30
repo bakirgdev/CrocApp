@@ -138,6 +138,14 @@ Permanent or deferred, each with its reason.
 
 ### App and UI
 
+- **The Mac Share extension needs a Direct profile with App Groups before the next release.**
+  - `CrocApp Direct` now carries the team-prefixed App Group `HBSU359M33.com.bakirgdev.CrocApp.direct`. The existing "CrocApp Direct Developer ID" profile lacks the capability, so `scripts/build-devid.sh` fails at archive ("doesn't include the App Groups capability", reproduced). Enable App Groups on the `com.bakirgdev.CrocApp.direct` App ID, regenerate the profile, reinstall it and update `DEVID_PROFILE_BASE64`.
+  - The Developer ID archive, export and notarization of an app that embeds `CrocShare Direct` were not run. A signed Debug build of both targets and an automatic-signing `codesign --verify --deep --strict` pass.
+- **Mac Share extension: only checked through `NSSharingService`.**
+  - A script shared a file and a folder through the system's sharing service to the signed Debug extension: it was offered, staged both into the group container and launched the app, which showed the **Shared Files** sheet. Choosing it from Finder's Share menu and context menu by hand was not done.
+  - A new extension may need turning on in System Settings, Extensions, Sharing (`pluginkit -e use` did it in the check). The `NSExtensionActivationRule` is a predicate on `public.file-url`, with no cap on the item count.
+  - The Direct extension was built and signed but its Share menu entry was not exercised. An unsigned Mac build has no usable App Group, so the handoff does nothing there.
+
 - **Unsigned Mac builds cannot use the Keychain.**
   - The data-protection keychain needs the `com.apple.application-identifier` entitlement, which a signed build gets from its provisioning profile. A build with `CODE_SIGNING_ALLOWED=NO` (CI, or a contributor outside team `HBSU359M33`) reads nothing, and every write or delete fails with `errSecMissingEntitlement`. The relay password, the proxies and Send as Link receipts do not persist; a relay password or proxy field shows "Couldn't save to the Keychain".
   - No test or harness needs it: they inject in-memory secret stores. An unsigned iOS Simulator build was not checked.

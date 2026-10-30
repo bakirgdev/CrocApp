@@ -39,8 +39,17 @@ struct StagedFilesSheet: View {
         }
     }
 
+    // A folder (from Finder's Share menu) has no size of its own: sum its files.
     private static func size(of url: URL) -> Int64 {
-        (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
+        let keys: Set<URLResourceKey> = [.fileSizeKey]
+        func fileSize(_ url: URL) -> Int64 {
+            (try? url.resourceValues(forKeys: keys).fileSize).map(Int64.init) ?? 0
+        }
+        guard url.hasDirectoryPath,
+            let walk = FileManager.default.enumerator(
+                at: url, includingPropertiesForKeys: Array(keys))
+        else { return fileSize(url) }
+        return walk.compactMap { $0 as? URL }.reduce(0) { $0 + fileSize($1) }
     }
 }
 
