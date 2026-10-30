@@ -15,8 +15,8 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | xcbeautify | none | CI only (`ci.yml`; `release.yml` does not use it) |
 | create-dmg 1.3.0 (Homebrew; CI installs it unpinned with `brew install create-dmg`) | none; called by `scripts/build-dmg.sh` | local + `release.yml` |
 | croc v10 CLI (the v10 peer of `verify-interop.sh` scenario 10) | `scripts/croc-v10.version` (read by the script and the `interop` job) | local + CI |
-| Node 26.12.0 | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
-| pnpm 12.14.0 | `packageManager` in `web/docs/package.json` (CI: `pnpm/action-setup` reads it) | docs site, local + CI |
+| Node 26.13.0 | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
+| pnpm 12.16.1 | `packageManager` in `web/docs/package.json` (CI: `pnpm/action-setup` reads it) | docs site, local + CI |
 | Docusaurus 3.10, React 19.3, TypeScript 7 | `web/docs/package.json`, `pnpm-lock.yaml`; `pnpm-workspace.yaml` holds `overrides` for transitive advisories | docs site, local + CI (`pnpm run typecheck` in the `site build` job and `github-pages.yml`). `@docusaurus/plugin-client-redirects` writes the old-URL redirects (`docs-site.md`) |
 | Sparkle 2.10.1 (SwiftPM, `CrocApp Direct` only; auto-update for the direct-download build) | `Package.resolved` under `app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/`, minimum in the `XCRemoteSwiftPackageReference` in `project.pbxproj`; Dependabot (`swift`, `/app`) reads the Xcode project's `Package.resolved` and opens the bump | `CrocApp Direct` build, local + CI (unsigned build step) |
 | MCP servers `xcode` (`xcrun mcpbridge`) and `gopls` (`gopls mcp`) for AI sessions | `.mcp.json` (Claude Code asks each user to approve them); `gopls` starts in `crocmobile/` because the Go module lives there, not at the repo root | local AI sessions. Use `xcode` to build, run tests, render previews and read diagnostics; it needs the project open in Xcode with MCP enabled, and never replaces the harnesses (`BUILDING.md`, "Verification harnesses"). Use `gopls` for symbol search and references in `crocmobile/` |
@@ -38,6 +38,27 @@ What is wired up, what was deliberately skipped, and the traps in each.
 - CI builds the iOS leg for `generic/platform=iOS Simulator`, which needs the SDK, not a runtime.
 
 The build settings that must not change casually (Swift 6 mode, deployment targets, arm64-only macOS, the version source, the Go pin) are in `../BUILDING.md`, "Build settings that must not change casually".
+
+## Keeping versions current
+
+Every pin, and what updates it. Dependabot opens its PRs on Mondays, grouped per ecosystem; the weekly pin-watch workflow (`.github/workflows/pin-watch.yml`, running `scripts/pin-watch.sh`) checks the rest and keeps one issue, "Pinned versions to update", open while any of them differs from the newest stable release.
+
+| Pin | Where | Updated by |
+|---|---|---|
+| GitHub Actions (full SHAs) | `.github/workflows/*.yml` | Dependabot `github-actions` |
+| croc, Go modules, gomobile, govulncheck | `crocmobile/go.mod` (`require` and `tool` blocks) | Dependabot `gomod`; a croc bump follows `croc-upgrade-playbook.md` |
+| Sparkle | `Package.resolved` in the Xcode project | Dependabot `swift` |
+| Docusaurus, React, TypeScript | `web/docs/package.json`, `pnpm-lock.yaml` | Dependabot `npm` |
+| Go toolchain | `go` line in `crocmobile/go.mod` | pin-watch |
+| Xcode | `.xcode-version` | pin-watch, against the newest stable Xcode on the `xcode-27` runner image (`../BUILDING.md`, "Xcode bump") |
+| Node | `web/docs/.nvmrc`, `engines` in `web/docs/package.json` | pin-watch (newest Node 26) |
+| pnpm | `packageManager` in `web/docs/package.json` | pin-watch |
+| croc v10 test peer | `scripts/croc-v10.version` | pin-watch |
+| golangci-lint | `version:` in `.github/workflows/reusable-go.yml` | pin-watch |
+| Runner labels (`ubuntu-26.04`, `macos-26`, `xcode-27`) | `runs-on:` in the workflows | pin-watch, against the `actions/runner-images` toolsets |
+| xcbeautify, create-dmg | `brew install` in the workflows | unpinned |
+
+The Swift language mode (6) and the deployment targets (26.0) are not version pins: they change only by decision (`../BUILDING.md`, "Build settings that must not change casually").
 
 ## CI gotchas
 

@@ -24,6 +24,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - The `.p12` password and the throwaway keychain password appear in `security import ... -P`, `security create-keychain -p`, `security unlock-keychain -p` and `security set-key-partition-list -k`.
   - `security` has no stdin option for them, so other processes on the runner can read them while the command runs.
   - Acceptable only on a single-tenant runner. Never run this workflow on a shared runner.
+- **CI builds with the Xcode 27.2 release candidate.** `.xcode-version` names 27.2, and the `xcode-27` runner image carries 27.2 only as the release candidate (27B48), while the stable 27.2 is 27B52. The pin-watch issue shows it until the image ships the stable build.
 - **`release.yml` installs `create-dmg` unpinned** (`brew install create-dmg`).
   - `scripts/build-dmg.sh` runs it while the signing keychain is unlocked and the notary key is on disk. A compromised or broken formula update would run with access to both.
   - Homebrew has no simple version pin for a formula, and a version check would fail every release after an upstream bump.
@@ -123,7 +124,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 - **The docs build is not fully pinned.**
   - `packageManager` in `web/docs/package.json` has no `+sha512` hash. `github-pages.yml` installs pnpm with `pnpm/action-setup`, so pnpm is pinned by version only.
   - The four `overrides` in `web/docs/pnpm-workspace.yaml` are open-ended `>=` floors.
-  - `pnpm audit --prod` reports one High advisory with no fix: `braces@3.0.3` (GHSA-vfj7-8cjw-p6xm, stack exhaustion), reached through `chokidar` and `micromatch` inside Docusaurus core. It is build-time only, and no attacker input reaches the glob handling.
+  - `pnpm audit` no longer lists `braces@3.0.3` (see "Accepted"), and reports one Low advisory with no fix: `deepmerge` <= 4.3.1 (GHSA-gcqx-w48m-w2h4, prototype poisoning), reached through `@svgr/plugin-svgo` at build time over our own SVG config.
   - Re-run the audit on each Docusaurus upgrade.
 
 ## Accepted

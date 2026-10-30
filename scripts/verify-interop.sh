@@ -24,7 +24,7 @@ require_croc
 command -v go >/dev/null || fail "go not installed (brew install go)"
 CROC_V10="${CROC_V10:-$(go env GOPATH)/bin/croc}"
 V10_VERSION=$(cat scripts/croc-v10.version)
-"$CROC_V10" --version 2>/dev/null | grep -qwF "$V10_VERSION" \
+"$CROC_V10" --version 2>/dev/null | grep -qwF "${V10_VERSION#v}" \
   || fail "croc $V10_VERSION not found at '$CROC_V10' (go install github.com/schollz/croc/v10@$V10_VERSION, or set CROC_V10)"
 
 TMP=$(mktemp -d)
