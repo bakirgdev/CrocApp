@@ -1,0 +1,10 @@
+# Paths where a change can leak a secret, weaken the build or the transfer
+# path (REVIEW.md, "Always human"). GitHub requests the owner's review on them.
+/.github/                  @bakirgdev
+/scripts/build-*.sh        @bakirgdev
+/app/Config/               @bakirgdev
+/app/**/*.entitlements     @bakirgdev
+/crocmobile/session.go     @bakirgdev
+/CrocKit/Sources/          @bakirgdev
+/SECURITY.md               @bakirgdev
+/docs/THREAT-MODEL.md      @bakirgdev
