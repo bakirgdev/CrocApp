@@ -20,11 +20,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
+help_flag "$@"
 
 CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 require_croc
 
-SIM="${SIM:-iPhone 17 Pro}"   # list runtimes with: xcrun simctl list devices
+SIM="${SIM:-iPhone 17 Pro}" # list runtimes with: xcrun simctl list devices
 BUNDLE=com.bakirgdev.CrocApp
 GROUP=group.com.bakirgdev.CrocApp
 DD=$(derived_data sim)
@@ -33,7 +34,7 @@ TMP=$(mktemp -d)
 trap 'kill_jobs; rm -rf "$TMP"' EXIT
 
 use_relay "$TMPROOT/sim-relay.log"
-CLI_R=${RELAY:+--relay=$RELAY}                     # one word, empty on the public pool: the CLI takes --relay before its command
+CLI_R=${RELAY:+--relay=$RELAY} # one word, empty on the public pool: the CLI takes --relay before its command
 
 xcrun simctl bootstatus "$SIM" -b > /dev/null
 logged "$TMPROOT/sim-build.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
@@ -46,15 +47,15 @@ DOCS="$(xcrun simctl get_app_container "$SIM" "$BUNDLE" data)/Documents"
 RESULT="$DOCS/verify-result.txt"
 READY="$DOCS/verify-code-ready.txt"
 
-launch() {                                          # launch ARGS...
-  xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
+launch() { # launch ARGS...
+  xcrun simctl terminate "$SIM" "$BUNDLE" 2> /dev/null || true
   xcrun simctl launch "$SIM" "$BUNDLE" "$@" ${RELAY:+--relay "$RELAY"} > /dev/null
 }
 
-check_result() {                                    # check_result LABEL
+check_result() { # check_result LABEL
   local got
   await_file "$RESULT" 120 || true
-  got=$(cat "$RESULT" 2>/dev/null || echo missing)
+  got=$(cat "$RESULT" 2> /dev/null || echo missing)
   echo "$1 result: $got"
   [ "$got" = "ok success=true" ] || fail "$1: expected 'ok success=true', got '$got'"
 }
@@ -66,8 +67,8 @@ C="sim-$$-recv"
 rm -f "$RESULT" "$READY" "$DOCS/simfile.txt"
 echo "sim transfer $$" > "$TMP/simfile.txt"
 mark_relay
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send simfile.txt ) \
-    > "$TMPROOT/sim-send.log" 2>&1 &
+(cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send simfile.txt) \
+  > "$TMPROOT/sim-send.log" 2>&1 &
 await_sender
 launch --auto-receive "$C"
 check_result receive
@@ -101,8 +102,8 @@ await_sender
 
 # CROC_SECRET rather than a positional code: the croc CLI refuses a positional
 # receive code and points at CROC_SECRET.
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes ) \
-    > "$TMPROOT/share-sim-recv.log" 2>&1 || {
+(cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes) \
+  > "$TMPROOT/share-sim-recv.log" 2>&1 || {
   rc=$?
   tail -n 30 "$TMPROOT/share-sim-recv.log" >&2
   fail "share: croc receive exited $rc (log: $TMPROOT/share-sim-recv.log)"

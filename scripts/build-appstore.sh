@@ -19,14 +19,18 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
+help_flag "$@"
 
 UPLOAD=0
 PLATFORMS=()
 for arg in "$@"; do
   case "$arg" in
     --upload) UPLOAD=1 ;;
-    ios|macos) PLATFORMS+=("$arg") ;;
-    *) echo "usage: $0 [--upload] [ios|macos]..." >&2; exit 2 ;;
+    ios | macos) PLATFORMS+=("$arg") ;;
+    *)
+      echo "usage: $0 [--upload] [ios|macos]..." >&2
+      exit 2
+      ;;
   esac
 done
 [ ${#PLATFORMS[@]} -gt 0 ] || PLATFORMS=(ios macos)
@@ -37,8 +41,14 @@ mkdir -p "$WORK"
 
 for platform in "${PLATFORMS[@]}"; do
   case "$platform" in
-    ios) DEST='generic/platform=iOS'; OPTIONS=app/Config/ExportOptions-iOS.plist ;;
-    macos) DEST='generic/platform=macOS'; OPTIONS=app/Config/ExportOptions-MAS.plist ;;
+    ios)
+      DEST='generic/platform=iOS'
+      OPTIONS=app/Config/ExportOptions-iOS.plist
+      ;;
+    macos)
+      DEST='generic/platform=macOS'
+      OPTIONS=app/Config/ExportOptions-MAS.plist
+      ;;
   esac
   ARCHIVE="$WORK/CrocApp-$platform.xcarchive"
   EXPORT="$WORK/export-$platform"

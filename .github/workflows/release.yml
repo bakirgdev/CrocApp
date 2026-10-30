@@ -107,7 +107,8 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: crocmobile/go.mod
-          cache-dependency-path: crocmobile/go.sum
+          # No cache in the release build: a cache any PR run can write must not feed shipped bytes.
+          cache: false
 
       - id: xcode
         run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
@@ -116,7 +117,18 @@ jobs:
         with:
           xcode-version: ${{ steps.xcode.outputs.version }}
 
-      - run: brew install create-dmg
+      # Pinned by tarball checksum: Homebrew installs whatever is current.
+      - name: Install create-dmg
+        env:
+          CREATE_DMG_VERSION: v1.3.0
+          CREATE_DMG_SHA256: c50d2bc97c3d6292642bac55f530d247eaf4bf65ee605f26b4caf339383e381c
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/create-dmg.tgz" \
+            "https://github.com/create-dmg/create-dmg/archive/refs/tags/$CREATE_DMG_VERSION.tar.gz"
+          echo "$CREATE_DMG_SHA256  $RUNNER_TEMP/create-dmg.tgz" | shasum -a 256 -c -
+          mkdir -p "$RUNNER_TEMP/create-dmg"
+          tar -xzf "$RUNNER_TEMP/create-dmg.tgz" -C "$RUNNER_TEMP/create-dmg" --strip-components 1
+          echo "$RUNNER_TEMP/create-dmg" >> "$GITHUB_PATH"
 
       - name: Build Croc.xcframework
         run: scripts/build-xcframework.sh
@@ -133,17 +145,20 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
+          # Passwords go to `security -i` on stdin, one command per call so
+          # each failure stops the step: on argv they would show in `ps`.
+          quote() { local v=${1//\\/\\\\}; printf '"%s"' "${v//\"/\\\"}"; }
+          sec() { printf '%s\n' "$1" | security -i; }
           kc="$RUNNER_TEMP/signing.keychain-db"
           kc_password=$(openssl rand -base64 32)
-          security create-keychain -p "$kc_password" "$kc"
+          sec "create-keychain -p $(quote "$kc_password") $(quote "$kc")"
           security set-keychain-settings -lut 21600 "$kc"
-          security unlock-keychain -p "$kc_password" "$kc"
+          sec "unlock-keychain -p $(quote "$kc_password") $(quote "$kc")"
 
           printf '%s' "$DEVID_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/devid.p12"
-          security import "$RUNNER_TEMP/devid.p12" -k "$kc" -P "$DEVID_P12_PASSWORD" \
-            -A -t cert -f pkcs12
+          sec "import $(quote "$RUNNER_TEMP/devid.p12") -k $(quote "$kc") -P $(quote "$DEVID_P12_PASSWORD") -A -t cert -f pkcs12"
           rm -f "$RUNNER_TEMP/devid.p12"
-          security set-key-partition-list -S apple-tool:,apple: -k "$kc_password" "$kc" > /dev/null
+          sec "set-key-partition-list -S apple-tool:,apple: -k $(quote "$kc_password") $(quote "$kc")" > /dev/null
           security list-keychains -d user | xargs security list-keychains -d user -s "$kc"
 
           profiles="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
@@ -253,12 +268,23 @@ jobs:
       # After stapling: the staple rewrites the disk image, and the
       # attestation has to cover the bytes that ship.
       - name: Attest build provenance
+        id: attest
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
             dist/*.dmg
             dist/*.zip
             dist/appcast.xml
+            dist/SHA256SUMS.txt
+
+      # Shipped as a release asset so anyone can verify offline with
+      # `gh attestation verify --bundle`, and so OpenSSF Scorecard's
+      # Signed-Releases check finds provenance (it looks for *.intoto.jsonl).
+      - name: Add the provenance bundle to the assets
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: cp "$BUNDLE" "dist/CrocApp-$VERSION.intoto.jsonl"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -317,4 +343,5 @@ jobs:
             "dist/CrocApp-$VERSION-arm64.dmg#CrocApp $VERSION (Apple silicon, disk image)" \
             "dist/appcast.xml#Update feed" \
             "dist/Croc.xcframework-$VERSION.zip#Croc.xcframework $VERSION (prebuilt engine)" \
-            "dist/SHA256SUMS.txt#Checksums"
+            "dist/SHA256SUMS.txt#Checksums" \
+            "dist/CrocApp-$VERSION.intoto.jsonl#Build provenance (Sigstore bundle)"

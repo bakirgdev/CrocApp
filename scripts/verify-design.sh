@@ -23,12 +23,17 @@
 # Exit 0 clean, 1 findings, 2 usage or unreadable input.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib.sh
+help_flag "$@"
 
 QUIET=0
 case "${1-}" in
   --quiet) QUIET=1 ;;
   "") ;;
-  *) echo "usage: $0 [--quiet]" >&2; exit 2 ;;
+  *)
+    echo "usage: $0 [--quiet]" >&2
+    exit 2
+    ;;
 esac
 export LC_ALL=C
 
@@ -37,11 +42,26 @@ SWIFT_TOKENS=app/CrocApp/Support/DesignTokens.swift
 COLORSETS=app/CrocApp/Assets.xcassets
 COLORS_MD=design/colors.md
 MANIFEST=web/landing/assets/img/favicon/site.webmanifest
-[ -r "$TOKENS" ] || { echo "FAIL: $TOKENS not readable" >&2; exit 2; }
-[ -r "$SWIFT_TOKENS" ] || { echo "FAIL: $SWIFT_TOKENS not readable" >&2; exit 2; }
-[ -r "$COLORS_MD" ] || { echo "FAIL: $COLORS_MD not readable" >&2; exit 2; }
-[ -r "$MANIFEST" ] || { echo "FAIL: $MANIFEST not readable" >&2; exit 2; }
-[ -d "$COLORSETS" ] || { echo "FAIL: $COLORSETS not a directory" >&2; exit 2; }
+[ -r "$TOKENS" ] || {
+  echo "FAIL: $TOKENS not readable" >&2
+  exit 2
+}
+[ -r "$SWIFT_TOKENS" ] || {
+  echo "FAIL: $SWIFT_TOKENS not readable" >&2
+  exit 2
+}
+[ -r "$COLORS_MD" ] || {
+  echo "FAIL: $COLORS_MD not readable" >&2
+  exit 2
+}
+[ -r "$MANIFEST" ] || {
+  echo "FAIL: $MANIFEST not readable" >&2
+  exit 2
+}
+[ -d "$COLORSETS" ] || {
+  echo "FAIL: $COLORSETS not a directory" >&2
+  exit 2
+}
 
 # ---------------------------------------------------------------------------
 # Parity table: numeric and curve tokens. token|Swift Enum.constant[|curve]
@@ -265,11 +285,17 @@ ALLOW_SWIFT='
 # Swift files the no-literals lint covers: DesignTokens.swift is where the
 # literals live, tests may use any value.
 SWIFT_FILES=$(find app -name '*.swift' ! -path "$SWIFT_TOKENS" ! -path 'app/CrocAppTests/*' | sort)
-[ -n "$SWIFT_FILES" ] || { echo "FAIL: no Swift files under app/" >&2; exit 2; }
+[ -n "$SWIFT_FILES" ] || {
+  echo "FAIL: no Swift files under app/" >&2
+  exit 2
+}
 
 WEB_FILES=$(
   for f in web/landing/styles.css web/docs/src/css/custom.css web/landing/app.js web/landing/theme-init.js web/landing/r/receive.js web/docs/src/prismTheme.ts; do
-    [ -r "$f" ] || { echo "FAIL: $f not readable" >&2; exit 2; }
+    [ -r "$f" ] || {
+      echo "FAIL: $f not readable" >&2
+      exit 2
+    }
     echo "$f"
   done
   find web/landing -name '*.html' | sort
@@ -1175,7 +1201,7 @@ export QUIET
 status=0
 run_phase() {
   local rc=0
-  awk "${AWK_COMMON}${1}" </dev/null || rc=$?
+  awk "${AWK_COMMON}${1}" < /dev/null || rc=$?
   if [ "$rc" -ge 2 ]; then exit 2; fi
   if [ "$rc" -ne 0 ]; then status=1; fi
 }

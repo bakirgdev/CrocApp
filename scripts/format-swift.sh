@@ -10,6 +10,8 @@
 # recursive run there would descend into .build/ and Croc.xcframework/.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib.sh
+help_flag "$@"
 
 PATHS=(app/CrocApp app/CrocAppDirect app/CrocShare app/Shared app/CrocAppTests CrocKit/Sources CrocKit/Tests CrocKit/Package.swift
   scripts/screenshots)
@@ -18,10 +20,16 @@ LINT_ONLY=0
 case "${1-}" in
   --lint) LINT_ONLY=1 ;;
   "") ;;
-  *) echo "usage: $0 [--lint]" >&2; exit 2 ;;
+  *)
+    echo "usage: $0 [--lint]" >&2
+    exit 2
+    ;;
 esac
 
-command -v xcrun >/dev/null || { echo "error: xcrun not found (needs the Xcode toolchain)" >&2; exit 1; }
+command -v xcrun > /dev/null || {
+  echo "error: xcrun not found (needs the Xcode toolchain)" >&2
+  exit 1
+}
 
 if [ "$LINT_ONLY" -eq 0 ]; then
   xcrun swift-format format --in-place --recursive --parallel "${PATHS[@]}"

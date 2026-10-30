@@ -20,26 +20,11 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - Still to check by ear: whether VoiceOver reads an Advanced field's hint and its visible footnote or error twice, whether a decorative QR image with a label is exposed as an image, and Full Keyboard Access focus in the menu-bar window when its content changes.
   - Not looked at: the macOS layout of the changed views.
   - Not measured: the rendered size of the code field's system `PasteButton` against the 44 pt hit target. SwiftUI lets the app set only its border shape, label style and tint, so the system decides its size.
-- **`release.yml` puts the signing passwords on `security` argv.**
-  - The `.p12` password and the throwaway keychain password appear in `security import ... -P`, `security create-keychain -p`, `security unlock-keychain -p` and `security set-key-partition-list -k`.
-  - `security` has no stdin option for them, so other processes on the runner can read them while the command runs.
-  - Acceptable only on a single-tenant runner. Never run this workflow on a shared runner.
 - **CI builds with the Xcode 27.2 release candidate.** `.xcode-version` names 27.2, and the `xcode-27` runner image carries 27.2 only as the release candidate (27B48), while the stable 27.2 is 27B52. The pin-watch issue shows it until the image ships the stable build.
-- **`release.yml` installs `create-dmg` unpinned** (`brew install create-dmg`).
-  - `scripts/build-dmg.sh` runs it while the signing keychain is unlocked and the notary key is on disk. A compromised or broken formula update would run with access to both.
-  - Homebrew has no simple version pin for a formula, and a version check would fail every release after an upstream bump.
-  - If this changes, pin it in a version file like `scripts/croc-v10.version`.
 - **A local Sparkle update test once hung after "Install and Relaunch".**
   - The test is in `RELEASING.md`, "Testing a Sparkle update locally". On the first launch of the `com.bakirgdev.CrocApp.direct` bundle ID on that Mac, the update downloaded and prepared. Then the app never terminated, its Quit menu item was ignored, and the installer kept waiting.
   - Later runs passed, some with Sparkle's first-launch defaults deleted, so first-launch state alone does not explain it. The cause is unknown.
   - If it recurs, watch `log stream` for `org.sparkle-project.Sparkle` and for the app's termination, and repeat the release rehearsal from a clean macOS account.
-- **App Store uploads report "Upload Symbols Failed" for `Croc.framework` (iOS) and `A` (macOS).**
-  - Xcode embeds a 50 KB stub `Croc.framework` dylib with no dSYM, because the gomobile xcframework is a static archive linked into the app binary. There is nothing to symbolicate there.
-  - It is a warning of Xcode's upload step, not an ITMS warning, and the build still processes.
-- **The App Store and direct-download builds cannot both be installed in /Applications.**
-  - Both are named `CrocApp.app` (`PRODUCT_NAME = CrocApp` on `CrocApp Direct`, so the menu bar, About and Quit say "CrocApp").
-  - The separate bundle ID keeps their data apart, but dragging the DMG copy into /Applications replaces the App Store copy.
-  - What the App Store does when a direct-download `CrocApp.app` is already there is untested. Use one channel per Mac.
 
 ## Harnesses
 
@@ -133,6 +118,10 @@ Permanent or deferred, each with its reason.
 
 ### Build and CI
 
+- **App Store uploads report "Upload Symbols Failed" for `Croc.framework` (iOS) and `A` (macOS).**
+  - Xcode embeds a 50 KB stub `Croc.framework` dylib with no dSYM, because the gomobile xcframework is a static archive linked into the app binary. There is nothing to symbolicate there.
+  - It is a warning of Xcode's upload step, not an ITMS warning, and the build still processes.
+- **CodeQL does not analyze Swift.** CodeQL supports Swift up to 6.3, and Xcode 27 builds with Swift 6.4, so `.github/workflows/codeql.yml` covers actions, Go and JavaScript/TypeScript only. Add `swift` (it needs a macOS runner and a manual build) once CodeQL's supported-languages page lists Swift 6.4.
 - **`braces` <= 3.0.3 (GHSA-vfj7-8cjw-p6xm) has no patched release.**
   - It is reached only at docs build time, through `chokidar` and `micromatch` over our own paths, never from user input. No override can lift it.
   - `pnpm audit` lists it, and any Dependabot alert for it is dismissed with this reason.

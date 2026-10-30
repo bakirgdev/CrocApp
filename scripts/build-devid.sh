@@ -25,6 +25,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
+help_flag "$@"
 
 OUT=${1:-dist}
 WORK="${DEVID_WORK:-$TMPROOT/crocapp-devid}"
@@ -79,9 +80,9 @@ notarize() {
   xcrun notarytool submit "$file" "${NOTARY_AUTH[@]}" --wait --output-format json > "$json" || true
   cat "$json"
   echo
-  status=$(plutil -extract status raw "$json" 2>/dev/null || echo "no status")
+  status=$(plutil -extract status raw "$json" 2> /dev/null || echo "no status")
   if [ "$status" != "Accepted" ]; then
-    if id=$(plutil -extract id raw "$json" 2>/dev/null); then
+    if id=$(plutil -extract id raw "$json" 2> /dev/null); then
       xcrun notarytool log "$id" "${NOTARY_AUTH[@]}" >&2 || echo "warning: could not fetch the notary log for $id" >&2
     fi
     fail "notarization of $file: status '$status'"

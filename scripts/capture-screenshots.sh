@@ -41,6 +41,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
+help_flag "$@"
 DD_MAC=$(derived_data mac)
 DD_SIM=$(derived_data sim)
 
@@ -72,12 +73,15 @@ stored-link history settings how-it-works"
 PAYLOAD_NAMES="Quarterly-Report.pdf Ridge-Sunrise.jpg Meeting-Notes.md Design-Assets.zip \
 Project-Archive.zip Field-Recordings.zip"
 
-in_list() { case " $1 " in *" $2 "*) return 0 ;; *) return 1 ;; esac; }
+in_list() { case " $1 " in *" $2 "*) return 0 ;; *) return 1 ;; esac }
 
-store_index() {                                     # store_index SCREEN -> its position, from 1
+store_index() { # store_index SCREEN -> its position, from 1
   local i=1 n
   for n in $STORE_SCREENS; do
-    [ "$n" = "$1" ] && { echo "$i"; return 0; }
+    [ "$n" = "$1" ] && {
+      echo "$i"
+      return 0
+    }
     i=$((i + 1))
   done
   return 1
@@ -87,7 +91,7 @@ store_index() {                                     # store_index SCREEN -> its 
 store_mode() { [ $(($(store_index "$1") % 2)) = 1 ] && echo light || echo dark; }
 store_name() { printf '%02d-%s-%s' "$(store_index "$1")" "$1" "$(store_mode "$1")"; }
 
-store_class() {                                     # store_class DEVICE -> App Store class dir
+store_class() { # store_class DEVICE -> App Store class dir
   case "$1" in
     mac) echo mac ;;
     iphone) echo iphone-6.9 ;;
@@ -97,7 +101,7 @@ store_class() {                                     # store_class DEVICE -> App 
   esac
 }
 
-store_dims() {                                      # store_dims DEVICE -> "WIDTH HEIGHT"
+store_dims() { # store_dims DEVICE -> "WIDTH HEIGHT"
   case "$1" in
     iphone) echo "1320 2868" ;;
     iphone63) echo "1206 2622" ;;
@@ -159,9 +163,12 @@ case "${1:-}" in
     ;;
 esac
 for arg in "$@"; do
-  if in_list "$DEVICES" "$arg"; then PICK_DEVICES="$PICK_DEVICES $arg"
-  elif in_list "$SCREENS" "$arg"; then PICK_SCREENS="$PICK_SCREENS $arg"
-  else fail "unknown argument '$arg'. Devices: $DEVICES. Screens: $SCREENS"
+  if in_list "$DEVICES" "$arg"; then
+    PICK_DEVICES="$PICK_DEVICES $arg"
+  elif in_list "$SCREENS" "$arg"; then
+    PICK_SCREENS="$PICK_SCREENS $arg"
+  else
+    fail "unknown argument '$arg'. Devices: $DEVICES. Screens: $SCREENS"
   fi
 done
 RUN_DEVICES="${PICK_DEVICES:-$DEVICES}"
@@ -181,7 +188,7 @@ PEER_PID=""
 RELAY_PID=""
 STORE_PID=""
 STORE_URL=""
-SIM_IDS=""                                          # UDIDs of the simulators this run created
+SIM_IDS="" # UDIDs of the simulators this run created
 SIM_APP=""
 ORIG_DARK=""
 DEV=""
@@ -194,25 +201,25 @@ CODE_PREFIXES=" "
 stop_peer() {
   [ -n "$PEER_PID" ] || return 0
   # A stopped process holds a pending TERM until it is continued.
-  kill -CONT "$PEER_PID" 2>/dev/null || true
-  kill "$PEER_PID" 2>/dev/null || true
-  wait "$PEER_PID" 2>/dev/null || true
+  kill -CONT "$PEER_PID" 2> /dev/null || true
+  kill "$PEER_PID" 2> /dev/null || true
+  wait "$PEER_PID" 2> /dev/null || true
   PEER_PID=""
 }
 
 cleanup() {
   local udid name
   stop_peer
-  [ -n "$APP_PID" ] && kill "$APP_PID" 2>/dev/null || true
-  [ -n "$RELAY_PID" ] && kill "$RELAY_PID" 2>/dev/null && wait "$RELAY_PID" 2>/dev/null || true
-  [ -n "$STORE_PID" ] && kill "$STORE_PID" 2>/dev/null && wait "$STORE_PID" 2>/dev/null || true
+  [ -n "$APP_PID" ] && kill "$APP_PID" 2> /dev/null || true
+  [ -n "$RELAY_PID" ] && kill "$RELAY_PID" 2> /dev/null && wait "$RELAY_PID" 2> /dev/null || true
+  [ -n "$STORE_PID" ] && kill "$STORE_PID" 2> /dev/null && wait "$STORE_PID" 2> /dev/null || true
   kill_jobs
   for udid in $SIM_IDS; do
-    xcrun simctl shutdown "$udid" 2>/dev/null || true
-    xcrun simctl delete "$udid" 2>/dev/null || true
+    xcrun simctl shutdown "$udid" 2> /dev/null || true
+    xcrun simctl delete "$udid" 2> /dev/null || true
   done
   if [ -n "$ORIG_DARK" ]; then
-    osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $ORIG_DARK" >/dev/null 2>&1 || true
+    osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $ORIG_DARK" > /dev/null 2>&1 || true
   fi
   if [ "$uses_mac" = 1 ]; then
     rm -rf "$MAC_DOCS/shots"
@@ -227,14 +234,14 @@ trap cleanup EXIT
 # --- preflight --------------------------------------------------------------
 
 for tool in xcodebuild xcrun swiftc sips; do
-  command -v "$tool" >/dev/null || fail "$tool not found (needs Xcode and its command line tools)"
+  command -v "$tool" > /dev/null || fail "$tool not found (needs Xcode and its command line tools)"
 done
 CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 require_croc
 "$CROC" --version | grep -q 'version v\?11\.' \
   || fail "croc 11 expected (crocmobile pins v11.5.5), '$CROC' says: $("$CROC" --version)"
 if in_list "$RUN_SCREENS" stored-link; then
-  command -v go >/dev/null || fail "go is needed to build the local store server for stored-link"
+  command -v go > /dev/null || fail "go is needed to build the local store server for stored-link"
 fi
 for type in "$PHONE_TYPE" "$PHONE63_TYPE" "$PAD_TYPE" "$DUO_TYPE"; do
   xcrun simctl list -j devicetypes | grep -q "\"$type\"" \
@@ -255,7 +262,7 @@ fi
 # --- helpers ----------------------------------------------------------------
 
 # Polls CMD... every 0.2 s for up to SECONDS seconds.
-poll() {                                            # poll SECONDS CMD...
+poll() { # poll SECONDS CMD...
   local deadline=$((SECONDS + $1))
   shift
   until "$@"; do
@@ -266,9 +273,12 @@ poll() {                                            # poll SECONDS CMD...
 
 # What a failed wait leaves behind is the only clue, so show it.
 die() {
-  echo "--- peer log ---" >&2;  tail -n 8 "$TMP/peer.log" 2>/dev/null >&2 || true
-  echo "--- app log ---" >&2;   tail -n 8 "$TMP/app.log" 2>/dev/null >&2 || true
-  echo "--- relay log ---" >&2; tail -n 8 "$TMP/relay.log" 2>/dev/null >&2 || true
+  echo "--- peer log ---" >&2
+  tail -n 8 "$TMP/peer.log" 2> /dev/null >&2 || true
+  echo "--- app log ---" >&2
+  tail -n 8 "$TMP/app.log" 2> /dev/null >&2 || true
+  echo "--- relay log ---" >&2
+  tail -n 8 "$TMP/relay.log" 2> /dev/null >&2 || true
   fail "$DEV $SCREEN $MODE: $*"
 }
 
@@ -286,7 +296,7 @@ WORDS=(amber willow signal copper lantern summit quiet meadow anchor violet harb
 # app generates. The relay hashes a three-word code's first word into a room
 # name, so that word must not repeat among recent codes (CODE_PREFIXES, cleared
 # once most of WORDS is used); a fresh relay per run covers the runs before this one.
-new_code() {                                        # new_code VAR
+new_code() { # new_code VAR
   local first words="" i w
   [ "$(wc -w <<< "$CODE_PREFIXES")" -lt $((${#WORDS[@]} - 8)) ] || CODE_PREFIXES=""
   while :; do
@@ -328,22 +338,22 @@ start_relay() {
     --source-join-limit 1000 --room-join-limit 1000 > "$TMP/relay.log" 2>&1 &
   RELAY_PID=$!
   poll 10 port_up "$base" || die "the relay did not start"
-  kill -0 "$RELAY_PID" 2>/dev/null || die "the relay exited at startup"
+  kill -0 "$RELAY_PID" 2> /dev/null || die "the relay exited at startup"
 }
 
 # A croc CLI peer against the local relay. exec, so $! is croc itself and a
 # signal reaches it.
-croc_peer() {                                       # croc_peer DIR CODE CROC_ARGS...
+croc_peer() { # croc_peer DIR CODE CROC_ARGS...
   local dir=$1 code=$2
   shift 2
-  ( cd "$dir" && CROC_SECRET="$code" CROC_PASS="$RELAY_PASS" exec "$CROC" --disable-clipboard \
-      --relay "$RELAY_ADDR" --ignore-stdin "$@" ) > "$TMP/peer.log" 2>&1 &
+  (cd "$dir" && CROC_SECRET="$code" CROC_PASS="$RELAY_PASS" exec "$CROC" --disable-clipboard \
+    --relay "$RELAY_ADDR" --ignore-stdin "$@") > "$TMP/peer.log" 2>&1 &
   PEER_PID=$!
 }
 
 # The app's receive must start after the sender is in the relay's room: a
 # receiver that arrives first corrupts the PAKE handshake.
-start_sender() {                                    # start_sender CODE DIR THROTTLE FILE...
+start_sender() { # start_sender CODE DIR THROTTLE FILE...
   local code=$1 dir=$2 throttle=$3 before
   shift 3
   before=$(grep -c 'room has first peer' "$TMP/relay.log" || true)
@@ -358,28 +368,28 @@ start_sender() {                                    # start_sender CODE DIR THRO
 
 # A fresh directory every time: croc skips a file the receiver already holds in
 # full, and the transfer would end before it could be photographed.
-start_receiver() {                                  # start_receiver CODE
+start_receiver() { # start_receiver CODE
   rm -rf "$TMP/recv"
   mkdir -p "$TMP/recv"
   croc_peer "$TMP/recv" "$1" --yes --overwrite
 }
 
-RELAY_ARGS=()                                       # set once the relay runs
-DISABLE_LOCAL=""                                    # 1 once RELAY_ARGS is set: --relay alone leaves the LAN route on, so launch() ends with --disable-local
+RELAY_ARGS=()    # set once the relay runs
+DISABLE_LOCAL="" # 1 once RELAY_ARGS is set: --relay alone leaves the LAN route on, so launch() ends with --disable-local
 
-phase_is() { grep -Eq "$1" "$DOCS/verify-phase.txt" 2>/dev/null; }
-await_phase() {                                     # await_phase REGEX SECONDS
-  poll "$2" phase_is "$1" || die "the app never reported a phase matching '$1' (last: $(cat "$DOCS/verify-phase.txt" 2>/dev/null || echo none))"
+phase_is() { grep -Eq "$1" "$DOCS/verify-phase.txt" 2> /dev/null; }
+await_phase() { # await_phase REGEX SECONDS
+  poll "$2" phase_is "$1" || die "the app never reported a phase matching '$1' (last: $(cat "$DOCS/verify-phase.txt" 2> /dev/null || echo none))"
 }
 
 percent_reached() {
   local p
-  p=$(sed -n 's/^transferring percent=//p' "$DOCS/verify-phase.txt" 2>/dev/null || true)
+  p=$(sed -n 's/^transferring percent=//p' "$DOCS/verify-phase.txt" 2> /dev/null || true)
   [ -n "$p" ] && [ "$p" -ge "$1" ]
 }
 
 file_exists() { [ -e "$DOCS/$1" ]; }
-await_docs_file() {                                 # await_docs_file NAME SECONDS
+await_docs_file() { # await_docs_file NAME SECONDS
   poll "$2" file_exists "$1" || die "the app never wrote $1"
 }
 
@@ -388,7 +398,7 @@ await_docs_file() {                                 # await_docs_file NAME SECON
 # makes the climb slow enough to catch: unthrottled, localhost moves 150 MB in
 # under a second.
 freeze_transfer() {
-  poll 90 percent_reached 40 || die "the transfer never reached 40% (phase: $(cat "$DOCS/verify-phase.txt" 2>/dev/null || echo none))"
+  poll 90 percent_reached 40 || die "the transfer never reached 40% (phase: $(cat "$DOCS/verify-phase.txt" 2> /dev/null || echo none))"
   kill -STOP "$PEER_PID"
   # The progress callback may still be in flight; one render pass.
   settle
@@ -400,10 +410,10 @@ settle() { sleep 1; }
 
 # --- devices ----------------------------------------------------------------
 
-set_system_appearance() {                           # set_system_appearance light|dark
+set_system_appearance() { # set_system_appearance light|dark
   local dark=false
   [ "$1" = dark ] && dark=true
-  osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $dark" >/dev/null
+  osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $dark" > /dev/null
   dark_is() { [ "$(osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode')" = "$dark" ]; }
   poll 10 dark_is || fail "the system appearance did not switch to $1"
 }
@@ -429,11 +439,11 @@ clock_941() {
 # resize glyph in the corner; the two SpringBoard keys switch that off.
 # Restarting SpringBoard with launchctl instead of rebooting leaves the status
 # bar blank.
-create_sim() {                                      # create_sim VAR NAME TYPE
+create_sim() { # create_sim VAR NAME TYPE
   local udid="" runtime
-  xcrun simctl delete "$2" 2>/dev/null || true
+  xcrun simctl delete "$2" 2> /dev/null || true
   for runtime in ${RUNTIME:-$(xcrun simctl list runtimes available | awk '/^iOS / { print $NF }' | sort -r)}; do
-    udid=$(xcrun simctl create "$2" "$3" "$runtime" 2>/dev/null) && break
+    udid=$(xcrun simctl create "$2" "$3" "$runtime" 2> /dev/null) && break
     udid=""
   done
   [ -n "$udid" ] || fail "no installed iOS runtime supports $3"
@@ -445,7 +455,8 @@ create_sim() {                                      # create_sim VAR NAME TYPE
   case "$3" in
     *iPad*)
       xcrun simctl spawn "$udid" defaults write com.apple.springboard SBMedusaMultitaskingEnabled -bool NO
-      xcrun simctl spawn "$udid" defaults write com.apple.springboard SBChamoisWindowingEnabled -bool NO ;;
+      xcrun simctl spawn "$udid" defaults write com.apple.springboard SBChamoisWindowingEnabled -bool NO
+      ;;
   esac
   xcrun simctl shutdown "$udid"
   xcrun simctl bootstatus "$udid" -b > /dev/null
@@ -457,12 +468,12 @@ create_sim() {                                      # create_sim VAR NAME TYPE
 
 # Puts the payloads where the device's app can read them: both macOS and the
 # simulator sandbox the app, so $TMP is out of reach from inside.
-stage_payloads() {                                  # stage_payloads DOCS
+stage_payloads() { # stage_payloads DOCS
   mkdir -p "$1/shots"
   cp "$TMP/payload"/* "$TMP/big/Project-Archive.zip" "$1/shots/"
 }
 
-sim_type() {                                        # sim_type DEVICE
+sim_type() { # sim_type DEVICE
   case "$1" in
     iphone) echo "$PHONE_TYPE" ;;
     iphone63) echo "$PHONE63_TYPE" ;;
@@ -473,7 +484,7 @@ sim_type() {                                        # sim_type DEVICE
 
 # A prepared simulator with the app and the payloads on it. Its UDID and
 # Documents folder go to ID_DEVICE and DOCS_DEVICE.
-bring_up() {                                        # bring_up DEVICE
+bring_up() { # bring_up DEVICE
   local id
   create_sim id "$SIM_NAME $1" "$(sim_type "$1")"
   xcrun simctl install "$id" "$SIM_APP"
@@ -483,16 +494,19 @@ bring_up() {                                        # bring_up DEVICE
 }
 
 # Not just shutdown: a deleted simulator frees its disk right away.
-drop_sim() {                                        # drop_sim DEVICE
+drop_sim() { # drop_sim DEVICE
   local var="ID_$1"
-  xcrun simctl shutdown "${!var}" 2>/dev/null || true
+  xcrun simctl shutdown "${!var}" 2> /dev/null || true
   xcrun simctl delete "${!var}"
 }
 
-use_device() {                                      # use_device DEVICE
+use_device() { # use_device DEVICE
   local id="ID_$1" docs="DOCS_$1"
   DEV=$1
-  if [ "$1" = mac ]; then DOCS=$MAC_DOCS; else SIM=${!id}; DOCS=${!docs}; fi
+  if [ "$1" = mac ]; then DOCS=$MAC_DOCS; else
+    SIM=${!id}
+    DOCS=${!docs}
+  fi
 }
 
 clean_docs() {
@@ -515,7 +529,7 @@ mac_windows() { "$TMP/bin/window" list CrocApp; }
 
 # The first on-screen window (layer 0) whose title is one of TITLES, a
 # |-separated list (titles contain spaces).
-mac_window_id() {                                   # mac_window_id TITLES
+mac_window_id() { # mac_window_id TITLES
   mac_windows | awk -F'\t' -v t="$1" '
     BEGIN { n = split(t, want, "|") }
     $2 == 0 { for (i = 1; i <= n; i++) if ($3 == want[i]) { print $1; exit } }'
@@ -529,17 +543,17 @@ mac_has_window() { mac_windows | awk -F'\t' '$2 == 0 { found = 1 } END { exit !f
 # repaint, which has no signal.
 activate_app() {
   activated() {
-    osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $APP_PID) to true" >/dev/null 2>&1
+    osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $APP_PID) to true" > /dev/null 2>&1
   }
   poll 15 activated || die "System Events never found the app (pid $APP_PID)"
   sleep 1
 }
 
-mac_titles() {                                      # the window title(s) a screen shows
+mac_titles() { # the window title(s) a screen shows
   case "$SCREEN" in
-    home|onboarding) echo "CrocApp" ;;
-    send-files|send-code|sending|stored-link) echo "Send" ;;
-    receive-code|receive-incoming|receive-conflict|receiving|receive-done) echo "Receive" ;;
+    home | onboarding) echo "CrocApp" ;;
+    send-files | send-code | sending | stored-link) echo "Send" ;;
+    receive-code | receive-incoming | receive-conflict | receiving | receive-done) echo "Receive" ;;
     history) echo "History" ;;
     how-it-works) echo "How It Works" ;;
     settings) echo "CrocApp Settings|General|Settings" ;;
@@ -547,7 +561,7 @@ mac_titles() {                                      # the window title(s) a scre
   esac
 }
 
-launch() {                                          # launch ARGS...
+launch() { # launch ARGS...
   rm -f "$DOCS"/verify-*.txt
   if [ "$DEV" = mac ]; then
     "$BIN" -ApplePersistenceIgnoreState YES "${LOCALE_ARGS[@]}" "$@" ${DISABLE_LOCAL:+--disable-local} > "$TMP/app.log" 2>&1 &
@@ -555,25 +569,25 @@ launch() {                                          # launch ARGS...
     poll 30 mac_has_window || die "the app opened no window"
     activate_app
   else
-    xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
+    xcrun simctl terminate "$SIM" "$BUNDLE" 2> /dev/null || true
     xcrun simctl launch "$SIM" "$BUNDLE" "${LOCALE_ARGS[@]}" "$@" ${DISABLE_LOCAL:+--disable-local} > /dev/null
   fi
 }
 
 quit_app() {
   if [ "$DEV" = mac ]; then
-    [ -n "$APP_PID" ] && kill "$APP_PID" 2>/dev/null || true
-    wait "$APP_PID" 2>/dev/null || true
+    [ -n "$APP_PID" ] && kill "$APP_PID" 2> /dev/null || true
+    wait "$APP_PID" 2> /dev/null || true
     APP_PID=""
   else
-    xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
+    xcrun simctl terminate "$SIM" "$BUNDLE" 2> /dev/null || true
   fi
   stop_peer
 }
 
 await_ready() { await_docs_file verify-ready.txt 30; }
 
-store_file() {                                      # store_file RAW
+store_file() { # store_file RAW
   local out dir
   dir="$OUT/app-store/$(store_class "$DEV")"
   out="$dir/$(store_name "$SCREEN").png"
@@ -602,9 +616,9 @@ snap() {
     [ -n "$wid" ] || die "no on-screen CrocApp window titled '$(mac_titles)'"
     screencapture -x -o -l "$wid" "$out"
   elif [ "$DEV" = duo ]; then
-    xcrun simctl io "$SIM" screenshot --type=png --display="$DUO_OUTER_DISPLAY" "$out" 2>/dev/null
+    xcrun simctl io "$SIM" screenshot --type=png --display="$DUO_OUTER_DISPLAY" "$out" 2> /dev/null
   else
-    xcrun simctl io "$SIM" screenshot --type=png "$out" 2>/dev/null
+    xcrun simctl io "$SIM" screenshot --type=png "$out" 2> /dev/null
   fi
   [ -s "$out" ] || die "nothing was captured to $out"
   is_main "$DEV" && echo "  $out"
@@ -612,7 +626,7 @@ snap() {
 }
 
 # A screen that needs no transfer: park on it, wait for the harness, photograph.
-still() {                                           # still ARGS...
+still() { # still ARGS...
   launch "$@"
   await_ready
   snap
@@ -621,7 +635,7 @@ still() {                                           # still ARGS...
 
 # macOS Settings is a separate window opened with Cmd-comma; the keystroke goes
 # to whatever is frontmost, so the app is raised first. TAB is General or Advanced.
-mac_settings() {                                    # mac_settings TAB
+mac_settings() { # mac_settings TAB
   local i
   launch --screen home
   for i in 1 2 3; do
@@ -630,7 +644,7 @@ mac_settings() {                                    # mac_settings TAB
     poll 5 mac_window_shown "General|Advanced|Settings|CrocApp Settings" && break
     [ "$i" -lt 3 ] || die "the Settings window did not open"
   done
-  osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID) to click button \"$1\" of toolbar 1 of window 1" >/dev/null
+  osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID) to click button \"$1\" of toolbar 1 of window 1" > /dev/null
   poll 5 mac_window_shown "$(mac_titles)" || die "the Settings window never showed the $1 tab"
   # The General form is taller than the window and cannot be stretched, so
   # scroll it to its end: the bottom then closes on a whole caption, and the
@@ -649,14 +663,17 @@ capture_screen() {
     home) still --screen home ;;
     send-files)
       still --screen send --stage "$DOCS/shots/Quarterly-Report.pdf" \
-        --stage "$DOCS/shots/Ridge-Sunrise.jpg" --stage "$DOCS/shots/Meeting-Notes.md" ;;
+        --stage "$DOCS/shots/Ridge-Sunrise.jpg" --stage "$DOCS/shots/Meeting-Notes.md"
+      ;;
     receive-code) still --screen receive ;;
     history) still --screen history --seed-history ;;
     how-it-works) still --screen howItWorks ;;
     settings)
-      if [ "$DEV" = mac ]; then mac_settings General; else still --screen settings; fi ;;
+      if [ "$DEV" = mac ]; then mac_settings General; else still --screen settings; fi
+      ;;
     settings-advanced)
-      if [ "$DEV" = mac ]; then mac_settings Advanced; else still --screen advanced; fi ;;
+      if [ "$DEV" = mac ]; then mac_settings Advanced; else still --screen advanced; fi
+      ;;
     send-code)
       # Parks on "Ready to send", the one state that shows the code and the QR.
       new_code code
@@ -664,7 +681,8 @@ capture_screen() {
       await_docs_file verify-code-ready.txt 60
       settle
       snap
-      quit_app ;;
+      quit_app
+      ;;
     sending)
       new_code code
       launch --auto-send "$DOCS/shots/Project-Archive.zip" --code "$code" "${RELAY_ARGS[@]}" \
@@ -674,7 +692,8 @@ capture_screen() {
       freeze_transfer
       snap
       quit_app
-      rm -rf "$TMP/recv" ;;
+      rm -rf "$TMP/recv"
+      ;;
     receive-incoming | receive-conflict)
       new_code code
       local conflicts=0
@@ -690,7 +709,8 @@ capture_screen() {
       settle
       snap
       quit_app
-      clean_docs ;;
+      clean_docs
+      ;;
     receiving)
       new_code code
       start_sender "$code" "$TMP/big" 6m Field-Recordings.zip
@@ -698,7 +718,8 @@ capture_screen() {
       freeze_transfer
       snap
       quit_app
-      clean_docs ;;
+      clean_docs
+      ;;
     receive-done)
       new_code code
       start_sender "$code" "$TMP/payload" "" Quarterly-Report.pdf Ridge-Sunrise.jpg Meeting-Notes.md
@@ -709,7 +730,8 @@ capture_screen() {
       settle
       snap
       quit_app
-      clean_docs ;;
+      clean_docs
+      ;;
     stored-link)
       start_store_server
       launch --auto-store-send "$DOCS/shots/Quarterly-Report.pdf" --store-server "$STORE_URL" \
@@ -717,7 +739,8 @@ capture_screen() {
       await_docs_file verify-store-link.txt 60
       settle
       snap
-      quit_app ;;
+      quit_app
+      ;;
   esac
 }
 
@@ -725,11 +748,14 @@ capture_screen() {
 # uploads to a real server. The link on screen is rewritten to the default link server, getcroc.com.
 start_store_server() {
   [ -z "$STORE_URL" ] || return 0
-  ( cd crocmobile && go build -tags croc_no_tailcat -o "$TMP/bin/croctest" ./cmd/croctest )
+  (cd crocmobile && go build -tags croc_no_tailcat -o "$TMP/bin/croctest" ./cmd/croctest)
   mkdir -p "$TMP/store"
   "$TMP/bin/croctest" store-server "$TMP/store" > "$TMP/store-srv.log" 2>&1 &
   STORE_PID=$!
-  store_up() { STORE_URL=$(sed -n 's/^STORE-URL //p' "$TMP/store-srv.log"); [ -n "$STORE_URL" ]; }
+  store_up() {
+    STORE_URL=$(sed -n 's/^STORE-URL //p' "$TMP/store-srv.log")
+    [ -n "$STORE_URL" ]
+  }
   poll 10 store_up || die "the store server did not start (see $TMP/store-srv.log)"
 }
 
@@ -739,7 +765,7 @@ make_payloads() {
   mkdir -p "$TMP/payload" "$TMP/big" "$TMP/assets"
   "$TMP/bin/payload" pdf "$TMP/payload/Quarterly-Report.pdf"
   "$TMP/bin/payload" jpg "$TMP/payload/Ridge-Sunrise.jpg"
-  cat > "$TMP/payload/Meeting-Notes.md" <<'EOF'
+  cat > "$TMP/payload/Meeting-Notes.md" << 'EOF'
 # Planning sync
 
 - Ship the iPad layout before the next release.
@@ -762,7 +788,7 @@ EOF
 
 # --- verification -----------------------------------------------------------
 
-check_png() {                                       # check_png FILE WIDTH HEIGHT
+check_png() { # check_png FILE WIDTH HEIGHT
   local info w h a
   info=$(sips -g pixelWidth -g pixelHeight -g hasAlpha "$1")
   w=$(awk '/pixelWidth/ { print $2 }' <<< "$info")
@@ -836,7 +862,7 @@ if [ -z "$PICK_SCREENS" ]; then
 fi
 
 # One pass per appearance over the devices that have a main set.
-shoot_devices() {                                   # shoot_devices DEVICE...
+shoot_devices() { # shoot_devices DEVICE...
   local d
   for d in "$@"; do
     use_device "$d"
@@ -866,7 +892,10 @@ for MODE in light dark; do
   echo "$MODE..."
   [ "$uses_mac" = 0 ] || set_system_appearance "$MODE"
   for d in $main_run; do
-    [ "$d" = mac ] || { id="ID_$d"; xcrun simctl ui "${!id}" appearance "$MODE" > /dev/null; }
+    [ "$d" = mac ] || {
+      id="ID_$d"
+      xcrun simctl ui "${!id}" appearance "$MODE" > /dev/null
+    }
   done
   # shellcheck disable=SC2086  # deliberate split: one word per device
   [ -z "$main_run" ] || shoot_devices $main_run

@@ -13,7 +13,7 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | `go test -race ./...` (Go `testing`) | `crocmobile/*_test.go` | local + CI (go job, `GOOS`/`GOARCH` unset) |
 | Swift Testing (Xcode's built-in) | `CrocKit/Tests/CrocKitTests/`, `app/CrocAppTests/` (shared `CrocApp` scheme) | local + CI (macOS leg of `build`) |
 | xcbeautify | none | CI only (`ci.yml`; `release.yml` does not use it) |
-| create-dmg 1.3.0 (Homebrew; CI installs it unpinned with `brew install create-dmg`) | none; called by `scripts/build-dmg.sh` | local + `release.yml` |
+| create-dmg 1.3.0 (Homebrew locally; `release.yml` downloads the release tarball and checks its SHA-256) | none; called by `scripts/build-dmg.sh` | local + `release.yml` |
 | croc v10 CLI (the v10 peer of `verify-interop.sh` scenario 10) | `scripts/croc-v10.version` (read by the script and the `interop` job) | local + CI |
 | Node 26.13.0 | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
 | pnpm 12.16.1 | `packageManager` in `web/docs/package.json` (CI: `pnpm/action-setup` reads it) | docs site, local + CI |
@@ -25,6 +25,9 @@ What is wired up, what was deliberately skipped, and the traps in each.
 | `scripts/verify-docs.sh` (pure bash and awk) | none; the rules it enforces are in `docs/AGENTS.md` | local + CI (`docs checks`, on every push and pull request, because renaming any file can break a path a doc names) |
 | `scripts/verify-swift.sh` (Xcode 27; Go only to rebuild the xcframework) | none; runs `swift test` on CrocKit and `xcodebuild test` on the `CrocApp` scheme for this Mac | local only, before pushing a Swift change. CI runs the same suites in the macOS leg of `build` |
 | ShellCheck 0.11 (Homebrew locally; preinstalled on `ubuntu-26.04`) | none (`shellcheck -x scripts/*.sh`, default checks) | local + CI (`shellcheck` job) |
+| shfmt 3.14 (Homebrew locally; CI downloads the pinned binary and checks its SHA-256) | `.editorconfig` (`shfmt -d scripts`; `shfmt -w scripts` fixes) | local + CI (`shellcheck` job) |
+| CodeQL (advanced setup; GitHub's default setup is off) | `.github/workflows/codeql.yml`: actions, Go, JavaScript/TypeScript, path-filtered, plus a weekly run | CI. No Swift (`../known-issues.md`, "CodeQL does not analyze Swift") |
+| actionlint, zizmor (Homebrew) | `.github/actionlint.yaml` (runner labels newer than actionlint's list) | local, before pushing a workflow change |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26`, which starts its own local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:17 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | Push to `main` only, on changes to `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh` and the workflow file: builds `_site` and deploys. The pre-merge build is the `site build` job in `ci.yml` |
@@ -56,7 +59,8 @@ Every pin, and what updates it. Dependabot opens its PRs on Mondays, grouped per
 | croc v10 test peer | `scripts/croc-v10.version` | pin-watch |
 | golangci-lint | `version:` in `.github/workflows/reusable-go.yml` | pin-watch |
 | Runner labels (`ubuntu-26.04`, `macos-26`, `xcode-27`) | `runs-on:` in the workflows | pin-watch, against the `actions/runner-images` toolsets |
-| xcbeautify, create-dmg | `brew install` in the workflows | unpinned |
+| shfmt, create-dmg | `*_VERSION` and `*_SHA256` env in `ci.yml` and `release.yml` | pin-watch (bump both values together) |
+| xcbeautify | `brew install` in `ci.yml` | unpinned (it only formats logs) |
 
 The Swift language mode (6) and the deployment targets (26.0) are not version pins: they change only by decision (`../BUILDING.md`, "Build settings that must not change casually").
 
@@ -81,6 +85,7 @@ The Swift language mode (6) and the deployment targets (26.0) are not version pi
   - It installs the v11 CLI with `go install` at the version in `crocmobile/go.mod`, because Homebrew's bottle can lag that pin and the store scenario needs `croc store`. It installs the v10 peer the same way, at the version in `scripts/croc-v10.version`.
   - Both binaries are cached under one key made of the runner OS and architecture and the two versions, with no fallback key, so a hit means exactly those versions and skips both installs. A version bump in `crocmobile/go.mod` or `scripts/croc-v10.version` misses the cache and installs afresh.
   - CI does not run the other harnesses or the public-pool scenario (`PUBLIC_POOL=1`).
+  - It needs macOS: on `ubuntu-26.04` a sender on one multicast group is heard on another, so the multicast-mismatch scenario fails.
 - **The go job carries the engine's build tag.** `GOFLAGS=-tags=croc_no_tailcat` is set job-wide in `reusable-go.yml` (and on the fuzz job in `go-weekly.yml`), so build, vet, test, fuzz, govulncheck and golangci-lint all see the croc without Tailcat that ships. A new Go step needs nothing extra. `TestBuildIsRelayOnly` fails a test run that lacks the tag.
 - **`go install` under the go job's cross-compile env.** The go job sets `GOOS=darwin GOARCH=arm64` job-wide so `go build` and `go vet` analyze the shipping target.
   - `go install` honours that and drops a darwin binary into `$GOPATH/bin/darwin_arm64/`, which is unrunnable on the Linux host and not where `$(go env GOPATH)/bin/` looks (exit 127).

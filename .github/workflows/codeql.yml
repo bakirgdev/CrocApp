@@ -1,0 +1,79 @@
+name: CodeQL
+
+# Advanced setup instead of GitHub's default one, so a docs-only change does
+# not start three analyses. Swift is left out: CodeQL supports Swift up to 6.3
+# and the app builds with Swift 6.4 (docs/known-issues.md, "Build and CI").
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - "crocmobile/**"
+      - "web/landing/**/*.js"
+      - "web/docs/**/*.[jt]s"
+      - "web/docs/**/*.[jt]sx"
+      - ".github/workflows/**"
+      - ".github/actions/**"
+  pull_request:
+    paths: *paths
+  schedule:
+    # Off the hour: GitHub delays or drops scheduled runs at :00 under load.
+    - cron: "47 4 * * 2"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: analyze (${{ matrix.language }})
+
+    runs-on: ubuntu-26.04
+
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          - language: go
+            build-mode: manual
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - if: matrix.language == 'go'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: crocmobile/go.mod
+          cache-dependency-path: crocmobile/go.sum
+
+      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      # The engine's build tag, as in reusable-go.yml: the Tailcat stubs keep
+      # gvisor and wireguard out of the build.
+      - if: matrix.language == 'go'
+        working-directory: crocmobile
+        env:
+          GOFLAGS: -tags=croc_no_tailcat
+        run: go build ./...
+
+      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          category: /language:${{ matrix.language }}

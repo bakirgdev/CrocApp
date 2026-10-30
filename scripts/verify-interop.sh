@@ -18,13 +18,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
+help_flag "$@"
 
 CROC="${CROC:-${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc}"
 require_croc
-command -v go >/dev/null || fail "go not installed (brew install go)"
+command -v go > /dev/null || fail "go not installed (brew install go)"
 CROC_V10="${CROC_V10:-$(go env GOPATH)/bin/croc}"
 V10_VERSION=$(cat scripts/croc-v10.version)
-"$CROC_V10" --version 2>/dev/null | grep -qwF "${V10_VERSION#v}" \
+"$CROC_V10" --version 2> /dev/null | grep -qwF "${V10_VERSION#v}" \
   || fail "croc $V10_VERSION not found at '$CROC_V10' (go install github.com/schollz/croc/v10@$V10_VERSION, or set CROC_V10)"
 
 TMP=$(mktemp -d)
@@ -57,7 +58,7 @@ use_relay "$TMP/relay.log"
 CT_R=${RELAY:+-relay=$RELAY}
 CLI_R=${RELAY:+--relay=$RELAY}
 
-( cd crocmobile && go build -tags croc_no_tailcat -o "$CT" ./cmd/croctest )
+(cd crocmobile && go build -tags croc_no_tailcat -o "$CT" ./cmd/croctest)
 
 mkdir -p "$TMP/src/sub" "$TMP/dst"
 echo "small file" > "$TMP/src/a.txt"
@@ -68,11 +69,14 @@ echo nested > "$TMP/src/sub/b.txt"
 # into a room name, so a shared prefix can collide across scenarios.
 code() { echo "$1$$-interop"; }
 
-await_code() {                                      # await_code LOG: prints the code croctest announced
+await_code() { # await_code LOG: prints the code croctest announced
   local i c
-  for (( i = 0; i < 100; i++ )); do
+  for ((i = 0; i < 100; i++)); do
     c=$(sed -n 's/^EVENT code //p' "$1")
-    [ -n "$c" ] && { echo "$c"; return 0; }
+    [ -n "$c" ] && {
+      echo "$c"
+      return 0
+    }
     sleep 0.2
   done
   return 1
@@ -84,14 +88,14 @@ await_code() {                                      # await_code LOG: prints the
 # the sender is in its room (mark_relay before the sender starts, await_sender
 # after; both in lib.sh). On the public pool nothing says, so await_sender
 # sleeps FALLBACK_SECONDS.
-sender_ready() {                                    # sender_ready LOG [FALLBACK_SECONDS]
+sender_ready() { # sender_ready LOG [FALLBACK_SECONDS]
   await_code "$1" > /dev/null || fail "sender printed no EVENT code ($1)"
   await_sender "${2:-3}"
 }
 
 # A -only-local sender never touches a relay: the room it opens lives in its own
 # process, where nothing outside can see it. The sleep is the only signal left.
-local_sender_ready() {                              # local_sender_ready LOG
+local_sender_ready() { # local_sender_ready LOG
   await_code "$1" > /dev/null || fail "sender printed no EVENT code ($1)"
   sleep 3
 }
@@ -105,9 +109,10 @@ C=$(code f1)
 mark_relay
 timeout 90 "$CT" send ${CT_R:+"$CT_R"} -code "$C" "$TMP/src/a.txt" > "$TMP/1.log" 2>&1 &
 sender_ready "$TMP/1.log"
-( cd "$TMP/dst" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite ) > "$TMP/1.cli" 2>&1 || true
+(cd "$TMP/dst" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite) > "$TMP/1.cli" 2>&1 || true
 diff "$TMP/src/a.txt" "$TMP/dst/a.txt" > /dev/null || fail "send file"
-wait; pass "send file"
+wait
+pass "send file"
 
 # 2. CLI sends file -> wrapper receives (accept)
 # --ignore-stdin: the CLI probes stdin for piped content and a non-tty send can
@@ -116,12 +121,13 @@ wait; pass "send file"
 SCENARIO=2
 C=$(code f2)
 mark_relay
-( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send a.txt ) > "$TMP/2.cli" 2>&1 &
+(cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send a.txt) > "$TMP/2.cli" 2>&1 &
 await_sender
 timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$TMP/dst2" -answer y "$C" > "$TMP/2.log" 2>&1 || true
 diff "$TMP/src/a.txt" "$TMP/dst2/a.txt" > /dev/null || fail "receive file"
 grep -q "EVENT filelist" "$TMP/2.log" || fail "filelist event"
-wait; pass "receive file + filelist event"
+wait
+pass "receive file + filelist event"
 
 # 3. folder both directions
 SCENARIO=3
@@ -130,17 +136,19 @@ mark_relay
 timeout 150 "$CT" send ${CT_R:+"$CT_R"} -code "$C" "$TMP/src" > "$TMP/3s.log" 2>&1 &
 sender_ready "$TMP/3s.log"
 mkdir -p "$TMP/dstdir"
-( cd "$TMP/dstdir" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite ) > "$TMP/3s.cli" 2>&1 || true
+(cd "$TMP/dstdir" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite) > "$TMP/3s.cli" 2>&1 || true
 diff -r "$TMP/src" "$TMP/dstdir/src" > /dev/null || fail "send folder"
-wait; pass "send folder"
+wait
+pass "send folder"
 
 C=$(code d2)
 mark_relay
-( cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send src ) > "$TMP/3r.cli" 2>&1 &
+(cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send src) > "$TMP/3r.cli" 2>&1 &
 await_sender
 timeout 120 "$CT" receive ${CT_R:+"$CT_R"} -out "$TMP/dstdir2" -answer y "$C" > "$TMP/3r.log" 2>&1 || true
 diff -r "$TMP/src" "$TMP/dstdir2/src" > /dev/null || fail "receive folder"
-wait; pass "receive folder"
+wait
+pass "receive folder"
 
 # 4. text both directions
 SCENARIO=4
@@ -148,9 +156,10 @@ C=$(code t1)
 mark_relay
 timeout 90 "$CT" send ${CT_R:+"$CT_R"} -code "$C" -text "wrapper text" > "$TMP/4s.log" 2>&1 &
 sender_ready "$TMP/4s.log"
-OUT=$( cd "$TMP" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite --stdout 2> "$TMP/4s.cli" ) || true
+OUT=$(cd "$TMP" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite --stdout 2> "$TMP/4s.cli") || true
 [ "$OUT" = "wrapper text" ] || fail "send text (got: $OUT)"
-wait; pass "send text"
+wait
+pass "send text"
 
 C=$(code t2)
 mark_relay
@@ -158,7 +167,8 @@ CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ign
 await_sender
 timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$TMP/dst" -answer y "$C" > "$TMP/4.log" 2>&1 || true
 grep -q "EVENT text cli text" "$TMP/4.log" || fail "receive text"
-wait; pass "receive text"
+wait
+pass "receive text"
 
 # 5. decline notifies sender
 # The croc v11 CLI sender exits 0 on a peer decline and reports it only in its
@@ -170,7 +180,10 @@ PEER_ERROR='peer error: refusing files|read error message'
 SCENARIO=5
 C=$(code n1)
 mark_relay
-( cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send a.txt > "$TMP/5s.log" 2>&1; echo "rc=$?" >> "$TMP/5s.log" ) &
+(
+  cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send a.txt > "$TMP/5s.log" 2>&1
+  echo "rc=$?" >> "$TMP/5s.log"
+) &
 await_sender
 timeout 30 "$CT" receive ${CT_R:+"$CT_R"} -out "$TMP/dst" -answer n "$C" > "$TMP/5r.log" 2>&1 || true
 wait
@@ -188,7 +201,10 @@ SCENARIO=6
 C=$(code c1)
 mkdir -p "$TMP/dst6"
 mark_relay
-( cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin --throttleUpload 200k send big.bin > "$TMP/6s.log" 2>&1; echo "rc=$?" >> "$TMP/6s.log" ) &
+(
+  cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin --throttleUpload 200k send big.bin > "$TMP/6s.log" 2>&1
+  echo "rc=$?" >> "$TMP/6s.log"
+) &
 await_sender
 timeout 30 "$CT" receive ${CT_R:+"$CT_R"} -out "$TMP/dst6" -answer y -cancel-after 6000 "$C" > "$TMP/6r.log" 2>&1 || true
 wait
@@ -208,7 +224,8 @@ mkdir -p "$TMP/dst7"
 mark_relay
 timeout 60 "$CT" send ${CT_R:+"$CT_R"} -code "$C" -throttle 200k -cancel-after 6000 "$TMP/src/big.bin" > "$TMP/7s.log" 2>&1 &
 sender_ready "$TMP/7s.log"
-rc=0; ( cd "$TMP/dst7" && CROC_SECRET="$C" timeout 30 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite ) > "$TMP/7r.log" 2>&1 || rc=$?
+rc=0
+(cd "$TMP/dst7" && CROC_SECRET="$C" timeout 30 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite) > "$TMP/7r.log" 2>&1 || rc=$?
 wait
 ! diff -q "$TMP/src/big.bin" "$TMP/dst7/big.bin" > /dev/null 2>&1 || fail "sender cancel: transfer completed anyway"
 [ "$rc" -ne 0 ] || grep -Eqi "interruption|context canceled|refus" "$TMP/7r.log" || fail "sender cancel: receiver did not error"
@@ -221,9 +238,10 @@ mark_relay
 timeout 120 "$CT" send ${CT_R:+"$CT_R"} -code "$C" -no-local "$TMP/src/a.txt" > "$TMP/8.log" 2>&1 &
 sender_ready "$TMP/8.log"
 mkdir -p "$TMP/dst8"
-( cd "$TMP/dst8" && CROC_SECRET="$C" timeout 90 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite ) > "$TMP/8.cli" 2>&1 || true
+(cd "$TMP/dst8" && CROC_SECRET="$C" timeout 90 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite) > "$TMP/8.cli" 2>&1 || true
 diff "$TMP/src/a.txt" "$TMP/dst8/a.txt" > /dev/null || fail "forced relay"
-wait; pass "forced relay"
+wait
+pass "forced relay"
 
 # 9. LAN only (no internet relay)
 # croc's sender-side local relay control port is the first configured relay port
@@ -238,9 +256,10 @@ LOCAL_IP=$(local_ip)
 timeout 90 "$CT" send -code "$C" -only-local "$TMP/src/a.txt" > "$TMP/9.log" 2>&1 &
 local_sender_ready "$TMP/9.log"
 mkdir -p "$TMP/dst9"
-( cd "$TMP/dst9" && CROC_SECRET="$C" timeout 60 "$CROC" --yes --overwrite --ip "$LOCAL_IP:9009" ) > "$TMP/9.cli" 2>&1 || true
+(cd "$TMP/dst9" && CROC_SECRET="$C" timeout 60 "$CROC" --yes --overwrite --ip "$LOCAL_IP:9009") > "$TMP/9.cli" 2>&1 || true
 diff "$TMP/src/a.txt" "$TMP/dst9/a.txt" > /dev/null || fail "LAN only"
-wait; pass "LAN only"
+wait
+pass "LAN only"
 
 # 10. croc v10 peer, both directions: crocmobile reports peerVersion.
 # Both sides must reach the same relay room. A v10 CLI defaults to
@@ -252,7 +271,7 @@ v10_relay() { if [ -n "${RELAY:-}" ]; then echo "$RELAY"; else "$CT" relay "$1";
 SCENARIO=10
 C=$(code v1)
 mark_relay
-( cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC_V10" --debug --disable-clipboard --ignore-stdin --relay "$(v10_relay "$C")" send --no-local a.txt ) > "$TMP/10s.cli" 2>&1 &
+(cd "$TMP/src" && CROC_SECRET="$C" timeout 30 "$CROC_V10" --debug --disable-clipboard --ignore-stdin --relay "$(v10_relay "$C")" send --no-local a.txt) > "$TMP/10s.cli" 2>&1 &
 await_sender
 mkdir -p "$TMP/dst10"
 timeout 30 "$CT" receive ${CT_R:+"$CT_R"} -no-local -out "$TMP/dst10" -answer y "$C" > "$TMP/10s.log" 2>&1 || true
@@ -265,7 +284,7 @@ C=$(code v2)
 mark_relay
 timeout 30 "$CT" send ${CT_R:+"$CT_R"} -no-local -code "$C" "$TMP/src/a.txt" > "$TMP/10r.log" 2>&1 &
 sender_ready "$TMP/10r.log"
-( cd "$TMP/dst10" && CROC_SECRET="$C" timeout 30 "$CROC_V10" --debug --yes --overwrite --relay "$(v10_relay "$C")" ) > "$TMP/10r.cli" 2>&1 || true
+(cd "$TMP/dst10" && CROC_SECRET="$C" timeout 30 "$CROC_V10" --debug --yes --overwrite --relay "$(v10_relay "$C")") > "$TMP/10r.cli" 2>&1 || true
 wait
 grep -q 'EVENT error {"code":"peerVersion"' "$TMP/10r.log" || fail "v10 receiver: no peerVersion"
 [ ! -e "$TMP/dst10/a.txt" ] || fail "v10 receiver: file arrived"
@@ -281,14 +300,14 @@ pass "v10 receiver: peerVersion"
 # croc forces under -yes when the sender ran --ask. The last case checks that
 # --ask prompt is refused with Replace.
 SCENARIO=12
-collide() {                                         # collide NAME POLICY ACCEPT...
+collide() { # collide NAME POLICY ACCEPT...
   local name=$1 policy=$2 dir="$TMP/dst12-$1" C
   shift 2
   C=$(code "c$name")
   mkdir -p "$dir"
   echo "existing file" > "$dir/a.txt"
   mark_relay
-  ( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send a.txt ) > "$TMP/12$name.cli" 2>&1 &
+  (cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send a.txt) > "$TMP/12$name.cli" 2>&1 &
   await_sender
   timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$dir" -policy "$policy" "$@" "$C" > "$TMP/12$name.log" 2>&1 || true
   wait
@@ -307,13 +326,13 @@ collide rp replace -answer y
 collide ky keepBoth -yes
 collide ry replace -yes
 
-zip_twice() {                                       # zip_twice NAME POLICY ACCEPT...
+zip_twice() { # zip_twice NAME POLICY ACCEPT...
   local name=$1 policy=$2 dir="$TMP/dst12z-$1" C round
   shift 2
   for round in 1 2; do
     C=$(code "z$name$round")
     mark_relay
-    ( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send --zip sub ) > "$TMP/12z$name$round.cli" 2>&1 &
+    (cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send --zip sub) > "$TMP/12z$name$round.cli" 2>&1 &
     await_sender
     timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$dir" -policy "$policy" "$@" "$C" > "$TMP/12z$name$round.log" 2>&1 || true
     wait
@@ -332,7 +351,7 @@ zip_twice ry replace -yes
 C=$(code ask12)
 mkdir -p "$TMP/dst12-ask"
 mark_relay
-( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin --ask send a.txt ) > "$TMP/12ask.cli" 2>&1 &
+(cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin --ask send a.txt) > "$TMP/12ask.cli" 2>&1 &
 await_sender
 timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$TMP/dst12-ask" -policy replace -yes "$C" > "$TMP/12ask.log" 2>&1 || true
 wait
@@ -356,7 +375,7 @@ for _ in $(seq 1 50); do
   sleep 0.2
 done
 [ -n "$STORE" ] || fail "store server did not start"
-field() {                                           # field LOGFILE KEY: a string value from the EVENT stored receipt
+field() { # field LOGFILE KEY: a string value from the EVENT stored receipt
   sed -n "s/.*\"$2\":\"\\([^\"]*\\)\".*/\\1/p" "$1" | head -1
 }
 cli_store() { CROC_CONFIG_DIR="$TMP/croc-config14" "$CROC" --disable-clipboard "$@"; }
@@ -366,7 +385,9 @@ cli_store() { CROC_CONFIG_DIR="$TMP/croc-config14" "$CROC" --disable-clipboard "
 # the server answer revoke with 410, which counts as revoked, so a broken revoke
 # would still pass 14b and 14c.
 "$CT" store-send -server "$STORE" -downloads 2 -lifetime 3600 "$TMP/src/a.txt" "$TMP/src/big.bin" > "$TMP/14a.log" 2>&1 || fail "store send (wrapper)"
-LINK=$(field "$TMP/14a.log" link); ID=$(field "$TMP/14a.log" id); TOKEN=$(field "$TMP/14a.log" uploadToken)
+LINK=$(field "$TMP/14a.log" link)
+ID=$(field "$TMP/14a.log" id)
+TOKEN=$(field "$TMP/14a.log" uploadToken)
 [ -n "$LINK" ] && [ -n "$ID" ] && [ -n "$TOKEN" ] || fail "store send (wrapper): no receipt"
 grep -q 'EVENT done {"files":2,"success":true' "$TMP/14a.log" || fail "store send (wrapper): no success summary"
 mkdir -p "$TMP/dst14a"
@@ -388,7 +409,8 @@ pass "store: revoke, then CLI download fails"
 # download fails with storeExpired
 cli_store --ignore-stdin store --url "$STORE" --downloads 2 --expiration 1h "$TMP/src/a.txt" "$TMP/src/big.bin" > "$TMP/14c.cli" 2>&1 || fail "store send (CLI)"
 LINK=$(grep -o 'http://127.0.0.1:[0-9]*/s/[A-Za-z0-9_-]*#v1\.[A-Za-z0-9_-]*' "$TMP/14c.cli" | head -1)
-ID=${LINK#*/s/}; ID=${ID%%#*}
+ID=${LINK#*/s/}
+ID=${ID%%#*}
 [ -n "$LINK" ] && [ -n "$ID" ] || fail "store send (CLI): no link in its output"
 timeout 60 "$CT" store-receive -out "$TMP/dst14c" -answer y "$LINK" > "$TMP/14c.log" 2>&1 || true
 grep -q 'EVENT filelist' "$TMP/14c.log" || fail "store receive: no filelist event"
@@ -402,7 +424,9 @@ pass "store: CLI upload, wrapper download, revoke, then wrapper download fails"
 # 14d. a receive onto an existing name: Keep Both adds "a (1).txt", Replace
 # overwrites, and a declined preview leaves the transfer downloadable
 "$CT" store-send -server "$STORE" -downloads 3 -lifetime 3600 "$TMP/src/a.txt" > "$TMP/14d.log" 2>&1 || fail "store send for collision"
-LINK=$(field "$TMP/14d.log" link); ID=$(field "$TMP/14d.log" id); TOKEN=$(field "$TMP/14d.log" uploadToken)
+LINK=$(field "$TMP/14d.log" link)
+ID=$(field "$TMP/14d.log" id)
+TOKEN=$(field "$TMP/14d.log" uploadToken)
 mkdir -p "$TMP/dst14d"
 echo "existing file" > "$TMP/dst14d/a.txt"
 timeout 60 "$CT" store-receive -out "$TMP/dst14d" -answer n "$LINK" > "$TMP/14d0.log" 2>&1 && fail "declined store receive exited 0"
@@ -418,7 +442,7 @@ diff "$TMP/src/a.txt" "$TMP/dst14d/a.txt" > /dev/null || fail "store replace: fi
 pass "store: existing file with Keep Both and Replace, decline keeps the transfer"
 # Later scenarios end in a bare `wait`, which would wait on the server forever.
 kill "$STORE_PID"
-wait "$STORE_PID" 2>/dev/null || true
+wait "$STORE_PID" 2> /dev/null || true
 
 # 15. Advanced options that change the wire, against the croc v11 CLI with
 # the matching flag. What each case pins down was observed with croc v11.5.5:
@@ -438,12 +462,12 @@ mkdir -p "$CFG15"
 # spends most of that; see scenario 11.
 [ -n "${RELAY:-}" ] || sleep 60
 
-default_ports_free() {                              # the sender's local relay needs 9009 to 9013; wait up to 30 s for them
+default_ports_free() { # the sender's local relay needs 9009 to 9013; wait up to 30 s for them
   local k i busy
-  for (( k = 0; k < 30; k++ )); do
+  for ((k = 0; k < 30; k++)); do
     busy=0
     for i in 0 1 2 3 4; do
-      ( exec 3<>"/dev/tcp/127.0.0.1/$((9009 + i))" ) 2>/dev/null && busy=1
+      (exec 3<> "/dev/tcp/127.0.0.1/$((9009 + i))") 2> /dev/null && busy=1
     done
     [ "$busy" = 0 ] && return 0
     sleep 1
@@ -458,7 +482,7 @@ C=$(code pt1)
 mkdir -p "$TMP/dst15pt1"
 timeout 90 "$CT" send -only-local -code "$C" "$TMP/src/big.bin" > "$TMP/15pt1.log" 2>&1 &
 local_sender_ready "$TMP/15pt1.log"
-( cd "$TMP/dst15pt1" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 60 "$CROC" --debug --yes --overwrite --ip "127.0.0.1:9009" ) > "$TMP/15pt1.cli" 2>&1 || true
+(cd "$TMP/dst15pt1" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 60 "$CROC" --debug --yes --overwrite --ip "127.0.0.1:9009") > "$TMP/15pt1.cli" 2>&1 || true
 wait
 cmp -s "$TMP/src/big.bin" "$TMP/dst15pt1/big.bin" || fail "sender IP: wrapper send, CLI receive --ip 127.0.0.1:9009: bytes differ"
 grep -q "banner: 9010,9011,9012,9013$" "$TMP/15pt1.cli" || fail "sender IP: banner is not the four data ports after 9009"
@@ -467,7 +491,7 @@ pass "sender IP: wrapper sends on its default ports, CLI receives --ip 127.0.0.1
 P=$(free_port) || fail "sender IP: no free port range"
 C=$(code pt2)
 mkdir -p "$TMP/dst15pt2"
-( cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 90 "$CROC" --debug --disable-clipboard --ignore-stdin --local send --port "$P" --transfers 2 big.bin ) > "$TMP/15pt2.cli" 2>&1 &
+(cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 90 "$CROC" --debug --disable-clipboard --ignore-stdin --local send --port "$P" --transfers 2 big.bin) > "$TMP/15pt2.cli" 2>&1 &
 await_log "$TMP/15pt2.cli" "local connection established" 30 || fail "sender IP: the CLI sender never joined its local relay"
 timeout 60 "$CT" receive -ip "127.0.0.1:$P" -out "$TMP/dst15pt2" -answer y "$C" > "$TMP/15pt2.log" 2>&1 || true
 wait
@@ -485,12 +509,12 @@ pass "sender IP: a sender IP with nothing listening fails with relayUnreachable"
 # real croc sends, and the last case that another group stays unheard.
 MC_GROUP=239.255.42.99
 MC_OTHER=239.255.42.98
-mc_listen() {                                       # mc_listen GROUP LOG: join for 6 s in the background
+mc_listen() { # mc_listen GROUP LOG: join for 6 s in the background
   "$CT" multicast-listen "$1" 6 > "$2" 2>&1 &
   MC_PID=$!
   sleep 1
 }
-mc_heard() {                                        # mc_heard LOG PAYLOAD LABEL
+mc_heard() { # mc_heard LOG PAYLOAD LABEL
   wait "$MC_PID" || fail "multicast: listener failed ($3)"
   grep -qx "MULTICAST-PAYLOAD $2" "$1" || fail "multicast: $3: group did not carry '$2'"
 }
@@ -511,7 +535,7 @@ if "$CT" multicast-listen "$MC_GROUP" 1 > "$TMP/15mcprobe.log" 2>&1; then
   P=$(free_port) || fail "multicast: no free port range"
   C=$(code mc3)
   mc_listen "$MC_GROUP" "$TMP/15mc3.listen"
-  ( cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 4 "$CROC" --disable-clipboard --ignore-stdin --local --multicast "$MC_GROUP" send --port "$P" a.txt ) > "$TMP/15mc3.cli" 2>&1 || true
+  (cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 4 "$CROC" --disable-clipboard --ignore-stdin --local --multicast "$MC_GROUP" send --port "$P" a.txt) > "$TMP/15mc3.cli" 2>&1 || true
   mc_heard "$TMP/15mc3.listen" "croc$P" "CLI sender"
   C=$(code mc4)
   mc_listen "$MC_GROUP" "$TMP/15mc4.listen"
@@ -547,7 +571,7 @@ fi
 # fails with croc's own message, promptly, and does not hang.
 SCENARIO=13
 head -c 136314880 /dev/urandom > "$TMP/huge.bin"
-no_tailcat() {                                      # no_tailcat LOG LABEL: the CLI log shows a plain relay transfer
+no_tailcat() { # no_tailcat LOG LABEL: the CLI log shows a plain relay transfer
   grep -aq "selected croc relay data transport$" "$1" || fail "$2: CLI log has no plain relay data transport line"
   ! grep -aEq "tailcat-offer|starting Tailcat server|Tailcat fallback|selected staged" "$1" || fail "$2: CLI log shows a Tailcat offer"
 }
@@ -557,7 +581,7 @@ mkdir -p "$L"
 mark_relay
 timeout 300 "$CT" send ${CT_R:+"$CT_R"} -code "$C" "$TMP/huge.bin" > "$L.log" 2>&1 &
 sender_ready "$L.log"
-( cd "$L" && CROC_SECRET="$C" timeout 280 "$CROC" ${CLI_R:+"$CLI_R"} --debug --yes --overwrite ) > "$L.cli" 2>&1 || true
+(cd "$L" && CROC_SECRET="$C" timeout 280 "$CROC" ${CLI_R:+"$CLI_R"} --debug --yes --overwrite) > "$L.cli" 2>&1 || true
 wait
 cmp -s "$TMP/huge.bin" "$L/huge.bin" || fail "large send: wrapper send of 130 MiB, CLI receive"
 no_tailcat "$L.cli" "large send"
@@ -566,7 +590,7 @@ pass "large files: wrapper sends 130 MiB, CLI receives it over the relay, no Tai
 L="$TMP/13r"
 C=$(code lr)
 mark_relay
-( cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send huge.bin ) > "$L.cli" 2>&1 &
+(cd "$TMP" && CROC_SECRET="$C" timeout 300 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send huge.bin) > "$L.cli" 2>&1 &
 await_sender
 timeout 280 "$CT" receive ${CT_R:+"$CT_R"} -out "$L" -answer y "$C" > "$L.log" 2>&1 || true
 wait
@@ -579,7 +603,7 @@ L="$TMP/13d"
 C=$(code ld)
 mkdir -p "$L"
 mark_relay
-( cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send --transport derp a.txt ) > "$L.cli" 2>&1 &
+(cd "$TMP/src" && CROC_SECRET="$C" timeout 60 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send --transport derp a.txt) > "$L.cli" 2>&1 &
 await_sender
 started=$SECONDS
 timeout 60 "$CT" receive ${CT_R:+"$CT_R"} -out "$L" -answer y "$C" > "$L.log" 2>&1 && fail "derp sender: wrapper receive exited 0"
@@ -605,7 +629,7 @@ fi
 # Nothing is assumed about an address from RELAY=, hence the skip above.
 SCENARIO=15
 PX_R=${RELAY_LOG:+-relay=localhost:${RELAY##*:}}
-start_proxy() {                                     # start_proxy KIND: sets PROXY_PID and PROXY_ADDR
+start_proxy() { # start_proxy KIND: sets PROXY_PID and PROXY_ADDR
   "$CT" "$1-proxy" > "$TMP/15px-$1.log" 2>&1 &
   PROXY_PID=$!
   PROXY_ADDR=""
@@ -618,7 +642,7 @@ start_proxy() {                                     # start_proxy KIND: sets PRO
 }
 tunnels() { grep -c '^PROXY-TUNNEL' "$TMP/15px-$1.log" || true; }
 
-proxy_send() {                                      # proxy_send KIND FLAG: wrapper sends through the proxy, CLI receives
+proxy_send() { # proxy_send KIND FLAG: wrapper sends through the proxy, CLI receives
   local kind=$1 flag=$2 L="$TMP/15px-$1-send" C job
   C=$(code "px$kind")
   mkdir -p "$L"
@@ -627,27 +651,27 @@ proxy_send() {                                      # proxy_send KIND FLAG: wrap
   timeout 100 "$CT" send ${PX_R:+"$PX_R"} -no-local -no-multi "$flag" "$PROXY_ADDR" -code "$C" "$TMP/src/a.txt" > "$L.log" 2>&1 &
   job=$!
   sender_ready "$L.log" 4
-  ( cd "$L" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 80 "$CROC" ${CLI_R:+"$CLI_R"} --debug --yes --overwrite ) > "$L.cli" 2>&1 || true
+  (cd "$L" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 80 "$CROC" ${CLI_R:+"$CLI_R"} --debug --yes --overwrite) > "$L.cli" 2>&1 || true
   wait "$job" || true
   kill "$PROXY_PID"
-  wait "$PROXY_PID" 2>/dev/null || true
+  wait "$PROXY_PID" 2> /dev/null || true
   cmp -s "$TMP/src/a.txt" "$L/a.txt" || fail "$kind proxy: wrapper send: bytes differ"
   [ "$(tunnels "$kind")" -ge 1 ] || fail "$kind proxy: wrapper send tunnelled no connection"
   pass "$kind proxy: wrapper $flag sends through $(tunnels "$kind") tunnelled connections"
 }
-proxy_receive() {                                   # proxy_receive KIND FLAG: CLI sends, wrapper receives through the proxy
+proxy_receive() { # proxy_receive KIND FLAG: CLI sends, wrapper receives through the proxy
   local kind=$1 flag=$2 L="$TMP/15px-$1-recv" C job
   C=$(code "py$kind")
   mkdir -p "$L"
   start_proxy "$kind"
   mark_relay
-  ( cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 100 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send --no-local --no-multi a.txt ) > "$L.cli" 2>&1 &
+  (cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 100 "$CROC" ${CLI_R:+"$CLI_R"} --debug --disable-clipboard --ignore-stdin send --no-local --no-multi a.txt) > "$L.cli" 2>&1 &
   job=$!
   await_sender 4
   timeout 80 "$CT" receive ${PX_R:+"$PX_R"} -no-local "$flag" "$PROXY_ADDR" -out "$L" -answer y "$C" > "$L.log" 2>&1 || true
   wait "$job" || true
   kill "$PROXY_PID"
-  wait "$PROXY_PID" 2>/dev/null || true
+  wait "$PROXY_PID" 2> /dev/null || true
   cmp -s "$TMP/src/a.txt" "$L/a.txt" || fail "$kind proxy: wrapper receive: bytes differ"
   [ "$(tunnels "$kind")" -ge 1 ] || fail "$kind proxy: wrapper receive tunnelled no connection"
   pass "$kind proxy: wrapper $flag receives through $(tunnels "$kind") tunnelled connections"
@@ -657,7 +681,7 @@ proxy_receive socks5 -socks5
 proxy_send http -connect
 proxy_receive http -connect
 
-if [ -z "${PUBLIC_POOL:-}" ]; then                 # use_relay accepted only empty or 1
+if [ -z "${PUBLIC_POOL:-}" ]; then # use_relay accepted only empty or 1
   echo "SKIP: public relay pool (11): set PUBLIC_POOL=1"
   echo "ALL INTEROP CHECKS PASSED (local relay $RELAY; public pool scenario skipped)"
   exit 0
@@ -673,33 +697,36 @@ fi
 # admissions to age out, multiplexing off (2 connections per peer), and one pass
 # over the pool per kind of transfer, so no relay is used twice in a row.
 SCENARIO=11
-pool_code() {                                       # pool_code PREFIX RELAY
+pool_code() { # pool_code PREFIX RELAY
   local k c
-  for (( k = 0; k < 64; k++ )); do
+  for ((k = 0; k < 64; k++)); do
     c=$(code "$1$k")
-    [ "$("$CT" relay "$c")" = "$2" ] && { echo "$c"; return 0; }
+    [ "$("$CT" relay "$c")" = "$2" ] && {
+      echo "$c"
+      return 0
+    }
   done
   return 1
 }
-pool_send_custom() {                                # pool_send_custom INDEX RELAY
+pool_send_custom() { # pool_send_custom INDEX RELAY
   local L="$TMP/11-$1-cs" C
   C=$(pool_code "p$1" "$2") || fail "relay $1: no custom code maps to $2"
   mark_relay
   timeout 120 "$CT" send -no-local -no-multi -code "$C" "$TMP/src/a.txt" > "$L.log" 2>&1 &
   sender_ready "$L.log"
   mkdir -p "$L"
-  ( cd "$L" && CROC_SECRET="$C" timeout 90 "$CROC" --debug --yes --overwrite ) > "$L.cli" 2>&1 || true
+  (cd "$L" && CROC_SECRET="$C" timeout 90 "$CROC" --debug --yes --overwrite) > "$L.cli" 2>&1 || true
   wait
   diff "$TMP/src/a.txt" "$L/a.txt" > /dev/null || fail "relay $1: wrapper custom-code send"
   grep -q "EVENT relay $2" "$L.log" || fail "relay $1: wrapper send not on $2"
   grep -q "public relay index $1 selected: $2" "$L.cli" || fail "relay $1: CLI receive not on $2"
   pass "relay $1 ($2): wrapper sends, custom code"
 }
-pool_receive_custom() {                             # pool_receive_custom INDEX RELAY
+pool_receive_custom() { # pool_receive_custom INDEX RELAY
   local L="$TMP/11-$1-cr" C
   C=$(pool_code "q$1" "$2") || fail "relay $1: no custom code maps to $2"
   mark_relay
-  ( cd "$TMP/src" && CROC_SECRET="$C" timeout 120 "$CROC" --debug --ignore-stdin --disable-clipboard send --no-local --no-multi a.txt ) > "$L.cli" 2>&1 &
+  (cd "$TMP/src" && CROC_SECRET="$C" timeout 120 "$CROC" --debug --ignore-stdin --disable-clipboard send --no-local --no-multi a.txt) > "$L.cli" 2>&1 &
   await_sender
   timeout 90 "$CT" receive -no-local -out "$L" -answer y "$C" > "$L.log" 2>&1 || true
   wait
@@ -708,14 +735,14 @@ pool_receive_custom() {                             # pool_receive_custom INDEX 
   grep -q "public relay index $1 selected: $2" "$L.cli" || fail "relay $1: CLI send not on $2"
   pass "relay $1 ($2): wrapper receives, custom code"
 }
-pool_send_generated() {                             # pool_send_generated INDEX RELAY
+pool_send_generated() { # pool_send_generated INDEX RELAY
   local L="$TMP/11-$1-gs" C
   timeout 120 "$CT" send -no-local -no-multi -relay-index "$1" "$TMP/src/a.txt" > "$L.log" 2>&1 &
   C=$(await_code "$L.log") || fail "relay $1: wrapper printed no generated code"
   grep -q "EVENT relay $2" "$L.log" || fail "relay $1: generated code not on $2"
-  sleep 3                                           # a pool relay's log is not ours to read: no signal, so a fixed wait
+  sleep 3 # a pool relay's log is not ours to read: no signal, so a fixed wait
   mkdir -p "$L"
-  ( cd "$L" && CROC_SECRET="$C" timeout 90 "$CROC" --debug --yes --overwrite ) > "$L.cli" 2>&1 || true
+  (cd "$L" && CROC_SECRET="$C" timeout 90 "$CROC" --debug --yes --overwrite) > "$L.cli" 2>&1 || true
   wait
   diff "$TMP/src/a.txt" "$L/a.txt" > /dev/null || fail "relay $1: wrapper generated-code send"
   grep -q "public relay index $1 selected: $2" "$L.cli" || fail "relay $1: CLI receive not on $2"
@@ -734,8 +761,8 @@ done
 
 # The CLI caches the relay its latency probe picks, so this covers one index.
 L="$TMP/11-cli"
-( cd "$TMP/src" && timeout 120 "$CROC" --debug --ignore-stdin --disable-clipboard send --no-local --no-multi a.txt ) > "$L.cli" 2>&1 &
-for (( k = 0; k < 100; k++ )); do
+(cd "$TMP/src" && timeout 120 "$CROC" --debug --ignore-stdin --disable-clipboard send --no-local --no-multi a.txt) > "$L.cli" 2>&1 &
+for ((k = 0; k < 100; k++)); do
   C=$(sed -n 's|.*getcroc.com/?code=||p' "$L.cli")
   [ -n "$C" ] && break
   sleep 0.2
