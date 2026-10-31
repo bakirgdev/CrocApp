@@ -21,7 +21,6 @@ These items gate Submit for Review of the first App Store release (`docs/README.
   - Suspected on macOS: buttons styled with `buttonVariant` (`ButtonVariantStyle` wraps the label in a new `Button`) expose no name, description or children to System Events, so VoiceOver may read only "button" on Send, Choose Files…, Check Relay… and the rest. Confirm with VoiceOver first. If it reproduces, try building the inner button from `Button(configuration)` and recheck the label colors.
   - Not looked at: the macOS layout of the changed views.
   - Not measured: the rendered size of the code field's system `PasteButton` against the 44 pt hit target. SwiftUI lets the app set only its border shape, label style and tint, so the system decides its size.
-- **CI builds with the Xcode 27.2 release candidate.** `.xcode-version` names 27.2, and the `xcode-27` runner image carries 27.2 only as the release candidate (27B48), while the stable 27.2 is 27B52. The pin-watch issue shows it until the image ships the stable build.
 - **A local Sparkle update test once hung after "Install and Relaunch".**
   - The test is in `RELEASING.md`, "Testing a Sparkle update locally". On the first launch of the `com.bakirgdev.CrocApp.direct` bundle ID on that Mac, the update downloaded and prepared. Then the app never terminated, its Quit menu item was ignored, and the installer kept waiting.
   - Later runs passed, some with Sparkle's first-launch defaults deleted, so first-launch state alone does not explain it. The cause is unknown.
