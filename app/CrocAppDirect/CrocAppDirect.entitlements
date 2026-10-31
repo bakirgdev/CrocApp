@@ -6,6 +6,10 @@
 	<array>
 		<string>applinks:crocapp.dev</string>
 	</array>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>$(TeamIdentifierPrefix)com.bakirgdev.CrocApp.direct</string>
+	</array>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
 	<key>com.apple.security.files.downloads.read-write</key>

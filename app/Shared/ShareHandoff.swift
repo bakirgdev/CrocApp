@@ -6,25 +6,48 @@ import Foundation
 ///
 /// This one file is compiled into the app, CrocApp Direct and CrocShare, so a
 /// name cannot drift between the writer and the reader. The group ID also sits
-/// in the three `.entitlements` files, which cannot import Swift: a change
-/// here needs the same change there.
+/// in the `.entitlements` files, which cannot import Swift: a change here needs
+/// the same change there.
 enum ShareHandoff {
+    // macOS uses the team-prefixed form, which needs no provisioning profile
+    // (a `group.` ID on a Developer ID build would need one for CrocShare too).
+    // The Direct build has its own group, so a Direct and an App Store copy
+    // on one Mac never read each other's inbox.
+    #if os(macOS) && DIRECT
+    static let groupID = "HBSU359M33.com.bakirgdev.CrocApp.direct"
+    #elseif os(macOS)
+    static let groupID = "HBSU359M33.com.bakirgdev.CrocApp"
+    #else
     static let groupID = "group.com.bakirgdev.CrocApp"
+    #endif
     static let inboxDirName = "ShareInbox"
     static let manifestName = "manifest.json"
     private static let batchPrefix = "batch-"
     /// Characters in the canonical `UUID.uuidString` form (8-4-4-4-12).
     private static let uuidLength = 36
 
+    /// The most shared text a batch carries, in UTF-8 bytes. The Send screen's
+    /// editor is not built for more, and the extension must stay small.
+    static let maxTextBytes = 1_048_576
+
     /// Names one staged batch. The extension writes it after the batch's files
     /// are in place, so a manifest on disk always points at a complete batch.
+    /// `text` is shared text or links, set only when `files` is empty. It lives
+    /// in the manifest so that consuming the manifest deletes it.
     struct Manifest: Codable {
         var batch: String
         var files: [String]
+        var text: String?
+    }
+
+    /// Non-blank parts joined one per line, or nil when nothing is left.
+    static func joinText(_ parts: [String]) -> String? {
+        let kept = parts.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        return kept.isEmpty ? nil : kept.joined(separator: "\n")
     }
 
     /// The inbox directory, or nil where the App Group container is
-    /// unavailable (macOS has no share extension and no group entitlement).
+    /// unavailable.
     static var inboxURL: URL? {
         FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: groupID)?

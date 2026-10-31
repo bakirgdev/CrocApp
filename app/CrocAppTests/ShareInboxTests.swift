@@ -194,3 +194,95 @@ import Testing
         #expect(!exists(named))
     }
 }
+
+@MainActor
+@Suite struct ShareInboxTextTests {
+    private func makeInbox() throws -> URL {
+        let inbox = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "ShareInboxTextTests-" + UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
+        return inbox
+    }
+
+    private func writeManifest(
+        files: [String] = [], text: String?, in inbox: URL
+    ) throws -> String {
+        let batch = ShareHandoff.makeBatchName()
+        let dir = inbox.appendingPathComponent(batch, isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        for file in files { try Data("x".utf8).write(to: dir.appendingPathComponent(file)) }
+        let data = try JSONEncoder().encode(
+            ShareHandoff.Manifest(batch: batch, files: files, text: text))
+        try data.write(to: ShareHandoff.manifestURL(in: inbox))
+        return batch
+    }
+
+    @Test func readsSharedText() throws {
+        let inbox = try makeInbox()
+        defer { try? FileManager.default.removeItem(at: inbox) }
+        _ = try writeManifest(text: "https://example.com/a\nhello", in: inbox)
+
+        let model = ShareInbox()
+        model.refresh(in: inbox)
+
+        #expect(model.text == "https://example.com/a\nhello")
+        #expect(model.staged.isEmpty)
+    }
+
+    @Test func filesTakePrecedenceOverText() throws {
+        let inbox = try makeInbox()
+        defer { try? FileManager.default.removeItem(at: inbox) }
+        _ = try writeManifest(files: ["a.txt"], text: "hello", in: inbox)
+
+        let model = ShareInbox()
+        model.refresh(in: inbox)
+
+        #expect(model.staged.count == 1)
+        #expect(model.text == nil)
+    }
+
+    @Test func dropsBlankAndOversizedText() throws {
+        let inbox = try makeInbox()
+        defer { try? FileManager.default.removeItem(at: inbox) }
+        let model = ShareInbox()
+
+        _ = try writeManifest(text: " \n\t", in: inbox)
+        model.refresh(in: inbox)
+        #expect(model.text == nil)
+
+        _ = try writeManifest(
+            text: String(repeating: "a", count: ShareHandoff.maxTextBytes), in: inbox)
+        model.refresh(in: inbox)
+        #expect(model.text?.utf8.count == ShareHandoff.maxTextBytes)
+
+        _ = try writeManifest(
+            text: String(repeating: "a", count: ShareHandoff.maxTextBytes + 1), in: inbox)
+        model.refresh(in: inbox)
+        #expect(model.text == nil)
+    }
+
+    @Test func consumingTheManifestForgetsTheText() throws {
+        let inbox = try makeInbox()
+        defer { try? FileManager.default.removeItem(at: inbox) }
+        _ = try writeManifest(text: "secret", in: inbox)
+        let model = ShareInbox()
+        model.refresh(in: inbox)
+        #expect(model.text == "secret")
+
+        try FileManager.default.removeItem(at: ShareHandoff.manifestURL(in: inbox))
+        model.refresh(in: inbox)
+
+        #expect(model.text == nil)
+    }
+
+    @Test func oldManifestsWithoutTextStillDecode() throws {
+        let json = Data(#"{"batch":"b","files":["a"]}"#.utf8)
+        let manifest = try JSONDecoder().decode(ShareHandoff.Manifest.self, from: json)
+        #expect(manifest.text == nil)
+    }
+
+    @Test func joinTextSkipsBlankParts() {
+        #expect(ShareHandoff.joinText(["a", " ", "b"]) == "a\nb")
+        #expect(ShareHandoff.joinText(["", "\n"]) == nil)
+    }
+}
