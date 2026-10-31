@@ -40,9 +40,9 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - By default the harnesses avoid both: each starts its own `croc relay` with raised admission limits and starts a receiver only when that relay's debug log shows the sender's room (`BUILDING.md`, "Verification harnesses"; CI's `interop (local relay)` job runs the same way).
   - A pool relay's log is not ours to read, so on the public pool, and with an explicit `RELAY`, the harnesses still wait a fixed 3 s after a sender. Leave a minute between public-pool runs, and treat a failure as a regression only after finding the cause in its log.
   - Every checkout and session on one machine shares one address, so one limit: another run on the public pool can use up yours.
-- **Two checkouts cannot run the same harness at once on one Mac.**
+- **Only one harness runs at a time on one Mac.**
   - `verify-app-mac.sh` and `verify-app-sim.sh` share the app container, `~/Downloads/CrocApp` and the pasteboard. A wrapper sender and `--local` scenarios in `verify-interop.sh` bind croc's default ports 9009 to 9013 and announce on the default multicast group, so a second run sees the first one's sender.
-  - Take turns. The local relay needs no care: each run picks its own free ports, and each checkout builds into its own DerivedData (`derived_data` in `scripts/lib.sh`).
+  - Each harness takes a lock (`take_harness_lock` in `scripts/lib.sh`), so a second run stops at once and names the run that holds it. The local relay needs no care: each run picks its own free ports, and each checkout builds into its own DerivedData (`derived_data` in `scripts/lib.sh`).
 
 ## Design system
 
