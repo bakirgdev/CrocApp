@@ -70,7 +70,7 @@
               developer receives no data from the app. This page lists every server the app can talk to and what each one can
               see.
             </p>
-            <p class="t-footnote">Applies to CrocApp 1.0. Last updated 20 October 2026.</p>
+            <p class="t-footnote">Applies to CrocApp 1.1.0. Last updated 1 November 2026.</p>
           </div>
 
           <div class="prose t-body">
@@ -168,7 +168,7 @@
                 <strong>What it can see:</strong> because the code is in a query string there, it
                 reaches the getcroc.com server, which therefore sees the code phrase along with your
                 IP address and the time. getcroc.com also serves the JavaScript that decrypts the
-                file, so this path trusts that site fully. That site's own pages also load third-party analytics and advertising scripts (Umami and Google AdSense when last checked, 2026-10-15), which CrocApp does not control. The CrocApp and croc command line paths
+                file, so this path trusts that site fully. That site's own pages also load third-party analytics and advertising scripts (Umami and Google AdSense when last checked, 2026-11-01), which CrocApp does not control. The CrocApp and croc command line paths
                 have no such dependency. The <code class="t-code">crocapp.dev/r/</code> page itself
                 keeps the code after the <code class="t-code">#</code>, makes no network request and
                 sends no referrer.
@@ -221,6 +221,12 @@
               for most custom codes), never file contents or the full phrase.
               For a stored upload it keeps the link server's host name, not the link or the upload token.
               Clear it any time from the history screen.
+              Shortcuts and Siri can find your past transfers by name, direction, status and date,
+              but only while <strong>Save Transfer History</strong> is on, and any shortcut you run
+              sees what it finds.
+              With <strong>Show History in Spotlight</strong> on (off by default), file names,
+              direction, status, date and size also go into this device's Spotlight index, never a
+              code phrase or its hint; turning it off removes them.
             </p>
             <p>
               <strong>Notifications.</strong> When CrocApp is in the background, a transfer that
