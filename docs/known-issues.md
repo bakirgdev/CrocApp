@@ -8,7 +8,7 @@ Engine and bridge invariants are in `knowledge/crocmobile-bridge.md`. UI state-m
 
 ## Release
 
-These items gate Submit for Review of the first App Store release (`knowledge/project-overview.md`, "Status").
+These items gate Submit for Review of the first App Store release (`docs/README.md`, "Status").
 
 - **Export compliance needs two owner actions in App Store Connect.**
   - The position (`ITSAppUsesNonExemptEncryption` is `false`, France excluded from availability) is in `RELEASING.md`, "Export compliance". Owner actions: remove France from availability, and file a `future` issue to add it back after an ANSSI declaration.
@@ -97,7 +97,7 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 
 - **No site search, on purpose.**
   - A local search plugin is a new dependency. Algolia DocSearch is an external account plus a third-party request from a page that makes a privacy claim.
-  - Eighteen pages with a full sidebar and browser find-in-page are enough at this size. Revisit if the page count grows.
+  - A full sidebar and browser find-in-page are enough at this size. Revisit if the page count grows.
 - **The docs 404 page keeps Docusaurus's default meta description.** The theme's NotFound page sets only a title. Changing it needs a swizzle, which is not worth the upkeep.
 - **A landing-only change rebuilds the docs site too, and the reverse.** `github-pages.yml` calls `scripts/assemble-site.sh`, which builds both surfaces regardless of which one changed.
 - **The two sitemaps stay separate.**
@@ -134,9 +134,6 @@ Permanent or deferred, each with its reason.
 
 ### App and UI
 
-- **The Mac Share extension needs a Direct profile with App Groups before the next release.**
-  - `CrocApp Direct` now carries the team-prefixed App Group `HBSU359M33.com.bakirgdev.CrocApp.direct`. The existing "CrocApp Direct Developer ID" profile lacks the capability, so `scripts/build-devid.sh` fails at archive ("doesn't include the App Groups capability", reproduced). The team-prefixed group needs no registration, but Xcode checks it against the profile. Enable App Groups on the `com.bakirgdev.CrocApp.direct` App ID, regenerate the profile, reinstall it and update `DEVID_PROFILE_BASE64`.
-  - The Developer ID archive, export and notarization of an app that embeds `CrocShare Direct` were not run. A signed Debug build of both targets and an automatic-signing `codesign --verify --deep --strict` pass.
 - **A second share replaces one the app has not opened yet.** The extension keeps one manifest, so sharing B before CrocApp offers A drops A: its batch is swept an hour later (`ShareInbox.stagingGrace`). The extension does not refuse or queue a second share, because a share left unopened would then block every later one.
 - **Mac Share extension: only checked through `NSSharingService`.**
   - A script shared a file and a folder through the system's sharing service to the signed Debug extension: it was offered, staged both into the group container and launched the app, which showed the **Shared Files** sheet. Choosing it from Finder's Share menu and context menu by hand was not done.
@@ -153,7 +150,7 @@ Permanent or deferred, each with its reason.
 - **Keychain items written by earlier builds stay behind.**
   - Mac: `KeychainStore` reads, writes and deletes only in the data-protection keychain (`kSecUseDataProtectionKeychain`). Earlier Mac builds (withdrawn pre-release disk images and development builds) wrote to the login keychain. CrocApp no longer reads those items, and clearing a field in Settings does not delete them.
   - Not a new exposure: they stay as they were stored, in the login keychain under the access control they were created with.
-  - No migration code, by owner decision: the app has no users. Remove them by hand in Keychain Access (search for `com.bakirgdev.CrocApp`), or with `security delete-generic-password -s com.bakirgdev.CrocApp -a <account>` for each account: `relayPassword`, `advanced.socks5Proxy`, `advanced.httpProxy`, `storedReceipts`.
+  - No migration code, by owner decision: no release had shipped when this was decided. Remove them by hand in Keychain Access (search for `com.bakirgdev.CrocApp`), or with `security delete-generic-password -s com.bakirgdev.CrocApp -a <account>` for each account: `relayPassword`, `advanced.socks5Proxy`, `advanced.httpProxy`, `storedReceipts`.
   - iPhone and iPad: an item that an earlier TestFlight or development build wrote keeps `kSecAttrAccessibleAfterFirstUnlock`, so a backup can still restore it to another device, until that setting (or the receipt list) is next saved.
 - **Photos that fail to load are counted, not named.** The banner says how many items could not be added and suggests checking the connection, because the likeliest cause is a photo that lives in iCloud. The picker gives no reason per item.
 - **A staged copy outlives a crash until the next launch.** `SendStaging` sweeps its folder on the first Send screen of a launch. Anything a crash leaves behind uses disk space until then.
@@ -193,7 +190,7 @@ Permanent or deferred, each with its reason.
   - In-app **Scan QR Code** and Paste work.
 - **The menu-bar window cannot take a drop on the icon itself.**
   - `MenuBarQuickSendView`'s drop zone exists only while the window is open, so the user clicks the icon first and then drops.
-  - A `MenuBarExtra` has no drop target on its status item: SwiftUI's `MenuBarExtra` documentation (Xcode 27.2 SDK) lists no drop or drag API for it. The **Choose Files...** button needs no drag.
+  - A `MenuBarExtra` has no drop target on its status item: SwiftUI's `MenuBarExtra` documentation (Xcode 27.2 SDK) lists no drop or drag API for it. The **Choose Files…** button needs no drag.
 - **A Shortcuts send action returns at the code, not at the end of the transfer.**
   - `SendFilesIntent` and `SendTextIntent` finish when `awaitCode()` sees `.waiting`. A shortcut that goes on to quit CrocApp, or a user who closes it, ends the transfer before the receiver has the files. The dialog says "Keep CrocApp open until the transfer ends."
   - The code has to reach the receiver while the sender is still waiting, so the action cannot wait for the end. Receive does wait for the end.
@@ -256,7 +253,7 @@ Permanent or deferred, each with its reason.
 - **A generated-code send with no internet or no reachable pool relay fails before a code is shown.**
   - With default settings, no pool relay answers the 1 s probe (`generatePublicCode` in `crocmobile/relay.go`), so the send fails with code `noPublicRelay` (croc's `no public relay available`, the same as the v11 CLI).
   - A "draw a code anyway and let a LAN peer join" fallback does not work: after the relay dial fails, croc waits for a LAN peer for only 10 s (`defaultAlternateSenderRouteTimeout`, unexported), and a `croctest send -relay 127.0.0.1:1` with no receiver printed its code and failed about 11 s later.
-  - Workaround: turn on **Local Network Only** (`web/docs/content/troubleshooting.md`, "Relay unreachable"). The app shows "No public relay answered" and "Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network."
+  - Workaround: turn on **Local Network Only** (`web/docs/content/troubleshooting.md`, "No internet"). The app shows "No public relay answered" and "Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network."
 - **A receiver that joins before the sender fails, and so does the sender.**
   - The receiver's `pake1` local probe times out after 500 ms and it carries on with the main PAKE. The sender's late reply to the old probe is then decoded as a transfer message and fails with `flate: corrupt input before offset 6` (`knowledge/crocmobile-bridge.md`, "Start order: sender first").
   - Generated codes are sender-first, but custom codes are not. A receiver who types an agreed code before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it.

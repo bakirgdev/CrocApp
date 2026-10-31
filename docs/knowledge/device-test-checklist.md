@@ -42,11 +42,11 @@ Setup unless a section says otherwise: an iPhone or iPad on iOS or iPadOS 26 or 
 Use an iPhone and a Mac running CrocApp as the sender (start a send and leave it on the waiting screen). The simulator has no camera and cannot resolve universal links.
 
 - [ ] 1. With CrocApp installed on the iPhone, point the Camera app at the waiting-screen QR on the Mac. Pass: CrocApp opens on Receive with the code filled in, and nothing connects until you tap **Receive**. After you tap it, the transfer completes.
-- [ ] 2. Delete CrocApp from the iPhone (or use an iPhone without it) and scan the same QR with the Camera app. Pass: Safari opens `https://crocapp.dev/r/`, the page shows the code, and it has the **Open in CrocApp**, **Get CrocApp**, **Mac Disk Image** and **Receive in your browser** buttons.
+- [ ] 2. Delete CrocApp from the iPhone (or use an iPhone without it) and scan the same QR with the Camera app. Pass: Safari opens `https://crocapp.dev/r/`, the page shows the code, and it has the **Open in CrocApp**, **Get CrocApp**, **Mac Disk Image** and **Receive in Your Browser** buttons.
 - [ ] 3. Install CrocApp again, open the page from step 2 (scan again, long-press the link and open it in Safari, or open it from Notes), and tap **Open in CrocApp**. Pass: CrocApp opens on Receive with the code filled in and does not connect by itself.
 - [ ] 4. In CrocApp, tap **Scan QR Code** and scan a QR whose text is `https://crocapp.dev/r/#word-word-word` (make one with any QR generator). Pass: the code field fills with `word-word-word` and nothing connects.
 - [ ] 5. Copy `https://getcroc.com/?code=<code>` (a link the croc CLI shows with `--qrcode`, or typed by hand) and tap **Paste** on Receive. Pass: the code field shows only `<code>`, not the link.
-- [ ] 6. On the page from step 2, tap **Receive in your browser** while the Mac sender uses the default relays. Pass: Safari opens `https://getcroc.com/?code=<code>` and the croc web app offers the transfer. This is croc's own web app, not CrocApp.
+- [ ] 6. On the page from step 2, tap **Receive in Your Browser** while the Mac sender uses the default relays. Pass: Safari opens `https://getcroc.com/?code=<code>` and the croc web app offers the transfer. This is croc's own web app, not CrocApp.
 
 ## Stored transfers
 

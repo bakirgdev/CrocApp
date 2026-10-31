@@ -229,7 +229,7 @@ TEST WITHOUT A SECOND DEVICE: use croc's own browser client at https://getcroc.c
 1. App sends, browser receives.
    a. In CrocApp tap Send, Add Files (or type text), then tap Send. A code phrase like cape-junky-widow and a QR code appear.
    b. In the browser open https://getcroc.com, choose Receive, enter the code, and accept. The browser saves the file.
-   c. Or tap Share Link in CrocApp, open that https://crocapp.dev/r/ link in a browser, and tap "Receive in your browser".
+   c. Or tap Share Link in CrocApp, open that https://crocapp.dev/r/ link in a browser, and tap "Receive in Your Browser".
 2. Browser sends, app receives.
    a. At https://getcroc.com choose Send, choose a file, and note the code the page shows.
    b. In CrocApp tap Receive, type the code (or paste the getcroc.com link; the app keeps only the code), and tap Receive.
@@ -334,7 +334,7 @@ This is research, not legal advice. `../known-issues.md`, "Release", tracks the 
 Still to do:
 
 - Run the Accessibility Inspector and VoiceOver audit on iOS and macOS (`../known-issues.md`, "Release"). Until it passes, keep VoiceOver and "largest text sizes" claims out of the description and What's New.
-- Send a file from getcroc.com in a browser and receive it in the app on a real device. The browser-sends, app-receives direction in the review notes (step 2) is not verified anywhere in the repo. The other direction, "Receive in your browser" from an app sender, is covered in `device-test-checklist.md`, "Links and web receive".
+- Send a file from getcroc.com in a browser and receive it in the app on a real device. The browser-sends, app-receives direction in the review notes (step 2) is not verified anywhere in the repo. The other direction, "Receive in Your Browser" from an app sender, is covered in `device-test-checklist.md`, "Links and web receive".
 - Read getcroc.com's current labels (Send, Receive, Choose files, "Croc code or stored link", Copy code) and compare them with the review notes. The page belongs to the croc project and can change.
 - Fill in the contact name, phone and email in App Review Information. They are not in the repo, and the developer-account address is not necessarily the public support contact.
 - Confirm `https://crocapp.dev/support/` and `https://crocapp.dev/privacy/` return HTTP 200.

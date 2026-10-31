@@ -110,7 +110,7 @@ The Swift language mode (6) and the deployment targets (26.0) are not version pi
   - The formatter binary itself is pinned by `.xcode-version`, which the CI job reads, so a changed default surfaces as a `lint --strict` failure on that bump, not silently.
 - **Several enabled rules are lint-only**: they flag but never rewrite, so `format --in-place` leaves them and they must be fixed by hand.
   - CI runs `lint --strict`, which turns every such warning into a build failure, so none may be left behind.
-  - Verified lint-only: `ReplaceForEachWithForLoop` (`.forEach { }` → for-in loop), `OnlyOneTrailingClosureArgument` (a call mixing a closure argument such as `onDismiss:` with a trailing closure → pass the trailing closure as an explicit `content:` argument), `AlwaysUseLowerCamelCase`, `TypeNamesShouldBeCapitalized`, `DontRepeatTypeInStaticProperties`, `NoBlockComments`, `AvoidRetroactiveConformances`.
+  - Verified lint-only: `ReplaceForEachWithForLoop` (rewrite `.forEach { }` as a for-in loop), `OnlyOneTrailingClosureArgument` (a call mixing a closure argument such as `onDismiss:` with a trailing closure: pass the trailing closure as an explicit `content:` argument), `AlwaysUseLowerCamelCase`, `TypeNamesShouldBeCapitalized`, `DontRepeatTypeInStaticProperties`, `NoBlockComments`, `AvoidRetroactiveConformances`.
   - A clean `format` run is not evidence CI will pass; run `lint --strict` too.
 - **The source set lives in `scripts/format-swift.sh`, not in the config.** swift-format has no "which files" setting. One script owns the path list, so CI, the PR template and the docs do not each keep a copy. `CrocKit` is listed path by path, because `--recursive` on the directory descends into `.build/` and `Croc.xcframework/`.
 
