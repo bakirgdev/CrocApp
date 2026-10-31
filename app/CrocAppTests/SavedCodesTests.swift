@@ -67,6 +67,35 @@ struct SavedCodesTests {
         #expect(!saved.saveFailed)
     }
 
+    @Test func aFailedReadBlocksWritesSoTheStoredListIsNeverOverwritten() {
+        let secrets = FakeSecretStore()
+        SavedCodes(secrets: secrets).save(SavedCode(name: "Ana", code: "ana-secret"))
+        let stored = secrets.items["savedCodes"]
+
+        secrets.failReads = true
+        let saved = SavedCodes(secrets: secrets)
+        #expect(saved.loadFailed)
+        saved.save(SavedCode(name: "Ben", code: "ben-secret"))
+        saved.remove(id: UUID())
+        #expect(saved.codes.isEmpty)
+        #expect(secrets.items["savedCodes"] == stored, "the stored codes are untouched")
+
+        secrets.failReads = false
+        saved.reload()
+        #expect(!saved.loadFailed)
+        #expect(saved.codes.map(\.name) == ["Ana"])
+    }
+
+    @Test func aSaveRetriesTheLoadFirst() {
+        let secrets = FakeSecretStore()
+        SavedCodes(secrets: secrets).save(SavedCode(name: "Ana", code: "ana-secret"))
+        secrets.failReads = true
+        let saved = SavedCodes(secrets: secrets)
+        secrets.failReads = false
+        saved.save(SavedCode(name: "Ben", code: "ben-secret"))
+        #expect(saved.codes.map(\.name) == ["Ana", "Ben"], "the earlier codes are kept")
+    }
+
     @Test func anUnreadableItemReadsAsEmpty() {
         let secrets = FakeSecretStore()
         secrets.items["savedCodes"] = "not json"

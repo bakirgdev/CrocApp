@@ -59,6 +59,16 @@ struct SavedCodesSection: View {
                 Label("Add Saved Code", systemImage: "plus")
             }
             .buttonVariant(.plain)
+            .disabled(savedCodes.loadFailed)
+            if savedCodes.loadFailed {
+                StatusBanner(
+                    kind: .error, title: String(localized: "Couldn't read saved codes"),
+                    detail: String(
+                        localized:
+                            "The Keychain is not available yet, for example before you first unlock this device. Nothing is changed until it can be read."
+                    ),
+                    actionTitle: "Try Again", action: { savedCodes.reload() })
+            }
             if savedCodes.saveFailed {
                 StatusBanner(
                     kind: .error, title: AppSettings.secretNotSavedTitle,

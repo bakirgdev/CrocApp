@@ -67,7 +67,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 Details:
 
 - **Saved codes.**
-  - `SavedCodes` (`Models/SavedCodes.swift`) keeps every saved code, with its peer name, as one JSON array in the Keychain item `savedCodes` (this device only, not synced, as `KeychainStore` stores everything). Never in `UserDefaults`, the App Group, Spotlight, History, logs or notifications. Entries are sorted by name.
+  - `SavedCodes` (`Models/SavedCodes.swift`) keeps every saved code, with its peer name, as one JSON array in the Keychain item `savedCodes` (this device only, not synced, as `KeychainStore` stores everything). Never in `UserDefaults`, the App Group, Spotlight, History, logs or notifications. Entries are sorted by name. A transfer that used a custom or saved code leaves no code hint in History.
   - **Settings > Saved codes** lists names only. A row opens the editor (name, code, **Save**, **Delete Saved Code**); swipe or the context menu also delete. **Add Saved Code** opens the same editor. The editor and the section footer say that a saved code is no longer single-use: anyone who learns it and connects first can receive the next transfer (`THREAT-MODEL.md`, "Saved codes").
   - Send (custom code) and Receive show one button per saved code under the code field. A tap fills the field and never starts a transfer. With none saved the row is absent.
   - Not offered: saving a code from the Send or Receive field, and the menu bar window. Both would save without the Settings editor's warning in front of the user.

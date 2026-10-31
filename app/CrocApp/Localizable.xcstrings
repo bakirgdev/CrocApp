@@ -162,6 +162,7 @@
     },
     "Couldn't reach the link server" : {},
     "Couldn't reach the relay" : {},
+    "Couldn't read saved codes" : {},
     "Couldn't revoke the link" : {},
     "Couldn't save to the Keychain" : {},
     "CrocApp" : {
@@ -493,6 +494,7 @@
       "comment" : "Title when a scanned QR code is neither a code phrase nor a link."
     },
     "That text is too long to send this way. Select less of it." : {},
+    "The Keychain is not available yet, for example before you first unlock this device. Nothing is changed until it can be read." : {},
     "The camera couldn't start. Close this and try again." : {},
     "The cancelled transfer didn't stop" : {},
     "The clipboard has no text to send." : {},

@@ -133,11 +133,12 @@ Local Network Only (`OnlyLocal`) keeps the connection on the local network. The 
 
 ### Saved codes
 
-A generated code lives for one transfer. A saved code is reused, so it is a standing secret, and the single-use property that limits a leaked code is gone (decision D14).
+A generated code lives for one transfer. A saved code is reused, so it is a standing secret, and the single-use property that limits a leaked code is gone. CrocApp offers saved codes anyway, because people who exchange files with the same peer often want a code they can reuse, and it makes the cost visible where the code is saved.
 
 - **Exposure.** Anyone who learns a saved code, and connects to the relay before the intended peer, receives the next transfer sent under it (or sends to a receiver waiting on it). PAKE still stops anyone who lacks the code. It does not help against someone who has it. croc shows no peer identity beyond "someone knew the code". **Confirm on Both Sides** (`--ask`) makes a sender confirm each connection before files go, which is the mitigation for the sending direction. Receiving, **Auto-Accept Transfers** off keeps the preview, which the user can decline.
 - **Control.** The warning is shown where a code is saved: in the editor and in the Settings section footer. Nothing is saved unless the user adds it. Every saved code is listed by name, and can be renamed or deleted, in Settings.
-- **At rest.** The Keychain item uses `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` and is not synchronizable (see Assets). Codes are drawn in the app's own window only (the editor), never in notifications, widgets, Live Activities, the App Group or Spotlight.
+- **At rest.** The Keychain item uses `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` and is not synchronizable (see Assets). Codes are drawn in the app's own window only (the editor), never in notifications, widgets, Live Activities, the App Group or Spotlight. A transfer sent with a custom code, or received with a saved one, leaves no code hint in History at all (`HistoryDraft`, `TransferController`), not even the first word a generated code keeps.
+- **Load failure.** If the Keychain cannot be read (for example before first unlock), `SavedCodes` reports the failure and blocks writes until a read succeeds, so a save cannot replace the stored list with an incomplete one.
 - **Residual.** A saved code is readable by anyone using the unlocked app. The Keychain item is not behind a biometric prompt, for the same reason as the relay password: background transfers need it.
 
 ### Build, update and release

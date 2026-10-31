@@ -8,6 +8,18 @@ protocol SecretStore {
     func get(account: String) -> String?
     @discardableResult func set(_ value: String, account: String) -> Bool
     @discardableResult func delete(account: String) -> Bool
+    /// Like `get`, but a read that failed throws instead of reading as absent.
+    /// For data a later write would replace, where "unreadable" must not look
+    /// like "empty" (the Keychain refuses reads before first unlock).
+    func load(account: String) throws -> String?
+}
+
+extension SecretStore {
+    func load(account: String) throws -> String? { get(account: account) }
+}
+
+struct KeychainReadError: Error {
+    let status: OSStatus
 }
 
 /// Keychain read/write for settings that shouldn't ride along in
@@ -93,6 +105,20 @@ struct KeychainStore: SecretStore {
         }
         guard status == errSecSuccess, let data = result as? Data else { return nil }
         return String(data: data, encoding: .utf8)
+    }
+
+    func load(account: String) throws -> String? {
+        var query = Self.query(account: account)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else {
+            Self.log.error("read \(account, privacy: .public) failed: OSStatus \(status)")
+            throw KeychainReadError(status: status)
+        }
+        return (result as? Data).flatMap { String(data: $0, encoding: .utf8) }
     }
 
     /// Remove the item under `account`, if any. `errSecItemNotFound` counts

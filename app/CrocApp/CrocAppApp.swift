@@ -38,11 +38,12 @@ struct CrocAppApp: App {
         _settings = State(initialValue: settings)
         let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: harness))
         _history = State(initialValue: history)
-        _savedCodes = State(
-            initialValue: SavedCodes(secrets: harness ? MemorySecretStore() : KeychainStore()))
+        let savedCodesStore = SavedCodes(secrets: harness ? MemorySecretStore() : KeychainStore())
+        _savedCodes = State(initialValue: savedCodesStore)
         let vault = StoredTransferVault(secrets: harness ? MemorySecretStore() : KeychainStore())
         let controller = TransferController(settings: settings, vault: vault)
         controller.history = history
+        controller.savedCodes = savedCodesStore
         _controller = State(initialValue: controller)
         let outputFolder = OutputFolderStore()
         _outputFolder = State(initialValue: outputFolder)

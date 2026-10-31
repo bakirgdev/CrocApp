@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 @testable import CrocApp
 
@@ -7,8 +8,15 @@ import Foundation
 final class FakeSecretStore: SecretStore {
     var items: [String: String] = [:]
     var failWrites = false
+    /// Makes `load` throw, like a Keychain that is locked before first unlock.
+    var failReads = false
 
     func get(account: String) -> String? { items[account] }
+
+    func load(account: String) throws -> String? {
+        if failReads { throw KeychainReadError(status: errSecInteractionNotAllowed) }
+        return items[account]
+    }
 
     func set(_ value: String, account: String) -> Bool {
         guard !failWrites else { return false }
