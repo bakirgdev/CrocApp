@@ -69,33 +69,9 @@ struct HomeView: View {
                     .accessibilityLabel("How croc keeps transfers private")
                     .help("How It Works")
                 }
-                #else
-                ToolbarItem {
-                    NavigationLink(value: AppRouter.Route.howItWorks) {
-                        Image(systemName: "lock.shield")
-                    }
-                    .accessibilityLabel("How croc keeps transfers private")
-                    .help("How It Works")
-                }
-                ToolbarItem {
-                    NavigationLink(value: AppRouter.Route.history) {
-                        Image(systemName: "clock.arrow.circlepath")
-                    }
-                    .accessibilityLabel("Transfer history")
-                    .help("History")
-                }
                 #endif
             }
-            .navigationDestination(for: AppRouter.Route.self) { route in
-                switch route {
-                case .send: SendView()
-                case .receive: ReceiveView()
-                case .settings: SettingsScreen()
-                case .advancedSettings: AdvancedSettingsView()
-                case .howItWorks: HowItWorksView()
-                case .history: HistoryView()
-                }
-            }
+            .navigationDestination(for: AppRouter.Route.self) { $0.destination }
         }
     }
 

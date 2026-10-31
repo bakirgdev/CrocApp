@@ -30,6 +30,9 @@ struct SendView: View {
     @State private var pickedURLs: [URL] = []
     /// Sizes of `pickedURLs`, read off the main actor; a row has none until then.
     @State private var pickedSizes: [URL: Int64] = [:]
+    /// Whether `pickedURLs` holds a folder, read once per change: the body
+    /// reads it several times per progress tick, and each read is a stat.
+    @State private var hasFolder = false
     @State private var text = ""
     @State private var customCode = ""
     @State private var showFileImporter = false
@@ -189,7 +192,7 @@ struct SendView: View {
         if mode == .text {
             return String(localized: "Text can't be sent as a link. Switch to Files.")
         }
-        if pickedURLs.contains(where: Self.isFolder) {
+        if hasFolder {
             return String(
                 localized:
                     "Folders can't be sent as a link. Remove the folders, or send them with a code."
@@ -356,6 +359,7 @@ struct SendView: View {
                 }
             }
             .task(id: pickedURLs) {
+                hasFolder = pickedURLs.contains(where: Self.isFolder)
                 let missing = pickedURLs.filter { pickedSizes[$0] == nil }
                 pickedSizes.merge(await FileSize.bytes(ofEach: missing)) { $1 }
             }

@@ -1,6 +1,6 @@
 # assets/
 
-Source-of-truth design and marketing files. Mostly binary and committed as-is, except `screenshots/`, which is gitignored capture output; nothing here is build output, and nothing here is served directly except through the copies named below. `design/brand.md` → Assets is the inventory across the whole repo.
+Source-of-truth design and marketing files. Mostly binary and committed as-is, except `screenshots/`, which is gitignored capture output; nothing here is build output, and nothing here is served directly except through the copies named below. `design/brand.md`, "Assets", is the inventory across the whole repo.
 
 ## Layout
 
@@ -8,11 +8,11 @@ Source-of-truth design and marketing files. Mostly binary and committed as-is, e
 | --- | --- | --- |
 | `mascot.png` | 1024×1024 mascot, the root image every other mascot asset derives from | Icon layer, `web/landing/assets/img/mascot-web.webp`, social cards |
 | `CrocAppIcon.icon/` | Icon Composer package: `icon.json` (pale khaki gradient background, deep olive dark variant, two glass groups) plus three layers cut from `mascot.png` at full size: `0_body.png` (whole silhouette), `1_belly.png`, `2_outline.png` (ink, white when tinted) | Mirrored to `app/CrocApp/AppIcon.icon`, which is the copy Xcode builds |
-| `favicons/` | Favicon set generated from the app icon by `scripts/favicons.swift`: `favicon.ico`, `favicon-96x96.png`, `apple-touch-icon.png`, `web-app-manifest-{192x192,512x512}.png`, `site.webmanifest` | Source of truth. The served copy is `web/landing/assets/img/favicon/`; the docs site references that copy. Recipe: `design/brand.md` → Favicon recipe |
+| `favicons/` | Favicon set generated from the app icon by `scripts/favicons.swift`: `favicon.ico`, `favicon-96x96.png`, `apple-touch-icon.png`, `web-app-manifest-{192x192,512x512}.png`, `site.webmanifest` | Source of truth. The served copy is `web/landing/assets/img/favicon/`; the docs site references that copy. Recipe: `design/brand.md`, "Favicon recipe" |
 | `dmg-background.tiff` | DMG Finder window background, dark, 660×400 at 1x and 2x | `scripts/build-dmg.sh`. Spec: `docs/RELEASING.md`, "Disk image" |
-| `github-social-preview.png` | 1280×640, dark; same layout as `web/landing/assets/img/og.jpg` | Only the repository's GitHub Settings → Social preview, uploaded by hand. No file references it |
+| `github-social-preview.png` | 1280×640, dark; same layout as `web/landing/assets/img/og.jpg` | Only the repository's GitHub Settings, Social preview, uploaded by hand. No file references it |
 | `screenshots/{mac,iphone,ipad}/<screen>-{light,dark}.png` | Full-resolution app screenshots, one pair per screen. Gitignored | The tracked WebP copies under `web/` (README, docs site, landing hero) |
-| `screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` | App Store Connect upload set, one folder per size class (`iphone-6.9`, `iphone-6.3`, `iphone-duo-outer`, `ipad-13`, `mac`): ten per class, odd `NN` light and even dark, no alpha, Apple's exact sizes, `NN` is the upload order. Gitignored, generated at submission | Uploaded by hand in App Store Connect. `iphone-duo-outer` is not upload-ready yet (see `docs/knowledge/screenshots.md` → iPhone Duo) |
+| `screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` | App Store Connect upload set, one folder per size class (`iphone-6.9`, `iphone-6.3`, `iphone-duo-outer`, `ipad-13`, `mac`): ten per class, odd `NN` light and even dark, no alpha, Apple's exact sizes, `NN` is the upload order. Gitignored, generated at submission | Uploaded by hand in App Store Connect. `iphone-duo-outer` is not upload-ready yet (see `docs/knowledge/screenshots.md`, "App Store sizes") |
 
 ## Rules
 

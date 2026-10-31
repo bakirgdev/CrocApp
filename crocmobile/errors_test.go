@@ -291,7 +291,8 @@ func FuzzClassify(f *testing.F) {
 	codes := []string{
 		codePeerVersion, codeRelayUnreachable, codeNoPublicRelay, codeDeclined, codeRefused,
 		codeRoomFull, codeBadPassword, codeWrongCode, codeCancelled, codeConnectionLost,
-		codeStoreLimit, codeStoreExpired, codeInvalidSetting, codeOther,
+		codeStoreLimit, codeStoreExpired, codeInvalidSetting, codeTransferActive,
+		codeEngineStuck, codeJoinedEarly, codePortInUse, codeOther,
 	}
 	f.Fuzz(func(t *testing.T, msg string) {
 		err := errors.New(msg)

@@ -59,7 +59,15 @@ jobs:
           fi
 
           if [ "$EVENT" != "push" ]; then
-            echo "Rehearsal of $declared: no tag, no CHANGELOG check, no release notes."
+            # The Unreleased section stands in for the notes, so the appcast
+            # step embeds Markdown notes before a tag run does. Empty is fine.
+            echo "Rehearsal of $declared: no tag, no CHANGELOG check, notes from [Unreleased]."
+            awk '
+              index($0, "## [Unreleased]") == 1 { found = 1; next }
+              found && (/^## \[/ || /^\[[^]]+\]: /) { exit }
+              found
+            ' CHANGELOG.md > notes.md
+            cat notes.md
             echo "version=$declared" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -116,6 +124,13 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: ${{ steps.xcode.outputs.version }}
+
+      # The build number in the log says which Xcode built the release.
+      - name: Print the toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+          go version
 
       # Pinned by tarball checksum: Homebrew installs whatever is current.
       - name: Install create-dmg
@@ -258,7 +273,7 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          ditto -c -k --sequesterRsrc CrocKit/Croc.xcframework "dist/Croc.xcframework-$VERSION.zip"
+          ditto -c -k --sequesterRsrc --keepParent CrocKit/Croc.xcframework "dist/Croc.xcframework-$VERSION.zip"
 
           # Named, not a glob: the checksum file has to cover exactly the
           # binaries that get published.

@@ -31,4 +31,4 @@ One fact has one home. Everywhere else links to that home instead of restating i
 - A change is finished when the docs describing it match it. The root `AGENTS.md`, "Docs", maps each area of code to the docs it must keep in step.
 - A stale or wrong fact you notice gets fixed or deleted in the same change.
 - `known-issues.md` gains an item when a defect is found and left; the item goes when the defect is fixed.
-- `scripts/verify-docs.sh` checks every relative link and repo path in the markdown docs, and CI runs it. Run it after any docs edit.
+- `scripts/verify-docs.sh` checks every relative link and repo path in the markdown docs, and CI runs it. Run it after any docs edit. It does not check that the heading a citation quotes exists, so check those by hand.

@@ -52,7 +52,6 @@ These items gate Submit for Review of the first App Store release (`docs/README.
   - Left because the screens own that state. Moving it into a model that outlives the screen would fix both layouts.
 - **The menu bar has no Clear History item.** The History screen's **Clear** toolbar button keeps its confirmation dialog in `HistoryView`'s own state, so `AppCommands` cannot reach it. A fix would publish the action with a focused value.
 - **A Mac list or form screen draws its scroll edge only as wide as the capped column.** `HistoryView` and the settings screens sit in a 480-wide column in the detail, and macOS 26 draws the hairline and, in dark mode, a slightly lighter band under the toolbar across that column only. The cap is the book's (`design/principles.md`, "Spacing and layout"). `scrollContentBackground` and `scrollEdgeEffectStyle` did not remove it, and `contentMargins` does nothing on a Mac list.
-- **`HomeView` and the sidebar detail each switch on `Route` to build a screen.** `Route.destination` (`Views/RegularLayout.swift`) is the shared copy, and `HomeView` still has its own because it was not touched.
 - **An iPhone Plus or Max in landscape reports regular width**, so by the book's rule (width, never device) it gets the sidebar. Not checked: no simulator was rotated to landscape.
 - **A few views differ from the design book.**
   - The Last Transfer widget (`app/CrocWidgets/LastTransferWidget.swift`) styles its time and empty-state glyph with `.secondary` instead of `Color.textSecondary`, because the widget target has no asset catalog with the token sets. It also uses raw point spacing (16, 8, 4) where the share extension (`ShareStagingView.swift`) does too. Both extensions are separate bundles without `DesignTokens.swift`.
@@ -126,6 +125,9 @@ Permanent or deferred, each with its reason.
 - **`golang.org/x/crypto` carries GO-2026-5932 (the unmaintained `openpgp` package) with no fixed version.**
   - The advisory covers the whole module, but nothing imports `openpgp`. In non-test code croc v11.5.5 imports only the `argon2`, `chacha20poly1305`, `hkdf`, `pbkdf2` and `ssh` packages of `x/crypto`, and `go tool govulncheck ./...` in `crocmobile/` reports it as required but not called.
   - `crocmobile/osv-scanner.toml` ignores it for Scorecard. Remove both if `x/crypto` drops `openpgp` or a dependency starts importing it.
+- **`golang.org/x/net` v0.61.0 carries GO-2026-6866 and GO-2026-6860, both in the `html` package.**
+  - Nothing imports `x/net/html`: `go list -deps -tags croc_no_tailcat ./...` in `crocmobile/` lists only `bpf`, `ipv4`, `ipv6`, `proxy` and internal packages, and `go tool govulncheck ./...` reports both as required but not called.
+  - The fix, v0.62.0, was four days old at the 1.1.0 release, so the pin waits for Dependabot's bump. `crocmobile/osv-scanner.toml` ignores both for Scorecard; remove both entries and this item with that bump.
 - **Three OpenSSF Scorecard alerts are dismissed as "won't fix".** Scorecard opens a code-scanning alert for every check below 10, and these cannot reach 10 with one maintainer.
   - **Branch-Protection:** 10 needs two approving reviewers with admins included, so nothing could merge. `main` keeps pull requests, the `ci pass` check, linear history, and no force push or deletion.
   - **Code-Review:** needs approvals from someone other than the author.
@@ -177,9 +179,6 @@ Permanent or deferred, each with its reason.
   - It uses `delete(model:)` on `container.mainContext` and saves immediately, from a `@MainActor` type.
   - Apple documents that deletion through that method takes effect on the next save, which is satisfied. The known `@Query` refresh asymmetry concerns inserts from a background `ModelActor` context, not main-context deletes.
   - No harness drives History. If it ever misbehaves, fall back to a fetch-and-delete loop. Save and fetch failures are logged (`os.Logger`, category `history`).
-- **`UIFileSharingEnabled` is declared twice**, in `app/Config/CrocApp-Info.plist` and as a pair of sdk-scoped `INFOPLIST_KEY_*` settings in the pbxproj.
-  - The plist declaration is the one that works. Removing it drops the key from the built `Info.plist` and takes the app out of the Files app, even though `xcodebuild -showBuildSettings` resolves the build setting to `YES` (measured on a simulator build).
-  - The pbxproj pair is inert for this key and harmless. The only risk is drift, and the values agree.
 - **A plain Mac launch can open with no window.**
   - Seen on a development Mac for a bundle ID that carried saved restoration state: a normal launch opened no window and logged `hasPersistentStateToRestore=1` with a restored window of `0x0`. The same happened on a `WindowGroup` build, so the single `Window` scene did not cause it. A fresh bundle ID opened its window every time, also after the window was closed and the app relaunched.
   - A reopen (`open -a`, a Dock click) or a link brings the window back. The cause is not pinned down. `.defaultLaunchBehavior(.presented)` and `.restorationBehavior(.disabled)` on the `Window` did not fix the case above, so neither is in the code.

@@ -863,7 +863,8 @@ type fileEntry struct {
 
 func (s *session) fileListJSON() string {
 	c := s.client
-	var files []fileEntry
+	// Not nil: an empty list must marshal as [], which DelegateBridge expects.
+	files := make([]fileEntry, 0, len(c.FilesToTransfer))
 	var total int64
 	for _, f := range c.FilesToTransfer {
 		name := filepath.Join(f.FolderRemote, f.Name)
