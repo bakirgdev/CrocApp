@@ -288,7 +288,7 @@ The curve, hash, base port and transfers are not options. croc settles the curve
 Two limits of the harness:
 
 - A transfer across two hosts on a shared multicast group is not covered. croc drops discovery packets from the host's own addresses (`peerdiscovery` `AllowSelf` false), so two peers on one host never find each other, not even two CLIs.
-- `NoMultiplexing` and `ThrottleUpload` are sender-side only. They are not a mismatch case; scenarios 6, 7 and 11 use them.
+- `NoMultiplexing` and `ThrottleUpload` are sender-side only. A receiver with `NoMultiplexing` set hangs against a multiplexing sender, so the app sets it for sends only (`EngineStart`). They are not a mismatch case; scenarios 6, 7 and 11 use them.
 - The sender-IP case needs ports 9009 to 9013 free on the host, because a wrapper sender no longer takes a different base port. The harness waits up to 30 s for them and then fails.
 
 ### Validating a setting

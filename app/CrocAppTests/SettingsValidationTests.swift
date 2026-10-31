@@ -54,9 +54,9 @@ import Testing
         Field(
             name: "excluded paths", check: { AppSettings.excludePathsError($0) },
             message:
-                "Enter one path per line, relative to the folder you send, such as src/secret.txt. Paths that start with / or leave the folder are not allowed.",
+                "Enter one path per line, relative to the folder you send, such as src/secret.txt. Use / between folders. Paths that start with /, contain \\ or leave the folder are not allowed.",
             valid: ["", "  ", "src/secret.txt", "a.txt\n\n ./b/c.txt "],
-            invalid: ["/etc/passwd", "../outside", "ok.txt\n..", "."]),
+            invalid: ["/etc/passwd", "../outside", "ok.txt\n..", ".", "dir\\file.txt"]),
         Field(
             name: "link server", check: { AppSettings.storedServerError($0) },
             message:

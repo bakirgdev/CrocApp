@@ -209,6 +209,10 @@ func validateExcludePaths(value string) error {
 		if line == "" {
 			continue
 		}
+		// Almost always a mistyped separator, and it would silently exclude nothing.
+		if strings.Contains(line, `\`) {
+			return invalidSetting("excluded path %q uses a backslash, write / between folders", line)
+		}
 		clean := path.Clean(line)
 		if path.IsAbs(clean) || clean == "." || clean == ".." || strings.HasPrefix(clean, "../") {
 			return invalidSetting("excluded path %q is not a path inside the folder", line)

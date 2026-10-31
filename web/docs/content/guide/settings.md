@@ -84,15 +84,15 @@ Type patterns in **Patterns, one per line** to skip matching files when you send
 **Connection.**
 
 - **Skip Local Network** (off by default) stops CrocApp from looking for the other device on your local network, so a transfer goes through a relay. It applies to sending and receiving. It cannot be on together with **Local Network Only**: each switch is disabled while the other is on. A sender with it on cannot be reached by **Sender IP**.
-- **Built-in DNS Resolver** (off by default) makes croc look up a relay's address with public DNS servers instead of your system's. That tells those servers the relay's name, so leave it off unless the system's DNS fails for you. It does not apply through a proxy or to [Send as link](send-as-link.md).
+- **Built-in DNS Resolver** (off by default) makes croc look up a relay's address by asking 18 public DNS servers at once (Cloudflare, Google, Quad9, Comodo and OpenDNS), in plain text on port 53. That skips your system, VPN and encrypted DNS settings and tells each of them the relay's name, so leave it off unless the system's DNS fails for you. It does not apply through a proxy or to [Send as link](send-as-link.md).
 
 **Performance.**
 
-- **Single Connection** (off by default) makes a send move its data over one connection instead of several. This can be slower.
+- **Single Connection** (off by default) makes a send move its data over one connection instead of several. It affects sending only, and can be slower.
 
 - **Send Speed Limit** caps this device's sending speed in bytes per second: digits with an optional `k`, `m` or `g`, such as `500k` or `2m`.
 
-**Exclude from sends.** **Exact Paths** takes one path per line, relative to the folder you send, such as `src/secret.txt`, and leaves exactly those out. Unlike the patterns under [Exclude from sends](#exclude-from-sends), which match any part of a name, a path must match in full. A path that starts with `/` or leaves the folder is refused.
+**Exclude from sends.** **Exact Paths** takes one path per line, relative to the folder you send, such as `src/secret.txt`, and leaves exactly those out. Unlike the patterns under [Exclude from sends](#exclude-from-sends), which match any part of a name, a path must match in full. Use `/` between folders. A path that starts with `/`, contains `\` or leaves the folder is refused.
 
 ## The trust badge
 

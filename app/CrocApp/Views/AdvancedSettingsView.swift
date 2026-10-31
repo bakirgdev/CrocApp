@@ -83,7 +83,7 @@ struct AdvancedSettingsView: View {
                 }
                 AdvancedRow(
                     footnote:
-                        "Looks up a relay's address with public DNS servers instead of the system's, which tells those servers the relay's name. It does not apply through a proxy or to Send as Link."
+                        "Looks up a relay's address by asking 18 public DNS servers (Cloudflare, Google, Quad9, Comodo and OpenDNS) at once, in plain text. This skips your system, VPN and encrypted DNS settings and tells them the relay's name. It does not apply through a proxy or to Send as Link."
                 ) {
                     Toggle("Built-in DNS Resolver", isOn: $settings.internalDNS)
                 }
@@ -92,7 +92,7 @@ struct AdvancedSettingsView: View {
             Section("Performance") {
                 AdvancedRow(
                     footnote:
-                        "When sending, moves the data over one connection instead of several. This can be slower."
+                        "Affects sending only: moves the data over one connection instead of several. This can be slower."
                 ) {
                     Toggle("Single Connection", isOn: $settings.noMultiplexing)
                 }

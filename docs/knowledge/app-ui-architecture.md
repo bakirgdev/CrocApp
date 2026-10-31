@@ -200,6 +200,7 @@ croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes 
 - `EngineStart` passes every setting. A receive adds `peerIP`. Store send, store receive and revoke pass `ProxySettings`.
 - Multicast reaches the engine on every platform. iOS needs the multicast entitlement for it, which `CrocApp-iOS.entitlements` carries (`apple-platform-constraints.md`, "LAN discovery and multicast").
 - The engine reports a bad proxy, upload limit, port, multicast address or sender IP as `invalidSetting` (`validateNetworkOptions` in `crocmobile/network.go`). The `invalidSetting` failure points at Settings > Advanced, and its **Open Settings** opens Advanced settings.
+- `noMultiplexing` is set only for the two send requests, never a receive.
 - **Skip Local Network** and **Local Network Only** (`onlyLocal`, in `PowerSettingsSections`) exclude each other. Each toggle is disabled while the other is on, with its footnote naming the other one. The engine refuses the pair too, so a stored pair (a harness override on top of **Local Network Only**) fails as `invalidSetting`.
 - A receive with a sender IP shows `RelayKind.directToSender` in the trust badge (`AppSettings.receiveRelayKind`), never the public pool.
 

@@ -113,6 +113,21 @@
             </article>
 
             <article class="card">
+              <h3 class="t-headline card__title">Public DNS servers</h3>
+              <p class="t-callout card__body">
+                <strong>When:</strong> only if you turn on <strong>Built-in DNS Resolver</strong> in
+                Settings &gt; Advanced (off by default), and only for a relay reached by name without
+                a proxy. croc asks 18 servers at once, in plain text on port 53, instead of your
+                system, VPN or encrypted DNS. They are run by Cloudflare, Google, Quad9, Comodo and
+                Cisco OpenDNS.
+              </p>
+              <p class="t-callout card__body">
+                <strong>What they can see:</strong> the relay's host name and your IP address. They
+                see no code phrase, file or transfer data.
+              </p>
+            </article>
+
+            <article class="card">
               <h3 class="t-headline card__title">getcroc.com, stored transfers</h3>
               <p class="t-callout card__body">
                 <strong>When:</strong> only when you use <strong>Send as Link</strong>, or open or revoke such a

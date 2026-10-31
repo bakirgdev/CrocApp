@@ -21,11 +21,15 @@ enum EngineStart {
             options.gitIgnore = settings.useGitIgnore
             options.exclude = settings.excludeList
             options.excludePaths = settings.excludePathList
+            // Send only: a receiver on one connection hangs against a sender that multiplexes.
+            options.noMultiplexing = settings.noMultiplexing
             self = .send(paths: urls.map(\.path), text: nil, options: options)
         case .sendText(let text, let code):
             var options = Self.baseOptions(settings, disableLocal: disableLocal)
             options.customCode = code
             options.workDir = FileManager.default.temporaryDirectory.path
+            // Send only: a receiver on one connection hangs against a sender that multiplexes.
+            options.noMultiplexing = settings.noMultiplexing
             self = .send(paths: [], text: text, options: options)
         case .receive(let code, let folder, _):
             var options = Self.baseOptions(settings, disableLocal: disableLocal)
@@ -90,7 +94,6 @@ enum EngineStart {
         o.relayPassword = settings.relayPassword
         o.onlyLocal = settings.onlyLocal
         o.disableLocal = disableLocal || settings.disableLocal
-        o.noMultiplexing = settings.noMultiplexing
         o.internalDNS = settings.internalDNS
         o.noCompress = settings.noCompress
         o.ask = settings.bothSidesConfirm

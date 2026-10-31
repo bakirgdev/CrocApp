@@ -130,6 +130,10 @@ Local Network Only (`OnlyLocal`) keeps the connection on the local network. The 
 - **Copy Link** asks the system to keep the link on this device, off Universal Clipboard, and to drop it from the pasteboard after 5 minutes. On macOS the app does the dropping, so it only happens while the app is running and only if nothing else was copied since. How each platform does it: `knowledge/app-ui-architecture.md`, "Support helpers". Not verified on hardware: the link staying off Universal Clipboard, the iOS expiry and clipboard managers skipping the copy (`knowledge/device-test-checklist.md`, "Clipboard").
 - A receipt in the Keychain lets the sender revoke the link; anyone holding the whole link can decrypt until it expires or is revoked.
 
+### Built-in DNS resolver
+
+**Built-in DNS Resolver** (`--internal-dns`, off by default) replaces the system lookup of a relay's host name. croc sends the name to all 18 servers in its `publicDNS` list (Cloudflare, Google, Quad9, Comodo, Cisco OpenDNS) at once, over plain DNS on port 53, so the lookup bypasses the system resolver, a VPN's DNS and encrypted DNS. Anyone on the path and those operators see the relay's name and the device's IP address, never a code, key or file. It applies only to a relay dialed by name without a proxy (a proxy resolves the name itself, and Send as Link never uses it). The setting has its own switch and footnote, and `web/landing/privacy/index.html` lists the operators. Accepted when the user turns it on.
+
 ### Build, update and release
 
 - **Signing:** the DMG app is signed with a Developer ID certificate, hardened runtime and timestamp; the app and the DMG are notarized and stapled (`.github/workflows/release.yml`, `web/docs/content/getting-started/verify-downloads.md`). App Store builds go through Apple's signing and review.

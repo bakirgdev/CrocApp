@@ -73,6 +73,16 @@ import Testing
         #expect(skips(setting: false, harness: true))
     }
 
+    @Test func aTextSendCarriesSingleConnection() {
+        settings.noMultiplexing = true
+        let start = EngineStart(.sendText(text: "hi", code: ""), settings: settings)
+        guard case .send(_, _, let o) = start else {
+            Issue.record("built \(start), not a send")
+            return
+        }
+        #expect(o.noMultiplexing)
+    }
+
     @Test func aTextSendLeavesTheFileOptionsOff() {
         settings.zipFolder = true
         settings.useGitIgnore = true
@@ -95,6 +105,7 @@ import Testing
 
     @Test func aReceiveCarriesTheFolderSenderIPAndPolicy() {
         settings.peerIP = " 192.0.2.7:9009 "
+        settings.noMultiplexing = true
         settings.whenFileExists = .replace
         settings.onlyLocal = true
         let start = EngineStart(
@@ -109,6 +120,8 @@ import Testing
         #expect(o.peerIP == "192.0.2.7:9009")
         #expect(o.whenFileExists == .replace)
         #expect(o.onlyLocal)
+        #expect(
+            !o.noMultiplexing, "a receiver on one connection hangs against a multiplexing sender")
         #expect(o.customCode.isEmpty)
     }
 

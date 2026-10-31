@@ -42,7 +42,7 @@ extension AppSettings {
     nonisolated static func excludePathsError(_ text: String) -> String? {
         engineError(
             .excludePaths, text,
-            "Enter one path per line, relative to the folder you send, such as src/secret.txt. Paths that start with / or leave the folder are not allowed."
+            "Enter one path per line, relative to the folder you send, such as src/secret.txt. Use / between folders. Paths that start with /, contain \\ or leave the folder are not allowed."
         )
     }
 

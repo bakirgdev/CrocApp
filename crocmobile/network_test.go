@@ -158,8 +158,8 @@ var settingCases = []struct {
 	},
 	{
 		SettingExcludePaths,
-		[]string{"", "  ", "a.txt", "dir/sub/file.txt", "./dir/file.txt", "a.txt\n\nb.txt", " a.txt \n b/c.txt ", "a/../b", `back\slash`},
-		[]string{"/abs", "..", "../x", "a\n../x", "a/../../x", ".", "a\n.", "dir/.."},
+		[]string{"", "  ", "a.txt", "dir/sub/file.txt", "./dir/file.txt", "a.txt\n\nb.txt", " a.txt \n b/c.txt ", "a/../b"},
+		[]string{`back\slash`, `dir\file.txt`, "/abs", "..", "../x", "a\n../x", "a/../../x", ".", "a\n.", "dir/.."},
 	},
 	{
 		SettingStoreServer,
