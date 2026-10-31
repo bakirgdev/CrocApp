@@ -45,7 +45,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Upload speed limit (sender side) | `--throttleUpload` | all | shipped |
 | Sender IP, direct connect (receive side) | `--ip` | all | shipped |
 | Custom multicast address | `--multicast` | all | shipped |
-| Run a relay on this Mac (Settings > Relay, and a toggle in the menu-bar window): port, optional password, address to use on the other device, **Start Relay at Launch** (off by default) | `croc relay` | macOS only | shipped |
+| Run a relay on this Mac (Settings > Relay, and a toggle in the menu-bar window): port, optional password, address to use on the other device, **Start Relay at Launch** (off by default) | `croc relay` (one data port fewer than a stock `croc relay`: 1 control port and 3 data ports, against 1 and 4) | macOS only | shipped |
 | Relay health check (**Check Relay…** in Settings): reachability and latency over IPv4 and IPv6, whether the relay accepts the password, and the local-network state, with what to change | none (croc's relay handshake) | all | shipped |
 
 ## App-native features
@@ -57,7 +57,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Share extension (send from Finder's Share menu) | macOS | shipped; the system's Share menu on a real Finder selection is not verified |
 | Add Photos, paste and drop of images and text on Send. Photos keep their names, ask no library permission, and stage in a folder that is deleted with the row or the screen | iOS and iPadOS (Photos), all (paste, drop). Paste from a hardware keyboard on iPad needs iOS 27 | shipped |
 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` (universal link), and `https://getcroc.com/?code=`. One parser, `TransferLink`. Opening a link prefills Receive and never connects. | all | shipped |
-| Trust UI: encryption badge, "How it works", active-relay indicator | all | shipped |
+| Trust UI: encryption badge, "How It Works", active-relay indicator | all | shipped |
 | Failure screen: what happened, what to do, and **Try Again** or **Open Settings** when one can help | all | shipped |
 | **Recent transfers** on Home: the latest three records below Send and Receive, hidden while **Save Transfer History** is off. A row opens the History list, not the record's detail. Home exists only at compact width, so a wide iPad window and the Mac show the History sidebar row instead; the dates refresh each minute | iPhone, and iPad at compact width | shipped |
 | Waiting-screen QR and **Share Link** encode `https://crocapp.dev/r/#<code>` (see below) | all | shipped |
@@ -87,8 +87,9 @@ Details:
   - Send (custom code) and Receive show one button per saved code under the code field. A tap fills the field and never starts a transfer. With none saved the row is absent.
   - Not offered: saving a code from the Send or Receive field, and the menu bar window. Both would save without the Settings editor's warning in front of the user.
 
-- **Link page.** The `web/landing/r/` page reads the code from the URL fragment, so no request carries it. It offers **Open in CrocApp**, **Get CrocApp** (the download section of the landing page), **Mac Disk Image**, and **Receive in your browser**. The last one goes through croc's own web app at getcroc.com and needs the default relays.
+- **Link page.** The `web/landing/r/` page reads the code from the URL fragment, so no request carries it. It offers **Open in CrocApp**, **Get CrocApp** (the download section of the landing page), **Mac Disk Image**, and **Receive in Your Browser**. The last one goes through croc's own web app at getcroc.com and needs the default relays.
 - **Send as Link.**
+  - Maps to `croc store` (or `--store` on `croc send`): the link lifetime is `--store-expiration`, the download count `--store-downloads`, and **Revoke Link** is `--revoke`.
   - Files only, up to 100 files and 1 GiB.
   - The link lasts 1 hour, 1 day or 7 days, with 1 to 100 downloads, on the server set in Settings (`https://getcroc.com` by default).
   - The result screen shows the link and a QR code, and offers **Revoke Link**, which works with Save Transfer History off. It warns when this device could not save the receipt to the Keychain, because revoke then works only until the app quits. Receiving from a pasted or scanned link goes through the normal incoming preview.
@@ -102,7 +103,7 @@ Details:
   - A `MenuBarExtra` window with a drop zone, **Choose Files…** and **Send Clipboard Text**, then the code, QR and progress of the one shared transfer. Codes are always generated.
   - **Receive**: a code field and a **Receive** button start a receive into the configured folder. A code or any link CrocApp opens is accepted. An incoming file list is answered in the main window: the window offers **Open CrocApp to Accept**.
   - The icon follows the phase (`MenuBarIcon`): idle, active with the percent beside it, waiting, needs your answer, done, failed. The accessibility label names the state.
-  - A drop on the icon itself is not possible (`known-issues.md`, "Menu bar").
+  - A drop on the icon itself is not possible (`known-issues.md`, "App and UI", "The menu-bar window cannot take a drop on the icon itself").
   - The **Show in Menu Bar** setting is on by default and **Open at Login** (`SMAppService`) is off by default.
   - Covered by unit tests and by `scripts/verify-app-mac.sh` (menu-bar send, clipboard send, Open at Login). The checks that need a real Mac are in `device-test-checklist.md`, "Menu bar on a Mac".
 - **Notifications and the Dock.**
@@ -112,14 +113,14 @@ Details:
   - The Mac Dock tile shows the percent while bytes move and "1" while a request waits. **Show Progress in the Dock** (`showDockBadge`, on by default) turns it off. It shows no names, and it is not a notification, so **Notifications** does not govern it.
   - Not verified on a device or by eye: delivery, the permission prompt and the tap.
 - **Shortcuts and Siri.** **Send Files with CrocApp**, **Send Text with CrocApp** and **Receive with CrocApp** (App Intents), also offered as App Shortcuts. They run in the foreground. The send actions return the code and Receive returns the files. Not verified on a device. That the Finder Quick Action works is inferred, not tested (`device-test-checklist.md`, "Shortcuts actions").
-- **History in Shortcuts and Spotlight.** A transfer is an entity with a name, direction, status, date, file names and size, never a code or its hint. Shortcuts gets **Find Transfers** (filters: date, direction, status, name) and **Open Transfer**, which opens History. Both answer with nothing while **Save Transfer History** is off. Spotlight indexing is a separate setting, **Show History in Spotlight**, off by default because it puts file names in a system index; turning it or Save Transfer History off removes what was indexed. Spotlight indexing and the entities were exercised by unit tests and a real-index test; the Spotlight search UI and a device were not (`known-issues.md`, "History entities").
+- **History in Shortcuts and Spotlight.** A transfer is an entity with a name, direction, status, date, file names and size, never a code or its hint. Shortcuts gets **Find Transfers** (filters: date, direction, status, name) and **Open Transfer**, which opens History. Both answer with nothing while **Save Transfer History** is off. Spotlight indexing is a separate setting, **Show History in Spotlight**, off by default because it puts file names in a system index; turning it or Save Transfer History off removes what was indexed. Spotlight indexing and the entities were exercised by unit tests and a real-index test; the Spotlight search UI and a device were not (`known-issues.md`, "App and UI", "History entities, Spotlight indexing and the Mac Send service are only partly verified").
 - **Send with CrocApp (Mac Services menu).** Selected files in Finder, or selected text in any app, stage in Send and bring CrocApp forward. Never starts a transfer. Text over 1 MiB is refused. Listed in the system's Services after a registration refresh (`known-issues.md`).
 - **Sidebar layout.**
   - A sidebar of **Send**, **Receive** and **History**, and **Settings** on iPad (the Mac keeps its Settings window). **How It Works** is a toolbar button that opens inside the screen.
   - The layout follows the window width, live: a Mac window, an iPad at full width or in a wide Split View gets the sidebar, and iPhone, Slide Over and a narrow Split View get Home.
   - While a transfer runs, its row says **Connecting**, **Waiting**, or the percent. When a request waits for an answer the row carries a **Review** badge and every other screen shows the same banner at its top, so a hidden sidebar never hides it.
   - Design: `design/principles.md`, "Platform adaptation". Code and measurements: `app-ui-architecture.md`, "Layout by width".
-- **Menu bar commands.** **Send…** (⌘1), **Send Clipboard Text…** (⌥⌘1), **Receive…** (⌘2), **Paste Code…** (⌥⌘2), **History** (⌘3), **Show Receive Folder** (⇧⌘R), **Cancel Transfer** (⌘.), **Copy Code** (⇧⌘C), **How It Works** (⌘?), and **Settings…** (⌘,) on iPad. The two clipboard commands only fill in Send and Receive, and a transfer starts when you tap the button. iPad has them in the hardware-keyboard menu bar, not verified on a device.
+- **Menu bar commands.** **Send…** (⌘1), **Send Clipboard Text…** (⌥⌘1), **Receive…** (⌘2), **Paste Code…** (⌥⌘2), **History** (⌘3), **Show Receive Folder in Finder** or **Show Receive Folder in Files** (⇧⌘R), **Cancel Transfer** (⌘.), **Copy Code** (⇧⌘C), **How It Works** (⌘?), and **Settings…** (⌘,) on iPad. The two clipboard commands only fill in Send and Receive, and a transfer starts when you tap the button. iPad has them in the hardware-keyboard menu bar, not verified on a device.
 - **File menu item.** On iPadOS the hand-off to the Files app is not verified on a device. A user-picked provider folder is expected to do nothing there.
 
 ## Skipped
@@ -135,7 +136,7 @@ Details:
 | `--debug`, `--quiet`, `--testing` | Developer output. `--debug` would put more into croc's stderr, and `--quiet` silences stderr for the whole process (`session.go`, `Quiet`) |
 | `--ignore-stdin`, `--disable-clipboard`, `--extended-clipboard` | The engine always sets the first two (no stdin, and the app has its own **Copy Code** with a clipboard expiry). The extended clipboard command is CLI only |
 | `croc ssh` | A shared terminal. It has no meaning in a file-transfer app |
-| `croc relay` | Hosting a relay is a service. CrocApp can use one (**Relay**), but running it needs a machine that stays on |
+| `croc relay` on iOS and iPadOS, and as a background service | Only the Mac hosts a relay, while the app runs (see "Run a relay on this Mac" above). A phone or tablet cannot keep one up, and a service needs a machine that stays on |
 | `croc update` | Updates come from the App Store or CrocApp's own update check (Direct build: **Check for Updates Automatically**) |
 | Handoff (`NSUserActivity` to continue a transfer on another device) | A transfer is a live session on one device: the engine, the relay room and the code belong to that process, so another device could only restart it with a code the activity must not carry (`design/principles.md`, "Bans", 5). Nothing a second device could pick up |
 | A Focus filter (`SetFocusFilterIntent`) | There is nothing to filter. Notifications already follow the system Focus, and the Dock badge, widget and Live Activity show no names unless the user opts in. A filter would add a setting that duplicates the system's |

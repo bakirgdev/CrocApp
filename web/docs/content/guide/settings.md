@@ -36,7 +36,7 @@ The **Menu bar** section has **Show in Menu Bar** (on by default), **Show Progre
 
 ## Saved codes
 
-Keep a custom code phrase for a peer under their name, and pick it in one tap on Send and Receive. **Add Saved Code** opens an editor with the name and the code; tap a name to change it or delete it. A saved code is no longer single-use, which the editor says: anyone who learns it and connects first can receive your next transfer. Codes are stored in this device's Keychain and never synced. See [Code phrases and links](code-phrases.md#saved-codes).
+Keep a custom code phrase for a person under their name, and pick it in one tap on Send and Receive. **Add Saved Code** opens an editor with the name and the code; tap a name to change it or delete it. A saved code is no longer single-use, which the editor says: anyone who learns it and connects first can receive your next transfer. Codes are stored in this device's Keychain and never synced. See [Code phrases and links](code-phrases.md#saved-codes).
 
 ## Relay
 
