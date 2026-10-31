@@ -14,6 +14,22 @@ import Testing
             storedServer: "")
     }
 
+    @Test func aCustomCodeSendKeepsNoHint() {
+        for request in [
+            TransferRequest.sendFiles(urls: [], code: "mom-blue-tiger"),
+            .sendText(text: "hi", code: "mom-blue-tiger"),
+        ] {
+            let draft = HistoryDraft(request, storedServer: "")
+            #expect(draft.codeHint == "")
+            #expect(draft.keepsNoHint)
+        }
+    }
+
+    @Test func aGeneratedCodeSendMayBackfillItsHint() {
+        let draft = HistoryDraft(.sendFiles(urls: [], code: ""), storedServer: "")
+        #expect(!draft.keepsNoHint)
+    }
+
     private func fileList(_ names: [String]) throws -> FileList {
         let object: [String: Any] = [
             "files": names.map { ["name": $0, "size": 10] as [String: Any] },

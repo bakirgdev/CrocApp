@@ -72,6 +72,8 @@
     "A photo in iCloud needs a connection to download. Check yours and try again." : {
       "comment" : "Says what to do after picked photos could not be loaded."
     },
+    "A saved code is kept in this device's Keychain and never synced. Using it again means it is no longer single-use: anyone who learns it and connects first can receive your next transfer." : {},
+    "A saved code is not single-use" : {},
     "A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer." : {},
     "About" : {},
     "About CrocApp" : {},
@@ -80,6 +82,7 @@
     "Add Files" : {},
     "Add Folder" : {},
     "Add Photos" : {},
+    "Add Saved Code" : {},
     "Address" : {},
     "Advanced" : {},
     "Allow CrocApp in System Settings > General > Login Items." : {},
@@ -90,6 +93,7 @@
     "Anyone who can reach this Mac can use it. Stop it, set a password and start it again." : {},
     "Anyone who gets this link can download the files until it expires or runs out. With Save Transfer History off, this screen is the only place to revoke it." : {},
     "Anyone who gets this link can download the files until it expires or runs out. You can also revoke it later in History." : {},
+    "Anyone who learns it and connects first can receive your next transfer." : {},
     "Ask them to send it again." : {},
     "Auto-Accept Transfers" : {},
     "Auto-Accept Transfers saves files without a preview, so leave it off unless you fully trust the sender." : {},
@@ -115,6 +119,7 @@
     "Cancelled." : {
       "comment" : "Error Shortcuts shows when the person stops the action."
     },
+    "Change it again before you quit CrocApp, or the next launch shows what was saved before." : {},
     "Change…" : {},
     "Check Again" : {},
     "Check Anyway" : {},
@@ -168,6 +173,7 @@
     },
     "Couldn't reach the link server" : {},
     "Couldn't reach the relay" : {},
+    "Couldn't read saved codes" : {},
     "Couldn't revoke the link" : {},
     "Couldn't save to the Keychain" : {},
     "CrocApp" : {
@@ -186,6 +192,7 @@
       "comment" : "Placeholder of the relay password field when none is set."
     },
     "Delete" : {},
+    "Delete Saved Code" : {},
     "Delete and Keep Link" : {},
     "Delete this record?" : {},
     "Devices on the same network transfer directly, and the data never leaves your network. The local path and the relay race; the faster one wins." : {},
@@ -200,6 +207,7 @@
     "Drop files or folders here" : {},
     "Drop files to send" : {},
     "Drop to Send" : {},
+    "Edit Saved Code" : {},
     "Edit the field to try again before you quit CrocApp." : {
       "comment" : "Under a Keychain field whose change was not saved. Until it is, the next launch shows the previous value."
     },
@@ -264,6 +272,7 @@
     "Files are encrypted with the code phrase. The relay only ever sees ciphertext." : {},
     "Files are waiting for your answer" : {},
     "Files from anyone who has your code are saved without a preview, unless Confirm on Both Sides is on. Replace overwrites existing files, and unsafe file names still cancel the transfer." : {},
+    "Fills in the saved code" : {},
     "Find the sender automatically" : {},
     "Finished sends and receives appear here." : {},
     "Finished transfers are listed in History, which stays on this device." : {},
@@ -438,14 +447,17 @@
     "Run a Relay" : {},
     "SOCKS5 Proxy" : {},
     "Same Wi-Fi or different continents, transfers find the fastest path automatically." : {},
+    "Save" : {},
     "Save Received Files To" : {},
     "Save Transfer History" : {},
+    "Saved codes" : {},
     "Scan Code" : {},
     "Scan QR Code" : {},
     "Scan the QR code on the sending device." : {
       "comment" : "Says what to do after a scanned QR code was not a CrocApp one."
     },
     "Search file names" : {},
+    "Selected" : {},
     "Send" : {
       "comment" : "Confirm button of the file chooser."
     },
@@ -535,6 +547,7 @@
     },
     "That port is already in use" : {},
     "That text is too long to send this way. Select less of it." : {},
+    "The Keychain is not available yet, for example before you first unlock this device. Nothing is changed until it can be read." : {},
     "The camera couldn't start. Close this and try again." : {},
     "The cancelled transfer didn't stop" : {},
     "The check connects to the relay and joins it the way a transfer does, without sending anything. It does not use a proxy." : {},
@@ -626,6 +639,7 @@
     "When a File Already Exists" : {},
     "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay." : {},
     "When receiving, connects straight to the sender at this address and base port (9009 unless changed), skipping relays." : {},
+    "Who it is for" : {},
     "Works anywhere" : {},
     "Works until %@, for ^[%lld download](inflect: true)" : {
       "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows.",

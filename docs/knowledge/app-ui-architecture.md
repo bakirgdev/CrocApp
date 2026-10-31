@@ -202,6 +202,12 @@ croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes 
 - The engine reports a bad proxy, upload limit, port, multicast address or sender IP as `invalidSetting` (`validateNetworkOptions` in `crocmobile/network.go`). The `invalidSetting` failure points at Settings > Advanced, and its **Open Settings** opens Advanced settings.
 - A receive with a sender IP shows `RelayKind.directToSender` in the trust badge (`AppSettings.receiveRelayKind`), never the public pool.
 
+### Saved codes
+
+`Models/SavedCodes.swift` (`@MainActor @Observable`, injected as `.environment(savedCodes)` into the main window and the macOS Settings scene) holds the `SavedCode` values (`id`, `name`, `code`) and persists them through the injected `SecretStore`: one Keychain item, `savedCodes`, a JSON array, because `SecretStore` cannot list accounts. A harness run uses `MemorySecretStore`. `save(_:)` trims both fields, refuses a blank name or a code shorter than `EngineConstraints.minCodeLength`, and replaces an entry with the same `id` (a rename). A failed Keychain write sets `saveFailed`, which `SavedCodesSection` shows as an error banner; the change then lasts until the app quits, like the vault. A Keychain read that fails (`SecretStore.load` throws, for example before first unlock) sets `loadFailed`: the section shows an error banner with **Try Again** (`reload()`), **Add Saved Code** is disabled, and `save` and `remove` do nothing until a load succeeds, so a later write cannot replace the stored list with an empty one. An item that reads but is not valid JSON loads as empty and the next write replaces it. Nothing logs a name or code. A transfer sent with a custom code, or received with a saved one, stores no code hint in History (`HistoryDraft.keepsNoHint`, `TransferController.savedCodes`).
+
+`Views/SavedCodesViews.swift`: `SavedCodesSection` (a `Form` section in the macOS General tab and the iOS `SettingsScreen`, after the History, Notifications and Haptics rows), `SavedCodeEditor` (a sheet, with the reuse warning as a `StatusBanner`) and `SavedCodePicker` (a horizontal row of buttons under the code field of Send and Receive, empty until a code exists). The list never shows a code, only the editor does.
+
 ### Relay hosting and the health check
 
 **Hosting (macOS only, both targets).** `Models/RelayHostController.swift` (`@MainActor @Observable`, `#if os(macOS)`) owns the relay this Mac runs through CrocKit's `RelayHost`. `init(settings:starter:stopsAtQuit:)` takes the starter as a closure, so `RelayHostControllerTests` passes a fake `RelayHandle`. `State` is `stopped`, `running(ports:)` or `failed(TransferFailure)`.
@@ -331,6 +337,7 @@ A row's label names the thing, in Title Case, as a noun phrase, never "Enable" o
 | **Show History in Spotlight** (off by default; disabled while Save Transfer History is off) | Spotlight on this device can find past transfers by their file names. |
 | Section "Notifications": **Incoming Transfers**, **Finished Transfers** | Shown only while CrocApp is in the background. |
 | **Haptics** (iPhone only) | A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer. |
+| Section "Saved codes": **Add Saved Code**, one row per name | A saved code is kept in this device's Keychain and never synced. Using it again means it is no longer single-use: anyone who learns it and connects first can receive your next transfer. |
 
 When the system has notifications off for CrocApp, both Notifications rows are disabled and the footer reads "Notifications are off for CrocApp in Settings." ("System Settings" on a Mac) with an **Open Settings** button. "Incoming" appears only in the label **Incoming Transfers** and the notification kind it names, because nothing is being received before the user says yes.
 

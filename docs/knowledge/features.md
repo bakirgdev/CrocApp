@@ -15,6 +15,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Send text or clipboard | `--text` | all | shipped |
 | Receive with a code | positional | all | shipped |
 | Custom code phrase (at least 6 characters) | `--code` | all | shipped |
+| Saved codes: a custom code kept per peer name in the Keychain, picked in one tap on Send and Receive, managed in Settings. Nothing is saved except by the user's own **Add Saved Code**, and the editor warns that a reused code is no longer single-use | `--code` | all | shipped |
 | QR code on send, QR scan on receive | `--qrcode` plus app-native scanner | all; scanning is iOS and iPadOS only | shipped |
 | Choose the output folder (iOS default is the Files-visible app folder) | `--out` | all | shipped |
 | Keep Both or Replace on receive, answered on the incoming sheet; Replace resumes a partial file | `--rename`, `--overwrite`, resume | all | shipped |
@@ -68,6 +69,12 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Menu bar commands for everything a toolbar button does, with shortcuts (see below) | macOS; iPad with a hardware keyboard | shipped |
 
 Details:
+
+- **Saved codes.**
+  - `SavedCodes` (`Models/SavedCodes.swift`) keeps every saved code, with its peer name, as one JSON array in the Keychain item `savedCodes` (this device only, not synced, as `KeychainStore` stores everything). Never in `UserDefaults`, the App Group, Spotlight, History, logs or notifications. Entries are sorted by name. A transfer that used a custom or saved code leaves no code hint in History.
+  - **Settings > Saved codes** lists names only. A row opens the editor (name, code, **Save**, **Delete Saved Code**); swipe or the context menu also delete. **Add Saved Code** opens the same editor. The editor and the section footer say that a saved code is no longer single-use: anyone who learns it and connects first can receive the next transfer (`THREAT-MODEL.md`, "Saved codes").
+  - Send (custom code) and Receive show one button per saved code under the code field. A tap fills the field and never starts a transfer. With none saved the row is absent.
+  - Not offered: saving a code from the Send or Receive field, and the menu bar window. Both would save without the Settings editor's warning in front of the user.
 
 - **Link page.** The `web/landing/r/` page reads the code from the URL fragment, so no request carries it. It offers **Open in CrocApp**, **Get CrocApp** (the download section of the landing page), **Mac Disk Image**, and **Receive in your browser**. The last one goes through croc's own web app at getcroc.com and needs the default relays.
 - **Send as Link.**

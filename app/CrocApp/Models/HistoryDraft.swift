@@ -10,6 +10,9 @@ struct HistoryDraft {
     var fileCount = 0
     var totalBytes: Int64 = 0
     var codeHint: String
+    /// A send starts with no hint: the generated code fills it in when it is ready (`TransferController`).
+    /// A custom code is reusable, so no part of it, not even a first word, goes to History.
+    var keepsNoHint = false
     var bookmarks: [Data] = []
     var storedID: String?
     var expiresAt: Date?
@@ -18,12 +21,14 @@ struct HistoryDraft {
     init(_ request: TransferRequest, storedServer: String) {
         switch request {
         case .sendFiles(let urls, let code):
-            self.init(sending: urls, codeHint: CodeHint.code(code))
+            self.init(sending: urls, codeHint: "")
+            keepsNoHint = !code.isEmpty
         case .storedSend(let urls, _, _):
             self.init(
                 sending: urls, codeHint: URL(string: storedServer).map(CodeHint.storedLink) ?? "")
         case .sendText(_, let code):
-            self.init(isSend: true, isText: true, codeHint: CodeHint.code(code))
+            self.init(isSend: true, isText: true, codeHint: "")
+            keepsNoHint = !code.isEmpty
         case .receive(let code, _, _):
             self.init(isSend: false, isText: false, codeHint: CodeHint.code(code))
         case .storedReceive(let link, _, _):
@@ -41,6 +46,12 @@ struct HistoryDraft {
         self.isSend = isSend
         self.isText = isText
         self.codeHint = codeHint
+    }
+
+    /// A saved code is reusable: History keeps no hint of it.
+    mutating func dropHint() {
+        codeHint = ""
+        keepsNoHint = true
     }
 
     /// A receive learns its names, count and size from the offer. A name
