@@ -4,7 +4,7 @@ import AppKit
 import CrocKit
 import SwiftUI
 
-/// The menu-bar window: drop files or tap a button to send, then the
+/// The menu-bar window: drop files or tap a button to send, or enter a code to receive, then the
 /// code, QR and progress of whatever transfer the shared controller runs.
 struct MenuBarQuickSendView: View {
     @Environment(TransferController.self) private var controller
@@ -12,6 +12,7 @@ struct MenuBarQuickSendView: View {
     @Environment(\.openWindow) private var openWindow
     let quickSend: MenuBarQuickSend
     @State private var isDropTargeted = false
+    @State private var code = ""
 
     // components.md → MenuBarQuickSend: the window is 300 wide.
     private static let windowWidth: CGFloat = 300
@@ -60,8 +61,8 @@ struct MenuBarQuickSendView: View {
         case .incoming:
             VStack(spacing: Spacing.space3) {
                 Label("Files are waiting for your answer", systemImage: "arrow.down.circle")
-                Text("Open CrocApp to accept or decline them.")
-                    .font(.callout).foregroundStyle(Color.textSecondary)
+                Button("Open CrocApp to Accept") { openMainWindow() }
+                    .buttonVariant(.prominent)
             }
         case .transferring:
             if let p = controller.progress { transferring(p) }
@@ -114,9 +115,25 @@ struct MenuBarQuickSendView: View {
                 }
                 .buttonVariant(.secondary)
             }
+            Divider()
+            CodeField(
+                placeholder: "Code phrase", text: $code,
+                onPaste: { code = $0 },
+                onSubmit: receive, submitLabel: .go)
+            Button("Receive") { receive() }
+                .buttonVariant(.prominent)
+                .disabled(code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             if let notice = quickSend.notice {
                 Text(notice).font(.caption).foregroundStyle(Color.textSecondary)
             }
+        }
+    }
+
+    private func receive() {
+        if quickSend.receive(code) {
+            code = ""
+        } else if let notice = quickSend.notice {
+            AccessibilityNotification.Announcement(notice).post()
         }
     }
 

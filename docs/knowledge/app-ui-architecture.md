@@ -222,9 +222,10 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 
 **Menu bar (macOS).**
 - `CrocAppApp` declares a `MenuBarExtra` in window style, inserted while `AppSettings.showInMenuBar` is on (`settings.showInMenuBar`, default true). The toggle is **Show in Menu Bar**.
-- `Views/MenuBarQuickSendView.swift` switches on `controller.phase`. A failure shows its title and detail in an error `StatusBanner`, with **Done**. `Models/MenuBarQuickSend.swift` holds the actions (`send(urls:)`, `sendClipboardText()`, `chooseFiles()`) and a `notice` string. Sends use a generated code.
+- `Views/MenuBarQuickSendView.swift` switches on `controller.phase`. A failure shows its title and detail in an error `StatusBanner`, with **Done**. `Models/MenuBarQuickSend.swift` holds the actions (`send(urls:)`, `sendClipboardText()`, `chooseFiles()`, `receive(_:)`) and a `notice` string. Sends use a generated code. `receive(_:)` parses with `TransferLink` and starts into `OutputFolderStore`, as `ReceiveIntent` does.
 - `chooseFiles()` uses a modal `NSOpenPanel`, because the window-style extra closes when focus moves to a SwiftUI file importer's sheet.
-- `.incoming` shows **Open CrocApp**, because the accept prompt lives in the main window.
+- `.incoming` shows **Open CrocApp to Accept**, a button that opens the main window, because the accept prompt lives there.
+- The label of the `MenuBarExtra` is `MenuBarIcon(phase:progress:)`, a pure mapping tested for real SF Symbols.
 - A drop lands only on the open window, never on the status item.
 
 **Open at Login.**
@@ -287,37 +288,34 @@ What the app puts outside its windows. **On any glanceable surface, never show**
 | Live Activity (the system draws it while a transfer runs in the background: title, file name, progress, Cancel) | yes | yes | no |
 | Menu bar icon, Dock tile | no | no | yes |
 
-**Notifications** are local only.
-- Two kinds, each its own setting: an incoming transfer waiting for an answer, and a transfer that finished or failed.
-- Posted only while the app is not active, and removed when the request is answered, the sender gives up or the app becomes active.
-- Interruption level is active, never time sensitive or critical, and there is no sound.
-- Incoming has one foreground action, **Review**, which opens the accept screen (as does a tap). There is no Accept, because the file list must be on screen before a yes, and no Decline, because that would answer from a Lock Screen with nothing in view. Finished has no action; a tap opens the result.
-- A cancel or decline the user made posts nothing.
-- Permission is asked in context, on the first send or the first open of Receive, never at launch or in onboarding. When denied, both settings are disabled and say why.
-- Each category carries a generic body for when the user hides previews.
+**Notifications** are local only (`Models/TransferNotifier.swift`, `Platform/SystemNotificationCenter.swift`).
+- `TransferNotifier` observes the controller's phase with `Observations`, so `TransferController` knows nothing about it. `TransferNotifier.notice(for:)` decides which phase notifies and what it says; a fake `NotificationPosting` tests it.
+- Notifies for `.done`, `.stored`, `.failed` (not the user's own cancel or decline), `.incoming` and `.confirmSend`. Posted only while the app is not active, replaces the one on screen, and is removed when the phase leaves it.
+- Two settings: **Notifications** (on by default; the system prompt comes with the first transfer, or when the switch is turned on) and **Show File Names in Notifications** (off by default; the title is generic and a failure body is the failure's title, which names no file).
+- Interruption level is active, never time sensitive or critical, and there is no sound. The `transfer` category carries `hiddenPreviewsBodyPlaceholder`, so a body with names is hidden when the user hides previews.
+- A tap sets `AppRouter.path` to the Send or Receive screen of the transfer. There are no notification actions: the accept gate must be on screen before a yes.
+- Denied permission is not read back: the switch stays on and nothing is delivered. The footer says CrocApp asks the system, and System Settings owns the answer.
+
+**Dock tile (Mac).** `TransferNotifier` also sets `NSApp.dockTile.badgeLabel`: the percent while `.transferring` with a known total, "1" while `phase.needsAnswer`, nil otherwise. A badge label needs no permission and no custom view. It has no switch.
 
 **Widgets.** Two, in the system container with system text styles. **Quick Actions** (small) offers Send and Receive, each opening its screen and starting nothing. **Recent Transfers** (medium) lists up to three records with direction glyph, name or count and relative date, and a tap opens the record in History. Only direction, status, display name or count and date cross to the widget, and file names are marked private so the system redacts them while the device is locked. With no transfers, or with Save Transfer History off, the widget shows its empty line. Direction glyphs join the accented group.
 
 **Control Center controls.** **Send** and **Receive**, also placeable on the Lock Screen and the Action button. A tap opens the app on that screen with nothing prefilled and nothing started, because a control that started a transfer would send or open a receive without a look. No state, number or code.
 
-**Menu bar icon (Mac).** One monochrome template glyph with no animation: `arrow.up.arrow.down.circle` at rest, its `.fill` while starting, waiting, connecting or transferring (with the tabular integer percent beside it when the total is known), and `exclamationmark.circle.fill` when a request waits or a failure is not yet dismissed. The accessibility label is "CrocApp" and the state in words, never a code phrase.
-
-**Dock tile (Mac).** A "1" badge while a request waits, cleared when answered; never a file count or a failure. While transferring with a known total, a determinate bar along the icon's lower edge that never moves backwards and takes no animation. Not verified against icon art on a Dock.
+**Menu bar icon (Mac).** One monochrome template glyph with no animation: `arrow.up.arrow.down.circle` at rest, its `.fill` while starting, waiting, connecting or transferring (with the tabular integer percent beside it when the total is known), `ellipsis.circle.fill` while waiting for the other device, `exclamationmark.circle.fill` when a request waits for an answer, a transfer failed or finished with errors, and `checkmark.circle` once a transfer is done and not yet dismissed. The accessibility label is "CrocApp" and the state in words, never a code phrase.
 
 **Received files.** After a completed receive the files list below the result as file rows. Quick Look is the primary action (a tap, or Space with a keyboard), and the app never opens, runs or interprets a received file itself. Each row has a trailing `ShareLink` and drags out as a copy of the file on iPad and Mac (iPhone has no drag between apps). A folder has no Quick Look: its action is the folder button. A text payload is not a row but a selectable text block with **Copy Text** and **Share**. Every action is also in the row's context menu.
 
-**Copy.** Titles and bodies for these surfaces. A notification shows a count and a size, written as the result screen writes them (`3 files • 24 MB`; a text payload is "Text snippet"), and never file names: a name is the first thing a bystander reads on a Lock Screen.
+**Copy.** Titles and bodies for these surfaces. A notification says its result generically and never shows file names unless **Show File Names in Notifications** is on, because a name is the first thing a bystander reads on a Lock Screen. With it on, the body is the file's name, or the count for several (`3 files`); sizes are not shown.
 
 | Surface | Title | Body |
 | --- | --- | --- |
-| Notification: a request waits | Files are waiting for your answer | `3 files • 24 MB` |
-| the same, previews hidden | | Open CrocApp to review. |
-| Notification action | **Review** | |
-| Notification: a send finished | Sending complete | `3 files • 24 MB` |
-| Notification: a receive finished | Receiving complete | `3 files • 24 MB` |
-| Notification: a link is ready | Link ready | Open CrocApp to copy or share it. |
-| Notification: a transfer failed | the failure's title | the failure's detail (`design/voice.md`, "Errors") |
-| a result, previews hidden | | Open CrocApp to see the result. |
+| Notification: a request waits | Files are waiting for your answer | the file name or count, if the switch is on |
+| Notification: both-sides confirm on a send | The other device is waiting for you to send | |
+| Notification: a transfer finished | Transfer complete, or Transfer finished with errors | the file name or count of a receive, if the switch is on |
+| Notification: a link is ready | Link ready | |
+| Notification: a transfer failed | Transfer failed | the failure's title |
+| any notification, previews hidden | | Transfer update |
 | Widget, no transfers | No transfers yet | |
 | Widget, Save Transfer History off | History is off | |
 | Widget and control labels | Send, Receive | |

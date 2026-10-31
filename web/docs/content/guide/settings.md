@@ -18,6 +18,12 @@ The **Receive** section shows **Save Received Files To**, with **Change…**, **
 
 The **Menu bar** section has **Show in Menu Bar** (on by default) and **Open at Login** (off by default). **Open at Login** follows what macOS reports, so a change in System Settings > General > Login Items shows up here. If macOS needs your approval, an **Open Settings** button takes you to Login Items. See [Mac menu bar and keyboard shortcuts](menu-bar.md).
 
+## Notifications
+
+- **Notifications** (on by default): when CrocApp is in the background, a transfer that finishes, fails or needs your answer sends a notification, and a tap opens that transfer. Cancelling or declining yourself sends nothing. CrocApp asks the system for permission when you start your first transfer, or when you turn the switch on. If you said no, allow CrocApp in System Settings > Notifications.
+- **Show File Names in Notifications** (off by default): the notification says "Transfer complete" unless you turn this on, because notifications can be read on a locked screen. With it on, a received file's name or the number of files is added. Notifications never show a code phrase or a link.
+- On a Mac the Dock icon shows the percent while a transfer moves and a badge while a request waits for you. It has no switch.
+
 ## History and haptics
 
 - **Save Transfer History** (on by default): finished transfers are listed in [History](history.md), which stays on this device. Turn it off and new transfers are no longer recorded. What is already in History stays until you delete it, and the History screen says "History is off" while it is empty. A [Send as link](send-as-link.md) upload sent while this is off leaves no row, so you cannot revoke that link later. It stops working when it expires.

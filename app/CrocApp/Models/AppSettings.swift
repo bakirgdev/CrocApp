@@ -71,6 +71,16 @@ final class AppSettings {
     }
     /// iPhone only. Off silences every haptic; the screen still shows each event.
     var haptics: Bool { didSet { save(haptics, "settings.haptics") } }
+    /// On by default because the permission prompt comes with the first
+    /// transfer, when a notification is useful (`TransferNotifier`).
+    var notificationsEnabled: Bool {
+        didSet { save(notificationsEnabled, "settings.notificationsEnabled") }
+    }
+    /// Off by default: a notification can be read on a locked screen, so it
+    /// says "Transfer complete" unless the user asks for file names.
+    var notificationsShowFileNames: Bool {
+        didSet { save(notificationsShowFileNames, "settings.notificationsShowFileNames") }
+    }
 
     // Advanced. Defaults are croc's, read from `EngineOptions`.
     static let advancedDefaults = EngineOptions()
@@ -157,6 +167,9 @@ final class AppSettings {
         indexHistoryInSpotlight = Self.read(
             storage, "settings.indexHistoryInSpotlight", default: false)
         haptics = Self.read(storage, "settings.haptics", default: true)
+        notificationsEnabled = Self.read(storage, "settings.notificationsEnabled", default: true)
+        notificationsShowFileNames = Self.read(
+            storage, "settings.notificationsShowFileNames", default: false)
         let croc = Self.advancedDefaults
         throttleUpload = Self.read(
             storage, "settings.advanced.throttleUpload", default: croc.throttleUpload)

@@ -1,7 +1,7 @@
 ---
 sidebar_position: 7
 title: Mac menu bar and keyboard shortcuts
-description: Send files and clipboard text from the Mac menu bar, open CrocApp at login, and the keyboard shortcuts on Mac and iPad.
+description: Send files and clipboard text, and receive, from the Mac menu bar, open CrocApp at login, and the keyboard shortcuts on Mac and iPad.
 ---
 
 # Mac menu bar and keyboard shortcuts
@@ -15,6 +15,7 @@ CrocApp puts an icon in the Mac menu bar. Click it to open a small window that s
 | Drop area | Drop files or folders here to send them |
 | **Choose Files…** | Opens a file panel to pick files and folders |
 | **Send Clipboard Text** | Sends the text on the clipboard. If there is none, the window says so |
+| Code field and **Receive** | Type or paste a code phrase or a link and press **Receive** to receive into your receive folder. If the sender offers files, the window shows **Open CrocApp to Accept** |
 | **Open CrocApp** | Brings the main window forward, or opens it if you closed it |
 
 Click the icon first, then drop. You cannot drop files onto the icon itself.
@@ -23,7 +24,9 @@ CrocApp has one main window. Closing it does not quit CrocApp: the menu bar icon
 
 Once a send starts, the window shows the code, a QR code, **Copy Code**, progress and **Cancel**. Quick send always uses a generated code. To choose your own, use the [main window](sending.md#custom-code).
 
-The window shares the one active transfer with the main window, and with [Shortcuts](shortcuts.md). It will not start a second one. If a receive needs you to accept or decline, the window says to open CrocApp, because that prompt lives in the main window.
+The window shares the one active transfer with the main window, and with [Shortcuts](shortcuts.md). It will not start a second one. If a receive needs you to accept or decline, the window offers **Open CrocApp to Accept**, because that prompt lives in the main window.
+
+The icon shows what is happening: a plain glyph at rest, a filled one with the percent beside it while files move, and other glyphs while it waits for the other device or for your answer, and when a transfer finishes or fails.
 
 The window also has a **Run a Relay** switch, which starts and stops the relay your Mac offers to other devices (see [Run your own relay](own-relay.md)).
 

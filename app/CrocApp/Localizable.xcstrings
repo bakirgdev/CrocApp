@@ -48,6 +48,17 @@
         }
       }
     },
+    "%@: %@" : {
+      "comment" : "Menu bar icon accessibility label.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
     "%lld percent" : {
       "comment" : "Said after a sidebar row's name. The placeholder is a number."
     },
@@ -203,6 +214,7 @@
         }
       }
     },
+    "Enter a code phrase or a download link." : {},
     "Enter a speed such as 500k, 2m or 1g, or leave it blank for no limit." : {},
     "Enter an IPv4 multicast address from 224.0.0.0 to 239.255.255.255." : {},
     "Enter host:port, or an address starting with http:// or https://." : {},
@@ -304,13 +316,14 @@
     "Not an address with a port" : {},
     "Not checked yet" : {},
     "Nothing is saved without your OK: a transfer you receive shows a file preview you accept or decline. Auto-Accept Transfers is off unless you turn it on." : {},
+    "Notifications" : {},
     "OK" : {},
     "Off" : {},
     "On the other device, enter this code or scan the QR." : {},
     "One code phrase does everything" : {},
     "One code, one transfer" : {},
     "Open CrocApp" : {},
-    "Open CrocApp to accept or decline them." : {},
+    "Open CrocApp to Accept" : {},
     "Open Settings" : {},
     "Open Transfer" : {},
     "Open at Login" : {},
@@ -485,6 +498,7 @@
     "Share Link" : {},
     "Share Text" : {},
     "Shared Files" : {},
+    "Show File Names in Notifications" : {},
     "Show History in Spotlight" : {},
     "Show Receive Folder in Files" : {},
     "Show Receive Folder in Finder" : {},
@@ -533,6 +547,7 @@
     "The other device is connected" : {},
     "The other device is connected. Send now?" : {},
     "The other device is waiting for you to accept or decline." : {},
+    "The other device is waiting for you to send" : {},
     "The other device wasn't ready" : {},
     "The other device's croc is outdated" : {},
     "The relay is just a pipe" : {},
@@ -562,9 +577,13 @@
     "Transfer" : {},
     "Transfer cancelled" : {},
     "Transfer complete" : {},
+    "Transfer failed" : {},
     "Transfer finished with errors" : {},
     "Transfer finished with problems" : {},
     "Transfer history" : {},
+    "Transfer update" : {
+      "comment" : "Notification text when the user hides previews on the lock screen."
+    },
     "Transfers use the relay only. Enable it in Settings › Privacy & Security › Local Network for faster direct transfers." : {
       "comment" : "The path names the iOS Settings app. Match its translated pane names."
     },
@@ -595,6 +614,7 @@
     "Waiting for the sender…" : {},
     "Welcome to CrocApp" : {},
     "What to Send" : {},
+    "When CrocApp is in the background, a transfer that finishes, fails or needs your answer sends a notification. It never shows a code phrase or link, and shows file names only if you turn that on. CrocApp asks the system for permission when you start your first transfer." : {},
     "When a File Already Exists" : {},
     "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay." : {},
     "When receiving, connects straight to the sender at this address and base port (9009 unless changed), skipping relays." : {},
@@ -637,16 +657,22 @@
     "iOS paused the transfer" : {},
     "iOS stopped it in the background, so keep CrocApp open and open the link again." : {},
     "iOS stopped it in the background, so keep CrocApp open and try again." : {},
+    "link ready" : {},
     "needs your answer" : {
       "comment" : "Said after a sidebar row's name."
     },
     "or add them with the buttons below" : {},
+    "transfer complete" : {},
+    "transfer failed" : {},
+    "transfer finished with errors" : {},
     "transferring" : {
       "comment" : "Said after a sidebar row's name."
     },
+    "transferring, %lld percent" : {},
     "waiting for the other device" : {
       "comment" : "Said after a sidebar row's name."
-    }
+    },
+    "waiting for your answer" : {}
   },
   "version" : "1.0"
 }
