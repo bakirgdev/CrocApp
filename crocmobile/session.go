@@ -228,7 +228,19 @@ func sendFilesInfo(paths []string, o *Options) ([]croc.FileInfo, []croc.FileInfo
 		}
 		literal[i] = p
 	}
-	return croc.GetFilesInfoWithExactExclusions(literal, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"), nil)
+	return croc.GetFilesInfoWithExactExclusions(literal, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"), exactExclusions(o.ExcludePaths))
+}
+
+// exactExclusions is croc's --exclude-file list: relative paths, normalized the
+// way the CLI does before it compares them.
+func exactExclusions(joined string) []string {
+	var out []string
+	for _, p := range splitNonEmpty(joined, "\n") {
+		if p = utils.NormalizeRelativePath(p); p != "." {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 var globEscaper = strings.NewReplacer(`\`, `\\`, `*`, `\*`, `?`, `\?`, `[`, `\[`)

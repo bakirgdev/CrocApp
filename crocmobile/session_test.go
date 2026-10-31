@@ -1082,3 +1082,39 @@ func TestCancelWatchdogQuietWhenCrocReturns(t *testing.T) {
 	}
 	activeMu.Unlock()
 }
+
+// ExcludePaths matches whole relative paths inside a sent folder, and a picked
+// file by its name, unlike Exclude, which matches substrings.
+func TestSendFilesInfoExcludesExactPaths(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.Join(dir, "proj")
+	for _, rel := range []string{"keep.txt", "secret.txt", "src/secret.txt", "src/secret.txt.bak", "node/x.js"} {
+		p := filepath.Join(root, rel)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(rel), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	names := func(o *Options, paths ...string) []string {
+		files, _, _, err := sendFilesInfo(paths, o)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got []string
+		for _, f := range files {
+			got = append(got, strings.TrimPrefix(f.FolderRemote+f.Name, "./"))
+		}
+		sort.Strings(got)
+		return got
+	}
+	got := names(&Options{ExcludePaths: " src/secret.txt \n\n./node\n"}, root)
+	want := []string{"proj/keep.txt", "proj/secret.txt", "proj/src/secret.txt.bak"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("folder send = %q, want %q", got, want)
+	}
+	if got := names(&Options{ExcludePaths: "keep.txt"}, filepath.Join(root, "keep.txt")); len(got) != 0 {
+		t.Errorf("picked file named in ExcludePaths still sent: %q", got)
+	}
+}

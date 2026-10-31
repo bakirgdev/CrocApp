@@ -11,6 +11,9 @@ import Testing
         #expect(o.relayPassword == "")
         #expect(o.code == "")
         #expect(o.exclude == "")
+        #expect(o.excludePaths == "")
+        #expect(!o.noMultiplexing)
+        #expect(!o.internalDNS)
         #expect(!o.autoAccept)
         #expect(!o.overwrite)
         #expect(o.rename, "Keep Both is the default")
@@ -43,6 +46,9 @@ import Testing
         e.gitIgnore = true
         e.exclude = ["node_modules", ".git"]
         e.ask = true
+        e.excludePaths = ["src/secret.txt", "build"]
+        e.noMultiplexing = true
+        e.internalDNS = true
 
         let o = try CrocEngine.crocOptions(from: e)
         #expect(o.relayAddress == "relay.example:9009")
@@ -61,6 +67,9 @@ import Testing
         #expect(o.gitIgnore)
         #expect(o.exclude == "node_modules\n.git", "Go splits exclude on newlines")
         #expect(o.ask)
+        #expect(o.excludePaths == "src/secret.txt\nbuild", "Go splits excludePaths on newlines")
+        #expect(o.noMultiplexing)
+        #expect(o.internalDNS)
     }
 
     /// One non-default value per Advanced option, and one assert per field.
@@ -113,6 +122,8 @@ import Testing
             Flag(name: "zipFolder", source: \.zipFolder, target: \.zipFolder),
             Flag(name: "gitIgnore", source: \.gitIgnore, target: \.gitIgnore),
             Flag(name: "ask", source: \.ask, target: \.ask),
+            Flag(name: "noMultiplexing", source: \.noMultiplexing, target: \.noMultiplexing),
+            Flag(name: "internalDNS", source: \.internalDNS, target: \.internalDNS),
         ]
         for flag in flags {
             var e = EngineOptions()

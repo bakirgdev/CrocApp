@@ -39,6 +39,13 @@ extension AppSettings {
             "Enter a speed such as 500k, 2m or 1g, or leave it blank for no limit.")
     }
 
+    nonisolated static func excludePathsError(_ text: String) -> String? {
+        engineError(
+            .excludePaths, text,
+            "Enter one path per line, relative to the folder you send, such as src/secret.txt. Use / between folders. Paths that start with /, contain \\ or leave the folder are not allowed."
+        )
+    }
+
     /// `message`, resolved, when the engine refuses `text` for `setting`, else
     /// nil. A `LocalizedStringResource`, so the lookup happens only on failure:
     /// the checks run on every render of the field.

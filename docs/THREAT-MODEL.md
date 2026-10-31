@@ -142,6 +142,10 @@ With **Run a Relay** on, the app listens on four TCP ports (the base port, defau
 - **Copy Link** asks the system to keep the link on this device, off Universal Clipboard, and to drop it from the pasteboard after 5 minutes. On macOS the app does the dropping, so it only happens while the app is running and only if nothing else was copied since. How each platform does it: `knowledge/app-ui-architecture.md`, "Support helpers". Not verified on hardware: the link staying off Universal Clipboard, the iOS expiry and clipboard managers skipping the copy (`knowledge/device-test-checklist.md`, "Clipboard").
 - A receipt in the Keychain lets the sender revoke the link; anyone holding the whole link can decrypt until it expires or is revoked.
 
+### Built-in DNS resolver
+
+**Built-in DNS Resolver** (`--internal-dns`, off by default) replaces the system lookup of a relay's host name. croc sends the name to all 18 servers in its `publicDNS` list (Cloudflare, Google, Quad9, Comodo, Cisco OpenDNS) at once, over plain DNS on port 53, so the lookup bypasses the system resolver, a VPN's DNS and encrypted DNS. Anyone on the path and those operators see the relay's name and the device's IP address, never a code, key or file. It applies only to a relay dialed by name without a proxy (a proxy resolves the name itself, and Send as Link never uses it). The setting has its own switch and footnote, and `web/landing/privacy/index.html` lists the operators. Accepted when the user turns it on.
+
 ### Saved codes
 
 A generated code lives for one transfer. A saved code is reused, so it is a standing secret, and the single-use property that limits a leaked code is gone. CrocApp offers saved codes anyway, because people who exchange files with the same peer often want a code they can reuse, and it makes the cost visible where the code is saved.
