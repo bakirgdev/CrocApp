@@ -11,6 +11,12 @@ import Observation
 final class ShareInbox {
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "share")
 
+    /// How long a batch no manifest names is left alone: the extension may
+    /// still be copying into it.
+    static let stagingGrace: TimeInterval = 60 * 60
+    /// The clock the purge reads. Tests move it past `stagingGrace`.
+    @ObservationIgnored var now: () -> Date = Date.init
+
     private(set) var staged: [URL] = []
     /// Shared text or links from the manifest, kept out of logs. Only set when
     /// no file is staged.
@@ -59,7 +65,7 @@ final class ShareInbox {
         let contents: [URL]
         do {
             contents = try FileManager.default.contentsOfDirectory(
-                at: inbox, includingPropertiesForKeys: nil)
+                at: inbox, includingPropertiesForKeys: [.creationDateKey])
         } catch {
             // No inbox yet (nothing was ever shared) is not a failure.
             if (error as? CocoaError)?.code != .fileReadNoSuchFile {
@@ -71,6 +77,10 @@ final class ShareInbox {
         for url in contents where url.hasDirectoryPath && url.lastPathComponent != liveBatch {
             // Never delete the batch backing an active send.
             if !staged.isEmpty, staged[0].deletingLastPathComponent() == url { continue }
+            // The extension writes the manifest only after copying, so a young
+            // batch with no manifest may still be filling (a large Mac folder).
+            let created = try? url.resourceValues(forKeys: [.creationDateKey]).creationDate
+            if let created, created > now().addingTimeInterval(-Self.stagingGrace) { continue }
             remove(url, what: "stale batch")
         }
     }

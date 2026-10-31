@@ -143,7 +143,7 @@ final class TransferNotifier {
     private static func nameText(_ names: [String]) -> String? {
         switch names.count {
         case 0: nil
-        case 1: names[0]
+        case 1: ReceivedName.isUnsafe(names[0]) ? nil : names[0]
         default: inflected(AttributedString(localized: "^[\(names.count) file](inflect: true)"))
         }
     }

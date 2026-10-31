@@ -85,6 +85,13 @@ private final class FakeNotificationCenter: NotificationPosting {
         #expect(on?.body == "secret-plans.pdf")
     }
 
+    @Test func aNameTheAppBlocksIsNeverShown() {
+        let notice = TransferNotifier.notice(
+            for: .done(testSummary(success: true), receivedText: nil), direction: .receive,
+            offeredNames: ["invoice\u{202E}fdp.exe"], showNames: true)
+        #expect(notice?.body == nil)
+    }
+
     @Test func aCodePhraseNeverReachesANotice() {
         let code = "wiry-alpha-bravo"
         let notice = TransferNotifier.notice(
