@@ -12,13 +12,14 @@ CrocApp is a native SwiftUI app for iOS, iPadOS and macOS 26. It embeds [croc](h
 - `TransferController` is the only code that calls `CrocEngine`.
 - Everything above that is SwiftUI views reacting to one `@Observable` state machine.
 
-The SwiftUI sources build three targets. `app/Shared/` is a folder group compiled into all three (`ShareHandoff.swift`, the share-handoff contract, and `ReceivedName.swift`, the rule for a file name that arrives from outside, which the extension applies when it stages a file):
+The SwiftUI sources build four targets. `app/Shared/` is a folder group compiled into all four (`ShareHandoff.swift`, the share-handoff contract, and `ReceivedName.swift`, the rule for a file name that arrives from outside, which the extension applies when it stages a file):
 
 | Target | Platforms | Channel |
 | --- | --- | --- |
 | `CrocApp` | iOS and macOS | App Store builds (status: `docs/knowledge/project-overview.md`, "Status") |
 | `CrocApp Direct` | macOS, arm64 | Direct download (notarized DMG with Sparkle updates) |
-| `CrocShare` | iOS | Share extension |
+| `CrocShare` | iOS and macOS | Share extension (iOS Share sheet; Finder's Share menu on macOS, embedded in `CrocApp`) |
+| `CrocShare Direct` | macOS, arm64 | The same extension sources, bundle ID `com.bakirgdev.CrocApp.direct.CrocShare`, embedded in `CrocApp Direct`. A separate target because an extension's bundle ID must be prefixed by its host's, and the Direct app has its own |
 
 ## Why a Go bridge
 
@@ -240,7 +241,7 @@ Persistence:
 | Output folder | `UserDefaults` key `outputFolderBookmark` | `OutputFolderStore`; security-scoped bookmark on macOS |
 | Transfer history | SwiftData, `TransferRecord` `@Model` | `HistoryStore`; in memory under the harness |
 | Stored-upload receipts | Keychain, one item `storedReceipts` | `StoredTransferVault`; removed on revoke and when expired; in memory under the harness |
-| Share-extension handoff | App Group container `group.com.bakirgdev.CrocApp` | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads; the names, the manifest type and the batch-name check are `app/Shared/ShareHandoff.swift`, compiled into both |
+| Share-extension handoff | App Group container: `group.com.bakirgdev.CrocApp` on iOS; on macOS the team-prefixed `HBSU359M33.com.bakirgdev.CrocApp` (Direct: `...direct`) | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads; the names, the manifest type and the batch-name check are `app/Shared/ShareHandoff.swift`, compiled into both |
 | Onboarding seen flag | `UserDefaults` via `@AppStorage("onboarding.seen")` | Read in `ContentView` |
 
 ## Platform split
@@ -250,7 +251,7 @@ One shared source tree, with `#if os(iOS)` and `#if os(macOS)` kept to dedicated
 | Concern | iOS | macOS |
 | --- | --- | --- |
 | Backgrounding | `BackgroundCoordinator` wraps transfers in `BGContinuedProcessingTask`, with a system Live Activity | Nothing; the `BackgroundCoordinator` bodies are `#if os(iOS)` |
-| Sending from outside the app | Share extension (`CrocShare`) plus `ShareInbox` and `StagedFilesSheet` | Dock icon drop and window drop, through `AppDelegate.application(_:open:)` and `AppRouter.shared` |
+| Sending from outside the app | Share extension (`CrocShare`, iOS Share sheet and Finder's Share menu) plus `ShareInbox` and `StagedFilesSheet` | Dock icon drop and window drop, through `AppDelegate.application(_:open:)` and `AppRouter.shared` |
 | Local-network check | `LocalNetworkChecker` (Bonjour self-probe) | Same file, same probe |
 | Receive links | `.onOpenURL` in `CrocAppApp` | `.onOpenURL` too, plus `AppDelegate.application(_:open:)`; file URLs go to Send; both parse with `TransferLink` and call `AppRouter.open(_:)` |
 | QR scan | `QRScannerView` (VisionKit `DataScannerViewController`); whole file is `#if os(iOS)` | Not offered (QR generation in `QRCodeView` works on both) |
@@ -273,13 +274,14 @@ The main app target picks its entitlements file by SDK in the project (`CODE_SIG
   - `com.apple.developer.associated-domains` (`applinks:crocapp.dev`)
 - `app/CrocApp/CrocApp-iOS.entitlements`: `application-groups` (`group.com.bakirgdev.CrocApp`, for the share-extension handoff) `associated-domains` (`applinks:crocapp.dev`), and `networking.multicast` (croc's local-network discovery).
 - `app/CrocAppDirect/CrocAppDirect.entitlements`: the macOS set above, plus Sparkle's mach-lookup exceptions `$(PRODUCT_BUNDLE_IDENTIFIER)-spks` and `-spki`.
-- `app/CrocShare/CrocShare.entitlements`: the same App Group and nothing else.
+- `app/CrocShare/CrocShare.entitlements` (iOS): the same App Group and nothing else.
+- `app/CrocShare/CrocShare-macOS.entitlements` and `CrocShareDirect.entitlements`: `app-sandbox` and the team-prefixed App Group (`$(TeamIdentifierPrefix)com.bakirgdev.CrocApp`, Direct `...direct`). The macOS app and Direct entitlements carry the same group. Apple documents the `<team ID>.<name>` form as needing no portal registration, and no profile for the system to accept it (Xcode, "Accessing app group containers in your existing macOS app"). Xcode still checks it against any profile present: the Developer ID profile of `CrocApp Direct` must include the App Groups capability (`RELEASING.md`). `CrocShare Direct` is signed without a profile. The extension gets read access to the shared items from the system, so it has no file entitlement.
 
 Associated Domains needs a provisioning profile, so signing a local macOS build needs the team set in the project. See `docs/BUILDING.md`, "Verification harnesses".
 
 ### Info.plist
 
-Four files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-Info.plist` (iOS), `CrocApp-macOS-Info.plist`, `CrocApp-Direct-Info.plist` and `CrocShare-Info.plist`.
+Five files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-Info.plist` (iOS), `CrocApp-macOS-Info.plist`, `CrocApp-Direct-Info.plist`, `CrocShare-Info.plist` (iOS) and `CrocShare-macOS-Info.plist` (both Mac extension targets; its activation rule is a predicate on `public.file-url`, so files and folders from Finder qualify).
 
 - `NSLocalNetworkUsageDescription` is a plain `INFOPLIST_KEY_*` build setting, not tied to an SDK, so it applies on every platform. `NSCameraUsageDescription` is a literal in `CrocApp-Info.plist` (iOS only) and absent from the macOS and Direct builds, because the QR scanner is iOS-only and a macOS build never touches the camera. It is not an `INFOPLIST_KEY_*` setting: an sdk-scoped one still lands in the macOS `Info.plist` as an empty string (measured, like the `UIStatusBarStyle` and `UIApplicationSupportsIndirectInputEvents` entries the iOS-scoped settings leave there).
 - `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace` are SDK-scoped `INFOPLIST_KEY_*` settings. `UIFileSharingEnabled` is also in `CrocApp-Info.plist`, and that copy is the one that works (`docs/known-issues.md`, "Accepted").
@@ -299,7 +301,7 @@ Four files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-In
 
 - Security-scoped URLs: every send or receive intent in `TransferController` calls `startAccessingSecurityScopedResource()` on URLs the user picked and tracks them in `scopes` (`SecurityScopes`) until the stream ends. `OutputFolderStore` and `HistoryView`'s bookmark path do the same before any `fileExists` or `stat` call, because the sandbox denies `stat` on a scope that is not open.
 - App Group container: the only channel between `CrocShare` and the app. `CrocShare` is a separate process with a memory cap of about 120 MB and no room for long work.
-  - It copies attachment bytes inside the synchronous `loadFileRepresentation` callback, because the source temp file is deleted when the callback returns.
+  - On iOS it copies attachment bytes inside the synchronous `loadFileRepresentation` callback, because the source temp file is deleted when the callback returns. On macOS it loads the Finder file URL and `copyItem`s it off the main actor. On the same APFS volume that clones, so a large folder costs no extra disk; a source on another volume is a full copy, so the free space of the container volume is checked first, and the staging window has a Cancel button. A security-scoped bookmark cannot replace the copy: it does not resolve in another process. After staging, the extension opens its host app (derived from its own bundle path) with `NSWorkspace.openApplication`, and the app's activation refresh offers the staged sheet.
   - It never deletes existing batches, because one may be mid-send.
 - Output folder: iOS defaults to the app's Documents folder, visible in Files through `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace`. macOS defaults to `~/Downloads/CrocApp`, which is why the `files.downloads.read-write` entitlement exists.
 - `network.server` on macOS exists so croc's local relay can bind a port inside the sandbox (the **Local Network Only** setting). Not verified; see `docs/knowledge/apple-platform-constraints.md`.

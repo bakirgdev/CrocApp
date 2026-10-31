@@ -12,6 +12,7 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- **CrocApp** in Finder's Share menu on a Mac. Select files or folders, choose Share, then CrocApp: the app opens with the **Shared Files** sheet, and nothing is sent until you press **Send**. Turn the extension on under System Settings, Extensions, Sharing if it is not listed.
 - Notifications when CrocApp is in the background: a transfer that finishes, fails or needs your answer sends a notification, and tapping it opens that transfer's screen. **Notifications** in Settings is on by default and CrocApp asks the system for permission when you start your first transfer. A notification says "Transfer complete" and never shows a code phrase or link; turn on **Show File Names in Notifications** (off by default) to see the file name or the number of files.
 - On a Mac, the Dock icon shows the percent while a transfer moves and a badge while a request waits for your answer.
 - Receive from the Mac menu bar: type or paste a code or link into the menu bar window and press **Receive**. The menu bar icon now shows the state of the transfer, with the percent beside it while files move, and a request waiting for you offers **Open CrocApp to Accept**.

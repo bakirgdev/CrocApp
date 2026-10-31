@@ -6,10 +6,20 @@ import Foundation
 ///
 /// This one file is compiled into the app, CrocApp Direct and CrocShare, so a
 /// name cannot drift between the writer and the reader. The group ID also sits
-/// in the three `.entitlements` files, which cannot import Swift: a change
-/// here needs the same change there.
+/// in the `.entitlements` files, which cannot import Swift: a change here needs
+/// the same change there.
 enum ShareHandoff {
+    // macOS uses the team-prefixed form, which needs no provisioning profile
+    // (a `group.` ID on a Developer ID build would need one for CrocShare too).
+    // The Direct build has its own group, so a Direct and an App Store copy
+    // on one Mac never read each other's inbox.
+    #if os(macOS) && DIRECT
+    static let groupID = "HBSU359M33.com.bakirgdev.CrocApp.direct"
+    #elseif os(macOS)
+    static let groupID = "HBSU359M33.com.bakirgdev.CrocApp"
+    #else
     static let groupID = "group.com.bakirgdev.CrocApp"
+    #endif
     static let inboxDirName = "ShareInbox"
     static let manifestName = "manifest.json"
     private static let batchPrefix = "batch-"
@@ -24,7 +34,7 @@ enum ShareHandoff {
     }
 
     /// The inbox directory, or nil where the App Group container is
-    /// unavailable (macOS has no share extension and no group entitlement).
+    /// unavailable.
     static var inboxURL: URL? {
         FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: groupID)?
