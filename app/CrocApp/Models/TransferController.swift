@@ -84,6 +84,15 @@ final class TransferController {
     /// current or last receive. Shortcuts uses them to hand the files back.
     private(set) var offeredFileNames: [String] = []
 
+    /// File and folder names of the current or last send, from its request.
+    /// Empty for a text send, whose payload must never be shown as a name.
+    var sentItemNames: [String] {
+        switch lastRequest {
+        case .sendFiles(let urls, _), .storedSend(let urls, _, _): urls.map(\.lastPathComponent)
+        default: []
+        }
+    }
+
     /// When the current or last transfer started. The receive result screen
     /// tells a file this receive wrote from an older one by it.
     private(set) var startedAt: Date?

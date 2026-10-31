@@ -97,4 +97,60 @@ import Testing
             showNames: false)
         #expect(store.read() == nil)
     }
+
+    private func seeded() -> (TransferSnapshotWriter, HistoryStore) {
+        let writer = writer()
+        let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
+        history.observers.append(writer)
+        writer.handle(
+            phase: .done(testSummary(success: true), receivedText: nil), saveHistory: true,
+            showNames: false)
+        #expect(store.read() != nil)
+        return (writer, history)
+    }
+
+    private func record() -> TransferRecord {
+        TransferRecord(
+            isSend: true, status: .completed, isText: false, fileCount: 1, totalBytes: 100,
+            names: ["a.txt"], codeHint: "wiry-…", bookmarks: [])
+    }
+
+    @Test func clearingHistoryClearsTheSnapshotForGood() {
+        let (writer, history) = seeded()
+        history.clear()
+        #expect(store.read() == nil)
+        // The same finished phase observed again must not bring it back.
+        writer.handle(
+            phase: .done(testSummary(success: true), receivedText: nil), saveHistory: true,
+            showNames: false)
+        #expect(store.read() == nil)
+    }
+
+    @Test func deletingARecordClearsTheSnapshot() {
+        let (_, history) = seeded()
+        let kept = record()
+        history.add(kept)
+        #expect(store.read() != nil)
+        history.delete(kept)
+        #expect(store.read() == nil)
+    }
+
+    @Test func aFinishedTransferCountsItsFilesFromTheSummary() {
+        let snapshot = TransferSnapshotWriter.snapshot(
+            for: .done(testSummary(success: true), receivedText: nil), direction: .send,
+            names: [], showNames: true, date: date)
+        #expect(snapshot?.itemCount == 1)
+        #expect(snapshot?.name == nil)
+    }
+
+    @Test func aSingleFileSendNamesItAndATextSendNamesNothing() {
+        let file = URL(fileURLWithPath: "/tmp/plans.pdf")
+        controller.start(.sendFiles(urls: [file], code: ""))
+        #expect(controller.sentItemNames == ["plans.pdf"])
+        controller.cancel()
+        controller.reset()
+        controller.start(.sendText(text: "the secret text", code: ""))
+        #expect(controller.sentItemNames.isEmpty)
+        controller.cancel()
+    }
 }

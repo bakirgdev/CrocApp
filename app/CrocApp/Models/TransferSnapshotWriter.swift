@@ -1,6 +1,7 @@
 import CrocKit
 import Foundation
 import Observation
+import SwiftData
 
 #if canImport(WidgetKit)
 import WidgetKit
@@ -11,7 +12,7 @@ import WidgetKit
 /// Transfer History off the file is deleted and nothing is written, because
 /// the widget would otherwise keep a record the user asked not to keep.
 @MainActor
-final class TransferSnapshotWriter {
+final class TransferSnapshotWriter: HistoryChangeObserver {
     private struct Observed: Equatable {
         let phase: TransferController.Phase
         let saveHistory: Bool
@@ -70,7 +71,9 @@ final class TransferSnapshotWriter {
         }
         if phase != lastPhase,
             let finished = Self.snapshot(
-                for: phase, direction: controller.direction, names: controller.offeredFileNames,
+                for: phase, direction: controller.direction,
+                names: controller.direction == .send
+                    ? controller.sentItemNames : controller.offeredFileNames,
                 showNames: true, date: now())
         {
             current = finished
@@ -82,21 +85,39 @@ final class TransferSnapshotWriter {
         reload()
     }
 
+    /// Clearing History or deleting a record must not leave the widget showing
+    /// the transfer. A deletion cannot say whether it was the newest record,
+    /// so it clears the snapshot whichever record went; the next transfer
+    /// writes a new one.
+    func historyDidClear() { forget() }
+    func historyDidDelete() { forget() }
+    func historyDidAdd(_ record: TransferRecord) {}
+    func historyDidRemove(_ ids: [PersistentIdentifier]) {}
+
+    private func forget() {
+        current = nil
+        do { try store?.clear() } catch { assertionFailure("\(error)") }
+        reload()
+    }
+
     /// A snapshot for a terminal phase; nil while a transfer runs or after a reset.
     static func snapshot(
         for phase: TransferController.Phase, direction: TransferController.Direction,
         names: [String], showNames: Bool, date: Date
     ) -> TransferSnapshot? {
         let outcome: TransferSnapshot.Outcome
+        var count = names.count
         switch phase {
-        case .done(let summary, _): outcome = summary.success ? .done : .failed
+        case .done(let summary, _):
+            outcome = summary.success ? .done : .failed
+            if summary.files > 0 { count = summary.files }
         case .stored: outcome = .done
         case .failed(let failure): outcome = failure.endedByUser ? .stopped : .failed
         default: return nil
         }
         return TransferSnapshot(
             direction: direction == .send ? .send : .receive, outcome: outcome,
-            itemCount: names.count,
+            itemCount: count,
             name: TransferSnapshot.name(from: names, showNames: showNames), date: date)
     }
 

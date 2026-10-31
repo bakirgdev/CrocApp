@@ -1,6 +1,10 @@
 import Foundation
 import Observation
 
+#if os(macOS)
+import AppKit
+#endif
+
 /// App-wide navigation plus externally-injected send payloads (window drop,
 /// dock-icon drop, menu commands). Singleton: NSApplicationDelegate and menu
 /// Commands live outside the SwiftUI environment graph and need a stable
@@ -69,6 +73,24 @@ final class AppRouter {
     var pendingReceive: TransferLink?
 
     #if os(macOS)
+    /// Opens the main window. The main window's content installs it at
+    /// launch (`CrocAppApp`): an `openWindow` action keeps working after the
+    /// window closes, which a notification tap or a widget button needs, and
+    /// the app may then have no window to show a route in.
+    @ObservationIgnored var windowOpener: (() -> Void)?
+
+    /// Brings the app forward with its main window open, also when the user
+    /// closed it. Without the opener (not built yet) it asks the system to
+    /// reopen the app.
+    func showMainWindow() {
+        NSApp.activate()
+        if let windowOpener {
+            windowOpener()
+        } else {
+            NSWorkspace.shared.open(Bundle.main.bundleURL)
+        }
+    }
+
     enum SettingsTab: Hashable { case general, advanced }
     /// The Settings window's tab, so Open Settings on a failure lands on the
     /// tab its fix lives in.
