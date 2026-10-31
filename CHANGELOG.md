@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 extra sections where a release needs them, and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-11-01
 
 CrocApp 1.1.0 is the first release: a native app for [croc](https://github.com/schollz/croc) on Mac, with the iPhone, iPad and Mac App Store builds following in the App Store. It embeds croc's Go library, so a code phrase from the croc command line works in the app and the other way round. The other device needs croc 11 or newer.
 
@@ -55,4 +55,4 @@ The disk image is signed with a Developer ID, notarized and stapled, and updates
 - Incoming file names with path separators, control, hidden or text-direction characters are blocked, and hidden characters are shown as code points wherever a name appears.
 - The transfer engine is croc v11.5.5, built with Go 1.27.3, without the Tailcat direct-connection path. The update checker is Sparkle 2.10.1 and installs only updates signed with the app's EdDSA key.
 
-[unreleased]: https://github.com/bakirgdev/CrocApp/commits/main
+[1.1.0]: https://github.com/bakirgdev/CrocApp/releases/tag/v1.1.0
