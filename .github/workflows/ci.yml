@@ -63,13 +63,13 @@ jobs:
           }
 
           {
-            out swift '^(app|CrocKit)/|^scripts/screenshots/|^\.swift-format$|^\.xcode-version$|^scripts/format-swift\.sh$|^\.github/workflows/(ci|reusable-swift-format)\.yml$'
+            out swift '^(app|CrocKit)/|^scripts/screenshots/|^\.swift-format$|^\.xcode-version$|^scripts/(lib|format-swift)\.sh$|^\.github/workflows/(ci|reusable-swift-format)\.yml$'
             out go '^crocmobile/|^\.github/workflows/(ci|reusable-go)\.yml$'
-            out build '^(app|CrocKit|crocmobile)/|^scripts/build-xcframework\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
+            out build '^(app|CrocKit|crocmobile)/|^scripts/(lib|build-xcframework)\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
             out design '^design/|^app/.*\.swift$|^app/CrocApp/Assets\.xcassets/|^web/landing/.*\.(css|html|js)$|^web/landing/assets/img/favicon/site\.webmanifest$|^web/docs/src/(css/|prismTheme\.ts$)|^scripts/(lib|verify-design)\.sh$|^\.github/workflows/ci\.yml$'
             out interop '^(crocmobile|CrocKit)/|^scripts/(lib|verify-interop)\.sh$|^scripts/croc-v10\.version$|^\.github/workflows/ci\.yml$'
             out scripts '^scripts/.*\.sh$|^\.editorconfig$|^\.github/workflows/ci\.yml$'
-            out site '^web/(landing|docs)/|^design/tokens\.css$|^scripts/assemble-site\.sh$|^\.github/workflows/(ci|github-pages)\.yml$'
+            out site '^web/(landing|docs)/|^design/tokens\.css$|^scripts/(lib|assemble-site)\.sh$|^\.github/workflows/(ci|github-pages)\.yml$'
           } | tee -a "$GITHUB_OUTPUT"
 
   swift-format:
@@ -295,7 +295,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: CrocKit/Croc.xcframework
-          key: xcframework-${{ steps.xcode.outputs.slices }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('crocmobile/**', 'scripts/build-xcframework.sh') }}
+          key: xcframework-${{ steps.xcode.outputs.slices }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('crocmobile/**', 'scripts/build-xcframework.sh', 'scripts/lib.sh') }}
 
       - if: steps.xcframework.outputs.cache-hit != 'true'
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
