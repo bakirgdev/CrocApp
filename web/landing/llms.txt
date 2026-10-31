@@ -8,7 +8,7 @@ Facts:
 
 - License: MIT. croc is also MIT.
 - Price: free. No paid tier, no subscription, no ads, no analytics, no tracking.
-- Current release: 1.0.0, a notarized disk image for Mac, available now from GitHub Releases. The iPhone, iPad and Mac App Store versions are coming and are not yet on the App Store.
+- Release status: nothing is released yet. The first public release, v1.1.0, is coming soon as a notarized disk image for Mac on GitHub Releases, and the iPhone, iPad and Mac App Store versions are coming. Do not describe any version as available.
 - Platforms: iOS 26 or later, iPadOS 26 or later, macOS 26 or later. The Mac build is for Apple silicon only. Apple platforms only: there is no Windows, Linux or Android client.
 - Updates: only the disk image build contains an updater (Sparkle). App Store builds update through the App Store.
 - The other device needs croc 11 or newer, whether it runs CrocApp or the croc command line. croc 10 cannot complete a transfer with CrocApp.
@@ -16,7 +16,7 @@ Facts:
 - Privacy: no accounts, analytics, ads or tracking, and history stays on the device. The developer collects no data.
 - Author: Bakir Gracic (github.com/bakirgdev).
 
-How a transfer works: the sender picks files, a folder or text. CrocApp generates a code phrase such as `cape-junky-widow`, which can be read out, messaged or shown as a QR code. The other device enters the code phrase, sees the file list and accepts. Send as Link stores encrypted files on a link server so the receiver can download later. The Mac menu bar offers quick send, and Shortcuts and Siri actions send and receive files.
+How a transfer works: the sender picks files, a folder or text. CrocApp generates a code phrase such as `cape-junky-widow`, which can be read out, messaged or shown as a QR code. The other device enters the code phrase, sees the file list and accepts. Send as Link stores encrypted files on a link server so the receiver can download later. The Mac menu bar sends and receives, Finder's Share menu and the iOS share sheet send files, text and links, and Shortcuts and Siri actions send and receive files. The iPhone Live Activity, a Last Transfer widget and Send and Receive controls in Control Center show no file name unless a Settings switch is on. Settings holds croc's options, a custom relay with a password, a relay health check, per-person saved code phrases, and a switch for every notification and history feature. A Mac can also run a croc relay for devices on its network.
 
 Security claims, stated precisely. Nothing beyond these is claimed:
 
@@ -51,8 +51,9 @@ Compared with the alternatives: AirDrop needs Apple devices in the same room. LA
 - [Code phrases and links](https://crocapp.dev/docs/guide/code-phrases/): generated and custom code phrases, QR codes and receive links
 - [Send as Link](https://crocapp.dev/docs/guide/send-as-link/): stored transfers, link lifetime and download limits
 - [Settings](https://crocapp.dev/docs/guide/settings/): relay, connection, transfer, exclusions, confirmation and advanced options
+- [Run your own relay](https://crocapp.dev/docs/guide/own-relay/): start a relay on a Mac and check that a relay is reachable and accepts your password
 - [History](https://crocapp.dev/docs/guide/history/): what the transfer history keeps and how to clear it
-- [Mac menu bar and keyboard shortcuts](https://crocapp.dev/docs/guide/menu-bar/): quick send and keyboard shortcuts on Mac
+- [Mac menu bar and keyboard shortcuts](https://crocapp.dev/docs/guide/menu-bar/): send, receive and keyboard shortcuts on Mac
 - [Shortcuts and Siri](https://crocapp.dev/docs/guide/shortcuts/): the Send Files, Send Text and Receive actions
 
 ## Help

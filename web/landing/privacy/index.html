@@ -209,7 +209,7 @@
               photo and no video are saved or sent anywhere.
             </p>
             <p>
-              <strong>Keychain.</strong> A custom relay password, proxy credentials and the receipts
+              <strong>Keychain.</strong> A custom relay password, proxy credentials, the saved code phrases you add and the receipts
               for your stored uploads (which hold the upload token and the link) are kept in the
               iOS or macOS Keychain, not in plain settings. A stored-upload receipt is removed when
               you revoke the link and at the first launch after it expires.
@@ -223,10 +223,30 @@
               Clear it any time from the history screen.
             </p>
             <p>
+              <strong>Notifications.</strong> When CrocApp is in the background, a transfer that
+              finishes, fails or needs your answer posts a notification made on the device. It never
+              shows a code phrase or link, and shows file names only if you turn on
+              <strong>Show File Names in Notifications</strong>.
+            </p>
+            <p>
+              <strong>Widget and Live Activity.</strong> The Last Transfer widget reads a small file
+              that CrocApp keeps in its App Group on the device: the state and time of your last
+              transfer. It never holds a code phrase or link, and holds a file name only if you turn
+              on <strong>Show File Names on the Lock Screen and in Widgets</strong>, the switch that
+              also lets the Live Activity show one. Nothing in it leaves the device.
+            </p>
+            <p>
               <strong>Local network.</strong> To find a nearby device and transfer directly, the
               two devices look for each other with multicast messages on your local network. That
               traffic stays on the local network. iOS asks your
               permission first. Turn on <strong>Local Network Only</strong> to use nothing else.
+            </p>
+            <p>
+              <strong>Relay on your Mac.</strong> If you turn on <strong>Run a Relay</strong> in
+              Settings on a Mac, that Mac accepts connections on the four ports from the one you
+              choose, on every network connection it has. Anyone who can reach it and has the
+              password can use it, so set one. It is off by default, and the relay only ever sees
+              ciphertext.
             </p>
 
             <h2 class="t-web-sub">This website</h2>

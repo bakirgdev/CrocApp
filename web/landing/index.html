@@ -347,7 +347,7 @@
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Files, several at once</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Whole folders</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Text and clipboard snippets</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Send from any app with the share sheet on iPhone and iPad</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Send from the share sheet, or from Finder's Share menu on a Mac. Text and links work too</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Show a QR code, or share a link, instead of reading the code out</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Send as Link: upload encrypted files so the receiver can download later</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Zip a folder before sending</li>
@@ -360,7 +360,7 @@
               <h3 class="t-headline card__title">Receive</h3>
               <ul class="featlist t-callout" role="list">
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Receive with a code phrase</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Set your own code phrase, six characters or more</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Set your own code phrase, six characters or more, or keep one per person in the Keychain</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Scan a QR code on iPhone and iPad</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Open a CrocApp link to fill in the code</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>See the file list before you accept</li>
@@ -374,11 +374,11 @@
               <h3 class="t-headline card__title">Trust and control</h3>
               <ul class="featlist t-callout" role="list">
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Encryption badge and a plain-language explanation</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Your own relay, with password and IPv6</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Your own relay, with password and IPv6. A Mac can run one, and Check Relay tests it</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg><span><strong>Local Network Only</strong> setting</span></li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Auto-accept off by default, and marked when on</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Ask both devices to confirm</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Turn compression off</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Turn compression off, skip local discovery, send over one connection</li>
               </ul>
             </article>
 
@@ -386,8 +386,10 @@
               <svg class="card__icon" aria-hidden="true"><use href="#i-zap" /></svg>
               <h3 class="t-headline card__title">Native</h3>
               <ul class="featlist t-callout" role="list">
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Progress, speed and cancel, with a Live Activity on iPhone</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Quick send from the Mac menu bar</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Progress, speed and cancel, with a Live Activity on iPhone that shows no file name unless you ask, and progress in the Mac Dock</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>A Last Transfer widget, and Send and Receive controls for Control Center</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Send and receive from the Mac menu bar</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Notifications when a transfer finishes, fails or needs your answer</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Shortcuts and Siri actions</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Transfer history that stays on your device</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Tries the local network and the relay at once</li>
@@ -404,20 +406,20 @@
         <div class="container">
           <div class="section__head">
             <h2 class="t-web-section" id="download-title">Download</h2>
-            <p class="t-web-lead">Free. No account, no tiers. The Mac disk image is available now; the App Store versions are coming.</p>
+            <p class="t-web-lead">Free. No account, no tiers. The first release, v1.1.0, is coming soon for Mac, iPhone and iPad.</p>
           </div>
 
           <div class="grid">
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">Mac disk image</h3>
-              <p class="t-callout card__body">Available now. Notarized, for Apple silicon, with built-in updates.</p>
+              <p class="t-callout card__body">Coming soon with v1.1.0, the first release. Notarized, for Apple silicon, with built-in updates.</p>
               <a
                 class="btn btn--md btn--secondary dlcard__action"
                 href="https://github.com/bakirgdev/CrocApp/releases/latest" target="_blank" rel="noopener"
               >
                 <svg class="btn__icon" aria-hidden="true"><use href="#i-download" /></svg>
-                Download Disk Image
+                GitHub Releases
                 <span class="u-visually-hidden">(opens in a new tab)</span>
               </a>
             </div>
@@ -600,7 +602,9 @@
             <div class="disclosure__body t-callout">
               <p>
                 Yes. Point CrocApp at any croc relay, with a password and IPv6 if you want them.
-                Running <code class="t-code">croc relay</code> on a machine you control is enough.
+                Running <code class="t-code">croc relay</code> on a machine you control is enough, and
+                a Mac running CrocApp can start one from Settings. <strong>Check Relay</strong> reports
+                whether a relay is reachable and accepts your password.
               </p>
             </div>
           </details>
@@ -730,11 +734,10 @@
       </div>
     </footer>
 
-    <!-- No aggregateRating: there are no ratings. downloadUrl is the direct
-         download; add the store listings to it once they exist. softwareVersion
-         and datePublished (the first public release, 0.9.9) are hand-maintained:
-         bump softwareVersion with every release. No FAQPage block: Google limits
-         that rich result to government and health sites. -->
+    <!-- No aggregateRating: there are no ratings. No softwareVersion, downloadUrl,
+         releaseNotes or datePublished until the first release is public: the
+         release PR adds them (RELEASING.md, "Each release"). No FAQPage block:
+         Google limits that rich result to government and health sites. -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -752,11 +755,7 @@
             "isAccessibleForFree": true,
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "author": { "@id": "https://crocapp.dev/#author" },
-            "sameAs": ["https://github.com/bakirgdev/CrocApp"],
-            "downloadUrl": "https://github.com/bakirgdev/CrocApp/releases/latest",
-            "softwareVersion": "1.0.0",
-            "releaseNotes": "https://github.com/bakirgdev/CrocApp/releases",
-            "datePublished": "2026-07-30"
+            "sameAs": ["https://github.com/bakirgdev/CrocApp"]
           },
           {
             "@type": "Person",
