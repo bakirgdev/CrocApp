@@ -26,6 +26,9 @@ final class RelayHostController {
     @ObservationIgnored private let settings: AppSettings
     @ObservationIgnored private let starter: Starter
     @ObservationIgnored private var handle: (any RelayHandle)?
+    /// Counts starts. A stop callback carries the number of the start it
+    /// belongs to, so one from a stopped relay never stops a newer one.
+    @ObservationIgnored private var generation = 0
     @ObservationIgnored private var quitObserver: (any NSObjectProtocol)?
 
     init(
@@ -65,12 +68,14 @@ final class RelayHostController {
                     remedy: nil))
             return
         }
+        generation += 1
+        let generation = generation
         do {
             let started = try starter(
                 settings.relayHostPort,
                 settings.relayHostPassword.trimmingCharacters(in: .whitespacesAndNewlines)
             ) { [weak self] failure in
-                Task { @MainActor in self?.stoppedByItself(failure) }
+                Task { @MainActor in self?.stoppedByItself(failure, generation: generation) }
             }
             handle = started
             state = .running(ports: started.ports)
@@ -90,8 +95,8 @@ final class RelayHostController {
         if on { start() } else { stop() }
     }
 
-    private func stoppedByItself(_ failure: EngineFailure) {
-        guard handle != nil else { return }
+    private func stoppedByItself(_ failure: EngineFailure, generation: Int) {
+        guard handle != nil, generation == self.generation else { return }
         handle?.stop()
         handle = nil
         state = .failed(TransferFailure(failure, situation: .init()))

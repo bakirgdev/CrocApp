@@ -217,8 +217,6 @@ Permanent or deferred, each with its reason.
   - The addresses list leaves out IPv6 link-local (`fe80::`) addresses: a relay setting cannot hold the interface scope they need. It is read once when the tab opens and when the relay starts or stops, so an interface that changes while the tab is open shows after the next change.
   - The relay uses croc's default connection and rate limits and cannot be tuned, and the app does not open a firewall or router port. A Mac firewall that blocks incoming connections stops other devices, and CrocApp cannot tell.
   - **Check Relay…** with no custom relay tests all four public pool relays, because the one a code phrase picks is not known beforehand. It dials directly and ignores the Advanced proxies, so on a network that reaches the internet only through a proxy it can say "Can't connect" while a proxied transfer works.
-  - A relay port that dies on its own stops the whole relay and the Relay tab shows the failure (`RelayDelegate.OnRelayStopped`). No test provokes that path.
-  - The relay's stop callback carries no identity, so a late callback from a relay that was stopped and restarted at once could stop the new one. It needs a failing port at the moment of a quick toggle.
 
 
 - **When both relay addresses are customised, both are sent.**

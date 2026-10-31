@@ -36,11 +36,13 @@ private final class FakeRelay: RelayHandle, @unchecked Sendable {
     final class Calls: @unchecked Sendable {
         private(set) var starts: [(port: Int, password: String)] = []
         private(set) var onStopped: (@Sendable (EngineFailure) -> Void)?
+        private(set) var allOnStopped: [@Sendable (EngineFailure) -> Void] = []
         func record(
             port: Int, password: String, onStopped: @escaping @Sendable (EngineFailure) -> Void
         ) {
             starts.append((port, password))
             self.onStopped = onStopped
+            allOnStopped.append(onStopped)
         }
     }
 
@@ -96,6 +98,23 @@ private final class FakeRelay: RelayHandle, @unchecked Sendable {
             Issue.record("state \(controller.state)")
             return
         }
+    }
+
+    /// A callback from a relay that was stopped must not stop the one started after it.
+    @Test func aStaleStopCallbackLeavesTheNewerRelayRunning() async {
+        let relay = FakeRelay(ports: [9009, 9010, 9011, 9012])
+        let (controller, calls) = controller(relay: relay)
+        controller.start()
+        controller.stop()
+        controller.start()
+        #expect(calls.allOnStopped.count == 2)
+        calls.allOnStopped[0](EngineFailure(code: .other, message: "late"))
+        for _ in 0..<50 { await Task.yield() }
+        #expect(controller.isRunning)
+        #expect(relay.stops == 1, "only the explicit stop")
+        calls.allOnStopped[1](EngineFailure(code: .other, message: "current"))
+        for _ in 0..<100 where controller.isRunning { await Task.yield() }
+        #expect(!controller.isRunning)
     }
 
     @Test func aRelayThatStopsByItselfIsShownAsFailed() async {

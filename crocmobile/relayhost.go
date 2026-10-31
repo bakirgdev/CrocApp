@@ -76,6 +76,12 @@ func StartRelay(host string, port int, password string, d RelayDelegate) (h *Rel
 		}
 		listeners = append(listeners, l)
 	}
+	return serveRelay(listeners, ports, password, d)
+}
+
+// serveRelay runs the relay on listeners it takes ownership of. Split from
+// StartRelay so a test can hand it listeners that fail.
+func serveRelay(listeners []net.Listener, ports []string, password string, d RelayDelegate) (*RelayHost, error) {
 	capabilities, err := tcp.NewRelayCapabilitySet(len(ports) - 1)
 	if err != nil {
 		for _, open := range listeners {
@@ -85,7 +91,7 @@ func StartRelay(host string, port int, password string, d RelayDelegate) (h *Rel
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	h = &RelayHost{cancel: cancel, done: make(chan struct{}), ports: ports}
+	h := &RelayHost{cancel: cancel, done: make(chan struct{}), ports: ports}
 	var wg sync.WaitGroup
 	var stopped sync.Once
 	for i, l := range listeners {

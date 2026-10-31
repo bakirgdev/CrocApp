@@ -2,6 +2,7 @@ package crocmobile
 
 import (
 	"encoding/json"
+	"errors"
 	"net"
 	"os"
 	"path/filepath"
@@ -242,5 +243,98 @@ func TestCheckRelayIPv6(t *testing.T) {
 	c := decodeCheck(t, CheckRelay(net.JoinHostPort("::1", strconv.Itoa(h)), "v6-secret", "6"))
 	if !c.Reachable || c.PasswordOK == nil || !*c.PasswordOK {
 		t.Errorf("IPv6: %+v", c)
+	}
+}
+
+// failingListener's Accept fails with a non-closed error once fail is closed,
+// as a listener that dies by itself would.
+type failingListener struct {
+	net.Listener
+	fail chan struct{}
+}
+
+func (l failingListener) Accept() (net.Conn, error) {
+	select {
+	case <-l.fail:
+		return nil, errors.New("accept failed")
+	default:
+	}
+	c := make(chan struct {
+		conn net.Conn
+		err  error
+	}, 1)
+	go func() {
+		conn, err := l.Listener.Accept()
+		c <- struct {
+			conn net.Conn
+			err  error
+		}{conn, err}
+	}()
+	select {
+	case r := <-c:
+		return r.conn, r.err
+	case <-l.fail:
+		return nil, errors.New("accept failed")
+	}
+}
+
+type stoppedRecorder struct{ got chan string }
+
+func (r stoppedRecorder) OnRelayStopped(j string) { r.got <- j }
+
+func TestRelayHostReportsAPortThatDiesAndStopsEverything(t *testing.T) {
+	var listeners []net.Listener
+	var ports []string
+	fail := make(chan struct{})
+	for i := range RelayPortCount {
+		l, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		ports = append(ports, strconv.Itoa(l.Addr().(*net.TCPAddr).Port))
+		if i == 2 {
+			l = failingListener{Listener: l, fail: fail}
+		}
+		listeners = append(listeners, l)
+	}
+	rec := stoppedRecorder{got: make(chan string, 2)}
+	h, err := serveRelay(listeners, ports, "", rec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer h.Stop()
+	close(fail)
+	select {
+	case j := <-rec.got:
+		if code := decodeFailure(t, j).Code; code != codeOther {
+			t.Fatalf("code = %s, want %s", code, codeOther)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("no OnRelayStopped")
+	}
+	select {
+	case <-h.done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the other ports kept running")
+	}
+	select {
+	case j := <-rec.got:
+		t.Fatalf("a second callback: %s", j)
+	case <-time.After(200 * time.Millisecond):
+	}
+}
+
+func TestRelayHostStopSilencesTheCallback(t *testing.T) {
+	rec := stoppedRecorder{got: make(chan string, 1)}
+	base := freePortBase(t, "127.0.0.1")
+	h, err := StartRelay("127.0.0.1", base, "", rec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h.Stop()
+	select {
+	case j := <-rec.got:
+		t.Fatalf("callback after Stop: %s", j)
+	case <-time.After(300 * time.Millisecond):
 	}
 }
