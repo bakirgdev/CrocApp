@@ -189,7 +189,7 @@ History never holds the token or the link. A stored record's `codeHint` is the s
 
 ### Advanced settings
 
-croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes it from `SettingsScreen` (`Route.advancedSettings`, `--screen advanced`). macOS Settings is a `TabView` with **General** and **Advanced** tabs, because the Advanced controls and their footnotes would double a form that already scrolls.
+croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes it from `SettingsScreen` (`Route.advancedSettings`, `--screen advanced`). macOS Settings is a `TabView` with **General**, **Relay** and **Advanced** tabs, because the Advanced controls and their footnotes would double a form that already scrolls.
 
 - `AppSettings` has one property per control under `settings.advanced.<name>`: `throttleUpload`, `multicastAddress`, `peerIP`. Defaults come from `EngineOptions()`, so they are croc's. The curve, hash, ports, connection count, multiplexing and DNS are not settings (`crocmobile-bridge.md`, "Advanced options on the wire").
 - `resetAdvancedToDefaults()` backs the **Reset to Defaults** button and persists.
@@ -201,6 +201,21 @@ croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes 
 - Multicast reaches the engine on every platform. iOS needs the multicast entitlement for it, which `CrocApp-iOS.entitlements` carries (`apple-platform-constraints.md`, "LAN discovery and multicast").
 - The engine reports a bad proxy, upload limit, port, multicast address or sender IP as `invalidSetting` (`validateNetworkOptions` in `crocmobile/network.go`). The `invalidSetting` failure points at Settings > Advanced, and its **Open Settings** opens Advanced settings.
 - A receive with a sender IP shows `RelayKind.directToSender` in the trust badge (`AppSettings.receiveRelayKind`), never the public pool.
+
+### Relay hosting and the health check
+
+**Hosting (macOS only, both targets).** `Models/RelayHostController.swift` (`@MainActor @Observable`, `#if os(macOS)`) owns the relay this Mac runs through CrocKit's `RelayHost`. `init(settings:starter:stopsAtQuit:)` takes the starter as a closure, so `RelayHostControllerTests` passes a fake `RelayHandle`. `State` is `stopped`, `running(ports:)` or `failed(TransferFailure)`.
+- It never starts by itself. `CrocAppApp.init` calls `startAtLaunchIfWanted()`, which starts only when `AppSettings.relayHostAtLaunch` (**Start Relay at Launch**, default off) is on, and never in a harness run. The controller stops the relay on `NSApplication.willTerminateNotification`. Each start has a generation number that its stop callback carries, so a callback from a stopped relay is ignored by a newer one.
+- Settings: `relayHostPort` (`settings.relayHostPort`, default croc's 9009), `relayHostPassword` (Keychain account `relayHostPassword`, deleted when blank, never in `UserDefaults`; separate from `relayPassword`, which this device uses to join a relay) and `relayHostAtLaunch`. `relayHostPortError` takes its range from the engine (`RelayHost.basePortRange`). A blank password means croc's default, which the footer says anyone can use.
+- `Views/RelaySettingsView.swift` is the **Relay** tab of the Settings window (`AppRouter.SettingsTab.relay`): the **Run a Relay** switch, port, password and launch switch (port and password are disabled while the relay runs, because a change would not apply), and, while running, `LocalAddresses.current()` rendered as the addresses to enter on the other device (IPv6 in brackets, link-local and loopback left out). The menu-bar window carries the same **Run a Relay** switch under a divider.
+- A start that fails shows `TransferFailure` words. The engine's `portInUse` code has its own copy ("That port is already in use") and no button: only the relay raises it.
+- Both macOS targets carry `network.server` already (`CrocApp.entitlements`, `CrocAppDirect.entitlements`), so no entitlement changed.
+
+**Health check (all platforms).** `Views/RelayHealthView.swift` is a sheet opened by **Check Relay…** (`RelayHealthButton`), next to the relay fields in `PowerSettingsSections` and in the Mac Relay tab. `Models/RelayHealth.swift` builds one row per relay address and IP version, runs them in parallel through CrocKit's `RelayCheck` and keeps no password: it passes the Keychain-backed `relayPassword` straight to the engine.
+- Targets: the custom `relayAddress` and `relayAddress6` when they differ from croc's defaults, else the four public pool relays (`RelayDefaults.publicPool`, because the one a code phrase picks is not known beforehand). With **Local Network Only** on it checks no relay and says so.
+- `advice` words the failures with `TransferFailure` (`badPassword`, `relayUnreachable`) plus one string of its own for a listener that is not a croc relay. An address with one working IP version is healthy: the other failing is not advice.
+- It dials directly, so it shows this device's own address to every relay it probes. With an Advanced proxy set (`usesProxy`) the sheet does not run on open: it warns and offers **Check Anyway**. A `busy` verdict (the relay answered "rate limited" or refused the room after taking the password) says so and advises trying again, not that the address is wrong.
+- The local-network row reads `LocalNetworkChecker` (the Mac Settings scene gets it as an environment object too) and reuses `TransferStatusView.localNetworkDeniedDetail`.
 
 ### Menu bar and Shortcuts
 

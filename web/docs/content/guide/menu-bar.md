@@ -28,6 +28,8 @@ The window shares the one active transfer with the main window, and with [Shortc
 
 The icon shows what is happening: a plain glyph at rest, a filled one with the percent beside it while files move, and other glyphs while it waits for the other device or for your answer, and when a transfer finishes or fails.
 
+The window also has a **Run a Relay** switch, which starts and stops the relay your Mac offers to other devices (see [Run your own relay](own-relay.md)).
+
 Turn the icon off with **Show in Menu Bar**, or start CrocApp at login with **Open at Login**, in [Settings](settings.md#receive-and-menu-bar-mac).
 
 ## Keyboard shortcuts
