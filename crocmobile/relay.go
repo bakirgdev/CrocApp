@@ -32,6 +32,10 @@ func RelayForCode(code string) string {
 	return relay
 }
 
+// PublicRelays returns the public relay pool, one address per line, in the
+// order the code phrase indexes it.
+func PublicRelays() string { return strings.Join(publicrelay.Relays(), "\n") }
+
 type relayRoute struct {
 	v4, v6 string
 	public bool

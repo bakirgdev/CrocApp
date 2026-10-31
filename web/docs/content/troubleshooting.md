@@ -15,6 +15,10 @@ CrocApp tries the local network and the relay at once and uses whichever connect
 - Start the sender first, then the receiver (see below).
 - If you see "This is taking longer than usual", double-check the code and make sure the other device is ready.
 
+## Check the relay
+
+If a transfer says "Couldn't reach the relay" or "The relay rejected its password", open **Settings** and tap **Check Relay…** (on a Mac, the button is in the **General** and **Relay** tabs). It tests the relay and the local network and says what to change. [Run your own relay](guide/own-relay.md#check-a-relay) explains each result.
+
 ## The receiver started first
 
 If the receiver joins before the sender has started, the receive fails with "The other device wasn't ready" and "Start the send there first, or use a faster connection, then enter the code again." The sending device can say "The code phrases don't match" at the same moment. This hits custom codes, and the croc command line sending with a fixed code. Start the send again first, then the receive.

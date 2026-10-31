@@ -30,6 +30,7 @@ DD=$(derived_data mac)
 RECV_DIR="$HOME/Downloads/CrocApp" # the Receive action's real folder
 RECV_NAME="intent-recv-$$.txt"
 
+take_harness_lock
 TMP=$(mktemp -d)
 SAVED_PASTE=""
 # Everything a run writes outside $TMP, so a failed run leaves none of it: the
@@ -43,6 +44,7 @@ cleanup() {
     "$DOCS"/verify-*
   rm -f "$RECV_DIR/$RECV_NAME"
   rm -rf "$TMP"
+  release_harness_lock
 }
 trap cleanup EXIT
 

@@ -28,6 +28,7 @@ V10_VERSION=$(cat scripts/croc-v10.version)
 "$CROC_V10" --version 2> /dev/null | grep -qwF "${V10_VERSION#v}" \
   || fail "croc $V10_VERSION not found at '$CROC_V10' (go install github.com/schollz/croc/v10@$V10_VERSION, or set CROC_V10)"
 
+take_harness_lock
 TMP=$(mktemp -d)
 CT="$TMP/croctest"
 # TMP is deleted on exit and holds the only copy of the logs, so a failed run
@@ -49,6 +50,7 @@ cleanup() {
     fi
   fi
   rm -rf "$TMP"
+  release_harness_lock
 }
 trap cleanup EXIT
 

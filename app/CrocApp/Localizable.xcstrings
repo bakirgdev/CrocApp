@@ -78,6 +78,7 @@
     "About" : {},
     "About CrocApp" : {},
     "Accept" : {},
+    "Access" : {},
     "Add Files" : {},
     "Add Folder" : {},
     "Add Photos" : {},
@@ -86,8 +87,10 @@
     "Advanced" : {},
     "Allow CrocApp in System Settings > General > Login Items." : {},
     "Allow camera access in Settings to scan QR codes." : {},
+    "Allowed" : {},
     "An Advanced setting can't be used" : {},
     "Another transfer is still running" : {},
+    "Anyone who can reach this Mac can use it. Stop it, set a password and start it again." : {},
     "Anyone who gets this link can download the files until it expires or runs out. With Save Transfer History off, this screen is the only place to revoke it." : {},
     "Anyone who gets this link can download the files until it expires or runs out. You can also revoke it later in History." : {},
     "Anyone who learns it and connects first can receive your next transfer." : {},
@@ -107,6 +110,7 @@
     "Camera access restricted" : {},
     "Camera scanning isn't available on this device" : {},
     "Camera unavailable" : {},
+    "Can't connect" : {},
     "Cancel" : {},
     "Cancel Transfer" : {},
     "Cancelled" : {
@@ -117,12 +121,16 @@
     },
     "Change it again before you quit CrocApp, or the next launch shows what was saved before." : {},
     "Change…" : {},
+    "Check Again" : {},
+    "Check Anyway" : {},
+    "Check Relay…" : {},
     "Check for Updates…" : {},
     "Check the code phrase on both devices." : {},
     "Check the files, and ask the sender to send any missing ones again." : {},
     "Check the proxies, addresses, ports and send speed limit in Settings > Advanced." : {
       "comment" : "Advanced is the title of a page in Settings."
     },
+    "Check the relay address and port in Settings, and that croc runs there." : {},
     "Check the relay password in Settings." : {},
     "Check with the other device that every file arrived." : {},
     "Check with them before you send it again." : {},
@@ -132,7 +140,10 @@
       "comment" : "Local Network Only is the label of a switch in Settings."
     },
     "Check your internet connection." : {},
+    "Checking" : {},
+    "Checks the relay your transfers use, and the local network." : {},
     "Choose Files…" : {},
+    "Choose a different relay port, or quit the app that uses it." : {},
     "Clear" : {},
     "Clear All" : {},
     "Clear History" : {},
@@ -203,10 +214,31 @@
     "Encrypted on this device. The link server only holds the encrypted files." : {},
     "End-to-end encrypted" : {},
     "Enter a code phrase or a download link." : {},
+    "Enter a port from %@ to %@." : {
+      "comment" : "The relay uses this port and the three after it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter a port from %1$@ to %2$@."
+          }
+        }
+      }
+    },
     "Enter a speed such as 500k, 2m or 1g, or leave it blank for no limit." : {},
     "Enter an IPv4 multicast address from 224.0.0.0 to 239.255.255.255." : {},
     "Enter host:port, or an address starting with http:// or https://." : {},
     "Enter host:port, or an address starting with socks5:// or socks5h://." : {},
+    "Enter one as the relay address in CrocApp, or after --relay in croc. Allow ports %@ to %@ in a firewall if a device cannot connect." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter one as the relay address in CrocApp, or after --relay in croc. Allow ports %1$@ to %2$@ in a firewall if a device cannot connect."
+          }
+        }
+      }
+    },
     "Enter the code phrase instead." : {},
     "Enter the sender's address and port, such as 192.168.1.20:9009. The port must be a number from 1 to 65535." : {},
     "Enter the server's address only, such as %@. It must use https, or http for localhost." : {
@@ -254,7 +286,10 @@
     "How It Works" : {},
     "How croc keeps transfers private" : {},
     "IPv6 Address" : {},
+    "It answered and accepted the password." : {},
+    "It connects to each relay directly, so every relay it tries sees this device's own address." : {},
     "It expired, was revoked or has no downloads left, so ask the sender for a new link." : {},
+    "It is working, but turned this check away. Try again in a minute." : {},
     "It no longer works for anyone." : {},
     "Keep Both" : {},
     "Link" : {
@@ -275,6 +310,8 @@
     },
     "Link scanned" : {},
     "Local Network Only" : {},
+    "Local Network Only is on, so transfers use no relay." : {},
+    "Local network" : {},
     "Local network access is off" : {},
     "Local network only: nothing leaves your network" : {},
     "Local network when possible" : {},
@@ -284,13 +321,17 @@
     "Multicast Address" : {},
     "Name" : {},
     "Network" : {},
+    "No address of this kind" : {},
     "No limit" : {},
     "No public relay answered" : {},
     "No transfers yet" : {},
     "None, or host:port" : {},
+    "Not an address with a port" : {},
+    "Not checked yet" : {},
     "Nothing is saved without your OK: a transfer you receive shows a file preview you accept or decline. Auto-Accept Transfers is off unless you turn it on." : {},
     "Notifications" : {},
     "OK" : {},
+    "Off" : {},
     "On the other device, enter this code or scan the QR." : {},
     "One code phrase does everything" : {},
     "One code, one transfer" : {},
@@ -301,12 +342,14 @@
     "Open at Login" : {},
     "Open in Files" : {},
     "Opens CrocApp at History." : {},
+    "Other devices can use this Mac as their relay while CrocApp runs. The relay listens on every network connection of this Mac, so without a password anyone who can reach it can use it, over the internet too if your router or IPv6 firewall lets them in. Set a password. It uses the port and the three after it, and stops when you quit CrocApp." : {},
     "Overall progress" : {},
     "Password" : {},
     "Paste Code…" : {},
     "Patterns, one per line" : {},
     "Performance" : {},
     "Point the camera at the QR code on the other device." : {},
+    "Port" : {},
     "Privacy Policy" : {},
     "Proxies, sender IP, speed limit and more. The defaults suit most people." : {},
     "Public relay pool" : {},
@@ -316,6 +359,10 @@
     "Quick Look" : {},
     "Quick Look %@" : {},
     "Quit and reopen CrocApp to transfer again." : {},
+    "Reachable in %@, but the relay is busy" : {},
+    "Reachable in %@, password accepted" : {},
+    "Reachable in %@, password rejected" : {},
+    "Reachable, but not a croc relay" : {},
     "Ready to send" : {},
     "Receive" : {},
     "Receive ${codeOrLink} with CrocApp" : {
@@ -372,6 +419,8 @@
     },
     "Recent transfers" : {},
     "Relay" : {},
+    "Relay Health" : {},
+    "Relay on this Mac" : {},
     "Remove %@" : {
       "comment" : "VoiceOver label of the button that removes a staged file. The placeholder is the file name."
     },
@@ -395,6 +444,7 @@
     "Revoke works only until CrocApp quits" : {},
     "Revoked" : {},
     "Revoking link" : {},
+    "Run a Relay" : {},
     "SOCKS5 Proxy" : {},
     "Same Wi-Fi or different continents, transfers find the fastest path automatically." : {},
     "Save" : {},
@@ -475,6 +525,7 @@
     "Size" : {},
     "Some names are already taken" : {},
     "Spotlight on this device can find past transfers by their file names." : {},
+    "Start Relay at Launch" : {},
     "Start the same transfer again; replacing the partly received files resumes it." : {
       "comment" : "Replace is the label of a button in the incoming-files prompt."
     },
@@ -488,15 +539,18 @@
     "Text can't be sent as a link. Switch to Files." : {},
     "Text snippet" : {},
     "Text to send" : {},
+    "That address isn't a croc relay" : {},
     "That code is already in use" : {},
     "That is not a croc code or a CrocApp link." : {},
     "That isn't a CrocApp QR code" : {
       "comment" : "Title when a scanned QR code is neither a code phrase nor a link."
     },
+    "That port is already in use" : {},
     "That text is too long to send this way. Select less of it." : {},
     "The Keychain is not available yet, for example before you first unlock this device. Nothing is changed until it can be read." : {},
     "The camera couldn't start. Close this and try again." : {},
     "The cancelled transfer didn't stop" : {},
+    "The check connects to the relay and joins it the way a transfer does, without sending anything. It does not use a proxy." : {},
     "The clipboard has no text to send." : {},
     "The code is %@. Keep CrocApp open until the transfer ends." : {
       "comment" : "Spoken or shown by Shortcuts after Send Files and Send Text. The placeholder is the code phrase."
@@ -514,14 +568,20 @@
     "The other device is waiting for you to send" : {},
     "The other device wasn't ready" : {},
     "The other device's croc is outdated" : {},
+    "The relay is busy" : {},
     "The relay is just a pipe" : {},
+    "The relay is working" : {},
+    "The relay port can't be used" : {},
     "The relay rejected its password" : {},
     "The transfer failed" : {},
     "There is nothing to send." : {},
+    "This Mac has no active network address." : {},
     "This also removes the saved proxies." : {},
+    "This check doesn't use your proxy" : {},
     "This device couldn't save the link to the Keychain, so revoke it before you quit if you want it ended early." : {},
     "This is taking longer than usual. Double-check the code, or the other device may not be ready." : {},
     "This link no longer works" : {},
+    "This relay has no password" : {},
     "This removes the list, not the files you received." : {},
     "Those files aren't available anymore" : {},
     "Total %@ / %@" : {
@@ -560,6 +620,7 @@
     "Turn on Save Transfer History in Settings to list finished transfers here." : {},
     "Type or paste the text to send." : {},
     "Unsafe file names were blocked" : {},
+    "Use on the other device" : {},
     "Version" : {},
     "Via custom relay %@, which sees only encrypted data" : {
       "comment" : "Line of the trust badge. The placeholder is the relay's address."
