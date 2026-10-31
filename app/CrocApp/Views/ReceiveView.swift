@@ -86,22 +86,25 @@ struct ReceiveView: View {
             if let storedLink {
                 storedLinkRow(storedLink)
             } else {
-                CodeField(
-                    placeholder: "Code phrase",
-                    text: $code,
-                    isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength,
-                    invalidMessage: CodeField.tooShortMessage,
-                    onPaste: { pasted in
-                        if let link = TransferLink.parse(pasted) { router.open(link) }
-                    },
-                    onSubmit: start,
-                    submitLabel: .go,
-                    focusesOnAppear: HardwareKeyboard.isExpected
-                )
-                .onChange(of: code) { _, typed in
-                    if typed.contains("://"), let link = TransferLink.parse(typed) {
-                        router.open(link)
+                VStack(alignment: .leading, spacing: Spacing.space3) {
+                    CodeField(
+                        placeholder: "Code phrase",
+                        text: $code,
+                        isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength,
+                        invalidMessage: CodeField.tooShortMessage,
+                        onPaste: { pasted in
+                            if let link = TransferLink.parse(pasted) { router.open(link) }
+                        },
+                        onSubmit: start,
+                        submitLabel: .go,
+                        focusesOnAppear: HardwareKeyboard.isExpected
+                    )
+                    .onChange(of: code) { _, typed in
+                        if typed.contains("://"), let link = TransferLink.parse(typed) {
+                            router.open(link)
+                        }
                     }
+                    SavedCodePicker(selection: code) { code = $0 }
                 }
             }
 

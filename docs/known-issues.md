@@ -40,9 +40,9 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
   - By default the harnesses avoid both: each starts its own `croc relay` with raised admission limits and starts a receiver only when that relay's debug log shows the sender's room (`BUILDING.md`, "Verification harnesses"; CI's `interop (local relay)` job runs the same way).
   - A pool relay's log is not ours to read, so on the public pool, and with an explicit `RELAY`, the harnesses still wait a fixed 3 s after a sender. Leave a minute between public-pool runs, and treat a failure as a regression only after finding the cause in its log.
   - Every checkout and session on one machine shares one address, so one limit: another run on the public pool can use up yours.
-- **Two checkouts cannot run the same harness at once on one Mac.**
+- **Only one harness runs at a time on one Mac.**
   - `verify-app-mac.sh` and `verify-app-sim.sh` share the app container, `~/Downloads/CrocApp` and the pasteboard. A wrapper sender and `--local` scenarios in `verify-interop.sh` bind croc's default ports 9009 to 9013 and announce on the default multicast group, so a second run sees the first one's sender.
-  - Take turns. The local relay needs no care: each run picks its own free ports, and each checkout builds into its own DerivedData (`derived_data` in `scripts/lib.sh`).
+  - Each harness takes a lock (`take_harness_lock` in `scripts/lib.sh`), so a second run stops at once and names the run that holds it. The local relay needs no care: each run picks its own free ports, and each checkout builds into its own DerivedData (`derived_data` in `scripts/lib.sh`).
 
 ## Design system
 
@@ -220,6 +220,12 @@ Permanent or deferred, each with its reason.
   - A service takes at most 1 MiB of text (`SendServicesProvider.maxTextBytes`); a larger selection is refused. Files have no limit there.
 
 ### Engine and croc behaviour
+
+- **The relay this Mac runs, and the relay health check, have limits.**
+  - The addresses list leaves out IPv6 link-local (`fe80::`) addresses: a relay setting cannot hold the interface scope they need. It is read once when the tab opens and when the relay starts or stops, so an interface that changes while the tab is open shows after the next change.
+  - The relay uses croc's default connection and rate limits and cannot be tuned, and the app does not open a firewall or router port. A Mac firewall that blocks incoming connections stops other devices, and CrocApp cannot tell. The relay binds every interface, so without a password it can be open to the internet (the tab warns); binding only to the listed LAN addresses was left out because those change with the network.
+  - **Check Relay…** with no custom relay tests all four public pool relays, because the one a code phrase picks is not known beforehand. It dials directly and ignores the Advanced proxies. With a proxy set it waits for **Check Anyway** and warns that the relays will see this device's address (`THREAT-MODEL.md`, Residual risks). On a network that reaches the internet only through a proxy it can say "Can't connect" while a proxied transfer works.
+
 
 - **When both relay addresses are customised, both are sent.**
   - croc's own CLI blanks `RelayAddress6` whenever the IPv4 address is customised, without checking whether the IPv6 one was customised too (`src/cli/cli.go`, send and receive alike), so it silently discards a custom IPv6 relay.

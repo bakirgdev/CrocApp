@@ -91,7 +91,7 @@ final class AppRouter {
         }
     }
 
-    enum SettingsTab: Hashable { case general, advanced }
+    enum SettingsTab: Hashable { case general, relay, advanced }
     /// The Settings window's tab, so Open Settings on a failure lands on the
     /// tab its fix lives in.
     var settingsTab: SettingsTab = .general

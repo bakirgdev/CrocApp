@@ -142,6 +142,8 @@ final class TransferController {
 
     /// History sink; set once at app startup. nil in previews.
     @ObservationIgnored var history: HistoryStore?
+    /// Codes the user saved: a transfer that used one leaves no code hint in History.
+    @ObservationIgnored var savedCodes: SavedCodes?
     @ObservationIgnored private var pendingRecord: HistoryDraft?
 
     init(
@@ -173,6 +175,9 @@ final class TransferController {
             request.direction == .send && !request.isStored && settings.bothSidesConfirm
         autoAcceptActive = call.autoAccept
         pendingRecord = HistoryDraft(request, storedServer: EngineStart.storedServer(settings))
+        if case .receive(let code, _, _) = request, savedCodes?.contains(code: code) == true {
+            pendingRecord?.dropHint()
+        }
         outDir = nil
         var sentFiles: [URL] = []
         switch request {
@@ -372,7 +377,7 @@ final class TransferController {
         switch event {
         case .codeReady(let code):
             currentCode = code
-            if pendingRecord?.codeHint.isEmpty == true {
+            if pendingRecord?.codeHint.isEmpty == true, pendingRecord?.keepsNoHint == false {
                 pendingRecord?.codeHint = CodeHint.code(code)
             }
             phase = .waiting(code: code)

@@ -91,6 +91,38 @@ import Testing
         #expect(history.recordCount() == 0)
     }
 
+    @Test func aCustomCodeSendLeavesNoHintInHistory() async throws {
+        controller.start(.sendFiles(urls: [file], code: "mom-blue-tiger"))
+        try await waitForTransfer()
+        try await deliver(.codeReady("mom-blue-tiger"))
+        try await deliver(.connected)
+        try await deliver(.done(Self.summary(files: 1, totalSize: 100)))
+
+        #expect(try onlyRecord().codeHint == "")
+    }
+
+    @Test func aReceiveWithASavedCodeLeavesNoHintInHistory() async throws {
+        let saved = SavedCodes(secrets: FakeSecretStore())
+        saved.save(SavedCode(name: "Mom", code: "mom-blue-tiger"))
+        controller.savedCodes = saved
+        controller.start(.receive(code: " mom-blue-tiger ", folder: folder, folderIsScoped: false))
+        try await waitForTransfer()
+        try await deliver(.failed(EngineFailure(code: .refused, message: "refused files")))
+
+        #expect(try onlyRecord().codeHint == "")
+    }
+
+    @Test func aReceiveWithAnotherCodeStillKeepsItsHint() async throws {
+        let saved = SavedCodes(secrets: FakeSecretStore())
+        saved.save(SavedCode(name: "Mom", code: "mom-blue-tiger"))
+        controller.savedCodes = saved
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
+        try await waitForTransfer()
+        try await deliver(.failed(EngineFailure(code: .refused, message: "refused files")))
+
+        #expect(try onlyRecord().codeHint == "wiry-…")
+    }
+
     @Test func savingHistoryOffRecordsNoFailedTransferEither() async throws {
         settings.saveTransferHistory = false
         await engine.failNextStart(

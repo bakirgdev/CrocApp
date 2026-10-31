@@ -136,14 +136,17 @@ struct SendView: View {
             linkOptions
 
             if !linkSelected {
-                CodeField(
-                    placeholder: "Custom code (optional)",
-                    text: $customCode,
-                    isInvalid: !customCodeTrimmed.isEmpty
-                        && customCodeTrimmed.count < EngineConstraints.minCodeLength,
-                    invalidMessage: CodeField.tooShortMessage
-                ) { pasted in
-                    customCode = pasted
+                VStack(alignment: .leading, spacing: Spacing.space3) {
+                    CodeField(
+                        placeholder: "Custom code (optional)",
+                        text: $customCode,
+                        isInvalid: !customCodeTrimmed.isEmpty
+                            && customCodeTrimmed.count < EngineConstraints.minCodeLength,
+                        invalidMessage: CodeField.tooShortMessage
+                    ) { pasted in
+                        customCode = pasted
+                    }
+                    SavedCodePicker(selection: customCode) { customCode = $0 }
                 }
                 .transition(.opacity)
             }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -45,6 +46,12 @@ func customCodes(t *testing.T) [4]string {
 		t.Fatalf("found codes for %d of 4 indices", found)
 	}
 	return codes
+}
+
+func TestPublicRelays(t *testing.T) {
+	if got, want := PublicRelays(), strings.Join(wantPool, "\n"); got != want {
+		t.Errorf("PublicRelays() = %q, want %q", got, want)
+	}
 }
 
 func TestRelayForCode(t *testing.T) {

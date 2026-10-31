@@ -5,7 +5,7 @@ import ServiceManagement
 import UniformTypeIdentifiers
 
 /// macOS Settings scene (⌘,): a General tab (receive folder plus the power
-/// options) and an Advanced tab. The Advanced controls with
+/// options), a Relay tab (the relay this Mac runs) and an Advanced tab. The Advanced controls with
 /// their footnotes would roughly double a form that already scrolls, so they
 /// get their own tab, the macOS convention for a long settings window.
 struct SettingsView: View {
@@ -28,6 +28,9 @@ struct SettingsView: View {
     var body: some View {
         TabView(selection: Bindable(AppRouter.shared).settingsTab) {
             Tab("General", systemImage: "gearshape", value: .general) { general }
+            Tab("Relay", systemImage: "antenna.radiowaves.left.and.right", value: .relay) {
+                RelaySettingsView()
+            }
             Tab("Advanced", systemImage: "slider.horizontal.3", value: .advanced) {
                 AdvancedSettingsView()
             }
@@ -63,6 +66,8 @@ struct SettingsView: View {
             menuBarSection
 
             GeneralSettingsSections()
+
+            SavedCodesSection()
 
             PowerSettingsSections()
 
@@ -120,5 +125,8 @@ extension SettingsView {
     }
 }
 
-#Preview { SettingsView().environment(OutputFolderStore()).environment(AppSettings()) }
+#Preview {
+    SettingsView().environment(OutputFolderStore()).environment(AppSettings())
+        .environment(SavedCodes(secrets: MemorySecretStore()))
+}
 #endif

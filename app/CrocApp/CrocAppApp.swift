@@ -14,6 +14,7 @@ struct CrocAppApp: App {
     @State private var settings: AppSettings
     @State private var controller: TransferController
     @State private var history: HistoryStore
+    @State private var savedCodes: SavedCodes
     @State private var outputFolder: OutputFolderStore
     @State private var localNetwork = LocalNetworkChecker()
     @State private var router = AppRouter.shared
@@ -24,6 +25,7 @@ struct CrocAppApp: App {
 
     #if os(macOS)
     @State private var quickSend: MenuBarQuickSend
+    @State private var relayHost: RelayHostController
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     #endif
 
@@ -38,9 +40,12 @@ struct CrocAppApp: App {
         _settings = State(initialValue: settings)
         let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: harness))
         _history = State(initialValue: history)
+        let savedCodesStore = SavedCodes(secrets: harness ? MemorySecretStore() : KeychainStore())
+        _savedCodes = State(initialValue: savedCodesStore)
         let vault = StoredTransferVault(secrets: harness ? MemorySecretStore() : KeychainStore())
         let controller = TransferController(settings: settings, vault: vault)
         controller.history = history
+        controller.savedCodes = savedCodesStore
         _controller = State(initialValue: controller)
         let outputFolder = OutputFolderStore()
         _outputFolder = State(initialValue: outputFolder)
@@ -52,6 +57,11 @@ struct CrocAppApp: App {
         #if os(macOS)
         _quickSend = State(
             initialValue: MenuBarQuickSend(controller: controller, outputFolder: outputFolder))
+        let relayHost = RelayHostController(settings: settings)
+        _relayHost = State(initialValue: relayHost)
+        // The relay listens on the network, so it starts only when the user's
+        // setting says so, never in a harness run.
+        if !harness { relayHost.startAtLaunchIfWanted() }
         #endif
         let center = SystemNotificationCenter()
         let notifier = TransferNotifier(
@@ -102,6 +112,7 @@ struct CrocAppApp: App {
         ) {
             MenuBarQuickSendView(quickSend: quickSend)
                 .environment(controller)
+                .environment(relayHost)
         } label: {
             let icon = MenuBarIcon(phase: controller.phase, progress: controller.progress)
             HStack(spacing: Spacing.space1) {
@@ -117,6 +128,9 @@ struct CrocAppApp: App {
             SettingsView()
                 .environment(outputFolder)
                 .environment(settings)
+                .environment(savedCodes)
+                .environment(relayHost)
+                .environment(localNetwork)
         }
         // A Settings scene's default .automatic resizability resolves to
         // .contentSize — min == max == content size — which is where the old
@@ -152,6 +166,7 @@ struct CrocAppApp: App {
             .environment(localNetwork)
             .environment(router)
             .environment(history)
+            .environment(savedCodes)
             .modelContainer(history.container)
             #if os(macOS)
         .modifier(CaptureWindowOpener(router: router))
