@@ -25,7 +25,7 @@ CrocApp keeps nothing in the cloud and has no account, so there is nothing to de
 You can leave this out if you do not care about leftovers. Each step is in the app:
 
 1. **Revoke live links.** In **History**, choose **Revoke Link** on any link that has not expired. This deletes the files from the link server. Without a receipt on the device, you cannot revoke later.
-2. **Clear History.** Tap **Clear**, then **Clear All**.
+2. **Clear History.** Choose **Clear History**, then **Clear All**.
 3. **Remove secrets.** In [Settings](guide/settings.md), empty **Password** under **Relay**, then in **Advanced** choose **Reset to Defaults**, which also removes the saved proxies.
 4. **Mac only:** turn off **Open at Login** in Settings, or the login item stays registered until you remove it in System Settings > General > Login Items.
 5. **Save any received files you want.** On iOS they live in the app's Documents folder and go with the app.

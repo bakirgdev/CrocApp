@@ -12,7 +12,7 @@ CrocApp is a native SwiftUI app for iOS, iPadOS and macOS 26. It embeds [croc](h
 - `TransferController` is the only code that calls `CrocEngine`.
 - Everything above that is SwiftUI views reacting to one `@Observable` state machine.
 
-The SwiftUI sources build four targets. `app/Shared/` is a folder group compiled into all four (`ShareHandoff.swift`, the share-handoff contract, and `ReceivedName.swift`, the rule for a file name that arrives from outside, which the extension applies when it stages a file):
+The SwiftUI sources build six targets: the app, the share extension and the widgets extension, each with a Direct twin. `app/Shared/` is a folder group compiled into every one of them (`ShareHandoff.swift`, the share-handoff contract, and `ReceivedName.swift`, the rule for a file name that arrives from outside, which the extension applies when it stages a file):
 
 | Target | Platforms | Channel |
 | --- | --- | --- |
