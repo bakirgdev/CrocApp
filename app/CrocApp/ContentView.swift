@@ -54,10 +54,7 @@ struct ContentView: View {
                 // scenePhase's onChange below (a transition) never fires for
                 // it; offer the staged sheet here too, under the same
                 // !controller.isActive gating as that handler.
-                if !controller.isActive {
-                    shareInbox.refresh()
-                    showStagedSheet = !shareInbox.staged.isEmpty && !showOnboarding
-                }
+                offerStagedFiles()
                 await AutoVerify.runIfRequested(controller: controller)
             }
             .onChange(of: controller.isActive) { _, active in
@@ -151,6 +148,13 @@ struct ContentView: View {
         // window.
         guard !controller.isActive else { return }
         shareInbox.refresh()
+        // Shared text needs no sheet: the Send screen is where it waits for
+        // the user's Send, like a Services-menu selection.
+        if let text = shareInbox.text {
+            shareInbox.consumeManifest()
+            shareInbox.refresh()
+            router.openSend(text: text)
+        }
         showStagedSheet = !shareInbox.staged.isEmpty && !showOnboarding
     }
 

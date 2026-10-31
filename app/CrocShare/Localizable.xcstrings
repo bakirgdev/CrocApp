@@ -5,16 +5,22 @@
       "comment" : "Shown in the share sheet when the files cannot be handed to the app."
     },
     "Cancel" : {},
-    "Couldn't prepare files" : {},
+    "Couldn't prepare the share" : {},
     "Done" : {},
     "Nothing shareable was provided." : {
-      "comment" : "Shown in the share sheet when the shared items hold no file."
+      "comment" : "Shown in the share sheet when the shared items hold no file, text or link."
     },
     "Not enough free space to prepare these files." : {
       "comment" : "Shown in the share sheet when the volume that holds the staging area has too little room."
     },
-    "Preparing files…" : {},
+    "Preparing…" : {},
     "Ready to send" : {},
+    "That text is too long to send this way." : {
+      "comment" : "Shown in the share sheet when the shared text is over the size limit."
+    },
+    "Text staged. Open CrocApp to start the transfer." : {
+      "comment" : "Shown in the share sheet once shared text or a link is staged."
+    },
     "Send with CrocApp" : {
       "comment" : "Title of the share sheet."
     },

@@ -5,12 +5,14 @@ enum ShareStagerError: LocalizedError {
     case noAppGroup
     case nothingUsable
     case notEnoughSpace
+    case textTooLong
 
     var errorDescription: String? {
         switch self {
         case .noAppGroup: String(localized: "App Group container unavailable.")
         case .nothingUsable: String(localized: "Nothing shareable was provided.")
         case .notEnoughSpace: String(localized: "Not enough free space to prepare these files.")
+        case .textTooLong: String(localized: "That text is too long to send this way.")
         }
     }
 }
@@ -31,21 +33,54 @@ enum ShareStager {
         try FileManager.default.createDirectory(at: batchDir, withIntermediateDirectories: true)
 
         var names: [String] = []
+        var texts: [String] = []
         for item in items {
             for provider in item.attachments ?? [] {
-                guard provider.hasItemConformingToTypeIdentifier(Self.sourceType.identifier) else {
-                    continue
+                if let text = try await loadText(provider) {
+                    texts.append(text)
+                } else if provider.hasItemConformingToTypeIdentifier(Self.sourceType.identifier) {
+                    names.append(try await stage(provider, into: batchDir, taken: names))
                 }
-                let name = try await stage(provider, into: batchDir, taken: names)
-                names.append(name)
             }
         }
-        guard !names.isEmpty else { throw ShareStagerError.nothingUsable }
+        // Files win over text in a mixed share: a batch is either files or
+        // text, and the files are the heavier thing to lose.
+        let text = names.isEmpty ? ShareHandoff.joinText(texts) : nil
+        guard !names.isEmpty || text != nil else { throw ShareStagerError.nothingUsable }
+        if let text, text.utf8.count > ShareHandoff.maxTextBytes {
+            throw ShareStagerError.textTooLong
+        }
 
-        let manifest = ShareHandoff.Manifest(batch: batchName, files: names)
+        let manifest = ShareHandoff.Manifest(batch: batchName, files: names, text: text)
         let data = try JSONEncoder().encode(manifest)
         try data.write(to: ShareHandoff.manifestURL(in: inbox), options: .atomic)
         return manifest
+    }
+
+    /// A web URL as its absolute string, or plain text as is. Nil for a file,
+    /// including a text file: those stage as files.
+    private static func loadText(_ provider: NSItemProvider) async throws -> String? {
+        guard !provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier),
+            let type = [UTType.url, .plainText].first(where: {
+                provider.hasItemConformingToTypeIdentifier($0.identifier)
+            })
+        else { return nil }
+        return try await withCheckedThrowingContinuation { cont in
+            provider.loadItem(forTypeIdentifier: type.identifier) { item, error in
+                switch item {
+                case let url as URL:
+                    cont.resume(returning: url.isFileURL ? nil : url.absoluteString)
+                case let text as String: cont.resume(returning: text)
+                // File-backed text arrives as Data or a file URL; it stages as a file.
+                default:
+                    if let error {
+                        cont.resume(throwing: error)
+                    } else {
+                        cont.resume(returning: nil)
+                    }
+                }
+            }
+        }
     }
 
     #if os(macOS)

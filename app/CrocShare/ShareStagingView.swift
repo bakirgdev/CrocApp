@@ -58,18 +58,22 @@ struct ShareStagingView: View {
     @ViewBuilder private var content: some View {
         switch state {
         case .staging:
-            ProgressView("Preparing files…")
+            ProgressView("Preparing…")
         case .done(let count):
             ContentUnavailableView {
                 Label("Ready to send", systemImage: "checkmark.circle")
             } description: {
-                Text(
-                    "^[\(count) file](inflect: true) staged. Open CrocApp to start the transfer."
-                )
+                if count == 0 {
+                    Text("Text staged. Open CrocApp to start the transfer.")
+                } else {
+                    Text(
+                        "^[\(count) file](inflect: true) staged. Open CrocApp to start the transfer."
+                    )
+                }
             }
         case .failed(let error):
             ContentUnavailableView {
-                Label("Couldn't prepare files", systemImage: "exclamationmark.triangle.fill")
+                Label("Couldn't prepare the share", systemImage: "exclamationmark.triangle.fill")
             } description: {
                 Text(error.localizedDescription)
             }
