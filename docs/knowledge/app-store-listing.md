@@ -211,14 +211,16 @@ Sending arbitrary files to another person is not content the app hosts or shows.
 
 ## Review notes
 
-Paste into App Review Information, Notes. Length: 3304 bytes of the 4000 allowed. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
+Paste into App Review Information, Notes. Length: 3527 bytes of the 4000 allowed. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
 
 ```text
 CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end-to-end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email. Source: https://github.com/bakirgdev/CrocApp
 
 ACCOUNT: none. There is no login, sign-up, purchase or subscription, so there is no demo account. Sign-in required is off.
 
-NETWORK: transfers connect two devices through croc's public relay pool (1.getcroc.com to 4.getcroc.com, TCP port 9009), which only forwards ciphertext. Links ("Send as Link", optional) use https://getcroc.com. The croc maintainer runs both, not CrocApp. Settings lets a user pick their own relay and link server. No analytics, ads or developer-side servers. If your network blocks outbound port 9009 the app reports "No public relay answered"; please test on an open network.
+NETWORK: transfers connect two devices through croc's public relay pool (1.getcroc.com to 4.getcroc.com, TCP port 9009), which only forwards ciphertext. Links ("Send as Link", optional) use https://getcroc.com. The croc maintainer runs both, not CrocApp. Settings lets a user pick their own relay and link server. No analytics, ads or developer-side servers.
+
+IF YOUR NETWORK BLOCKS PORT 9009: a code transfer then reports "No public relay answered". Use step 4 instead. Send as Link needs only HTTPS (port 443) and works on any network that allows the web.
 
 PERMISSIONS (first use, both optional):
 - Local network: "CrocApp uses the local network to discover nearby devices for direct, faster transfers." Used only to find another device on the same network. Denying it leaves relay transfers working.
@@ -235,7 +237,7 @@ TEST WITHOUT A SECOND DEVICE: use croc's own browser client at https://getcroc.c
    b. In CrocApp tap Receive, type the code (or paste the getcroc.com link; the app keeps only the code), and tap Receive.
    c. The file list appears. Tap Accept. The file is saved to the receive folder (on iPhone and iPad, On My iPhone, CrocApp, in the Files app).
 3. Link flow: tap the link https://crocapp.dev/r/#cape-junky-widow in Notes or Messages with CrocApp installed (iOS does not open the app for a URL typed into Safari), or open that page in a browser and press Open in CrocApp. CrocApp opens on Receive with the code filled in and does not connect until you tap Receive.
-4. Optional, Send as Link: in Send choose files, turn on "Send as Link", then tap Send as Link. A link and QR code appear. Open the link in a browser to get the file. In History, Revoke Link makes it stop working.
+4. Send as Link (HTTPS only): in Send choose files, turn on "Send as Link", then tap Send as Link. A link and QR code appear. Open the link in a browser to get the file, or receive it in the app: tap Receive, paste the link into the Code phrase field (the screen shows "Receive from Link"), and tap Receive. In History, Revoke Link makes it stop working.
 
 The browser UI at getcroc.com is the croc project's and may change wording; the flow stays: one device shows a code, the other enters it.
 
