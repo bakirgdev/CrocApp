@@ -13,12 +13,29 @@ final class StoredTransferVault {
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "vault")
 
     private let secrets: any SecretStore
-    private var receipts: [StoredReceipt]
+    private var receipts: [StoredReceipt] = []
+    /// The Keychain could not be read, so `receipts` is not what is stored.
+    /// Writes are blocked until a read succeeds: a write now would replace
+    /// the stored receipts, and with them the right to revoke those links.
+    private(set) var loadFailed = false
 
     init(secrets: any SecretStore = KeychainStore(), now: Date = .now) {
         self.secrets = secrets
-        receipts = Self.load(from: secrets)
+        reload()
         purgeExpired(now: now)
+    }
+
+    /// Reads the stored receipts again, keeping any this launch added or
+    /// changed while the Keychain was unreadable.
+    private func reload() {
+        do {
+            let stored = try Self.load(from: secrets)
+            receipts = stored.filter { s in !receipts.contains { $0.id == s.id } } + receipts
+            loadFailed = false
+        } catch {
+            Self.log.error("receipts could not be read from the Keychain")
+            loadFailed = true
+        }
     }
 
     func receipt(id: String) -> StoredReceipt? {
@@ -49,6 +66,12 @@ final class StoredTransferVault {
 
     @discardableResult
     private func persist(_ operation: String) -> Bool {
+        if loadFailed { reload() }
+        guard !loadFailed else {
+            Self.log.error(
+                "receipts \(operation, privacy: .public) not saved: the Keychain is unreadable")
+            return false
+        }
         let stored: Bool
         if receipts.isEmpty {
             stored = secrets.delete(account: Self.account)
@@ -69,10 +92,10 @@ final class StoredTransferVault {
         return stored
     }
 
-    /// An unreadable item is logged and treated as empty; the next write
-    /// replaces it.
-    private static func load(from secrets: any SecretStore) -> [StoredReceipt] {
-        guard let json = secrets.get(account: account) else { return [] }
+    /// A Keychain read failure throws. An item that is there but not valid
+    /// JSON is logged and treated as empty; the next write replaces it.
+    private static func load(from secrets: any SecretStore) throws -> [StoredReceipt] {
+        guard let json = try secrets.load(account: account) else { return [] }
         do {
             return try JSONDecoder().decode([StoredReceipt].self, from: Data(json.utf8))
         } catch {

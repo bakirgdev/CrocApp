@@ -182,7 +182,7 @@ Relay strings use `""` for "croc default" (the `TextField` prompt reads "Public 
 
 `TrustBadge(relay:)` appears in the waiting, transferring and confirm-send views. `HowItWorksView` is the plain-language explainer. Its facts come from `what-is-croc.md`.
 
-**About and privacy link.** `Views/AboutSection.swift` is the last `Form` section of the macOS General tab and of the iOS `SettingsScreen`. It shows the version (`CFBundleShortVersionString` and `CFBundleVersion`) and **Privacy Policy** and **Support** links. The URLs and the version string live in `Support/AppInfo.swift`, and `AppInfoTests` pins their scheme, host and path.
+**About and privacy link.** `Views/AboutSection.swift` is the last `Form` section of the macOS General tab and of the iOS `SettingsScreen`. It shows the version (`CFBundleShortVersionString` and `CFBundleVersion`), **Privacy Policy**, **Support** and **croc License** links, and a footer with the attribution croc's MIT license requires (`design/brand.md`, "Attribution and legal"). The app and Direct targets also set `NSHumanReadableCopyright`. The URLs and the version string live in `Support/AppInfo.swift`, and `AppInfoTests` pins their scheme, host and path.
 
 On macOS, `AppCommands` replaces the `.appInfo` group with an **About CrocApp** button. It calls `NSApplication.orderFrontStandardAboutPanel(options:)` with a linked "Privacy Policy" `.credits` string. The Direct build's `UpdateCommands` still attaches after that group.
 
@@ -281,7 +281,7 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - A shortcut does not answer the accept prompt. Auto-accept applies as usual, and Keep Both or Replace follows the setting.
 
 **History entities and Spotlight.**
-- `Intents/HistoryEntity.swift` is the `AppEntity` and `IndexedEntity` for a record: name, direction, status, date, file names, size. Never the code phrase or code hint. `HistoryEntityQuery` answers Shortcuts (by id, by name, and a Find Transfers action with date, direction, status and name filters). `OpenTransferIntent` opens History (the list, not the record: no route carries a record yet, `known-issues.md`, "History entities").
+- `Intents/HistoryEntity.swift` is the `AppEntity` and `IndexedEntity` for a record: name, direction, status, date, file names, size. Never the code phrase or code hint. `HistoryEntityQuery` answers Shortcuts (by id, by name, and a Find Transfers action with date, direction, status and name filters). `OpenTransferIntent` opens History (the list, not the record: no route carries a record yet, `known-issues.md`, "App and UI", "Open Transfer opens the History list, not the record").
 - `Models/HistoryEntityStore.swift` is the one object both read. It is registered with `AppDependencyManager` and set as `HistoryStore.observer`, which tells it after each saved add, delete, prune and clear. A change that fails to save is never announced (`HistoryStore.saveOverride` lets a test force one).
 - The index is changed by one queued operation at a time. It is rebuilt in full (remove all, index all) at launch and whenever Save Transfer History or Show History in Spotlight changes. A failed index call sets `needsRebuild`, and the next change rebuilds in full instead of applying a delta.
 - `Models/HistorySpotlightIndex.swift` wraps a named `CSSearchableIndex` (`CrocAppHistory`) behind `HistoryIndexing`, which the tests replace. Under a unit-test host and in a harness run the store gets no index, so the developer's Spotlight is never written.
@@ -373,11 +373,11 @@ A row's label names the thing, in Title Case, as a noun phrase, never "Enable" o
 | --- | --- |
 | **Save Transfer History** | Finished transfers are listed in History, which stays on this device. |
 | **Show History in Spotlight** (off by default; disabled while Save Transfer History is off) | Spotlight on this device can find past transfers by their file names. |
-| Section "Notifications": **Incoming Transfers**, **Finished Transfers** | Shown only while CrocApp is in the background. |
+| **Notifications**, **Show File Names in Notifications** (the second is disabled while the first is off) | When CrocApp is in the background, a transfer that finishes, fails or needs your answer sends a notification. It never shows a code phrase or link, and shows file names only if you turn that on. CrocApp asks the system for permission when you start your first transfer. |
 | **Haptics** (iPhone only) | A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer. |
 | Section "Saved codes": **Add Saved Code**, one row per name | A saved code is kept in this device's Keychain and never synced. Using it again means it is no longer single-use: anyone who learns it and connects first can receive your next transfer. |
 
-When the system has notifications off for CrocApp, both Notifications rows are disabled and the footer reads "Notifications are off for CrocApp in Settings." ("System Settings" on a Mac) with an **Open Settings** button. "Incoming" appears only in the label **Incoming Transfers** and the notification kind it names, because nothing is being received before the user says yes.
+When the system has notifications off for CrocApp, both Notifications rows are disabled and the footer reads "Notifications are off for CrocApp in Settings." ("System Settings" on a Mac) with an **Open Settings** button. "Incoming" appears in no label, because nothing is being received before the user says yes.
 
 ## Windows and keyboard focus
 
@@ -422,7 +422,7 @@ Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookma
 - **Delete** is immediate, except for a record whose link can still be revoked (`controller.canRevoke`): then a dialog offers **Revoke Link and Delete**, **Delete and Keep Link** or Cancel. A failed revoke keeps the record. Delete is disabled while that record's revoke runs.
 - On macOS the Delete key, the context menu and `record(in:)` use only the rows in `shown`, the selection is cleared when the search changes, and the menu appears for one row only.
 - Code hints are `.privacySensitive()`. Relative dates and the link expiry text sit in `TimelineView(.everyMinute)`, so "yesterday" and Expires or Expired stay current.
-- **Clear** behind a confirmation.
+- **Clear History** behind a confirmation, whose button is **Clear All**.
 - **Send Again** for send records that carry bookmarks: resolve the bookmarks, then `router.openSend`.
 
 **Both platform probe branches must call `startAccessingSecurityScopedResource()` before `fileExists`.** The sandbox denies `stat` on an unopened scope.

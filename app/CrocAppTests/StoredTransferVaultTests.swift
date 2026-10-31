@@ -85,6 +85,29 @@ import Testing
         #expect(reopened.receipt(id: "b") == nil)
     }
 
+    /// A locked Keychain must not read as empty: the next write would replace
+    /// every stored receipt, and with it the right to revoke those links.
+    @Test func aFailedReadBlocksWritesSoStoredReceiptsAreNeverOverwritten() {
+        let store = FakeSecretStore()
+        StoredTransferVault(secrets: store, now: now).add(receipt("a"))
+        let stored = store.items[Self.account]
+
+        store.failReads = true
+        let vault = StoredTransferVault(secrets: store, now: now)
+        #expect(vault.loadFailed)
+        #expect(!vault.add(receipt("b")))
+        #expect(vault.receipt(id: "b") != nil, "usable until the app quits")
+        vault.purgeExpired(now: now.addingTimeInterval(7200))
+        #expect(store.items[Self.account] == stored, "the stored receipts are untouched")
+
+        store.failReads = false
+        #expect(vault.add(receipt("c")), "the write retries the read first")
+        #expect(!vault.loadFailed)
+        let reopened = StoredTransferVault(secrets: store, now: now)
+        #expect(reopened.receipt(id: "a") != nil)
+        #expect(reopened.receipt(id: "c") != nil)
+    }
+
     @Test func unreadableItemStartsEmpty() {
         let store = FakeSecretStore()
         store.items[Self.account] = "not json"

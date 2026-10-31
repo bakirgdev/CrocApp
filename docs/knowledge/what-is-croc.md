@@ -133,7 +133,7 @@ croc --relay myserver:9009 send f                    # self-hosted relay
   - v10's `message.Message` (through v10.7.0) has no version field at all.
   - The v11 key schedule also differs from v10's.
 - **v10 peers often never meet.** v10 derives the relay room from the code's first 4 characters, and v11 from the first word. v10's default relay is not always the pool relay a v11 code maps to. So `peerVersion` fires only when both reach the same room.
-- **Other clients**: croc's README lists a community native Kotlin client (`croc-app`, on F-Droid) that is not in the croc repo. `prior-art.md` covers its subprocess architecture, which is unusable on iOS. The README also lists `croc-desktop` (Wails, croc in process) with experimental iOS and Android builds. No dedicated free native iOS client is listed, so CrocApp fills a real gap.
+- **Other clients**: croc's README lists a community native Kotlin client (`croc-app`, on F-Droid) that is not in the croc repo. It runs the croc binary as a subprocess, an architecture iOS forbids. The README also lists `croc-desktop` (Wails, croc in process) with experimental iOS and Android builds. No dedicated free native iOS client is listed, so CrocApp fills a real gap.
 - **iOS friction points**:
   - UDP multicast discovery needs the `com.apple.developer.networking.multicast` entitlement.
   - The local relay needs listening sockets.

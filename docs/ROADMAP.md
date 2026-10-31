@@ -2,7 +2,7 @@
 
 What CrocApp intends to do and not do. This is intent, not a promise: priorities change, and one maintainer sets the pace (see [`GOVERNANCE.md`](../GOVERNANCE.md)). The plan changes by pull request to this file. To propose something, open a [discussion](https://github.com/bakirgdev/CrocApp/discussions) or a [feature request](https://github.com/bakirgdev/CrocApp/issues/new?template=feature_request.yml).
 
-Shipped work is in [`CHANGELOG.md`](../CHANGELOG.md). Release status is in [`knowledge/project-overview.md`](knowledge/project-overview.md), "Status".
+Shipped work is in [`CHANGELOG.md`](../CHANGELOG.md). Release status is in [`docs/README.md`](README.md), "Status".
 
 ## Next milestone
 
@@ -32,7 +32,7 @@ Each planned item is a GitHub issue, so it can be discussed, linked and closed b
 | Not planned | Why |
 |---|---|
 | Anything in the [Unlikely to be merged](../CONTRIBUTING.md#unlikely-to-be-merged) table: iOS or macOS below 26, telemetry, a paid tier, a UIKit or AppKit rewrite, bundled fonts or icon sets, changes to croc's protocol or crypto | Recorded decisions, with the reason for each in that table |
-| Windows, Linux or Android clients | Non-goal ([project overview](knowledge/project-overview.md)). Interest can be shown in an [issue](https://github.com/bakirgdev/CrocApp/issues) |
+| Windows, Linux or Android clients | Non-goal ([project non-goals](README.md#non-goals)). Interest can be shown in an [issue](https://github.com/bakirgdev/CrocApp/issues) |
 | Forking or reimplementing croc | CrocApp wraps croc |
 | A CrocApp web version | croc's own browser client at [getcroc.com](https://getcroc.com) already covers it |
 | `--stdout` piping, `--classic` mode, `--remember` | Skipped in [`knowledge/features.md`](knowledge/features.md), "Skipped": CLI-only, insecure by design, and redundant with persistent settings |
