@@ -1,4 +1,5 @@
 import CrocKit
+import Foundation
 import Testing
 
 @testable import CrocApp
@@ -14,16 +15,21 @@ import Testing
     }
 
     /// Answers each probe from `verdicts[family]` and records what it was asked.
+    /// `RelayHealth` runs the probes in a task group, so the record is locked.
     private nonisolated final class Probe: @unchecked Sendable {
-        var asked: [(String, String, RelayFamily)] = []
+        private let lock = NSLock()
+        private var calls: [(String, String, RelayFamily)] = []
         var verdicts: [RelayFamily: RelayCheckResult.Verdict] = [:]
+
+        var asked: [(String, String, RelayFamily)] { lock.withLock { calls } }
+        func record(_ call: (String, String, RelayFamily)) { lock.withLock { calls.append(call) } }
     }
 
     private func health(_ probe: Probe) -> RelayHealth {
         RelayHealth(
             settings: settings,
             checker: { address, password, family in
-                probe.asked.append((address, password, family))
+                probe.record((address, password, family))
                 return RelayCheckResult(
                     family: family, ip: nil, latencyMs: 5,
                     verdict: probe.verdicts[family] ?? .ok)
