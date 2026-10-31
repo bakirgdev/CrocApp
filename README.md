@@ -110,7 +110,7 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 | Send folders | positional args |
 | Send text and clipboard contents | `--text` |
 | Receive by code phrase | positional args |
-| Custom code phrase | `--code` |
+| Custom code phrase, and saved codes per peer | `--code` |
 | Show QR on send, scan QR on receive | `--qrcode` |
 | Choose output folder; Files-visible by default on iOS | `--out` |
 | Keep Both or Replace when a file already exists; resume with Replace | `--rename`, `--overwrite` |
@@ -158,7 +158,7 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 
 | Feature |
 |---|
-| Share extension: send from any app (iOS) |
+| Share extension: send files, text and links from any app (iOS, Mac) |
 | Menu bar quick send and Open at login (macOS) |
 | Receive links: `crocapp://`, `crocapp.dev/r/` and `getcroc.com/?code=` open Receive with the code filled in |
 | Shortcuts and Siri actions: Send Files, Send Text, Receive |

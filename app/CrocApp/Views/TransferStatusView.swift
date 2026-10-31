@@ -231,12 +231,12 @@ struct TransferStatusView: View {
     // The two platforms spell the same pane differently, and naming the wrong
     // one is worse than naming none.
     #if os(iOS)
-    private static let localNetworkDeniedDetail = String(
+    static let localNetworkDeniedDetail = String(
         localized:
             "Transfers use the relay only. Enable it in Settings › Privacy & Security › Local Network for faster direct transfers.",
         comment: "The path names the iOS Settings app. Match its translated pane names.")
     #else
-    private static let localNetworkDeniedDetail = String(
+    static let localNetworkDeniedDetail = String(
         localized:
             "Transfers use the relay only. Enable it in System Settings › Privacy & Security › Local Network for faster direct transfers.",
         comment: "The path names the macOS System Settings app. Match its translated pane names."

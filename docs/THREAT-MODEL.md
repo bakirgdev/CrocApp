@@ -44,6 +44,7 @@ CrocApp does not defend against, and does not claim to:
 |---|---|---|
 | File and text contents | Sender and receiver devices; ciphertext in transit | Confidentiality, integrity |
 | Code phrase | Screen, QR and `https://crocapp.dev/r/#<code>` link; never stored in full in History (first word or two characters only) | Whoever has it can join the transfer |
+| Saved codes | Keychain, on this device only (`SavedCodes`, item `savedCodes`): never synced, never in `UserDefaults`, History, Spotlight, logs or notifications. Only a user's own **Add Saved Code** writes one | Whoever has a saved code can join the next transfer that uses it (Saved codes) |
 | Transfer key | Memory of the Go engine, one session | Decrypts the transfer |
 | Send as Link key | The link's `#` fragment; the receipt in the Keychain, on this device only | Anyone with the whole link decrypts the files |
 | Relay password, proxy credentials | Keychain, on this device only (`app/CrocApp/Support/KeychainStore.swift`): never synced, and not restored to another device from a backup. An item written by an earlier build takes this class on its next write | Access to the user's own relay or proxy |
@@ -87,7 +88,7 @@ CrocApp does not defend against, and does not claim to:
 |---|---|---|---|
 | **SwiftUI to `CrocKit`** | Typed Swift calls | Nothing from the network; the layer above is the user | `CrocEngine` is the single caller of Go; `TransferController` the single caller of `CrocEngine` (`ARCHITECTURE.md`, "Layer diagram") |
 | **`CrocKit` to Go (gomobile)** | Scalars and strings; file lists and progress as JSON; paths joined by `\n` | Go side trusts the joined path list | `CrocEngine.joinedPaths` refuses line breaks; Go `splitPaths` keeps names exact; malformed JSON becomes a failure (`DelegateBridge`) |
-| **App to share extension, via App Group** | Staged files and `manifest.json` | The manifest is data, not trusted | `ShareInbox.refresh` ignores a manifest whose batch name is not `batch-` and a UUID (`ShareHandoff.isValidBatchName`) and filters file names with `ReceivedName.isUnsafe`; the extension has only the App Group entitlement and no network |
+| **App to share extension, via App Group** | Staged files and `manifest.json`, which carries shared text or links in its `text` field. That text sits in the App Group container, unencrypted beyond the device's file protection, until the app consumes the manifest on its next foreground (the app deletes it then, before the user presses Send), so shared text can be a secret the user did not mean to keep on disk | The manifest is data, not trusted | `ShareInbox.refresh` re-checks the text cap (`ShareHandoff.maxTextBytes`, 1 MiB, also enforced by `ShareStager`) and never logs the text; it ignores a manifest whose batch name is not `batch-` and a UUID (`ShareHandoff.isValidBatchName`) and filters file names with `ReceivedName.isUnsafe`; the extension has only the App Group entitlement (and the sandbox on macOS) and no network |
 | **Go engine to the network and filesystem** | Sockets, files, process-global `Chdir`, stdin | Everything on the wire | Common weaknesses countered |
 | **Device to the other device** | Encrypted stream, direct or via relay | Only a device that proved knowledge of the code phrase; still treated as untrusted for names and sizes | PAKE, key confirmation, per-message AES-GCM; names and sizes validated on receipt (path traversal, injection, overflow and time-of-check rows of Common weaknesses countered) |
 | **Device to relay or link server** | Ciphertext, plus metadata | Neither is trusted with plaintext | Separate relay-hop authentication; link server gets ciphertext only (Relay and local network, Send as Link) |
@@ -111,14 +112,25 @@ The relay hop is authenticated with its own PAKE using the relay password (an ou
 
 Local Network Only (`OnlyLocal`) keeps the connection on the local network. The engine is croc's relay-only build (`croc_no_tailcat`, set in `scripts/build-xcframework.sh`), so the relay and the LAN are the only data paths. There is no Tailcat, DERP or `tailcat.dev` path in the shipped binary, and no setting to turn one on. The trust badge names the configured route, not the path that carried the data (`known-issues.md`, Accepted).
 
+### The relay this Mac can run (macOS)
+
+With **Run a Relay** on, the app listens on four TCP ports (the base port, default 9009, and the next three) on every interface, so any device that can reach the Mac can connect to it. This is the only time CrocApp accepts inbound connections other than croc's per-send local relay.
+- It is off by default and never starts by itself. It starts only from the user's switch, or at launch when **Start Relay at Launch** (off by default) is on, and it stops when the app quits. A harness run never starts it.
+- The relay is croc's own relay code, in the same process. It sees ciphertext only, as any croc relay does (Relay and local network). It sees metadata: the IP addresses and timing of devices that use it.
+- Admission is croc's relay password. A blank password is croc's built-in default, which is public, so the relay is then open to anyone who can reach it. The Settings footer says so. A password the user sets is held in the Keychain under its own account, shown only as dots, and never logged or sent anywhere.
+- A relay open to the internet is the user's choice: the app does not open a firewall or router port. Rate and room limits are croc's defaults.
+- The health check dials only the relay the user configured (or croc's public pool) with the configured password, joins a throwaway room and sends nothing else. It dials directly and never uses the Advanced proxies, so it shows this device's own IP address to each relay it probes (see Residual risks). With a proxy set it does not run when the screen opens: it says so and waits for **Check Anyway**.
+- The relay listens on every interface, global IPv6 included, so with a blank password it can be an open relay reachable from the internet. The Relay tab says so, and shows a warning while the relay runs without a password. Binding only to chosen addresses was not done: the set of addresses changes with the network and an IPv6 prefix is not stable.
+
 ### App sandbox and entitlements
 
 | Target | Entitlements | Why |
 |---|---|---|
-| macOS app (`app/CrocApp/CrocApp.entitlements`) | `app-sandbox`, `network.client`, `network.server`, `files.user-selected.read-write`, `files.downloads.read-write`, associated domain `applinks:crocapp.dev` | `network.server` is only for croc's local relay listener; `downloads.read-write` is for the default output folder `~/Downloads/CrocApp` |
+| macOS app (`app/CrocApp/CrocApp.entitlements`) | `app-sandbox`, `network.client`, `network.server`, `files.user-selected.read-write`, `files.downloads.read-write`, associated domain `applinks:crocapp.dev` | `network.server` is only for croc's local relay listener and the relay the user can run from Settings; `downloads.read-write` is for the default output folder `~/Downloads/CrocApp` |
 | iOS app (`app/CrocApp/CrocApp-iOS.entitlements`) | App Group `group.com.bakirgdev.CrocApp`, associated domain, multicast networking | Share extension handoff; universal links; local-network discovery |
 | Direct (DMG) build (`app/CrocAppDirect/CrocAppDirect.entitlements`) | The macOS set plus two `temporary-exception.mach-lookup.global-name` entries for Sparkle's installer services (`-spks`, `-spki`) | Sandboxed Sparkle updates |
-| Share extension (`app/CrocShare/CrocShare.entitlements`) | App Group only | Copies files into the group container; no network |
+| Share extension, iOS (`app/CrocShare/CrocShare.entitlements`) | App Group only | Copies files into the group container; no network |
+| Share extension, macOS (`CrocShare-macOS.entitlements`, `CrocShareDirect.entitlements`) | `app-sandbox` and the team-prefixed App Group (macOS app and Direct carry the same group) | Copies the files and folders Finder shares into the group container; no network, no file entitlement (the system grants access to the shared items). On macOS, any process signed by team `HBSU359M33` can read the group container, so a staged file is as exposed as any file of the user until the app consumes it |
 
 `ENABLE_APP_SANDBOX` and `ENABLE_HARDENED_RUNTIME` are set to `YES` on the app targets in `app/CrocApp.xcodeproj/project.pbxproj`. User-picked URLs are accessed through security-scoped bookmarks and released at the end of the transfer (`ARCHITECTURE.md`, "Platform split").
 
@@ -133,6 +145,16 @@ Local Network Only (`OnlyLocal`) keeps the connection on the local network. The 
 ### Built-in DNS resolver
 
 **Built-in DNS Resolver** (`--internal-dns`, off by default) replaces the system lookup of a relay's host name. croc sends the name to all 18 servers in its `publicDNS` list (Cloudflare, Google, Quad9, Comodo, Cisco OpenDNS) at once, over plain DNS on port 53, so the lookup bypasses the system resolver, a VPN's DNS and encrypted DNS. Anyone on the path and those operators see the relay's name and the device's IP address, never a code, key or file. It applies only to a relay dialed by name without a proxy (a proxy resolves the name itself, and Send as Link never uses it). The setting has its own switch and footnote, and `web/landing/privacy/index.html` lists the operators. Accepted when the user turns it on.
+
+### Saved codes
+
+A generated code lives for one transfer. A saved code is reused, so it is a standing secret, and the single-use property that limits a leaked code is gone. CrocApp offers saved codes anyway, because people who exchange files with the same peer often want a code they can reuse, and it makes the cost visible where the code is saved.
+
+- **Exposure.** Anyone who learns a saved code, and connects to the relay before the intended peer, receives the next transfer sent under it (or sends to a receiver waiting on it). PAKE still stops anyone who lacks the code. It does not help against someone who has it. croc shows no peer identity beyond "someone knew the code". **Confirm on Both Sides** (`--ask`) makes a sender confirm each connection before files go, which is the mitigation for the sending direction. Receiving, **Auto-Accept Transfers** off keeps the preview, which the user can decline.
+- **Control.** The warning is shown where a code is saved: in the editor and in the Settings section footer. Nothing is saved unless the user adds it. Every saved code is listed by name, and can be renamed or deleted, in Settings.
+- **At rest.** The Keychain item uses `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` and is not synchronizable (see Assets). Codes are drawn in the app's own window only (the editor), never in notifications, widgets, Live Activities, the App Group or Spotlight. A transfer sent with a custom code, or received with a saved one, leaves no code hint in History at all (`HistoryDraft`, `TransferController`), not even the first word a generated code keeps.
+- **Load failure.** If the Keychain cannot be read (for example before first unlock), `SavedCodes` reports the failure and blocks writes until a read succeeds, so a save cannot replace the stored list with an incomplete one.
+- **Residual.** A saved code is readable by anyone using the unlocked app. The Keychain item is not behind a biometric prompt, for the same reason as the relay password: background transfers need it.
 
 ### Build, update and release
 
@@ -204,6 +226,8 @@ Photos, dropped and pasted images are copied into `SendStaging` under the tempor
 | Metadata (IP, timing, volume) visible to relay and network | Accepted (Non-goals). |
 | The trust badge names the configured route, not the path used | Accepted; the claim that the relay sees ciphertext holds on every path. |
 | Entitlement exceptions: `network.server`, Sparkle mach-lookup (Direct build) | Each has a stated reason (App sandbox and entitlements). |
+| The relay health check bypasses the Advanced proxies, so the relays it probes see this device's real IP address | Mitigated: with a proxy set the check never runs by itself, warns that it connects directly and needs **Check Anyway**. Without a proxy the address is the one a transfer would show anyway. |
+| The Mac relay with a blank password admits anyone who can reach its ports | Accepted: the user turns it on, the footer says so, and a password is one field away (The relay this Mac can run). |
 
 ## Keeping this current
 

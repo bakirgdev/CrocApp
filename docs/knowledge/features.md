@@ -15,6 +15,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Send text or clipboard | `--text` | all | shipped |
 | Receive with a code | positional | all | shipped |
 | Custom code phrase (at least 6 characters) | `--code` | all | shipped |
+| Saved codes: a custom code kept per peer name in the Keychain, picked in one tap on Send and Receive, managed in Settings. Nothing is saved except by the user's own **Add Saved Code**, and the editor warns that a reused code is no longer single-use | `--code` | all | shipped |
 | QR code on send, QR scan on receive | `--qrcode` plus app-native scanner | all; scanning is iOS and iPadOS only | shipped |
 | Choose the output folder (iOS default is the Files-visible app folder) | `--out` | all | shipped |
 | Keep Both or Replace on receive, answered on the incoming sheet; Replace resumes a partial file | `--rename`, `--overwrite`, resume | all | shipped |
@@ -43,12 +44,16 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Upload speed limit (sender side) | `--throttleUpload` | all | shipped |
 | Sender IP, direct connect (receive side) | `--ip` | all | shipped |
 | Custom multicast address | `--multicast` | all | shipped |
+| Run a relay on this Mac (Settings > Relay, and a toggle in the menu-bar window): port, optional password, address to use on the other device, **Start Relay at Launch** (off by default) | `croc relay` | macOS only | shipped |
+| Relay health check (**Check Relay…** in Settings): reachability and latency over IPv4 and IPv6, whether the relay accepts the password, and the local-network state, with what to change | none (croc's relay handshake) | all | shipped |
 
 ## App-native features
 
 | Feature | Platform | Status |
 |---|---|---|
 | Share extension (send from any app) | iOS and iPadOS | shipped |
+| Share extension accepts shared text and web links (sent as a text transfer from the Send screen; files win in a mixed share; capped at 1 MiB) | iOS, iPadOS and macOS | shipped; not verified through a real share sheet |
+| Share extension (send from Finder's Share menu) | macOS | shipped; the system's Share menu on a real Finder selection is not verified |
 | Add Photos, paste and drop of images and text on Send. Photos keep their names, ask no library permission, and stage in a folder that is deleted with the row or the screen | iOS and iPadOS (Photos), all (paste, drop). Paste from a hardware keyboard on iPad needs iOS 27 | shipped |
 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` (universal link), and `https://getcroc.com/?code=`. One parser, `TransferLink`. Opening a link prefills Receive and never connects. | all | shipped |
 | Trust UI: encryption badge, "How it works", active-relay indicator | all | shipped |
@@ -74,6 +79,12 @@ Details:
   - **Single Connection** (`--no-multi`, `noMultiplexing`) sends the data over one connection. Sending only: `EngineStart` leaves it off for a receive, because a receiver on one connection hangs against a sender that multiplexes.
   - **Built-in DNS Resolver** (`--internal-dns`, `internalDNS`) makes croc look up a direct relay's host name through public DNS servers it ships a list of, not the system resolver. croc queries all 18 servers in its list (Cloudflare, Google, Quad9, Comodo, Cisco OpenDNS) at once over plain port 53, bypassing the system, VPN and encrypted DNS, and tells each the relay's name. So it is off by default, the footnote says so, and the privacy page lists the operators (`THREAT-MODEL.md`, "Built-in DNS resolver"). A proxy keeps resolving the name itself, and Send as Link ignores it. The engine sets croc's process-wide flag for the length of a transfer and restores it (`setNetworkGlobals`).
   - **Exact Paths** (`--exclude-file`, `excludePaths`) skips exact relative paths inside a sent folder, or a picked file by its name. The check refuses an absolute path or one that leaves the folder. **Exclude from sends** in Settings matches substrings instead.
+
+- **Saved codes.**
+  - `SavedCodes` (`Models/SavedCodes.swift`) keeps every saved code, with its peer name, as one JSON array in the Keychain item `savedCodes` (this device only, not synced, as `KeychainStore` stores everything). Never in `UserDefaults`, the App Group, Spotlight, History, logs or notifications. Entries are sorted by name. A transfer that used a custom or saved code leaves no code hint in History.
+  - **Settings > Saved codes** lists names only. A row opens the editor (name, code, **Save**, **Delete Saved Code**); swipe or the context menu also delete. **Add Saved Code** opens the same editor. The editor and the section footer say that a saved code is no longer single-use: anyone who learns it and connects first can receive the next transfer (`THREAT-MODEL.md`, "Saved codes").
+  - Send (custom code) and Receive show one button per saved code under the code field. A tap fills the field and never starts a transfer. With none saved the row is absent.
+  - Not offered: saving a code from the Send or Receive field, and the menu bar window. Both would save without the Settings editor's warning in front of the user.
 
 - **Link page.** The `web/landing/r/` page reads the code from the URL fragment, so no request carries it. It offers **Open in CrocApp**, **Get CrocApp** (the download section of the landing page), **Mac Disk Image**, and **Receive in your browser**. The last one goes through croc's own web app at getcroc.com and needs the default relays.
 - **Send as Link.**

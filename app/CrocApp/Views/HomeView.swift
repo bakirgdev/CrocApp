@@ -171,6 +171,7 @@ struct SettingsScreen: View {
     var body: some View {
         Form {
             GeneralSettingsSections()
+            SavedCodesSection()
             PowerSettingsSections()
             Section {
                 NavigationLink("Advanced", value: AppRouter.Route.advancedSettings)
@@ -193,5 +194,6 @@ struct SettingsScreen: View {
                 settings: AppSettings(), vault: StoredTransferVault(secrets: MemorySecretStore()))
         )
         .environment(history)
+        .environment(SavedCodes(secrets: MemorySecretStore()))
         .modelContainer(history.container)
 }

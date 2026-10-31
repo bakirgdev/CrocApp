@@ -30,6 +30,7 @@ const sidebars: SidebarsConfig = {
     ]),
     ...group('Customize', [
       'guide/settings',
+      'guide/own-relay',
       'guide/history',
       'guide/menu-bar',
       'guide/shortcuts',

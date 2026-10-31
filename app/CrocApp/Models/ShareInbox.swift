@@ -3,15 +3,18 @@ import OSLog
 import Observation
 
 // Reads files staged by the CrocShare extension out of the App Group
-// container (the contract is in Shared/ShareHandoff.swift). macOS has no
-// share extension and no app group entitlement — containerURL returns nil
-// there and everything degrades to a no-op.
+// container (the contract is in Shared/ShareHandoff.swift). Where the
+// container is unavailable (an unsigned build) containerURL returns nil and
+// everything degrades to a no-op.
 @MainActor
 @Observable
 final class ShareInbox {
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "share")
 
     private(set) var staged: [URL] = []
+    /// Shared text or links from the manifest, kept out of logs. Only set when
+    /// no file is staged.
+    private(set) var text: String?
 
     func refresh() {
         guard let inbox = ShareHandoff.inboxURL else { return }
@@ -25,6 +28,7 @@ final class ShareInbox {
         purgeStaleBatches(in: inbox, keeping: manifest?.batch)
         guard let manifest else {
             staged = []
+            text = nil
             return
         }
         let batchDir = inbox.appendingPathComponent(manifest.batch, isDirectory: true)
@@ -35,6 +39,12 @@ final class ShareInbox {
             .filter { !ReceivedName.isUnsafe($0) }
             .map { batchDir.appendingPathComponent($0) }
             .filter { FileManager.default.fileExists(atPath: $0.path) }
+        // Same boundary, same rule as the names: the cap is re-checked here.
+        text =
+            staged.isEmpty
+            ? manifest.text.flatMap {
+                $0.utf8.count <= ShareHandoff.maxTextBytes ? ShareHandoff.joinText([$0]) : nil
+            } : nil
     }
 
     // Called when the user decides (send or discard): the prompt must not

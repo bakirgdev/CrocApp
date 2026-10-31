@@ -290,6 +290,13 @@ extension TransferFailure {
                 remedy: .tryAgain)
         case .engineStuck:
             return .engineStuck
+        case .portInUse:
+            // Only the relay this Mac runs raises it, never a transfer.
+            return TransferFailure(
+                title: String(localized: "That port is already in use"),
+                detail: String(
+                    localized: "Choose a different relay port, or quit the app that uses it."),
+                remedy: nil)
         case .joinedEarly:
             // The receiver joined first, or a slow link made croc's probe reply
             // late. The sender has failed too by then, and a generated code

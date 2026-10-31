@@ -6,6 +6,10 @@ import Foundation
 public enum RelayDefaults {
     public static var address: String { CrocmobileDefaultRelayAddress() }
     public static var address6: String { CrocmobileDefaultRelayAddress6() }
+    /// The public relay pool a transfer picks from by its code phrase.
+    public static var publicPool: [String] {
+        CrocmobilePublicRelays().split(separator: "\n").map(String.init)
+    }
 }
 
 /// A setting whose value the engine checks. `validate(_:)` runs the check a
@@ -231,6 +235,8 @@ public struct EngineFailure: Error, Equatable, Sendable {
         case engineStuck
         /// This receiver joined the room before the sender (croc's local-probe race).
         case joinedEarly
+        /// Hosting a relay: a port it needs is taken.
+        case portInUse
     }
 
     public let code: Code

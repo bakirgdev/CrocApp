@@ -34,6 +34,7 @@ import Testing
         (.transferActive, .tryAgain),
         (.engineStuck, nil),
         (.joinedEarly, nil),
+        (.portInUse, nil),
         (.other, .tryAgain),
     ]
 

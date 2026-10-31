@@ -10,7 +10,8 @@
 		DA000000000000000000000F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = DA000000000000000000000D /* Sparkle */; };
 		DA0000000000000000000010 /* CrocKit in Frameworks */ = {isa = PBXBuildFile; productRef = DA000000000000000000000E /* CrocKit */; };
 		84F97A57301906920055C4C7 /* CrocKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3F021D37A76468BD7E9B164B /* CrocKit */; };
-		CA000000000000000000000C /* CrocShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000001 /* CrocShare.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CA000000000000000000000C /* CrocShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000001 /* CrocShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CB000000000000000000000B /* CrocShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB0000000000000000000001 /* CrocShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -28,6 +29,13 @@
 			remoteGlobalIDString = CA0000000000000000000006;
 			remoteInfo = CrocShare;
 		};
+		CB0000000000000000000009 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84DEC93F30101868006ECBE6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CB0000000000000000000002;
+			remoteInfo = "CrocShare Direct";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -42,6 +50,17 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CB000000000000000000000C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CB000000000000000000000B /* CrocShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +69,7 @@
 		84DEC94730101868006ECBE6 /* CrocApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CrocApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0000000000000000000001 /* CrocShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrocShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA0000000000000000000003 /* CrocApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CrocApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB0000000000000000000001 /* CrocShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrocShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -112,6 +132,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CB0000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -141,6 +168,7 @@
 			children = (
 				84DEC94730101868006ECBE6 /* CrocApp.app */,
 				CA0000000000000000000001 /* CrocShare.appex */,
+				CB0000000000000000000001 /* CrocShare.appex */,
 				844EAD41307C8833006F34A7 /* CrocAppTests.xctest */,
 				DA0000000000000000000003 /* CrocApp.app */,
 			);
@@ -229,10 +257,12 @@
 				DA0000000000000000000005 /* Sources */,
 				DA0000000000000000000006 /* Frameworks */,
 				DA0000000000000000000007 /* Resources */,
+				CB000000000000000000000C /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				CB000000000000000000000A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				84DEC94930101868006ECBE6 /* CrocApp */,
@@ -247,6 +277,29 @@
 			productName = CrocApp;
 			productReference = DA0000000000000000000003 /* CrocApp.app */;
 			productType = "com.apple.product-type.application";
+		};
+		CB0000000000000000000002 /* CrocShare Direct */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CB0000000000000000000003 /* Build configuration list for PBXNativeTarget "CrocShare Direct" */;
+			buildPhases = (
+				CB0000000000000000000005 /* Sources */,
+				CB0000000000000000000006 /* Frameworks */,
+				CB0000000000000000000007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CA0000000000000000000002 /* CrocShare */,
+				DA0000000000000000000011 /* Shared */,
+			);
+			name = "CrocShare Direct";
+			packageProductDependencies = (
+			);
+			productName = CrocShare;
+			productReference = CB0000000000000000000001 /* CrocShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -267,6 +320,9 @@
 					};
 					CA0000000000000000000006 = {
 						CreatedOnToolsVersion = 26.6;
+					};
+					CB0000000000000000000002 = {
+						CreatedOnToolsVersion = 27.0;
 					};
 					DA0000000000000000000008 = {
 						CreatedOnToolsVersion = 27.0;
@@ -295,6 +351,7 @@
 				CA0000000000000000000006 /* CrocShare */,
 				844EAD40307C8833006F34A7 /* CrocAppTests */,
 				DA0000000000000000000008 /* CrocApp Direct */,
+				CB0000000000000000000002 /* CrocShare Direct */,
 			);
 		};
 /* End PBXProject section */
@@ -322,6 +379,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		DA0000000000000000000007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB0000000000000000000007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -359,6 +423,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CB0000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -369,9 +440,13 @@
 		};
 		CA000000000000000000000B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			platformFilter = ios;
 			target = CA0000000000000000000006 /* CrocShare */;
 			targetProxy = CA000000000000000000000A /* PBXContainerItemProxy */;
+		};
+		CB000000000000000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CB0000000000000000000002 /* CrocShare Direct */;
+			targetProxy = CB0000000000000000000009 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -657,21 +732,30 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = CrocShare/CrocShare.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "CrocShare/CrocShare-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Config/CrocShare-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "Config/CrocShare-macOS-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.CrocShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -684,21 +768,30 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = CrocShare/CrocShare.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "CrocShare/CrocShare-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Config/CrocShare-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "Config/CrocShare-macOS-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.CrocShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -765,6 +858,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.direct;
+				PROVISIONING_PROFILE_SPECIFIER = "$(DEVID_PROFILE)";
 				PRODUCT_NAME = CrocApp;
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;
@@ -777,6 +871,66 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		CB0000000000000000000004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_ENTITLEMENTS = CrocShare/CrocShareDirect.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/CrocShare-macOS-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.direct.CrocShare;
+				PRODUCT_NAME = CrocShare;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DIRECT $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		CB0000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_ENTITLEMENTS = CrocShare/CrocShareDirect.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/CrocShare-macOS-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.direct.CrocShare;
+				PRODUCT_NAME = CrocShare;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DIRECT $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
@@ -825,6 +979,15 @@
 			buildConfigurations = (
 				DA000000000000000000000A /* Debug */,
 				DA000000000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CB0000000000000000000003 /* Build configuration list for PBXNativeTarget "CrocShare Direct" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB0000000000000000000004 /* Debug */,
+				CB0000000000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

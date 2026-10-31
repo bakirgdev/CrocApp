@@ -39,4 +39,13 @@ Type your own into **Custom code (optional)** on the Send screen to share it by 
 
 - It must be at least 6 characters. A short, guessable code is easier for someone else to join.
 - Codes that start with the same word can land in the same relay room. Generated codes rarely collide: two share a first word about once in 1296.
+- A custom code you reuse is no longer single-use. See [Saved codes](#saved-codes).
 - Start the sender before the receiver. A receiver that joins first can fail with a generic error. See [Troubleshooting](../troubleshooting.md#the-receiver-started-first).
+
+## Saved codes
+
+If you send to or receive from the same person often, keep their code. In **Settings**, under **Saved codes**, tap **Add Saved Code**, then enter a name and the code phrase (at least 6 characters). On **Send** (under the custom code field) and on **Receive**, each saved code is a button with the name: tap it to fill in the code. Nothing starts until you press **Send** or **Receive**. Tap a name in Settings to rename or change it, or choose **Delete Saved Code**. On iPhone and iPad you can also swipe a row to delete it.
+
+A saved code is no longer single-use. Anyone who learns it and connects first can receive your next transfer, so use one only with someone you trust, and delete it when you stop needing it. When receiving, keep **Auto-Accept Transfers** off so you see the file list and can decline. When sending, turn on **Confirm on Both Sides** in [Settings](settings.md) to confirm the connection before anything is sent.
+
+Saved codes are kept in this device's Keychain. They are not synced to other devices or iCloud, and they never appear in History, Spotlight or notifications.

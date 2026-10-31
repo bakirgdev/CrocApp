@@ -16,7 +16,7 @@ final class SendServicesProvider: NSObject {
     /// can be a whole document, and the Send screen's editor is not built for
     /// that; the limit stops a stray Select All from hanging it. Files have no
     /// such limit here: the send validates them.
-    static let maxTextBytes = 1_048_576
+    static let maxTextBytes = ShareHandoff.maxTextBytes
 
     private let router: AppRouter
 

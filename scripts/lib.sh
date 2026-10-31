@@ -41,6 +41,19 @@ logged() { # logged LOG CMD...
   }
 }
 
+# One harness run at a time on this Mac, across checkouts: the app harnesses
+# share the app container, ~/Downloads/CrocApp and the pasteboard, and
+# verify-interop.sh binds croc's default ports and multicast group, so a second
+# run breaks the first in ways that look like transfer failures
+# (docs/known-issues.md, "Harnesses"). Release it from the caller's EXIT trap.
+take_harness_lock() {
+  HARNESS_LOCK="$TMPROOT/crocapp-harness.lock"
+  mkdir "$HARNESS_LOCK" 2> /dev/null \
+    || fail "another harness run holds $HARNESS_LOCK (pid $(cat "$HARNESS_LOCK/pid" 2> /dev/null || echo unknown)); wait for it, or delete the directory if that run is gone"
+  echo $$ > "$HARNESS_LOCK/pid"
+}
+release_harness_lock() { if [ -n "${HARNESS_LOCK:-}" ]; then rm -rf "$HARNESS_LOCK"; fi; }
+
 require_croc() {
   command -v "$CROC" > /dev/null 2>&1 || fail "croc not found at '$CROC' (set CROC=/path/to/croc)"
 }
