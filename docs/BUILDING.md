@@ -130,6 +130,8 @@ scripts/verify-design.sh   # token mirrors, contrast, no raw web colors (design/
 scripts/verify-docs.sh     # links, repo paths and stale markers in the markdown (docs/AGENTS.md)
 ```
 
+Before tagging a release, `scripts/release-check.sh X.Y.Z` (needs `gh`) runs the checks the release rehearsal skips (`RELEASING.md`, "Each release").
+
 The website (landing page and docs site) builds into one artifact. Broken links and anchors fail it, and CI runs the same script in the `site build` job:
 
 ```bash

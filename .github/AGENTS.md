@@ -7,7 +7,7 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 | Path | Purpose |
 | --- | --- |
 | `workflows/ci.yml` | push-main + PR gate. A `changes` job diffs the base against the head and gates the other jobs by area (`docs checks` always runs; `site build` runs `scripts/assemble-site.sh` and `tsc` on the docs when the site files change); `ci pass` aggregates them |
-| `workflows/release.yml` | on `v*` tag: check the tag against `MARKETING_VERSION` and `CHANGELOG.md`, then (environment `release`) sign, notarize, write the Sparkle appcast, attest, publish. `workflow_dispatch` is a rehearsal that publishes nothing |
+| `workflows/release.yml` | on `v*` tag: check the tag against `MARKETING_VERSION` and `CHANGELOG.md`, then (environment `release`) sign, notarize, write the Sparkle appcast, attest, publish. `workflow_dispatch` is a rehearsal that publishes nothing and takes its notes from `## [Unreleased]`; `scripts/release-check.sh` covers the tag checks it skips |
 | `workflows/go-weekly.yml` | Monday run of the Go checks, so new govulncheck findings surface without a code change, plus `go test -fuzz` for 30 s per `Fuzz*` target (a failing input is uploaded as the `fuzz-failures` artifact); files or updates one `security` issue on failure |
 | `workflows/github-pages.yml` | on push to main (site paths only): builds `_site` and deploys it. The pre-merge check of the same build is the `site build` job in `ci.yml`; keep its `site` regex and this `paths:` list in step |
 | `workflows/reusable-*.yml` | `workflow_call` only. Edit the check here, never in a caller |
@@ -28,7 +28,7 @@ gh api repos/OWNER/REPO/git/ref/tags/TAG --jq '.object.type + " " + .object.sha'
 
 **Versions live in files, not in workflow text.** Xcode in `.xcode-version`, Node in `web/docs/.nvmrc`, pnpm in `packageManager` in `web/docs/package.json`, Go in `crocmobile/go.mod`, govulncheck and gomobile in its `tool` block, the croc v10 test peer in `scripts/croc-v10.version`. A tool downloaded in a workflow (shfmt, create-dmg) is pinned by `*_VERSION` and `*_SHA256` env next to the download. `.github/workflows/pin-watch.yml` reports what Dependabot cannot update, runner labels included (`docs/knowledge/tooling.md`, "Keeping versions current").
 
-**`ci pass` is an interface.** `main` requires a pull request (0 approvals) and the `ci pass` check (admins can bypass both), so renaming that job breaks merging. Merging is squash-only (title = PR title, body = PR body) and `main` requires linear history.
+**`ci pass` is an interface.** `main` requires a pull request (0 approvals), the `ci pass` check on a branch that is up to date with `main`, resolved conversations and linear history, with no admin bypass, so renaming that job blocks every merge. Merging is squash-only (title = PR title, body = PR body). Actions settings also require full-SHA pins.
 
 **A new file CI reads goes into the `changes` regex** of the job that reads it, or edits to that file skip the job.
 
