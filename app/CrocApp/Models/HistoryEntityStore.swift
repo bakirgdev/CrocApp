@@ -57,7 +57,7 @@ final class HistoryEntityStore: HistoryChangeObserver {
         let store = HistoryEntityStore(
             container: history.container, settings: settings,
             index: indexed && !isHostingTests ? SpotlightHistoryIndex() : nil)
-        history.observer = store
+        history.observers.append(store)
         AppDependencyManager.shared.add(dependency: store)
         store.start()
         return store

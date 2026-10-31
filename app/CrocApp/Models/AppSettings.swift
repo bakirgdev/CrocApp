@@ -82,6 +82,13 @@ final class AppSettings {
         didSet { save(notificationsShowFileNames, "settings.notificationsShowFileNames") }
     }
 
+    /// Off by default: widgets and the iOS Live Activity show on a locked
+    /// screen, so they say "Sending" or "Received" unless the user asks for
+    /// file names (`TransferSnapshotWriter`, `BackgroundCoordinator`).
+    var systemSurfacesShowFileNames: Bool {
+        didSet { save(systemSurfacesShowFileNames, "settings.systemSurfacesShowFileNames") }
+    }
+
     // Advanced. Defaults are croc's, read from `EngineOptions`.
     static let advancedDefaults = EngineOptions()
 
@@ -182,6 +189,8 @@ final class AppSettings {
         notificationsEnabled = Self.read(storage, "settings.notificationsEnabled", default: true)
         notificationsShowFileNames = Self.read(
             storage, "settings.notificationsShowFileNames", default: false)
+        systemSurfacesShowFileNames = Self.read(
+            storage, "settings.systemSurfacesShowFileNames", default: false)
         let croc = Self.advancedDefaults
         throttleUpload = Self.read(
             storage, "settings.advanced.throttleUpload", default: croc.throttleUpload)

@@ -345,6 +345,8 @@
     "One path per line" : {},
     "Open CrocApp" : {},
     "Open CrocApp to Accept" : {},
+    "Open Receive" : {},
+    "Open Send" : {},
     "Open Settings" : {},
     "Open Transfer" : {},
     "Open at Login" : {},
@@ -524,6 +526,7 @@
     "Share Text" : {},
     "Shared Files" : {},
     "Show File Names in Notifications" : {},
+    "Show File Names on the Lock Screen and in Widgets" : {},
     "Show History in Spotlight" : {},
     "Show Receive Folder in Files" : {},
     "Show Receive Folder in Finder" : {},
@@ -616,6 +619,9 @@
     "Transfer update" : {
       "comment" : "Notification text when the user hides previews on the lock screen."
     },
+    "Transferring…" : {
+      "comment" : "Subtitle of the iOS Live Activity while bytes move and file names are hidden."
+    },
     "Transfers use the relay only. Enable it in Settings › Privacy & Security › Local Network for faster direct transfers." : {
       "comment" : "The path names the iOS Settings app. Match its translated pane names."
     },
@@ -653,6 +659,7 @@
     "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay." : {},
     "When receiving, connects straight to the sender at this address and base port (9009 unless changed), skipping relays." : {},
     "Who it is for" : {},
+    "Widgets, and the Live Activity on iPhone, show only whether a transfer is sending or receiving unless you turn this on. They never show a code phrase or link. Widgets show the last transfer only while Save Transfer History is on." : {},
     "Works anywhere" : {},
     "Works until %@, for ^[%lld download](inflect: true)" : {
       "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows.",

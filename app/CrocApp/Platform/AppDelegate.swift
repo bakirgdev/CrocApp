@@ -22,6 +22,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        // An opened link or file needs a window, also after the user closed it.
+        AppRouter.shared.showMainWindow()
         let files = urls.filter(\.isFileURL)
         if !files.isEmpty { AppRouter.shared.openSend(with: files) }
         for url in urls where !url.isFileURL {

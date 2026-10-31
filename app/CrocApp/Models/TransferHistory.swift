@@ -74,6 +74,12 @@ protocol HistoryChangeObserver: AnyObject {
     func historyDidAdd(_ record: TransferRecord)
     func historyDidRemove(_ ids: [PersistentIdentifier])
     func historyDidClear()
+    /// The user deleted one record (a prune is `historyDidRemove` alone).
+    func historyDidDelete()
+}
+
+extension HistoryChangeObserver {
+    func historyDidDelete() {}
 }
 
 /// Thin MainActor wrapper over the ModelContainer so TransferController can
@@ -85,7 +91,7 @@ final class HistoryStore {
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "history")
 
     let container: ModelContainer
-    @ObservationIgnored var observer: (any HistoryChangeObserver)?
+    @ObservationIgnored var observers: [any HistoryChangeObserver] = []
     /// Replaces the context save; a test sets it to make a save fail.
     @ObservationIgnored var saveOverride: (() throws -> Void)?
 
@@ -119,7 +125,7 @@ final class HistoryStore {
 
     func add(_ record: TransferRecord) {
         container.mainContext.insert(record)
-        if save("add") { observer?.historyDidAdd(record) }
+        if save("add") { for observer in observers { observer.historyDidAdd(record) } }
         pruneToRetentionCap()
     }
 
@@ -144,7 +150,7 @@ final class HistoryStore {
         }
         let ids = stale.map(\.persistentModelID)
         for record in stale { container.mainContext.delete(record) }
-        if save("prune") { observer?.historyDidRemove(ids) }
+        if save("prune") { for observer in observers { observer.historyDidRemove(ids) } }
     }
 
     /// The record of the stored upload `storedID`, or nil when history holds
@@ -175,7 +181,12 @@ final class HistoryStore {
         guard record.modelContext != nil else { return }
         let id = record.persistentModelID
         container.mainContext.delete(record)
-        if save("delete") { observer?.historyDidRemove([id]) }
+        if save("delete") {
+            for observer in observers {
+                observer.historyDidRemove([id])
+                observer.historyDidDelete()
+            }
+        }
     }
 
     func clear() {
@@ -186,7 +197,7 @@ final class HistoryStore {
         } catch {
             Self.log.error("history clear failed: \(String(describing: error), privacy: .public)")
         }
-        if save("clear"), deleted { observer?.historyDidClear() }
+        if save("clear"), deleted { for observer in observers { observer.historyDidClear() } }
     }
 
     func recordCount() -> Int {

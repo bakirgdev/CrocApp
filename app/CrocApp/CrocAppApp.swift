@@ -19,6 +19,7 @@ struct CrocAppApp: App {
     @State private var localNetwork = LocalNetworkChecker()
     @State private var router = AppRouter.shared
     @State private var notifier: TransferNotifier
+    @State private var snapshotWriter: TransferSnapshotWriter
 
     static let mainWindowID = "main"
 
@@ -72,6 +73,23 @@ struct CrocAppApp: App {
         if !harness {
             center.install()
             notifier.start()
+        }
+        let snapshotWriter = TransferSnapshotWriter(controller: controller, settings: settings)
+        _snapshotWriter = State(initialValue: snapshotWriter)
+        // A harness run must not write the user's widget data.
+        if !harness {
+            snapshotWriter.start()
+            history.observers.append(snapshotWriter)
+        }
+        // Widget buttons and the Control Center control land here.
+        OpenScreen.handler = { target in
+            switch target {
+            case .send: AppRouter.shared.path = [.send]
+            case .receive: AppRouter.shared.openReceive()
+            }
+            #if os(macOS)
+            AppRouter.shared.showMainWindow()
+            #endif
         }
         // AppRouter.shared is constructed before this init runs; attach the
         // controller now so AppRouter.isBusy can read isActive live.
@@ -150,12 +168,15 @@ struct CrocAppApp: App {
             .environment(history)
             .environment(savedCodes)
             .modelContainer(history.container)
+            #if os(macOS)
+        .modifier(CaptureWindowOpener(router: router))
+            #endif
             .onOpenURL { url in
                 if let link = TransferLink.parse(url.absoluteString) { router.open(link) }
             }
             #if os(macOS)
         .frame(minWidth: 720, minHeight: 560)
-            #endif
+        #endif
     }
 
     @CommandsBuilder private var appCommands: some Commands {
@@ -165,3 +186,18 @@ struct CrocAppApp: App {
         #endif
     }
 }
+
+#if os(macOS)
+/// Hands the router the `openWindow` action, so a notification tap or a widget
+/// button can reopen the main window after it was closed (`AppRouter.showMainWindow`).
+private struct CaptureWindowOpener: ViewModifier {
+    @Environment(\.openWindow) private var openWindow
+    let router: AppRouter
+
+    func body(content: Content) -> some View {
+        content.onAppear {
+            router.windowOpener = { openWindow(id: CrocAppApp.mainWindowID) }
+        }
+    }
+}
+#endif

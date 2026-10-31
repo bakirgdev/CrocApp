@@ -19,6 +19,8 @@ The SwiftUI sources build four targets. `app/Shared/` is a folder group compiled
 | `CrocApp` | iOS and macOS | App Store builds (status: `docs/knowledge/project-overview.md`, "Status") |
 | `CrocApp Direct` | macOS, arm64 | Direct download (notarized DMG with Sparkle updates) |
 | `CrocShare` | iOS and macOS | Share extension (iOS Share sheet; Finder's Share menu on macOS, embedded in `CrocApp`) |
+| `CrocWidgets` | iOS and macOS | WidgetKit extension: the Last Transfer widget and the Send and Receive controls, embedded in `CrocApp`. Reads `last-transfer.json` from the App Group (`TransferSnapshotStore`) |
+| `CrocWidgets Direct` | macOS, arm64 | The same sources, bundle ID `com.bakirgdev.CrocApp.direct.CrocWidgets`, embedded in `CrocApp Direct` (the group differs, as for the share extension) |
 | `CrocShare Direct` | macOS, arm64 | The same extension sources, bundle ID `com.bakirgdev.CrocApp.direct.CrocShare`, embedded in `CrocApp Direct`. A separate target because an extension's bundle ID must be prefixed by its host's, and the Direct app has its own |
 
 ## Why a Go bridge
@@ -276,13 +278,14 @@ The main app target picks its entitlements file by SDK in the project (`CODE_SIG
 - `app/CrocApp/CrocApp-iOS.entitlements`: `application-groups` (`group.com.bakirgdev.CrocApp`, for the share-extension handoff) `associated-domains` (`applinks:crocapp.dev`), and `networking.multicast` (croc's local-network discovery).
 - `app/CrocAppDirect/CrocAppDirect.entitlements`: the macOS set above, plus Sparkle's mach-lookup exceptions `$(PRODUCT_BUNDLE_IDENTIFIER)-spks` and `-spki`.
 - `app/CrocShare/CrocShare.entitlements` (iOS): the same App Group and nothing else.
+- `app/CrocWidgets/CrocWidgets.entitlements`, `CrocWidgets-macOS.entitlements` and `CrocWidgetsDirect.entitlements`: copies of the three CrocShare files (same groups; `app-sandbox` on the Mac). The extension has no network entitlement and only reads the group.
 - `app/CrocShare/CrocShare-macOS.entitlements` and `CrocShareDirect.entitlements`: `app-sandbox` and the team-prefixed App Group (`$(TeamIdentifierPrefix)com.bakirgdev.CrocApp`, Direct `...direct`). The macOS app and Direct entitlements carry the same group. Apple documents the `<team ID>.<name>` form as needing no portal registration, and no profile for the system to accept it (Xcode, "Accessing app group containers in your existing macOS app"). Xcode still checks it against any profile present: the Developer ID profile of `CrocApp Direct` must include the App Groups capability (`RELEASING.md`). `CrocShare Direct` is signed without a profile. The extension gets read access to the shared items from the system, so it has no file entitlement.
 
 Associated Domains needs a provisioning profile, so signing a local macOS build needs the team set in the project. See `docs/BUILDING.md`, "Verification harnesses".
 
 ### Info.plist
 
-Five files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-Info.plist` (iOS), `CrocApp-macOS-Info.plist`, `CrocApp-Direct-Info.plist`, `CrocShare-Info.plist` (iOS) and `CrocShare-macOS-Info.plist` (both Mac extension targets; its activation rule is a predicate on `public.file-url`, so files and folders from Finder qualify).
+Six files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-Info.plist` (iOS), `CrocApp-macOS-Info.plist`, `CrocApp-Direct-Info.plist`, `CrocShare-Info.plist` (iOS) and `CrocWidgets-Info.plist` (both widget targets use it: only the `com.apple.widgetkit-extension` point), `CrocShare-macOS-Info.plist` (both Mac share extension targets; its activation rule is a predicate on `public.file-url`, so files and folders from Finder qualify).
 
 - `NSLocalNetworkUsageDescription` is a plain `INFOPLIST_KEY_*` build setting, not tied to an SDK, so it applies on every platform. `NSCameraUsageDescription` is a literal in `CrocApp-Info.plist` (iOS only) and absent from the macOS and Direct builds, because the QR scanner is iOS-only and a macOS build never touches the camera. It is not an `INFOPLIST_KEY_*` setting: an sdk-scoped one still lands in the macOS `Info.plist` as an empty string (measured, like the `UIStatusBarStyle` and `UIApplicationSupportsIndirectInputEvents` entries the iOS-scoped settings leave there).
 - `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace` are SDK-scoped `INFOPLIST_KEY_*` settings. `UIFileSharingEnabled` is also in `CrocApp-Info.plist`, and that copy is the one that works (`docs/known-issues.md`, "Accepted").
@@ -309,7 +312,7 @@ Five files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-In
 
 ## Concurrency model
 
-- Swift 6 language mode (`SWIFT_VERSION = 6.0`), `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`. Set on every app target (`CrocApp`, `CrocApp Direct`, `CrocShare`, `CrocAppTests`), in Debug and Release.
+- Swift 6 language mode (`SWIFT_VERSION = 6.0`), `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`. Set on every app target (`CrocApp`, `CrocApp Direct`, `CrocShare`, `CrocWidgets`, `CrocAppTests`), in Debug and Release.
 - Effect: any type in the app or the share extension is `@MainActor` unless it opts out. The explicit `@MainActor` on `AppSettings`, `TransferController` and the others documents what the compiler already enforces.
 - `CrocEngine` is the deliberate exception. It is a plain `actor` on its own executor.
 - Delegate callbacks (`OnCodeReady`, `OnProgress` and the rest) arrive on arbitrary Go threads. The poller goroutine and the transfer goroutine both call the delegate directly, with no ordering between threads.
