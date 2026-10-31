@@ -26,11 +26,24 @@ enum ShareHandoff {
     /// Characters in the canonical `UUID.uuidString` form (8-4-4-4-12).
     private static let uuidLength = 36
 
+    /// The most shared text a batch carries, in UTF-8 bytes. The Send screen's
+    /// editor is not built for more, and the extension must stay small.
+    static let maxTextBytes = 1_048_576
+
     /// Names one staged batch. The extension writes it after the batch's files
     /// are in place, so a manifest on disk always points at a complete batch.
+    /// `text` is shared text or links, set only when `files` is empty. It lives
+    /// in the manifest so that consuming the manifest deletes it.
     struct Manifest: Codable {
         var batch: String
         var files: [String]
+        var text: String?
+    }
+
+    /// Non-blank parts joined one per line, or nil when nothing is left.
+    static func joinText(_ parts: [String]) -> String? {
+        let kept = parts.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        return kept.isEmpty ? nil : kept.joined(separator: "\n")
     }
 
     /// The inbox directory, or nil where the App Group container is

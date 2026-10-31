@@ -154,7 +154,7 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 
 | Feature |
 |---|
-| Share extension: send from any app (iOS) |
+| Share extension: send files, text and links from any app (iOS, Mac) |
 | Menu bar quick send and Open at login (macOS) |
 | Receive links: `crocapp://`, `crocapp.dev/r/` and `getcroc.com/?code=` open Receive with the code filled in |
 | Shortcuts and Siri actions: Send Files, Send Text, Receive |
