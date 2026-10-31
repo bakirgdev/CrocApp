@@ -20,7 +20,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Choose the output folder (iOS default is the Files-visible app folder) | `--out` | all | shipped |
 | Keep Both or Replace on receive, answered on the incoming sheet; Replace resumes a partial file | `--rename`, `--overwrite`, resume | all | shipped |
 | Incoming file list preview with Accept and Decline | croc's interactive prompt | all | shipped |
-| Progress, speed and Cancel; system Live Activity while backgrounded (direction and progress; file name only with **Show File Names on the Lock Screen and in Widgets**) | engine progress events | Live Activity on iOS and iPadOS | shipped |
+| Progress, speed and Cancel; system Live Activity while backgrounded (direction and progress; file name only with **Show File Names on the Lock Screen and in Widgets**) | engine progress events | Live Activity on iOS and iPadOS | shipped; the Live Activity is not verified on a device |
 | **Last Transfer** widget (state and date, Send and Receive buttons) and Send and Receive Control Center controls | app-native | all | shipped |
 | LAN and relay race | croc default | all | shipped |
 | Transfer history (local only), with a **Save Transfer History** setting (on by default; off records nothing new and keeps what is there) | app-native | all | shipped |
