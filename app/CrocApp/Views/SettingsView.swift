@@ -64,6 +64,8 @@ struct SettingsView: View {
 
             GeneralSettingsSections()
 
+            SavedCodesSection()
+
             PowerSettingsSections()
 
             AboutSection()
@@ -120,5 +122,8 @@ extension SettingsView {
     }
 }
 
-#Preview { SettingsView().environment(OutputFolderStore()).environment(AppSettings()) }
+#Preview {
+    SettingsView().environment(OutputFolderStore()).environment(AppSettings())
+        .environment(SavedCodes(secrets: MemorySecretStore()))
+}
 #endif

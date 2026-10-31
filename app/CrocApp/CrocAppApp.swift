@@ -14,6 +14,7 @@ struct CrocAppApp: App {
     @State private var settings: AppSettings
     @State private var controller: TransferController
     @State private var history: HistoryStore
+    @State private var savedCodes: SavedCodes
     @State private var outputFolder: OutputFolderStore
     @State private var localNetwork = LocalNetworkChecker()
     @State private var router = AppRouter.shared
@@ -37,6 +38,8 @@ struct CrocAppApp: App {
         _settings = State(initialValue: settings)
         let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: harness))
         _history = State(initialValue: history)
+        _savedCodes = State(
+            initialValue: SavedCodes(secrets: harness ? MemorySecretStore() : KeychainStore()))
         let vault = StoredTransferVault(secrets: harness ? MemorySecretStore() : KeychainStore())
         let controller = TransferController(settings: settings, vault: vault)
         controller.history = history
@@ -99,6 +102,7 @@ struct CrocAppApp: App {
             SettingsView()
                 .environment(outputFolder)
                 .environment(settings)
+                .environment(savedCodes)
         }
         // A Settings scene's default .automatic resizability resolves to
         // .contentSize — min == max == content size — which is where the old
@@ -134,6 +138,7 @@ struct CrocAppApp: App {
             .environment(localNetwork)
             .environment(router)
             .environment(history)
+            .environment(savedCodes)
             .modelContainer(history.container)
             .onOpenURL { url in
                 if let link = TransferLink.parse(url.absoluteString) { router.open(link) }

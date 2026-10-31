@@ -12,7 +12,7 @@ description: How to remove CrocApp from iPhone, iPad and Mac, where it keeps dat
 |---|---|---|
 | Settings, including the receive folder you chose | The app's preferences | Yes |
 | [History](guide/history.md) | A database in the app's own storage | Yes |
-| Relay password, the two proxies, and receipts for [Send as link](guide/send-as-link.md) | The Keychain | Mac: no (checked on a development build only). iPhone and iPad: not verified |
+| Relay password, the two proxies, [saved codes](guide/code-phrases.md#saved-codes), and receipts for [Send as link](guide/send-as-link.md) | The Keychain | Mac: no (checked on a development build only). iPhone and iPad: not verified |
 | Received files, iOS | The app's **Documents** folder | Yes: they are deleted with the app |
 | Received files, Mac | `Downloads/CrocApp`, or the folder you chose | No |
 | Files staged by the share sheet, iOS | The app's shared storage | Yes |
