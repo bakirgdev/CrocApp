@@ -118,7 +118,8 @@ With **Run a Relay** on, the app listens on four TCP ports (the base port, defau
 - The relay is croc's own relay code, in the same process. It sees ciphertext only, as any croc relay does (Relay and local network). It sees metadata: the IP addresses and timing of devices that use it.
 - Admission is croc's relay password. A blank password is croc's built-in default, which is public, so the relay is then open to anyone who can reach it. The Settings footer says so. A password the user sets is held in the Keychain under its own account, shown only as dots, and never logged or sent anywhere.
 - A relay open to the internet is the user's choice: the app does not open a firewall or router port. Rate and room limits are croc's defaults.
-- The health check dials only the relay the user configured (or croc's public pool) with the configured password, joins a throwaway room and sends nothing else.
+- The health check dials only the relay the user configured (or croc's public pool) with the configured password, joins a throwaway room and sends nothing else. It dials directly and never uses the Advanced proxies, so it shows this device's own IP address to each relay it probes (see Residual risks). With a proxy set it does not run when the screen opens: it says so and waits for **Check Anyway**.
+- The relay listens on every interface, global IPv6 included, so with a blank password it can be an open relay reachable from the internet. The Relay tab says so, and shows a warning while the relay runs without a password. Binding only to chosen addresses was not done: the set of addresses changes with the network and an IPv6 prefix is not stable.
 
 ### App sandbox and entitlements
 
@@ -209,6 +210,7 @@ Photos, dropped and pasted images are copied into `SendStaging` under the tempor
 | Metadata (IP, timing, volume) visible to relay and network | Accepted (Non-goals). |
 | The trust badge names the configured route, not the path used | Accepted; the claim that the relay sees ciphertext holds on every path. |
 | Entitlement exceptions: `network.server`, Sparkle mach-lookup (Direct build) | Each has a stated reason (App sandbox and entitlements). |
+| The relay health check bypasses the Advanced proxies, so the relays it probes see this device's real IP address | Mitigated: with a proxy set the check never runs by itself, warns that it connects directly and needs **Check Anyway**. Without a proxy the address is the one a transfer would show anyway. |
 | The Mac relay with a blank password admits anyone who can reach its ports | Accepted: the user turns it on, the footer says so, and a password is one field away (The relay this Mac can run). |
 
 ## Keeping this current

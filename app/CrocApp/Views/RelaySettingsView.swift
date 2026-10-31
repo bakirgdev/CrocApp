@@ -35,12 +35,23 @@ struct RelaySettingsView: View {
                         kind: .error, title: AppSettings.secretNotSavedTitle,
                         detail: AppSettings.secretNotSavedDetail)
                 }
+                if relay.isRunning,
+                    settings.relayHostPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+                        .isEmpty
+                {
+                    StatusBanner(
+                        kind: .warning, title: String(localized: "This relay has no password"),
+                        detail: String(
+                            localized:
+                                "Anyone who can reach this Mac can use it. Stop it, set a password and start it again."
+                        ))
+                }
                 Toggle("Start Relay at Launch", isOn: $settings.relayHostAtLaunch)
             } header: {
                 Text("Relay on this Mac")
             } footer: {
                 Text(
-                    "Other devices on your network can use this Mac as their relay while CrocApp runs. Without a password, anyone who can reach it can use it. The relay uses the port and the three after it, and stops when you quit CrocApp."
+                    "Other devices can use this Mac as their relay while CrocApp runs. The relay listens on every network connection of this Mac, so without a password anyone who can reach it can use it, over the internet too if your router or IPv6 firewall lets them in. Set a password. It uses the port and the three after it, and stops when you quit CrocApp."
                 )
                 .foregroundStyle(Color.textSecondary)
             }

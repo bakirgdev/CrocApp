@@ -75,6 +75,9 @@ public struct RelayCheckResult: Sendable, Equatable {
         case unreachable
         /// Reachable, and the relay rejected the password.
         case badPassword
+        /// Reachable, and it accepted the password, but it turned the probe away
+        /// for now (rate limit or a full room).
+        case busy
         /// Reachable, but it did not answer like a croc relay.
         case notARelay
         /// The address is not host:port.
@@ -131,6 +134,7 @@ public enum RelayCheck {
         case "noAddress": verdict = .noAddress
         case "relayUnreachable": verdict = .unreachable
         case "badPassword": verdict = .badPassword
+        case "busy": verdict = .busy
         case "invalidSetting": verdict = .invalidAddress
         default: verdict = payload.reachable ? .notARelay : .unreachable
         }

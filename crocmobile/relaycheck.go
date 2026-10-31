@@ -19,9 +19,13 @@ import (
 // relayCheckTimeout bounds one CheckRelay: name lookup, connect and handshake.
 const relayCheckTimeout = 5 * time.Second
 
-// codeNoAddress is CheckRelay's own result code: the relay's name has no
-// address of the family asked for. It is not a transfer failure code.
-const codeNoAddress = "noAddress"
+// CheckRelay's own result codes, not transfer failure codes: the relay's name
+// has no address of the family asked for, and the relay is reachable and took
+// the password but turned the probe away for now.
+const (
+	codeNoAddress = "noAddress"
+	codeBusy      = "busy"
+)
 
 type relayCheck struct {
 	Family    string  `json:"family"`
@@ -38,7 +42,7 @@ type relayCheck struct {
 // "4" or "6", and returns a JSON object: family, ip, reachable, latencyMs (the
 // TCP connect time), passwordOk, and code, which is empty when the relay is
 // reachable and accepts the password, else "noAddress", "badPassword",
-// "relayUnreachable", "invalidSetting" or "other". A blank password means
+// "busy", "relayUnreachable", "invalidSetting" or "other". A blank password means
 // croc's default.
 //
 // The password is checked with croc's own relay handshake (the one a transfer
@@ -116,17 +120,24 @@ func checkRelay(address, password, family string) relayCheck {
 		return res
 	}
 	_, _, _, err = tcp.HandshakeTCPServerCapability(comm.New(conn), password, "croc-check-"+hex.EncodeToString(room[:]))
-	ok := err == nil
-	res.PasswordOK = &ok
-	if err != nil {
-		if code := classify(err); code == codeBadPassword {
-			res.Code = code
-		} else {
-			// Not croc's answer (a timeout, a reset, another protocol), so the
-			// password is neither accepted nor refused.
-			res.PasswordOK = nil
-			res.Code = codeOther
-		}
-	}
+	res.Code, res.PasswordOK = handshakeVerdict(err)
 	return res
+}
+
+// handshakeVerdict reads the relay's handshake result. A relay answers "rate
+// limited" or refuses the room only after it accepted the password, so those
+// are a reachable, working relay that is busy.
+func handshakeVerdict(err error) (code string, passwordOK *bool) {
+	yes, no := true, false
+	switch {
+	case err == nil:
+		return "", &yes
+	case classify(err) == codeBadPassword:
+		return codeBadPassword, &no
+	case errors.Is(err, tcp.ErrAdmissionLimited), classify(err) == codeRoomFull:
+		return codeBusy, &yes
+	}
+	// Not croc's answer (a timeout, a reset, another protocol), so the
+	// password is neither accepted nor refused.
+	return codeOther, nil
 }

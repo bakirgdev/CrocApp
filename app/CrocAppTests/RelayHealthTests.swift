@@ -105,6 +105,27 @@ import Testing
         #expect(health.advice == [RelayHealth.notARelay])
     }
 
+    @Test func aBusyRelayIsNotARelayProblemButIsSaid() async {
+        settings.relayAddress = "relay.example:9009"
+        let probe = Probe()
+        probe.verdicts = [.ipv4: .busy, .ipv6: .noAddress]
+        let health = health(probe)
+        await health.run()
+        #expect(health.advice == [RelayHealth.busy])
+        #expect(health.advice != [RelayHealth.notARelay])
+    }
+
+    @Test func aProxyIsDetectedFromEitherField() {
+        #expect(!health(Probe()).usesProxy)
+        settings.httpProxy = "http://proxy.example:3128"
+        #expect(health(Probe()).usesProxy)
+        settings.httpProxy = ""
+        settings.socks5Proxy = " \n"
+        #expect(!health(Probe()).usesProxy)
+        settings.socks5Proxy = "proxy.example:1080"
+        #expect(health(Probe()).usesProxy)
+    }
+
     @Test func noAdviceUntilEveryProbeAnswered() {
         #expect(health(Probe()).advice.isEmpty)
         #expect(!health(Probe()).isHealthy)

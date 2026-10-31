@@ -87,6 +87,7 @@ import Testing
         #expect(
             verdict(#"{"family":"4","reachable":false,"code":"relayUnreachable"}"#) == .unreachable)
         #expect(verdict(#"{"family":"4","reachable":true,"code":"badPassword"}"#) == .badPassword)
+        #expect(verdict(#"{"family":"4","reachable":true,"code":"busy"}"#) == .busy)
         #expect(verdict(#"{"family":"4","reachable":true,"code":"other"}"#) == .notARelay)
         #expect(
             verdict(#"{"family":"4","reachable":false,"code":"invalidSetting"}"#) == .invalidAddress

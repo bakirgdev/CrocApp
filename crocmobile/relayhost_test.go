@@ -3,6 +3,8 @@ package crocmobile
 import (
 	"encoding/json"
 	"errors"
+	"github.com/schollz/croc/v11/src/tcp"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -336,5 +338,30 @@ func TestRelayHostStopSilencesTheCallback(t *testing.T) {
 	case j := <-rec.got:
 		t.Fatalf("callback after Stop: %s", j)
 	case <-time.After(300 * time.Millisecond):
+	}
+}
+
+func TestHandshakeVerdict(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		err    error
+		code   string
+		wantOK string // "yes", "no" or "unknown"
+	}{
+		{"accepted", nil, "", "yes"},
+		{"bad password", errors.New("bad password"), codeBadPassword, "no"},
+		{"rate limited", tcp.ErrAdmissionLimited, codeBusy, "yes"},
+		{"room refused", errors.New("relay admission rejected"), codeBusy, "yes"},
+		{"room full", errors.New("relay room full"), codeBusy, "yes"},
+		{"reset", io.ErrUnexpectedEOF, codeOther, "unknown"},
+	} {
+		code, ok := handshakeVerdict(c.err)
+		got := "unknown"
+		if ok != nil {
+			got = map[bool]string{true: "yes", false: "no"}[*ok]
+		}
+		if code != c.code || got != c.wantOK {
+			t.Errorf("%s: (%q, %s), want (%q, %s)", c.name, code, got, c.code, c.wantOK)
+		}
 	}
 }

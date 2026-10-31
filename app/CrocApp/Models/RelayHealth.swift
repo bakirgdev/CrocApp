@@ -37,6 +37,14 @@ final class RelayHealth {
         usesNoRelay = settings.onlyLocal
     }
 
+    /// An Advanced proxy is set. The check dials the relay directly, so it would
+    /// show this device's own address to every relay it probes.
+    var usesProxy: Bool {
+        [settings.socks5Proxy, settings.httpProxy].contains {
+            !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+    }
+
     /// The relay addresses a transfer would use: the custom ones, else the
     /// public pool (the one a code phrase picks is not known before a transfer).
     var targets: [String] {
@@ -85,6 +93,9 @@ final class RelayHealth {
         if results.contains(where: { $0.verdict == .notARelay }) {
             advice.append(Self.notARelay)
         }
+        if results.contains(where: { $0.verdict == .busy }) {
+            advice.append(Self.busy)
+        }
         // A relay with an address of one IP version at least is fine; trouble is
         // an address none of whose probes got through.
         let unreachable = Dictionary(grouping: rows, by: \.address).values.contains { group in
@@ -107,6 +118,14 @@ final class RelayHealth {
 
     private static func failure(_ code: EngineFailure.Code) -> TransferFailure {
         TransferFailure(EngineFailure(code: code, message: ""), situation: .init())
+    }
+
+    static var busy: TransferFailure {
+        TransferFailure(
+            title: String(localized: "The relay is busy"),
+            detail: String(
+                localized: "It is working, but turned this check away. Try again in a minute."),
+            remedy: nil)
     }
 
     static var notARelay: TransferFailure {

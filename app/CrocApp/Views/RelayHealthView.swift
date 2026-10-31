@@ -30,11 +30,35 @@ struct RelayHealthView: View {
             let health = RelayHealth(settings: settings)
             self.health = health
             localNetwork.checkIfNeeded()
-            await health.run()
+            // A proxy is set: wait for the user's say-so (`proxyNotice`).
+            if !health.usesProxy { await health.run() }
+        }
+    }
+
+    /// The check cannot use the Advanced proxies, so it needs a tap before it
+    /// shows this device's address to the relays.
+    @ViewBuilder private func proxyNotice(_ health: RelayHealth) -> some View {
+        if health.usesProxy, health.rows.isEmpty {
+            Section {
+                StatusBanner(
+                    kind: .warning,
+                    title: String(localized: "This check doesn't use your proxy"),
+                    detail: String(
+                        localized:
+                            "It connects to each relay directly, so every relay it tries sees this device's own address."
+                    ))
+                Button {
+                    Task { await health.run() }
+                } label: {
+                    Text("Check Anyway").hitTarget()
+                }
+                .buttonVariant(.plain)
+            }
         }
     }
 
     @ViewBuilder private func content(_ health: RelayHealth) -> some View {
+        proxyNotice(health)
         if health.usesNoRelay {
             Section("Relay") {
                 Text("Local Network Only is on, so transfers use no relay.")
@@ -71,10 +95,10 @@ struct RelayHealthView: View {
                 Text("Check Again").hitTarget()
             }
             .buttonVariant(.plain)
-            .disabled(health.isRunning)
+            .disabled(health.isRunning || (health.usesProxy && health.rows.isEmpty))
         } footer: {
             Text(
-                "The check connects to the relay and joins it the way a transfer does, without sending anything."
+                "The check connects to the relay and joins it the way a transfer does, without sending anything. It does not use a proxy."
             )
             .foregroundStyle(Color.textSecondary)
         }
@@ -118,7 +142,8 @@ private struct ProbeResult: View {
         switch verdict {
         case .ok: "checkmark.circle"
         case .noAddress: "minus.circle"
-        case .unreachable, .badPassword, .notARelay, .invalidAddress: "exclamationmark.circle"
+        case .unreachable, .badPassword, .busy, .notARelay, .invalidAddress:
+            "exclamationmark.circle"
         }
     }
 
@@ -133,6 +158,7 @@ private struct ProbeResult: View {
         case .noAddress: String(localized: "No address of this kind")
         case .unreachable: String(localized: "Can't connect")
         case .badPassword: String(localized: "Reachable in \(latency), password rejected")
+        case .busy: String(localized: "Reachable in \(latency), but the relay is busy")
         case .notARelay: String(localized: "Reachable, but not a croc relay")
         case .invalidAddress: String(localized: "Not an address with a port")
         }
