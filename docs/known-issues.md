@@ -8,7 +8,7 @@ Engine and bridge invariants are in `knowledge/crocmobile-bridge.md`. UI state-m
 
 ## Release
 
-These items gate Submit for Review of the first App Store release (`knowledge/project-overview.md`, "Status").
+These items gate Submit for Review of the first App Store release (`docs/README.md`, "Status").
 
 - **Export compliance needs two owner actions in App Store Connect.**
   - The position (`ITSAppUsesNonExemptEncryption` is `false`, France excluded from availability) is in `RELEASING.md`, "Export compliance". Owner actions: remove France from availability, and file a `future` issue to add it back after an ANSSI declaration.

@@ -1,6 +1,6 @@
 # Threat model and assurance case
 
-Why CrocApp's security requirements are met, for a reviewer who wants to check. Scope: CrocApp on iOS, iPadOS and macOS (release status: `knowledge/project-overview.md`, "Status"), the `crocmobile/` Go bridge, the `CrocKit` package, the share extension, and the release pipeline. The transfer protocol belongs to [croc](https://github.com/schollz/croc) v11.5.5 (pinned in `crocmobile/go.mod`); this document says what CrocApp relies on there and what it adds. To report a vulnerability, see [`SECURITY.md`](../SECURITY.md).
+Why CrocApp's security requirements are met, for a reviewer who wants to check. Scope: CrocApp on iOS, iPadOS and macOS (release status: `docs/README.md`, "Status"), the `crocmobile/` Go bridge, the `CrocKit` package, the share extension, and the release pipeline. The transfer protocol belongs to [croc](https://github.com/schollz/croc) v11.5.5 (pinned in `crocmobile/go.mod`); this document says what CrocApp relies on there and what it adds. To report a vulnerability, see [`SECURITY.md`](../SECURITY.md).
 
 **No third-party security audit of croc or CrocApp has been done.** Everything below is the maintainer's own analysis, backed by the code and tests it names. Where a claim is read from croc's source and not run here, it says so.
 

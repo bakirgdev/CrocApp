@@ -16,7 +16,7 @@ The SwiftUI sources build six targets: the app, the share extension and the widg
 
 | Target | Platforms | Channel |
 | --- | --- | --- |
-| `CrocApp` | iOS and macOS | App Store builds (status: `docs/knowledge/project-overview.md`, "Status") |
+| `CrocApp` | iOS and macOS | App Store builds (status: `docs/README.md`, "Status") |
 | `CrocApp Direct` | macOS, arm64 | Direct download (notarized DMG with Sparkle updates) |
 | `CrocShare` | iOS and macOS | Share extension (iOS Share sheet; Finder's Share menu on macOS, embedded in `CrocApp`) |
 | `CrocWidgets` | iOS and macOS | WidgetKit extension: the Last Transfer widget and the Send and Receive controls, embedded in `CrocApp`. Reads `last-transfer.json` from the App Group (`TransferSnapshotStore`) |
@@ -71,7 +71,7 @@ Notes on the arrows:
 ### croc (dependency, not this repo's code)
 
 - `schollz/croc/v11`, pinned in `crocmobile/go.mod`.
-- CrocApp does not fork or reimplement it (see `docs/knowledge/project-overview.md`).
+- CrocApp does not fork or reimplement it (see `docs/README.md`, "Non-goals").
 - Upgrades are a version bump plus a rebuild of the xcframework: `docs/knowledge/croc-upgrade-playbook.md`.
 
 ### `crocmobile/`: Go wrapper

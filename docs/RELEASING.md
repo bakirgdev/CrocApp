@@ -13,7 +13,7 @@ How CrocApp is signed, notarized, updated and uploaded, and the checklist for cu
 - The App Store builds come from the `CrocApp` target and scheme. Its product is also `CrocApp.app`.
 - One channel per Mac: both targets produce `CrocApp.app`, so the disk image copy replaces an App Store copy in /Applications. Their data stays apart (separate bundle IDs). The landing download section and the docs site install page say so; keep them in step.
 - In one shared DerivedData, each scheme's build replaces the other's. The harness scripts and CI use their own `-derivedDataPath`; otherwise build Direct last.
-- Which channels have shipped: `knowledge/project-overview.md`, "Status".
+- Which channels have shipped: `docs/README.md`, "Status".
 
 ## Direct download (Developer ID)
 
