@@ -30,8 +30,9 @@ BUNDLE=com.bakirgdev.CrocApp
 GROUP=group.com.bakirgdev.CrocApp
 DD=$(derived_data sim)
 
+take_harness_lock
 TMP=$(mktemp -d)
-trap 'kill_jobs; rm -rf "$TMP"' EXIT
+trap 'kill_jobs; rm -rf "$TMP"; release_harness_lock' EXIT
 
 use_relay "$TMPROOT/sim-relay.log"
 CLI_R=${RELAY:+--relay=$RELAY} # one word, empty on the public pool: the CLI takes --relay before its command
