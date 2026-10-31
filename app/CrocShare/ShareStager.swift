@@ -4,11 +4,13 @@ import UniformTypeIdentifiers
 enum ShareStagerError: LocalizedError {
     case noAppGroup
     case nothingUsable
+    case notEnoughSpace
 
     var errorDescription: String? {
         switch self {
         case .noAppGroup: String(localized: "App Group container unavailable.")
         case .nothingUsable: String(localized: "Nothing shareable was provided.")
+        case .notEnoughSpace: String(localized: "Not enough free space to prepare these files.")
         }
     }
 }
@@ -49,10 +51,12 @@ enum ShareStager {
     #if os(macOS)
     // Finder hands over file URLs, and a folder conforms to `public.item` but
     // not `public.data`. Loading the URL, not a file representation, skips the
-    // system's own temp copy; `copyItem` then clones on APFS, so a large
-    // folder costs no extra disk or time. Bookmarks cannot replace the copy: a
-    // bookmark made here does not resolve in the app, which is another process.
-    private static let sourceType = UTType.fileURL
+    // system's own temp copy. On the same APFS volume (the usual case)
+    // `copyItem` then clones, so a large folder costs no extra disk; a source
+    // on another volume is a full copy, so the free space is checked first.
+    // Bookmarks cannot replace the copy: a bookmark made here does not resolve
+    // in the app, which is another process.
+    nonisolated private static let sourceType = UTType.fileURL
 
     private static func stage(
         _ provider: NSItemProvider, into dir: URL, taken: [String]
@@ -71,9 +75,35 @@ enum ShareStager {
                 }
             }
         }
+        return try await stageFile(url, into: dir, taken: taken)
+    }
+
+    // @concurrent: a folder copy must not run on the main actor.
+    @concurrent private static func stageFile(
+        _ url: URL, into dir: URL, taken: [String]
+    ) async throws -> String {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        try Task.checkCancellation()
+        try checkSpace(for: url, in: dir)
         return try copy(url, into: dir, taken: taken)
+    }
+
+    // shortcut: a same-volume source is assumed to clone, which only APFS does.
+    // Check the space there too if a non-APFS volume ever matters.
+    nonisolated private static func checkSpace(for url: URL, in dir: URL) throws {
+        let source = try url.resourceValues(forKeys: [.volumeIdentifierKey])
+        let target = try dir.resourceValues(forKeys: [
+            .volumeIdentifierKey, .volumeAvailableCapacityForImportantUsageKey,
+        ])
+        if let a = source.volumeIdentifier, let b = target.volumeIdentifier, a.isEqual(b) {
+            return
+        }
+        if let free = target.volumeAvailableCapacityForImportantUsage,
+            FileSize.bytes(of: url) > free
+        {
+            throw ShareStagerError.notEnoughSpace
+        }
     }
     #else
     private static let sourceType = UTType.data

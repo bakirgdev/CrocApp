@@ -53,14 +53,15 @@ VERSION=$(sed -nE 's/^MARKETING_VERSION = ([^ ]+)$/\1/p' app/Config/Version.xcco
 rm -rf "$WORK"
 mkdir -p "$WORK" "$OUT"
 
-# The profile is set on the CrocApp Direct target in the project, not here: a
-# command-line setting would also reach CrocShare Direct, which has a different
-# bundle ID and needs no profile (its team-prefixed App Group is not restricted).
-# The export re-signs everything nested.
+# PROVISIONING_PROFILE_SPECIFIER is not set here: it would reach CrocShare
+# Direct too, which has another bundle ID. The CrocApp Direct target reads
+# DEVID_PROFILE (empty by default, so a local automatic-signing build is
+# unaffected). The export re-signs everything nested.
 logged "$WORK/archive.log" xcodebuild -project app/CrocApp.xcodeproj -scheme 'CrocApp Direct' \
   -configuration Release -destination 'generic/platform=macOS' -derivedDataPath "$WORK/dd" \
   -archivePath "$ARCHIVE" archive ARCHS=arm64 \
-  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$SIGNER" DEVELOPMENT_TEAM="$TEAM"
+  CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$SIGNER" DEVELOPMENT_TEAM="$TEAM" \
+  DEVID_PROFILE="$PROFILE"
 echo "archive: OK"
 
 logged "$WORK/export.log" xcodebuild -exportArchive -archivePath "$ARCHIVE" \

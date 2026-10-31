@@ -4,10 +4,14 @@
     "App Group container unavailable." : {
       "comment" : "Shown in the share sheet when the files cannot be handed to the app."
     },
+    "Cancel" : {},
     "Couldn't prepare files" : {},
     "Done" : {},
     "Nothing shareable was provided." : {
       "comment" : "Shown in the share sheet when the shared items hold no file."
+    },
+    "Not enough free space to prepare these files." : {
+      "comment" : "Shown in the share sheet when the volume that holds the staging area has too little room."
     },
     "Preparing files…" : {},
     "Ready to send" : {},

@@ -17,9 +17,17 @@ struct ShareStagingView: View {
         // A success has nothing to confirm: the controller opens the app.
         VStack(spacing: 16) {
             content
-            if case .failed(let error) = state {
+            switch state {
+            case .failed(let error):
                 Button("Done") { cancel(error) }
                     .keyboardShortcut(.defaultAction)
+            case .staging:
+                // Ending the extension also ends an in-flight copy; the
+                // partial batch has no manifest, so the app sweeps it later.
+                Button("Cancel") { cancel(CocoaError(.userCancelled)) }
+                    .keyboardShortcut(.cancelAction)
+            case .done:
+                EmptyView()
             }
         }
         .padding()

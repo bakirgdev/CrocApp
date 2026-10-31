@@ -858,7 +858,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.direct;
-				PROVISIONING_PROFILE_SPECIFIER = "CrocApp Direct Developer ID";
+				PROVISIONING_PROFILE_SPECIFIER = "$(DEVID_PROFILE)";
 				PRODUCT_NAME = CrocApp;
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;

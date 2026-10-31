@@ -139,7 +139,7 @@ Permanent or deferred, each with its reason.
 ### App and UI
 
 - **The Mac Share extension needs a Direct profile with App Groups before the next release.**
-  - `CrocApp Direct` now carries the team-prefixed App Group `HBSU359M33.com.bakirgdev.CrocApp.direct`. The existing "CrocApp Direct Developer ID" profile lacks the capability, so `scripts/build-devid.sh` fails at archive ("doesn't include the App Groups capability", reproduced). Enable App Groups on the `com.bakirgdev.CrocApp.direct` App ID, regenerate the profile, reinstall it and update `DEVID_PROFILE_BASE64`.
+  - `CrocApp Direct` now carries the team-prefixed App Group `HBSU359M33.com.bakirgdev.CrocApp.direct`. The existing "CrocApp Direct Developer ID" profile lacks the capability, so `scripts/build-devid.sh` fails at archive ("doesn't include the App Groups capability", reproduced). The team-prefixed group needs no registration, but Xcode checks it against the profile. Enable App Groups on the `com.bakirgdev.CrocApp.direct` App ID, regenerate the profile, reinstall it and update `DEVID_PROFILE_BASE64`.
   - The Developer ID archive, export and notarization of an app that embeds `CrocShare Direct` were not run. A signed Debug build of both targets and an automatic-signing `codesign --verify --deep --strict` pass.
 - **Mac Share extension: only checked through `NSSharingService`.**
   - A script shared a file and a folder through the system's sharing service to the signed Debug extension: it was offered, staged both into the group container and launched the app, which showed the **Shared Files** sheet. Choosing it from Finder's Share menu and context menu by hand was not done.

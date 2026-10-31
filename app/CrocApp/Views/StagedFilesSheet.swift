@@ -7,13 +7,16 @@ struct StagedFilesSheet: View {
     let send: () -> Void
     let discard: () -> Void
 
+    // Folders are walked off the main thread, once per list, not in `body`.
+    @State private var sizes: [URL: Int64] = [:]
+
     var body: some View {
         NavigationStack {
             List {
                 ForEach(Array(files.enumerated()), id: \.element) { index, url in
                     FileRow(
                         name: url.lastPathComponent,
-                        size: Self.size(of: url),
+                        size: sizes[url] ?? 0,
                         isFirst: index == 0,
                         isLast: index == files.count - 1
                     )
@@ -26,6 +29,7 @@ struct StagedFilesSheet: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .task(id: files) { sizes = await FileSize.bytes(ofEach: files) }
             .navigationTitle("Shared Files")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -37,19 +41,6 @@ struct StagedFilesSheet: View {
                 }
             }
         }
-    }
-
-    // A folder (from Finder's Share menu) has no size of its own: sum its files.
-    private static func size(of url: URL) -> Int64 {
-        let keys: Set<URLResourceKey> = [.fileSizeKey]
-        func fileSize(_ url: URL) -> Int64 {
-            (try? url.resourceValues(forKeys: keys).fileSize).map(Int64.init) ?? 0
-        }
-        guard url.hasDirectoryPath,
-            let walk = FileManager.default.enumerator(
-                at: url, includingPropertiesForKeys: Array(keys))
-        else { return fileSize(url) }
-        return walk.compactMap { $0 as? URL }.reduce(0) { $0 + fileSize($1) }
     }
 }
 
