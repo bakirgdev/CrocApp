@@ -19,6 +19,8 @@ public enum EngineSetting: Sendable, CaseIterable {
     case multicastAddress
     /// Receive only: `EngineOptions.peerIP`.
     case peerIP
+    /// Send only: `EngineOptions.excludePaths`, one relative path per line.
+    case excludePaths
     /// `StoredSendOptions.server`.
     case storeServer
 
@@ -41,6 +43,7 @@ public enum EngineSetting: Sendable, CaseIterable {
         case .throttleUpload: CrocmobileSettingThrottleUpload
         case .multicastAddress: CrocmobileSettingMulticastAddress
         case .peerIP: CrocmobileSettingPeerIP
+        case .excludePaths: CrocmobileSettingExcludePaths
         case .storeServer: CrocmobileSettingStoreServer
         }
     }
@@ -99,6 +102,9 @@ public struct EngineOptions: Sendable {
     public var gitIgnore = false
     /// Substring patterns excluded from sends (croc --exclude semantics).
     public var exclude: [String] = []
+    /// Relative paths excluded exactly, inside a sent folder or by a picked
+    /// file's name (croc --exclude-file). Unlike `exclude`, no substring match.
+    public var excludePaths: [String] = []
     /// Both-sides confirm (croc --ask). Sender prompt is bridged via the
     /// stdin pipe; respond(accept:policy:) answers it.
     public var ask = false
@@ -115,6 +121,12 @@ public struct EngineOptions: Sendable {
     /// Receive only: the sender's `ip:port` (IPv6 in brackets). Connects
     /// straight to it and turns the public relay pool off.
     public var peerIP = ""
+    /// Send only: one data connection instead of several (croc --no-multi).
+    public var noMultiplexing = false
+    /// Resolve a direct relay's host name with croc's built-in resolver
+    /// (croc --internal-dns). A proxy keeps resolving it, and Send as Link
+    /// ignores it.
+    public var internalDNS = false
     /// May carry credentials; see `ProxySettings`.
     public var socks5Proxy = ""
     /// May carry credentials; see `ProxySettings`.

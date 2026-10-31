@@ -146,6 +146,10 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 | Send speed limit | `--throttleUpload` |
 | Sender IP, direct connect | `--ip` |
 | Multicast address | `--multicast` |
+| Skip the local network | `--no-local` |
+| Single connection | `--no-multi` |
+| Built-in DNS resolver | `--internal-dns` |
+| Exclude exact paths | `--exclude-file` |
 
 </details>
 

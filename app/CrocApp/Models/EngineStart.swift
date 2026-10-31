@@ -10,7 +10,7 @@ enum EngineStart {
     case storeSend(paths: [String], options: StoredSendOptions)
     case storeReceive(link: String, outDir: String, proxy: ProxySettings)
 
-    /// `disableLocal` is the harness's `--disable-local`, not a user setting.
+    /// `disableLocal` is the harness's `--disable-local`; it adds to the user's Skip Local Network.
     init(_ request: TransferRequest, settings: AppSettings, disableLocal: Bool = false) {
         switch request {
         case .sendFiles(let urls, let code):
@@ -20,6 +20,7 @@ enum EngineStart {
             options.zipFolder = settings.zipFolder
             options.gitIgnore = settings.useGitIgnore
             options.exclude = settings.excludeList
+            options.excludePaths = settings.excludePathList
             self = .send(paths: urls.map(\.path), text: nil, options: options)
         case .sendText(let text, let code):
             var options = Self.baseOptions(settings, disableLocal: disableLocal)
@@ -88,7 +89,9 @@ enum EngineStart {
         o.relayAddress6 = settings.relayAddress6
         o.relayPassword = settings.relayPassword
         o.onlyLocal = settings.onlyLocal
-        o.disableLocal = disableLocal
+        o.disableLocal = disableLocal || settings.disableLocal
+        o.noMultiplexing = settings.noMultiplexing
+        o.internalDNS = settings.internalDNS
         o.noCompress = settings.noCompress
         o.ask = settings.bothSidesConfirm
         o.throttleUpload = settings.throttleUpload.trimmingCharacters(in: .whitespacesAndNewlines)

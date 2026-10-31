@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/schollz/croc/v11/src/comm"
+	"github.com/schollz/croc/v11/src/models"
 	"github.com/schollz/croc/v11/src/store"
 )
 
@@ -48,6 +49,9 @@ func TestValidateNetworkOptions(t *testing.T) {
 		{ThrottleUpload: " 2M "},
 		{ThrottleUpload: "1g"},
 		{ThrottleUpload: "12"},
+		{ExcludePaths: "node_modules\n src/secret.txt \n\n./build/out.bin"},
+		{DisableLocal: true},
+		{OnlyLocal: true},
 	}
 	for _, o := range valid {
 		if err := validateNetworkOptions(&o); err != nil {
@@ -77,6 +81,11 @@ func TestValidateNetworkOptions(t *testing.T) {
 		{ThrottleUpload: "+5k"},
 		{ThrottleUpload: "5kb"},
 		{ThrottleUpload: "1.5m"},
+		{ExcludePaths: "/etc/passwd"},
+		{ExcludePaths: "ok.txt\n../outside"},
+		{ExcludePaths: "a/../../b"},
+		{ExcludePaths: "."},
+		{OnlyLocal: true, DisableLocal: true},
 	}
 	for _, o := range invalid {
 		err := validateNetworkOptions(&o)
@@ -148,6 +157,11 @@ var settingCases = []struct {
 		},
 	},
 	{
+		SettingExcludePaths,
+		[]string{"", "  ", "a.txt", "dir/sub/file.txt", "./dir/file.txt", "a.txt\n\nb.txt", " a.txt \n b/c.txt ", "a/../b", `back\slash`},
+		[]string{"/abs", "..", "../x", "a\n../x", "a/../../x", ".", "a\n.", "dir/.."},
+	},
+	{
 		SettingStoreServer,
 		[]string{
 			"https://getcroc.com", "https://getcroc.com/", "  https://example.org:8443  ",
@@ -190,7 +204,7 @@ func payloadCode(err error) string {
 func TestValidateSettingCoversEverySetting(t *testing.T) {
 	fields := []string{
 		SettingSocks5Proxy, SettingHTTPProxy, SettingThrottleUpload, SettingMulticastAddress, SettingPeerIP,
-		SettingStoreServer,
+		SettingExcludePaths, SettingStoreServer,
 	}
 	if len(settingChecks) != len(fields) || len(settingCases) != len(fields) {
 		t.Fatalf("%d checks and %d case tables for %d settings", len(settingChecks), len(settingCases), len(fields))
@@ -219,6 +233,7 @@ func TestValidateSettingMatchesTransferStart(t *testing.T) {
 		SettingThrottleUpload:   func(v string) error { return validateNetworkOptions(&Options{ThrottleUpload: v}) },
 		SettingMulticastAddress: func(v string) error { return validateNetworkOptions(&Options{MulticastAddress: v}) },
 		SettingPeerIP:           func(v string) error { return validateNetworkOptions(&Options{PeerIP: v}) },
+		SettingExcludePaths:     func(v string) error { return validateNetworkOptions(&Options{ExcludePaths: v}) },
 		SettingStoreServer:      validateStoreOrigin,
 	}
 	for _, c := range settingCases {
@@ -282,13 +297,14 @@ func TestInvalidSettingFailsBeforeTheLock(t *testing.T) {
 
 type networkGlobals struct {
 	socks5, httpProxy string
+	internalDNS       bool
 }
 
 func readNetworkGlobals() networkGlobals {
-	return networkGlobals{comm.Socks5Proxy, comm.HttpProxy}
+	return networkGlobals{comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS}
 }
 
-var proxiedOptions = Options{Socks5Proxy: "203.0.113.1:1080", HTTPProxy: "203.0.113.2:3128"}
+var proxiedOptions = Options{Socks5Proxy: "203.0.113.1:1080", HTTPProxy: "203.0.113.2:3128", InternalDNS: true}
 
 func assertGlobalsRestored(t *testing.T, before networkGlobals) {
 	t.Helper()
@@ -342,7 +358,7 @@ func TestNetworkGlobalsHeldForTheTransfer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StartSend: %v", err)
 	}
-	want := networkGlobals{proxiedOptions.Socks5Proxy, proxiedOptions.HTTPProxy}
+	want := networkGlobals{proxiedOptions.Socks5Proxy, proxiedOptions.HTTPProxy, true}
 	if got := readNetworkGlobals(); got != want {
 		t.Errorf("during the transfer: network globals = %+v, want %+v", got, want)
 	}

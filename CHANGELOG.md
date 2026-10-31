@@ -12,6 +12,7 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- Four more croc options in **Settings > Advanced**. **Skip Local Network** sends and receives only through a relay. **Single Connection** sends data over one connection instead of several. **Built-in DNS Resolver** looks up a relay's address with public DNS servers (off by default, because it tells those servers the relay's name). **Exact Paths** leaves exact relative paths out of a folder you send. **Skip Local Network** and **Local Network Only** switch each other off, and **Reset to Defaults** covers the new settings.
 - Notifications when CrocApp is in the background: a transfer that finishes, fails or needs your answer sends a notification, and tapping it opens that transfer's screen. **Notifications** in Settings is on by default and CrocApp asks the system for permission when you start your first transfer. A notification says "Transfer complete" and never shows a code phrase or link; turn on **Show File Names in Notifications** (off by default) to see the file name or the number of files.
 - On a Mac, the Dock icon shows the percent while a transfer moves and a badge while a request waits for your answer.
 - Receive from the Mac menu bar: type or paste a code or link into the menu bar window and press **Receive**. The menu bar icon now shows the state of the transfer, with the percent beside it while files move, and a request waiting for you offers **Open CrocApp to Accept**.

@@ -72,7 +72,30 @@ struct AdvancedSettingsView: View {
                 }
             }
 
+            Section("Connection") {
+                AdvancedRow(
+                    footnote: settings.onlyLocal
+                        ? "Turn off Local Network Only to use this. It is in Settings."
+                        : "Skips finding the other device on your local network, so a transfer goes through a relay. Applies to sending and receiving."
+                ) {
+                    Toggle("Skip Local Network", isOn: $settings.disableLocal)
+                        .disabled(settings.onlyLocal)
+                }
+                AdvancedRow(
+                    footnote:
+                        "Looks up a relay's address with public DNS servers instead of the system's, which tells those servers the relay's name. It does not apply through a proxy or to Send as Link."
+                ) {
+                    Toggle("Built-in DNS Resolver", isOn: $settings.internalDNS)
+                }
+            }
+
             Section("Performance") {
+                AdvancedRow(
+                    footnote:
+                        "When sending, moves the data over one connection instead of several. This can be slower."
+                ) {
+                    Toggle("Single Connection", isOn: $settings.noMultiplexing)
+                }
                 AdvancedRow(
                     footnote:
                         "The most this device sends per second, such as 500k, 2m or 1g.",
@@ -88,6 +111,23 @@ struct AdvancedSettingsView: View {
                 }
             }
 
+            Section("Exclude from sends") {
+                AdvancedRow(
+                    footnote:
+                        "Leaves out these exact paths, one per line, relative to the folder you send, such as src/secret.txt. The patterns in Settings match any part of a name instead.",
+                    error: AppSettings.excludePathsError(settings.excludePaths)
+                ) {
+                    LabeledField("Exact Paths") {
+                        TextField(
+                            "Exact Paths", text: $settings.excludePaths,
+                            prompt: Text("One path per line"), axis: .vertical
+                        )
+                        .lineLimit(3...6)
+                        .urlEntry()
+                    }
+                }
+            }
+
             Section {
                 Button {
                     confirmReset = true
@@ -98,7 +138,7 @@ struct AdvancedSettingsView: View {
                 .disabled(settings.advancedIsDefault)
             } footer: {
                 Text(
-                    "Puts every setting on this page back to croc's default and removes the saved proxies."
+                    "Puts every setting on this page back to croc's default, clears the excluded paths and removes the saved proxies."
                 )
                 .foregroundStyle(Color.textSecondary)
             }

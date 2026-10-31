@@ -98,6 +98,7 @@
     "Both sides need croc 11 or newer, so update croc there." : {
       "comment" : "croc is the name of the file-transfer tool and stays untranslated."
     },
+    "Built-in DNS Resolver" : {},
     "Camera access denied" : {},
     "Camera access is restricted on this device and can't be changed here." : {},
     "Camera access restricted" : {},
@@ -144,6 +145,7 @@
     "Confirmation" : {},
     "Connecting" : {},
     "Connecting…" : {},
+    "Connection" : {},
     "Copied" : {},
     "Copy Code" : {},
     "Copy Link" : {},
@@ -199,6 +201,7 @@
     "Enter an IPv4 multicast address from 224.0.0.0 to 239.255.255.255." : {},
     "Enter host:port, or an address starting with http:// or https://." : {},
     "Enter host:port, or an address starting with socks5:// or socks5h://." : {},
+    "Enter one path per line, relative to the folder you send, such as src/secret.txt. Paths that start with / or leave the folder are not allowed." : {},
     "Enter the code phrase instead." : {},
     "Enter the sender's address and port, such as 192.168.1.20:9009. The port must be a number from 1 to 65535." : {},
     "Enter the server's address only, such as %@. It must use https, or http for localhost." : {
@@ -206,6 +209,7 @@
     },
     "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner. Share it over a channel you trust; it expires with the transfer." : {},
     "Everything is encrypted on your device and decrypted only on the other one. Nothing in between can read it." : {},
+    "Exact Paths" : {},
     "Exclude from sends" : {},
     "Expired" : {},
     "Expires" : {},
@@ -248,6 +252,7 @@
     "It expired, was revoked or has no downloads left, so ask the sender for a new link." : {},
     "It no longer works for anyone." : {},
     "Keep Both" : {},
+    "Leaves out these exact paths, one per line, relative to the folder you send, such as src/secret.txt. The patterns in Settings match any part of a name instead." : {},
     "Link" : {
       "comment" : "VoiceOver label of the text that shows a link."
     },
@@ -270,6 +275,7 @@
     "Local network only: nothing leaves your network" : {},
     "Local network when possible" : {},
     "Local-only transfers never touch a relay on the internet." : {},
+    "Looks up a relay's address with public DNS servers instead of the system's, which tells those servers the relay's name. It does not apply through a proxy or to Send as Link." : {},
     "Lost connection to the other device" : {},
     "Menu bar" : {},
     "Multicast Address" : {},
@@ -285,6 +291,7 @@
     "On the other device, enter this code or scan the QR." : {},
     "One code phrase does everything" : {},
     "One code, one transfer" : {},
+    "One path per line" : {},
     "Open CrocApp" : {},
     "Open CrocApp to Accept" : {},
     "Open Settings" : {},
@@ -301,7 +308,7 @@
     "Privacy Policy" : {},
     "Proxies, sender IP, speed limit and more. The defaults suit most people." : {},
     "Public relay pool" : {},
-    "Puts every setting on this page back to croc's default and removes the saved proxies." : {},
+    "Puts every setting on this page back to croc's default, clears the excluded paths and removes the saved proxies." : {},
     "QR code for the code phrase" : {},
     "QR code for the link" : {},
     "Quick Look" : {},
@@ -460,7 +467,10 @@
     "Show in Files" : {},
     "Show in Finder" : {},
     "Show in Menu Bar" : {},
+    "Single Connection" : {},
     "Size" : {},
+    "Skip Local Network" : {},
+    "Skips finding the other device on your local network, so a transfer goes through a relay. Applies to sending and receiving." : {},
     "Some names are already taken" : {},
     "Spotlight on this device can find past transfers by their file names." : {},
     "Start the same transfer again; replacing the partly received files resumes it." : {
@@ -544,6 +554,8 @@
     "Turn off Auto-Accept Transfers in Settings and try again, or ask the sender to resend without their confirmation option." : {
       "comment" : "Auto-Accept Transfers is the label of a switch in Settings."
     },
+    "Turn off Local Network Only to use this. It is in Settings." : {},
+    "Turn off Skip Local Network in Advanced to use Local Network Only." : {},
     "Turn on Save Transfer History in Settings to list finished transfers here." : {},
     "Type or paste the text to send." : {},
     "Unsafe file names were blocked" : {},
@@ -565,6 +577,7 @@
     "When a File Already Exists" : {},
     "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay." : {},
     "When receiving, connects straight to the sender at this address and base port (9009 unless changed), skipping relays." : {},
+    "When sending, moves the data over one connection instead of several. This can be slower." : {},
     "Works anywhere" : {},
     "Works until %@, for ^[%lld download](inflect: true)" : {
       "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows.",

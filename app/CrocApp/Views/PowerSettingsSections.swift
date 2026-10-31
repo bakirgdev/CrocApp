@@ -65,13 +65,18 @@ struct PowerSettingsSections: View {
 
         Section {
             Toggle("Local Network Only", isOn: $settings.onlyLocal)
+                .disabled(settings.disableLocal)
             Toggle("Disable Compression", isOn: $settings.noCompress)
             Toggle("Zip Folders Before Sending", isOn: $settings.zipFolder)
         } header: {
             Text("Transfer")
         } footer: {
-            Text("Local-only transfers never touch a relay on the internet.")
-                .foregroundStyle(Color.textSecondary)
+            Text(
+                settings.disableLocal
+                    ? "Turn off Skip Local Network in Advanced to use Local Network Only."
+                    : "Local-only transfers never touch a relay on the internet."
+            )
+            .foregroundStyle(Color.textSecondary)
         }
 
         Section {

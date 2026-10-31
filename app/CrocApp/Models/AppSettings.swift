@@ -88,6 +88,18 @@ final class AppSettings {
     }
     /// Receive only: the sender's ip:port.
     var peerIP: String { didSet { save(peerIP, "settings.advanced.peerIP") } }
+    /// Skips the local network for transfers: no LAN discovery or local relay.
+    /// croc's `--no-local`. Excludes `onlyLocal`.
+    var disableLocal: Bool { didSet { save(disableLocal, "settings.advanced.disableLocal") } }
+    /// One data connection instead of several. croc's `--no-multi`. Send only.
+    var noMultiplexing: Bool {
+        didSet { save(noMultiplexing, "settings.advanced.noMultiplexing") }
+    }
+    /// croc's `--internal-dns`: a direct relay's host name is looked up by
+    /// croc's own resolver, which asks public DNS servers.
+    var internalDNS: Bool { didSet { save(internalDNS, "settings.advanced.internalDNS") } }
+    /// One relative path per line, excluded exactly (croc's `--exclude-file`).
+    var excludePaths: String { didSet { save(excludePaths, "settings.advanced.excludePaths") } }
     /// Proxies may carry credentials: Keychain only, see `persistProxy`.
     var socks5Proxy: String {
         didSet { persistProxy(socks5Proxy, account: Self.socks5ProxyAccount, as: .socks5Proxy) }
@@ -165,6 +177,13 @@ final class AppSettings {
         multicastAddress = Self.read(
             storage, "settings.advanced.multicastAddress", default: croc.multicastAddress)
         peerIP = Self.read(storage, "settings.advanced.peerIP", default: croc.peerIP)
+        disableLocal = Self.read(
+            storage, "settings.advanced.disableLocal", default: croc.disableLocal)
+        noMultiplexing = Self.read(
+            storage, "settings.advanced.noMultiplexing", default: croc.noMultiplexing)
+        internalDNS = Self.read(
+            storage, "settings.advanced.internalDNS", default: croc.internalDNS)
+        excludePaths = Self.read(storage, "settings.advanced.excludePaths", default: "")
         socks5Proxy = secrets.get(account: Self.socks5ProxyAccount) ?? ""
         httpProxy = secrets.get(account: Self.httpProxyAccount) ?? ""
     }
@@ -191,6 +210,13 @@ final class AppSettings {
         peerIP.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? relayKind : .directToSender
     }
 
+    /// `excludePaths` as the engine takes it.
+    var excludePathList: [String] {
+        excludePaths.split(separator: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
     var excludeList: [String] {
         excludePatterns.split(separator: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces) }
@@ -205,6 +231,10 @@ final class AppSettings {
         throttleUpload = croc.throttleUpload
         multicastAddress = croc.multicastAddress
         peerIP = croc.peerIP
+        disableLocal = croc.disableLocal
+        noMultiplexing = croc.noMultiplexing
+        internalDNS = croc.internalDNS
+        excludePaths = ""
         socks5Proxy = ""
         httpProxy = ""
     }
@@ -213,7 +243,8 @@ final class AppSettings {
     var advancedIsDefault: Bool {
         let croc = Self.advancedDefaults
         return throttleUpload.isEmpty && multicastAddress == croc.multicastAddress
-            && peerIP.isEmpty && socks5Proxy.isEmpty && httpProxy.isEmpty
+            && peerIP.isEmpty && !disableLocal && !noMultiplexing && !internalDNS
+            && excludePaths.isEmpty && socks5Proxy.isEmpty && httpProxy.isEmpty
     }
 
     private func save(_ value: Any, _ key: String) {
