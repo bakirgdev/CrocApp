@@ -406,20 +406,20 @@
         <div class="container">
           <div class="section__head">
             <h2 class="t-web-section" id="download-title">Download</h2>
-            <p class="t-web-lead">Free. No account, no tiers. The first release, v1.1.0, is coming soon for Mac, iPhone and iPad.</p>
+            <p class="t-web-lead">Free. No account, no tiers. Version 1.1.0 is available now for Mac, and coming soon for iPhone and iPad.</p>
           </div>
 
           <div class="grid">
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">Mac disk image</h3>
-              <p class="t-callout card__body">Coming soon with v1.1.0, the first release. Notarized, for Apple silicon, with built-in updates.</p>
+              <p class="t-callout card__body">Available now: version 1.1.0. Notarized, for Apple silicon, with built-in updates.</p>
               <a
                 class="btn btn--md btn--secondary dlcard__action"
                 href="https://github.com/bakirgdev/CrocApp/releases/latest" target="_blank" rel="noopener"
               >
                 <svg class="btn__icon" aria-hidden="true"><use href="#i-download" /></svg>
-                GitHub Releases
+                Download Disk Image
                 <span class="u-visually-hidden">(opens in a new tab)</span>
               </a>
             </div>
@@ -734,9 +734,9 @@
       </div>
     </footer>
 
-    <!-- No aggregateRating: there are no ratings. No softwareVersion, downloadUrl,
-         releaseNotes or datePublished until the first release is public: the
-         release PR adds them (RELEASING.md, "Each release"). No FAQPage block:
+    <!-- No aggregateRating: there are no ratings. softwareVersion, downloadUrl
+         and releaseNotes change with every release; datePublished stays the
+         first public release (RELEASING.md, "Each release"). No FAQPage block:
          Google limits that rich result to government and health sites. -->
     <script type="application/ld+json">
       {
@@ -753,6 +753,10 @@
             "image": "https://crocapp.dev/assets/img/og.jpg",
             "license": "https://opensource.org/licenses/MIT",
             "isAccessibleForFree": true,
+            "softwareVersion": "1.1.0",
+            "downloadUrl": "https://github.com/bakirgdev/CrocApp/releases/latest",
+            "releaseNotes": "https://github.com/bakirgdev/CrocApp/releases/tag/v1.1.0",
+            "datePublished": "2026-11-01",
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "author": { "@id": "https://crocapp.dev/#author" },
             "sameAs": ["https://github.com/bakirgdev/CrocApp"]
