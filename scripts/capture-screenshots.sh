@@ -559,7 +559,7 @@ activate_app() {
 
 mac_titles() { # the window title(s) a screen shows
   case "$SCREEN" in
-    home | onboarding) echo "CrocApp" ;;
+    home | onboarding) echo "CrocApp|Send" ;; # the Mac sidebar opens on Send, which titles the window
     send-files | send-code | sending | stored-link) echo "Send" ;;
     receive-code | receive-incoming | receive-conflict | receiving | receive-done) echo "Receive" ;;
     history) echo "History" ;;
@@ -663,7 +663,12 @@ mac_settings() { # mac_settings TAB [LAUNCH_ARG...]
   [ "$tab" != General ] || "$TMP/bin/window" scroll CrocApp
   if [ "$SCREEN" = relay-health ]; then
     # The sheet runs its check on open; the relay is the local one, so it answers at once.
-    osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID) to click (first button of (entire contents of window 1) whose name is \"Check Relay…\")" > /dev/null
+    # Check Relay… exposes no name to System Events (docs/known-issues.md), so
+    # click the tab's one button that has neither a name nor a description.
+    osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID)" \
+      -e 'repeat with e in (entire contents of window 1 as list)' \
+      -e 'if class of e is button and name of e is missing value and description of e is "button" then' \
+      -e 'click e' -e 'return' -e 'end if' -e 'end repeat' -e 'error "Check Relay… not found"' -e 'end tell' > /dev/null
     sleep 3
   fi
   settle
@@ -872,6 +877,7 @@ DISABLE_LOCAL=1
 # old file behind. Late, so a failed build or preflight wipes nothing.
 if [ -z "$PICK_SCREENS" ]; then
   if [ -z "$PICK_DEVICES" ]; then
+    mkdir -p "$OUT"
     find "$OUT" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
   else
     for d in $RUN_DEVICES; do
