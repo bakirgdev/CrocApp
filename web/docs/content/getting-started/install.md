@@ -12,7 +12,7 @@ The other device needs **croc 11 or newer**, whether it runs CrocApp or the croc
 
 ## Where to get it
 
-The first release, v1.1.0, is coming soon: a disk image for Mac on GitHub Releases, then the App Store and Mac App Store versions. [crocapp.dev](https://crocapp.dev) links them once they are live.
+Version 1.1.0 is available as a disk image for Mac on GitHub Releases. The App Store and Mac App Store versions are coming; [crocapp.dev](https://crocapp.dev) links them once they are live.
 
 | Channel | For | Where |
 |---|---|---|

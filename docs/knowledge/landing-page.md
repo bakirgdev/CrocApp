@@ -64,7 +64,7 @@ Lighthouse is `npx lighthouse` (13.6.0 when last run, the chrome-devtools MCP to
 
 Nothing checks these. They are listed in `docs/known-issues.md`, "Landing page":
 
-- Nothing is released yet (the first public release is v1.1.0), so the page claims no available version: the Download section says "coming soon", the Mac card links GitHub Releases under that label, and the JSON-LD has no `softwareVersion`, `downloadUrl`, `releaseNotes` or `datePublished`. It is not in the JSON-LD because it would describe a version nobody can get. The release PR adds them and flips the copy in `index.html`, `llms.txt` and the docs install page (`RELEASING.md`, "Each release"). Once added, `datePublished` stays the first public release.
+- The disk image is released (v1.1.0, 1 November 2026) and the store apps are not: the Download section says "available now" for Mac, the Mac card's **Download Disk Image** button links the latest GitHub release, and the store cards say "coming soon". The JSON-LD carries `softwareVersion`, `downloadUrl`, `releaseNotes` and `datePublished`. Each release PR updates the version, the notes link and the copy in `index.html`, `llms.txt` and the docs install page (`RELEASING.md`, "Each release"). `datePublished` stays the first public release.
 - The store badges stay unlinked until the apps are on the App Store.
 - `security.txt` has an `Expires` field to renew (keep it at least six months out).
 - The site-wide copy (`index.html` feature lists, `llms.txt`) describes what `main` ships. It can run ahead of the released version, so merge copy for an unreleased feature with the release.
