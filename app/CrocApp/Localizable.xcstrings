@@ -85,6 +85,7 @@
     "Add Saved Code" : {},
     "Address" : {},
     "Advanced" : {},
+    "Affects sending only: moves the data over one connection instead of several. This can be slower." : {},
     "Allow CrocApp in System Settings > General > Login Items." : {},
     "Allow camera access in Settings to scan QR codes." : {},
     "Allowed" : {},
@@ -105,6 +106,7 @@
     "Both sides need croc 11 or newer, so update croc there." : {
       "comment" : "croc is the name of the file-transfer tool and stays untranslated."
     },
+    "Built-in DNS Resolver" : {},
     "Camera access denied" : {},
     "Camera access is restricted on this device and can't be changed here." : {},
     "Camera access restricted" : {},
@@ -160,6 +162,7 @@
     "Confirmation" : {},
     "Connecting" : {},
     "Connecting…" : {},
+    "Connection" : {},
     "Copied" : {},
     "Copy Code" : {},
     "Copy Link" : {},
@@ -239,6 +242,7 @@
         }
       }
     },
+    "Enter one path per line, relative to the folder you send, such as src/secret.txt. Use / between folders. Paths that start with /, contain \\ or leave the folder are not allowed." : {},
     "Enter the code phrase instead." : {},
     "Enter the sender's address and port, such as 192.168.1.20:9009. The port must be a number from 1 to 65535." : {},
     "Enter the server's address only, such as %@. It must use https, or http for localhost." : {
@@ -246,6 +250,7 @@
     },
     "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner. Share it over a channel you trust; it expires with the transfer." : {},
     "Everything is encrypted on your device and decrypted only on the other one. Nothing in between can read it." : {},
+    "Exact Paths" : {},
     "Exclude from sends" : {},
     "Expired" : {},
     "Expires" : {},
@@ -292,6 +297,7 @@
     "It is working, but turned this check away. Try again in a minute." : {},
     "It no longer works for anyone." : {},
     "Keep Both" : {},
+    "Leaves out these exact paths, one per line, relative to the folder you send, such as src/secret.txt. The patterns in Settings match any part of a name instead." : {},
     "Link" : {
       "comment" : "VoiceOver label of the text that shows a link."
     },
@@ -316,6 +322,7 @@
     "Local network only: nothing leaves your network" : {},
     "Local network when possible" : {},
     "Local-only transfers never touch a relay on the internet." : {},
+    "Looks up a relay's address by asking 18 public DNS servers (Cloudflare, Google, Quad9, Comodo and OpenDNS) at once, in plain text. This skips your system, VPN and encrypted DNS settings and tells them the relay's name. It does not apply through a proxy or to Send as Link." : {},
     "Lost connection to the other device" : {},
     "Menu bar" : {},
     "Multicast Address" : {},
@@ -335,6 +342,7 @@
     "On the other device, enter this code or scan the QR." : {},
     "One code phrase does everything" : {},
     "One code, one transfer" : {},
+    "One path per line" : {},
     "Open CrocApp" : {},
     "Open CrocApp to Accept" : {},
     "Open Receive" : {},
@@ -355,7 +363,7 @@
     "Privacy Policy" : {},
     "Proxies, sender IP, speed limit and more. The defaults suit most people." : {},
     "Public relay pool" : {},
-    "Puts every setting on this page back to croc's default and removes the saved proxies." : {},
+    "Puts every setting on this page back to croc's default, clears the excluded paths and removes the saved proxies." : {},
     "QR code for the code phrase" : {},
     "QR code for the link" : {},
     "Quick Look" : {},
@@ -525,7 +533,10 @@
     "Show in Files" : {},
     "Show in Finder" : {},
     "Show in Menu Bar" : {},
+    "Single Connection" : {},
     "Size" : {},
+    "Skip Local Network" : {},
+    "Skips finding the other device on your local network, so a transfer goes through a relay. Applies to sending and receiving." : {},
     "Some names are already taken" : {},
     "Spotlight on this device can find past transfers by their file names." : {},
     "Start Relay at Launch" : {},
@@ -623,6 +634,8 @@
     "Turn off Auto-Accept Transfers in Settings and try again, or ask the sender to resend without their confirmation option." : {
       "comment" : "Auto-Accept Transfers is the label of a switch in Settings."
     },
+    "Turn off Local Network Only to use this. It is in Settings." : {},
+    "Turn off Skip Local Network in Advanced to use Local Network Only." : {},
     "Turn on Save Transfer History in Settings to list finished transfers here." : {},
     "Type or paste the text to send." : {},
     "Unsafe file names were blocked" : {},

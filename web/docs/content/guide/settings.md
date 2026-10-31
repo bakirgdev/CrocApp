@@ -70,7 +70,7 @@ Type patterns in **Patterns, one per line** to skip matching files when you send
 
 ![CrocApp Settings on macOS showing the Advanced tab with the proxy fields](../../screenshots/mac/settings-advanced-light.webp#gh-light-mode-only)![CrocApp Settings on macOS showing the Advanced tab with the proxy fields](../../screenshots/mac/settings-advanced-dark.webp#gh-dark-mode-only)
 
-**Advanced** holds croc options most people never need. Every default is croc's own. Each field checks what you type and shows a message under it. If a saved value is not usable, a transfer fails with "An Advanced setting can't be used" instead of falling back to something else. **Reset to Defaults** at the bottom puts every setting back after a confirmation, and removes the saved proxies.
+**Advanced** holds croc options most people never need. Every default is croc's own. Each field checks what you type and shows a message under it. If a saved value is not usable, a transfer fails with "An Advanced setting can't be used" instead of falling back to something else. **Reset to Defaults** at the bottom puts every setting back after a confirmation, clears the excluded paths and removes the saved proxies.
 
 | Setting | Default | Affects | Does the other device have to match? |
 |---|---|---|---|
@@ -78,7 +78,11 @@ Type patterns in **Patterns, one per line** to skip matching files when you send
 | HTTP Proxy | None | This device | No |
 | Multicast Address (Mac only) | `239.255.255.250` | Both devices | Yes, to find each other on the local network |
 | Sender IP | None | Receiving | No, but it must be the sender's address and port |
+| Skip Local Network | Off | Both | No |
+| Built-in DNS Resolver | Off | This device | No |
+| Single Connection | Off | Sending | No |
 | Send Speed Limit | No limit | Sending | No |
+| Exact Paths | None | Sending | No |
 
 **Network.**
 
@@ -86,9 +90,18 @@ Type patterns in **Patterns, one per line** to skip matching files when you send
 - **Multicast Address** is the group croc uses to find devices on the local network. It must be an IPv4 multicast address, `224.0.0.0` to `239.255.255.255`.
 - **Sender IP** is for receiving. Enter the sender's address and port, such as `192.168.1.20:9009` or `[fe80::1]:9009`, and CrocApp connects straight to it, skipping relays and discovery. A CrocApp sender listens on port 9009 and the four ports after it. If something else on the sender's device uses 9009, croc takes the next free ports, so the port you need can be higher. If nothing answers, the receive fails at once. It does not fall back to a relay.
 
+**Connection.**
+
+- **Skip Local Network** (off by default) stops CrocApp from looking for the other device on your local network, so a transfer goes through a relay. It applies to sending and receiving. It cannot be on together with **Local Network Only**: each switch is disabled while the other is on. A sender with it on cannot be reached by **Sender IP**.
+- **Built-in DNS Resolver** (off by default) makes croc look up a relay's address by asking 18 public DNS servers at once (Cloudflare, Google, Quad9, Comodo and OpenDNS), in plain text on port 53. That skips your system, VPN and encrypted DNS settings and tells each of them the relay's name, so leave it off unless the system's DNS fails for you. It does not apply through a proxy or to [Send as link](send-as-link.md).
+
 **Performance.**
 
+- **Single Connection** (off by default) makes a send move its data over one connection instead of several. It affects sending only, and can be slower.
+
 - **Send Speed Limit** caps this device's sending speed in bytes per second: digits with an optional `k`, `m` or `g`, such as `500k` or `2m`.
+
+**Exclude from sends.** **Exact Paths** takes one path per line, relative to the folder you send, such as `src/secret.txt`, and leaves exactly those out. Unlike the patterns under [Exclude from sends](#exclude-from-sends), which match any part of a name, a path must match in full. Use `/` between folders. A path that starts with `/`, contains `\` or leaves the folder is refused.
 
 ## The trust badge
 

@@ -14,6 +14,7 @@ import Testing
         .throttleUpload: "500k",
         .multicastAddress: "239.255.255.250",
         .peerIP: "10.0.0.1:9009",
+        .excludePaths: "src/secret.txt\nbuild",
         .storeServer: "https://getcroc.com",
     ]
 
@@ -24,6 +25,7 @@ import Testing
         .throttleUpload: "5",
         .multicastAddress: "10.0.0.1",
         .peerIP: "10.0.0.1",
+        .excludePaths: "../outside",
         .storeServer: "http://example.com",
     ]
 

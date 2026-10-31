@@ -189,7 +189,7 @@ Answers queued for croc's stdin prompts:
 ### Options that Swift wires
 
 - `crocOptions(from:)` sets every `crocmobile.Options` field. `Rename` and `Overwrite` both come from the one knob `EngineOptions.whenFileExists` (`FilePolicy`, default `.keepBoth`).
-- Advanced options (throttle, multicast group, sender IP, proxies) are the ones the app sets. See "Advanced options on the wire". `buildCrocOptions` fixes the rest to what the croc CLI defaults to (`cli.go`), because the library does not default them itself: curve `p256`, local relay ports 9009 to 9013 (`crocBasePort`, `crocTransfers` in `network.go`). The hash is left empty, so croc picks xxhash (`sendCollectFiles` in `croc.go`).
+- Advanced options (throttle, multicast group, sender IP, proxies, `DisableLocal`, `NoMultiplexing`, `InternalDNS`, `ExcludePaths`) are the ones the app sets. See "Advanced options on the wire". `buildCrocOptions` fixes the rest to what the croc CLI defaults to (`cli.go`), because the library does not default them itself: curve `p256`, local relay ports 9009 to 9013 (`crocBasePort`, `crocTransfers` in `network.go`). The hash is left empty, so croc picks xxhash (`sendCollectFiles` in `croc.go`).
 - `croctest` can set the same fields from the command line.
 
 ### Transport
@@ -285,9 +285,15 @@ The batch fixes this. `verify-interop.sh` scenario 12 covers it.
 
 ## Advanced options on the wire
 
-`Options.MulticastAddress`, `PeerIP`, `Socks5Proxy` and `HTTPProxy` map one to one onto croc's flags of the same name (`buildCrocOptions` and `network.go`). `croctest` takes `-multicast -ip -socks5 -connect`, plus `-no-multi` for `NoMultiplexing`, which only the harness sets.
+`Options.MulticastAddress`, `PeerIP`, `Socks5Proxy` and `HTTPProxy` map one to one onto croc's flags of the same name (`buildCrocOptions` and `network.go`). `croctest` takes `-multicast -ip -socks5 -connect`, plus `-no-multi` and `-no-local`. The app sets `NoMultiplexing` and `DisableLocal` from Advanced settings too (`DisableLocal` also from the harness's `--disable-local`).
 
-The curve, hash, base port, transfers and internal DNS are not options. croc settles the curve and hash between the peers itself: a sender adopts the receiver's curve (`c.pakeCurve = string(m.Bytes2)` in `croc.go`, "initialize curve based on the recipient's choice") and a receiver adopts the sender's hash (receiver `--debug`: `using hash algorithm: md5`), so two devices never need to match. The ports matter only to a receiver that dials the sender by `PeerIP`, which a CrocApp sender serves on 9009. A busy port is skipped and the next free ones bind, scanning at most 200 ports (`reserveLocalRelayListeners` in `local_relay.go`, read from source, not observed), so the announced port can differ. If croc cannot bind them all, the send fails at start with `start local relay: not enough open ports to run local relay: reserved N of M` (code `other`).
+`InternalDNS` and `ExcludePaths` are the remaining croc flags the app exposes (`--internal-dns`, `--exclude-file`):
+
+- `InternalDNS` sets `models.INTERNAL_DNS` in `setNetworkGlobals`, under `activeMu` like the proxies, and the restore puts the previous value back. croc reads it when it dials a relay by name without a proxy (`models.ResolveRelayAddress` from `comm.go`); a proxy keeps the host name, and the store client never reads it. croc's own `init` sets the flag from `--internal-dns` in `os.Args` or an `internal-dns` file in its config directory, which the app overrides for the transfer.
+- `ExcludePaths` is newline-joined. `sendFilesInfo` hands the normalized list (`utils.NormalizeRelativePath`, as `cli.go` does) to `GetFilesInfoWithExactExclusions`. A path is compared to the path inside the sent folder, or to a picked file's name. `validateExcludePaths` refuses an absolute path, `.` and a path that leaves the folder.
+- `validateNetworkOptions` also refuses `OnlyLocal` together with `DisableLocal`, which would leave a transfer with no route.
+
+The curve, hash, base port and transfers are not options. croc settles the curve and hash between the peers itself: a sender adopts the receiver's curve (`c.pakeCurve = string(m.Bytes2)` in `croc.go`, "initialize curve based on the recipient's choice") and a receiver adopts the sender's hash (receiver `--debug`: `using hash algorithm: md5`), so two devices never need to match. The ports matter only to a receiver that dials the sender by `PeerIP`, which a CrocApp sender serves on 9009. A busy port is skipped and the next free ones bind, scanning at most 200 ports (`reserveLocalRelayListeners` in `local_relay.go`, read from source, not observed), so the announced port can differ. If croc cannot bind them all, the send fails at start with `start local relay: not enough open ports to run local relay: reserved N of M` (code `other`).
 
 `verify-interop.sh` scenario 15 runs each against the croc v11.5.5 CLI. The table records what that scenario observed, with the croc source (`src/croc/croc.go`, `comm/comm.go`) read for the reason.
 
@@ -300,15 +306,15 @@ The curve, hash, base port, transfers and internal DNS are not options. croc set
 Two limits of the harness:
 
 - A transfer across two hosts on a shared multicast group is not covered. croc drops discovery packets from the host's own addresses (`peerdiscovery` `AllowSelf` false), so two peers on one host never find each other, not even two CLIs.
-- `NoMultiplexing` and `ThrottleUpload` are sender-side only. They are not a mismatch case; scenarios 6, 7 and 11 use them.
+- `NoMultiplexing` and `ThrottleUpload` are sender-side only. A receiver with `NoMultiplexing` set hangs against a multiplexing sender, so the app sets it for sends only (`EngineStart`). They are not a mismatch case; scenarios 6, 7 and 11 use them.
 - The sender-IP case needs ports 9009 to 9013 free on the host, because a wrapper sender no longer takes a different base port. The harness waits up to 30 s for them and then fails.
 
 ### Validating a setting
 
 `ValidateSetting(field, value string) error` in `network.go` is how the app's settings form asks the engine whether a value is valid, so the form keeps no copy of the rules.
 
-- **One code path.** `settingChecks` maps each field name to its check. `validateNetworkOptions` (run by `startSession` before it takes the lock) loops over it for the five network fields, and `ValidateSetting` looks the field up in the same map. `TestValidateSettingMatchesTransferStart` checks that the two accept and refuse alike.
-- **Fields**, as constants: `SettingSocks5Proxy`, `SettingHTTPProxy`, `SettingThrottleUpload`, `SettingMulticastAddress`, `SettingPeerIP` (the `Options` field names) and `SettingStoreServer` (`StoreOptions.Server`). CrocKit's `EngineSetting` reads them through gobind.
+- **One code path.** `settingChecks` maps each field name to its check. `validateNetworkOptions` (run by `startSession` before it takes the lock) loops over it for the six network fields, and `ValidateSetting` looks the field up in the same map. `TestValidateSettingMatchesTransferStart` checks that the two accept and refuse alike.
+- **Fields**, as constants: `SettingSocks5Proxy`, `SettingHTTPProxy`, `SettingThrottleUpload`, `SettingMulticastAddress`, `SettingPeerIP`, `SettingExcludePaths` (the `Options` field names) and `SettingStoreServer` (`StoreOptions.Server`). CrocKit's `EngineSetting` reads them through gobind.
 - **Result.** `nil`, or the `startError` JSON payload. A refused value has code `invalidSetting`; an unknown field name has code `other`. The call takes no lock, so it works during a transfer.
 - **Normalization.** Each check trims the value the way the engine does: `buildCrocOptions` trims the upload limit, sender IP and multicast address, `proxyURL` and `setNetworkGlobals` trim the proxies, and croc's `normalizeOrigin` trims the server. The app passes the text as typed. Blank is valid for every field except `SettingStoreServer`, which needs an origin.
 - **Proxy errors never quote the value**, which can carry credentials. `TestValidateSettingNeverQuotesAProxy` includes refusals that come from `url.Parse`.

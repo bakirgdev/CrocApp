@@ -52,6 +52,12 @@ import Testing
             // "5": croc quietly ignores a one-character value.
             invalid: ["5", "k", "0k", "-5k", "1.5m", "5kb"]),
         Field(
+            name: "excluded paths", check: { AppSettings.excludePathsError($0) },
+            message:
+                "Enter one path per line, relative to the folder you send, such as src/secret.txt. Use / between folders. Paths that start with /, contain \\ or leave the folder are not allowed.",
+            valid: ["", "  ", "src/secret.txt", "a.txt\n\n ./b/c.txt "],
+            invalid: ["/etc/passwd", "../outside", "ok.txt\n..", ".", "dir\\file.txt"]),
+        Field(
             name: "link server", check: { AppSettings.storedServerError($0) },
             message:
                 "Enter the server's address only, such as https://getcroc.com. It must use https, or http for localhost.",

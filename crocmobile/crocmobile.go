@@ -22,6 +22,7 @@ type Options struct {
 	OutDir         string // receive destination (required on receive)
 	WorkDir        string // send: writable cwd for temp files (text/zip); required on iOS
 	Exclude        string // newline-joined substring patterns
+	ExcludePaths   string // newline-joined relative paths excluded exactly, inside a sent folder or by a picked file's name (croc --exclude-file)
 	DisableLocal   bool
 	OnlyLocal      bool
 	NoCompress     bool
@@ -31,7 +32,8 @@ type Options struct {
 	Rename         bool // receive: keep both, croc names the new file "name (1).ext"; also the default when neither is set
 	AutoAccept     bool // maps to croc NoPrompt; default false (product pillar)
 	Ask            bool
-	NoMultiplexing bool // harness only (croctest -no-multi): one data connection per transfer; the app never sets it
+	NoMultiplexing bool // one data connection per transfer (croc --no-multi); sender side, so a peer that cannot take several connections still works
+	InternalDNS    bool // resolve a direct relay hostname through croc's built-in resolver (croc --internal-dns); proxies keep the hostname for proxy-side DNS
 
 	// Advanced options. Zero values mean croc's defaults.
 	MulticastAddress string // IPv4 group for LAN discovery (croc --multicast)
