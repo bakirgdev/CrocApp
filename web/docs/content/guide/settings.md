@@ -119,7 +119,7 @@ The badge reads your settings. It does not report which path carried the data. A
 
 ## About
 
-**About** shows the app version and links to the privacy policy and support page.
+**About** shows the app version and links to the privacy policy, the support page and croc's license. CrocApp is built on croc by Zack Scholl (MIT), and is unofficial and not affiliated with croc.
 
 ## What is stored
 

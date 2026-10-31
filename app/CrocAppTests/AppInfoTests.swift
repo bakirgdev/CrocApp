@@ -12,6 +12,13 @@ import Testing
         expectHTTPSPage(AppInfo.supportURL, path: "/support/")
     }
 
+    @Test func crocLicenseURLIsCrocsLicenseOnGitHub() {
+        let parts = URLComponents(url: AppInfo.crocLicenseURL, resolvingAgainstBaseURL: false)
+        #expect(parts?.scheme == "https")
+        #expect(parts?.host == "github.com")
+        #expect(parts?.path == "/schollz/croc/blob/main/LICENSE")
+    }
+
     // URLComponents, not URL.path: URL.path drops the trailing slash.
     private func expectHTTPSPage(_ url: URL, path: String) {
         let parts = URLComponents(url: url, resolvingAgainstBaseURL: false)

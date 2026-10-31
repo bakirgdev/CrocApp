@@ -109,6 +109,9 @@
     "Both sides need croc 11 or newer, so update croc there." : {
       "comment" : "croc is the name of the file-transfer tool and stays untranslated."
     },
+    "Built on croc by Zack Scholl (MIT). CrocApp is unofficial and not affiliated with croc." : {
+      "comment" : "Footer of the About section. croc is the open-source tool CrocApp is built on; keep croc and CrocApp untranslated."
+    },
     "Built-in DNS Resolver" : {},
     "Camera access denied" : {},
     "Camera access is restricted on this device and can't be changed here." : {},
@@ -704,6 +707,9 @@
     },
     "connecting" : {
       "comment" : "Said after a sidebar row's name."
+    },
+    "croc License" : {
+      "comment" : "Link in the About section to the MIT license of croc, the open-source tool CrocApp is built on. Keep croc lowercase and untranslated."
     },
     "iOS paused the transfer" : {},
     "iOS stopped it in the background, so keep CrocApp open and open the link again." : {},
