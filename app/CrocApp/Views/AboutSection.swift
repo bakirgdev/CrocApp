@@ -1,16 +1,26 @@
 import SwiftUI
 
-/// Version and the privacy and support links, last section of Settings
-/// on both platforms.
+/// Version, the privacy and support links, and the croc attribution its MIT
+/// license requires (`design/brand.md`, "Attribution and legal"). Last
+/// section of Settings on both platforms.
 struct AboutSection: View {
     var body: some View {
-        Section("About") {
+        Section {
             LabeledContent("Version", value: AppInfo.versionDescription)
                 .accessibilityElement(children: .combine)
             Link("Privacy Policy", destination: AppInfo.privacyURL)
                 .linkRow()
             Link("Support", destination: AppInfo.supportURL)
                 .linkRow()
+            Link("croc License", destination: AppInfo.crocLicenseURL)
+                .linkRow()
+        } header: {
+            Text("About")
+        } footer: {
+            Text(
+                "Built on croc by Zack Scholl (MIT). CrocApp is unofficial and not affiliated with croc."
+            )
+            .foregroundStyle(Color.textSecondary)
         }
     }
 }
