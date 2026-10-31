@@ -28,7 +28,7 @@ File contents are never recorded.
 
 ## Shortcuts and Spotlight
 
-Past transfers are available to the Shortcuts app through a **Find Transfers** action (see [Shortcuts and Siri](shortcuts.md)). That action returns nothing while **Save Transfer History** is off. To find a transfer from Spotlight, turn on **Show History in Spotlight** in [Settings](settings.md). It is off by default, because it makes file names searchable outside CrocApp. Neither one shows a code phrase.
+Past transfers are available to the Shortcuts app through a Find Transfers action (see [Shortcuts and Siri](shortcuts.md)). That action returns nothing while **Save Transfer History** is off. To find a transfer from Spotlight, turn on **Show History in Spotlight** in [Settings](settings.md). It is off by default, because it makes file names searchable outside CrocApp. Neither one shows a code phrase.
 
 ## Send Again
 
@@ -41,7 +41,7 @@ A [Send as link](send-as-link.md) row shows the link server's host and when the 
 ## Delete
 
 - **Delete** in a row's context menu (or a swipe on iOS) removes that entry.
-- **Clear** in the toolbar, then **Clear All**, removes the whole list.
+- **Clear History** in the toolbar, then **Clear All**, removes the whole list.
 
 Both remove the list only. Files you already received stay where they were saved.
 

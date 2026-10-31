@@ -68,7 +68,7 @@ Favicons are the app icon, not the bare mascot. Regenerate them whenever the ico
 
 ## Naming
 
-"CrocApp": one word, capital C and A. Never "Croc App", "Crocapp" or "CrocAPP". "croc", the CLI, is always lowercase. Bundle ID `com.bakirgdev.CrocApp`; share extension `com.bakirgdev.CrocApp.CrocShare`.
+"CrocApp": one word, capital C and A. Never "Croc App", "Crocapp" or "CrocAPP". "croc", the CLI, is always lowercase. Bundle ID `com.bakirgdev.CrocApp`; the other five are listed in `docs/RELEASING.md`, "One-time setup".
 
 Apple product names follow Apple's rules: singular, never possessive, never all caps, never abbreviated. "CrocApp for iPhone, iPad and Mac", not "the iPhone app". "App Store" with a capital A and S, and only "the" before it.
 

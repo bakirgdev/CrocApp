@@ -86,7 +86,7 @@ Always lowercase and mono, never autocapitalized, autocorrected or spell-checked
 | notification | alert, push, toast ("banner" is only the in-app StatusBanner) |
 | haptics | vibration, buzz |
 
-"Password" is right only for the relay password, a real password a user types for their own relay. "Incoming" appears only in the label **Incoming Transfers** and the notification kind it names, because nothing is being received before the user says yes. **Send as link** is still sending ("Send as Link", "Sending", "Link ready"); "download" appears only as the noun for one fetch of a link ("2 of 5 downloads used").
+"Password" is right only for the relay password, a real password a user types for their own relay. "Incoming" appears in no label (the Settings rows are **Notifications** and **Show File Names in Notifications**), because nothing is being received before the user says yes. **Send as Link** is still sending ("Send as Link", "Sending", "Link ready"); "download" appears only as the noun for one fetch of a link ("2 of 5 downloads used").
 
 ## Claims
 
