@@ -52,7 +52,7 @@ Free, open source, no account. Send files, folders or text to another device wit
 
 ## Description
 
-Length: 2921 characters. The security statements follow the approved list in `design/voice.md`, "Claims".
+Length: 2883 characters. The security statements follow the approved list in `design/voice.md`, "Claims".
 
 ```text
 CrocApp sends files, folders and text from one device to another with a short code phrase such as cape-junky-widow. No account, no sign-up, and the two devices do not need to be on the same network.
@@ -78,7 +78,7 @@ WHAT YOU CAN DO
 - Watch progress and speed, cancel at any time, and resume an interrupted transfer.
 - Send as Link: share encrypted files for someone who is not online, with a lifetime of 1 hour, 1 day or 7 days and a limit on downloads (up to 100 files and 1 GiB). You can revoke the link from History.
 - Use your own relay, force local-network-only transfers, or route through a proxy, from Settings.
-- iPhone and iPad: send from any app with the share sheet, follow a transfer in a Live Activity, find received files in the Files app, and use Shortcuts and Siri actions.
+- iPhone and iPad: send from any app with the share sheet, find received files in the Files app, and use Shortcuts and Siri actions.
 - Mac: drag and drop, a menu bar window for quick sends, and Shortcuts actions.
 - Light and dark appearance and Dynamic Type.
 
@@ -211,7 +211,7 @@ Sending arbitrary files to another person is not content the app hosts or shows.
 
 ## Review notes
 
-Paste into App Review Information, Notes. Length: 3527 bytes of the 4000 allowed. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
+Paste into App Review Information, Notes. Length: 3445 bytes of the 4000 allowed. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
 
 ```text
 CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end-to-end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email. Source: https://github.com/bakirgdev/CrocApp
@@ -241,12 +241,14 @@ TEST WITHOUT A SECOND DEVICE: use croc's own browser client at https://getcroc.c
 
 The browser UI at getcroc.com is the croc project's and may change wording; the flow stays: one device shows a code, the other enters it.
 
-Please keep CrocApp in the foreground during a transfer on iPhone and iPad. A transfer can continue briefly in the background through a system Live Activity.
+Please keep CrocApp in the foreground during a transfer on iPhone and iPad.
 
 Questions: https://crocapp.dev/support/
 ```
 
 Check the notes by hand before pasting, as listed in "Open checks before submitting".
+
+Run on TestFlight build 1.1.0 (4): step 2 on an iPhone; step 4 on a Mac with outgoing TCP 9009 to 9013 blocked, where a code transfer showed "No public relay answered"; and a code transfer on an iPhone on an IPv6-only (NAT64) network. Steps 1 and 3 and the macOS build's step 2 were not run on that build. Neither the description nor these notes mention the Live Activity, which has not been seen on a device.
 
 ## Export compliance
 
@@ -336,7 +338,6 @@ This is research, not legal advice. `../known-issues.md`, "Release", tracks the 
 Still to do:
 
 - Run the Accessibility Inspector and VoiceOver audit on iOS and macOS (`../known-issues.md`, "Release"). Until it passes, keep VoiceOver and "largest text sizes" claims out of the description and What's New.
-- Send a file from getcroc.com in a browser and receive it in the app on a real device. The browser-sends, app-receives direction in the review notes (step 2) is not verified anywhere in the repo. The other direction, "Receive in Your Browser" from an app sender, is covered in `device-test-checklist.md`, "Links and web receive".
 - Read getcroc.com's current labels (Send, Receive, Choose files, "Croc code or stored link", Copy code) and compare them with the review notes. The page belongs to the croc project and can change.
 - Fill in the contact name, phone and email in App Review Information. They are not in the repo, and the developer-account address is not necessarily the public support contact.
 - Confirm `https://crocapp.dev/support/` and `https://crocapp.dev/privacy/` return HTTP 200.
