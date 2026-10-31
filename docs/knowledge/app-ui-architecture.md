@@ -182,7 +182,7 @@ Relay strings use `""` for "croc default" (the `TextField` prompt reads "Public 
 
 `TrustBadge(relay:)` appears in the waiting, transferring and confirm-send views. `HowItWorksView` is the plain-language explainer. Its facts come from `what-is-croc.md`.
 
-**About and privacy link.** `Views/AboutSection.swift` is the last `Form` section of the macOS General tab and of the iOS `SettingsScreen`. It shows the version (`CFBundleShortVersionString` and `CFBundleVersion`) and **Privacy Policy** and **Support** links. The URLs and the version string live in `Support/AppInfo.swift`, and `AppInfoTests` pins their scheme, host and path.
+**About and privacy link.** `Views/AboutSection.swift` is the last `Form` section of the macOS General tab and of the iOS `SettingsScreen`. It shows the version (`CFBundleShortVersionString` and `CFBundleVersion`), **Privacy Policy**, **Support** and **croc License** links, and a footer with the attribution croc's MIT license requires (`design/brand.md`, "Attribution and legal"). The app and Direct targets also set `NSHumanReadableCopyright`. The URLs and the version string live in `Support/AppInfo.swift`, and `AppInfoTests` pins their scheme, host and path.
 
 On macOS, `AppCommands` replaces the `.appInfo` group with an **About CrocApp** button. It calls `NSApplication.orderFrontStandardAboutPanel(options:)` with a linked "Privacy Policy" `.credits` string. The Direct build's `UpdateCommands` still attaches after that group.
 
