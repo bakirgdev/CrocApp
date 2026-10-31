@@ -155,6 +155,8 @@ Facts about the upload that look like problems but are not:
 
 `app/CrocApp/PrivacyInfo.xcprivacy` declares the required-reason APIs the Go engine reaches: `FileTimestamp` (`C617.1`, `3B52.1`) and `SystemBootTime` (`35F9.1`), besides `UserDefaults` (`CA92.1`). The engine is linked statically into the app binary and imports `stat`, `fstat`, `fstatat`, `lstat` and `mach_absolute_time` (checked with `nm -u`). It does not import `statfs`, `statvfs` or `getattrlist`, so there is no `DiskSpace` entry. Re-run `nm -u` after a croc or Go bump.
 
+Each extension carries its own manifest. `app/CrocShare/PrivacyInfo.xcprivacy` declares `DiskSpace` (`E174.1`): `ShareStager` reads `volumeAvailableCapacityForImportantUsageKey` to refuse a copy that would not fit. `app/CrocWidgets/PrivacyInfo.xcprivacy` declares nothing. A required-reason API added to an extension needs its entry there, or App Store Connect answers with ITMS-91053 for that `.appex`.
+
 ### Checking the result of an upload
 
 After every upload:
