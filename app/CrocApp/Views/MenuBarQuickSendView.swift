@@ -44,7 +44,7 @@ struct MenuBarQuickSendView: View {
         case .starting, .connecting:
             VStack(spacing: Spacing.space3) {
                 ProgressView().accessibilityHidden(true)
-                Text("Connecting…").foregroundStyle(.secondary)
+                Text("Connecting…").foregroundStyle(Color.textSecondary)
                 cancelButton
             }
         case .waiting(let code):

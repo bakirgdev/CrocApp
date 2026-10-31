@@ -16,7 +16,7 @@ struct StagedFilesSheet: View {
                 ForEach(Array(files.enumerated()), id: \.element) { index, url in
                     FileRow(
                         name: url.lastPathComponent,
-                        size: sizes[url] ?? 0,
+                        size: sizes[url],
                         isFirst: index == 0,
                         isLast: index == files.count - 1
                     )

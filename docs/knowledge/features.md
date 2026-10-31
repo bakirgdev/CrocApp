@@ -65,7 +65,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | **Haptics** setting (on by default): a short tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer | iPhone only | shipped |
 | Menu bar quick send and receive, with an icon that shows the transfer state (see below) | macOS only | shipped |
 | **Notifications** and **Show File Names in Notifications** settings: a local notification when a transfer finishes, fails or needs your answer while the app is in the background (see below) | all | shipped, not verified on a device |
-| Dock tile: the percent while bytes move, a badge while a request waits for an answer | macOS only | shipped, not verified by eye |
+| Dock tile: the percent while bytes move, a badge while a request waits for an answer; **Show Progress in the Dock** turns it off | macOS only | shipped, not verified by eye |
 | Shortcuts and Siri actions (see below) | all | shipped |
 | Past transfers as Shortcuts entities (**Find Transfers**, **Open Transfer**), and in Spotlight behind **Show History in Spotlight** (off by default) | all | shipped, not verified in the system UI |
 | **Send with CrocApp** in the Services menu (selected files and text) | macOS | shipped |
@@ -109,7 +109,7 @@ Details:
   - `TransferNotifier` watches the controller from outside and posts a local notification for a finished, failed or waiting-for-answer transfer, only while the app is not active (Mac: not frontmost; iOS: not in the foreground). The user's own cancel or decline posts nothing.
   - **Notifications** is on by default. The system permission prompt comes when the first transfer starts or when the switch is turned on, not at launch. **Show File Names in Notifications** is off by default, so the text is "Transfer complete"; with it on, a receive names its file, or counts several.
   - A notification never carries a code phrase or link. The category supplies a generic body for when the user hides previews on the lock screen. A tap opens the Send or Receive screen of that transfer (on a Mac it also reopens a closed window).
-  - The Mac Dock tile shows the percent while bytes move and "1" while a request waits. It has no switch of its own: it shows no names, and it is not a notification.
+  - The Mac Dock tile shows the percent while bytes move and "1" while a request waits. **Show Progress in the Dock** (`showDockBadge`, on by default) turns it off. It shows no names, and it is not a notification, so **Notifications** does not govern it.
   - Not verified on a device or by eye: delivery, the permission prompt and the tap.
 - **Shortcuts and Siri.** **Send Files with CrocApp**, **Send Text with CrocApp** and **Receive with CrocApp** (App Intents), also offered as App Shortcuts. They run in the foreground. The send actions return the code and Receive returns the files. Not verified on a device. That the Finder Quick Action works is inferred, not tested (`device-test-checklist.md`, "Shortcuts actions").
 - **History in Shortcuts and Spotlight.** A transfer is an entity with a name, direction, status, date, file names and size, never a code or its hint. Shortcuts gets **Find Transfers** (filters: date, direction, status, name) and **Open Transfer**, which opens History. Both answer with nothing while **Save Transfer History** is off. Spotlight indexing is a separate setting, **Show History in Spotlight**, off by default because it puts file names in a system index; turning it or Save Transfer History off removes what was indexed. Spotlight indexing and the entities were exercised by unit tests and a real-index test; the Spotlight search UI and a device were not (`known-issues.md`, "History entities").
@@ -136,7 +136,9 @@ Details:
 | `--ignore-stdin`, `--disable-clipboard`, `--extended-clipboard` | The engine always sets the first two (no stdin, and the app has its own **Copy Code** with a clipboard expiry). The extended clipboard command is CLI only |
 | `croc ssh` | A shared terminal. It has no meaning in a file-transfer app |
 | `croc relay` | Hosting a relay is a service. CrocApp can use one (**Relay**), but running it needs a machine that stays on |
-| `croc update` | Updates come from the App Store or CrocApp's own update check |
+| `croc update` | Updates come from the App Store or CrocApp's own update check (Direct build: **Check for Updates Automatically**) |
+| Handoff (`NSUserActivity` to continue a transfer on another device) | A transfer is a live session on one device: the engine, the relay room and the code belong to that process, so another device could only restart it with a code the activity must not carry (`design/principles.md`, "Bans", 5). Nothing a second device could pick up |
+| A Focus filter (`SetFocusFilterIntent`) | There is nothing to filter. Notifications already follow the system Focus, and the Dock badge, widget and Live Activity show no names unless the user opts in. A filter would add a setting that duplicates the system's |
 | Tailcat, `--transport` | The engine is croc's relay-only build (`croc_no_tailcat`). It halves the app, and the relay and the LAN carry every transfer, so there is no Connection setting. See `crocmobile-bridge.md`, "Transport" |
 
 What stands between the shipped feature set and the first App Store release is listed in `docs/known-issues.md`, "Release".

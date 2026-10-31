@@ -145,6 +145,35 @@ A failed settings write to `secrets` is never silent. This covers the relay pass
 
 **Haptics** (`haptics`, key `settings.haptics`, default on, iPhone only). `phoneHaptic` (`Views/PhoneHaptics.swift`) is the one place that checks it, together with the iPhone idiom, so every call site honors it. The modifier reads `AppSettings` from the environment on iOS, so a view that uses `phoneHaptic` needs it there (the WindowGroup provides it). `Views/GeneralSettingsSections.swift` holds the two rows, shared by the macOS General tab and the iOS `SettingsScreen`; the Haptics row only exists on iPhone.
 
+### User controls
+
+Every automatic or stored behavior has a visible switch in Settings, or a stated reason it needs none. A default stores and shows the least that keeps the feature useful. A surface that can show a transfer name outside the app has its own switch, off by default, and never carries a code phrase, a relay password or a stored-link key (`design/principles.md`, "Bans"). This table is the audit (D23); a new automatic behavior adds a row. Keys are `settings.<name>` unless the row says otherwise.
+
+| Behavior | Switch (Settings label) | Default | Lives in |
+| --- | --- | --- | --- |
+| Transfer history kept on this device, capped at 300 records | **Save Transfer History** (`saveTransferHistory`) | on | SwiftData store (`HistoryStore`); a record keeps a code hint, never the code |
+| History file names in Spotlight | **Show History in Spotlight** (`indexHistoryInSpotlight`), needs history on | off | `HistorySpotlightIndex` |
+| History offered to Shortcuts and Siri (Find Transfers) | follows **Save Transfer History**; the actions are the user's own, so no second switch | on with history | `HistoryEntityStore` |
+| Notifications when CrocApp is in the background | **Notifications** (`notificationsEnabled`); the system asks for permission at the first transfer | on | `TransferNotifier` |
+| File names in notifications | **Show File Names in Notifications** (`notificationsShowFileNames`) | off | `TransferNotifier.notice` |
+| Names in widgets, Control Center and the Live Activity | **Show File Names on the Lock Screen and in Widgets** (`systemSurfacesShowFileNames`) | off | `TransferSnapshotWriter`, `BackgroundCoordinator` |
+| Last-transfer widget data (direction, outcome, time) | follows **Save Transfer History**: the file is deleted while it is off. A widget exists only once the user adds it | on with history | App Group file (`TransferSnapshotStore`) |
+| iOS Live Activity during a background transfer (direction and progress) | the system's per-app Live Activities switch in iOS Settings. It ends with the transfer, and shows no name unless the switch above is on | system | `BackgroundCoordinator` |
+| Dock badge, macOS: the percent while bytes move, "1" while a request waits | **Show Progress in the Dock** (`showDockBadge`) | on | `TransferNotifier` |
+| Menu bar item, macOS | **Show in Menu Bar** (`showInMenuBar`) | on | `MenuBarExtra(isInserted:)` |
+| Open at login, macOS | **Open at Login** | off | the system's login-item list (`LoginItem`, `SMAppService`), not our defaults |
+| The relay this Mac runs | **Run a Relay**, and **Start Relay at Launch** (`relayHostAtLaunch`) | off, off | `RelayHostController` |
+| Saved codes | none: added only by **Add Saved Code**, deleted in Settings. They never leave the Keychain | empty | Keychain item `savedCodes` |
+| Accepting without asking | **Auto-Accept Transfers** (`autoAccept`), with the warning footer; **When a File Already Exists** applies under it | off | `AppSettings` |
+| Update check, Direct build only | **Check for Updates Automatically**, which is Sparkle's own setting | off until the user answers Sparkle's prompt | Sparkle's defaults (`AppUpdater`). The App Store build has no check |
+| Receive folder | **Save Received Files To** (Change, Reset) | `~/Downloads/CrocApp`, or the app's Documents | bookmark in `UserDefaults` (`OutputFolderStore`) |
+| Haptics, iPhone | **Haptics** (`haptics`) | on | `phoneHaptic` |
+| Copied code or link leaves the pasteboard after 5 minutes (macOS clears it while the app runs; iOS sets an expiry) | none: it protects a secret and discards the user's data only if the user has not copied anything since | always | `Clipboard.copySecret` |
+| Staged copies of shared files and photos | none: deleted with the row, the screen or the next launch's sweep. Only the user's own staged files | n/a | `SendStaging` |
+| Receipt of a Send as Link upload, kept until the link expires so it can be revoked | none: the user started the upload, and the receipt is the only way to revoke it | n/a | Keychain (`StoredTransferVault`) |
+| Screen stays awake during a transfer, iOS | none: a transfer stops when the device sleeps | during a transfer | `BackgroundCoordinator` |
+| The croc relay pool and LAN discovery | **Local Network Only**, **Skip Local Network**, a custom relay (Settings > Relay and Advanced) | public pool plus LAN | `EngineStart` |
+
 Relay strings use `""` for "croc default" (the `TextField` prompt reads "Public relay pool") and reach the engine as stored, password included. Go resolves them (`crocmobile/relay.go`): blank means croc's default, and with no custom relay and Local Network Only off, the relay comes from upstream's public pool by code.
 
 `relayKind` is display-only: `publicDefault`, `custom`, `localOnly` or `directToSender`. It is `custom` if either address is set to something other than `RelayDefaults` (CrocKit, read from Go). `receiveRelayKind` returns `directToSender` when a sender IP is set.
@@ -477,7 +506,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 - Apple's `Window` quits the app when it closes. `AppDelegate.applicationShouldTerminateAfterLastWindowClosed` returns false, so a running transfer and the menu-bar item outlive the window. Measured on macOS 27: with the delegate method missing, `performClose` on the window ended the process; with it, the process stayed and the window was `isVisible == false`.
 - The window comes back from a reopen (`open -a`, the event a Dock click sends; the Dock click itself was not tried), from a link, and from **Open CrocApp** in the menu-bar window. `openWindow(id:)` opens a closed `Window` scene and orders an open one to the front (Apple's `OpenWindowAction`), so `MenuBarQuickSendView.openMainWindow` is `NSApp.activate()` plus `openWindow(id:)`. Measured with the window closed: `open -a` and a link each made it visible again, and `openWindow(id:)` called from the menu-bar scene did too. With it open there was still one window. The menu-bar button itself was not clicked.
 - The old `.handlesExternalEvents(preferring: [], allowing: ["*"])` is gone, because a `Window` is never duplicated by an opened URL.
-- `CrocApp Direct` only (`#if DIRECT`, `app/CrocAppDirect/AppUpdater.swift`): a **Check for Updates…** item in the app menu right after **About CrocApp**, backed by Sparkle's `SPUStandardUpdaterController`. The App Store target has no such item.
+- `CrocApp Direct` only (`#if DIRECT`, `app/CrocAppDirect/AppUpdater.swift`): a **Check for Updates…** item in the app menu right after **About CrocApp**, backed by Sparkle's `SPUStandardUpdaterController`, and **Check for Updates Automatically** in the General tab (`UpdateSettingsSection`), which reads and writes `SPUUpdater.automaticallyChecksForUpdates` (Sparkle persists it). The App Store target has neither.
 - The default output folder is `~/Downloads/CrocApp`. It needs the `files.downloads.read-write` entitlement. The folder is auto-created in `defaultFolder`, and `defaultDisplayName` supplies the UI label. The receive-done screen offers **Show in Finder** via `NSWorkspace.activateFileViewerSelecting`.
 - Build and release scripts are described in `docs/RELEASING.md`.
 

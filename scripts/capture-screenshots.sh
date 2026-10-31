@@ -63,7 +63,10 @@ DEVICES="mac iphone ipad iphone63 duo"
 MAIN_DEVICES="mac iphone ipad"
 SCREENS="onboarding home send-files send-code sending receive-code receive-incoming \
 receive-conflict receiving receive-done stored-link history how-it-works settings \
-settings-advanced"
+settings-advanced receive-saved-codes settings-relay relay-health"
+# Screens a phone or an iPad has no counterpart of: the relay this Mac runs and its
+# health check live in the Mac's Relay tab only.
+MAC_ONLY_SCREENS="settings-relay relay-health"
 # The App Store subset, in upload order. The number in a file name is the position.
 STORE_SCREENS="send-files send-code sending receive-incoming receiving receive-done \
 stored-link history settings how-it-works"
@@ -74,6 +77,9 @@ PAYLOAD_NAMES="Quarterly-Report.pdf Ridge-Sunrise.jpg Meeting-Notes.md Design-As
 Project-Archive.zip Field-Recordings.zip"
 
 in_list() { case " $1 " in *" $2 "*) return 0 ;; *) return 1 ;; esac }
+
+# has_screen DEVICE SCREEN: whether the device takes the screen.
+has_screen() { [ "$1" = mac ] || ! in_list "$MAC_ONLY_SCREENS" "$2"; }
 
 store_index() { # store_index SCREEN -> its position, from 1
   local i=1 n
@@ -123,7 +129,9 @@ case "${1:-}" in
       echo "$d ($(store_dims "$d" | tr ' ' x) in the store set):"
       if is_main "$d"; then
         for s in $SCREENS; do
-          [ "$d $s" = "mac onboarding" ] || echo "  $OUT/$d/$s-{light,dark}.png"
+          [ "$d $s" = "mac onboarding" ] && continue
+          has_screen "$d" "$s" || continue
+          echo "  $OUT/$d/$s-{light,dark}.png"
         done
       fi
       for s in $STORE_SCREENS; do echo "  $OUT/app-store/$(store_class "$d")/$(store_name "$s").png"; done
@@ -558,6 +566,8 @@ mac_titles() { # the window title(s) a screen shows
     how-it-works) echo "How It Works" ;;
     settings) echo "CrocApp Settings|General|Settings" ;;
     settings-advanced) echo "Advanced" ;;
+    settings-relay | relay-health) echo "Relay" ;;
+    receive-saved-codes) echo "Receive" ;;
   esac
 }
 
@@ -635,21 +645,27 @@ still() { # still ARGS...
 
 # macOS Settings is a separate window opened with Cmd-comma; the keystroke goes
 # to whatever is frontmost, so the app is raised first. TAB is General or Advanced.
-mac_settings() { # mac_settings TAB
-  local i
-  launch --screen home
+mac_settings() { # mac_settings TAB [LAUNCH_ARG...]
+  local i tab=$1
+  shift
+  launch --screen home "$@"
   for i in 1 2 3; do
     activate_app
     osascript -e 'tell application "System Events" to keystroke "," using command down'
     poll 5 mac_window_shown "General|Advanced|Settings|CrocApp Settings" && break
     [ "$i" -lt 3 ] || die "the Settings window did not open"
   done
-  osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID) to click button \"$1\" of toolbar 1 of window 1" > /dev/null
-  poll 5 mac_window_shown "$(mac_titles)" || die "the Settings window never showed the $1 tab"
+  osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID) to click button \"$tab\" of toolbar 1 of window 1" > /dev/null
+  poll 5 mac_window_shown "$(mac_titles)" || die "the Settings window never showed the $tab tab"
   # The General form is taller than the window and cannot be stretched, so
   # scroll it to its end: the bottom then closes on a whole caption, and the
   # top slides under the toolbar like any scrolled form.
-  [ "$1" != General ] || "$TMP/bin/window" scroll CrocApp
+  [ "$tab" != General ] || "$TMP/bin/window" scroll CrocApp
+  if [ "$SCREEN" = relay-health ]; then
+    # The sheet runs its check on open; the relay is the local one, so it answers at once.
+    osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID) to click (first button of (entire contents of window 1) whose name is \"Check Relay…\")" > /dev/null
+    sleep 3
+  fi
   settle
   snap
   quit_app
@@ -666,6 +682,7 @@ capture_screen() {
         --stage "$DOCS/shots/Ridge-Sunrise.jpg" --stage "$DOCS/shots/Meeting-Notes.md"
       ;;
     receive-code) still --screen receive ;;
+    receive-saved-codes) still --screen receive --seed-saved-codes ;;
     history) still --screen history --seed-history ;;
     how-it-works) still --screen howItWorks ;;
     settings)
@@ -674,6 +691,8 @@ capture_screen() {
     settings-advanced)
       if [ "$DEV" = mac ]; then mac_settings Advanced; else still --screen advanced; fi
       ;;
+    settings-relay) mac_settings Relay ;;
+    relay-health) mac_settings Relay "${RELAY_ARGS[@]}" ;;
     send-code)
       # Parks on "Ready to send", the one state that shows the code and the QR.
       new_code code
@@ -815,6 +834,7 @@ verify_outputs() {
     is_main "$d" || continue
     for s in $RUN_SCREENS; do
       [ "$d $s" = "mac onboarding" ] && continue
+      has_screen "$d" "$s" || continue
       for MODE in light dark; do
         [ -s "$OUT/$d/$s-$MODE.png" ] || fail "missing $OUT/$d/$s-$MODE.png"
       done
@@ -870,6 +890,7 @@ shoot_devices() { # shoot_devices DEVICE...
       # On macOS the first-run welcome is a sheet over a window that then
       # photographs with grey traffic lights.
       [ "$DEV $SCREEN" = "mac onboarding" ] && continue
+      has_screen "$DEV" "$SCREEN" || continue
       # A store-only device takes just the screens that are in the store set,
       # in the one appearance their slot calls for.
       if ! is_main "$DEV"; then

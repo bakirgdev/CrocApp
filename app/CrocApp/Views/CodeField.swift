@@ -37,10 +37,11 @@ struct CodeField: View {
 
     /// What `invalidMessage` says for a code shorter than the engine accepts.
     static var tooShortMessage: String {
-        String(
-            localized:
-                "A code phrase needs at least \(EngineConstraints.minCodeLength) characters.",
-            comment: "The placeholder is the minimum number of characters a code needs.")
+        inflected(
+            AttributedString(
+                localized:
+                    "A code phrase needs at least ^[\(EngineConstraints.minCodeLength) character](inflect: true).",
+                comment: "The placeholder is the minimum number of characters a code needs."))
     }
 
     // components.md → CodeField: wrapper padding is `0 6px 0 14px`, not a

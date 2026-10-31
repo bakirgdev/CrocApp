@@ -145,4 +145,16 @@ private final class FakeNotificationCenter: NotificationPosting {
         #expect(TransferNotifier.dockBadge(for: .idle, percent: nil) == nil)
         #expect(TransferNotifier.dockBadge(for: Self.done, percent: nil) == nil)
     }
+
+    @Test func theDockBadgeFollowsItsOwnSwitch() {
+        var badge: String?
+        let n = TransferNotifier(
+            controller: controller, settings: settings, center: center,
+            isAppActive: { true }, setDockBadge: { badge = $0 })
+        n.handle(phase: .transferring, percent: 42, enabled: false)
+        #expect(badge == "42%")
+        settings.showDockBadge = false
+        n.handle(phase: .transferring, percent: 43, enabled: false)
+        #expect(badge == nil)
+    }
 }

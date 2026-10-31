@@ -54,20 +54,11 @@ These items gate Submit for Review of the first App Store release (`knowledge/pr
 - **A Mac list or form screen draws its scroll edge only as wide as the capped column.** `HistoryView` and the settings screens sit in a 480-wide column in the detail, and macOS 26 draws the hairline and, in dark mode, a slightly lighter band under the toolbar across that column only. The cap is the book's (`design/principles.md`, "Spacing and layout"). `scrollContentBackground` and `scrollEdgeEffectStyle` did not remove it, and `contentMargins` does nothing on a Mac list.
 - **`HomeView` and the sidebar detail each switch on `Route` to build a screen.** `Route.destination` (`Views/RegularLayout.swift`) is the shared copy, and `HomeView` still has its own because it was not touched.
 - **An iPhone Plus or Max in landscape reports regular width**, so by the book's rule (width, never device) it gets the sidebar. Not checked: no simulator was rotated to landscape.
-- **The views predate the amended design book.** What the book now specifies and the app does not do yet:
-  - Call sites in the other views still style text with `.secondary` instead of `Color.textSecondary` (`design/principles.md`, Contrast); `HomeView`, `RecentTransfersSection`, `OnboardingView` and `HowItWorksView` follow it. The `Color.textSecondary` call sites already follow it, because the alias now routes to the `ColorTextSecondary` set. The Swift lint does not catch `.secondary`.
-  - The user's own cancel or decline ends on the failure `StatusBlock`, with the error glyph and tint, although `design/voice.md`, "Errors", says it is not a failure. Its title stands alone with **Done**, as the book wants; `StatusBlock` has no neutral kind for it yet.
-  - `CodePhraseDisplay` labels the code "Transfer code" for VoiceOver, a banned term (`design/voice.md`, "Terminology").
-  - Not built: Quick Look and drag-out of received files, and the symbol-replace, numeric-text and waiting-pulse motions (only the fade-in of Home's pending-request banner is).
+- **A few views differ from the design book.**
+  - The Last Transfer widget (`app/CrocWidgets/LastTransferWidget.swift`) styles its time and empty-state glyph with `.secondary` instead of `Color.textSecondary`, because the widget target has no asset catalog with the token sets. It also uses raw point spacing (16, 8, 4) where the share extension (`ShareStagingView.swift`) does too. Both extensions are separate bundles without `DesignTokens.swift`.
   - A Home recent-transfer row opens the History list, not the record's own detail (`design/components.md`, "Home"). History's detail screen exists, but no route opens it from outside the History list yet.
   - On macOS, Home's grouped `Form` draws a section card behind the badge, banner and the two actions, because `.listRowBackground(Color.clear)` has no effect in a grouped macOS form. iOS draws no card there. Seen in a Debug build with `--screen home`; the regular-width layout (`design/principles.md`, "Platform adaptation") is meant to replace Home on the Mac.
-- **`FileRow` looks up each staged file's size in `init(url:)`** (`app/CrocApp/Views/FileRow.swift`).
-  - It is synchronous file I/O on the main actor, run by `SendView` when it builds the row. A network or iCloud volume could make it hitch.
-  - Not measured. A fix would read the size once when files are staged.
-- **A little on-screen text cannot be translated yet.**
-  - The `/s` after a transfer speed (`SpeedText` in `TransferStatusView.swift`) and the receive-folder labels "Downloads/CrocApp" and "Documents" (`OutputFolderStore.defaultDisplayName`) are English text built by hand. `byteCount` already localizes the size itself.
-  - `CodeField.tooShortMessage` counts "characters" with `EngineConstraints.minCodeLength`, which is 6. It is not inflected (`design/voice.md`, "Numbers"), so a minimum of 1 would read "1 characters". Every other count noun is inflected.
-  - Fixing the speed needs a format string, and the folder labels need the system's folder names. Left because the app has one language so far (`knowledge/app-ui-architecture.md`, "Localization").
+- **The screenshot manifest has screens no run has captured.** `receive-saved-codes` (`--seed-saved-codes`), and on the Mac `settings-relay` and `relay-health` (the Settings Relay tab, and its **Check Relay…** sheet clicked through System Events), were added without running `scripts/capture-screenshots.sh`, which takes over the display. The `relay-health` click path and whether a window capture includes the attached sheet are unverified. The menu-bar window is not in the manifest: opening a `MenuBarExtra` window needs a click on the status item that the script has no way to do yet.
 
 ## Landing page
 

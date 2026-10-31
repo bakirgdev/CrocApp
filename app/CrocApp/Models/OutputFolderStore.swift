@@ -41,9 +41,13 @@ final class OutputFolderStore {
 
     var defaultDisplayName: String {
         #if os(macOS)
-        "Downloads/CrocApp"
+        // The system's own name for the folder, so it follows the language.
+        let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
+        return "\(FileManager.default.displayName(atPath: downloads.path))/CrocApp"
         #else
-        "Documents"
+        return String(
+            localized: "Documents",
+            comment: "The folder received files go to by default on iPhone and iPad.")
         #endif
     }
 

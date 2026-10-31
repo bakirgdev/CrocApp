@@ -29,6 +29,7 @@ import Testing
         #expect(s.whenFileExists == .keepBoth)
         #expect(s.storedServer == "https://getcroc.com")
         #expect(s.showInMenuBar)
+        #expect(s.showDockBadge)
         #expect(s.saveTransferHistory)
         #expect(s.haptics)
         #expect(s.relayKind == .publicDefault)
@@ -48,6 +49,7 @@ import Testing
         s.whenFileExists = .replace
         s.storedServer = "https://store.example"
         s.showInMenuBar = false
+        s.showDockBadge = false
         s.saveTransferHistory = false
         s.haptics = false
 
@@ -64,6 +66,7 @@ import Testing
         #expect(r.whenFileExists == .replace)
         #expect(r.storedServer == "https://store.example")
         #expect(!r.showInMenuBar)
+        #expect(!r.showDockBadge)
         #expect(!r.saveTransferHistory)
         #expect(!r.haptics)
     }
@@ -110,6 +113,7 @@ import Testing
     @Test func eachDefaultOnBoolPersistsAlone() {
         let bools: [(String, ReferenceWritableKeyPath<AppSettings, Bool>)] = [
             ("showInMenuBar", \.showInMenuBar),
+            ("showDockBadge", \.showDockBadge),
             ("saveTransferHistory", \.saveTransferHistory),
             ("haptics", \.haptics),
         ]

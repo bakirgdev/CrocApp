@@ -69,6 +69,10 @@ struct SettingsView: View {
 
             SavedCodesSection()
 
+            #if DIRECT
+            UpdateSettingsSection()
+            #endif
+
             PowerSettingsSections()
 
             AboutSection()
@@ -100,6 +104,7 @@ extension SettingsView {
     @ViewBuilder fileprivate var menuBarSection: some View {
         Section {
             Toggle("Show in Menu Bar", isOn: Bindable(settings).showInMenuBar)
+            Toggle("Show Progress in the Dock", isOn: Bindable(settings).showDockBadge)
             Toggle(
                 "Open at Login",
                 isOn: Binding(
@@ -109,7 +114,7 @@ extension SettingsView {
             if loginItem.needsApproval {
                 HStack {
                     Text("Allow CrocApp in System Settings > General > Login Items.")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(Color.textSecondary)
                     Button("Open Settings") { SMAppService.openSystemSettingsLoginItems() }
                         .buttonVariant(.plain)
                 }

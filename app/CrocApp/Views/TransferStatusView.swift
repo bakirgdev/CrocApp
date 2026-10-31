@@ -620,7 +620,10 @@ private struct SpeedText: View {
     /// a stall (voice.md → Numbers).
     private var text: String {
         guard bytesPerSecond > 0 else { return "—" }
-        return "\(Int64(bytesPerSecond).formatted(.byteCount(style: .file)))/s"
+        let size = Int64(bytesPerSecond).formatted(.byteCount(style: .file))
+        return String(
+            localized: "\(size)/s",
+            comment: "A transfer speed: a file size, such as 3.2 MB, per second.")
     }
 }
 
