@@ -386,7 +386,8 @@
               <svg class="card__icon" aria-hidden="true"><use href="#i-zap" /></svg>
               <h3 class="t-headline card__title">Native</h3>
               <ul class="featlist t-callout" role="list">
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Progress, speed and cancel, with a Live Activity on iPhone and progress in the Mac Dock</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Progress, speed and cancel, with a Live Activity on iPhone that shows no file name unless you ask, and progress in the Mac Dock</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>A Last Transfer widget, and Send and Receive controls for Control Center</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Send and receive from the Mac menu bar</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Notifications when a transfer finishes, fails or needs your answer</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Shortcuts and Siri actions</li>
@@ -405,20 +406,20 @@
         <div class="container">
           <div class="section__head">
             <h2 class="t-web-section" id="download-title">Download</h2>
-            <p class="t-web-lead">Free. No account, no tiers. The Mac disk image is available now; the App Store versions are coming.</p>
+            <p class="t-web-lead">Free. No account, no tiers. The first release, v1.1.0, is coming soon for Mac, iPhone and iPad.</p>
           </div>
 
           <div class="grid">
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">Mac disk image</h3>
-              <p class="t-callout card__body">Available now. Notarized, for Apple silicon, with built-in updates.</p>
+              <p class="t-callout card__body">Coming soon with v1.1.0, the first release. Notarized, for Apple silicon, with built-in updates.</p>
               <a
                 class="btn btn--md btn--secondary dlcard__action"
                 href="https://github.com/bakirgdev/CrocApp/releases/latest" target="_blank" rel="noopener"
               >
                 <svg class="btn__icon" aria-hidden="true"><use href="#i-download" /></svg>
-                Download Disk Image
+                GitHub Releases
                 <span class="u-visually-hidden">(opens in a new tab)</span>
               </a>
             </div>
@@ -733,11 +734,10 @@
       </div>
     </footer>
 
-    <!-- No aggregateRating: there are no ratings. downloadUrl is the direct
-         download; add the store listings to it once they exist. softwareVersion
-         and datePublished (the first public release, 0.9.9) are hand-maintained:
-         bump softwareVersion with every release. No FAQPage block: Google limits
-         that rich result to government and health sites. -->
+    <!-- No aggregateRating: there are no ratings. No softwareVersion, downloadUrl,
+         releaseNotes or datePublished until the first release is public: the
+         release PR adds them (RELEASING.md, "Each release"). No FAQPage block:
+         Google limits that rich result to government and health sites. -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -755,11 +755,7 @@
             "isAccessibleForFree": true,
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "author": { "@id": "https://crocapp.dev/#author" },
-            "sameAs": ["https://github.com/bakirgdev/CrocApp"],
-            "downloadUrl": "https://github.com/bakirgdev/CrocApp/releases/latest",
-            "softwareVersion": "1.0.0",
-            "releaseNotes": "https://github.com/bakirgdev/CrocApp/releases",
-            "datePublished": "2026-07-30"
+            "sameAs": ["https://github.com/bakirgdev/CrocApp"]
           },
           {
             "@type": "Person",

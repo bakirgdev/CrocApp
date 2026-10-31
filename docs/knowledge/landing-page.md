@@ -47,6 +47,10 @@ Every landing page links `site.webmanifest`, the 96px PNG, `favicon.ico` and the
 - `sitemap.xml` lists the landing, support and privacy pages with a `lastmod`. Update the date when a page's content changes. The JSON-LD in `index.html` is one `@graph` (`SoftwareApplication`, `Person`, `WebSite`); validate it by parsing it as JSON and with the Schema.org validator after an edit. The docs sitemap is generated.
 - `robots.txt` lists both sitemaps.
 
+## Performance checks
+
+Lighthouse is `npx lighthouse` (13.6.0 when last run, the chrome-devtools MCP tool omits performance) against the output of `scripts/assemble-site.sh` served locally, mobile (the default preset) and `--preset=desktop`. `python3 -m http.server` sends no compression, which drags mobile scores down (landing 80, docs home 70); GitHub Pages compresses, so serve through a gzip server for numbers that mean anything. The landing page's intermittent mobile 81 comes from a layout shift before first paint. It was found by repeating the run 6 to 8 times and reading `LayoutShift` events from the saved trace (`--save-assets`); see `known-issues.md`, "Landing page".
+
 ## security.txt
 
 `crocapp.dev` has DNS records pointing straight at GitHub Pages (185.199.108.153 to 185.199.111.153), so Cloudflare does not proxy it and cannot serve a `security.txt` of its own. The file therefore stays in `web/landing/.well-known/` and ships with the artifact. `SECURITY.md` hands out its address.
@@ -60,7 +64,7 @@ Every landing page links `site.webmanifest`, the 96px PNG, `favicon.ico` and the
 
 Nothing checks these. They are listed in `docs/known-issues.md`, "Landing page":
 
-- Per release: `softwareVersion` in the JSON-LD block of `index.html`, the release status in `llms.txt`, and the "available now" and "coming soon" copy and store cards in `index.html` (`RELEASING.md`, "Each release"). `datePublished` stays the first public release.
+- Nothing is released yet (the first public release is v1.1.0), so the page claims no available version: the Download section says "coming soon", the Mac card links GitHub Releases under that label, and the JSON-LD has no `softwareVersion`, `downloadUrl`, `releaseNotes` or `datePublished`. It is not in the JSON-LD because it would describe a version nobody can get. The release PR adds them and flips the copy in `index.html`, `llms.txt` and the docs install page (`RELEASING.md`, "Each release"). Once added, `datePublished` stays the first public release.
 - The store badges stay unlinked until the apps are on the App Store.
 - `security.txt` has an `Expires` field to renew (keep it at least six months out).
 - The site-wide copy (`index.html` feature lists, `llms.txt`) describes what `main` ships. It can run ahead of the released version, so merge copy for an unreleased feature with the release.
