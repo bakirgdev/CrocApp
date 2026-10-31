@@ -784,8 +784,6 @@
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIFileSharingEnabled[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIFileSharingEnabled[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
@@ -838,8 +836,6 @@
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "CrocApp uses the local network to discover nearby devices for direct, faster transfers.";
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIFileSharingEnabled[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIFileSharingEnabled[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;

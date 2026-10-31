@@ -1,5 +1,6 @@
 import CrocKit
 import Foundation
+import OSLog
 import Observation
 import SwiftData
 
@@ -13,6 +14,8 @@ import WidgetKit
 /// the widget would otherwise keep a record the user asked not to keep.
 @MainActor
 final class TransferSnapshotWriter: HistoryChangeObserver {
+    private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "widget")
+
     private struct Observed: Equatable {
         let phase: TransferController.Phase
         let saveHistory: Bool
@@ -72,7 +75,10 @@ final class TransferSnapshotWriter: HistoryChangeObserver {
             guard lastSaveHistory != false else { return }
             current = nil
             // A failed delete leaves the record in place, so it must not be silent.
-            do { try store.clear() } catch { assertionFailure("\(error)") }
+            do { try store.clear() } catch {
+                Self.log.error(
+                    "snapshot clear failed: \(String(describing: error), privacy: .public)")
+            }
             reload()
             return
         }
@@ -88,7 +94,9 @@ final class TransferSnapshotWriter: HistoryChangeObserver {
         guard let current else { return }
         let shown = showNames ? current : current.withoutName
         guard shown != store.read() else { return }
-        do { try store.write(shown) } catch { assertionFailure("\(error)") }
+        do { try store.write(shown) } catch {
+            Self.log.error("snapshot write failed: \(String(describing: error), privacy: .public)")
+        }
         reload()
     }
 
@@ -103,7 +111,9 @@ final class TransferSnapshotWriter: HistoryChangeObserver {
 
     private func forget() {
         current = nil
-        do { try store?.clear() } catch { assertionFailure("\(error)") }
+        do { try store?.clear() } catch {
+            Self.log.error("snapshot clear failed: \(String(describing: error), privacy: .public)")
+        }
         reload()
     }
 
