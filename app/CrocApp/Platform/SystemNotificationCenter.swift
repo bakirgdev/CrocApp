@@ -68,8 +68,7 @@ final class SystemNotificationCenter: NSObject, NotificationPosting,
         let direction = response.notification.request.content.userInfo["direction"] as? String
         AppRouter.shared.path = [direction == "send" ? .send : .receive]
         #if os(macOS)
-        // Reopening the app shows the main window, also when it was closed.
-        NSWorkspace.shared.open(Bundle.main.bundleURL)
+        AppRouter.shared.showMainWindow()
         #endif
         completionHandler()
     }

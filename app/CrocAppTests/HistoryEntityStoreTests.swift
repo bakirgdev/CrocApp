@@ -60,7 +60,7 @@ private final class RecordingIndex: HistoryIndexing {
     private func started(index: (any HistoryIndexing)?) async -> HistoryEntityStore {
         let store = HistoryEntityStore(
             container: history.container, settings: settings, index: index)
-        history.observer = store
+        history.observers.append(store)
         store.start()
         await store.settled()
         return store

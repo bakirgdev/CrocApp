@@ -293,8 +293,8 @@ What the app puts outside its windows. **On any glanceable surface, never show**
 | Surface | iPhone | iPad | Mac |
 | --- | --- | --- | --- |
 | Notification | yes | yes | yes |
-| Home Screen and Lock Screen widget, Control Center control | yes | yes | no |
-| Live Activity (the system draws it while a transfer runs in the background: title, file name, progress, Cancel) | yes | yes | no |
+| Home Screen and desktop widget, Control Center control | yes | yes | yes |
+| Live Activity (the system draws it while a transfer runs in the background: title, progress, Cancel, and the file name only with the switch below) | yes | yes | no |
 | Menu bar icon, Dock tile | no | no | yes |
 
 **Notifications** are local only (`Models/TransferNotifier.swift`, `Platform/SystemNotificationCenter.swift`).
@@ -307,9 +307,15 @@ What the app puts outside its windows. **On any glanceable surface, never show**
 
 **Dock tile (Mac).** `TransferNotifier` also sets `NSApp.dockTile.badgeLabel`: the percent while `.transferring` with a known total, "1" while `phase.needsAnswer`, nil otherwise. A badge label needs no permission and no custom view. It has no switch.
 
-**Widgets.** Two, in the system container with system text styles. **Quick Actions** (small) offers Send and Receive, each opening its screen and starting nothing. **Recent Transfers** (medium) lists up to three records with direction glyph, name or count and relative date, and a tap opens the record in History. Only direction, status, display name or count and date cross to the widget, and file names are marked private so the system redacts them while the device is locked. With no transfers, or with Save Transfer History off, the widget shows its empty line. Direction glyphs join the accented group.
-
-**Control Center controls.** **Send** and **Receive**, also placeable on the Lock Screen and the Action button. A tap opens the app on that screen with nothing prefilled and nothing started, because a control that started a transfer would send or open a receive without a look. No state, number or code.
+**Widgets and controls** live in the `CrocWidgets` extension (`app/CrocWidgets/`; `CrocWidgets Direct` for the Direct app). It reads one file, `last-transfer.json`, in the App Group container (`ShareHandoff.groupID`).
+- `TransferSnapshotWriter` observes the controller like `TransferNotifier` and writes a `TransferSnapshot` (direction, outcome done, failed or stopped, item count, date, and a name) only when a transfer ends, then reloads the timelines. A running transfer is never written, so a killed app cannot leave a stale "in progress". The code phrase and link never enter the type.
+- **Last Transfer** (small, medium): state, date and the count; the medium size adds **Send** and **Receive** buttons. With no file, or with **Save Transfer History** off (the writer deletes the file), it says "No recent transfer".
+- A name is stored only for a single item and only with **Show File Names on the Lock Screen and in Widgets** (off by default). It is one switch for the widget and the Live Activity, separate from **Show File Names in Notifications** because a widget stays on screen and a notification does not. Turning it off rewrites the file without the name.
+- The buttons run `OpenSendIntent` and `OpenReceiveIntent` (`Shared/OpenScreenIntents.swift`), which set `AppRouter.path` and start nothing. The Shortcuts actions in `Intents/` need files, text or a code, so a one-tap button cannot run them. The intents are not discoverable in Shortcuts.
+- On the Mac, a widget or control button, a notification tap and an opened `crocapp://` link or file all end in `AppRouter.showMainWindow()`. The main window's content gives the router its `openWindow` action at launch, and the action still works after the user closed the window (checked by hand: close the window, `open -a CrocApp.app "crocapp://receive?code=..."`, the window returns). Without it the router asks the system to reopen the app.
+- Clearing History or deleting a record deletes `last-transfer.json` (`TransferSnapshotWriter` is a `HistoryChangeObserver`); a deletion cannot say whether it was the newest record, so any user deletion clears it. A send's count comes from `Summary.files` and its name from the request's URLs, never from a text payload.
+- **Control Center controls**: **Send** and **Receive** (`ControlWidgetButton`, iOS 26 and macOS 26) run the same two intents. They show no state, number or code.
+- **Live Activity.** The system draws it for the `BGContinuedProcessingTask` (`BackgroundCoordinator`); the SDK header says it shows the task's `progress`, so there is no ActivityKit activity. The title names the direction. The subtitle is the file name only with the switch on (captured when the transfer starts), otherwise "Transferring…".
 
 **Menu bar icon (Mac).** One monochrome template glyph with no animation: `arrow.up.arrow.down.circle` at rest, its `.fill` while starting, waiting, connecting or transferring (with the tabular integer percent beside it when the total is known), `ellipsis.circle.fill` while waiting for the other device, `exclamationmark.circle.fill` when a request waits for an answer, a transfer failed or finished with errors, and `checkmark.circle` once a transfer is done and not yet dismissed. The accessibility label is "CrocApp" and the state in words, never a code phrase.
 
@@ -325,9 +331,10 @@ What the app puts outside its windows. **On any glanceable surface, never show**
 | Notification: a link is ready | Link ready | |
 | Notification: a transfer failed | Transfer failed | the failure's title |
 | any notification, previews hidden | | Transfer update |
-| Widget, no transfers | No transfers yet | |
-| Widget, Save Transfer History off | History is off | |
+| Widget, no transfer or History off | No recent transfer | |
+| Widget, last transfer | Sent, Received, Send failed, Receive failed, Send stopped, Receive stopped | the name (switch on, one item) or the count, and the time since |
 | Widget and control labels | Send, Receive | |
+| Live Activity, file names hidden | Sending with CrocApp, Receiving with CrocApp | Transferring… |
 
 ### Settings copy
 

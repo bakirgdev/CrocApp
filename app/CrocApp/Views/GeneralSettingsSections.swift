@@ -40,6 +40,17 @@ struct GeneralSettingsSections: View {
             .foregroundStyle(Color.textSecondary)
         }
 
+        Section {
+            Toggle(
+                "Show File Names on the Lock Screen and in Widgets",
+                isOn: $settings.systemSurfacesShowFileNames)
+        } footer: {
+            Text(
+                "Widgets, and the Live Activity on iPhone, show only whether a transfer is sending or receiving unless you turn this on. They never show a code phrase or link. Widgets show the last transfer only while Save Transfer History is on."
+            )
+            .foregroundStyle(Color.textSecondary)
+        }
+
         #if os(iOS)
         // iPhone only: iPad's haptics are inconsistent across models
         // (design/principles.md, "Haptics").
