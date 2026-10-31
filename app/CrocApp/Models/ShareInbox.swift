@@ -3,9 +3,9 @@ import OSLog
 import Observation
 
 // Reads files staged by the CrocShare extension out of the App Group
-// container (the contract is in Shared/ShareHandoff.swift). macOS has no
-// share extension and no app group entitlement — containerURL returns nil
-// there and everything degrades to a no-op.
+// container (the contract is in Shared/ShareHandoff.swift). Where the
+// container is unavailable (an unsigned build) containerURL returns nil and
+// everything degrades to a no-op.
 @MainActor
 @Observable
 final class ShareInbox {

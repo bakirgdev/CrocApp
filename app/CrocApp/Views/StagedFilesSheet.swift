@@ -7,13 +7,16 @@ struct StagedFilesSheet: View {
     let send: () -> Void
     let discard: () -> Void
 
+    // Folders are walked off the main thread, once per list, not in `body`.
+    @State private var sizes: [URL: Int64] = [:]
+
     var body: some View {
         NavigationStack {
             List {
                 ForEach(Array(files.enumerated()), id: \.element) { index, url in
                     FileRow(
                         name: url.lastPathComponent,
-                        size: Self.size(of: url),
+                        size: sizes[url] ?? 0,
                         isFirst: index == 0,
                         isLast: index == files.count - 1
                     )
@@ -26,6 +29,7 @@ struct StagedFilesSheet: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .task(id: files) { sizes = await FileSize.bytes(ofEach: files) }
             .navigationTitle("Shared Files")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -37,10 +41,6 @@ struct StagedFilesSheet: View {
                 }
             }
         }
-    }
-
-    private static func size(of url: URL) -> Int64 {
-        (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
     }
 }
 

@@ -65,68 +65,62 @@ struct ContentView: View {
             }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { localNetwork.recheckIfDenied() }
-                // Gate on !controller.isActive before touching the inbox at
-                // all, not just before presenting: refresh() purges batches
-                // no manifest points to, and purgeStaleBatches()'s "don't
-                // delete the batch behind an active send" guard only works
-                // for repeat refreshes on THIS instance (it checks this
-                // instance's own `staged` cache). A transfer started
-                // elsewhere (e.g. AutoVerify's own short-lived ShareInbox for
-                // --auto-share-send) already consumed the manifest by the
-                // time it calls start, so if this instance's first-ever
-                // refresh() lands mid-transfer it has no cached `staged` to
-                // protect the batch with and deletes the file out from under
-                // croc mid-send. controller.isActive flips true synchronously
-                // before any such call returns, so gating here closes the
-                // window.
-                guard phase == .active, !controller.isActive else { return }
-                shareInbox.refresh()
-                showStagedSheet = !shareInbox.staged.isEmpty && !showOnboarding
+                guard phase == .active else { return }
+                offerStagedFiles()
             }
-            .sheet(isPresented: $showStagedSheet) {
-                StagedFilesSheet(
-                    files: shareInbox.staged,
-                    send: {
-                        let urls = shareInbox.staged
-                        shareInbox.consumeManifest()
-                        showStagedSheet = false
-                        // Navigate to Send first: TransferStatusView only
-                        // renders inside SendView/ReceiveView, so without
-                        // this the transfer would run invisibly under
-                        // HomeView. Mirrors AppDelegate's dock-drop routing.
-                        router.path = [.send]
-                        controller.start(.sendFiles(urls: urls, code: ""))
-                    },
-                    discard: {
-                        shareInbox.consumeManifest()
-                        shareInbox.refresh()
-                        showStagedSheet = false
-                    })
-            }
-            .sheet(
-                isPresented: $showOnboarding,
-                onDismiss: {
-                    onboardingSeen = true
-                    // The staged sheet yields to onboarding on first launch;
-                    // offer it now instead of waiting for the next foreground.
-                    // Guarded the same way as the scenePhase and .task offers,
-                    // for symmetry with them.
-                    showStagedSheet = !shareInbox.staged.isEmpty && !controller.isActive
-                    // Sequenced, not simultaneous: two stacked system prompts
-                    // on first launch is bad UX.
-                    #if os(iOS)
-                    Task {
-                        await CameraPermission.requestIfNeeded()
-                        localNetwork.checkIfNeeded()
-                    }
-                    #endif
+            #if os(macOS)
+        // scenePhase stays .active while the window is open, so a share
+        // that arrives while the app runs is only seen on activation.
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+        ) { _ in
+            offerStagedFiles()
+        }
+        #endif
+        .sheet(isPresented: $showStagedSheet) {
+            StagedFilesSheet(
+                files: shareInbox.staged,
+                send: {
+                    let urls = shareInbox.staged
+                    shareInbox.consumeManifest()
+                    showStagedSheet = false
+                    // Navigate to Send first: TransferStatusView only
+                    // renders inside SendView/ReceiveView, so without
+                    // this the transfer would run invisibly under
+                    // HomeView. Mirrors AppDelegate's dock-drop routing.
+                    router.path = [.send]
+                    controller.start(.sendFiles(urls: urls, code: ""))
                 },
-                content: {
-                    OnboardingView {
-                        showOnboarding = false
-                    }
+                discard: {
+                    shareInbox.consumeManifest()
+                    shareInbox.refresh()
+                    showStagedSheet = false
+                })
+        }
+        .sheet(
+            isPresented: $showOnboarding,
+            onDismiss: {
+                onboardingSeen = true
+                // The staged sheet yields to onboarding on first launch;
+                // offer it now instead of waiting for the next foreground.
+                // Guarded the same way as the scenePhase and .task offers,
+                // for symmetry with them.
+                showStagedSheet = !shareInbox.staged.isEmpty && !controller.isActive
+                // Sequenced, not simultaneous: two stacked system prompts
+                // on first launch is bad UX.
+                #if os(iOS)
+                Task {
+                    await CameraPermission.requestIfNeeded()
+                    localNetwork.checkIfNeeded()
                 }
-            )
+                #endif
+            },
+            content: {
+                OnboardingView {
+                    showOnboarding = false
+                }
+            }
+        )
     }
 
     /// design/principles.md → Platform adaptation: compact is Home and one stack,
@@ -138,6 +132,26 @@ struct ContentView: View {
         } else {
             RegularLayout()
         }
+    }
+
+    private func offerStagedFiles() {
+        // Gate on !controller.isActive before touching the inbox at
+        // all, not just before presenting: refresh() purges batches
+        // no manifest points to, and purgeStaleBatches()'s "don't
+        // delete the batch behind an active send" guard only works
+        // for repeat refreshes on THIS instance (it checks this
+        // instance's own `staged` cache). A transfer started
+        // elsewhere (e.g. AutoVerify's own short-lived ShareInbox for
+        // --auto-share-send) already consumed the manifest by the
+        // time it calls start, so if this instance's first-ever
+        // refresh() lands mid-transfer it has no cached `staged` to
+        // protect the batch with and deletes the file out from under
+        // croc mid-send. controller.isActive flips true synchronously
+        // before any such call returns, so gating here closes the
+        // window.
+        guard !controller.isActive else { return }
+        shareInbox.refresh()
+        showStagedSheet = !shareInbox.staged.isEmpty && !showOnboarding
     }
 
     #if os(macOS)

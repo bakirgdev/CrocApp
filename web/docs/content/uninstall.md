@@ -16,6 +16,7 @@ description: How to remove CrocApp from iPhone, iPad and Mac, where it keeps dat
 | Received files, iOS | The app's **Documents** folder | Yes: they are deleted with the app |
 | Received files, Mac | `Downloads/CrocApp`, or the folder you chose | No |
 | Files staged by the share sheet, iOS | The app's shared storage | Yes |
+| Files staged by Finder's Share menu, Mac | `~/Library/Group Containers/HBSU359M33.com.bakirgdev.CrocApp` (Direct: `...direct`) | No: remove the folder by hand |
 
 CrocApp keeps nothing in the cloud and has no account, so there is nothing to delete on a server, except a [Send as link](guide/send-as-link.md) upload that has not expired.
 
