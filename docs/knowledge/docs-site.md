@@ -23,6 +23,10 @@ To build the full Pages artifact (both surfaces, what CI publishes) locally:
 scripts/assemble-site.sh          # writes ./_site/, landing at /, docs at /docs/
 ```
 
+## Crawler files
+
+`web/docs/static/llms.txt` is the hand-written docs index (llmstxt.org shape), served at `/docs/llms.txt`. A page added, renamed or removed is edited there and in the landing `llms.txt` (`landing-page.md`, "Crawler files"). There is no `llms-full.txt`: Docusaurus does not generate one, and the only route is a third-party plugin, a new dependency this repo has not adopted. The sitemap at `/docs/sitemap.xml` is generated and listed in the landing `robots.txt`.
+
 ## Content and styling rules
 
 - Page copy is bound by `design/voice.md` (terminology, capitalization, the approved security claims) and `design/brand.md`. Headings and sidebar titles are sentence case; app controls are quoted in bold, Title Case, exactly as the app spells them.

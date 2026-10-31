@@ -39,7 +39,7 @@ Type is the system font, SF Mono for code. Glyphs are SF Symbols in the app and 
 ## Imagery
 
 - **Screenshots** come only from `scripts/capture-screenshots.sh`, in light and dark pairs, never hand-edited, cropped or retouched (`docs/knowledge/screenshots.md`). Pages show them unframed, with no device bezel of our own.
-- **Social cards** are hand-made in the layout in the table below and change only together.
+- **Social cards** are drawn by `scripts/social-cards.swift` in the layout in the table below and change only together.
 
 ## Assets
 
@@ -51,8 +51,8 @@ Type is the system font, SF Mono for code. Glyphs are SF Symbols in the app and 
 | Favicons | `assets/favicons/` (source set), `web/landing/assets/img/favicon/` (served copy) | the app icon at web sizes: `favicon.ico`, `favicon-96x96.png`, `apple-touch-icon.png`, `web-app-manifest-{192x192,512x512}.png`, `site.webmanifest`. The docs site references the landing copy |
 | Screenshots | `web/docs/screenshots/`, `web/landing/assets/img/screenshots/` (WebP, tracked), from `assets/screenshots/{mac,iphone,ipad}/<screen>-{light,dark}.png` (capture output, gitignored) | README, docs, landing hero |
 | App Store screenshots | `assets/screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` (generated at submission, gitignored) | App Store Connect |
-| Social card | `web/landing/assets/img/og.jpg` | 1200×630, light: wordmark, accent `lock`, headline "Send files with a code phrase", the line "Encrypted end-to-end", the site URL, mascot on the trailing side |
-| GitHub social preview | `assets/github-social-preview.png` | 1280×640, the same layout in dark values with the repo URL; uploaded by hand in the repo settings |
+| Social card | `web/landing/assets/img/og.jpg` (landing and docs) | 1200×630, light: the icon's khaki gradient, wordmark, olive `lock`, headline "Send files with a code phrase", the line "Encrypted end-to-end", the site URL, mascot on the trailing side. Drawn by `scripts/social-cards.swift` |
+| GitHub social preview | `assets/github-social-preview.png` | 1280×640, the same layout on the icon's deep olive with the repo URL, from the same script; uploaded by hand in the repo settings |
 | Disk image background | `assets/dmg-background.tiff` | `docs/RELEASING.md`, "Disk image" |
 | App Store badges | `web/landing/assets/img/app-store.svg`, `mac-app-store.svg` | Apple's artwork, below |
 

@@ -1,0 +1,44 @@
+# CrocApp documentation
+
+> User documentation for CrocApp, a free, open-source, native app for iPhone, iPad and Mac that sends files, folders and text to another device with a short code phrase. Transfers are end-to-end encrypted, and there is no account. CrocApp is a front end for the croc command-line tool by Zack Scholl, unofficial and not affiliated with croc.
+
+These pages describe the current app. For the project overview, facts and the exact security claims, read [the site summary](https://crocapp.dev/llms.txt). CrocApp has not had a formal third-party security audit, so do not describe it as audited.
+
+## Getting started
+
+- [Documentation home](https://crocapp.dev/docs/): what CrocApp is and where to start
+- [Requirements and install](https://crocapp.dev/docs/getting-started/install/): supported devices, the Mac disk image and updates
+- [Your first transfer](https://crocapp.dev/docs/getting-started/first-transfer/): send and receive a file in three steps
+- [Verify a release](https://crocapp.dev/docs/getting-started/verify-downloads/): check a download's attestation and checksum
+
+## Send and receive
+
+- [Send](https://crocapp.dev/docs/guide/sending/): files, folders, text and photos, and what the waiting screen shows
+- [Receive](https://crocapp.dev/docs/guide/receiving/): accepting a transfer, where files land, and name conflicts
+- [Code phrases and links](https://crocapp.dev/docs/guide/code-phrases/): generated, custom and saved code phrases, QR codes and receive links
+- [Send as Link](https://crocapp.dev/docs/guide/send-as-link/): stored transfers, link lifetime and download limits
+
+## Customize
+
+- [Settings](https://crocapp.dev/docs/guide/settings/): relay, connection, transfer, exclusions, notifications and advanced options
+- [Run your own relay](https://crocapp.dev/docs/guide/own-relay/): start a relay on a Mac and check that a relay is reachable
+- [History](https://crocapp.dev/docs/guide/history/): what the transfer history keeps and how to clear it
+- [Mac menu bar and keyboard shortcuts](https://crocapp.dev/docs/guide/menu-bar/): send, receive and keyboard shortcuts on Mac
+- [Shortcuts and Siri](https://crocapp.dev/docs/guide/shortcuts/): the Send Files, Send Text and Receive actions
+
+## Help
+
+- [Troubleshooting](https://crocapp.dev/docs/troubleshooting/): transfers that will not connect, guest Wi-Fi, relays
+- [FAQ](https://crocapp.dev/docs/faq/): short answers and a glossary
+- [Security and privacy](https://crocapp.dev/docs/security-and-privacy/): what is protected and what each server sees
+- [Uninstall and data](https://crocapp.dev/docs/uninstall/): removing CrocApp and what it leaves behind
+
+## Reference
+
+- [croc CLI interoperability](https://crocapp.dev/docs/reference/croc-cli-interop/): which croc versions and options work with CrocApp
+
+## Optional
+
+- [Contribute](https://crocapp.dev/docs/contribute/): how to help, how it was made, and what inspired it
+- [Source and issue tracker](https://github.com/bakirgdev/CrocApp): the repository, MIT licensed
+- [Releases](https://github.com/bakirgdev/CrocApp/releases): release notes and downloads

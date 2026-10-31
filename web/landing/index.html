@@ -347,7 +347,7 @@
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Files, several at once</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Whole folders</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Text and clipboard snippets</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Send from any app with the share sheet on iPhone and iPad</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Send from the share sheet, or from Finder's Share menu on a Mac. Text and links work too</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Show a QR code, or share a link, instead of reading the code out</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Send as Link: upload encrypted files so the receiver can download later</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Zip a folder before sending</li>
@@ -360,7 +360,7 @@
               <h3 class="t-headline card__title">Receive</h3>
               <ul class="featlist t-callout" role="list">
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Receive with a code phrase</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Set your own code phrase, six characters or more</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Set your own code phrase, six characters or more, or keep one per person in the Keychain</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Scan a QR code on iPhone and iPad</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Open a CrocApp link to fill in the code</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>See the file list before you accept</li>
@@ -374,11 +374,11 @@
               <h3 class="t-headline card__title">Trust and control</h3>
               <ul class="featlist t-callout" role="list">
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Encryption badge and a plain-language explanation</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Your own relay, with password and IPv6</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Your own relay, with password and IPv6. A Mac can run one, and Check Relay tests it</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg><span><strong>Local Network Only</strong> setting</span></li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Auto-accept off by default, and marked when on</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Ask both devices to confirm</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Turn compression off</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Turn compression off, skip local discovery, send over one connection</li>
               </ul>
             </article>
 
@@ -386,8 +386,9 @@
               <svg class="card__icon" aria-hidden="true"><use href="#i-zap" /></svg>
               <h3 class="t-headline card__title">Native</h3>
               <ul class="featlist t-callout" role="list">
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Progress, speed and cancel, with a Live Activity on iPhone</li>
-                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Quick send from the Mac menu bar</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Progress, speed and cancel, with a Live Activity on iPhone and progress in the Mac Dock</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Send and receive from the Mac menu bar</li>
+                <li><svg aria-hidden="true"><use href="#i-check" /></svg>Notifications when a transfer finishes, fails or needs your answer</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Shortcuts and Siri actions</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Transfer history that stays on your device</li>
                 <li><svg aria-hidden="true"><use href="#i-check" /></svg>Tries the local network and the relay at once</li>
@@ -600,7 +601,9 @@
             <div class="disclosure__body t-callout">
               <p>
                 Yes. Point CrocApp at any croc relay, with a password and IPv6 if you want them.
-                Running <code class="t-code">croc relay</code> on a machine you control is enough.
+                Running <code class="t-code">croc relay</code> on a machine you control is enough, and
+                a Mac running CrocApp can start one from Settings. <strong>Check Relay</strong> reports
+                whether a relay is reachable and accepts your password.
               </p>
             </div>
           </details>
