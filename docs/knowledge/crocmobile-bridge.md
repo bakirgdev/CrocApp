@@ -58,7 +58,8 @@ Rules that follow from the payloads:
 
 `OnError` receives `{"code","message"}` JSON (`crocmobile/errors.go`). `StartSend` and `StartReceive` errors carry the same JSON as their text, because gobind exposes only the text (as `NSError.localizedDescription`). CrocKit decodes both into `EngineFailure`.
 
-- `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `other`.
+- `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `other`.
+- `portInUse` is raised only by `StartRelay`, for a taken port. A transfer never reports it.
 - An unknown code, or a payload that is not JSON, decodes as `other` with the raw text.
 - `message` is croc's text and is for logs only. The UI maps wording from the code.
 - A recovered panic reports `other`.
@@ -77,6 +78,7 @@ How `classify` picks a code:
 | `relayUnreachable` | `croc.ErrRelayConnection`, `croc.ErrDERPConnection`, `tcp.ErrAdmissionLimited`, rate limiting, dial and DNS failures |
 | `connectionLost` | unexpected EOF, reset, broken pipe, `transfer disconnected` |
 | `joinedEarly` | text `problem with decoding: decompress message`, on a receiver that joined before the sender (see "Start order: sender first") |
+| `portInUse` | `StartRelay` only: a relay port is taken (`syscall.EADDRINUSE` on bind), set directly by `listenError` |
 | `noPublicRelay` | this package's own `codedError`, raised by `generatePublicCode`. A start cancelled during the probe reports `cancelled` instead |
 | `transferActive` | this package's own `codedError`: a start while another transfer holds `activeMu`. CrocKit throws `CrocEngineError.transferActive` for it |
 | `engineStuck` | this package's own `codedError`: the cancel watchdog's terminal event, and every start while a stuck session holds `activeMu` (see "Cancel and teardown") |
@@ -88,6 +90,22 @@ Notes:
 - Order matters in `classify`: a peer's refusal also cancels croc's context, and a bad relay password is reported as `could not connect to`.
 - croc exports sentinels for relay failures only, so the rest is matched on croc v11.5.5 text. `errors_test.go` pins the live ones against real croc clients and an in-process relay.
 - A local `Cancel()` during the accept prompt cancels the context before it closes the prompt pipe, and `GetInputContext` returns the context error whenever the context is done. By reading the source that failure is `cancelled`, not `refused`. Not verified live.
+
+## Relay host and relay check
+
+Neither takes `activeMu`, touches stdio, the working directory or croc's proxy globals, so both run beside a transfer.
+
+**`StartRelay(host, port, password, delegate)`** (`relayhost.go`) is `croc relay` in the process: the CLI's default layout (`RelayCommand` in `cli.go`), `RelayPortCount` (4) ports counted from `port`, the first the control port whose banner announces the other three. It follows the CLI's wiring: `tcp.WithBanner` on the control port, one `tcp.NewRelayCapabilitySet` shared by all ports with `tcp.WithFastAdmission`, and `tcp.WithCtx`. Limits stay at croc's defaults (`tcp/defaults.go`), which are the CLI flags' defaults.
+- It binds every port itself and serves each with `tcp.RunWithListener`, because `RunWithOptionsAsync` blocks and reports a bind failure only after the fact. A taken port fails the start at once with code `portInUse`, an out-of-range base port with `invalidSetting`, and no listener is left open.
+- A blank password is croc's default. An empty host listens on every interface. The relay logs at `warn`: croc logs each client's address at debug.
+- `RelayHost.Stop()` cancels the context and waits at most 3 s for the listeners. If one port dies on its own, the whole relay stops and `RelayDelegate.OnRelayStopped` gets the failure payload, once, never after `Stop()`. Test coverage of that path is the `Stop` and port tests only: a dying port cannot be provoked from outside croc.
+- A Go test sends through the hosted relay with a plain croc client and receives with `StartReceive`. Both peers cannot be app transfers, since one transfer runs per process.
+
+**`CheckRelay(address, password, family)`** (`relaycheck.go`) probes one relay over IPv4 (`"4"`) or IPv6 (`"6"`) and returns a JSON string, never an error: `family`, `ip`, `reachable`, `latencyMs` (TCP connect time), `passwordOk` (absent when unknown) and `code`.
+- It resolves the name for that family (an IP literal is checked against it, so `127.0.0.1` has no IPv6), dials the address, then runs croc's own relay handshake, `tcp.HandshakeTCPServerCapability`, with a throwaway room name. The relay compares the password in that handshake and answers `bad password`, so the password is checked with no transfer. The room is never entered by a peer; the relay frees it when the connection closes.
+- `code` is empty for a reachable relay that accepts the password, else `noAddress` (the name has none of that family; a result code of this call only), `relayUnreachable`, `badPassword`, `invalidSetting` (not host:port) or `other` (reachable but not a croc handshake, `passwordOk` absent).
+- It dials directly, so croc's proxy settings do not apply to it, and it takes five seconds at most. The password is never put in a result or a log, and croc's own handshake errors are already redacted.
+- `PublicRelays()` returns the pool one address per line, for the health screen.
 
 ## Stored transfers
 

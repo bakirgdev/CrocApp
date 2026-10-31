@@ -8,7 +8,7 @@ description: Every CrocApp setting in the order the app lists them, with default
 
 ![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-light.webp#gh-light-mode-only)![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-dark.webp#gh-dark-mode-only)
 
-On a Mac, open Settings with ⌘, and use the **General** and **Advanced** tabs. On iPad, choose **Settings** in the sidebar. On iPhone, or in a narrow iPad window, tap the gear on the home screen. **Advanced** is a row at the bottom of that screen.
+On a Mac, open Settings with ⌘, and use the **General**, **Relay** and **Advanced** tabs. On iPad, choose **Settings** in the sidebar. On iPhone, or in a narrow iPad window, tap the gear on the home screen. **Advanced** is a row at the bottom of that screen.
 
 Settings stay on the device. There is no sync and no account. Defaults suit most people.
 
@@ -28,7 +28,11 @@ The **Menu bar** section has **Show in Menu Bar** (on by default) and **Open at 
 
 By default CrocApp uses croc's public relay pool, the same one the croc command line uses. **Address** and **IPv6 Address** show "Public relay pool" when empty, and **Password** shows "Default".
 
-To use your own relay, run `croc relay` on a machine you control and enter its address, and its password if you set one. The other device must use the same relay. The app cannot run a relay itself. Reasons to run your own: your transfers route through infrastructure you control, or you would rather not depend on an external service.
+To use your own relay, run `croc relay` on a machine you control, or [run one on your Mac from CrocApp](own-relay.md), and enter its address, and its password if you set one. The other device must use the same relay. Reasons to run your own: your transfers route through infrastructure you control, or you would rather not depend on an external service.
+
+**Check Relay…** opens a screen that tests the relay your transfers use and tells you what to change. See [Run your own relay](own-relay.md#check-a-relay).
+
+On a Mac, the **Relay** tab runs a relay on that Mac. See [Run your own relay](own-relay.md).
 
 ## Send as link
 

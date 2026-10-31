@@ -25,6 +25,8 @@ Once a send starts, the window shows the code, a QR code, **Copy Code**, progres
 
 The window shares the one active transfer with the main window, and with [Shortcuts](shortcuts.md). It will not start a second one. If a receive needs you to accept or decline, the window says to open CrocApp, because that prompt lives in the main window.
 
+The window also has a **Run a Relay** switch, which starts and stops the relay your Mac offers to other devices (see [Run your own relay](own-relay.md)).
+
 Turn the icon off with **Show in Menu Bar**, or start CrocApp at login with **Open at Login**, in [Settings](settings.md#receive-and-menu-bar-mac).
 
 ## Keyboard shortcuts

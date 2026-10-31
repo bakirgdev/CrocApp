@@ -83,6 +83,7 @@ Files:
 - `errors.go`: turns croc errors into failure codes.
 - `network.go`: validates Advanced options and exports `ValidateSetting`, which runs the same checks for the app's settings form. It also holds the croc CLI defaults the library does not apply (curve, relay ports) and sets croc's process-wide proxy globals.
 - `relay.go`: public relay selection.
+- `relayhost.go`, `relaycheck.go`: the relay this Mac can run (`StartRelay`, `RelayHost`) and the relay health probe (`CheckRelay`). Neither takes the transfer lock.
 - `doc.go`: the gobind constraint comment.
 - `cmd/croctest/main.go`: a command-line test harness, not linked into the app.
 
@@ -95,7 +96,7 @@ Key types:
 Errors:
 
 - `OnError` receives JSON `{"code","message"}`. `StartSend` and `StartReceive` return the same JSON as their error text, because gobind gives Swift only the text.
-- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.5.5 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `other`.
+- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.5.5 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `other`.
 - The app picks its wording from the code and never reads croc's text.
 
 Network settings:
@@ -267,7 +268,7 @@ The main app target picks its entitlements file by SDK in the project (`CODE_SIG
 - `app/CrocApp/CrocApp.entitlements` (macOS):
   - `com.apple.security.app-sandbox`
   - `network.client`
-  - `network.server`, so croc's local-only relay can listen on a port inside the sandbox
+  - `network.server`, so croc's local-only relay, and the relay a Mac user can run from Settings, can listen on a port inside the sandbox
   - `files.user-selected.read-write`
   - `files.downloads.read-write`, for the default output folder `~/Downloads/CrocApp`
   - `com.apple.developer.associated-domains` (`applinks:crocapp.dev`)

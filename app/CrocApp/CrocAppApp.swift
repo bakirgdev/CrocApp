@@ -22,6 +22,7 @@ struct CrocAppApp: App {
 
     #if os(macOS)
     @State private var quickSend: MenuBarQuickSend
+    @State private var relayHost: RelayHostController
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     #endif
 
@@ -49,6 +50,11 @@ struct CrocAppApp: App {
         HistoryEntityStore.install(for: history, settings: settings, indexed: !harness)
         #if os(macOS)
         _quickSend = State(initialValue: MenuBarQuickSend(controller: controller))
+        let relayHost = RelayHostController(settings: settings)
+        _relayHost = State(initialValue: relayHost)
+        // The relay listens on the network, so it starts only when the user's
+        // setting says so, never in a harness run.
+        if !harness { relayHost.startAtLaunchIfWanted() }
         #endif
         // AppRouter.shared is constructed before this init runs; attach the
         // controller now so AppRouter.isBusy can read isActive live.
@@ -66,6 +72,7 @@ struct CrocAppApp: App {
         ) {
             MenuBarQuickSendView(quickSend: quickSend)
                 .environment(controller)
+                .environment(relayHost)
         }
         .menuBarExtraStyle(.window)
 
@@ -73,6 +80,8 @@ struct CrocAppApp: App {
             SettingsView()
                 .environment(outputFolder)
                 .environment(settings)
+                .environment(relayHost)
+                .environment(localNetwork)
         }
         // A Settings scene's default .automatic resizability resolves to
         // .contentSize — min == max == content size — which is where the old

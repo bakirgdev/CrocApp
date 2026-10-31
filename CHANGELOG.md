@@ -12,6 +12,8 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- **Run a Relay** on a Mac: a **Relay** tab in Settings (and a switch in the menu-bar window) starts a croc relay on this Mac, so devices on your network can use it instead of a relay on the internet. Choose the port (croc's 9009 and the next three), set an optional password (kept in the Keychain), and the tab lists the addresses to enter on the other device. It is off by default, starts at launch only if you turn on **Start Relay at Launch**, and stops when you quit CrocApp. Without a password, anyone who can reach the Mac can use it.
+- **Check Relay…** in Settings, on every platform: checks the relay your transfers use, or croc's public relays if you set none. For each address it reports whether IPv4 and IPv6 connect, how fast, and whether the relay accepts your password, plus the local network permission, and says what to change. It sends nothing.
 - Past transfers are offered to Shortcuts and Siri: a **Find Transfers** action filters them by date, direction, status or file name, and a found transfer opens CrocApp at History. They answer with nothing while **Save Transfer History** is off.
 - **Show History in Spotlight** in Settings (off by default). Turn it on and Spotlight can find past transfers by their file names; turn it off, or turn off **Save Transfer History**, and CrocApp removes every transfer it added to Spotlight. Code phrases and code hints never go to Spotlight.
 - **Send with CrocApp** in the Services menu on a Mac. Select files in Finder, or text in any app, choose it from the app menu's Services submenu, and CrocApp opens at Send with the selection staged. Nothing is sent until you press Send. Text over 1 MiB is refused.

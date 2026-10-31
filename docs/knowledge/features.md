@@ -39,6 +39,8 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Upload speed limit (sender side) | `--throttleUpload` | all | shipped |
 | Sender IP, direct connect (receive side) | `--ip` | all | shipped |
 | Custom multicast address | `--multicast` | all | shipped |
+| Run a relay on this Mac (Settings > Relay, and a toggle in the menu-bar window): port, optional password, address to use on the other device, **Start Relay at Launch** (off by default) | `croc relay` | macOS only | shipped |
+| Relay health check (**Check Relay…** in Settings): reachability and latency over IPv4 and IPv6, whether the relay accepts the password, and the local-network state, with what to change | none (croc's relay handshake) | all | shipped |
 
 ## App-native features
 

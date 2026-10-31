@@ -8,6 +8,7 @@ import SwiftUI
 /// code, QR and progress of whatever transfer the shared controller runs.
 struct MenuBarQuickSendView: View {
     @Environment(TransferController.self) private var controller
+    @Environment(RelayHostController.self) private var relayHost
     @Environment(\.openWindow) private var openWindow
     let quickSend: MenuBarQuickSend
     @State private var isDropTargeted = false
@@ -19,6 +20,15 @@ struct MenuBarQuickSendView: View {
         VStack(spacing: Spacing.space4) {
             content
             Divider()
+            Toggle(
+                "Run a Relay",
+                isOn: Binding(get: { relayHost.isRunning }, set: { relayHost.setRunning($0) })
+            )
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            if case .failed(let failure) = relayHost.state {
+                StatusBanner(kind: .error, title: failure.title, detail: failure.detail)
+            }
             Button("Open CrocApp") { openMainWindow() }
                 .buttonVariant(.plain)
         }
