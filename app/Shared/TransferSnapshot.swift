@@ -27,7 +27,8 @@ struct TransferSnapshot: Codable, Equatable {
 
     /// Keeps `names` only for exactly one item and `showNames`.
     static func name(from names: [String], showNames: Bool) -> String? {
-        showNames && names.count == 1 ? names[0] : nil
+        // A name the app refuses to write (ReceivedName) is not shown either.
+        showNames && names.count == 1 && !ReceivedName.isUnsafe(names[0]) ? names[0] : nil
     }
 }
 

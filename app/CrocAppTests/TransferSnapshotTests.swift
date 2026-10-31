@@ -98,6 +98,20 @@ import Testing
         #expect(store.read() == nil)
     }
 
+    @Test func historyOffClearsOncePerSwitchOff() {
+        let writer = writer()
+        writer.handle(phase: .starting, saveHistory: false, showNames: false)
+        let afterFirst = reloads.count
+        writer.handle(phase: .connecting, saveHistory: false, showNames: false)
+        writer.handle(phase: .transferring, saveHistory: false, showNames: false)
+        #expect(reloads.count == afterFirst)
+    }
+
+    @Test func aNameTheAppBlocksIsNeverShown() {
+        #expect(TransferSnapshot.name(from: ["invoice\u{202E}fdp.exe"], showNames: true) == nil)
+        #expect(TransferSnapshot.name(from: ["report.pdf"], showNames: true) == "report.pdf")
+    }
+
     private func seeded() -> (TransferSnapshotWriter, HistoryStore) {
         let writer = writer()
         let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))

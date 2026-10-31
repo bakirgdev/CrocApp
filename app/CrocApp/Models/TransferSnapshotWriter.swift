@@ -28,6 +28,8 @@ final class TransferSnapshotWriter: HistoryChangeObserver {
     /// name back after it was hidden. The file never holds it while off.
     private var current: TransferSnapshot?
     private var lastPhase: TransferController.Phase = .idle
+    /// nil until the first change, so a launch with history off clears once.
+    private var lastSaveHistory: Bool?
     private var task: Task<Void, Never>?
 
     init(
@@ -60,9 +62,14 @@ final class TransferSnapshotWriter: HistoryChangeObserver {
 
     /// One observed change. Internal so tests can feed phases without a transfer.
     func handle(phase: TransferController.Phase, saveHistory: Bool, showNames: Bool) {
-        defer { lastPhase = phase }
+        defer {
+            lastPhase = phase
+            lastSaveHistory = saveHistory
+        }
         guard let store else { return }
         guard saveHistory else {
+            // Once per switch-off, not on every phase change of every transfer.
+            guard lastSaveHistory != false else { return }
             current = nil
             // A failed delete leaves the record in place, so it must not be silent.
             do { try store.clear() } catch { assertionFailure("\(error)") }

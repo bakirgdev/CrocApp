@@ -176,10 +176,23 @@ import Testing
         try touch(stale.appendingPathComponent("b.txt"))
         try writeManifest(batch: live.lastPathComponent, files: ["a.txt"], in: box.inbox)
 
-        ShareInbox().refresh(in: box.inbox)
+        let inbox = ShareInbox()
+        inbox.now = { .now.addingTimeInterval(2 * ShareInbox.stagingGrace) }
+        inbox.refresh(in: box.inbox)
 
         #expect(exists(live))
         #expect(!exists(stale))
+    }
+
+    @Test func purgeLeavesABatchThatMayStillBeFilling() throws {
+        let box = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: box.root) }
+        let filling = box.inbox.appendingPathComponent(ShareHandoff.makeBatchName())
+        try touch(filling.appendingPathComponent("part.bin"))
+
+        ShareInbox().refresh(in: box.inbox)
+
+        #expect(exists(filling))
     }
 
     @Test func purgeDoesNotKeepAnInvalidBatchName() throws {
@@ -189,7 +202,9 @@ import Testing
         try touch(named.appendingPathComponent("f.txt"))
         try writeManifest(batch: "x", files: ["f.txt"], in: box.inbox)
 
-        ShareInbox().refresh(in: box.inbox)
+        let inbox = ShareInbox()
+        inbox.now = { .now.addingTimeInterval(2 * ShareInbox.stagingGrace) }
+        inbox.refresh(in: box.inbox)
 
         #expect(!exists(named))
     }
