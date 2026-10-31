@@ -16,14 +16,17 @@ Settings stay on the device. There is no sync and no account. Defaults suit most
 
 The **Receive** section shows **Save Received Files To**, with **Change…**, **Reset** and **Show in Finder**. On iOS, change the destination from the **Receive** screen instead.
 
-The **Menu bar** section has **Show in Menu Bar** (on by default) and **Open at Login** (off by default). **Open at Login** follows what macOS reports, so a change in System Settings > General > Login Items shows up here. If macOS needs your approval, an **Open Settings** button takes you to Login Items. See [Mac menu bar and keyboard shortcuts](menu-bar.md).
+The **Menu bar** section has **Show in Menu Bar** (on by default), **Show Progress in the Dock** (on by default) and **Open at Login** (off by default). **Show Progress in the Dock** puts the percent on the Dock icon while a transfer moves, and a badge while a request waits for you; it shows no names. **Open at Login** follows what macOS reports, so a change in System Settings > General > Login Items shows up here. If macOS needs your approval, an **Open Settings** button takes you to Login Items. See [Mac menu bar and keyboard shortcuts](menu-bar.md).
+
+## Updates (Mac disk image build)
+
+**Check for Updates Automatically** (General tab, off until you answer the question CrocApp asks on its second launch): about once a day CrocApp asks github.com for a newer version. It sends no system profile. **Check for Updates** in the CrocApp menu checks once. The App Store builds have neither.
 
 ## Notifications
 
 - **Notifications** (on by default): when CrocApp is in the background, a transfer that finishes, fails or needs your answer sends a notification, and a tap opens that transfer. Cancelling or declining yourself sends nothing. CrocApp asks the system for permission when you start your first transfer, or when you turn the switch on. If you said no, allow CrocApp in System Settings > Notifications.
 - **Show File Names in Notifications** (off by default): the notification says "Transfer complete" unless you turn this on, because notifications can be read on a locked screen. With it on, a received file's name or the number of files is added. Notifications never show a code phrase or a link.
 - **Show File Names on the Lock Screen and in Widgets** (off by default): the Last Transfer widget and the iPhone Live Activity say only whether a transfer is sending or receiving. With it on, a single file's name is added. The widget shows your last transfer only while **Save Transfer History** is on, and neither shows a code phrase or a link. Add the widget from the Home Screen or desktop, and the **Send** and **Receive** controls from Control Center.
-- On a Mac the Dock icon shows the percent while a transfer moves and a badge while a request waits for you. It has no switch.
 
 ## History and haptics
 

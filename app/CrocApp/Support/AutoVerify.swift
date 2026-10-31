@@ -43,6 +43,7 @@ import ServiceManagement
 ///                                  onboarding on launch; combines with the --auto-* modes
 ///   --stage PATH                   preload PATH into the Send screen's staged list (repeatable)
 ///   --seed-history                 fill the (in-memory) history store with showcase records
+///   --seed-saved-codes             fill the (in-memory) saved codes with three showcase names
 /// --auto-send takes its two values non-adjacently (separated by the --code
 /// flag, not `--auto-send PATH CODE`): two bare positional arguments in a row
 /// makes AppKit treat the launch as a file-open request and it never creates
@@ -50,7 +51,7 @@ import ServiceManagement
 /// runs -- confirmed via `sample` on the hung process (idle in NSApplication's
 /// event loop, no window ever attached). Splitting them with a flag avoids it.
 /// On macOS, AppKit reads `--flag value` pairs as defaults and a bare leftover token as a file to
-/// open, so a flag without a value (--hold, --seed-history) must come last.
+/// open, so a flag without a value (--hold, --seed-history, --seed-saved-codes) must come last.
 /// Writes verify-result.txt ("ok success=<bool>" | "error <msg>") to Documents,
 /// and verify-code-ready.txt once a send has its code, so a script can start
 /// the receiver only after the app is in the room. For scripts that need to
@@ -148,6 +149,7 @@ enum AutoVerify {
         // pixels, while the capture script combines them freely.
         if let route = requestedRoute() { applyRoute(route, args: args) }
         if args.contains("--seed-history") { seedHistory(controller.history) }
+        if args.contains("--seed-saved-codes") { seedSavedCodes(controller.savedCodes) }
         announceReady(docs: docs)
         let hold = args.contains("--hold")
         #if os(macOS)
@@ -416,6 +418,18 @@ enum AutoVerify {
                 expiresAt: sample.stored ? Date(timeIntervalSinceNow: 2 * day) : nil)
             record.date = Date(timeIntervalSinceNow: -sample.ago)
             history.add(record)
+        }
+    }
+
+    /// Names for the saved-codes screenshot. The codes are placeholders no
+    /// peer uses; Keychain-free, because a harness run gets in-memory secrets.
+    @MainActor
+    private static func seedSavedCodes(_ savedCodes: SavedCodes?) {
+        for (name, code) in [
+            ("Home laptop", "showcase-home-laptop"), ("Studio Mac", "showcase-studio-mac"),
+            ("Work desktop", "showcase-work-desktop"),
+        ] {
+            savedCodes?.save(SavedCode(name: name, code: code))
         }
     }
 

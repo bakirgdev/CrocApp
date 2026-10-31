@@ -30,6 +30,7 @@ final class TransferNotifier {
         let phase: TransferController.Phase
         let percent: Int?
         let enabled: Bool
+        let dockBadge: Bool
     }
 
     private let controller: TransferController
@@ -61,7 +62,7 @@ final class TransferNotifier {
             Snapshot(
                 phase: controller.phase,
                 percent: SidebarRowState.percent(of: controller.progress),
-                enabled: settings.notificationsEnabled)
+                enabled: settings.notificationsEnabled, dockBadge: settings.showDockBadge)
         }
         task = Task { [weak self] in
             for await s in updates {
@@ -72,7 +73,7 @@ final class TransferNotifier {
 
     /// One observed change. Internal so tests can feed phases without a transfer.
     func handle(phase: TransferController.Phase, percent: Int?, enabled: Bool) {
-        setDockBadge(Self.dockBadge(for: phase, percent: percent))
+        setDockBadge(settings.showDockBadge ? Self.dockBadge(for: phase, percent: percent) : nil)
         defer {
             lastEnabled = enabled
             lastPhase = phase

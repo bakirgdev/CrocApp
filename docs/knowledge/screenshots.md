@@ -54,6 +54,9 @@ One vocabulary across devices, kebab-case, named for the state shown.
 | `how-it-works` | the trust screen |
 | `settings` | Settings (macOS: General tab) |
 | `settings-advanced` | Advanced settings (macOS: Advanced tab) |
+| `receive-saved-codes` | Receive with three saved codes under the code field (placeholder codes, never real) |
+| `settings-relay` | Mac only: the Relay tab, with the relay stopped |
+| `relay-health` | Mac only: the **Check Relay…** sheet, checked against the script's own local relay |
 
 The App Store subset is `send-files`, `send-code`, `sending`, `receive-incoming`, `receiving`, `receive-done`, `stored-link`, `history`, `settings`, `how-it-works`, in that upload order, identical in every class. Change `STORE_SCREENS` in the script to reorder (at most ten).
 
@@ -93,6 +96,7 @@ The app is driven by DEBUG-only launch flags in `app/CrocApp/Support/AutoVerify.
 | `--screen ROUTE` | navigates on launch: `home`, `send`, `receive`, `settings`, `advanced`, `howItWorks`, `history`, `onboarding` |
 | `--stage PATH` | preloads the Send list, repeatable, with `--screen send` |
 | `--seed-history` | fills the in-memory history with showcase records |
+| `--seed-saved-codes` | fills the in-memory saved codes with three placeholder names |
 | `--hold` | parks at the incoming prompt instead of auto-accepting |
 | `--auto-send PATH --code CODE`, `--auto-receive CODE` | run a real transfer |
 | `--auto-store-send PATH --store-server URL --store-downloads N` | upload to the local store server and park on "Link ready" |

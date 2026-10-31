@@ -12,6 +12,7 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- **Check for Updates Automatically** in the General tab of Settings (Mac disk image build): turn the daily update check on or off from Settings. The App Store builds have no update check.
 - **Last Transfer** widget (small and medium, iPhone, iPad and Mac): the state and time of your last transfer, with **Send** and **Receive** buttons on the medium size that open CrocApp on that screen. It never shows a code phrase or link, and shows a file name only if you turn on **Show File Names on the Lock Screen and in Widgets** (off by default). It is empty while **Save Transfer History** is off.
 - **Send** and **Receive** controls for Control Center on iOS 26 and macOS 26: one tap opens CrocApp on that screen.
 - The iPhone Live Activity for a background transfer now shows "Transferring…" instead of the file name, unless **Show File Names on the Lock Screen and in Widgets** is on.
@@ -22,7 +23,7 @@ extra sections where a release needs them, and the project follows
 - The share extension now accepts text and web links, on iPhone, iPad and Mac. Shared text or a link lands in the Send screen as text, and nothing is sent until you press **Send**. If you share files together with text, only the files are kept. Text is limited to 1 MiB.
 - **CrocApp** in Finder's Share menu on a Mac. Select files or folders, choose Share, then CrocApp: the app opens with the **Shared Files** sheet, and nothing is sent until you press **Send**. Turn the extension on under System Settings, Extensions, Sharing if it is not listed.
 - Notifications when CrocApp is in the background: a transfer that finishes, fails or needs your answer sends a notification, and tapping it opens that transfer's screen. **Notifications** in Settings is on by default and CrocApp asks the system for permission when you start your first transfer. A notification says "Transfer complete" and never shows a code phrase or link; turn on **Show File Names in Notifications** (off by default) to see the file name or the number of files.
-- On a Mac, the Dock icon shows the percent while a transfer moves and a badge while a request waits for your answer.
+- On a Mac, the Dock icon shows the percent while a transfer moves and a badge while a request waits for your answer. **Show Progress in the Dock** in Settings turns it off.
 - Receive from the Mac menu bar: type or paste a code or link into the menu bar window and press **Receive**. The menu bar icon now shows the state of the transfer, with the percent beside it while files move, and a request waiting for you offers **Open CrocApp to Accept**.
 - Past transfers are offered to Shortcuts and Siri: a **Find Transfers** action filters them by date, direction, status or file name, and a found transfer opens CrocApp at History. They answer with nothing while **Save Transfer History** is off.
 - **Show History in Spotlight** in Settings (off by default). Turn it on and Spotlight can find past transfers by their file names; turn it off, or turn off **Save Transfer History**, and CrocApp removes every transfer it added to Spotlight. Code phrases and code hints never go to Spotlight.
@@ -49,6 +50,8 @@ extra sections where a release needs them, and the project follows
 - Send and Receive keep the caret where a keyboard is likely: in the code field on a Mac, and on an iPad with a hardware keyboard. Return starts a receive, and the code field waits until you finish typing before it says a code is too short.
 - The Send and Receive screens scroll at the largest text sizes, and the Text box shows a focus ring while you type in it.
 - An empty file now reads "0 bytes" in the send list.
+- The send list no longer reads each file's size on the main thread, so a file on a network or iCloud volume cannot freeze the screen. A folder in the list now shows its total size. The size appears a moment after the row.
+- A transfer speed such as "3.2 MB/s", the default receive folder name and the minimum code length message are now translatable, and the folder name follows the system's language on a Mac.
 - A failed transfer now says what happened and what to do, and offers the one action that can help. **Try Again** runs the same transfer again when it could now succeed (a dropped connection, an unreachable relay or link server, iOS stopping it in the background). **Open Settings** goes where the fix is when a setting is the cause (a rejected relay password, an Advanced setting that cannot be used, auto-accept meeting a sender who confirms). Otherwise there is only **Done**. Shortcuts and the menu bar show the same words.
 
 - The app is about half the size. The transfer engine is now croc's relay-only build, without Tailcat, the direct-connection path croc could try for large sends. The main executable went from 22.0 MB to 10.5 MB on Mac and from 21.3 MB to 10.3 MB on iPhone and iPad (measured on unsigned release archives). Transfers use croc's relay or your local network, as they did for everything under 128 MiB.

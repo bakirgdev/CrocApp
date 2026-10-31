@@ -48,6 +48,9 @@
         }
       }
     },
+    "%@/s" : {
+      "comment" : "A transfer speed: a file size, such as 3.2 MB, per second."
+    },
     "%@: %@" : {
       "comment" : "Menu bar icon accessibility label.",
       "localizations" : {
@@ -66,7 +69,7 @@
     "1 day" : {},
     "1 hour" : {},
     "7 days" : {},
-    "A code phrase needs at least %lld characters." : {
+    "A code phrase needs at least ^[%lld character](inflect: true)." : {
       "comment" : "The placeholder is the minimum number of characters a code needs."
     },
     "A photo in iCloud needs a connection to download. Check yours and try again." : {
@@ -125,6 +128,7 @@
     "Change…" : {},
     "Check Again" : {},
     "Check Anyway" : {},
+    "Check for Updates Automatically" : {},
     "Check Relay…" : {},
     "Check for Updates…" : {},
     "Check the code phrase on both devices." : {},
@@ -182,6 +186,7 @@
     "CrocApp" : {
       "shouldTranslate" : false
     },
+    "CrocApp asks github.com for a newer version about once a day. It sends no system profile and no transfer data. Choose Check for Updates in the CrocApp menu to check once." : {},
     "CrocApp is already sending or receiving. Wait for it to finish." : {},
     "CrocApp will ask to use your camera (to scan QR codes) and your local network (for faster nearby transfers)." : {},
     "Current file progress" : {},
@@ -202,6 +207,9 @@
     "Direction" : {},
     "Disable Compression" : {},
     "Discard" : {},
+    "Documents" : {
+      "comment" : "The folder received files go to by default on iPhone and iPad."
+    },
     "Done" : {},
     "Downloads allowed: %lld" : {
       "comment" : "Label of a stepper. The placeholder is how many times the link can be downloaded."
@@ -455,6 +463,7 @@
     "Revoked" : {},
     "Revoking link" : {},
     "Run a Relay" : {},
+    "Show Progress in the Dock" : {},
     "SOCKS5 Proxy" : {},
     "Same Wi-Fi or different continents, transfers find the fastest path automatically." : {},
     "Save" : {},

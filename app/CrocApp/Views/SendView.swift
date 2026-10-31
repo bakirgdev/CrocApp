@@ -28,6 +28,8 @@ struct SendView: View {
 
     @State private var mode: Mode = .files
     @State private var pickedURLs: [URL] = []
+    /// Sizes of `pickedURLs`, read off the main actor; a row has none until then.
+    @State private var pickedSizes: [URL: Int64] = [:]
     @State private var text = ""
     @State private var customCode = ""
     @State private var showFileImporter = false
@@ -326,6 +328,7 @@ struct SendView: View {
                         ForEach(Array(pickedURLs.enumerated()), id: \.element) { index, url in
                             FileRow(
                                 url: url,
+                                size: pickedSizes[url],
                                 isFirst: index == 0,
                                 isLast: index == pickedURLs.count - 1
                             ) {
@@ -351,6 +354,10 @@ struct SendView: View {
                         }
                     }
                 }
+            }
+            .task(id: pickedURLs) {
+                let missing = pickedURLs.filter { pickedSizes[$0] == nil }
+                pickedSizes.merge(await FileSize.bytes(ofEach: missing)) { $1 }
             }
             // Files, and on iPad the images and text another app drags out.
             .dropDestination(for: SendPayload.self) { payloads, _ in

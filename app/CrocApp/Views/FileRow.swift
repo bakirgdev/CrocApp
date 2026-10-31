@@ -28,14 +28,15 @@ struct FileRow: View {
         let reveal: (() -> Void)?
     }
 
-    /// A staged local file: name, size and glyph come from the URL.
-    init(url: URL, isFirst: Bool = false, isLast: Bool = false, onRemove: @escaping () -> Void) {
-        let isFolder = url.hasDirectoryPath
+    /// A staged local file: name and glyph come from the URL. The size is the
+    /// caller's, read off the main actor (`FileSize`); nil draws none.
+    init(
+        url: URL, size: Int64?, isFirst: Bool = false, isLast: Bool = false,
+        onRemove: @escaping () -> Void
+    ) {
         self.name = url.lastPathComponent
-        self.size =
-            isFolder
-            ? nil
-            : (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init)
+        self.size = size
+        let isFolder = url.hasDirectoryPath
         self.symbolName = Self.symbolName(extension: url.pathExtension, isFolder: isFolder)
         self.isFirst = isFirst
         self.isLast = isLast
@@ -45,7 +46,7 @@ struct FileRow: View {
     /// A remote entry, as listed by the accept gate: name and size only. The
     /// name is the sender's, so it is drawn in its shown form: a name
     /// `ReceivedName` blocks never renders raw.
-    init(name: String, size: Int64, isFirst: Bool = false, isLast: Bool = false) {
+    init(name: String, size: Int64?, isFirst: Bool = false, isLast: Bool = false) {
         self.name = ReceivedName.shown(name)
         self.size = size
         self.symbolName = Self.symbolName(

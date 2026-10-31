@@ -58,6 +58,9 @@ final class AppSettings {
     /// macOS menu-bar quick send. On by default; the menu-bar scene is
     /// inserted only while this is true.
     var showInMenuBar: Bool { didSet { save(showInMenuBar, "settings.showInMenuBar") } }
+    /// macOS Dock tile badge: the percent while bytes move, "1" while a request
+    /// waits. No names, so on by default.
+    var showDockBadge: Bool { didSet { save(showDockBadge, "settings.showDockBadge") } }
     /// Off: a finished transfer leaves no History record. Records already
     /// there stay until the user deletes them.
     var saveTransferHistory: Bool {
@@ -182,6 +185,7 @@ final class AppSettings {
         storedServer = Self.read(
             storage, "settings.storedServer", default: Self.defaultStoredServer)
         showInMenuBar = Self.read(storage, "settings.showInMenuBar", default: true)
+        showDockBadge = Self.read(storage, "settings.showDockBadge", default: true)
         saveTransferHistory = Self.read(storage, "settings.saveTransferHistory", default: true)
         indexHistoryInSpotlight = Self.read(
             storage, "settings.indexHistoryInSpotlight", default: false)
