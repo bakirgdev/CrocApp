@@ -18,12 +18,12 @@ A green build is not evidence a transfer works. A change to `crocmobile/session.
 | --- | --- |
 | `crocmobile/` or `CrocKit/` | `docs/knowledge/crocmobile-bridge.md`, `docs/ARCHITECTURE.md` |
 | App models, views or settings | `docs/knowledge/app-ui-architecture.md`, `docs/knowledge/features.md` |
-| Anything a user sees | `CHANGELOG.md` (`## [Unreleased]`), the docs site page in `web/docs/content/` |
+| Anything a user sees | `CHANGELOG.md` (`## [Unreleased]`), the docs site page in `web/docs/content/`, `web/landing/llms.txt` |
 | `web/landing/` | `docs/knowledge/landing-page.md` |
 | Scripts, CI, toolchain pins | `docs/BUILDING.md`, `docs/knowledge/tooling.md` |
 | Signing, Sparkle, store builds or listing | `docs/RELEASING.md`, `docs/knowledge/app-store-listing.md` |
 | The croc version | `docs/knowledge/croc-upgrade-playbook.md` (it lists the rest) |
-| Security-relevant behavior | `docs/THREAT-MODEL.md` |
+| Security-relevant behavior | `docs/THREAT-MODEL.md`, `web/docs/content/security-and-privacy.md`, `web/landing/privacy/index.html` |
 | A defect found and left, or fixed | `docs/known-issues.md` |
 
 Run `scripts/verify-docs.sh` after editing markdown; CI runs it.

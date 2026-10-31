@@ -3,3 +3,11 @@
 [[IgnoredVulns]]
 id = "GO-2026-5932"
 reason = "golang.org/x/crypto/openpgp is never imported: croc imports only x/crypto's argon2, chacha20poly1305, hkdf, pbkdf2 and ssh packages, and govulncheck reports the vulnerability as not called. No fixed x/crypto version exists."
+
+[[IgnoredVulns]]
+id = "GO-2026-6866"
+reason = "golang.org/x/net/html is never imported (go list -deps -tags croc_no_tailcat shows only bpf, ipv4, ipv6, proxy and internal packages of x/net), and govulncheck reports it as not called. Remove when x/net moves to v0.62.0 or later."
+
+[[IgnoredVulns]]
+id = "GO-2026-6860"
+reason = "golang.org/x/net/html is never imported (go list -deps -tags croc_no_tailcat shows only bpf, ipv4, ipv6, proxy and internal packages of x/net), and govulncheck reports it as not called. Remove when x/net moves to v0.62.0 or later."

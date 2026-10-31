@@ -115,7 +115,10 @@ func serveRelay(listeners []net.Listener, ports []string, password string, d Rel
 			stopped.Do(func() {
 				cancel()
 				if d != nil {
-					go d.OnRelayStopped(errorJSON(err))
+					go func() {
+						defer func() { recover() }() //nolint:errcheck // gobind: a panic here must never cross into the host app
+						d.OnRelayStopped(errorJSON(err))
+					}()
 				}
 			})
 		})
