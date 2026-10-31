@@ -6,7 +6,7 @@ description: Three CrocApp actions for the Shortcuts app, Siri and Spotlight, to
 
 # Shortcuts and Siri
 
-CrocApp adds three actions to the Shortcuts app on iPhone, iPad and Mac. Use them in your own shortcuts, or say or type the phrase in Siri and Spotlight.
+CrocApp adds five actions to the Shortcuts app on iPhone, iPad and Mac: the three below, and Find Transfers and **Open Transfer** (see "Find past transfers"). Use them in your own shortcuts, or say or type the phrase in Siri and Spotlight.
 
 | Action | Phrase | Input | Returns |
 |---|---|---|---|
@@ -32,7 +32,7 @@ The action does not accept or decline for you. The prompt appears in CrocApp unl
 
 ## Find past transfers
 
-**Find Transfers** lists your [History](history.md) in a shortcut: filter by date, direction (sent or received), status or file name, and sort by date. Each result has a name, direction, status, date, file names and size, and opening one opens CrocApp at History. It returns nothing while **Save Transfer History** is off. It never returns a code phrase.
+The Find Transfers action lists your [History](history.md) in a shortcut: filter by date, direction (sent or received), status or file name, and sort by date. Each result has a name, direction, status, date, file names and size, and opening one opens CrocApp at History. It returns nothing while **Save Transfer History** is off. It never returns a code phrase.
 
 ## Send from the Mac Services menu
 
