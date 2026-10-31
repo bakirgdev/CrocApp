@@ -308,7 +308,9 @@ final class TransferController {
                     localized: "Receiving with CrocApp",
                     comment: "Title of the iOS Live Activity while receiving.")
             }
-        background.transferStarted(title: title) { [weak self] in
+        background.transferStarted(
+            title: title, showFileNames: settings.systemSurfacesShowFileNames
+        ) { [weak self] in
             guard let self else { return }
             self.backgroundExpired = true
             self.cancel()

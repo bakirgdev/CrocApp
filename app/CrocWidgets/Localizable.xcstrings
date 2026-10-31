@@ -1,0 +1,24 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Last Transfer" : {},
+    "No recent transfer" : {},
+    "Open Receive" : {},
+    "Open Send" : {},
+    "Opens CrocApp on Receive." : {},
+    "Opens CrocApp on Send." : {},
+    "Receive" : {},
+    "Receive failed" : {},
+    "Receive stopped" : {},
+    "Receive with CrocApp" : {},
+    "Received" : {},
+    "Send" : {},
+    "Send failed" : {},
+    "Send stopped" : {},
+    "Send with CrocApp" : {},
+    "Sent" : {},
+    "The state of your last transfer, with Send and Receive buttons." : {},
+    "^[%lld file](inflect: true)" : {}
+  },
+  "version" : "1.0"
+}

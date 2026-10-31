@@ -22,6 +22,7 @@ The **Menu bar** section has **Show in Menu Bar** (on by default) and **Open at 
 
 - **Notifications** (on by default): when CrocApp is in the background, a transfer that finishes, fails or needs your answer sends a notification, and a tap opens that transfer. Cancelling or declining yourself sends nothing. CrocApp asks the system for permission when you start your first transfer, or when you turn the switch on. If you said no, allow CrocApp in System Settings > Notifications.
 - **Show File Names in Notifications** (off by default): the notification says "Transfer complete" unless you turn this on, because notifications can be read on a locked screen. With it on, a received file's name or the number of files is added. Notifications never show a code phrase or a link.
+- **Show File Names on the Lock Screen and in Widgets** (off by default): the Last Transfer widget and the iPhone Live Activity say only whether a transfer is sending or receiving. With it on, a single file's name is added. The widget shows your last transfer only while **Save Transfer History** is on, and neither shows a code phrase or a link. Add the widget from the Home Screen or desktop, and the **Send** and **Receive** controls from Control Center.
 - On a Mac the Dock icon shows the percent while a transfer moves and a badge while a request waits for you. It has no switch.
 
 ## History and haptics

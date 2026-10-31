@@ -12,6 +12,8 @@
 		84F97A57301906920055C4C7 /* CrocKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3F021D37A76468BD7E9B164B /* CrocKit */; };
 		CA000000000000000000000C /* CrocShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA0000000000000000000001 /* CrocShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CB000000000000000000000B /* CrocShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB0000000000000000000001 /* CrocShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CC000000000000000000000C /* CrocWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* CrocWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CD000000000000000000000B /* CrocWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CD0000000000000000000001 /* CrocWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,6 +38,20 @@
 			remoteGlobalIDString = CB0000000000000000000002;
 			remoteInfo = "CrocShare Direct";
 		};
+		CC000000000000000000000A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84DEC93F30101868006ECBE6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CC0000000000000000000006;
+			remoteInfo = CrocWidgets;
+		};
+		CD0000000000000000000009 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84DEC93F30101868006ECBE6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CD0000000000000000000002;
+			remoteInfo = "CrocWidgets Direct";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -46,6 +62,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				CA000000000000000000000C /* CrocShare.appex in Embed Foundation Extensions */,
+				CC000000000000000000000C /* CrocWidgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -57,6 +74,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				CB000000000000000000000B /* CrocShare.appex in Embed Foundation Extensions */,
+				CD000000000000000000000B /* CrocWidgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -70,6 +88,8 @@
 		CA0000000000000000000001 /* CrocShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrocShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA0000000000000000000003 /* CrocApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CrocApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB0000000000000000000001 /* CrocShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrocShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC0000000000000000000001 /* CrocWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrocWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD0000000000000000000001 /* CrocWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrocWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -96,6 +116,11 @@
 		DA0000000000000000000011 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		CC0000000000000000000002 /* CrocWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CrocWidgets;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -139,6 +164,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC0000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CD0000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -148,6 +187,7 @@
 				84DEC94930101868006ECBE6 /* CrocApp */,
 				DA0000000000000000000004 /* CrocAppDirect */,
 				CA0000000000000000000002 /* CrocShare */,
+				CC0000000000000000000002 /* CrocWidgets */,
 				DA0000000000000000000011 /* Shared */,
 				844EAD42307C8833006F34A7 /* CrocAppTests */,
 				DA0000000000000000000002 /* Config */,
@@ -169,6 +209,8 @@
 				84DEC94730101868006ECBE6 /* CrocApp.app */,
 				CA0000000000000000000001 /* CrocShare.appex */,
 				CB0000000000000000000001 /* CrocShare.appex */,
+				CC0000000000000000000001 /* CrocWidgets.appex */,
+				CD0000000000000000000001 /* CrocWidgets.appex */,
 				844EAD41307C8833006F34A7 /* CrocAppTests.xctest */,
 				DA0000000000000000000003 /* CrocApp.app */,
 			);
@@ -214,6 +256,7 @@
 			);
 			dependencies = (
 				CA000000000000000000000B /* PBXTargetDependency */,
+				CC000000000000000000000B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				84DEC94930101868006ECBE6 /* CrocApp */,
@@ -263,6 +306,7 @@
 			);
 			dependencies = (
 				CB000000000000000000000A /* PBXTargetDependency */,
+				CD000000000000000000000A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				84DEC94930101868006ECBE6 /* CrocApp */,
@@ -301,6 +345,52 @@
 			productReference = CB0000000000000000000001 /* CrocShare.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		CC0000000000000000000006 /* CrocWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC0000000000000000000007 /* Build configuration list for PBXNativeTarget "CrocWidgets" */;
+			buildPhases = (
+				CC0000000000000000000003 /* Sources */,
+				CC0000000000000000000004 /* Frameworks */,
+				CC0000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CC0000000000000000000002 /* CrocWidgets */,
+				DA0000000000000000000011 /* Shared */,
+			);
+			name = "CrocWidgets";
+			packageProductDependencies = (
+			);
+			productName = CrocWidgets;
+			productReference = CC0000000000000000000001 /* CrocWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		CD0000000000000000000002 /* CrocWidgets Direct */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CD0000000000000000000003 /* Build configuration list for PBXNativeTarget "CrocWidgets Direct" */;
+			buildPhases = (
+				CD0000000000000000000005 /* Sources */,
+				CD0000000000000000000006 /* Frameworks */,
+				CD0000000000000000000007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CC0000000000000000000002 /* CrocWidgets */,
+				DA0000000000000000000011 /* Shared */,
+			);
+			name = "CrocWidgets Direct";
+			packageProductDependencies = (
+			);
+			productName = CrocWidgets;
+			productReference = CD0000000000000000000001 /* CrocWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -320,6 +410,12 @@
 					};
 					CA0000000000000000000006 = {
 						CreatedOnToolsVersion = 26.6;
+					};
+					CC0000000000000000000006 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					CD0000000000000000000002 = {
+						CreatedOnToolsVersion = 27.0;
 					};
 					CB0000000000000000000002 = {
 						CreatedOnToolsVersion = 27.0;
@@ -352,6 +448,8 @@
 				844EAD40307C8833006F34A7 /* CrocAppTests */,
 				DA0000000000000000000008 /* CrocApp Direct */,
 				CB0000000000000000000002 /* CrocShare Direct */,
+				CC0000000000000000000006 /* CrocWidgets */,
+				CD0000000000000000000002 /* CrocWidgets Direct */,
 			);
 		};
 /* End PBXProject section */
@@ -386,6 +484,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CB0000000000000000000007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC0000000000000000000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CD0000000000000000000007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -430,6 +542,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC0000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CD0000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -447,6 +573,16 @@
 			isa = PBXTargetDependency;
 			target = CB0000000000000000000002 /* CrocShare Direct */;
 			targetProxy = CB0000000000000000000009 /* PBXContainerItemProxy */;
+		};
+		CC000000000000000000000B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CC0000000000000000000006 /* CrocWidgets */;
+			targetProxy = CC000000000000000000000A /* PBXContainerItemProxy */;
+		};
+		CD000000000000000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CD0000000000000000000002 /* CrocWidgets Direct */;
+			targetProxy = CD0000000000000000000009 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -935,6 +1071,136 @@
 			};
 			name = Release;
 		};
+		CC0000000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = CrocWidgets/CrocWidgets.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "CrocWidgets/CrocWidgets-macOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/CrocWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.CrocWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CC0000000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = CrocWidgets/CrocWidgets.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "CrocWidgets/CrocWidgets-macOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/CrocWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.CrocWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CD0000000000000000000004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_ENTITLEMENTS = CrocWidgets/CrocWidgetsDirect.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/CrocWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.direct.CrocWidgets;
+				PRODUCT_NAME = CrocWidgets;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DIRECT $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		CD0000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_ENTITLEMENTS = CrocWidgets/CrocWidgetsDirect.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = HBSU359M33;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/CrocWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = CrocApp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bakirgdev.CrocApp.direct.CrocWidgets;
+				PRODUCT_NAME = CrocWidgets;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DIRECT $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -988,6 +1254,24 @@
 			buildConfigurations = (
 				CB0000000000000000000004 /* Debug */,
 				CB0000000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC0000000000000000000007 /* Build configuration list for PBXNativeTarget "CrocWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC0000000000000000000008 /* Debug */,
+				CC0000000000000000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CD0000000000000000000003 /* Build configuration list for PBXNativeTarget "CrocWidgets Direct" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CD0000000000000000000004 /* Debug */,
+				CD0000000000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

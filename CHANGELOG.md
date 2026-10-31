@@ -12,6 +12,9 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- **Last Transfer** widget (small and medium, iPhone, iPad and Mac): the state and time of your last transfer, with **Send** and **Receive** buttons on the medium size that open CrocApp on that screen. It never shows a code phrase or link, and shows a file name only if you turn on **Show File Names on the Lock Screen and in Widgets** (off by default). It is empty while **Save Transfer History** is off.
+- **Send** and **Receive** controls for Control Center on iOS 26 and macOS 26: one tap opens CrocApp on that screen.
+- The iPhone Live Activity for a background transfer now shows "Transferring…" instead of the file name, unless **Show File Names on the Lock Screen and in Widgets** is on.
 - **CrocApp** in Finder's Share menu on a Mac. Select files or folders, choose Share, then CrocApp: the app opens with the **Shared Files** sheet, and nothing is sent until you press **Send**. Turn the extension on under System Settings, Extensions, Sharing if it is not listed.
 - Notifications when CrocApp is in the background: a transfer that finishes, fails or needs your answer sends a notification, and tapping it opens that transfer's screen. **Notifications** in Settings is on by default and CrocApp asks the system for permission when you start your first transfer. A notification says "Transfer complete" and never shows a code phrase or link; turn on **Show File Names in Notifications** (off by default) to see the file name or the number of files.
 - On a Mac, the Dock icon shows the percent while a transfer moves and a badge while a request waits for your answer.

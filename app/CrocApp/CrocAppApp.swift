@@ -18,6 +18,7 @@ struct CrocAppApp: App {
     @State private var localNetwork = LocalNetworkChecker()
     @State private var router = AppRouter.shared
     @State private var notifier: TransferNotifier
+    @State private var snapshotWriter: TransferSnapshotWriter
 
     static let mainWindowID = "main"
 
@@ -62,6 +63,17 @@ struct CrocAppApp: App {
         if !harness {
             center.install()
             notifier.start()
+        }
+        let snapshotWriter = TransferSnapshotWriter(controller: controller, settings: settings)
+        _snapshotWriter = State(initialValue: snapshotWriter)
+        // A harness run must not write the user's widget data.
+        if !harness { snapshotWriter.start() }
+        // Widget buttons and the Control Center control land here.
+        OpenScreen.handler = { target in
+            switch target {
+            case .send: AppRouter.shared.path = [.send]
+            case .receive: AppRouter.shared.openReceive()
+            }
         }
         // AppRouter.shared is constructed before this init runs; attach the
         // controller now so AppRouter.isBusy can read isActive live.

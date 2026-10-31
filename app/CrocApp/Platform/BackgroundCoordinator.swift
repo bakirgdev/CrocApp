@@ -27,16 +27,22 @@ final class BackgroundCoordinator {
     private var pendingRequestIdentifier: String?
     private var title = ""
     private var subtitle = ""
+    // Captured at start like the title: the Live Activity shows on a locked
+    // screen, so a file name appears only with the user's switch on.
+    private var showFileNames = false
     private var onExpiration: (@MainActor () -> Void)?
     // Bumped per transferStarted() so a late .queue launch handler for a
     // stale (already-ended) transfer can't bind its expiry to a newer one.
     private var generation = 0
     #endif
 
-    func transferStarted(title: String, onExpiration: @escaping @MainActor () -> Void) {
+    func transferStarted(
+        title: String, showFileNames: Bool, onExpiration: @escaping @MainActor () -> Void
+    ) {
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
         self.title = title
+        self.showFileNames = showFileNames
         self.subtitle = String(
             localized: "Waiting for connection…",
             comment: "Subtitle of the iOS Live Activity before the transfer has any progress.")
@@ -79,9 +85,16 @@ final class BackgroundCoordinator {
         guard let task, totalBytes > 0 else { return }
         task.progress.totalUnitCount = totalBytes
         task.progress.completedUnitCount = min(bytesDone, totalBytes)
-        if !fileName.isEmpty, fileName != subtitle {
-            subtitle = fileName
-            task.updateTitle(title, subtitle: fileName)
+        let shown =
+            showFileNames && !fileName.isEmpty
+            ? fileName
+            : String(
+                localized: "Transferring…",
+                comment:
+                    "Subtitle of the iOS Live Activity while bytes move and file names are hidden.")
+        if shown != subtitle {
+            subtitle = shown
+            task.updateTitle(title, subtitle: shown)
         }
         #endif
     }
