@@ -8,11 +8,9 @@ Engine and bridge invariants are in `knowledge/crocmobile-bridge.md`. UI state-m
 
 ## Release
 
-These items gate Submit for Review of the first App Store release (`docs/README.md`, "Status").
+Open items from the first App Store release (`docs/README.md`, "Status").
 
-- **Export compliance needs two owner actions in App Store Connect.**
-  - The position (`ITSAppUsesNonExemptEncryption` is `false`, France excluded from availability) is in `RELEASING.md`, "Export compliance". Owner actions: remove France from availability, and file a `future` issue to add it back after an ANSSI declaration.
-  - The research behind this is in `knowledge/app-store-listing.md`, "Export compliance". It is not legal advice, and the exact App Store Connect questions could not be fetched.
+- **France is excluded from App Store availability** until an ANSSI encryption declaration exists (issue #115). The position is in `RELEASING.md`, "Export compliance"; the research is in `knowledge/app-store-listing.md`, "Export compliance".
 - **The Accessibility Inspector and VoiceOver audit has not run on any view.**
   - It needs Accessibility Inspector and VoiceOver on iOS and macOS, so no automated session can do it.
   - Views to cover: the Keep Both / Replace sheet, the **When a File Already Exists** picker, the waiting screen's QR code, Share Link and relay note, Send as Link and its result screen, the stored-link row on Receive, History (Revoke and the row layout), the stored-server field, the Advanced settings page, and the menu-bar window.

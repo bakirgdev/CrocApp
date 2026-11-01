@@ -6,7 +6,7 @@ Shipped work is in [`CHANGELOG.md`](../CHANGELOG.md). Release status is in [`doc
 
 ## Next milestone
 
-**v1.1.0 is the first public release**: the notarized direct download for the Mac, then the App Store for iPhone, iPad and Mac. Its scope is the [v1.1.0 milestone](https://github.com/bakirgdev/CrocApp/milestone/1). What gates Submit for Review is listed in [`known-issues.md`](known-issues.md), "Release", and the steps are in [`RELEASING.md`](RELEASING.md), "App Store builds".
+**v1.1.0 is the first public release**: the notarized direct download for the Mac, then the App Store for iPhone, iPad and Mac. Its scope is the [v1.1.0 milestone](https://github.com/bakirgdev/CrocApp/milestone/1). Its open items are listed in [`known-issues.md`](known-issues.md), "Release", and the steps are in [`RELEASING.md`](RELEASING.md), "App Store builds".
 
 ## Ongoing
 
