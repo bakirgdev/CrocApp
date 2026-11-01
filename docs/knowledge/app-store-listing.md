@@ -1,6 +1,6 @@
 # App Store listing
 
-The copy for CrocApp's App Store Connect record, written to be pasted field by field and reused for every App Store release. One app record holds iOS, iPadOS and macOS (universal purchase, bundle ID `com.bakirgdev.CrocApp`). The record has not been submitted yet: the first App Store release is the first submission, and it goes out as 1.1.0 (`../RELEASING.md`, "App Store builds").
+The copy for CrocApp's App Store Connect record, written to be pasted field by field and reused for every App Store release. One app record holds iOS, iPadOS and macOS (universal purchase, bundle ID `com.bakirgdev.CrocApp`). The first App Store release, 1.1.0, was submitted from this copy (`../RELEASING.md`, "App Store builds").
 
 Every fenced block under a field heading is the exact text to paste. Character counts were measured with a script (Python `len()` for characters, `len(s.encode())` for the two byte-limited fields). When you change a block, recount it.
 
@@ -106,30 +106,7 @@ croc,transfer,share,encrypted,secure,private,qr,p2p,wormhole,folder,lan,nearby,e
 
 ## What's New
 
-Not verified: whether App Store Connect shows or requires this field for an app's first version. Apple's version-information page, the only Apple source recorded here, does not say. Paste the text below if the field appears, and leave it empty if it does not. Later releases replace it with that release's changes, taken from the `[x.y.z]` section of `CHANGELOG.md`.
-
-Length: 1188 characters.
-
-```text
-CrocApp is on the App Store for iPhone, iPad and Mac.
-
-Highlights
-- Send as Link: share encrypted files by link or QR code with someone who is not online. You choose the lifetime and the number of downloads, and can revoke the link from History.
-- Links: opening a CrocApp link, a crocapp.dev/r/ link or a getcroc.com link fills in the code on the Receive screen. Nothing connects until you tap Receive.
-- A Keep Both or Replace choice when a received file has the same name as one you already have.
-- Advanced settings: proxies, sender IP, send speed limit and more. The defaults suit most people.
-- Mac menu bar quick send, and Shortcuts and Siri actions for sending and receiving.
-- iPad File menu: Show Receive Folder in Files (Shift Command R).
-
-Good to know
-- The transfer engine is croc 11.5.5. A device running croc 10 cannot transfer with CrocApp; it needs croc 11 or newer.
-- Errors say what went wrong: a wrong code, a refused transfer, a lost connection, a device on an older croc, or no public relay available.
-- History keeps less of a code than before, and never the whole code.
-
-CrocApp is free and open source. It is unofficial and not affiliated with croc or its author.
-```
-
-Update the highlights to match the release you submit. If the first App Store release has other changes, list those.
+App Store Connect shows no What's New field on an app's first version (the 1.1.0 iOS and macOS pages had none). From the second App Store release on, write it from that release's `[x.y.z]` section of `CHANGELOG.md`, in the voice of the description.
 
 ## URLs, category, price
 
@@ -145,8 +122,12 @@ Update the highlights to match the release you submit. If the first App Store re
 | Version | `MARKETING_VERSION` in `app/Config/Version.xcconfig`; attach the iOS and macOS builds that finished processing in TestFlight |
 | Privacy choices URL | leave empty (optional per Apple) |
 | Sign-in required (App Review) | off; the app has no account |
+| Content Rights (App Information) | No, the app does not contain, show, or access third-party content (owner's answer) |
+| Advertising Identifier | not asked when 1.1.0 was submitted; the app uses no IDFA |
+| iPhone and iPad Apps on Apple Silicon Macs (Pricing and Availability) | off, so the native macOS app is the only one Macs see |
+| Product page Header asset (5244x2950 or 3840x1646) | optional; left empty |
 
-The support and privacy pages exist in `web/landing/` (`support/`, `privacy/`). The privacy page must name every server the app talks to and what each one sees, because the App Privacy label says nothing about them. Both URLs must answer HTTP 200 on the live site before you submit.
+The support and privacy pages exist in `web/landing/` (`support/`, `privacy/`). The privacy page must name every server the app talks to and what each one sees, because the App Privacy label says nothing about them. Both URLs must answer HTTP 200 on the live site before you submit. App Store Connect stores the privacy URL without the trailing slash; `https://crocapp.dev/privacy` redirects (301) to `/privacy/`, so that is fine.
 
 ## Availability
 
@@ -189,7 +170,7 @@ Why "not collected" holds:
 | In-app controls | Parental Controls | Not selected (none in the app) |
 | In-app controls | Age Assurance | Not selected |
 | Capabilities | Unrestricted Web Access | Not selected. The app has no embedded browser (no `WKWebView`, `SFSafariViewController`; verified by search). Links open in the system browser. |
-| Capabilities | User-Generated Content | Not selected. Apple's definition is "broad distribution of content created by users"; CrocApp moves a file from one person to one other person. |
+| Capabilities | User-Generated Content | Selected (owner's choice). Apple's definition is "broad distribution of content created by users", and CrocApp moves a file from one person to one other person, so not selecting it is also defensible. Inference: a reviewer may ask about reporting and blocking (guideline 1.2); the answer is that only devices sharing a code phrase exchange anything, and nothing is published. |
 | Capabilities | Messaging and Chat | Not selected. See the note below. |
 | Capabilities | Social Media, Social Media Disabled for Users Under 13 | Not selected |
 | Capabilities | Advertising | Not selected (no ads) |
@@ -203,7 +184,7 @@ Why "not collected" holds:
 | Override | | None |
 | Age Suitability URL | | leave empty |
 
-Expected result: **4+**. In Apple's table, 4+ is the tier whose allowed content includes messaging and chat, user-generated content, advertising and parental controls, so the Messaging and Chat decision below does not change the rating.
+Result: **4+**, as App Store Connect showed with these answers. In Apple's table, 4+ is the tier whose allowed content includes messaging and chat, user-generated content, advertising and parental controls, so the Messaging and Chat decision below does not change the rating.
 
 Note on Messaging and Chat (judgement): Apple defines it as users who "directly communicate with one another through features within the app" (text, voice, video, messaging, posting). CrocApp can send a text snippet, but it is a one-shot transfer with no conversation, contacts or accounts. "Not selected" is the honest reading, and ticking it would also leave the rating at 4+. The residual risk is a reviewer who disagrees; the review notes say what the text feature is.
 
@@ -335,16 +316,22 @@ This is research, not legal advice. `../known-issues.md`, "Release", tracks the 
 
 ## Open checks before submitting
 
-Still to do:
+Before every submission:
 
-- Run the Accessibility Inspector and VoiceOver audit on iOS and macOS (`../known-issues.md`, "Release"). Until it passes, keep VoiceOver and "largest text sizes" claims out of the description and What's New.
+- The Accessibility Inspector and VoiceOver audit is still open (`../known-issues.md`, "Release"). Until it passes, keep VoiceOver and "largest text sizes" claims out of the description and What's New.
 - Read getcroc.com's current labels (Send, Receive, Choose files, "Croc code or stored link", Copy code) and compare them with the review notes. The page belongs to the croc project and can change.
-- Fill in the contact name, phone and email in App Review Information. They are not in the repo, and the developer-account address is not necessarily the public support contact.
+- Check the contact name, phone and email in App Review Information. They are not in the repo, and the developer-account address is not necessarily the public support contact.
 - Confirm `https://crocapp.dev/support/` and `https://crocapp.dev/privacy/` return HTTP 200.
-- Decide whether to add the croc maintainer's written reply to the review notes. The reply text is not in the repo; the notes say only that the maintainer was informed. Ask the owner before submitting.
-- State on the privacy page that getcroc.com is the croc project's site and runs its own analytics (Umami) and ads (Google AdSense), as seen in the page source. The reviewer opens that page, and the `/r/` page links to it. The app does not load it (no web view). Re-check the page before relying on this.
-- Make the Export compliance decision above: France out of availability.
-- Take the screenshots (`screenshots.md`).
+- Re-check that getcroc.com still runs its own analytics (Umami) and ads (Google AdSense), as the privacy page says, and update the page's date for that check. The reviewer opens getcroc.com, and the `/r/` page links to it. The app does not load it (no web view).
+- Keep France out of availability until the ANSSI declaration exists (see "Export compliance").
+
+## Submitting
+
+- Press **Add for Review** on each platform's version page. It only builds a draft; nothing reaches Apple until **Submit for Review**.
+- App Store Connect keeps one draft submission per platform, so iOS and macOS go in as two submissions, one right after the other.
+- A screenshot that is still processing blocks **Add for Review** with "1 or more screenshots must finish processing". Reload after a minute and press it again.
+- iPhone Duo screenshots were not required: **Add for Review** accepted the 1.1.0 iOS build without them.
+- Version release is Manual, so the website's store links can go live before the listing does. Approval does not publish the app; **Release This Version** on each platform does.
 
 ## Sources
 

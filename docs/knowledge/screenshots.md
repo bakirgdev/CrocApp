@@ -70,7 +70,7 @@ From Apple's screenshot specifications, https://developer.apple.com/help/app-sto
 |---|---|---|---|
 | `iphone-6.3` | 1206x2622 | Dynamic Island (medium), required | iPhone 17 Pro simulator |
 | `iphone-6.9` | 1320x2868 | Dynamic Island (large), optional | iPhone 17 Pro Max simulator, same captures as `iphone/` |
-| `iphone-duo-outer` | 1398x2034 | iPhone Duo (outer), required for apps using the iOS 27.1 SDK or later (Apple's page gives the start date; checked against it) | iPhone Duo simulator, display 1 |
+| `iphone-duo-outer` | 1398x2034 | iPhone Duo (outer). Apple's page lists it for apps using the iOS 27.1 SDK or later, but App Store Connect accepted the 1.1.0 iOS build (that SDK) for review without it | iPhone Duo simulator, display 1 |
 | `ipad-13` | 2064x2752 | 13" display, required because the app runs on iPad | iPad Pro 13-inch (M5) simulator |
 | `mac` | 2880x1800 | 16:10, one of four accepted sizes | the window composed on a canvas |
 
