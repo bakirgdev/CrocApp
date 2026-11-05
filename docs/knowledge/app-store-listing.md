@@ -192,7 +192,7 @@ Sending arbitrary files to another person is not content the app hosts or shows.
 
 ## Review notes
 
-Paste into App Review Information, Notes. Length: 3445 bytes of the 4000 allowed. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
+Paste into App Review Information, Notes. Length: 3954 bytes of the 4000 allowed. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
 
 ```text
 CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end-to-end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email. Source: https://github.com/bakirgdev/CrocApp
@@ -225,9 +225,13 @@ The browser UI at getcroc.com is the croc project's and may change wording; the 
 Please keep CrocApp in the foreground during a transfer on iPhone and iPad.
 
 Questions: https://crocapp.dev/support/
+
+MAC ENTITLEMENTS. network.server: the Mac accepts incoming TCP in two features. 1) Each send runs croc's local relay on ports 9009-9013 so a receiver on the same network connects directly (during a send, lsof -nP -iTCP:9009 -sTCP:LISTEN lists CrocApp). 2) Settings, Relay tab (or the menu bar window), Run a Relay: off by default; when on, the Mac serves croc's relay protocol on ports 9009-9012. downloads.read-write: received files go to Downloads/CrocApp by default. On Mac, click where the steps say tap.
 ```
 
 Check the notes by hand before pasting, as listed in "Open checks before submitting".
+
+Keep the "MAC ENTITLEMENTS" paragraph while the macOS app carries `network.server`. Apple's automated Mac check rejects the build under guideline 2.4.5 when the entitlement "does not appear to have matching functionality", because the listeners live in the statically linked Go engine, where the check does not find them. The rejection asks for a reply to App Review that explains the use, plus the same explanation in these notes. The entitlement cannot go: croc starts its local relay on every send unless **Skip Local Network** is on, and fails the send when the port cannot be bound (`setupLocalRelay` in croc v11.5.5 `src/croc/croc.go`).
 
 Run on TestFlight build 1.1.0 (4): step 2 on an iPhone; step 4 on a Mac with outgoing TCP 9009 to 9013 blocked, where a code transfer showed "No public relay answered"; and a code transfer on an iPhone on an IPv6-only (NAT64) network. Steps 1 and 3 and the macOS build's step 2 were not run on that build. Neither the description nor these notes mention the Live Activity, which has not been seen on a device.
 
