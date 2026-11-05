@@ -60,7 +60,7 @@ The first public release is 1.1.0: a notarized direct download for the Mac (Spar
 | [`knowledge/crocmobile-bridge.md`](knowledge/crocmobile-bridge.md) | `crocmobile/`, `CrocKit/Sources/`, or the event and error contract between them |
 | [`knowledge/app-ui-architecture.md`](knowledge/app-ui-architecture.md) | `TransferController` or any view that observes it |
 | [`knowledge/apple-platform-constraints.md`](knowledge/apple-platform-constraints.md) | iOS backgrounding, sandboxing, entitlements, local network access |
-| [`knowledge/tooling.md`](knowledge/tooling.md) | CI, a linter, a formatter, or a tool that was deliberately skipped |
+| [`knowledge/tooling.md`](knowledge/tooling.md) | CI, a linter, a formatter, the String Catalogs, or a tool that was deliberately skipped |
 | [`knowledge/docs-site.md`](knowledge/docs-site.md) | `web/docs/` |
 | [`knowledge/landing-page.md`](knowledge/landing-page.md) | `web/landing/`: the home page, the `/r/` link page, `.well-known/`, `llms.txt` |
 | [`knowledge/screenshots.md`](knowledge/screenshots.md) | Any app screenshot: capturing, adding or moving one |

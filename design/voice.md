@@ -31,6 +31,7 @@ Title Case follows Apple's style: capitalize every word except articles, coordin
 - **One line, then stop.** A description that needs two sentences usually needs one shorter one.
 - **Second person, present tense.** "Enter it on the other device", not "The code should be entered".
 - **No period on a fragment**, a period on a full sentence. Empty-state bodies and alert messages are full sentences.
+- **A path through Settings uses `>`**: "System Settings > General > Login Items", never commas or arrows.
 - **An ellipsis means "this opens something"**: "Change…" opens a picker, and a button that acts immediately never takes one. Use the `…` character.
 - **No exclamation marks**, anywhere.
 - **No internal IDs** (feature or requirement IDs) in anything a user reads.

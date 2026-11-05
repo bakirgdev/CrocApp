@@ -1,6 +1,6 @@
 # Implementation
 
-How the tokens reach each surface. `tokens.css` is canonical for values; this file maps a token to a SwiftUI API or to web CSS and never redefines one. The app's mirrors are `app/CrocApp/Support/DesignTokens.swift` (constants and `Color` aliases) and the color sets in `app/CrocApp/Assets.xcassets`; `scripts/verify-design.sh` checks both against `tokens.css`. The SwiftUI APIs named here were checked against the iOS 26 SDK; if one fails to compile, re-check Apple's documentation rather than working around it.
+How the tokens reach each surface. `tokens.css` is canonical for values; this file maps a token to a SwiftUI API or to web CSS and never redefines one. The app's mirrors are `app/CrocApp/Support/DesignTokens.swift` (constants and `Color` aliases) and the color sets in `app/CrocApp/Assets.xcassets`; `scripts/verify-design.sh` checks both against `tokens.css`. The SwiftUI APIs named here were checked against the iOS and macOS 26 SDKs; if one fails to compile, re-check Apple's documentation rather than working around it.
 
 ## Colors
 
