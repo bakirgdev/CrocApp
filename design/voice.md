@@ -87,6 +87,8 @@ Always lowercase and mono, never autocapitalized, autocorrected or spell-checked
 | notification | alert, push, toast ("banner" is only the in-app StatusBanner) |
 | haptics | vibration, buzz |
 
+"Sender" and "receiver" are allowed as role nouns on the docs site and the receive-link page where one sentence has to tell the two devices apart (start order, **Sender IP**, croc command line interoperability). Elsewhere, and in app copy, the other device is "the other device". **Sender IP** and "Auto-accept can't answer this sender" are the app's own wording, so pages quote them as written.
+
 "Password" is right only for the relay password, a real password a user types for their own relay. "Incoming" appears in no label (the Settings rows are **Notifications** and **Show File Names in Notifications**), because nothing is being received before the user says yes. **Send as Link** is still sending ("Send as Link", "Sending", "Link ready"); "download" appears only as the noun for one fetch of a link ("2 of 5 downloads used").
 
 ## Claims

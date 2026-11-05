@@ -129,6 +129,15 @@ html {
   gap: var(--space-5);
 }
 
+/* Four cards in an auto-fit grid flow 3+1 from the width that fits three
+   (about 50.5rem) until the container reaches 976px and fits four (67rem, with
+   a 48px gutter either side). Two columns in that span. */
+@media (48rem <= width < 67rem) {
+  .grid:has(> :nth-child(4):last-child) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .section__head {
   display: flex;
   flex-direction: column;

@@ -15,7 +15,7 @@ pnpm --dir web/docs start
 
 The same `tokens` script copies `web/landing/assets/img/mascot-web.webp` to `static/img/mascot.webp` (gitignored), the navbar logo. It is the one web derivative of the mascot (`design/brand.md`, "Mascot"); never commit a second copy.
 
-The docs site keeps no icon or social-card file of its own. `docusaurus.config.ts` points the favicon, the apple-touch icon, the web manifest and the social image (`og.jpg`) at the landing copies under `web/landing/assets/img/` through absolute `https://crocapp.dev/assets/img/...` URLs (a site-relative URL would get the `/docs/` base prefixed). Replace those files on the landing side only. The mascot is the exception: it stays a local copy so `docusaurus start` does not depend on the live site.
+The docs site keeps no icon or social-card file of its own. `docusaurus.config.ts` points the favicon, the apple-touch icon, the web manifest and the social image (`og.jpg`) at the landing copies under `web/landing/assets/img/` through absolute `https://crocapp.dev/assets/img/...` URLs (a site-relative URL would get the `/docs/` base prefixed). Replace those files on the landing side only. `themeConfig.metadata` adds `og:image:alt` and `twitter:image:alt` with the landing page's alt text for that card (`socialImageAlt`); change both together when `og.jpg` is regenerated. The mascot is the exception: it stays a local copy so `docusaurus start` does not depend on the live site.
 
 To build the full Pages artifact (both surfaces, what CI publishes) locally:
 
