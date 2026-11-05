@@ -25,6 +25,7 @@ import Testing
         s.relayHostPort = 9100
         s.relayHostAtLaunch = true
         s.relayHostPassword = "hosted-secret"
+        s.flushSecrets()
         let r = makeSettings()
         #expect(r.relayHostPort == 9100)
         #expect(r.relayHostAtLaunch)
@@ -35,10 +36,12 @@ import Testing
     @Test func thePasswordNeverReachesPlainStorage() {
         let s = makeSettings()
         s.relayHostPassword = "hosted-secret"
+        s.flushSecrets()
         #expect(secrets.items["relayHostPassword"] == "hosted-secret")
         #expect(secrets.items["relayPassword"] == nil)
         #expect(storage.object(forKey: "settings.relayHostPassword") == nil)
         s.relayHostPassword = ""
+        s.flushSecrets()
         #expect(secrets.items["relayHostPassword"] == nil)
     }
 
@@ -46,6 +49,7 @@ import Testing
         let s = makeSettings()
         secrets.failWrites = true
         s.relayHostPassword = "hosted-secret"
+        s.flushSecrets()
         #expect(s.unsavedSecrets.contains(.relayHostPassword))
     }
 

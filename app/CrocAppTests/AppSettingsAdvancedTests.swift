@@ -23,6 +23,7 @@ import Testing
         s.noMultiplexing = true
         s.internalDNS = true
         s.excludePaths = "src/notes.txt\nbuild"
+        s.flushSecrets()
     }
 
     @Test func freshDefaultsAreCrocs() {
@@ -71,7 +72,9 @@ import Testing
         for (name, edit) in edits {
             let storage = MemorySettingsStorage()
             let secrets = FakeSecretStore()
-            edit(AppSettings(storage: storage, secrets: secrets))
+            let edited = AppSettings(storage: storage, secrets: secrets)
+            edit(edited)
+            edited.flushSecrets()
             let r = AppSettings(storage: storage, secrets: secrets)
             let changed = [
                 "throttle": r.throttleUpload != "",
@@ -102,10 +105,12 @@ import Testing
         let s = makeSettings()
         s.socks5Proxy = "proxy.example:1080"
         s.httpProxy = "proxy.example:3128"
+        s.flushSecrets()
         #expect(secrets.items.count == 2)
 
         s.socks5Proxy = ""
         s.httpProxy = "   "
+        s.flushSecrets()
         #expect(secrets.items.isEmpty)
         #expect(makeSettings().socks5Proxy == "")
     }
@@ -115,16 +120,19 @@ import Testing
         secrets.failWrites = true
 
         s.socks5Proxy = "proxy.example:1080"
+        s.flushSecrets()
 
         #expect(s.unsavedSecrets == [.socks5Proxy])
         #expect(secrets.items.isEmpty)
 
         secrets.failWrites = false
         s.httpProxy = "proxy.example:3128"
+        s.flushSecrets()
 
         #expect(s.unsavedSecrets == [.socks5Proxy], "another secret's write leaves it unsaved")
 
         s.socks5Proxy = "proxy.example:1081"
+        s.flushSecrets()
 
         #expect(s.unsavedSecrets.isEmpty)
         #expect(secrets.items["advanced.socks5Proxy"] == "proxy.example:1081")
@@ -138,6 +146,7 @@ import Testing
         #expect(harness.socks5Proxy == "")
         harness.socks5Proxy = "other.example:1080"
         harness.peerIP = "10.0.0.1:9100"
+        harness.flushSecrets()
         #expect(secrets.items["advanced.socks5Proxy"] == "proxy.example:1080")
         #expect(storage.values.isEmpty)
         #expect(makeSettings().socks5Proxy == "proxy.example:1080")

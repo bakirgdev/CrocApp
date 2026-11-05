@@ -62,6 +62,13 @@ struct CrocAppApp: App {
         // The relay listens on the network, so it starts only when the user's
         // setting says so, never in a harness run.
         if !harness { relayHost.startAtLaunchIfWanted() }
+        // A secret typed just before quitting is still waiting for its Keychain
+        // write (`AppSettings.flushSecrets`).
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification, object: nil, queue: .main
+        ) { _ in
+            MainActor.assumeIsolated { settings.flushSecrets() }
+        }
         #endif
         let center = SystemNotificationCenter()
         let notifier = TransferNotifier(

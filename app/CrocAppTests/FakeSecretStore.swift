@@ -10,6 +10,8 @@ final class FakeSecretStore: SecretStore {
     var failWrites = false
     /// Makes `load` throw, like a Keychain that is locked before first unlock.
     var failReads = false
+    /// Every `set` and `delete` call, failed or not.
+    private(set) var writes = 0
 
     func get(account: String) -> String? { items[account] }
 
@@ -19,12 +21,14 @@ final class FakeSecretStore: SecretStore {
     }
 
     func set(_ value: String, account: String) -> Bool {
+        writes += 1
         guard !failWrites else { return false }
         items[account] = value
         return true
     }
 
     func delete(account: String) -> Bool {
+        writes += 1
         guard !failWrites else { return false }
         items[account] = nil
         return true

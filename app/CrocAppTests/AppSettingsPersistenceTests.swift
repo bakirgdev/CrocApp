@@ -155,6 +155,7 @@ import Testing
     @Test func theRelayPasswordLivesOnlyInTheSecretStore() {
         let s = makeSettings()
         s.relayPassword = "hunter2"
+        s.flushSecrets()
 
         #expect(secrets.items["relayPassword"] == "hunter2")
         #expect(!String(describing: storage.values).contains("hunter2"))
@@ -167,6 +168,7 @@ import Testing
         #expect(s.relayPassword == "stored")
 
         s.relayPassword = ""
+        s.flushSecrets()
 
         #expect(secrets.items.isEmpty)
     }
@@ -176,6 +178,7 @@ import Testing
         secrets.failWrites = true
 
         s.relayPassword = "hunter2"
+        s.flushSecrets()
 
         #expect(s.unsavedSecrets == [.relayPassword])
         #expect(secrets.items["relayPassword"] == nil)
@@ -183,6 +186,7 @@ import Testing
 
         secrets.failWrites = false
         s.relayPassword = "hunter3"
+        s.flushSecrets()
 
         #expect(s.unsavedSecrets.isEmpty)
         #expect(secrets.items["relayPassword"] == "hunter3")
@@ -194,15 +198,45 @@ import Testing
         secrets.failWrites = true
 
         s.relayPassword = ""
+        s.flushSecrets()
 
         #expect(s.unsavedSecrets == [.relayPassword])
         #expect(makeSettings().relayPassword == "stored", "the next launch reads the old value")
 
         secrets.failWrites = false
         s.relayPassword = ""
+        s.flushSecrets()
 
         #expect(s.unsavedSecrets.isEmpty)
         #expect(secrets.items.isEmpty)
+    }
+
+    @Test func typingASecretAppliesAtOnceButWritesTheKeychainOnlyOnFlush() {
+        let s = makeSettings()
+
+        for typed in ["h", "hu", "hun"] { s.relayPassword = typed }
+
+        #expect(s.relayPassword == "hun", "the edit applies for this launch right away")
+        #expect(secrets.writes == 0, "no Keychain write per keystroke")
+
+        s.flushSecrets()
+        #expect(secrets.items["relayPassword"] == "hun")
+        #expect(secrets.writes == 1)
+
+        s.flushSecrets()
+        #expect(secrets.writes == 1, "a flush with nothing edited writes nothing")
+    }
+
+    @Test func aPauseInTypingWritesTheLastValueOnce() async throws {
+        let s = AppSettings(
+            storage: storage, secrets: secrets, secretWriteDelay: .milliseconds(30))
+
+        for typed in ["h", "hu", "hun"] { s.relayPassword = typed }
+        #expect(secrets.writes == 0)
+
+        for _ in 0..<200 where secrets.writes == 0 { try await Task.sleep(for: .milliseconds(10)) }
+        #expect(secrets.items["relayPassword"] == "hun")
+        #expect(secrets.writes == 1)
     }
 }
 
