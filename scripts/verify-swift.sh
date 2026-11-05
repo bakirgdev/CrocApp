@@ -16,14 +16,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
 
-case ${1:-} in
-  -h | --help)
-    sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
-    exit 0
-    ;;
-  "") ;;
-  *) fail "unknown argument '$1' (try --help)" ;;
-esac
+help_flag "$@"
+[ $# -eq 0 ] || fail "unknown argument '$1' (try --help)"
 
 XCF=CrocKit/Croc.xcframework
 LOGS="$TMPROOT/verify-swift"

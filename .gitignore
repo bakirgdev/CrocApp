@@ -4,6 +4,7 @@
 
 # Secrets and signing material
 .env*
+!.envrc.example
 *.p8
 *.p12
 *.cer
@@ -31,7 +32,7 @@ node_modules/
 .docusaurus/
 
 # Build output
-build/
+/web/docs/build/
 /_site/
 /dist/
 

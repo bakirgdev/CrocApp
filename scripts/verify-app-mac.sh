@@ -96,13 +96,6 @@ await_app() { # await_app SECONDS
   wait "$APP_PID" 2> /dev/null || true # reap quietly; unreaped kills print "Terminated: 15"
 }
 
-check_result() { # check_result LABEL
-  local got
-  got=$(cat "$RESULT" 2> /dev/null || echo missing)
-  echo "$1 result: $got"
-  [ "$got" = "ok success=true" ] || fail "$1: expected 'ok success=true', got '$got'"
-}
-
 # The app is already running as sender: receive with the CLI, gate, diff.
 recv_from_app() { # recv_from_app LABEL SRC DST [croc-args...]
   local label=$1 src=$2 dst=$3
@@ -115,9 +108,7 @@ recv_from_app() { # recv_from_app LABEL SRC DST [croc-args...]
   cmp -s "$src" "$dst/${src##*/}" || fail "$label: received bytes differ"
 }
 
-# Every code's first 4 characters must be unique: the relay hashes that prefix
-# into a room name.
-code() { echo "$1$$-mac"; }
+CODE_SUFFIX=mac
 
 # --- 1: CLI -> app, plus SwiftData history isolation -------------------------
 C=$(code recv)
@@ -271,10 +262,6 @@ echo MAC-COLLIDE-OK
 # The observed log lines are in docs/knowledge/crocmobile-bridge.md,
 # "Transport and Tailcat".
 head -c 136314880 /dev/urandom > "$TMP/bigrecv.bin"
-no_tailcat() { # no_tailcat LOG LABEL
-  grep -aq "selected croc relay data transport$" "$1" || fail "$2: CLI log has no plain relay data transport line"
-  ! grep -aEq "tailcat-offer|starting Tailcat server|Tailcat fallback|selected staged" "$1" || fail "$2: CLI log shows a Tailcat offer"
-}
 big_app_send() {
   C=$(code xsend)
   rm -f "$RESULT" "$DOCS/bigsend.bin"
