@@ -114,18 +114,26 @@ public actor CrocEngine {
 
     /// Deletes a stored upload from its server; a transfer the server no longer
     /// has counts as revoked. Throws `EngineFailure`. Blocks up to 30 seconds on
-    /// the network, off the caller's actor, and needs no running transfer, so it
-    /// works while another one is active.
+    /// the network, on a dispatch thread rather than a Swift concurrency one
+    /// (as `RelayCheck.run` does), so a slow server ties up neither the caller's
+    /// actor nor the cooperative pool. Needs no running transfer, so it works
+    /// while another one is active.
     public nonisolated func revokeStored(
         _ receipt: StoredReceipt, proxy: ProxySettings
     ) async throws {
-        var error: NSError?
-        let opts = Self.storeOptions(proxy: proxy)
-        guard
-            CrocmobileRevokeStored(receipt.origin, receipt.id, receipt.uploadToken, opts, &error)
-        else {
-            throw EngineFailure(payload: error?.localizedDescription)
+        // Built inside the closure: the bridge options object is not Sendable.
+        let failure = await withCheckedContinuation {
+            (cont: CheckedContinuation<EngineFailure?, Never>) in
+            DispatchQueue.global().async {
+                var error: NSError?
+                let opts = Self.storeOptions(proxy: proxy)
+                let revoked = CrocmobileRevokeStored(
+                    receipt.origin, receipt.id, receipt.uploadToken, opts, &error)
+                cont.resume(
+                    returning: revoked ? nil : EngineFailure(payload: error?.localizedDescription))
+            }
         }
+        if let failure { throw failure }
     }
 
     /// Answer the accept/decline request raised by a `.fileList` event. On
