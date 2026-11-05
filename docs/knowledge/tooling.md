@@ -28,7 +28,7 @@ What is wired up, what was deliberately skipped, the traps in each, and how the 
 | ShellCheck 0.11 (Homebrew locally; preinstalled on `ubuntu-26.04`) | none (`shellcheck -x scripts/*.sh`, default checks) | local + CI (`shellcheck` job) |
 | shfmt 3.14 (Homebrew locally; CI downloads the pinned binary and checks its SHA-256) | `.editorconfig` (`shfmt -d scripts`; `shfmt -w scripts` fixes) | local + CI (`shellcheck` job) |
 | CodeQL (advanced setup; GitHub's default setup is off) | `.github/workflows/codeql.yml`: actions, Go, JavaScript/TypeScript, path-filtered, plus a weekly run | CI. No Swift (`../known-issues.md`, "Build and CI") |
-| actionlint, zizmor (Homebrew) | `.github/actionlint.yaml` (runner labels newer than actionlint's list) | local, before pushing a workflow change |
+| actionlint, zizmor (Homebrew) | `.github/actionlint.yaml` (runner labels newer than actionlint's list) | local, before pushing a workflow change; `zizmor --pedantic .github/workflows` reports only the `self-repository` finding (`../known-issues.md`, "Accepted") |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26`, which starts its own local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:17 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | Push to `main` only, on changes to `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh`, `scripts/lib.sh` and the workflow file: builds `_site` and deploys. The pre-merge build is the `site build` job in `ci.yml` |

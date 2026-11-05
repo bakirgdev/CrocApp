@@ -108,6 +108,8 @@ jobs:
 
   # The runner image ships shellcheck; shfmt comes pinned below.
   shellcheck:
+    name: shellcheck
+
     needs: changes
 
     if: needs.changes.outputs.scripts == 'true'

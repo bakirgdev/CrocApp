@@ -34,8 +34,8 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write
-      attestations: write
+      id-token: write # the Sigstore identity for the build provenance
+      attestations: write # stores the attestation
 
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -342,7 +342,7 @@ jobs:
     timeout-minutes: 10
 
     permissions:
-      contents: write
+      contents: write # creates the release and attaches the assets
 
     env:
       GH_TOKEN: ${{ github.token }}

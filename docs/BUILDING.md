@@ -98,7 +98,7 @@ Shell scripts and workflows, from the repo root (the first two are what CI runs;
 ```bash
 shellcheck -x scripts/*.sh
 shfmt -d scripts              # style from .editorconfig; shfmt -w scripts rewrites
-actionlint && zizmor .github/workflows/
+actionlint && zizmor --pedantic .github/workflows/
 ```
 
 Go, from `crocmobile/`. The engine ships without Tailcat, so every command needs the build tag (`golangci-lint` reads it from `.golangci.yml`). Export it once per shell:
