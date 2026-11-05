@@ -9,7 +9,10 @@
 #   2. Repo paths. An inline-code span that names a repo path (`scripts/x.sh`,
 #      `docs/knowledge/`, a sibling `tooling.md`) exists. A gitignored build
 #      output (`CrocKit/Croc.xcframework/`) counts as existing.
-#   3. Stale markers, in docs/ and the AGENTS.md files: dates and the
+#   3. Heading citations. A file named in a code span or a link and followed by
+#      `, "Heading"` (docs/AGENTS.md, "Writing rules") names a heading that
+#      exists in that file, compared as plain text.
+#   4. Stale markers, in docs/ and the AGENTS.md files: dates and the
 #      planning IDs (R12, F31, O9, B23, W4), which go stale (docs/AGENTS.md,
 #      "Writing rules"), and section-number citations, which rot on every
 #      re-order.
@@ -18,8 +21,10 @@
 #
 # Fenced code blocks are skipped. Known limits: reference-style links and link
 # titles are not checked, and anchors follow GitHub's slug rule for ASCII
-# headings only, without the `-1` suffix a repeated heading gets. Pure bash and POSIX awk, so CI runs it on a
-# bare runner. Exit 0 clean, 1 findings.
+# headings only, without the `-1` suffix a repeated heading gets. A citation
+# is only checked in the `file`, "Heading" and [text](file), "Heading" shapes.
+# Pure bash and POSIX awk, so CI runs it on a bare runner. Exit 0 clean, 1
+# findings.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
@@ -38,7 +43,9 @@ done > "$TMP/files"
 git ls-files --cached --others --exclude-standard \
   | awk '{ print; while (sub("/[^/]*$", "")) print $0 "/" }' | sort -u > "$TMP/tracked"
 
-# One line per candidate: file<TAB>line<TAB>kind<TAB>target. Kinds: link, code.
+# One line per candidate: file<TAB>line<TAB>kind<TAB>target[<TAB>heading].
+# Kinds: link, code, citec and citel (a heading citation after a code span or a
+# link).
 while IFS= read -r f; do
   awk -v file="$f" '
     /^[ \t]*(```|~~~)/ {
@@ -49,6 +56,23 @@ while IFS= read -r f; do
     fence != "" { next }
     {
       line = $0
+      # heading citations: `file.md`, "Heading" and [text](file.md), "Heading"
+      s = line
+      while (match(s, /(`[^`]+\.md`|\]\([^) ]+\.md(#[^) ]*)?\)), "[^"]+"/)) {
+        m = substr(s, RSTART, RLENGTH)
+        s = substr(s, RSTART + RLENGTH)
+        q = index(m, "\"")
+        head = substr(m, q + 1, length(m) - q - 1)
+        gsub(/[`*]/, "", head)
+        ref = substr(m, 1, q - 1)
+        if (substr(ref, 1, 1) == "`") {
+          ref = substr(ref, 2); sub(/`.*/, "", ref)
+          print file "\t" FNR "\tcitec\t" ref "\t" head
+        } else {
+          sub(/^\]\(/, "", ref); sub(/[#)].*/, "", ref)
+          print file "\t" FNR "\tcitel\t" ref "\t" head
+        }
+      }
       # inline code spans
       s = line
       while (match(s, /`[^`]+`/)) {
@@ -89,6 +113,19 @@ awk -F'\t' -v top='^(\\.github|app|assets|CrocKit|crocmobile|design|docs|scripts
   {
     file = $1; n = $2; kind = $3; t = $4
     dir = file; if (!sub(/\/[^\/]*$/, "", dir)) dir = "."
+    if (kind == "citel" || kind == "citec") {
+      # A missing file is reported by the link and path checks, not here.
+      path = t; target = ""
+      if (kind == "citel" || path ~ /^\.\.?\//) target = normalize(dir "/" path)
+      else if (path ~ top) target = path
+      else {
+        # A bare name may be any file of that name: the heading may be in any.
+        nc = split(dir "/" path " docs/" path " docs/knowledge/" path " design/" path " " path, cand, " ")
+        for (i = 1; i <= nc; i++) if (have(cand[i])) target = target (target == "" ? "" : " ") cand[i]
+      }
+      if (target != "" && (index(target, " ") || have(target))) print file "\t" n "\t@" target "@" $5
+      next
+    }
     if (kind == "link") {
       if (t ~ /^(https?|mailto):/) next
       path = t; anchor = ""
@@ -131,8 +168,40 @@ anchors() {
     }' "$1"
 }
 
+# The heading texts of a markdown file, one per line, without code ticks or
+# emphasis marks.
+headings() {
+  awk '
+    /^[ \t]*(```|~~~)/ {
+      m = $0; sub(/^[ \t]*/, "", m); m = substr(m, 1, 3)
+      if (fence == "") fence = m; else if (m == fence) fence = ""
+      next
+    }
+    fence != "" || !/^#+ / { next }
+    {
+      h = $0
+      sub(/^#+ +/, "", h)
+      sub(/[ \t]+$/, "", h)
+      gsub(/[`*]/, "", h)
+      print h
+      # "### 2. Rendezvous" is cited as "Rendezvous", never by its number.
+      if (sub(/^[0-9]+\. +/, "", h)) print h
+    }' "$1"
+}
+
 while IFS=$'\t' read -r f n msg; do
   case $msg in
+    @*)
+      rest=${msg#@}
+      targets=${rest%%@*}
+      head=${rest#*@}
+      found=0
+      for target in $targets; do
+        headings "$target" > "$TMP/headings"
+        if grep -qxF -- "$head" "$TMP/headings"; then found=1; fi
+      done
+      [ "$found" -eq 1 ] || finding "$f" "$n" "no heading \"$head\" in ${targets// / or }"
+      ;;
     \?*)
       # A missing path cannot match a directory-only pattern (`dir/`) unless it
       # ends in a slash, so try both: a fresh clone has no build outputs.
@@ -183,4 +252,4 @@ if [ "$findings" -gt 0 ]; then
   echo "FAIL: $findings finding(s). Fix the doc, or the path it names; never the check."
   exit 1
 fi
-echo "PASS: links, repo paths and stale markers in $(wc -l < "$TMP/files" | tr -d ' ') markdown files"
+echo "PASS: links, repo paths, heading citations and stale markers in $(wc -l < "$TMP/files" | tr -d ' ') markdown files"

@@ -569,6 +569,6 @@ Launch gotchas, both macOS:
 
 - Once `CFBundleDocumentTypes` exists, bare adjacent argv tokens are document-open candidates and AppKit skips creating the default window. Use flag-style arguments only.
 - Scripted launches need `-ApplePersistenceIgnoreState YES` or they hang in window restoration.
-- A plain launch can come up with no window when the bundle ID carries leftover restoration state (`known-issues.md`, "A plain Mac launch can open with no window"). Test window behavior on a fresh bundle ID or pass the flag.
+- A plain launch can come up with no window when the bundle ID carries leftover restoration state (`known-issues.md`, "App and UI"). Test window behavior on a fresh bundle ID or pass the flag.
 
 On the CLI side of a verify run, a receiving `croc` needs `CROC_SECRET=` in the environment instead of a positional code. croc refuses custom positional codes in non-classic mode for receive as well as send.

@@ -127,7 +127,7 @@ Design and docs, no toolchain needed:
 
 ```bash
 scripts/verify-design.sh   # token mirrors, contrast, no raw web colors (design/AGENTS.md)
-scripts/verify-docs.sh     # links, repo paths and stale markers in the markdown (docs/AGENTS.md)
+scripts/verify-docs.sh     # links, repo paths, quoted headings and stale markers in the markdown (docs/AGENTS.md)
 ```
 
 Before tagging a release, `scripts/release-check.sh X.Y.Z` (needs `gh`) runs the checks the release rehearsal skips (`RELEASING.md`, "Each release").
