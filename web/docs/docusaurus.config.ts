@@ -5,6 +5,10 @@ import prismTheme from './src/prismTheme';
 // crocapp.dev is the landing page. GitHub Pages serves one site per repo, so
 // the docs live under /docs/ of that same artifact and both surfaces are
 // published together by scripts/assemble-site.sh.
+// The landing page's og:image:alt, which describes the same og.jpg.
+const socialImageAlt =
+  'The CrocApp wordmark and mascot beside the headline Send files with a code phrase, with the line Encrypted end-to-end and the address crocapp.dev.';
+
 const config: Config = {
   title: 'CrocApp',
   tagline: 'Send files with a code phrase',
@@ -144,6 +148,10 @@ const config: Config = {
 
   themeConfig: {
     image: 'https://crocapp.dev/assets/img/og.jpg',
+    metadata: [
+      {property: 'og:image:alt', content: socialImageAlt},
+      {name: 'twitter:image:alt', content: socialImageAlt},
+    ],
     colorMode: {
       respectPrefersColorScheme: true,
     },

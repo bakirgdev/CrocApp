@@ -3,7 +3,7 @@ slug: /
 sidebar_position: 1
 sidebar_label: Overview
 title: Documentation
-description: Send files, folders and text to another device with a short code phrase. Free, open source and end-to-end encrypted.
+description: Guides for sending and receiving with CrocApp, running your own relay, and what each server can see.
 ---
 
 # CrocApp documentation

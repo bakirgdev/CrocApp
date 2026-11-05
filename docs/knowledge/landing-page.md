@@ -35,7 +35,7 @@ The policy forbids inline script and style, `data:` images and any remote host, 
 
 ## Images
 
-Screenshots are WebP, one file per theme, and the hero uses `<picture>` with a `<source media="(prefers-color-scheme: dark)" data-theme-source>` so only the variant that matches the OS downloads. A manual theme pin cannot reach a `<source>` before parse, so `app.js` rewrites that `media` to `all` or `not all` on load and on toggle. Trade-off: a pin that disagrees with the OS fetches the OS variant first, then the pinned one (`known-issues.md`, "Landing page"). Every image has `width` and `height`; the Mac hero image has `fetchpriority="high"` and the rest are `loading="lazy"`. `scripts/capture-screenshots.sh --copy-web` writes the WebP files and needs `cwebp` (`brew install webp`).
+Screenshots are WebP, one file per theme, and the hero uses `<picture>` with a `<source media="(prefers-color-scheme: dark)" data-theme-source>` so only the variant that matches the OS downloads. A manual theme pin cannot reach a `<source>` before parse, so `app.js` rewrites that `media` to `all` or `not all` on load and on toggle. Trade-off: a pin that disagrees with the OS fetches the OS variant first, then the pinned one (`known-issues.md`, "Landing page"). Every image has `width` and `height`; the Mac hero image has `fetchpriority="high"`. No image is `loading="lazy"`: the badges and the footer mascot are sized by CSS (`width: auto`, a token), and Chrome flags a lazy image whose CSS width differs from its attributes. `scripts/capture-screenshots.sh --copy-web` writes the WebP files and needs `cwebp` (`brew install webp`).
 
 ## Head
 

@@ -70,7 +70,8 @@ Open items left from the 1.1.0 release (`docs/README.md`, "Status").
   - About one run in three, the trace shows a shift at 31 ms, before first paint: the stacked Mac shot is laid out 50 by 68 pixels, then at full width. Real browsing did not reproduce it with the throttled-network emulation of the DevTools MCP.
   - Tried and not fixed it: skipping the initial `syncPictures()` in `app.js`, dropping `decoding="async"`, keeping the toggle hidden, and an explicit `aspect-ratio` on the picture and the image (that one cut the rate but not to zero, and it would duplicate the screenshot dimensions that a recapture can change).
   - Measured with Lighthouse 13.6.0 (`npx lighthouse`), mobile preset, against `scripts/assemble-site.sh` output behind a gzip static server, 6 to 8 runs per variant; the layout shift comes from the trace's `LayoutShift` events (`--save-assets`).
-  - Retest after the screenshots are recaptured.
+  - Retested after the screenshots were recaptured (Lighthouse 13.6.0, gzip server): 2 of 8 mobile runs still shift. The two screenshot pairs have equal dimensions per theme, so the recapture did not change the cause.
+  - The saved trace of a shifting run has one shift at DOMContentLoaded, before first paint, that moves the whole page: the header controls 52 px left, the Mac shot from 50 by 68 px to full width. A repeat of `aspect-ratio` on both hero images did not help (6 of 12 runs shifted). The `/support/` page, which has no hero shots, never shifted in 8 runs. Not fixed: the cause looks like Lighthouse's viewport emulation racing the first layout (inferred, not proven).
 - **The landing CSP is a meta tag, so it cannot stop framing, and the docs site has none.**
   - GitHub Pages cannot send headers. `frame-ancestors` is ignored in a meta tag, so clickjacking of the `/r/` buttons stays open.
   - The docs pages carry no policy, because Docusaurus injects inline scripts that would need a hash for each.
