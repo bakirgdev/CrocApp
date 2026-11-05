@@ -7,9 +7,9 @@ How the project runs after 1.1.0: recurring dates, release cadence, support chan
 | When | What | Where it is tracked |
 | --- | --- | --- |
 | Every Monday | Read the "Pinned versions to update" issue and the Dependabot PRs; merge what is green | `.github/workflows/pin-watch.yml`, `dependabot.yml` |
-| January 2027 | Renew the Developer ID certificate and profile before they expire on 2027-02-01 | `RELEASING.md`, "One-time setup", steps 2 and 5 |
-| Before 2027-08-01 | Bump `Expires` in `security.txt` | `known-issues.md`, "Landing page" |
-| 2027-08-27, then yearly | Apple Developer Program membership renewal | Apple account |
+| A month before the certificate expires (developer.apple.com > Certificates) | Renew the Developer ID certificate and its profile | `RELEASING.md`, "One-time setup", steps 2 and 5 |
+| A month before its `Expires` field | Bump `Expires` in `web/landing/.well-known/security.txt` | `known-issues.md`, "Landing page" |
+| Yearly, before the renewal date in the Apple Developer account | Apple Developer Program membership renewal | Apple account |
 | Whenever App Store Connect shows one | Accept updated agreements; uploads are blocked until then | `RELEASING.md`, "One-time setup" |
 | June (WWDC) to September | Build on the new Xcode beta from the third beta, ship a compatibility release by the OS launch | This file, "OS cycle" |
 
