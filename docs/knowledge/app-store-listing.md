@@ -125,7 +125,7 @@ App Store Connect shows no What's New field on an app's first version (the 1.1.0
 | Content Rights (App Information) | No, the app does not contain, show, or access third-party content (owner's answer) |
 | Advertising Identifier | not asked when 1.1.0 was submitted; the app uses no IDFA |
 | iPhone and iPad Apps on Apple Silicon Macs (Pricing and Availability) | off, so the native macOS app is the only one Macs see |
-| Product page Header asset (5244x2950 or 3840x1646) | optional; left empty |
+| Product page Header and Search Results asset (universal 16:9, 5244x2950) | `assets/app-store-header.png`, from `scripts/social-cards.swift`; submitted through the Asset Library after the 1.1.0 iOS release. Shown on iOS and iPadOS 27 and later only |
 
 The support and privacy pages exist in `web/landing/` (`support/`, `privacy/`). The privacy page must name every server the app talks to and what each one sees, because the App Privacy label says nothing about them. Both URLs must answer HTTP 200 on the live site before you submit. App Store Connect stores the privacy URL without the trailing slash; `https://crocapp.dev/privacy` redirects (301) to `/privacy/`, so that is fine.
 
@@ -336,6 +336,9 @@ Before every submission:
 - A screenshot that is still processing blocks **Add for Review** with "1 or more screenshots must finish processing". Reload after a minute and press it again.
 - iPhone Duo screenshots were not required: **Add for Review** accepted the 1.1.0 iOS build without them.
 - Version release is Manual, so the website's store links can go live before the listing does. Approval does not publish the app; **Release This Version** on each platform does.
+- **A later version.** The **+** next to "iOS App" or "macOS App" in the sidebar adds it; enter `MARKETING_VERSION`, paste "What's New" from the version's `CHANGELOG.md` section, and pick the build once it has processed. Description, keywords, screenshots and "What's New" change only with a new version; promotional text changes any time without review.
+- While either platform has a version in review, App Information and App Privacy are locked for both.
+- **Creative assets** (the header and search results asset) are uploaded in the Asset Library and go through **Add for Review** there, as an iOS submission of their own with no build. Once approved, select the asset on the iOS version page > Header and Search Results.
 
 ## Sources
 

@@ -53,6 +53,7 @@ Type is the system font, SF Mono for code. Glyphs are SF Symbols in the app and 
 | App Store screenshots | `assets/screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` (generated at submission, gitignored) | App Store Connect |
 | Social card | `web/landing/assets/img/og.jpg` (landing and docs) | 1200×630, light: the icon's khaki gradient, wordmark, olive `lock`, headline "Send files with a code phrase", the line "Encrypted end-to-end", the site URL, mascot on the trailing side. Drawn by `scripts/social-cards.swift` |
 | GitHub social preview | `assets/github-social-preview.png` | 1280×640, the same layout on the icon's deep olive with the repo URL, from the same script; uploaded by hand in the repo settings |
+| App Store header | `assets/app-store-header.png` | 5244×2950, Apple's universal creative asset for the product page header and search results: the social card in light values without a URL (Apple bans URLs there), scaled into the center 4200 px so both crops keep it whole. From the same script; uploaded by hand in App Store Connect > Asset Library |
 | Disk image background | `assets/dmg-background.tiff` | `docs/RELEASING.md`, "Disk image" |
 | App Store badges | `web/landing/assets/img/app-store.svg`, `mac-app-store.svg` | Apple's artwork, below |
 
