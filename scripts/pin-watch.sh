@@ -47,6 +47,12 @@ row pnpm web/docs/package.json "$pnpm_pin" "$(curl -fsS https://registry.npmjs.o
 go_pin=$(awk '$1 == "go" {print $2}' crocmobile/go.mod)
 row Go crocmobile/go.mod "$go_pin" "$(curl -fsS 'https://go.dev/dl/?mode=json' | jq -r '.[0].version | ltrimstr("go")')"
 
+# The go.mod `tool` block's modules are `// indirect`, which Dependabot skips.
+for mod in golang.org/x/mobile golang.org/x/vuln; do
+  row "$mod" crocmobile/go.mod "$(awk -v m="$mod" '$1 == m {print $2; exit}' crocmobile/go.mod)" \
+    "$(curl -fsS "https://proxy.golang.org/$mod/@latest" | jq -r .Version)"
+done
+
 v10_pin=$(cat scripts/croc-v10.version)
 row "croc v10 test peer" scripts/croc-v10.version "$v10_pin" \
   "$(gh api repos/schollz/croc/tags --paginate --jq '.[].name' | grep -E '^v10\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"

@@ -14,7 +14,7 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 | `workflows/codeql.yml` | CodeQL advanced setup (Actions, JavaScript/TypeScript, Go with `croc_no_tailcat`) on PRs and pushes touching those paths, plus a Tuesday cron. Swift is not analyzed (`docs/known-issues.md`). The repo's default setup stays off, or SARIF uploads fail |
 | `workflows/pin-watch.yml` | Monday run of `scripts/pin-watch.sh`; keeps one "Pinned versions to update" issue in step with the report |
 | `workflows/scorecard.yml` | OpenSSF Scorecard: Wednesday cron, `branch_protection_rule`, dispatch |
-| `dependabot.yml` | github-actions, gomod `/crocmobile`, swift `/app` (reads the Xcode project's `Package.resolved`), npm `/web/docs`, all weekly. Minor and patch grouped, majors one PR each. croc `>=11.6.0` is ignored while the pin is held (`docs/knowledge/croc-upgrade-playbook.md`) |
+| `dependabot.yml` | github-actions, gomod `/crocmobile`, swift `/app` (reads the Xcode project's `Package.resolved`), npm `/web/docs`, all weekly. Minor and patch grouped, majors one PR each. `github-actions` and `npm` carry a 7-day `cooldown` (`default-days`), so a release is not adopted the day it ships; security updates ignore it. croc `>=11.6.0` is ignored while the pin is held (`docs/knowledge/croc-upgrade-playbook.md`) |
 
 ## Rules
 
@@ -38,6 +38,6 @@ gh api repos/OWNER/REPO/git/ref/tags/TAG --jq '.object.type + " " + .object.sha'
 
 - **Fork pull requests get a read-only `GITHUB_TOKEN`.** Any step that writes a comment, label, or issue needs `github.event.pull_request.head.repo.full_name == github.repository`, or a green run goes red.
 - **A label named in config must already exist** in the repo. Dependabot silently drops missing ones, and a `labels:` filter on `listForRepo` silently matches nothing, which breaks issue dedup.
-- **Dependabot bumps only direct Go requirements.** The `tool` block's modules (`x/mobile`, `x/vuln`) are `// indirect`, so bump them by hand: `go get tool` in `crocmobile/`.
+- **Dependabot bumps only direct Go requirements.** The `tool` block's modules (`x/mobile`, `x/vuln`) are `// indirect`, so `pin-watch` reports them and you bump them by hand: `go get tool` in `crocmobile/`.
 - **Go jobs cross-target `darwin/arm64`** because the module only ships through gomobile. Tools have to be built for the runner (`env -u GOOS -u GOARCH go build -o ...`) and then run under the job's env.
 - **`release.yml` parses `CHANGELOG.md`.** It requires a [Keep a Changelog](https://keepachangelog.com/) heading, dated: `## [1.2.3] - YYYY-MM-DD`. Change the heading style and the tag stops releasing. The notes end at the next `## [` heading or at the first line starting `[label]: `, so a reference-style link definition inside a version section cuts its release notes short; use inline links there.
