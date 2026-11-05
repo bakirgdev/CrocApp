@@ -30,7 +30,16 @@ final class TransferController {
     private(set) var direction: Direction = .send
     /// The last accepted progress tick of the transfer in flight; nil before
     /// the first one.
-    private(set) var progress: TransferProgress?
+    private(set) var progress: TransferProgress? {
+        didSet {
+            let percent = SidebarRowState.percent(of: progress)
+            if percent != progressPercent { progressPercent = percent }
+        }
+    }
+    /// `progress` as a whole percent. It changes at most 101 times a transfer,
+    /// where `progress` changes at the tick rate, so what shows only the percent
+    /// (the menu-bar label) reads this and redraws no more often than it moves.
+    private(set) var progressPercent: Int?
     private(set) var speedBytesPerSec: Double = 0
     /// The transfer goes through a stored-transfer server rather
     /// than a croc peer.

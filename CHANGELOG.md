@@ -13,6 +13,9 @@ extra sections where a release needs them, and the project follows
 ### Fixed
 
 - The Last Transfer widget's time and empty-state icon use a darker secondary color in light mode, so they are easier to read.
+- The share sheet on iPhone and iPad has a **Cancel** button while it prepares a large share.
+- Deleting a saved code from its context menu asks first. A swipe still deletes at once.
+- A transfer no longer shows "File 0 of 0" before the file count is known.
 
 ## [1.1.0] - 2026-11-01
 

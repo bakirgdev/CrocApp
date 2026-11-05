@@ -39,6 +39,12 @@ struct ShareStagingView: View {
                 .navigationTitle("Send with CrocApp")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    // Same as the macOS Cancel: ending the extension ends an
+                    // in-flight copy, and the app sweeps the partial batch later
+                    // (`ShareInbox.purgeStaleBatches`).
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel", role: .cancel) { cancel(CocoaError(.userCancelled)) }
+                    }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done") {
                             if case .failed(let error) = state {

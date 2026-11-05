@@ -146,7 +146,7 @@ import AppKit
 
 @Suite struct MenuBarIconTests {
     private func icon(_ phase: TransferController.Phase) -> MenuBarIcon {
-        MenuBarIcon(phase: phase, progress: nil)
+        MenuBarIcon(phase: phase, percent: nil)
     }
 
     @Test func everyPhaseHasARealSymbolAndNoCode() {
@@ -162,6 +162,12 @@ import AppKit
             #expect(NSImage(systemSymbolName: icon.symbol, accessibilityDescription: nil) != nil)
             #expect(!icon.label.contains("wiry"))
         }
+    }
+
+    @Test func thePercentShowsOnlyWhileTransferring() {
+        #expect(MenuBarIcon(phase: .transferring, percent: 42).percent == 42)
+        #expect(MenuBarIcon(phase: .connecting, percent: 42).percent == nil)
+        #expect(MenuBarIcon(phase: .transferring, percent: nil).percent == nil)
     }
 
     @Test func idleIsPlainAndActiveIsFilled() {

@@ -1,5 +1,6 @@
 import CrocKit
 import Foundation
+import Synchronization
 
 /// Checks for the Settings fields the engine validates. The engine decides
 /// (`EngineSetting`, `ValidateSetting` in `crocmobile/network.go`), so a field
@@ -46,17 +47,34 @@ extension AppSettings {
         )
     }
 
+    /// The last text each setting was checked with, and whether the engine
+    /// refused it. A check is a cgo call and runs on every render of its field
+    /// (a Send body re-renders at the progress rate), while the answer depends
+    /// on the text alone. It keeps one text per setting, so a proxy URL with
+    /// credentials is held no longer than the setting itself.
+    nonisolated private static let lastChecks = Mutex<
+        [EngineSetting: (text: String, refused: Bool)]
+    >(
+        [:])
+
     /// `message`, resolved, when the engine refuses `text` for `setting`, else
     /// nil. A `LocalizedStringResource`, so the lookup happens only on failure:
     /// the checks run on every render of the field.
     nonisolated static func engineError(
         _ setting: EngineSetting, _ text: String, _ message: LocalizedStringResource
     ) -> String? {
-        do {
-            try setting.validate(text)
-            return nil
-        } catch {
-            return String(localized: message)
+        let refused = lastChecks.withLock { checks -> Bool in
+            if let last = checks[setting], last.text == text { return last.refused }
+            let refused: Bool
+            do {
+                try setting.validate(text)
+                refused = false
+            } catch {
+                refused = true
+            }
+            checks[setting] = (text, refused)
+            return refused
         }
+        return refused ? String(localized: message) : nil
     }
 }

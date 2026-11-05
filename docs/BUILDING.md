@@ -41,7 +41,7 @@ The shared schemes `CrocApp`, `CrocApp Direct` and `CrocShare` are committed und
 - `CrocApp Direct` is the Developer ID build (`RELEASING.md`, "Release channels"). It has no testables.
 - A new target needs its scheme committed there too. Per-user schemes in `xcuserdata/` stay gitignored.
 
-CI builds with these commands (run from `app/`; the macOS one also runs the tests). CI also passes `COMPILER_INDEX_STORE_ENABLE=NO`. Add the `SWIFT_TREAT_WARNINGS_AS_ERRORS` and `GCC_TREAT_WARNINGS_AS_ERRORS` flags (see "Build settings that must not change casually") to reproduce a CI failure:
+CI builds with these commands (run from `app/`; the macOS one also runs the tests). CI also passes `COMPILER_INDEX_STORE_ENABLE=NO`. Add the `GCC_TREAT_WARNINGS_AS_ERRORS=YES` flag (see "Build settings that must not change casually") to reproduce a CI failure; the project already treats Swift warnings as errors:
 
 ```bash
 xcodebuild -scheme CrocApp -destination 'platform=macOS' \
@@ -228,7 +228,7 @@ Any change to `crocmobile/session.go`, `CrocKit/Sources/` or `TransferController
 ## Build settings that must not change casually
 
 - **Swift 6 language mode everywhere.** `SWIFT_VERSION = 6.0` on every target (`CrocApp`, `CrocApp Direct`, `CrocShare`, `CrocShare Direct`, `CrocWidgets`, `CrocWidgets Direct`, `CrocAppTests`, all configurations in `app/CrocApp.xcodeproj/project.pbxproj`) and `swift-tools-version: 6.0` in `CrocKit`. Also `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`: types are MainActor-isolated by default, `nonisolated` is the explicit opt-out, and strict concurrency violations are build errors.
-- **CI treats compiler warnings as errors.** `ci.yml` passes `SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES` to its `xcodebuild` calls and `-Xswiftc -warnings-as-errors` to `swift test`, so a warning fails the PR. The project files leave both off, so a local build with a warning still runs. Pass the same flags before pushing.
+- **CI treats compiler warnings as errors.** `ci.yml` passes `SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES` to its `xcodebuild` calls and `-Xswiftc -warnings-as-errors` to `swift test`, so a warning fails the PR. The project sets `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` at project level, so a Swift warning fails a local build too; it leaves `GCC_TREAT_WARNINGS_AS_ERRORS` off, so pass that flag before pushing. `swift test` in `CrocKit` needs its own `-Xswiftc -warnings-as-errors`.
 - **The deployment target is `26.0` everywhere, never a minor.** `IPHONEOS_DEPLOYMENT_TARGET` and `MACOSX_DEPLOYMENT_TARGET` in the pbxproj, `platforms: [.iOS("26.0"), .macOS("26.0")]` in `CrocKit/Package.swift`, and `-iosversion 26.0 -macosversion 26.0` in `scripts/build-xcframework.sh`. All four move together.
 - **macOS is arm64 only.** `"ARCHS[sdk=macosx*]" = arm64` in the pbxproj. The xcframework has no `x86_64` macOS slice (golang/go#73119), so the pin makes an Intel archive fail the link cleanly instead of attempting a link that cannot succeed.
 - **`DEAD_CODE_STRIPPING = YES` on the project-level Release configuration.** Xcode resolves it to `NO` for macOS when nothing sets it, and the iOS default is already `YES`, so the pbxproj sets it for every target. The saving on macOS is small: about 5 KB for `CrocApp` and 21 KB for `CrocApp Direct` (measured). The likely reason (inferred) is that the Go engine arrives as one large archive that the linker mostly keeps.

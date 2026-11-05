@@ -41,11 +41,7 @@ struct RecentTransferSummary: Equatable {
     private static func dateText(for date: Date, now: Date, calendar: Calendar) -> String {
         let locale = calendar.locale ?? .current
         if now.timeIntervalSince(date) < relativeWindow {
-            let formatter = RelativeDateTimeFormatter()
-            formatter.calendar = calendar
-            formatter.locale = locale
-            formatter.dateTimeStyle = .named
-            return formatter.localizedString(for: date, relativeTo: now)
+            return date.relativeText(to: now, calendar: calendar)
         }
         var style = Date.FormatStyle(
             locale: locale, calendar: calendar, timeZone: calendar.timeZone

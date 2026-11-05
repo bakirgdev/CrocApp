@@ -121,7 +121,7 @@ struct CrocAppApp: App {
                 .environment(controller)
                 .environment(relayHost)
         } label: {
-            let icon = MenuBarIcon(phase: controller.phase, progress: controller.progress)
+            let icon = MenuBarIcon(phase: controller.phase, percent: controller.progressPercent)
             HStack(spacing: Spacing.space1) {
                 Image(systemName: icon.symbol)
                 if let percent = icon.percent { Text(verbatim: "\(percent)%").monospacedDigit() }

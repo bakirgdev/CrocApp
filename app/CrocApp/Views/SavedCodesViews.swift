@@ -36,6 +36,8 @@ struct SavedCodePicker: View {
 struct SavedCodesSection: View {
     @Environment(SavedCodes.self) private var savedCodes
     @State private var editing: SavedCodeEditor.Target?
+    /// The code the context menu's Delete asked about, until the dialog answers.
+    @State private var deleteCandidate: SavedCode?
 
     var body: some View {
         Section {
@@ -49,8 +51,9 @@ struct SavedCodesSection: View {
                 .swipeActions {
                     Button("Delete", role: .destructive) { savedCodes.remove(id: saved.id) }
                 }
+                // The swipe stays the fast path; a context menu entry is easy to hit by mistake.
                 .contextMenu {
-                    Button("Delete", role: .destructive) { savedCodes.remove(id: saved.id) }
+                    Button("Delete", role: .destructive) { deleteCandidate = saved }
                 }
             }
             Button {
@@ -84,6 +87,18 @@ struct SavedCodesSection: View {
                 .foregroundStyle(Color.textSecondary)
         }
         .sheet(item: $editing) { SavedCodeEditor(target: $0) }
+        .confirmationDialog(
+            "Delete this saved code?",
+            isPresented: Binding(
+                get: { deleteCandidate != nil },
+                set: { if !$0 { deleteCandidate = nil } }),
+            presenting: deleteCandidate
+        ) { saved in
+            Button("Delete Saved Code", role: .destructive) { savedCodes.remove(id: saved.id) }
+            Button("Cancel", role: .cancel) {}
+        } message: { saved in
+            Text("\(saved.name) is removed from this device's Keychain. You can't undo this.")
+        }
     }
 }
 
