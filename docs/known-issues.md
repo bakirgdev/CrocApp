@@ -129,7 +129,7 @@ Permanent or deferred, each with its reason.
   - It is reached only at docs build time, through `@svgr/plugin-svgo` merging its own SVGO config, never from user input. No override can lift it.
   - `web/docs/osv-scanner.toml` ignores it so OpenSSF Scorecard's Vulnerabilities check does not count it. Remove this item and that entry when `deepmerge` publishes a fix.
 - **`zizmor --pedantic` reports `self-repository` on every `uses: ./.github/workflows/...` call (five sites).** GitHub documents `uses: $/.github/workflows/...` as the recommended form, but actionlint 1.7.12 rejects it ("not following the format") and GitHub Enterprise Server lacks it. Switch when actionlint accepts `$/`. Every other pedantic finding is fixed.
-- **Secret scanning's non-provider patterns and validity checks are off.** A `PATCH` of `security_and_analysis` on the repository returns 200 and leaves both `disabled`, so the API does not enable them here. Turn them on in Settings, Code security (not verified that the UI offers them on this plan).
+- **Secret scanning's non-provider patterns and validity checks are off, and stay off.** The owner's GitHub plan does not offer them, and a `PATCH` of `security_and_analysis` returns 200 but leaves both `disabled`. Secret scanning and push protection are on. Accepted; do not ask the owner to enable them again.
 
 ### App and UI
 
