@@ -61,6 +61,8 @@ struct ContentView: View {
                 if active { localNetwork.checkIfNeeded() }
             }
             .onChange(of: scenePhase) { _, phase in
+                // A secret typed a moment ago is still waiting for its Keychain write.
+                if phase != .active { controller.settings.flushSecrets() }
                 if phase == .active { localNetwork.recheckIfDenied() }
                 guard phase == .active else { return }
                 offerStagedFiles()

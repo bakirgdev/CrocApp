@@ -7,10 +7,12 @@ import Observation
 /// defaults and the public relay pool. Each property writes its own key to
 /// `storage` in `didSet` (which does not fire for the assignments in init), so
 /// adding a setting never resets the others. A harness run and the tests pass
-/// in-memory storage and secrets instead of the real ones. `relayPassword` is
-/// the one exception to "storage": it lives in `secrets` (the Keychain, see
+/// in-memory storage and secrets instead of the real ones. The relay passwords
+/// are the exception to "storage": they live in `secrets` (the Keychain, see
 /// `KeychainStore`). The Advanced proxies are the same: they can carry
-/// credentials, so they live in `secrets` and never in `storage`.
+/// credentials, so they live in `secrets` and never in `storage`. A secret
+/// takes its new value at once but reaches `secrets` only after the edits stop
+/// (`flushSecrets`), so typing does not write the Keychain on every keystroke.
 @MainActor
 @Observable
 final class AppSettings {
@@ -30,14 +32,18 @@ final class AppSettings {
 
     @ObservationIgnored private let storage: any SettingsStorage
     @ObservationIgnored private let secrets: any SecretStore
+    @ObservationIgnored private let secretWriteDelay: Duration
+    /// Secrets edited since their last write to `secrets`.
+    @ObservationIgnored private var dirtySecrets: Set<Secret> = []
+    @ObservationIgnored private var secretWriteTask: Task<Void, Never>?
 
     var relayAddress: String { didSet { save(relayAddress, "settings.relayAddress") } }
     var relayAddress6: String { didSet { save(relayAddress6, "settings.relayAddress6") } }
-    var relayPassword: String { didSet { persistRelayPassword() } }
+    var relayPassword: String { didSet { secretEdited(.relayPassword) } }
     /// Mac only: the relay this Mac runs (`RelayHostController`). Its own
     /// password, apart from `relayPassword`, which this device uses to join a relay.
     var relayHostPort: Int { didSet { save(relayHostPort, "settings.relayHostPort") } }
-    var relayHostPassword: String { didSet { persistRelayHostPassword() } }
+    var relayHostPassword: String { didSet { secretEdited(.relayHostPassword) } }
     /// Off by default: the relay never starts by itself unless the user says so.
     var relayHostAtLaunch: Bool { didSet { save(relayHostAtLaunch, "settings.relayHostAtLaunch") } }
     var onlyLocal: Bool { didSet { save(onlyLocal, "settings.onlyLocal") } }
@@ -119,10 +125,10 @@ final class AppSettings {
     var excludePaths: String { didSet { save(excludePaths, "settings.advanced.excludePaths") } }
     /// Proxies may carry credentials: Keychain only, see `persistProxy`.
     var socks5Proxy: String {
-        didSet { persistProxy(socks5Proxy, account: Self.socks5ProxyAccount, as: .socks5Proxy) }
+        didSet { secretEdited(.socks5Proxy) }
     }
     var httpProxy: String {
-        didSet { persistProxy(httpProxy, account: Self.httpProxyAccount, as: .httpProxy) }
+        didSet { secretEdited(.httpProxy) }
     }
 
     /// The settings kept in `secrets` instead of `storage`.
@@ -161,10 +167,12 @@ final class AppSettings {
 
     init(
         storage: any SettingsStorage = UserDefaults.standard,
-        secrets: any SecretStore = KeychainStore()
+        secrets: any SecretStore = KeychainStore(),
+        secretWriteDelay: Duration = .milliseconds(500)
     ) {
         self.storage = storage
         self.secrets = secrets
+        self.secretWriteDelay = secretWriteDelay
         relayAddress = Self.read(storage, "settings.relayAddress", default: "")
         relayAddress6 = Self.read(storage, "settings.relayAddress6", default: "")
         relayPassword = secrets.get(account: Self.relayPasswordAccount) ?? ""
@@ -261,6 +269,7 @@ final class AppSettings {
         excludePaths = ""
         socks5Proxy = ""
         httpProxy = ""
+        flushSecrets()
     }
 
     /// True when every Advanced control already holds its default.
@@ -273,6 +282,37 @@ final class AppSettings {
 
     private func save(_ value: Any, _ key: String) {
         storage.set(value, forKey: key)
+    }
+
+    /// A secret field changed: the new value applies now, and the Keychain write
+    /// waits until `secretWriteDelay` passes without another edit. A new edit
+    /// cancels the pending wait, so a burst of keystrokes is one write.
+    private func secretEdited(_ secret: Secret) {
+        dirtySecrets.insert(secret)
+        secretWriteTask?.cancel()
+        secretWriteTask = Task { [weak self, secretWriteDelay] in
+            do { try await Task.sleep(for: secretWriteDelay) } catch { return }
+            self?.flushSecrets()
+        }
+    }
+
+    /// Writes every edited secret to `secrets` now. Call it where the app can
+    /// stop before the delay runs out: quitting, or leaving the foreground.
+    func flushSecrets() {
+        secretWriteTask?.cancel()
+        secretWriteTask = nil
+        let dirty = dirtySecrets
+        dirtySecrets = []
+        for secret in dirty {
+            switch secret {
+            case .relayPassword: persistRelayPassword()
+            case .relayHostPassword: persistRelayHostPassword()
+            case .socks5Proxy:
+                persistProxy(socks5Proxy, account: Self.socks5ProxyAccount, as: .socks5Proxy)
+            case .httpProxy:
+                persistProxy(httpProxy, account: Self.httpProxyAccount, as: .httpProxy)
+            }
+        }
     }
 
     /// Deletes rather than stores "" so clearing the field doesn't leave a
@@ -321,9 +361,9 @@ final class AppSettings {
         record(saved, for: secret)
     }
 
-    /// Touches `unsavedSecrets` only when the outcome changes, because every
-    /// keystroke in a secret field persists and each write would otherwise
-    /// redraw whatever reads the set.
+    /// Touches `unsavedSecrets` only when the outcome changes, because a write
+    /// that repeats the last outcome would otherwise redraw whatever reads the
+    /// set.
     private func record(_ saved: Bool, for secret: Secret) {
         if saved {
             if unsavedSecrets.contains(secret) { unsavedSecrets.remove(secret) }
