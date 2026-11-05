@@ -67,9 +67,7 @@ echo "small file" > "$TMP/src/a.txt"
 head -c 5242880 /dev/urandom > "$TMP/src/big.bin"
 echo nested > "$TMP/src/sub/b.txt"
 
-# Codes must differ in their first 4 characters: the relay hashes that prefix
-# into a room name, so a shared prefix can collide across scenarios.
-code() { echo "$1$$-interop"; }
+CODE_SUFFIX=interop
 
 await_code() { # await_code LOG: prints the code croctest announced
   local i c
@@ -573,10 +571,6 @@ fi
 # fails with croc's own message, promptly, and does not hang.
 SCENARIO=13
 head -c 136314880 /dev/urandom > "$TMP/huge.bin"
-no_tailcat() { # no_tailcat LOG LABEL: the CLI log shows a plain relay transfer
-  grep -aq "selected croc relay data transport$" "$1" || fail "$2: CLI log has no plain relay data transport line"
-  ! grep -aEq "tailcat-offer|starting Tailcat server|Tailcat fallback|selected staged" "$1" || fail "$2: CLI log shows a Tailcat offer"
-}
 L="$TMP/13s"
 C=$(code ls)
 mkdir -p "$L"

@@ -23,16 +23,11 @@ harness output: the summary lines and any failures, not the whole log
 ## Docs
 
 - [ ] User-visible change: a line under `## [Unreleased]` in `CHANGELOG.md`, written for someone deciding whether to update. That section becomes the release notes verbatim
-- [ ] Internals changed: the docs that describe them updated (root `AGENTS.md`, "Docs")
-- [ ] Defect fixed or accepted: its `docs/known-issues.md` line deleted or added
-- [ ] Nothing doc-worthy
-- [ ] `scripts/verify-docs.sh` passes
+- [ ] Docs that describe the change updated (root `AGENTS.md`, "Docs"), a fixed or accepted defect's `docs/known-issues.md` line deleted or added, and `scripts/verify-docs.sh` passes
 
 ## UI changes
 
 Before and after screenshots, light and dark, on every affected platform.
 
-- [ ] Tokens, SF Symbols and the system font only
-- [ ] Both themes checked
-- [ ] `scripts/verify-design.sh` passes
+- [ ] Tokens, SF Symbols and the system font only, both themes checked, and `scripts/verify-design.sh` passes
 - [ ] Screenshots recaptured if the UI changed (`scripts/capture-screenshots.sh`)

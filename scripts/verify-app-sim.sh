@@ -53,14 +53,6 @@ launch() { # launch ARGS...
   xcrun simctl launch "$SIM" "$BUNDLE" "$@" ${RELAY:+--relay "$RELAY"} > /dev/null
 }
 
-check_result() { # check_result LABEL
-  local got
-  await_file "$RESULT" 120 || true
-  got=$(cat "$RESULT" 2> /dev/null || echo missing)
-  echo "$1 result: $got"
-  [ "$got" = "ok success=true" ] || fail "$1: expected 'ok success=true', got '$got'"
-}
-
 # --- 1: CLI -> app ------------------------------------------------------------
 # Results from a previous run are cleared first, so a crashed or no-op app
 # cannot leave behind a file that makes this run look like it passed.
@@ -72,7 +64,7 @@ mark_relay
   > "$TMPROOT/sim-send.log" 2>&1 &
 await_sender
 launch --auto-receive "$C"
-check_result receive
+check_result receive 120
 cmp -s "$TMP/simfile.txt" "$DOCS/simfile.txt" || fail "receive: received bytes differ"
 echo SIM-INTEROP-OK
 
@@ -109,6 +101,6 @@ await_sender
   tail -n 30 "$TMPROOT/share-sim-recv.log" >&2
   fail "share: croc receive exited $rc (log: $TMPROOT/share-sim-recv.log)"
 }
-check_result share
+check_result share 120
 cmp -s "$GROUP_DIR/ShareInbox/$BATCH/payload.bin" "$TMP/payload.bin" || fail "share: received bytes differ"
 echo SHARE-SIM-OK

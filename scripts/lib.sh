@@ -233,3 +233,26 @@ await_sender() { # await_sender [FALLBACK_SECONDS]
   done
   fail "no sender opened a room on the relay $RELAY within 30 s (relay log: $RELAY_LOG)"
 }
+
+# --- Helpers the app and interop harnesses share -------------------------------
+
+# A transfer code: NAME, the harness's pid and its CODE_SUFFIX. Every code's
+# first 4 characters must be unique in a run: the relay hashes that prefix into
+# a room name.
+code() { echo "$1$$-$CODE_SUFFIX"; }
+
+# The app harness gate: the app's verify-result.txt at $RESULT must read
+# "ok success=true". WAIT_SECONDS (default 0) waits for the file first.
+check_result() { # check_result LABEL [WAIT_SECONDS]
+  local got
+  await_file "$RESULT" "${2:-0}" || true
+  got=$(cat "$RESULT" 2> /dev/null || echo missing)
+  echo "$1 result: $got"
+  [ "$got" = "ok success=true" ] || fail "$1: expected 'ok success=true', got '$got'"
+}
+
+# The CLI log shows a plain relay transfer: the engine is built without Tailcat.
+no_tailcat() { # no_tailcat LOG LABEL
+  grep -aq "selected croc relay data transport$" "$1" || fail "$2: CLI log has no plain relay data transport line"
+  ! grep -aEq "tailcat-offer|starting Tailcat server|Tailcat fallback|selected staged" "$1" || fail "$2: CLI log shows a Tailcat offer"
+}

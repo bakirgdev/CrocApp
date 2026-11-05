@@ -5,7 +5,7 @@ Build, release, verification and screenshot scripts. Each script's header is its
 ## Conventions
 
 - Bash with `set -euo pipefail`. Every script `cd`s to the repo root first, so path arguments are relative to the root, not the caller's directory.
-- Source `lib.sh` instead of re-implementing what it has: `fail`, `logged`, `kill_jobs`, `await_file`, `await_log`, `local_ip`, `TMPROOT`, the relay helpers (`use_relay`, `mark_relay`, `await_sender`, `free_port`), and the `timeout` shim (macOS has no `timeout`).
+- Source `lib.sh` instead of re-implementing what it has: `fail`, `logged`, `kill_jobs`, `await_file`, `await_log`, `local_ip`, `TMPROOT`, the relay helpers (`use_relay`, `mark_relay`, `await_sender`, `free_port`), the harness helpers (`code` with the script's `CODE_SUFFIX`, `check_result`, `no_tailcat`), and the `timeout` shim (macOS has no `timeout`). Report an error with `fail`, not `echo "error: ..."; exit 1`, so every failure carries one grep-able `FAIL:` prefix.
 - Run every build or archive step as `logged LOG cmd...`. A bare `> log 2>&1` under `set -e` exits without saying what failed or where the log is.
 - Scratch goes in `mktemp -d`, removed by the EXIT trap. Logs worth reading after a failure go under `$TMPROOT` (per-user on macOS), never at a fixed path in `/tmp`.
 - A harness undoes in its EXIT trap everything it writes outside its temp dir (the app's Documents, `~/Downloads/CrocApp`, the pasteboard), so a failed run leaves nothing behind. Every croc CLI send takes `--disable-clipboard`: croc otherwise copies its code over the user's pasteboard.

@@ -65,7 +65,7 @@ jobs:
           }
 
           {
-            out swift '^(app|CrocKit)/|^scripts/screenshots/|^\.swift-format$|^\.xcode-version$|^scripts/(lib|format-swift)\.sh$|^\.github/workflows/(ci|reusable-swift-format)\.yml$'
+            out swift '^(app|CrocKit)/|^scripts/(screenshots/|.*\.swift$)|^\.swift-format$|^\.xcode-version$|^scripts/(lib|format-swift)\.sh$|^\.github/workflows/(ci|reusable-swift-format)\.yml$'
             out go '^crocmobile/|^\.github/workflows/(ci|reusable-go)\.yml$'
             out build '^(app|CrocKit|crocmobile)/|^scripts/(lib|build-xcframework)\.sh$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
             out design '^design/|^app/.*\.swift$|^app/CrocApp/Assets\.xcassets/|^web/landing/.*\.(css|html|js)$|^web/landing/assets/img/favicon/site\.webmanifest$|^web/docs/src/(css/|prismTheme\.ts$)|^scripts/(lib\.sh|verify-design(\.sh|/))|^\.github/workflows/ci\.yml$'
