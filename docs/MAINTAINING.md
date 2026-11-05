@@ -15,13 +15,14 @@ How the project runs after 1.1.0: recurring dates, release cadence, support chan
 
 ## OS cycle
 
-- Support the current major OS and the one before it. The minimum moves up each September, in the first release after the new OS ships.
+- Support iOS, iPadOS and macOS 26 and later. A new OS release does not raise the minimum; raising it is a separate decision.
 - Test on betas from the third beta; file Feedback for regressions in system frameworks instead of working around them early.
 - The Xcode pin follows `BUILDING.md`, "When the toolchain changes"; release candidates never build a release.
 
 ## croc upstream
 
-- Follow croc minor and patch releases once `docs/knowledge/croc-upgrade-playbook.md` and the interop harness pass, normally within two weeks.
+- Follow croc minor releases only; a patch-only release is skipped. Wait about two weeks after a minor ships so its early patches land, then upgrade to that minor's latest patch once `docs/knowledge/croc-upgrade-playbook.md` and the interop harness pass.
+- A croc patch that fixes a security issue is the exception and is taken at once.
 - Hold a release back (as with croc 11.6) when it breaks progress, interop or error classification, and say why in the hold's issue.
 
 ## Releases
