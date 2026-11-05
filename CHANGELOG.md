@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 extra sections where a release needs them, and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- The Last Transfer widget's time and empty-state icon use a darker secondary color in light mode, so they are easier to read.
+
 ## [1.1.0] - 2026-11-01
 
 CrocApp 1.1.0 is the first release: a native app for [croc](https://github.com/schollz/croc) on Mac, iPhone and iPad. It embeds croc's Go library, so a code phrase from the croc command line works in the app and the other way round. The other device needs croc 11 or newer.
