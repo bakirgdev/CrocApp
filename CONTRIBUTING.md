@@ -134,7 +134,7 @@ The commands, and what each harness covers and needs, are in [`docs/BUILDING.md`
 
 ### Translations
 
-The app ships in English only. Every new user-facing string goes through a String Catalog (`docs/knowledge/app-ui-architecture.md`, "Localization"), so a later language needs no code change. Pull requests that add a language are not accepted yet: open an issue first, because each language needs a maintainer who keeps it current.
+The app ships in English only. Every new user-facing string goes through a String Catalog (`docs/knowledge/tooling.md`, "Localization"), so a later language needs no code change. Pull requests that add a language are not accepted yet: open an issue first, because each language needs a maintainer who keeps it current.
 
 ### Tests
 

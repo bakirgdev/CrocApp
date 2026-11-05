@@ -1,6 +1,6 @@
 # Tooling
 
-What is wired up, what was deliberately skipped, and the traps in each.
+What is wired up, what was deliberately skipped, the traps in each, and how the String Catalogs are kept in step.
 
 ## In use
 
@@ -135,6 +135,83 @@ These cost real debugging time on this machine. All are environment quirks, not 
   - `verify-interop.sh` and `verify-app-sim.sh` both register that trap, so `kill $pids 2>/dev/null || true` must stay.
   - The `interop (local relay)` job trusts these scripts' exit codes.
 - **A harness's relay is disowned, so a bare `wait` does not wait on it.** `verify-interop.sh` ends many scenarios in `wait`, which would otherwise block on the relay forever. `start_croc_relay` therefore runs `disown` on it, `jobs -p` no longer lists it, and `kill_jobs` stops it by `RELAY_PID`. Checked on bash 3.2 (`/bin/bash`) and bash 5.3.
+
+## Localization
+
+The app ships in English only and is ready for more languages. The catalogs exist and every user-facing string reaches one. No second language is in them yet, and the project knows only the `en` and `Base` regions. The plan for languages is in `docs/ROADMAP.md`.
+
+| Catalog | Bundle | Holds |
+| --- | --- | --- |
+| `app/CrocApp/Localizable.xcstrings` | `CrocApp`, `CrocApp Direct` | every string of the app and of `app/CrocAppDirect/`, and the App Intents titles, descriptions and parameter summaries |
+| `app/CrocApp/AppShortcuts.xcstrings` | the same | the three Siri phrases of `CrocAppShortcuts` |
+| `app/CrocApp/InfoPlist.xcstrings` | the same | the camera and local-network permission texts |
+| `app/CrocApp/ServicesMenu.xcstrings` | the macOS and Direct apps | the title of the **Send with CrocApp** Services menu item (`NSMenuItem` in the two Info plists). Edited by hand |
+| `app/CrocShare/Localizable.xcstrings` | `CrocShare`, `CrocShare Direct` | the share extension's few strings. An extension is its own bundle, so it has its own catalog |
+
+### What is localized, and how
+
+What a string is used for decides how it is written. Never wrap a literal that SwiftUI already treats as a key.
+
+| The text is | Write |
+| --- | --- |
+| a literal handed to a SwiftUI view or modifier that takes a key (`Text`, `Button`, `Label`, `navigationTitle`, `accessibilityLabel`, `ContentUnavailableView`) | the literal itself. A parameter that only ever receives literals is typed `LocalizedStringKey` (`DropZone.title`, `CodeField.placeholder`, `AdvancedRow.footnote`), because a `String` parameter shows its text as it is and Xcode never extracts it |
+| built in a model or helper, or needed as a `String` (`TransferFailure`, the Settings field errors, the `StatusBanner` and `StatusBlock` title and detail, VoiceOver announcements, the iOS Live Activity text, `NSOpenPanel`) | `String(localized:)`, with `comment:` where the meaning or a placeholder is not obvious. It resolves when it is built, so never keep one past a language change (the system relaunches the app for one) |
+| an App Intents title, description, parameter or dialog | a `LocalizedStringResource`, or the literal where the API takes one. Shortcuts resolves it |
+| formatted data (`"\(done) / \(total)"` of two file sizes) | `Text(verbatim:)`, or `Text(_:format:)` for a number. Otherwise the build adds a meaningless `%@ / %@` key |
+| a count | `^[\(n) file](inflect: true)` in a `Text` or an `AttributedString(localized:)` (`inflected(_:)` turns the result into a `String`), or one plural variation in the catalog (`Received %lld items.`) |
+
+Never localize:
+
+- Code phrases, file names, URLs, relay addresses and croc or Go output. The engine's `EngineFailure.message` is never shown (`TransferFailure`).
+- `Logger` messages, test strings and preview-only labels (use `Text(verbatim:)` there, as `ButtonVariants.swift` does).
+- The `AutoVerify` markers and the failure copy the harness scripts match, such as "This link no longer works" in `scripts/verify-app-mac.sh`. The harnesses expect English, so run them on an English system.
+- The names `CrocApp` and `croc`.
+
+Not localizable yet: `known-issues.md`, "Design system", lists the on-screen strings that still bypass the catalogs.
+
+### Keeping a catalog in step
+
+Apple says Xcode adds new keys to the catalogs on every build in the IDE. `xcodebuild` does not: with Xcode 27.1 a build compiles the strings but leaves the `.xcstrings` files untouched. What the IDE does can be run by hand, because the compiler writes one `.stringsdata` file per source file, and `xcstringstool sync` merges them into a catalog.
+
+The three variants compile different code (`#if os(iOS)`, `#if os(macOS)`, `#if DIRECT`), so build all of them, then sync from every `.stringsdata`. A sync from one variant drops the keys only the others use.
+
+```bash
+DD=$(mktemp -d)
+FLAGS=(CODE_SIGNING_ALLOWED=NO -derivedDataPath "$DD")
+xcodebuild build -project app/CrocApp.xcodeproj -scheme CrocApp -destination platform=macOS "${FLAGS[@]}"
+xcodebuild build -project app/CrocApp.xcodeproj -scheme CrocApp -destination 'generic/platform=iOS Simulator' "${FLAGS[@]}"
+xcodebuild build -project app/CrocApp.xcodeproj -scheme 'CrocApp Direct' -destination platform=macOS "${FLAGS[@]}"
+
+# One --stringsdata per file; the Direct build's directory has a space in it.
+sync() {
+  local catalog=$1; shift; local args=() f d
+  for d in "$@"; do
+    while IFS= read -r f; do args+=(--stringsdata "$f"); done < <(find "$d" -name '*.stringsdata')
+  done
+  xcrun xcstringstool sync "$catalog" "${args[@]}"
+}
+B="$DD/Build/Intermediates.noindex/CrocApp.build"
+APP=("$B/Debug-iphonesimulator/CrocApp.build" "$B/Debug/CrocApp Direct.build" "$B/Debug/CrocApp.build")
+sync app/CrocApp/Localizable.xcstrings "${APP[@]}"
+sync app/CrocApp/AppShortcuts.xcstrings "${APP[@]}"
+sync app/CrocShare/Localizable.xcstrings "$B/Debug-iphonesimulator/CrocShare.build"
+```
+
+The file name is the table name, so each catalog takes only its own table. A sync keeps comments, translations and `shouldTranslate`, and removes an untranslated key no code uses any more.
+
+Three things no build writes, so edit them by hand:
+
+- `ServicesMenu.xcstrings` holds the one `NSServices` menu title. The system looks the plist's `default` title up in the `ServicesMenu` table, which is the file name. Keep the key equal to the plist text. It is not synced from code, so `xcstringstool sync` never touches it.
+- `InfoPlist.xcstrings` holds `NSCameraUsageDescription` and `NSLocalNetworkUsageDescription`. Apple's Xcode 16.3 release notes say the IDE extracts Info.plist keys into this catalog on its own. `xcodebuild` writes nothing there (verified), and the IDE was not run, so both keys are seeded with their current text. Keep a changed permission text in step with `app/Config/CrocApp-Info.plist` or the `INFOPLIST_KEY_` setting.
+- The plural variation of `Received %lld items.`, which `ReceiveIntent` uses for its dialog. `LocalizationTests` pins that 1 and 3 render as "1 item" and "3 items".
+
+### Adding a language
+
+1. In Xcode, open each catalog and add the language, which also adds it to the project's regions.
+2. Translate. Keep every placeholder (`%@`, `%lld`, `${applicationName}`), and move it where the grammar needs it. Give each count key plural variations: `^[%lld file](inflect: true)` only works for the languages Apple's automatic grammar agreement supports (not checked which), and the other languages need explicit variations.
+3. Translate the three phrases in `AppShortcuts.xcstrings`, each with `${applicationName}`, and the two permission texts in `InfoPlist.xcstrings`.
+4. Test with the scheme's **App Language** option, or the launch argument `-AppleLanguages (xx)`. Check the longest strings against `design/principles.md`: a translation is often longer than the English.
+5. The docs site (`web/docs/`), the landing page and the store listing (`app-store-listing.md`) are separate and not in the catalogs.
 
 ## Deferred, with the trigger for revisiting
 

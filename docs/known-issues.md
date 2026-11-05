@@ -137,7 +137,7 @@ Permanent or deferred, each with its reason.
 - **A second share replaces one the app has not opened yet.** The extension keeps one manifest, so sharing B before CrocApp offers A drops A: its batch is swept an hour later (`ShareInbox.stagingGrace`). The extension does not refuse or queue a second share, because a share left unopened would then block every later one.
 - **Mac Share extension: only checked through `NSSharingService`.**
   - A script shared a file and a folder through the system's sharing service to the signed Debug extension: it was offered, staged both into the group container and launched the app, which showed the **Shared Files** sheet. Choosing it from Finder's Share menu and context menu by hand was not done.
-  - A new extension may need turning on in System Settings, Extensions, Sharing (`pluginkit -e use` did it in the check). The `NSExtensionActivationRule` is a predicate on `public.file-url`, with no cap on the item count.
+  - A new extension may need turning on in System Settings > Extensions > Sharing (`pluginkit -e use` did it in the check). The `NSExtensionActivationRule` is a predicate on `public.file-url`, with no cap on the item count.
   - The Direct extension was built and signed but its Share menu entry was not exercised. An unsigned Mac build has no usable App Group, so the handoff does nothing there.
 
 - **Unsigned Mac builds cannot use the Keychain.**

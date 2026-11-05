@@ -140,7 +140,7 @@ A known hang after **Install and Relaunch** on the first launch of the Direct bu
 
 To run it you need:
 
-- Xcode signed in to the Apple ID that belongs to team `HBSU359M33` (Settings, Accounts). Signing is automatic and cloud-managed through `-allowProvisioningUpdates`, so no Apple Distribution or Mac Installer certificate has to be in the keychain.
+- Xcode signed in to the Apple ID that belongs to team `HBSU359M33` (Settings > Accounts). Signing is automatic and cloud-managed through `-allowProvisioningUpdates`, so no Apple Distribution or Mac Installer certificate has to be in the keychain.
 - `CrocKit/Croc.xcframework` built (`scripts/build-xcframework.sh`).
 - The App Store Connect record "CrocApp" (iOS and macOS on one record, bundle ID `com.bakirgdev.CrocApp`).
 - A build number App Store Connect has not seen for this version. The build number is always `CURRENT_PROJECT_VERSION` in `app/Config/Version.xcconfig` (`manageAppVersionAndBuildNumber` is false), and App Store Connect refuses a number it has already seen for that `MARKETING_VERSION`. Bump it in its own commit before every upload. Run the script without `--upload` first if the change is in doubt.

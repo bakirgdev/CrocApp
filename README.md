@@ -3,7 +3,7 @@
 <p align="center">
   <strong>Send files with a code phrase</strong>
   <br>
-  A free, open-source native SwiftUI app for Mac, with iPhone and iPad arriving in the App Store release.
+  A free, open-source native SwiftUI app for iPhone, iPad and Mac.
 </p>
 
 <p align="center">
@@ -101,73 +101,16 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 
 ## Features
 
-<details>
-<summary><strong>Core transfer</strong></summary>
-
-| Feature | croc equivalent |
+| Area | Guide |
 |---|---|
-| Send files, multiple at once, drag-drop or picker | positional args |
-| Send folders | positional args |
-| Send text and clipboard contents | `--text` |
-| Receive by code phrase | positional args |
-| Custom code phrase, and saved codes per peer | `--code` |
-| Show QR on send, scan QR on receive | `--qrcode` |
-| Choose output folder; Files-visible by default on iOS | `--out` |
-| Keep Both or Replace when a file already exists; resume with Replace | `--rename`, `--overwrite` |
-| Preview the file list, then accept or decline | interactive prompt |
-| Live progress, speed, cancel; Live Activity on iOS | |
-| Local network and relay raced automatically | croc default |
-| Local transfer history | |
-
-</details>
-
-<details>
-<summary><strong>Power options</strong></summary>
-
-| Feature | croc equivalent |
-|---|---|
-| Custom relay, password, IPv6 | `--relay --relay6 --pass` |
-| Force local-only transfers | `--local` |
-| Disable compression | `--no-compress` |
-| Zip a folder before sending | `--zip` |
-| Exclude patterns, respect `.gitignore` | `--exclude --git` |
-| Auto-accept transfers, off by default | `--yes` |
-| Require confirmation on both sides | `--ask` |
-
-</details>
-
-<details>
-<summary><strong>Advanced settings</strong></summary>
-
-| Feature | croc equivalent |
-|---|---|
-| SOCKS5 proxy | `--socks5` |
-| HTTP proxy | `--connect` |
-| Send speed limit | `--throttleUpload` |
-| Sender IP, direct connect | `--ip` |
-| Multicast address | `--multicast` |
-| Skip the local network | `--no-local` |
-| Single connection | `--no-multi` |
-| Built-in DNS resolver | `--internal-dns` |
-| Exclude exact paths | `--exclude-file` |
-
-</details>
-
-<details>
-<summary><strong>Native to the app</strong></summary>
-
-| Feature |
-|---|
-| Share extension: send files, text and links from any app (iOS, Mac) |
-| Menu bar quick send and Open at login (macOS) |
-| Receive links: `crocapp://`, `crocapp.dev/r/` and `getcroc.com/?code=` open Receive with the code filled in |
-| Shortcuts and Siri actions: Send Files, Send Text, Receive |
-| Trust UI: end-to-end badge, **How It Works**, active-relay indicator |
-| Share Link and a QR code that opens CrocApp or a page that explains how to receive |
-| Send as Link: files encrypted on your device, for someone who is not online, with expiry and revoke |
-| iPad File menu: Show Receive Folder in Files |
-
-</details>
+| Send files, folders, text and clipboard, with a QR code | [Send](https://crocapp.dev/docs/guide/sending/) |
+| Receive with a code phrase, a QR code or a link, and choose what to keep | [Receive](https://crocapp.dev/docs/guide/receiving/) |
+| Custom and saved code phrases, receive links | [Code phrases and links](https://crocapp.dev/docs/guide/code-phrases/) |
+| Share a file for someone who is not online, with expiry and revoke | [Send as link](https://crocapp.dev/docs/guide/send-as-link/) |
+| Your own relay, local-only transfers, proxies and the other croc options | [Settings](https://crocapp.dev/docs/guide/settings/), [Run your own relay](https://crocapp.dev/docs/guide/own-relay/) |
+| Transfer history | [History](https://crocapp.dev/docs/guide/history/) |
+| Shortcuts, Siri, the menu bar and keyboard shortcuts | [Shortcuts and Siri](https://crocapp.dev/docs/guide/shortcuts/), [Mac menu bar](https://crocapp.dev/docs/guide/menu-bar/) |
+| Which croc options CrocApp covers | [croc CLI interoperability](https://crocapp.dev/docs/reference/croc-cli-interop/), [`docs/knowledge/features.md`](docs/knowledge/features.md) |
 
 ## FAQ
 
