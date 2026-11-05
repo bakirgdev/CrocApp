@@ -27,7 +27,7 @@ What is wired up, what was deliberately skipped, the traps in each, and how the 
 | `scripts/verify-swift.sh` (Xcode 27; Go only to rebuild the xcframework) | none; runs `swift test` on CrocKit and `xcodebuild test` on the `CrocApp` scheme for this Mac | local only, before pushing a Swift change. CI runs the same suites in the macOS leg of `build` |
 | ShellCheck 0.11 (Homebrew locally; preinstalled on `ubuntu-26.04`) | none (`shellcheck -x scripts/*.sh`, default checks) | local + CI (`shellcheck` job) |
 | shfmt 3.14 (Homebrew locally; CI downloads the pinned binary and checks its SHA-256) | `.editorconfig` (`shfmt -d scripts`; `shfmt -w scripts` fixes) | local + CI (`shellcheck` job) |
-| CodeQL (advanced setup; GitHub's default setup is off) | `.github/workflows/codeql.yml`: actions, Go, JavaScript/TypeScript, path-filtered, plus a weekly run | CI. No Swift (`../known-issues.md`, "CodeQL does not analyze Swift") |
+| CodeQL (advanced setup; GitHub's default setup is off) | `.github/workflows/codeql.yml`: actions, Go, JavaScript/TypeScript, path-filtered, plus a weekly run | CI. No Swift (`../known-issues.md`, "Build and CI") |
 | actionlint, zizmor (Homebrew) | `.github/actionlint.yaml` (runner labels newer than actionlint's list) | local, before pushing a workflow change |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26`, which starts its own local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:17 UTC + manual |
@@ -55,7 +55,7 @@ Every pin, and what updates it. Dependabot opens its PRs on Mondays, grouped per
 | Sparkle | `Package.resolved` in the Xcode project | Dependabot `swift` |
 | Docusaurus, React, TypeScript | `web/docs/package.json`, `pnpm-lock.yaml` | Dependabot `npm` |
 | Go toolchain | `go` line in `crocmobile/go.mod` | pin-watch |
-| Xcode | `.xcode-version` | pin-watch, against the newest stable Xcode on the `xcode-27` runner image (`../BUILDING.md`, "Xcode bump") |
+| Xcode | `.xcode-version` | pin-watch, against the newest stable Xcode on the `xcode-27` runner image (`../BUILDING.md`, "When the toolchain changes") |
 | Node | `web/docs/.nvmrc`, `engines` in `web/docs/package.json` | pin-watch (newest Node 26) |
 | pnpm | `packageManager` in `web/docs/package.json` | pin-watch |
 | croc v10 test peer | `scripts/croc-v10.version` | pin-watch |
