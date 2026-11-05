@@ -6,7 +6,7 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 
 | Path | Purpose |
 | --- | --- |
-| `workflows/ci.yml` | push-main + PR gate. A `changes` job diffs the base against the head and gates the other jobs by area (`docs checks` always runs; `site build` runs `scripts/assemble-site.sh` and `tsc` on the docs when the site files change); `ci pass` aggregates them |
+| `workflows/ci.yml` | push-main + PR gate. A `changes` job diffs the base against the head and gates the other jobs by area (`docs checks` always runs; `site build` runs `scripts/assemble-site.sh` and `tsc` on the docs when a pull request changes the site files; on push, `github-pages.yml` builds it); `ci pass` aggregates them |
 | `workflows/release.yml` | on `v*` tag: check the tag against `MARKETING_VERSION` and `CHANGELOG.md`, then (environment `release`) sign, notarize, write the Sparkle appcast, attest, publish. `workflow_dispatch` is a rehearsal that publishes nothing and takes its notes from `## [Unreleased]`; `scripts/release-check.sh` covers the tag checks it skips |
 | `workflows/go-weekly.yml` | Monday run of the Go checks, so new govulncheck findings surface without a code change, plus `go test -fuzz` for 30 s per `Fuzz*` target (a failing input is uploaded as the `fuzz-failures` artifact); files or updates one `security` issue on failure |
 | `workflows/github-pages.yml` | on push to main (site paths only): builds `_site` and deploys it. The pre-merge check of the same build is the `site build` job in `ci.yml`; keep its `site` regex and this `paths:` list in step |

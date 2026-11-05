@@ -7,7 +7,9 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # A push to main keeps running when a newer one lands, so every main commit
+  # has a result and saves its caches.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -150,13 +152,14 @@ jobs:
       - run: scripts/verify-docs.sh
 
   # The deploy workflow's build, run before merge so a broken docs link or type
-  # error fails the PR instead of the push to main.
+  # error fails the PR instead of the push to main. Not on push: github-pages.yml
+  # builds the same _site there.
   site:
     name: site build
 
     needs: changes
 
-    if: needs.changes.outputs.site == 'true'
+    if: github.event_name == 'pull_request' && needs.changes.outputs.site == 'true'
 
     runs-on: ubuntu-26.04
 
@@ -309,7 +312,11 @@ jobs:
 
       - run: brew install xcbeautify
 
+      # macOS leg only: the cache holds package resolution, not compiles
+      # (docs/knowledge/tooling.md, "CI gotchas"), the restore took 4 to 20 s,
+      # and the iOS entries held 4.7 GB of the repo's 10 GB cache cap.
       - name: Restore DerivedData
+        if: matrix.platform == 'macOS'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/dd
@@ -362,7 +369,7 @@ jobs:
             | xcbeautify --renderer github-actions
 
       - name: Save DerivedData
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && matrix.platform == 'macOS'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/dd

@@ -38,12 +38,14 @@ jobs:
           go-version-file: crocmobile/go.mod
           cache-dependency-path: crocmobile/go.sum
 
-      # go test -fuzz takes one target per run, so list them instead of
-      # naming them here, and new targets join without a workflow edit.
+      # go test -fuzz takes one target per run, so list them per package instead
+      # of naming them here, and new targets join without a workflow edit.
       - name: go test -fuzz
         run: |
-          for target in $(go test -list '^Fuzz' . | grep '^Fuzz'); do
-            go test -run '^$' -fuzz "^${target}\$" -fuzztime 30s .
+          for pkg in $(go list ./...); do
+            for target in $(go test -list '^Fuzz' "$pkg" | grep '^Fuzz'); do
+              go test -run '^$' -fuzz "^${target}\$" -fuzztime 30s "$pkg"
+            done
           done
 
       # A failure writes its input under testdata/fuzz/; keep it to reproduce

@@ -51,7 +51,7 @@ The site has one version and `docusaurus.config.ts` configures none, so there is
 
 ## One workflow publishes both surfaces
 
-`github-pages.yml` runs on a push to `main` only: it deploys. The pre-merge build is the `site build` job in `ci.yml`. It calls `scripts/assemble-site.sh` and uploads the whole `_site/`. Editing only `web/docs/**` still rebuilds the Docusaurus site and re-copies `web/landing/` verbatim, and editing only `web/landing/**` does the reverse. GitHub Pages replaces the entire artifact on every deploy, so a single workflow always ships both. The workflow triggers on `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh` and its own file.
+`github-pages.yml` runs on a push to `main` only: it deploys. The pre-merge build is the `site build` job in `ci.yml`. It calls `scripts/assemble-site.sh` and uploads the whole `_site/`. Editing only `web/docs/**` still rebuilds the Docusaurus site and re-copies `web/landing/` verbatim, and editing only `web/landing/**` does the reverse. GitHub Pages replaces the entire artifact on every deploy, so a single workflow always ships both. The workflow triggers on `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh`, `scripts/lib.sh` and its own file.
 
 ## What `assemble-site.sh` asserts
 

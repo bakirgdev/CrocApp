@@ -31,7 +31,7 @@ What is wired up, what was deliberately skipped, the traps in each, and how the 
 | actionlint, zizmor (Homebrew) | `.github/actionlint.yaml` (runner labels newer than actionlint's list) | local, before pushing a workflow change |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26`, which starts its own local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:17 UTC + manual |
-| GitHub Actions | `.github/workflows/github-pages.yml` | Push to `main` only, on changes to `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh` and the workflow file: builds `_site` and deploys. The pre-merge build is the `site build` job in `ci.yml` |
+| GitHub Actions | `.github/workflows/github-pages.yml` | Push to `main` only, on changes to `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh`, `scripts/lib.sh` and the workflow file: builds `_site` and deploys. The pre-merge build is the `site build` job in `ci.yml` |
 | GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes; `workflow_dispatch` is a rehearsal that publishes nothing |
 
 - Xcode baseline lives in `.xcode-version` (plain text, one line).
@@ -68,6 +68,7 @@ The Swift language mode (6) and the deployment targets (26.0) are not version pi
 ## CI gotchas
 
 - **`ci.yml` has no workflow-level `paths:`.** A filtered-out workflow never reports, so a required check would stay pending. Jobs skip through `if:` instead (see the next bullet).
+- **A newer push cancels a superseded pull request run, never a `main` run.** `cancel-in-progress` is true only for `pull_request`, so every commit on `main` gets a result and saves its caches.
 - **The `changes` job decides which jobs run.**
   - It diffs the PR base (or the push's `before`) against the head with `git diff --name-only` and sets one output per area: `swift`, `go`, `build`, `design`, `interop`, `scripts` and `site`. Each job gates on its output with `if:`.
   - The regexes in the `changes` job of `ci.yml` are the source of truth for what each area covers; the rule for new files is in `.github/AGENTS.md`.
@@ -80,7 +81,7 @@ The Swift language mode (6) and the deployment targets (26.0) are not version pi
   - The key is the leg's slice list, the Xcode version and a hash of `crocmobile/**` and `scripts/build-xcframework.sh`. `crocmobile/go.mod` carries the Go and gomobile pins, so a toolchain bump misses too.
   - A hit skips `setup-go` and the bind, the slowest steps of a cold runner (150 to 176 s before the cache). A miss binds only the leg's slices through `XCFRAMEWORK_TARGETS`: `macos/arm64` on macOS, `ios,iossimulator/arm64` on the iOS leg. The device slice is linked by no CI build, but binding it there makes a change that breaks the device bind fail CI instead of the release.
   - The macOS leg runs `xcodebuild test`, which builds the app first, so it has no separate build step. Both legs pass `COMPILER_INDEX_STORE_ENABLE=NO`.
-  - The DerivedData cache saves package resolution, not compiles: a fresh checkout gives every source a new mtime, so Xcode recompiles the app. A cache of `CrocKit/.build` would fail the same way, so there is none.
+  - The DerivedData cache (macOS leg only) saves package resolution, not compiles: a fresh checkout gives every source a new mtime, so Xcode recompiles the app. A cache of `CrocKit/.build` would fail the same way, so there is none. The iOS leg has none: its restore took 4 to 20 s with no compile to save, and its entries filled half of the repo's 10 GB cache cap.
 - **The `interop (local relay)` job (`macos-26`) runs `scripts/verify-interop.sh` against a local relay.**
   - The script starts `croc relay` on 127.0.0.1 itself, with raised admission limits, because the public relays rate-limit a shared runner address (`scripts/lib.sh`, "The relay a harness sends through"). The job only provides the CLI binaries.
   - It installs the v11 CLI with `go install` at the version in `crocmobile/go.mod`, because Homebrew's bottle can lag that pin and the store scenario needs `croc store`. It installs the v10 peer the same way, at the version in `scripts/croc-v10.version`.

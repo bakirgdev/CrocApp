@@ -12,7 +12,6 @@ on:
       - "web/docs/**/*.[jt]s"
       - "web/docs/**/*.[jt]sx"
       - ".github/workflows/**"
-      - ".github/actions/**"
   pull_request:
     paths: *paths
   schedule:

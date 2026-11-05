@@ -8,6 +8,7 @@ on:
       - "web/docs/**"
       - "design/tokens.css"
       - "scripts/assemble-site.sh"
+      - "scripts/lib.sh"
       - ".github/workflows/github-pages.yml"
 
 permissions:
