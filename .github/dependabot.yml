@@ -25,6 +25,14 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    # croc: minors only, 14 days after release so early patches land; a security
+    # patch still comes as a security update (docs/knowledge/croc-upgrade-playbook.md).
+    ignore:
+      - dependency-name: "github.com/schollz/croc/v11"
+        update-types: ["version-update:semver-patch"]
+    cooldown:
+      semver-minor-days: 14
+      include: ["github.com/schollz/croc/v11"]
     groups:
       go-deps:
         patterns: ["*"]

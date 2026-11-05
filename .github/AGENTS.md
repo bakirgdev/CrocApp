@@ -14,7 +14,7 @@ GitHub's config for this repo: CI, releases, Pages, dependabot, issue forms, PR 
 | `workflows/codeql.yml` | CodeQL advanced setup (Actions, JavaScript/TypeScript, Go with `croc_no_tailcat`) on PRs and pushes touching those paths, plus a Tuesday cron. Swift is not analyzed (`docs/known-issues.md`). The repo's default setup stays off, or SARIF uploads fail |
 | `workflows/pin-watch.yml` | Monday run of `scripts/pin-watch.sh`; keeps one "Pinned versions to update" issue in step with the report |
 | `workflows/scorecard.yml` | OpenSSF Scorecard: Wednesday cron, `branch_protection_rule`, dispatch |
-| `dependabot.yml` | github-actions, gomod `/crocmobile`, swift `/app` (reads the Xcode project's `Package.resolved`), npm `/web/docs`, all weekly. Minor and patch grouped, majors one PR each. `github-actions` and `npm` carry a 7-day `cooldown` (`default-days`), so a release is not adopted the day it ships; security updates ignore it. A croc bump follows `docs/knowledge/croc-upgrade-playbook.md` |
+| `dependabot.yml` | github-actions, gomod `/crocmobile`, swift `/app` (reads the Xcode project's `Package.resolved`), npm `/web/docs`, all weekly. Minor and patch grouped, majors one PR each. `github-actions` and `npm` carry a 7-day `cooldown` (`default-days`), so a release is not adopted the day it ships; security updates ignore it. croc (gomod) ignores patch releases and waits 14 days on a minor (`semver-minor-days`); a croc bump follows `docs/knowledge/croc-upgrade-playbook.md` |
 
 ## Rules
 

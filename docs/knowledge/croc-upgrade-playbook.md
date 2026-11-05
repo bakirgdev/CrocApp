@@ -1,8 +1,8 @@
 # croc upgrade playbook
 
-How to bump the pinned croc version in `crocmobile/go.mod`. Run it as one session whenever upstream releases.
+How to bump the pinned croc version in `crocmobile/go.mod`. Take each new minor about 14 days after it ships, at that minor's latest patch, and skip patch-only releases unless one fixes a security issue (`.github/dependabot.yml` enforces this). Run the playbook as one session per bump.
 
-**Pinned: v11.6.4.** croc still reports no bundle progress an embedder can read, so a batch of small files shows indeterminate progress (`crocmobile-bridge.md`, "Small-file bundles"). Check each release for an exported bundle progress path, and for any change to the fields `betweenUnits` reads.
+**Pinned: v11.6.4.** croc still reports no bundle progress an embedder can read, so a batch of small files shows indeterminate progress (`crocmobile-bridge.md`, "Small-file bundles"). Check each release for an exported bundle progress path, and for any change to the fields `bundleGap` reads.
 
 ## Steps
 
