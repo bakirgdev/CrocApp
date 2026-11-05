@@ -125,6 +125,11 @@ Permanent or deferred, each with its reason.
   - **Code-Review:** needs approvals from someone other than the author.
   - **CII-Best-Practices:** the project holds the passing badge, which scores below the maximum (exact score not verified). 10 needs gold, and gold needs several developers.
   - Revisit Branch-Protection and Code-Review if a second maintainer joins.
+- **`deepmerge` <= 4.3.1 (GHSA-gcqx-w48m-w2h4) has no patched release.**
+  - It is reached only at docs build time, through `@svgr/plugin-svgo` merging its own SVGO config, never from user input. No override can lift it.
+  - `web/docs/osv-scanner.toml` ignores it so OpenSSF Scorecard's Vulnerabilities check does not count it. Remove this item and that entry when `deepmerge` publishes a fix.
+- **`zizmor --pedantic` reports `self-repository` on every `uses: ./.github/workflows/...` call (five sites).** GitHub documents `uses: $/.github/workflows/...` as the recommended form, but actionlint 1.7.12 rejects it ("not following the format") and GitHub Enterprise Server lacks it. Switch when actionlint accepts `$/`. Every other pedantic finding is fixed.
+- **Secret scanning's non-provider patterns and validity checks are off.** A `PATCH` of `security_and_analysis` on the repository returns 200 and leaves both `disabled`, so the API does not enable them here. Turn them on in Settings, Code security (not verified that the UI offers them on this plan).
 
 ### App and UI
 

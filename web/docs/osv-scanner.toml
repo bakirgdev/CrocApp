@@ -3,3 +3,7 @@
 [[IgnoredVulns]]
 id = "GHSA-vfj7-8cjw-p6xm"
 reason = "braces <= 3.0.3 has no patched release. Reached only at docs build time through chokidar, micromatch and fast-glob over our own paths, never from user input."
+
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+reason = "deepmerge <= 4.3.1 has no patched release. Reached only at docs build time through @svgr/plugin-svgo merging its own SVGO config, never from user input."

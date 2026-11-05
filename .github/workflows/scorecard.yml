@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   analysis:
     name: analysis
@@ -24,9 +28,9 @@ jobs:
     # publish_results; see "Workflow Restrictions" in the scorecard-action README.
     permissions:
       contents: read
-      actions: read
-      security-events: write
-      id-token: write
+      actions: read # required by publish_results, as the comment above says
+      security-events: write # uploads the SARIF results to code scanning
+      id-token: write # publish_results signs the result with OIDC
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

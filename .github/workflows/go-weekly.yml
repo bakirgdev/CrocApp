@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# A manual run on top of the Monday run waits instead of racing it for the
+# security issue and the fuzz corpus.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   checks:
     uses: ./.github/workflows/reusable-go.yml
@@ -70,7 +76,7 @@ jobs:
 
     permissions:
       contents: read
-      issues: write
+      issues: write # files or updates the security issue on a failure
 
     steps:
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0

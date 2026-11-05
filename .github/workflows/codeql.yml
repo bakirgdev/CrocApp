@@ -36,7 +36,7 @@ jobs:
 
     permissions:
       contents: read
-      security-events: write
+      security-events: write # uploads the SARIF results to code scanning
 
     strategy:
       fail-fast: false

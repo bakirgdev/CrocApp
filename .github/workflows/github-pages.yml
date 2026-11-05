@@ -68,8 +68,8 @@ jobs:
 
     permissions:
       contents: read
-      pages: write
-      id-token: write
+      pages: write # deploys the Pages artifact
+      id-token: write # the Pages deploy action verifies the deployment through OIDC
 
     environment:
       name: github-pages
