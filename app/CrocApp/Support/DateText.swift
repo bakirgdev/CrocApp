@@ -10,17 +10,30 @@ extension Date {
         return self > weekAgo
     }
 
+    /// One formatter for every row: a list rewrites its dates every minute, and
+    /// a formatter per row per minute is wasted allocation. Calendar and locale
+    /// are set on each use, since callers pass their own.
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.dateTimeStyle = .named
+        return formatter
+    }()
+
+    /// "yesterday", "3 days ago": `self` written relative to `now`.
+    func relativeText(to now: Date, calendar: Calendar) -> String {
+        let formatter = Self.relativeFormatter
+        formatter.calendar = calendar
+        formatter.locale = calendar.locale ?? .current
+        return formatter.localizedString(for: self, relativeTo: now)
+    }
+
     /// A past date written as design/voice.md → Dates asks: relative inside
     /// a week ("yesterday", "3 days ago"), a short absolute date after ("Oct
     /// 20", with the year when it is not this year). Never a raw timestamp.
     func recordText(now: Date = .now, calendar: Calendar = .current) -> String {
         let locale = calendar.locale ?? .current
         if isWithinAWeek(of: now, calendar: calendar) {
-            let formatter = RelativeDateTimeFormatter()
-            formatter.calendar = calendar
-            formatter.locale = locale
-            formatter.dateTimeStyle = .named
-            return formatter.localizedString(for: self, relativeTo: now)
+            return relativeText(to: now, calendar: calendar)
         }
         var style = Date.FormatStyle(
             locale: locale, calendar: calendar, timeZone: calendar.timeZone

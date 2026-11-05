@@ -12,7 +12,7 @@ import UIKit
 /// brings the app to the transfer when a notification is tapped.
 @MainActor
 final class SystemNotificationCenter: NSObject, NotificationPosting,
-    @preconcurrency UNUserNotificationCenterDelegate
+    UNUserNotificationCenterDelegate
 {
     nonisolated private static let log = Logger(
         subsystem: "com.bakirgdev.CrocApp", category: "notifications")
@@ -61,16 +61,20 @@ final class SystemNotificationCenter: NSObject, NotificationPosting,
         center.removeDeliveredNotifications(withIdentifiers: [Self.identifier])
     }
 
-    func userNotificationCenter(
-        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
-        withCompletionHandler completionHandler: @escaping () -> Void
-    ) {
+    /// The framework may deliver this off the main thread, so the direction is
+    /// read here and the router is touched only after a hop to the main actor.
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
+    ) async {
         let direction = response.notification.request.content.userInfo["direction"] as? String
+        await Self.open(direction: direction)
+    }
+
+    private static func open(direction: String?) {
         AppRouter.shared.path = [direction == "send" ? .send : .receive]
         #if os(macOS)
         AppRouter.shared.showMainWindow()
         #endif
-        completionHandler()
     }
 
     static var isAppActive: Bool {

@@ -87,6 +87,21 @@ import Testing
         }
     }
 
+    /// The engine's answer is reused while a field's text repeats, so a change of
+    /// text, back and forth and across fields, must never show a stale one.
+    @Test func aRepeatedValueKeepsItsAnswerAndAChangedOneGetsItsOwn() {
+        for _ in 0..<2 {
+            #expect(AppSettings.throttleError("500k") == nil)
+            #expect(AppSettings.throttleError("500k") == nil)
+            #expect(AppSettings.throttleError("5") != nil)
+            #expect(AppSettings.throttleError("5") != nil)
+            #expect(AppSettings.multicastAddressError("5") != nil)
+            #expect(AppSettings.multicastAddressError("224.0.0.1") == nil)
+            #expect(
+                AppSettings.throttleError("500k") == nil, "another field's check changed nothing")
+        }
+    }
+
     @Test func defaultsAreValid() {
         let defaults = AppSettings.advancedDefaults
         #expect(AppSettings.multicastAddressError(defaults.multicastAddress) == nil)

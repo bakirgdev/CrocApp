@@ -263,7 +263,7 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - `Views/MenuBarQuickSendView.swift` switches on `controller.phase`. A failure shows its title and detail in an error `StatusBanner`, with **Done**. `Models/MenuBarQuickSend.swift` holds the actions (`send(urls:)`, `sendClipboardText()`, `chooseFiles()`, `receive(_:)`) and a `notice` string. Sends use a generated code. `receive(_:)` parses with `TransferLink` and starts into `OutputFolderStore`, as `ReceiveIntent` does.
 - `chooseFiles()` uses a modal `NSOpenPanel`, because the window-style extra closes when focus moves to a SwiftUI file importer's sheet.
 - `.incoming` shows **Open CrocApp to Accept**, a button that opens the main window, because the accept prompt lives there.
-- The label of the `MenuBarExtra` is `MenuBarIcon(phase:progress:)`, a pure mapping tested for real SF Symbols.
+- The label of the `MenuBarExtra` is `MenuBarIcon(phase:percent:)`, a pure mapping tested for real SF Symbols. It takes `TransferController.progressPercent`, not `progress`, so the label redraws when the percent moves, not at the tick rate.
 - A drop lands only on the open window, never on the status item.
 
 **Open at Login.**

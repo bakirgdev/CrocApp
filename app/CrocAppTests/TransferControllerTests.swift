@@ -63,6 +63,7 @@ import Testing
         try await deliver(.progress(Self.progress(sent: 40)))
         #expect(controller.phase == .transferring)
         #expect(controller.progress?.fileSent == 40)
+        #expect(controller.progressPercent == 40)
 
         try await deliver(.done(Self.summary(files: 1, totalSize: 100)))
         let done = try #require(controller.phase.result)

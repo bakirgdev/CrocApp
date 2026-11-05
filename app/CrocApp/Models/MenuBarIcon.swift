@@ -11,12 +11,14 @@ struct MenuBarIcon: Equatable {
     /// The integer percent shown beside the glyph while bytes move.
     let percent: Int?
 
-    init(phase: TransferController.Phase, progress: TransferProgress?) {
+    /// Takes the percent, not the progress, so the label depends on the percent
+    /// alone (`TransferController.progressPercent`).
+    init(phase: TransferController.Phase, percent: Int?) {
         let app = String(localized: "CrocApp")
         func describe(_ state: String) -> String {
             String(localized: "\(app): \(state)", comment: "Menu bar icon accessibility label.")
         }
-        percent = phase == .transferring ? SidebarRowState.percent(of: progress) : nil
+        self.percent = phase == .transferring ? percent : nil
         switch phase {
         case .idle:
             symbol = "arrow.up.arrow.down.circle"

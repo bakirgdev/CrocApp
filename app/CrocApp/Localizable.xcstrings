@@ -15,6 +15,9 @@
     "%@ Change it in Settings." : {
       "comment" : "The placeholder is a sentence saying what is wrong with the link server."
     },
+    "%@ is removed from this device's Keychain. You can't undo this." : {
+      "comment" : "Confirmation under Delete this saved code?. The placeholder is the name the user gave the code."
+    },
     "%@, %@" : {
       "comment" : "A sidebar row's name, then its state. Both placeholders are words.",
       "localizations" : {
@@ -206,6 +209,7 @@
     "Delete Saved Code" : {},
     "Delete and Keep Link" : {},
     "Delete this record?" : {},
+    "Delete this saved code?" : {},
     "Devices on the same network transfer directly, and the data never leaves your network. The local path and the relay race; the faster one wins." : {},
     "Direction" : {},
     "Disable Compression" : {},

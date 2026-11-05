@@ -387,9 +387,12 @@ struct TransferStatusView: View {
                 )
                 .accessibilityLabel("Current file progress")
                 HStack {
-                    Text("File \(fileNumber) of \(p.totalFiles)")
-                        .contentTransition(numericTransition)
-                        .animation(phaseAnimation, value: fileNumber)
+                    // Hidden until the engine reports a count: "File 0 of 0" is wrong.
+                    if p.totalFiles > 0 {
+                        Text("File \(fileNumber) of \(p.totalFiles)")
+                            .contentTransition(numericTransition)
+                            .animation(phaseAnimation, value: fileNumber)
+                    }
                     Spacer()
                     Text(
                         // spellsOutZero: the default renders the first moments
