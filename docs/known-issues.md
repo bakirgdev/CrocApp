@@ -59,10 +59,6 @@ Open items from the first App Store release (`docs/README.md`, "Status").
 
 ## Landing page
 
-- **The two store badges are not links.**
-  - The hero **Download** button scrolls to three channels. The direct-download card links to the latest GitHub release.
-  - The App Store and Mac App Store cards say "Coming soon" and show unlinked badges, because those apps are not released.
-  - They become links when the apps ship, with real alt text (the markup carries a comment saying so).
 - **The hero mockup uses `--content-max-width`.**
   - `design/implementation.md` allows this for an element that depicts the app.
   - The exception is narrow and easy to over-apply.

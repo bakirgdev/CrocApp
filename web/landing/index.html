@@ -406,7 +406,7 @@
         <div class="container">
           <div class="section__head">
             <h2 class="t-web-section" id="download-title">Download</h2>
-            <p class="t-web-lead">Free. No account, no tiers. Version 1.1.0 is available now for Mac, and coming soon for iPhone and iPad.</p>
+            <p class="t-web-lead">Free. No account, no tiers. Version 1.1.0 is available now for iPhone, iPad and Mac.</p>
           </div>
 
           <div class="grid">
@@ -424,38 +424,42 @@
               </a>
             </div>
 
-            <!-- Apple's supplied artwork, not links: neither listing exists yet.
-                 A bare <img> promises nothing and stays out of the tab order;
-                 alt="" because the card says "App Store" and "Coming soon" in
-                 text. Give them real alt text when they become <a>. -->
+            <!-- Apple's supplied artwork as the link itself; the alt text is
+                 the badge's own wording, so the link has a name. -->
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">iPhone and iPad</h3>
-              <p class="t-callout card__body">Coming soon to the App Store.</p>
-              <img
-                class="dlcard__action dlcard__badge"
-                src="assets/img/app-store.svg"
-                alt=""
-                width="120"
-                height="40"
-                loading="lazy"
-                decoding="async"
-              />
+              <p class="t-callout card__body">Available now on the App Store.</p>
+              <a class="dlcard__action dlcard__store" href="https://apps.apple.com/app/crocapp/id6805675003" target="_blank" rel="noopener">
+                <img
+                  class="dlcard__badge"
+                  src="assets/img/app-store.svg"
+                  alt="Download on the App Store"
+                  width="120"
+                  height="40"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="u-visually-hidden">(opens in a new tab)</span>
+              </a>
             </div>
 
             <div class="card dlcard">
               <svg class="card__icon" aria-hidden="true"><use href="#i-download" /></svg>
               <h3 class="t-headline card__title">Mac App Store</h3>
-              <p class="t-callout card__body">Coming soon to the Mac App Store.</p>
-              <img
-                class="dlcard__action dlcard__badge"
-                src="assets/img/mac-app-store.svg"
-                alt=""
-                width="156"
-                height="40"
-                loading="lazy"
-                decoding="async"
-              />
+              <p class="t-callout card__body">Available now on the Mac App Store.</p>
+              <a class="dlcard__action dlcard__store" href="https://apps.apple.com/app/crocapp/id6805675003" target="_blank" rel="noopener">
+                <img
+                  class="dlcard__badge"
+                  src="assets/img/mac-app-store.svg"
+                  alt="Download on the Mac App Store"
+                  width="156"
+                  height="40"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="u-visually-hidden">(opens in a new tab)</span>
+              </a>
             </div>
           </div>
 
@@ -755,11 +759,12 @@
             "isAccessibleForFree": true,
             "softwareVersion": "1.1.0",
             "downloadUrl": "https://github.com/bakirgdev/CrocApp/releases/latest",
+            "installUrl": "https://apps.apple.com/app/crocapp/id6805675003",
             "releaseNotes": "https://github.com/bakirgdev/CrocApp/releases/tag/v1.1.0",
             "datePublished": "2026-11-01",
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
             "author": { "@id": "https://crocapp.dev/#author" },
-            "sameAs": ["https://github.com/bakirgdev/CrocApp"]
+            "sameAs": ["https://github.com/bakirgdev/CrocApp", "https://apps.apple.com/app/crocapp/id6805675003"]
           },
           {
             "@type": "Person",

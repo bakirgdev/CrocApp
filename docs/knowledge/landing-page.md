@@ -64,8 +64,7 @@ Lighthouse is `npx lighthouse` (13.6.0 when last run, the chrome-devtools MCP to
 
 Nothing checks these. They are listed in `docs/known-issues.md`, "Landing page":
 
-- The disk image is released (v1.1.0, 1 November 2026) and the store apps are not: the Download section says "available now" for Mac, the Mac card's **Download Disk Image** button links the latest GitHub release, and the store cards say "coming soon". The JSON-LD carries `softwareVersion`, `downloadUrl`, `releaseNotes` and `datePublished`. Each release PR updates the version, the notes link and the copy in `index.html`, `llms.txt` and the docs install page (`RELEASING.md`, "Each release"). `datePublished` stays the first public release.
-- The store badges stay unlinked until the apps are on the App Store.
+- All three channels are released (v1.1.0): the Download section says "available now", the Mac card's **Download Disk Image** button links the latest GitHub release, and both store badges link the App Store listing (`https://apps.apple.com/app/crocapp/id6805675003`, one record for iOS and macOS). The JSON-LD carries `softwareVersion`, `downloadUrl`, `installUrl` (the App Store listing), `releaseNotes` and `datePublished`. Each release PR updates the version, the notes link and the copy in `index.html`, `llms.txt` and the docs install page (`RELEASING.md`, "Each release"). `datePublished` stays the first public release.
 - `security.txt` has an `Expires` field to renew (keep it at least six months out).
 - The site-wide copy (`index.html` feature lists, `llms.txt`) describes what `main` ships. It can run ahead of the released version, so merge copy for an unreleased feature with the release.
 - The AASA `/r/*` component is wider than the one page that exists.

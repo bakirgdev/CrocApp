@@ -857,8 +857,17 @@ html {
    from the file. Never filtered: the gray border is part of the artwork.
    brand.md → App Store badges. */
 .dlcard__badge {
+  display: block;
   width: auto;
   height: var(--store-badge-height-web);
+}
+
+.dlcard__store {
+  border-radius: var(--radius-xs);
+}
+
+.dlcard__store:focus-visible {
+  box-shadow: var(--shadow-focus-ring);
 }
 
 .download__req {
