@@ -48,7 +48,7 @@ To run it locally you need:
 - **A tag run** runs `swift-format` and the Go checks, then the build job.
   - It checks the tag against `MARKETING_VERSION` and against a dated heading in `CHANGELOG.md` (see "Each release").
   - It builds, signs and notarizes, then writes a signed `appcast.xml` with Sparkle's `generate_appcast`, seeded with the latest release's appcast and with the CHANGELOG section embedded as release notes.
-  - It attests the stapled files, then publishes the disk image, `appcast.xml`, the `Croc.xcframework` zip and `SHA256SUMS.txt`.
+  - It attests the stapled files, then publishes (as a draft until every file is attached) the disk image, `appcast.xml`, the `Croc.xcframework` zip and `SHA256SUMS.txt`.
   - It fails when the build number is not above every build in the published `appcast.xml`, because Sparkle only offers a higher `CFBundleVersion`.
 - **A `workflow_dispatch` run** is a rehearsal. It skips the tag and CHANGELOG checks and the publish job, only warns about the build number, and publishes nothing. It embeds the `## [Unreleased]` section as the Sparkle notes, so the appcast step runs the way a tag run does. `scripts/release-check.sh` covers the checks it skips ("Each release", step 5). It can only run once the workflow is on `main`, because dispatch needs the workflow on the default branch and the environment allows `main`.
 - **The build job** runs in the `release` environment: a required reviewer, and a deployment policy limited to branch `main` and tags `v*`.
