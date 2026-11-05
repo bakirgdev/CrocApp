@@ -120,9 +120,6 @@ Permanent or deferred, each with its reason.
 - **`golang.org/x/crypto` carries GO-2026-5932 (the unmaintained `openpgp` package) with no fixed version.**
   - The advisory covers the whole module, but nothing imports `openpgp`. In non-test code croc v11.5.5 imports only the `argon2`, `chacha20poly1305`, `hkdf`, `pbkdf2` and `ssh` packages of `x/crypto`, and `go tool govulncheck ./...` in `crocmobile/` reports it as required but not called.
   - `crocmobile/osv-scanner.toml` ignores it for Scorecard. Remove both if `x/crypto` drops `openpgp` or a dependency starts importing it.
-- **`golang.org/x/net` v0.61.0 carries GO-2026-6866 and GO-2026-6860, both in the `html` package.**
-  - Nothing imports `x/net/html`: `go list -deps -tags croc_no_tailcat ./...` in `crocmobile/` lists only `bpf`, `ipv4`, `ipv6`, `proxy` and internal packages, and `go tool govulncheck ./...` reports both as required but not called.
-  - The fix, v0.62.0, was four days old at the 1.1.0 release, so the pin waits for Dependabot's bump. `crocmobile/osv-scanner.toml` ignores both for Scorecard; remove both entries and this item with that bump.
 - **Three OpenSSF Scorecard alerts are dismissed as "won't fix".** Scorecard opens a code-scanning alert for every check below 10, and these cannot reach 10 with one maintainer.
   - **Branch-Protection:** 10 needs two approving reviewers with admins included, so nothing could merge. `main` keeps pull requests, the `ci pass` check, linear history, and no force push or deletion.
   - **Code-Review:** needs approvals from someone other than the author.
