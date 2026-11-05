@@ -267,6 +267,48 @@ func TestProgressSnapshot(t *testing.T) {
 	}
 }
 
+func TestBundleGap(t *testing.T) {
+	tests := []struct {
+		name                         string
+		sender, info, requested, end bool
+		files                        int // 0 means 4
+		gap                          int
+		prev, sent                   int64
+		want                         int
+	}{
+		{name: "receiver before the accept", gap: 2},
+		{name: "receiver in a bundle", info: true, gap: 2, want: 3},
+		{name: "receiver after a single file, in a bundle", info: true, sent: 42, want: 1},
+		{name: "receiver on a single file", info: true, requested: true, gap: 5, sent: 42},
+		{name: "receiver done", info: true, end: true, gap: 5},
+		{name: "receiver of too few files to bundle, hashing one", info: true, files: 3, gap: 5},
+		{name: "sender waiting for the accept", sender: true, info: true},
+		{name: "sender in a bundle", sender: true, info: true, gap: 2, prev: 10, sent: 42, want: 3},
+		{name: "sender in a bundle, no bytes this tick", sender: true, info: true, gap: 3, prev: 42, sent: 42, want: 3},
+		{name: "sender between two single files", sender: true, info: true, prev: 42, sent: 42},
+		{name: "sender on a single file", sender: true, info: true, requested: true, gap: 5, prev: 10, sent: 42},
+		{name: "sender done", sender: true, info: true, gap: 5, prev: 10, sent: 42, end: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			files := tt.files
+			if files == 0 {
+				files = 4
+			}
+			s := &session{sender: tt.sender, client: &croc.Client{
+				FilesToTransfer:           make([]croc.FileInfo, files),
+				Step2FileInfoTransferred:  tt.info,
+				Step3RecipientRequestFile: tt.requested,
+				SuccessfulTransfer:        tt.end,
+				TotalSent:                 tt.sent,
+			}}
+			if got := s.bundleGap(tt.gap, tt.prev); got != tt.want {
+				t.Fatalf("bundleGap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 // Sizes in a file list are the sender's word: a peer can declare sizes whose
 // sums overflow int64, so every reported size and sum is capped.
 func TestProgressSnapshotCapsDeclaredSizes(t *testing.T) {

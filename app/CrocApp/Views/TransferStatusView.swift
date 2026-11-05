@@ -183,7 +183,9 @@ struct TransferStatusView: View {
         case .incoming(let list, let conflicts, let blocked):
             IncomingRequestView(list: list, conflicts: conflicts, blocked: blocked)
         case .transferring:
-            if let progress = controller.progress { transferringView(progress) }
+            if let progress = controller.progress {
+                if progress.isBundling { bundleView(progress) } else { transferringView(progress) }
+            }
         case .done(let summary, let receivedText):
             doneView(summary, receivedText: receivedText)
         case .stored(let receipt):
@@ -426,6 +428,28 @@ struct TransferStatusView: View {
             .accessibilityElement(children: .combine)
             .accessibilityValue(percent(totalFraction))
         }
+    }
+
+    /// croc moves a run of small files as one batch and counts none of its
+    /// bytes where the engine can read them, so the extent is unknown and the
+    /// bar indeterminate (components.md, "Loading").
+    private func bundleView(_ p: TransferProgress) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.space3) {
+            Text("A batch of small files")
+                .font(.callout)
+            ProgressView()
+                .progressViewStyle(.linear)
+                .accessibilityLabel("Overall progress")
+            HStack {
+                Text("^[\(p.totalFiles) file](inflect: true)")
+                Spacer()
+                Text(verbatim: p.totalSize.formatted(.byteCount(style: .file)))
+            }
+            .font(.caption)
+            .foregroundStyle(Color.textSecondary)
+            .monospacedDigit()
+        }
+        .accessibilityElement(children: .combine)
     }
 
     /// principles.md → Motion; digits swap instantly under

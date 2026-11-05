@@ -9,8 +9,8 @@
 #
 # Whichever side sends must register its code before the receiver joins: a
 # receiver that arrives first corrupts the PAKE handshake ("problem with
-# decoding: invalid character", or "flate: corrupt input" when it times out
-# croc's 500 ms local-endpoint probe and decodes the late reply as data).
+# decoding: invalid character"), or fails with "local discovery failed: ...
+# i/o timeout" when croc's local-endpoint probe gets no answer within 5 s.
 #
 # Both scenarios send through a `croc relay` this script starts on free loopback
 # ports (scripts/lib.sh, "The relay a harness sends through"); the simulator

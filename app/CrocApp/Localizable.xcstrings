@@ -72,6 +72,9 @@
     "1 day" : {},
     "1 hour" : {},
     "7 days" : {},
+    "A batch of small files" : {
+      "comment" : "Shown during a transfer while croc moves several small files as one batch, whose progress it does not report."
+    },
     "A code phrase needs at least ^[%lld character](inflect: true)." : {
       "comment" : "The placeholder is the minimum number of characters a code needs."
     },

@@ -209,8 +209,9 @@ use_relay() { # use_relay LOG
 
 relay_rooms() { { grep -c 'room has first peer' "$RELAY_LOG" || true; } 2> /dev/null; }
 
-# A receiver that joins a relay room before the sender fails ("flate: corrupt
-# input"), so it starts only once the sender is in its room. The relay logs
+# A receiver that joins a relay room more than 5 s before the sender fails
+# ("local discovery failed: ... i/o timeout"), so it starts only once the
+# sender is in its room. The relay logs
 # "room has first peer" once it has admitted the first client of a room, and a
 # sender opens exactly one room before a receiver exists (its control
 # connection; the data connections come after the receiver joins). So: mark the

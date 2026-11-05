@@ -73,7 +73,7 @@ func startError(err error) error {
 
 // classify maps an error from croc or this package to a failure code. croc
 // exports sentinels for relay failures only; everything else is matched on the
-// text croc v11.5.5 produces (errors_test.go pins each one against a real croc
+// text croc v11.6.4 produces (errors_test.go pins each one against a real croc
 // client where it can). Order matters: a peer's refusal also cancels croc's
 // context, and a bad relay password is reported as "could not connect to".
 func classify(err error) string {
@@ -97,10 +97,10 @@ func classify(err error) string {
 		return codeRefused
 	case errors.Is(err, context.Canceled):
 		return codeCancelled
-	// A receiver that joined first gets the sender's late answer to its local
-	// probe in the transfer loop, where that unencrypted frame fails to
-	// decompress (crocmobile-bridge.md, "Start order: sender first").
-	case strings.Contains(m, "problem with decoding: decompress message"):
+	// A receiver that joined first waits 5 s for the sender to answer its local
+	// probe, then fails (crocmobile-bridge.md, "Start order: sender first").
+	// Before the generic "i/o timeout" below, which means an unreachable relay.
+	case strings.Contains(m, "local discovery failed") && strings.Contains(m, "i/o timeout"):
 		return codeJoinedEarly
 	// A relay's only non-ok, non-rate-limit admission answer is "room full"; the
 	// control connection reports it as "relay admission rejected".

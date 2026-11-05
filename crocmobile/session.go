@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/schollz/croc/v11/src/bundle"
 	"github.com/schollz/croc/v11/src/codephrase"
 	"github.com/schollz/croc/v11/src/croc"
 	"github.com/schollz/croc/v11/src/models"
@@ -280,9 +281,26 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		activeMu.Unlock()
 		return nil, fmt.Errorf("working directory: %w", err)
 	}
+	// croc v11.6 spools small-file bundles in os.TempDir(), and a sandboxed Mac
+	// app inherits a $TMPDIR it cannot write (crocmobile-bridge.md, "Small-file bundles").
+	origTMPDIR, hadTMPDIR := os.LookupEnv("TMPDIR")
+	if o.WorkDir != "" {
+		if err := os.Setenv("TMPDIR", o.WorkDir); err != nil {
+			activeMu.Unlock()
+			return nil, fmt.Errorf("workdir: %w", err)
+		}
+	}
 	restoreNetwork := setNetworkGlobals(o)
 	release := func() {
 		restoreNetwork()
+		// Neither call can fail: the key is valid and the value came from the environment.
+		switch {
+		case o.WorkDir == "": // TMPDIR was never changed
+		case hadTMPDIR:
+			_ = os.Setenv("TMPDIR", origTMPDIR)
+		default:
+			_ = os.Unsetenv("TMPDIR")
+		}
 		activeMu.Unlock()
 	}
 	// The session's context exists before the slow setup (the public relay
@@ -810,6 +828,8 @@ func (s *session) poll() {
 	t := time.NewTicker(100 * time.Millisecond)
 	defer t.Stop()
 	connected, listSent := false, false
+	gap := 0       // ticks counted by bundleGap
+	var sent int64 // TotalSent at the previous tick
 	// Last payload actually emitted. Its zero value has an empty Step, which no
 	// real snapshot ever carries, so the first tick always emits.
 	var last progressState
@@ -846,6 +866,11 @@ func (s *session) poll() {
 			// scalars, not the JSON, or the marshal being avoided still runs.
 			// No consumer treats a tick as a heartbeat.
 			p := s.progressSnapshot(connected)
+			gap = s.bundleGap(gap, sent)
+			sent = c.TotalSent
+			if gap >= bundleTicks {
+				p.Step = "bundling"
+			}
 			if p == last {
 				return
 			}
@@ -854,6 +879,31 @@ func (s *session) poll() {
 			s.delegate.OnProgress(string(b))
 		}()
 	}
+}
+
+// bundleTicks is how many counted ticks poll needs before it reports
+// "bundling": a receiver counts about one round trip between two single files.
+const bundleTicks = 3
+
+// bundleGap returns the count of ticks spent in a transfer past the accept
+// whose data no exported croc counter tracks, given the previous count and
+// TotalSent at the previous tick. Since croc v11.6 the receiver asks for runs
+// of four or more small files as one bundle. For a bundle croc never sets
+// Step3RecipientRequestFile or moves FilesToTransferCurrentNum, and the
+// receiver never adds to TotalSent (receiveData in croc.go); its progress lives
+// in an unexported display. A sender's TotalSent grows through a bundle (in
+// bursts under a throttle) and stays put while it waits for the accept or
+// between two single files, so a sender counts only ticks on which it grew.
+func (s *session) bundleGap(gap int, prevSent int64) int {
+	c := s.client
+	switch {
+	case len(c.FilesToTransfer) < bundle.MinFiles || !c.Step2FileInfoTransferred ||
+		c.Step3RecipientRequestFile || c.SuccessfulTransfer:
+		return 0
+	case !s.sender || c.TotalSent > prevSent:
+		return gap + 1
+	}
+	return gap
 }
 
 type fileEntry struct {

@@ -34,6 +34,7 @@ enum EngineStart {
         case .receive(let code, let folder, _):
             var options = Self.baseOptions(settings, disableLocal: disableLocal)
             options.outDir = folder.path
+            options.workDir = FileManager.default.temporaryDirectory.path
             options.peerIP = settings.peerIP.trimmingCharacters(in: .whitespacesAndNewlines)
             // Auto-accept uses the setting; otherwise the incoming sheet's answer
             // replaces it.

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Verifies the macOS app's UI state machine end-to-end via launch arguments,
-# in 12 scenarios: CLI -> app receive (+ history), app -> CLI send, local-only
+# in 13 scenarios: CLI -> app receive (+ history), app -> CLI send, local-only
 # send, custom-relay send, no-compress send, both-sides-confirm send, a receive
 # onto an existing file with Keep Both and with Replace, a 130 MiB transfer in
 # each direction that must not use Tailcat, stored transfers against a
-# local store server, menu-bar quick send, Open at login and the Shortcuts
-# actions. Every transfer gates on a byte-identical diff AND the app's
+# local store server, menu-bar quick send, Open at login, the Shortcuts
+# actions and a small-file bundle in each direction. Every transfer gates on a byte-identical diff AND the app's
 # verify-result.txt.
 #
 # Every relay transfer goes through a `croc relay` this script starts on free
@@ -40,7 +40,7 @@ cleanup() {
   kill_jobs
   if [ -n "$SAVED_PASTE" ]; then pbcopy < "$SAVED_PASTE"; fi
   rm -rf "$DOCS"/{macfile,sendme,localme,relayme,nocompme,collide,menubar,intentsend}.txt \
-    "$DOCS/collide (1).txt" "$DOCS"/{bigsend,bigrecv,storeme}.bin "$DOCS"/{askdir,store-src} \
+    "$DOCS/collide (1).txt" "$DOCS"/{bigsend,bigrecv,storeme}.bin "$DOCS"/{askdir,store-src,bundleme,bundlesend} \
     "$DOCS"/verify-*
   rm -f "$RECV_DIR/$RECV_NAME"
   rm -rf "$TMP"
@@ -80,8 +80,8 @@ run_app() {
   run_app_raw ${RELAY:+--relay "$RELAY"} "$@"
 }
 
-# The receiver must join the relay room after the app: one that arrives first
-# fails with "flate: corrupt input". The marker fires before croc dials the
+# The receiver must join the relay room after the app: one that arrives more
+# than 5 s first fails with "local discovery failed: ... i/o timeout". The marker fires before croc dials the
 # relay; the relay's own log says when the app is in its room (lib.sh,
 # await_sender). A `local` send opens its room in the app's own process, where
 # nothing outside can see it: the sleep is the only signal left.
@@ -449,3 +449,34 @@ echo "intent receive result: $got"
 cmp -s "$TMP/$RECV_NAME" "$RECV_DIR/$RECV_NAME" || fail "Receive action: file differs"
 [ "$got" = "ok success=true files=$RECV_NAME" ] || fail "Receive action: expected the file name back, got '$got'"
 echo MAC-INTENT-OK
+
+# --- 13: a small-file bundle in each direction --------------------------
+# Four or more small files between croc 11.6 peers travel as one bundle, which
+# croc spools in $TMPDIR. The sandbox denies the $TMPDIR the app inherits, so
+# this proves crocmobile points it at the app's own (crocmobile-bridge.md,
+# "Small-file bundles").
+C=$(code bndr)
+rm -f "$RESULT" "$HISTORY"
+mkdir -p "$TMP/bundleme"
+for i in 1 2 3 4 5 6 7 8; do echo "mac bundle $i $$" > "$TMP/bundleme/b$i.txt"; done
+mark_relay
+(cd "$TMP" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin send bundleme) \
+  > "$TMPROOT/mac-cli-bundle-send.log" 2>&1 &
+await_sender
+run_app --auto-receive "$C" > "$TMPROOT/mac-app-bundle-recv.log" 2>&1
+await_app 120
+check_result bundle-receive
+diff -r "$TMP/bundleme" "$DOCS/bundleme" > /dev/null || fail "bundle-receive: received files differ"
+
+C=$(code bnds)
+rm -rf "$RESULT" "$HISTORY" "$DOCS/bundlesend"
+cp -R "$TMP/bundleme" "$DOCS/bundlesend"
+run_app --auto-send "$DOCS/bundlesend" --code "$C" > "$TMPROOT/mac-app-bundle-send.log" 2>&1
+await_ready
+mkdir -p "$TMP/d13"
+(cd "$TMP/d13" && CROC_SECRET="$C" timeout 120 "$CROC" ${CLI_R:+"$CLI_R"} --ignore-stdin --yes) \
+  > "$TMPROOT/mac-cli-bundle-recv.log" 2>&1 || fail "bundle-send: croc receive exited $? (log: $TMPROOT/mac-cli-bundle-recv.log)"
+await_app 30
+check_result bundle-send
+diff -r "$DOCS/bundlesend" "$TMP/d13/bundlesend" > /dev/null || fail "bundle-send: received files differ"
+echo MAC-BUNDLE-OK

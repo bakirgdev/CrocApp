@@ -1,6 +1,6 @@
 # What is croc
 
-Facts checked against croc **v11.5.5**, the pinned version: the source read in the Go module cache, and CLI behaviour read in `src/cli`. Before trusting any of this against a newer croc, follow `croc-upgrade-playbook.md`. Terms: `../GLOSSARY.md`.
+Facts checked against croc **v11.6.4**, the pinned version: the source read in the Go module cache, and CLI behaviour read in `src/cli`. Before trusting any of this against a newer croc, follow `croc-upgrade-playbook.md`. Terms: `../GLOSSARY.md`.
 
 Source: https://github.com/schollz/croc
 
@@ -53,7 +53,7 @@ Everything is end to end.
 - Each side proves it holds the key (HMAC-SHA256 tags) before data flows.
 - After that, everything on the wire is **AES-256-GCM** (`crypt.NewAESGCM`, a random 12-byte nonce prepended to each message).
 - `crypt.New` (PBKDF2-HMAC-SHA256, 100 iterations) protects only the client-to-relay password handshake (`src/tcp`), not transfer data.
-- `crypt.NewArgon2` (Argon2id with XChaCha20-Poly1305) and `EncryptChaCha` / `DecryptChaCha` exist in the same file but have no non-test call site in v11.5.5. Do not describe croc as Argon2- or ChaCha-based.
+- `crypt.NewArgon2` (Argon2id with XChaCha20-Poly1305) and `EncryptChaCha` / `DecryptChaCha` exist in the same file but have no non-test call site in v11.6.4. Do not describe croc as Argon2- or ChaCha-based.
 - The relay sees ciphertext only. It is untrusted by design.
 
 ### 5. Transport
@@ -62,6 +62,7 @@ Data is DEFLATE-compressed (HuffmanOnly; `--no-compress` disables it) and chunke
 
 - A file whose first 256 KB shrinks by under 2% is sent uncompressed.
 - The sender chooses the data path with `--transport` (`auto` default, `derp`, `relay`). Receivers always follow the sender.
+- Since v11.6 a receiver asks for a run of four or more small files as one bundle when both peers support it: one payload of at most 32 MiB, hashed and published as a whole. Between native v11.6 clients a bundle holds up to 1024 files of up to 32 MiB each, otherwise up to 128 files of up to 1 MiB (`src/bundle`). There is no option to turn it off (`crocmobile-bridge.md`, "Small-file bundles").
 
 **relay**: chunks are claimed from a shared queue by up to 8 parallel TCP connections, one per relay transfer port. This is croc's classic speed trick.
 
@@ -77,7 +78,7 @@ Data is DEFLATE-compressed (HuffmanOnly; `--no-compress` disables it) and chunke
 ### 6. Local path
 
 - The sender also starts a local relay and broadcasts its port over UDP multicast (`schollz/peerdiscovery`, default group 239.255.255.250 via `--multicast`, IPv4 and IPv6).
-- The receiver races discovery (200 ms search, 500 ms cap) against the relay dial, staggered by 75 ms. Whichever connection completes first wins. If the relay wins, the receiver still asks the sender for its local IPs and tries them directly.
+- The receiver races discovery (200 ms search, 500 ms cap) against the relay dial, staggered by 75 ms. Whichever connection completes first wins. If the relay wins, the receiver still asks the sender for its local IPs and tries them directly. It waits up to 5 s for that answer and fails without one (`crocmobile-bridge.md`, "Start order: sender first").
 - Same-LAN transfers never touch the internet.
 - Discovery is not guaranteed. It returned zero peers every time on one AP-isolated (client isolation) network, for both the stock CLI and crocmobile. That was seen with the previous croc pin and not re-tested on v11. Root cause not isolated.
 - Workaround: `--ip <senderLAN-IP>:9009` on the receiver connects directly to the sender's local relay control port (the first local relay port, 9009 unless busy). It skips discovery and never touches the public relay.

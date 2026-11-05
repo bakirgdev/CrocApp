@@ -40,7 +40,7 @@ Type your own into **Custom code (optional)** on the Send screen to share it by 
 - It must be at least 6 characters. A short, guessable code is easier for someone else to join.
 - Codes that start with the same word can land in the same relay room. Generated codes rarely collide: two share a first word about once in 1296.
 - A custom code you reuse is no longer single-use. See [Saved codes](#saved-codes).
-- Start the sender before the receiver. A receiver that joins first can fail with a generic error. See [Troubleshooting](../troubleshooting.md#the-receiver-started-first).
+- Start the sender before the receiver. A receiver that waits more than 5 seconds for the sender fails. See [Troubleshooting](../troubleshooting.md#the-receiver-started-first).
 
 ## Saved codes
 

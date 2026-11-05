@@ -110,6 +110,7 @@ Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answ
 - Receive passes `autoAccept && !bothSidesConfirm`, so confirmation wins. Engine auto-accept closes the prompt pipe, which croc reads as a decline.
 - `start(_:)` opens security scope on send URLs and on the user-picked output folder (`SecurityScopes`), and releases it at stream end or on reset. `startAccessingSecurityScopedResource() == false` is fine for non-scoped drops. Keep the call anyway.
 - Speed (`TransferSpeed`) is an exponential moving average (0.25 new, 0.75 old) over `bytesFinished + fileSent` deltas, sampled at most every 0.2 s. Overall progress is `(bytesFinished + fileSent) / totalSize`. `fileSent` is per current file.
+- While croc moves a batch of small files (`TransferProgress.isBundling`, engine step `bundling`) no byte count is current (`crocmobile-bridge.md`, "Small-file bundles"). `TransferStatusView.bundleView` and the menu-bar window show "A batch of small files" over an indeterminate bar, `SidebarRowState.percent` is nil (so the sidebar, menu bar label and Dock badge show no percent), and the iOS background task gets a negative completed count, which makes its progress indeterminate.
 - `activeRelay` is captured at start, for the trust badge.
 - `harnessDisableLocal`, `harnessShownRelay` and `harnessShownLinkOrigin` are harness-only, not user settings, and exist only in Debug builds.
 
@@ -560,7 +561,7 @@ Result files, all written to the container's Documents folder (hardcoded, indepe
 | `verify-code-ready.txt` | `ready`, written once when the phase first reaches `.waiting` (a send has its code); both verify scripts wait for it |
 | `verify-code.txt` | the generated or custom code |
 | `verify-history.txt` | `records=N`, written when the transfer is done or failed (`scripts/verify-app-mac.sh` reads it) |
-| `verify-phase.txt` | the current phase label; `transferring percent=N` reads `controller.progress` |
+| `verify-phase.txt` | the current phase label; `transferring percent=N` reads `controller.progress`, and `transferring bundling` replaces it during a batch of small files |
 | `verify-ready.txt` | written once a `--screen` request has settled |
 
 The result contract is shared by `scripts/verify-app-sim.sh` and `scripts/verify-app-mac.sh`.

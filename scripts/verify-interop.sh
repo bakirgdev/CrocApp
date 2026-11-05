@@ -6,7 +6,8 @@
 # in each direction that must not use Tailcat, stored transfers against a
 # local store server,
 # the Advanced options that change the wire (sender IP,
-# multicast group, proxies), and, with PUBLIC_POOL=1, every public pool relay
+# multicast group, proxies), a small-file bundle in each direction, and, with
+# PUBLIC_POOL=1, every public pool relay
 # (custom, wrapper-generated and CLI-generated codes).
 # Exits non-zero on first failure.
 #
@@ -82,8 +83,9 @@ await_code() { # await_code LOG: prints the code croctest announced
   return 1
 }
 
-# A receiver that joins the relay room before the sender fails with "flate:
-# corrupt input before offset 6", so a croctest sender is waited on, not timed.
+# A receiver that joins the relay room more than 5 s before the sender fails
+# with "local discovery failed: ... i/o timeout", so a croctest sender is waited
+# on, not timed.
 # EVENT code fires before croc dials the relay: the relay's own log says when
 # the sender is in its room (mark_relay before the sender starts, await_sender
 # after; both in lib.sh). On the public pool nothing says, so await_sender
@@ -445,7 +447,7 @@ kill "$STORE_PID"
 wait "$STORE_PID" 2> /dev/null || true
 
 # 15. Advanced options that change the wire, against the croc v11 CLI with
-# the matching flag. What each case pins down was observed with croc v11.5.5:
+# the matching flag. What each case pins down was observed with croc v11.6.4:
 #  - sender IP: the sender's local relay listens on croc's default ports, 9009
 #    and the four after it, so a receiver given the sender IP reaches it
 #    there, and the banner it reads lists the data ports. A CLI sender on
@@ -557,7 +559,7 @@ fi
 # croc_no_tailcat tag, so a transfer of 128 MiB or more, which the stock CLI
 # would race over Tailcat against a Tailcat-capable peer, goes over the relay
 # here. The CLI runs with its default --transport auto. Its --debug log tells
-# the two cases apart (observed with croc v11.5.5):
+# the two cases apart (observed with croc v11.6.4):
 #  - a Tailcat-capable peer: "tailcat-offer", "starting Tailcat server", and a
 #    "selected staged croc relay data transport" or "... after Tailcat
 #    fallback" line;
@@ -676,6 +678,35 @@ proxy_send socks5 -socks5
 proxy_receive socks5 -socks5
 proxy_send http -connect
 proxy_receive http -connect
+
+# 16. small-file bundle, both directions. croc 11.6 moves a run of 4 or more
+# small files as one bundle, for which it reports no bytes the wrapper can read
+# (docs/knowledge/crocmobile-bridge.md, "Small-file bundles"). 20 x 64 KiB at
+# 200 KB/s makes the bundle last about 6 s, long enough for the wrapper to
+# report step "bundling" instead of sitting at 0%.
+SCENARIO=16
+mkdir -p "$TMP/many/many"
+for i in $(seq 1 20); do head -c 65536 /dev/urandom > "$TMP/many/many/f$i.bin"; done
+C=$(code b1)
+mark_relay
+(cd "$TMP/many" && CROC_SECRET="$C" timeout 90 "$CROC" ${CLI_R:+"$CLI_R"} --disable-clipboard --ignore-stdin --throttleUpload 200k send many) > "$TMP/16r.cli" 2>&1 &
+await_sender
+timeout 90 "$CT" receive ${CT_R:+"$CT_R"} -out "$TMP/16r" -yes "$C" > "$TMP/16r.log" 2>&1 || true
+wait
+diff -r "$TMP/many/many" "$TMP/16r/many" > /dev/null || fail "bundle receive: files differ"
+grep -q '"step":"bundling"' "$TMP/16r.log" || fail "bundle receive: no bundling progress"
+pass "bundle receive: $(grep -c '"step":"bundling"' "$TMP/16r.log") progress events with step bundling"
+
+C=$(code b2)
+mark_relay
+timeout 90 "$CT" send ${CT_R:+"$CT_R"} -code "$C" -throttle 200k "$TMP/many/many" > "$TMP/16s.log" 2>&1 &
+sender_ready "$TMP/16s.log"
+mkdir -p "$TMP/16s"
+(cd "$TMP/16s" && CROC_SECRET="$C" timeout 90 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite) > "$TMP/16s.cli" 2>&1 || true
+wait
+diff -r "$TMP/many/many" "$TMP/16s/many" > /dev/null || fail "bundle send: files differ"
+grep -q '"step":"bundling"' "$TMP/16s.log" || fail "bundle send: no bundling progress"
+pass "bundle send: $(grep -c '"step":"bundling"' "$TMP/16s.log") progress events with step bundling"
 
 if [ -z "${PUBLIC_POOL:-}" ]; then # use_relay accepted only empty or 1
   echo "SKIP: public relay pool (11): set PUBLIC_POOL=1"

@@ -49,6 +49,20 @@ private func events(_ drive: (DelegateBridge) -> Void) async -> [TransferEvent] 
         #expect(p.bytesFinished == 3)
         #expect(p.totalSize == 8)
         #expect(p.step == "transferring")
+        #expect(!p.isBundling)
+    }
+
+    @Test func decodesBundlingProgress() async throws {
+        let got = await events {
+            $0.onProgress(
+                #"{"currentFile":0,"totalFiles":20,"fileName":"a","fileSent":0,"fileSize":5,"bytesFinished":0,"totalSize":100,"step":"bundling"}"#
+            )
+        }
+        guard case .progress(let p) = try #require(got.first) else {
+            Issue.record("expected .progress, got \(got)")
+            return
+        }
+        #expect(p.isBundling)
     }
 
     @Test func decodesDoneAndFinishesStream() async throws {
