@@ -17,8 +17,9 @@ import (
 )
 
 // RelayPortCount is how many ports a hosted relay uses, counted from its base
-// port: the croc CLI's `relay` default (cli.go relay), --transfers 4, the first
-// the control port that announces the rest as its banner.
+// port: the first is the control port that announces the rest as its banner.
+// That is one data port fewer than the croc CLI's `relay` default (cli.go
+// relay), --transfers 5: 1 control port and 4 data ports.
 const RelayPortCount = 4
 
 // stopWait bounds how long Stop waits for the listeners to close. They close
