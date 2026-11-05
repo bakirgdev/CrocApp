@@ -29,7 +29,7 @@ It is a graphical front end for [croc](https://github.com/schollz/croc), the com
 
 | Platform | Where |
 |---|---|
-| iPhone, iPad, Mac (App Store) | Not listed yet; once live links will be posted |
+| iPhone, iPad, Mac (App Store) | [CrocApp on the App Store](https://apps.apple.com/app/crocapp/id6805675003) |
 | Mac (Apple silicon only) | `CrocApp-<version>-arm64.dmg` from [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases/latest) |
 | Mac (Homebrew cask) | Not available yet. Homebrew accepts a cask once the repo shows [enough public interest](https://docs.brew.sh/Package-Acceptance-Policy#notability): 225 stars, 90 watchers, or 90 forks. Starring the repo helps |
 
