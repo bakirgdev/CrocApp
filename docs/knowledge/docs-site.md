@@ -59,5 +59,6 @@ The script fails the build unless the landing files and the receive-link page ar
 
 ## Traps
 
+- **No `backdrop-filter` (or `transform`, `filter`) on an ancestor of the mobile menu while it is open.** `.navbar-sidebar` is `position: fixed` inside `.navbar`, so a `backdrop-filter` on `.navbar` makes the navbar its containing block and the open menu shrinks to the bar's height: no links, and nothing to tap (seen in Safari on an iOS 27.2 Simulator). `custom.css` drops the blur on `.navbar-sidebar--show`.
 - **Frontmatter values containing a colon must be quoted.** `description: Fixes for X: stalled transfers` breaks the build with "bad indentation of a mapping entry". Quote the whole value: `description: "Fixes for X: stalled transfers"`. Several pages under `content/` already need this, check before adding a colon to any frontmatter field.
 - **`showLastUpdateTime` renders nothing for a file that is not yet committed.** It reads git history per file (`fetch-depth: 0` in `github-pages.yml` and the `site build` job makes this work in CI); a new page with only uncommitted local edits shows no "last updated" line until it lands in a commit. This is not a bug, only confusing while drafting.
