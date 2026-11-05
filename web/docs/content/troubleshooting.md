@@ -21,7 +21,11 @@ If a transfer says "Couldn't reach the relay" or "The relay rejected its passwor
 
 ## The receiver started first
 
-If the receiver joins before the sender has started, the receive fails with "The other device wasn't ready" and "Start the send there first, or use a faster connection, then enter the code again." The sending device can say "The code phrases don't match" at the same moment. This hits custom codes, and the croc command line sending with a fixed code. Start the send again first, then the receive.
+A receiver that starts first waits up to 5 seconds for the sender. A send started in that time goes through. After that the receive fails with "The other device wasn't ready" and "Start the send there first, or use a faster connection, then enter the code again." This hits custom codes, and the croc command line sending with a fixed code. Start the send first, then the receive.
+
+## Progress pauses on many small files
+
+When both devices run croc 11.6 or newer, four or more small files can travel together as one batch. croc does not report how far a batch has got, so CrocApp shows "A batch of small files" with a moving bar and no percent until the batch arrives. The transfer is still running.
 
 ## No internet
 

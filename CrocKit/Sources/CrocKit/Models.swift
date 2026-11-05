@@ -286,6 +286,11 @@ public struct TransferProgress: Codable, Sendable, Equatable {
     public let bytesFinished: Int64
     public let totalSize: Int64
     public let step: String
+
+    /// croc is moving a batch of small files whose bytes no counter tracks, so
+    /// no byte count or percent here is current (`crocmobile-bridge.md`, "Event
+    /// and JSON contract").
+    public var isBundling: Bool { step == "bundling" }
 }
 
 public struct Summary: Codable, Sendable, Equatable {

@@ -118,7 +118,7 @@ Permanent or deferred, each with its reason.
   - `pnpm audit` lists it, and any Dependabot alert for it is dismissed with this reason.
   - `web/docs/osv-scanner.toml` ignores it so OpenSSF Scorecard's Vulnerabilities check does not count it. Remove this item and that entry when `braces` publishes a fix.
 - **`golang.org/x/crypto` carries GO-2026-5932 (the unmaintained `openpgp` package) with no fixed version.**
-  - The advisory covers the whole module, but nothing imports `openpgp`. In non-test code croc v11.5.5 imports only the `argon2`, `chacha20poly1305`, `hkdf`, `pbkdf2` and `ssh` packages of `x/crypto`, and `go tool govulncheck ./...` in `crocmobile/` reports it as required but not called.
+  - The advisory covers the whole module, but nothing imports `openpgp`. In non-test code croc v11.6.4 imports only the `argon2`, `chacha20poly1305`, `hkdf`, `pbkdf2` and `ssh` packages of `x/crypto`, and `go tool govulncheck ./...` in `crocmobile/` reports it as required but not called.
   - `crocmobile/osv-scanner.toml` ignores it for Scorecard. Remove both if `x/crypto` drops `openpgp` or a dependency starts importing it.
 - **Three OpenSSF Scorecard alerts are dismissed as "won't fix".** Scorecard opens a code-scanning alert for every check below 10, and these cannot reach 10 with one maintainer.
   - **Branch-Protection:** 10 needs two approving reviewers with admins included, so nothing could merge. `main` keeps pull requests, the `ci pass` check, linear history, and no force push or deletion.
@@ -233,12 +233,12 @@ Permanent or deferred, each with its reason.
   - Existing members are kept and matching ones in the archive are skipped under every policy, Replace and auto-accept included. The stdin answers croc's unzip prompt reads are always "n", because a queued "y" would also answer the accept prompt croc re-runs after a reconnect or forces when the sender used `--ask` (`knowledge/crocmobile-bridge.md`).
   - The archive's contents are known to croc only after it unpacks, and keeping what is there loses nothing.
 - **A file whose name ends in a space cannot be sent to a croc v11 peer.**
-  - CrocApp sends the exact name (crocmobile `splitPaths`). croc 11.5.5 receivers, CLI and crocmobile alike, refuse it: `unsafe receive path in "report.pdf ": Windows-trimmed trailing character`. The sender sees `cancelled`.
+  - CrocApp sends the exact name (crocmobile `splitPaths`). croc v11 receivers, CLI and crocmobile alike, refuse it (croc v11.6.4 source, `receivefs`): `unsafe receive path in "report.pdf ": Windows-trimmed trailing character`. The sender sees `cancelled`.
   - The refusal is croc's receive-path policy. Rename the file to send it.
 - **A croc v11 reconnect after a manually accepted receive ends as `refused`.**
   - croc re-runs the accept prompt on the sender's file list after each reconnect (`resetForReconnectAttempt`, then `processMessageFileInfo`). The next queued stdin answer is "n", so the receive fails instead of resuming.
   - Answering "y" there would accept a list the user never saw, and crocmobile cannot tell that prompt from the unzip prompt on the same pipe.
-  - Read from croc v11.5.5 source; no harness forces a reconnect.
+  - Read from croc v11.6.4 source; no harness forces a reconnect.
 - **A cancelled transfer that croc never returns from keeps the engine until CrocApp is relaunched.**
   - The cancel watchdog reports it after 15 s as `engineStuck`, so the app leaves the transfer and every later start fails at once with "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again." (`knowledge/crocmobile-bridge.md`, "Cancel and teardown").
   - The lock itself stays held: forcing it open while croc still runs would let two sessions change the same process-global state (`os.Chdir`, the stdin and stdout swaps).
@@ -254,14 +254,18 @@ Permanent or deferred, each with its reason.
   - With default settings, no pool relay answers the 1 s probe (`generatePublicCode` in `crocmobile/relay.go`), so the send fails with code `noPublicRelay` (croc's `no public relay available`, the same as the v11 CLI).
   - A "draw a code anyway and let a LAN peer join" fallback does not work: after the relay dial fails, croc waits for a LAN peer for only 10 s (`defaultAlternateSenderRouteTimeout`, unexported), and a `croctest send -relay 127.0.0.1:1` with no receiver printed its code and failed about 11 s later.
   - Workaround: turn on **Local Network Only** (`web/docs/content/troubleshooting.md`, "No internet"). The app shows "No public relay answered" and "Check your internet connection, or turn on Local Network Only in Settings if both devices are on the same network."
-- **A receiver that joins before the sender fails, and so does the sender.**
-  - The receiver's `pake1` local probe times out after 500 ms and it carries on with the main PAKE. The sender's late reply to the old probe is then decoded as a transfer message and fails with `flate: corrupt input before offset 6` (`knowledge/crocmobile-bridge.md`, "Start order: sender first").
-  - Generated codes are sender-first, but custom codes are not. A receiver who types an agreed code before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it.
-  - The receiver reports `joinedEarly`: "The other device wasn't ready" and "Start the send there first, or use a faster connection, then enter the code again." A sender with LAN on fails with croc's `could not secure channel` and shows "The code phrases don't match", because that code is also a real mismatch.
-  - There is no automatic retry of the receive. With a croc v11.5.5 CLI sender, the sender had already failed when the receiver did, and a second receive with the same code only waited for a sender that was gone. Both sides have to start again, sender first.
+- **A receiver that waits more than 5 s for the sender fails.**
+  - A receiver with LAN on waits up to 5 s for the sender to answer its `pake1` local probe, then fails with `local discovery failed: ... i/o timeout` (`knowledge/crocmobile-bridge.md`, "Start order: sender first"). A sender that joins inside those 5 s completes the transfer, and a late answer within them no longer fails a receive, so a slow link or a proxy matters only past 5 s.
+  - Generated codes are sender-first, but custom codes are not. A receiver who types an agreed code more than 5 s before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it.
+  - The receiver reports `joinedEarly`: "The other device wasn't ready" and "Start the send there first, or use a faster connection, then enter the code again."
+  - A sender that arrives after that finds the room empty and waits for a new receiver (inferred from the croc v11.6.4 source, not verified live), so a second receive with the same code should then work. There is no automatic retry of the receive.
   - Workaround: start the sender first, then the receiver. `verify-app-sim.sh`, `verify-app-mac.sh` and `verify-interop.sh` all delay their CLI receiver for this reason.
-  - The same error follows a slow link even when the sender was first: croc waits only 500 ms for the probe reply, so a SOCKS5 proxy, a slow mobile link or a distant relay can make the reply late. The detail therefore offers a fix for both causes.
-  - Not verified whether `schollz/croc` has an upstream issue for it. The probe timeout and the frame decoding are croc's.
+  - The window is croc's `localProbeReadTimeout`, unexported. Not verified whether `schollz/croc` has an upstream issue for it.
+- **A batch of small files shows no progress while it moves.**
+  - Since croc v11.6, four or more small files can travel as one bundle, and croc counts a bundle's bytes only in an unexported display (`knowledge/crocmobile-bridge.md`, "Small-file bundles"). It has no option to turn bundles off.
+  - The bridge reports `step` `bundling`, and the app shows "A batch of small files" over an indeterminate bar with no percent, byte count or speed. The sidebar and menu bar drop the percent, and the iOS background task's progress turns indeterminate (not verified on a device).
+  - The sender does count bundle bytes in `TotalSent`, so its overall progress could be shown; the app treats both sides alike for now.
+  - A fix needs croc to export bundle progress (a callback or fields). Raise it upstream if the indeterminate stretch proves long in practice: a bundle carries at most 32 MiB.
 - **Cancelling a start is best effort.**
   - `CancelStart()` reaches a start only once Go has registered its context (`lockTransfer`, `Getwd`, the network globals). A cancel that lands before that finds nothing, and the start goes on to show a code.
   - `TransferController` recovers by cancelling by transfer ID as soon as the start returns. Other callers of `CrocEngine` (such as `crockit-verify`) do not.

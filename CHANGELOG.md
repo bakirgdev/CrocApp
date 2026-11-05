@@ -10,6 +10,11 @@ extra sections where a release needs them, and the project follows
 
 ## [Unreleased]
 
+### Changed
+
+- The transfer engine is now croc 11.6.4. When both devices run croc 11.6 or newer, four or more small files travel together as one batch. croc does not report how far a batch has got, so while one moves CrocApp shows "A batch of small files" with a moving bar and no percent.
+- A receive started before the send now waits up to 5 seconds for the sender, and a send started in that time goes through.
+
 ### Fixed
 
 - The Last Transfer widget's time and empty-state icon use a darker secondary color in light mode, so they are easier to read.

@@ -20,7 +20,7 @@ type Options struct {
 	ThrottleUpload string
 	Code           string // custom code phrase (send); empty = auto-generate
 	OutDir         string // receive destination (required on receive)
-	WorkDir        string // send: writable cwd for temp files (text/zip); required on iOS
+	WorkDir        string // writable temp dir: send's cwd (text/zip) and, both ways, $TMPDIR for croc's bundle spool; required on iOS and in the Mac sandbox
 	Exclude        string // newline-joined substring patterns
 	ExcludePaths   string // newline-joined relative paths excluded exactly, inside a sent folder or by a picked file's name (croc --exclude-file)
 	DisableLocal   bool

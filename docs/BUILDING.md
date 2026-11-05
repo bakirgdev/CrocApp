@@ -157,8 +157,8 @@ A green build is not evidence that a transfer works. Every harness starts its ow
 
 | Harness | Proves | Needs | Env vars |
 |---|---|---|---|
-| `scripts/verify-interop.sh` | crocmobile (through its `croctest` CLI) and the croc CLI interoperate, 15 scenarios (list below) | croc CLI, croc v10 CLI (`scripts/croc-v10.version`); outbound network only with `PUBLIC_POOL=1` | `CROC`, `CROC_V10`, `RELAY`, `PUBLIC_POOL` |
-| `scripts/verify-app-mac.sh` | the macOS app, 12 scenarios (list below) | croc CLI, a macOS app build; outbound network only with `PUBLIC_POOL=1` | `CROC`, `RELAY`, `PUBLIC_POOL` |
+| `scripts/verify-interop.sh` | crocmobile (through its `croctest` CLI) and the croc CLI interoperate, 16 scenarios (list below) | croc CLI, croc v10 CLI (`scripts/croc-v10.version`); outbound network only with `PUBLIC_POOL=1` | `CROC`, `CROC_V10`, `RELAY`, `PUBLIC_POOL` |
+| `scripts/verify-app-mac.sh` | the macOS app, 13 scenarios (list below) | croc CLI, a macOS app build; outbound network only with `PUBLIC_POOL=1` | `CROC`, `RELAY`, `PUBLIC_POOL` |
 | `scripts/verify-app-sim.sh` | the iOS simulator, 2 scenarios (list below) | croc CLI, an iOS Simulator; outbound network only with `PUBLIC_POOL=1` | `CROC`, `SIM`, `RELAY`, `PUBLIC_POOL` |
 | `crockit-verify` (`swift run --package-path CrocKit crockit-verify send\|receive\|twice ...`) | Swift-layer send and receive, cancel fired mid-wire, and two transfers back to back in one process (proves fd0, stdout, cwd and mutex restoration compose) | outbound network, croc CLI, macOS only | optional `CROC_RELAY`, `CROC_PASS` for a private relay |
 
@@ -179,6 +179,7 @@ A green build is not evidence that a transfer works. Every harness starts its ow
 13. Large files without Tailcat: a 130 MiB transfer in each direction against a CLI on its default `--transport auto`, asserting byte equality and, in the CLI `--debug` log, the plain `selected croc relay data transport` line and no `tailcat-offer`. Then a CLI sender with `--transport derp`, which a Tailcat-free build cannot serve: the wrapper must fail within 30 s with croc's "peer requires Tailcat" error, not hang.
 14. Stored transfers against a loopback `croctest store-server`: a wrapper upload downloaded by the CLI, a CLI upload downloaded by the wrapper, a revoke after which the download fails, and an existing name with Keep Both, Replace and a declined preview.
 15. Advanced options that change the wire, each against the CLI with the matching flag: the sender IP (a wrapper sender on its default ports 9009 to 9013, a CLI sender on another port, a dead address), multicast group, SOCKS5 and HTTP proxy. The sender-IP and multicast cases need ports 9009 to 9013 free on the host.
+16. A small-file bundle in each direction (20 files of 64 KiB, throttled), asserting the wrapper reports `step` `bundling` while croc moves the batch.
 
 Every scenario that needs a relay sends through the local relay. With `RELAY=host:port` they send through that relay instead, and the proxy part of 15 is skipped as well: the script cannot tell whether croc's dialer would send that address through the proxy. Scenario 11 runs only with `PUBLIC_POOL=1`. Scenario 9, scenario 14 and the sender IP and multicast cases of 15 use no relay.
 
@@ -196,6 +197,7 @@ Every scenario that needs a relay sends through the local relay. With `RELAY=hos
 10. A send started through the menu-bar view model, with a file and with clipboard text (prints `MAC-MENUBAR-OK`). It saves and restores the text on the pasteboard.
 11. Open at login following `SMAppService.status` (prints `MAC-LOGIN-OK`). It registers the login item and unregisters it again.
 12. The three Shortcuts actions run through their `perform()` against the CLI (prints `MAC-INTENT-OK`). The receive saves into the real `~/Downloads/CrocApp` and deletes the file.
+13. A folder of 8 small files in each direction, which croc 11.6 sends as a small-file bundle spooled in `$TMPDIR` (prints `MAC-BUNDLE-OK`).
 
 In the app-as-sender scenarios the CLI receiver starts only after the app writes `verify-code-ready.txt` and the relay's debug log shows the app's room. The `--local` scenario has no relay to watch (its room is inside the app), so it sleeps 3 s. On the public pool or with `RELAY` set, a fixed 3 s sleep stands in for the relay log.
 

@@ -150,25 +150,33 @@ func TestClassifyLiveCrocErrors(t *testing.T) {
 		wantCode(t, "receive", err, codeCancelled)
 	})
 
-	// The receiver's local probe (sent only with LAN on) times out before the
-	// sender joins, and the sender's late answer to it breaks the receiver.
-	// What the sender sees depends on its own LAN setting (a CLI sender with
-	// LAN on fails with "could not secure channel"), so it is only stopped.
+	// The receiver's local probe (sent only with LAN on) waits 5 s for the
+	// sender (localProbeReadTimeout in croc.go). A sender inside that window
+	// completes the transfer; with none, the receiver fails on its own.
 	t.Run("receiver joined before the sender", func(t *testing.T) {
 		recv := testClientOptions(false, relay, testRelayPassword, "oscar-bravo-charlie")
+		recv.DisableLocal = false
+		started := time.Now()
+		err := runClient(t, timeout(t, 20*time.Second), recv)
+		wantCode(t, "receive", err, codeJoinedEarly)
+		if waited := time.Since(started); waited < 4*time.Second {
+			t.Errorf("receiver failed after %v, want croc's 5 s probe window", waited)
+		}
+	})
+
+	t.Run("sender inside the receiver's probe window", func(t *testing.T) {
+		t.Chdir(t.TempDir()) // the receive writes f.txt into the working directory
+		recv := testClientOptions(false, relay, testRelayPassword, "papa-bravo-charlie")
 		recv.DisableLocal = false
 		recvErr := make(chan error, 1)
 		go func() { recvErr <- runClient(t, timeout(t, 20*time.Second), recv) }()
 		time.Sleep(1500 * time.Millisecond)
-		sendCtx, stopSend := context.WithCancel(context.Background())
-		sendDone := make(chan struct{})
-		go func() {
-			defer close(sendDone)
-			_ = runClient(t, sendCtx, testClientOptions(true, relay, testRelayPassword, "oscar-bravo-charlie"))
-		}()
-		wantCode(t, "receive", <-recvErr, codeJoinedEarly)
-		stopSend()
-		<-sendDone
+		if err := runClient(t, timeout(t, 20*time.Second), testClientOptions(true, relay, testRelayPassword, "papa-bravo-charlie")); err != nil {
+			t.Errorf("send: %v", err)
+		}
+		if err := <-recvErr; err != nil {
+			t.Errorf("receive: %v", err)
+		}
 	})
 
 	// Through croc's control-connection call, the one its clients use.
@@ -187,7 +195,7 @@ func TestClassifyLiveCrocErrors(t *testing.T) {
 
 // Errors croc only produces with a peer we cannot run in-process (a v10 peer,
 // a prompt answered on fd 0) or at an exact network moment. The text is copied
-// from croc v11.5.5; verify-interop.sh covers the first three end to end.
+// from croc v11.6.4; verify-interop.sh covers the first three end to end.
 func TestClassifyCrocErrorText(t *testing.T) {
 	cases := []struct {
 		err  error
@@ -202,7 +210,8 @@ func TestClassifyCrocErrorText(t *testing.T) {
 		{fmt.Errorf("write: %w", syscall.EPIPE), codeConnectionLost},
 		{errors.New("transfer disconnected after 3 reconnect attempts: missing reconnect room"), codeConnectionLost},
 		{context.Canceled, codeCancelled},
-		{errors.New("problem with decoding: decompress message: decompress data: flate: corrupt input before offset 6\nclose decompressor: flate: corrupt input before offset 6"), codeJoinedEarly},
+		{errors.New("local discovery failed: read tcp 127.0.0.1:60003->127.0.0.1:59988: i/o timeout"), codeJoinedEarly},
+		{errors.New("dial tcp 192.0.2.1:9009: i/o timeout"), codeRelayUnreachable},
 		{errors.New("received archive failed validation or extraction"), codeOther},
 	}
 	for _, c := range cases {

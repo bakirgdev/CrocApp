@@ -117,6 +117,7 @@ import Testing
         }
         #expect(code == "wiry-alpha-bravo")
         #expect(o.outDir == folder.path)
+        #expect(o.workDir == FileManager.default.temporaryDirectory.path)
         #expect(o.peerIP == "192.0.2.7:9009")
         #expect(o.whenFileExists == .replace)
         #expect(o.onlyLocal)

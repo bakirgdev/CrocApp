@@ -267,6 +267,38 @@ func TestProgressSnapshot(t *testing.T) {
 	}
 }
 
+func TestBetweenUnits(t *testing.T) {
+	tests := []struct {
+		name                         string
+		sender, info, requested, end bool
+		sent                         int64
+		want                         bool
+	}{
+		{name: "receiver before the accept"},
+		{name: "receiver in a bundle", info: true, want: true},
+		{name: "receiver after a single file, in a bundle", info: true, sent: 42, want: true},
+		{name: "receiver on a single file", info: true, requested: true, sent: 42},
+		{name: "receiver done", info: true, end: true},
+		{name: "sender waiting for the accept", sender: true, info: true},
+		{name: "sender in a bundle", sender: true, info: true, sent: 42, want: true},
+		{name: "sender on a single file", sender: true, info: true, requested: true, sent: 42},
+		{name: "sender done", sender: true, info: true, sent: 42, end: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &session{sender: tt.sender, client: &croc.Client{
+				Step2FileInfoTransferred:  tt.info,
+				Step3RecipientRequestFile: tt.requested,
+				SuccessfulTransfer:        tt.end,
+				TotalSent:                 tt.sent,
+			}}
+			if got := s.betweenUnits(); got != tt.want {
+				t.Fatalf("betweenUnits() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 // Sizes in a file list are the sender's word: a peer can declare sizes whose
 // sums overflow int64, so every reported size and sum is capped.
 func TestProgressSnapshotCapsDeclaredSizes(t *testing.T) {
