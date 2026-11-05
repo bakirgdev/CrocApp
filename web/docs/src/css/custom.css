@@ -167,6 +167,14 @@ h3 {
     backdrop-filter: blur(var(--blur-regular)) saturate(var(--glass-saturate));
     border-block-end-color: var(--color-glass-border);
   }
+
+  /* A backdrop-filter makes the navbar the containing block of its fixed
+     descendants, so the open mobile menu (.navbar-sidebar, fixed top 0 and
+     bottom 0) shrinks to the bar's height and shows no links. The menu covers
+     the page anyway, so the blur can go while it is open. */
+  .navbar.navbar-sidebar--show {
+    backdrop-filter: none;
+  }
 }
 
 .footer {
