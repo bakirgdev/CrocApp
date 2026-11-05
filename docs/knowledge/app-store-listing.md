@@ -1,6 +1,6 @@
 # App Store listing
 
-The copy for CrocApp's App Store Connect record, written to be pasted field by field and reused for every App Store release. One app record holds iOS, iPadOS and macOS (universal purchase, bundle ID `com.bakirgdev.CrocApp`). The first App Store release, 1.1.0, was submitted from this copy (`../RELEASING.md`, "App Store builds").
+The copy for CrocApp's App Store Connect record, written to be pasted field by field and reused for every App Store release. One app record holds iOS, iPadOS and macOS (universal purchase, bundle ID `com.bakirgdev.CrocApp`). The first App Store release, 1.1.0, was submitted from this copy (`../RELEASING.md`, "App Store builds"). The iOS and iPadOS build is released; the Mac build is in App Review with manual release.
 
 Every fenced block under a field heading is the exact text to paste. Character counts were measured with a script (Python `len()` for characters, `len(s.encode())` for the two byte-limited fields). When you change a block, recount it.
 
@@ -97,11 +97,11 @@ The description does not claim VoiceOver support. Add it only after the accessib
 - Comma separated, no spaces.
 - Words already in the name or subtitle (`crocapp`, `send`, `files`, `code`, `phrase`) and the category (`utilities`) are left out because Apple already indexes them.
 - `croc` is a deliberate keep: the name is one token, and the protocol name is what people search.
-- `airdrop` is left out on purpose (another company's trademark).
+- `airdrop` is left out on purpose (another company's trademark). `wormhole` is left out too: it names other transfer products (Magic Wormhole, Wormhole), which guideline 2.3.7 treats as trademark-adjacent. The 1.1.0 submission still carried it, so the swap for `link,mac` goes in with the 1.1.1 submission.
 - `secure`, `p2p` and `peer` are search terms people type; keywords are never shown, so `design/voice.md`, "Terminology", which binds displayed copy, does not apply to them.
 
 ```text
-croc,transfer,share,encrypted,secure,private,qr,p2p,wormhole,folder,lan,nearby,e2ee,drop,peer,text
+croc,transfer,share,encrypted,secure,private,qr,p2p,link,mac,folder,lan,nearby,e2ee,drop,peer,text
 ```
 
 ## What's New

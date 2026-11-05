@@ -6,7 +6,7 @@ Shipped work is in [`CHANGELOG.md`](../CHANGELOG.md). Release status is in [`doc
 
 ## Next milestone
 
-**v1.1.0 is the first public release**: the notarized direct download for the Mac, then the App Store for iPhone, iPad and Mac. Its scope is the [v1.1.0 milestone](https://github.com/bakirgdev/CrocApp/milestone/1). Its open items are listed in [`known-issues.md`](known-issues.md), "Release", and the steps are in [`RELEASING.md`](RELEASING.md), "App Store builds".
+**v1.1.0 is the first public release** and shipped through three channels: the notarized direct download for the Mac, the iOS and iPadOS App Store build, and the Mac App Store build (released manually once App Review approves it). What is left from it is in [`known-issues.md`](known-issues.md), "Release". The next release is 1.1.1, which takes the open issues without the `future` label. The steps are in [`RELEASING.md`](RELEASING.md), "Each release".
 
 ## Ongoing
 
@@ -24,8 +24,8 @@ Each planned item is a GitHub issue, so it can be discussed, linked and closed b
 
 | Where | What |
 |---|---|
-| [v1.1.0 milestone](https://github.com/bakirgdev/CrocApp/milestone/1) | Everything in the next release |
-| [`future` label](https://github.com/bakirgdev/CrocApp/issues?q=is%3Aissue+is%3Aopen+label%3Afuture) | Approved for a release after v1.1.0, such as localization and the Homebrew cask |
+| Open issues without the `future` label | What the next release can take |
+| [`future` label](https://github.com/bakirgdev/CrocApp/issues?q=is%3Aissue+is%3Aopen+label%3Afuture) | Approved for a later release, such as localization and the Homebrew cask |
 
 ## Not planned
 
