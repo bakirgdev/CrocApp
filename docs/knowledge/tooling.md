@@ -50,7 +50,8 @@ Every pin, and what updates it. Dependabot opens its PRs on Mondays, grouped per
 | Pin | Where | Updated by |
 |---|---|---|
 | GitHub Actions (full SHAs) | `.github/workflows/*.yml` | Dependabot `github-actions` |
-| croc, Go modules, gomobile, govulncheck | `crocmobile/go.mod` (`require` and `tool` blocks) | Dependabot `gomod`; a croc bump follows `croc-upgrade-playbook.md` |
+| croc, Go modules | `crocmobile/go.mod` (`require` block) | Dependabot `gomod`; a croc bump follows `croc-upgrade-playbook.md` |
+| gomobile (`golang.org/x/mobile`), govulncheck (`golang.org/x/vuln`) | `crocmobile/go.mod` (`tool` block, `// indirect`) | pin-watch reports a newer release; bump by hand (`../BUILDING.md`, "When the toolchain changes") |
 | Sparkle | `Package.resolved` in the Xcode project | Dependabot `swift` |
 | Docusaurus, React, TypeScript | `web/docs/package.json`, `pnpm-lock.yaml` | Dependabot `npm` |
 | Go toolchain | `go` line in `crocmobile/go.mod` | pin-watch |
