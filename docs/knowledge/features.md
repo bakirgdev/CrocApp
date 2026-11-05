@@ -142,4 +142,4 @@ Details:
 | A Focus filter (`SetFocusFilterIntent`) | There is nothing to filter. Notifications already follow the system Focus, and the Dock badge, widget and Live Activity show no names unless the user opts in. A filter would add a setting that duplicates the system's |
 | Tailcat, `--transport` | The engine is croc's relay-only build (`croc_no_tailcat`). It halves the app, and the relay and the LAN carry every transfer, so there is no Connection setting. See `crocmobile-bridge.md`, "Transport" |
 
-What stands between the shipped feature set and the first App Store release is listed in `docs/known-issues.md`, "Release".
+What the 1.1.0 release left open is listed in `docs/known-issues.md`, "Release".

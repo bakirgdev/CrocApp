@@ -10,7 +10,7 @@ extra sections where a release needs them, and the project follows
 
 ## [1.1.0] - 2026-11-01
 
-CrocApp 1.1.0 is the first release: a native app for [croc](https://github.com/schollz/croc) on Mac, with the iPhone, iPad and Mac App Store builds following in the App Store. It embeds croc's Go library, so a code phrase from the croc command line works in the app and the other way round. The other device needs croc 11 or newer.
+CrocApp 1.1.0 is the first release: a native app for [croc](https://github.com/schollz/croc) on Mac, iPhone and iPad. It embeds croc's Go library, so a code phrase from the croc command line works in the app and the other way round. The other device needs croc 11 or newer.
 
 **macOS 26 or later, Apple silicon only** for the disk image. iOS 26 and iPadOS 26 or later in the App Store.
 

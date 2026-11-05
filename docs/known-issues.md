@@ -8,7 +8,7 @@ Engine and bridge invariants are in `knowledge/crocmobile-bridge.md`. UI state-m
 
 ## Release
 
-Open items from the first App Store release (`docs/README.md`, "Status").
+Open items left from the 1.1.0 release (`docs/README.md`, "Status").
 
 - **France is excluded from App Store availability** until an ANSSI encryption declaration exists (issue #115). The position is in `RELEASING.md`, "Export compliance"; the research is in `knowledge/app-store-listing.md`, "Export compliance".
 - **The Accessibility Inspector and VoiceOver audit has not run on any view.**
@@ -133,7 +133,7 @@ Permanent or deferred, each with its reason.
 - **Most of the device test checklist has not run on the 1.1.0 TestFlight build.**
   - Run and passed: the review path in `knowledge/app-store-listing.md`, "Review notes", as that section lists, including an IPv6-only (NAT64) network.
   - Not run: the rest of `knowledge/device-test-checklist.md`, among them universal links and QR scans, the local network prompt and **Local Network Only**, notifications, the Live Activity and background continuation, the share sheet and Finder's Share menu, Shortcuts and Siri, the widget and Control Center controls, the menu bar, and the Mac window on relaunch.
-  - The release ships without them by the owner's decision: none is on App Review's path, so a failure there is fixed in an update.
+  - 1.1.0 shipped without them by the owner's decision: none is on App Review's path, so a failure there is fixed in an update.
 - **A second share replaces one the app has not opened yet.** The extension keeps one manifest, so sharing B before CrocApp offers A drops A: its batch is swept an hour later (`ShareInbox.stagingGrace`). The extension does not refuse or queue a second share, because a share left unopened would then block every later one.
 - **Mac Share extension: only checked through `NSSharingService`.**
   - A script shared a file and a folder through the system's sharing service to the signed Debug extension: it was offered, staged both into the group container and launched the app, which showed the **Shared Files** sheet. Choosing it from Finder's Share menu and context menu by hand was not done.
