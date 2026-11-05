@@ -11,6 +11,7 @@ Contributor and internals documentation: how CrocApp is built, how it works insi
 | Signing, notarization, Sparkle, App Store uploads, the release checklist | `RELEASING.md` |
 | A term a newcomer cannot infer | `GLOSSARY.md` |
 | What is planned and what is not | `ROADMAP.md` |
+| Recurring dates, cadence, support, bus factor | `MAINTAINING.md` |
 | Why the security claims hold | `THREAT-MODEL.md` |
 | A defect, limitation or risk the project lives with | `known-issues.md` |
 | Deep reference on one subsystem or process | `knowledge/<topic>.md` |

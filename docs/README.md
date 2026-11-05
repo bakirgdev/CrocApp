@@ -49,6 +49,7 @@ The first public release is 1.1.0: a notarized direct download for the Mac (Spar
 | Read | When |
 | --- | --- |
 | [`ROADMAP.md`](ROADMAP.md) | You want to know what is planned and what will not be |
+| [`MAINTAINING.md`](MAINTAINING.md) | You want the recurring dates, release cadence, support and security response, or the exit plan |
 | [`knowledge/features.md`](knowledge/features.md) | You need to know whether a feature exists, on which platform, and which croc option it maps to |
 | [`THREAT-MODEL.md`](THREAT-MODEL.md) | You change anything that touches files, secrets, the network or the release pipeline |
 
