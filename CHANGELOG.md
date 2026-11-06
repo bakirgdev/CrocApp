@@ -10,6 +10,11 @@ extra sections where a release needs them, and the project follows
 
 ## [Unreleased]
 
+### Added
+
+- The App Store builds ask for a rating after a transfer succeeds, from the third success on, at most once per version and never after a failed transfer. The system decides whether the prompt shows. **Rate CrocApp** in Settings, About opens the review page at any time.
+- The disk image build has a **Support CrocApp** link in Settings, About, which opens the sponsor options on the project site. The App Store builds have no such link.
+
 ### Fixed
 
 - At the largest text sizes, saved codes under the code field stack in a column instead of running off the edge of the screen.

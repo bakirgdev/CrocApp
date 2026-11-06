@@ -127,6 +127,8 @@ App Store Connect shows no What's New field on an app's first version (the 1.1.0
 | iPhone and iPad Apps on Apple Silicon Macs (Pricing and Availability) | off, so the native macOS app is the only one Macs see |
 | Product page Header and Search Results asset (universal 16:9, 5244x2950) | `assets/app-store-header.png`, from `scripts/social-cards.swift`; submitted through the Asset Library after the 1.1.0 iOS release. Shown on iOS and iPadOS 27 and later only |
 
+The Direct build's **Support CrocApp** link points at a payment destination outside In-App Purchase, so the App Store builds omit it (guideline 3.1.1); `AboutSection` picks the link with `#if DIRECT`. **Rate CrocApp** opens `https://apps.apple.com/app/id6805675003?action=write-review` and appears in App Store builds only.
+
 The support and privacy pages exist in `web/landing/` (`support/`, `privacy/`). The privacy page must name every server the app talks to and what each one sees, because the App Privacy label says nothing about them. Both URLs must answer HTTP 200 on the live site before you submit. App Store Connect stores the privacy URL without the trailing slash; `https://crocapp.dev/privacy` redirects (301) to `/privacy/`, so that is fine.
 
 ## Availability

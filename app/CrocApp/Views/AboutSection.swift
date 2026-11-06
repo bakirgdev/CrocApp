@@ -14,6 +14,16 @@ struct AboutSection: View {
                 .linkRow()
             Link("croc License", destination: AppInfo.crocLicenseURL)
                 .linkRow()
+            // Tips are a payment outside In-App Purchase (guideline 3.1.1), so
+            // only the disk image build links them; only the App Store build
+            // has a listing to rate.
+            #if DIRECT
+            Link("Support CrocApp", destination: AppInfo.sponsorURL)
+                .linkRow()
+            #else
+            Link("Rate CrocApp", destination: AppInfo.reviewURL)
+                .linkRow()
+            #endif
         } header: {
             Text("About")
         } footer: {

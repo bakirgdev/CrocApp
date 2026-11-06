@@ -19,6 +19,20 @@ import Testing
         #expect(parts?.path == "/schollz/croc/blob/main/LICENSE")
     }
 
+    @Test func reviewURLOpensTheWriteReviewSheetOfTheLiveListing() {
+        let parts = URLComponents(url: AppInfo.reviewURL, resolvingAgainstBaseURL: false)
+        #expect(parts?.host == "apps.apple.com")
+        #expect(parts?.path == "/app/id6805675003")
+        #expect(parts?.query == "action=write-review")
+    }
+
+    @Test func sponsorURLIsTheLandingPageSponsorSection() {
+        let parts = URLComponents(url: AppInfo.sponsorURL, resolvingAgainstBaseURL: false)
+        #expect(parts?.scheme == "https")
+        #expect(parts?.host == "crocapp.dev")
+        #expect(parts?.fragment == "sponsor")
+    }
+
     // URLComponents, not URL.path: URL.path drops the trailing slash.
     private func expectHTTPSPage(_ url: URL, path: String) {
         let parts = URLComponents(url: url, resolvingAgainstBaseURL: false)
