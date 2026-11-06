@@ -119,7 +119,7 @@ The badge reads your settings. It does not report which path carried the data. A
 
 ## About
 
-**About** shows the app version and links to the privacy policy, the support page and croc's license. CrocApp is built on croc by Zack Scholl (MIT), and is unofficial and not affiliated with croc.
+**About** shows the app version and links to the privacy policy, the support page and croc's license. The App Store builds add **Rate CrocApp**, which opens the review page; they also ask for a rating once after a transfer succeeds, from the third success on, at most once per version, and the system decides whether the prompt shows. The disk image build adds **Support CrocApp**, which opens the sponsor options on crocapp.dev. CrocApp is built on croc by Zack Scholl (MIT), and is unofficial and not affiliated with croc.
 
 ## What is stored
 

@@ -80,6 +80,14 @@ final class AppSettings {
     }
     /// iPhone only. Off silences every haptic; the screen still shows each event.
     var haptics: Bool { didSet { save(haptics, "settings.haptics") } }
+    /// Transfers that finished successfully, for `ReviewPrompt`.
+    private(set) var successfulTransfers: Int {
+        didSet { save(successfulTransfers, "settings.successfulTransfers") }
+    }
+    /// The app version the review prompt was last requested in; empty before the first.
+    var lastReviewPromptVersion: String {
+        didSet { save(lastReviewPromptVersion, "settings.lastReviewPromptVersion") }
+    }
     /// On by default because the permission prompt comes with the first
     /// transfer, when a notification is useful (`TransferNotifier`).
     var notificationsEnabled: Bool {
@@ -198,6 +206,9 @@ final class AppSettings {
         indexHistoryInSpotlight = Self.read(
             storage, "settings.indexHistoryInSpotlight", default: false)
         haptics = Self.read(storage, "settings.haptics", default: true)
+        successfulTransfers = Self.read(storage, "settings.successfulTransfers", default: 0)
+        lastReviewPromptVersion = Self.read(
+            storage, "settings.lastReviewPromptVersion", default: "")
         notificationsEnabled = Self.read(storage, "settings.notificationsEnabled", default: true)
         notificationsShowFileNames = Self.read(
             storage, "settings.notificationsShowFileNames", default: false)
@@ -279,6 +290,8 @@ final class AppSettings {
             && peerIP.isEmpty && !disableLocal && !noMultiplexing && !internalDNS
             && excludePaths.isEmpty && socks5Proxy.isEmpty && httpProxy.isEmpty
     }
+
+    func recordSuccessfulTransfer() { successfulTransfers += 1 }
 
     private func save(_ value: Any, _ key: String) {
         storage.set(value, forKey: key)

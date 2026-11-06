@@ -92,6 +92,23 @@ import Testing
         #expect(history.recordCount() == 0)
     }
 
+    @Test func aSuccessfulTransferIsCountedForTheReviewPrompt() async throws {
+        controller.start(.sendFiles(urls: [file], code: ""))
+        try await waitForTransfer()
+        try await deliver(.codeReady(Self.code))
+        try await deliver(.connected)
+        try await deliver(.done(Self.summary()))
+        #expect(settings.successfulTransfers == 1)
+    }
+
+    @Test func aFailedTransferIsNotCountedForTheReviewPrompt() async throws {
+        controller.start(.sendFiles(urls: [file], code: ""))
+        try await waitForTransfer()
+        try await deliver(.codeReady(Self.code))
+        try await deliver(.failed(EngineFailure(code: .refused, message: "refused files")))
+        #expect(settings.successfulTransfers == 0)
+    }
+
     @Test func aCustomCodeSendLeavesNoHintInHistory() async throws {
         controller.start(.sendFiles(urls: [file], code: "mom-blue-tiger"))
         try await waitForTransfer()
