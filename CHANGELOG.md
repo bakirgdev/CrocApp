@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 extra sections where a release needs them, and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-11-06
 
 ### Added
 
@@ -89,5 +89,6 @@ The disk image is signed with a Developer ID, notarized and stapled, and updates
 - Incoming file names with path separators, control, hidden or text-direction characters are blocked, and hidden characters are shown as code points wherever a name appears.
 - The transfer engine is croc v11.5.5, built with Go 1.27.3, without the Tailcat direct-connection path. The update checker is Sparkle 2.10.1 and installs only updates signed with the app's EdDSA key.
 
+[1.2.0]: https://github.com/bakirgdev/CrocApp/releases/tag/v1.2.0
 [1.1.1]: https://github.com/bakirgdev/CrocApp/releases/tag/v1.1.1
 [1.1.0]: https://github.com/bakirgdev/CrocApp/releases/tag/v1.1.0
