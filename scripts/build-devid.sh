@@ -52,6 +52,7 @@ VERSION=$(sed -nE 's/^MARKETING_VERSION = ([^ ]+)$/\1/p' app/Config/Version.xcco
 
 rm -rf "$WORK"
 mkdir -p "$WORK" "$OUT"
+ensure_xcframework "$WORK/xcframework.log"
 
 # PROVISIONING_PROFILE_SPECIFIER is not set here: it would reach CrocShare
 # Direct too, which has another bundle ID. The CrocApp Direct target reads

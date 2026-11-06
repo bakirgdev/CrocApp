@@ -19,16 +19,10 @@ cd "$(dirname "$0")/.."
 help_flag "$@"
 [ $# -eq 0 ] || fail "unknown argument '$1' (try --help)"
 
-XCF=CrocKit/Croc.xcframework
 LOGS="$TMPROOT/verify-swift"
 mkdir -p "$LOGS"
 
-if [ ! -d "$XCF/macos-arm64" ] \
-  || [ -n "$(find crocmobile scripts/build-xcframework.sh -type f -newer "$XCF/Info.plist" \
-    -not -path 'crocmobile/cmd/croctest/croctest' -print -quit)" ]; then
-  echo "Rebuilding $XCF (missing or older than crocmobile/)"
-  logged "$LOGS/xcframework.log" scripts/build-xcframework.sh
-fi
+ensure_xcframework "$LOGS/xcframework.log"
 
 logged "$LOGS/crockit.log" swift test --package-path CrocKit -Xswiftc -warnings-as-errors
 pass "CrocKit tests ($(grep -Eo 'Test run with [0-9]+ tests' "$LOGS/crockit.log" | tail -n 1))"

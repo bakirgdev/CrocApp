@@ -39,6 +39,8 @@ WORK="${APPSTORE_WORK:-$TMPROOT/crocapp-appstore}"
 rm -rf "$WORK"
 mkdir -p "$WORK"
 
+ensure_xcframework "$WORK/xcframework.log"
+
 for platform in "${PLATFORMS[@]}"; do
   case "$platform" in
     ios)
