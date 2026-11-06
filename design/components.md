@@ -12,7 +12,7 @@ Interactive elements share six states: rest, hover, pressed, focus, disabled, lo
 - **Pressed** is the system style's own state in the app, and hover plus a slight scale on web.
 - **Focus** is the system indicator in the app and `--shadow-focus-ring` on web.
 - **Disabled** is `.disabled()` on controls. A row or field that dims as one takes `--opacity-disabled-container`.
-- **Loading** has no skeletons. Known extent shows a determinate progress bar, unknown extent an indeterminate one. A working button keeps its label and width, swaps its leading glyph for a spinner and goes disabled; it never collapses to a bare spinner or resizes under the pointer.
+- **Loading** has no skeletons. Known extent shows a determinate progress bar, unknown extent an indeterminate one (on iOS, which draws an indeterminate bar as a still, empty track, a spinner beside the label). A working button keeps its label and width, swaps its leading glyph for a spinner and goes disabled; it never collapses to a bare spinner or resizes under the pointer.
 
 ## Shared: drawn on web, system-styled in the app
 

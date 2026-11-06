@@ -40,7 +40,7 @@ Tap **Send**. The screen shows **Ready to send** with:
 
 The screen reads **Waiting for the other device…** until the other device connects. A note appears when a custom relay or **Local Network Only** is on, because receiving in a browser needs the default relays.
 
-If **Confirm on Both Sides** is on, a prompt reading **The other device is connected** appears when it connects, and nothing moves until you tap **Send**. Once the transfer runs, CrocApp shows per-file and overall progress, speed and **Cancel**. While several small files travel as one batch, it shows a moving bar without a percent ([Troubleshooting](../troubleshooting.md#progress-pauses-on-many-small-files)).
+If **Confirm on Both Sides** is on, a prompt reading **The other device is connected** appears when it connects, and nothing moves until you tap **Send**. Once the transfer runs, CrocApp shows per-file and overall progress, speed and **Cancel**. While several small files travel as one batch, it shows a spinner (a moving bar on Mac) without a percent ([Troubleshooting](../troubleshooting.md#progress-pauses-on-many-small-files)).
 
 Start the sender before the receiver. A receiver that waits more than 5 seconds for the sender fails. See [Troubleshooting](../troubleshooting.md#the-receiver-started-first).
 

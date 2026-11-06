@@ -263,7 +263,7 @@ Permanent or deferred, each with its reason.
   - The window is croc's `localProbeReadTimeout`, unexported. Not verified whether `schollz/croc` has an upstream issue for it.
 - **A batch of small files shows no progress while it moves.**
   - Since croc v11.6, four or more small files can travel as one bundle, and croc counts a bundle's bytes only in an unexported display (`knowledge/crocmobile-bridge.md`, "Small-file bundles"). It has no option to turn bundles off.
-  - The bridge reports `step` `bundling`, and the app shows "A batch of small files" over an indeterminate bar with no percent, byte count or speed. The sidebar and menu bar drop the percent, and the iOS background task's progress turns indeterminate (not verified on a device).
+  - The bridge reports `step` `bundling`, and the app shows "A batch of small files" with a spinner (iOS) or an indeterminate bar (macOS) and no percent, byte count or speed. The sidebar and menu bar drop the percent, and the iOS background task's progress turns indeterminate (not verified on a device).
   - The sender does count bundle bytes in `TotalSent`, so its overall progress could be shown; the app treats both sides alike for now.
   - A receiver of four or more files also shows the batch state while croc hashes an existing destination file before resuming it, because nothing exported tells the two apart.
   - A fix needs croc to export bundle progress (a callback or fields). Raise it upstream if the indeterminate stretch proves long in practice: a bundle carries at most 32 MiB.

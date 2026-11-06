@@ -25,7 +25,7 @@ A receiver that starts first waits up to 5 seconds for the sender. A send starte
 
 ## Progress pauses on many small files
 
-When both devices run croc 11.6 or newer, four or more small files can travel together as one batch. croc does not report how far a batch has got, so CrocApp shows "A batch of small files" with a moving bar and no percent until the batch arrives. The transfer is still running.
+When both devices run croc 11.6 or newer, four or more small files can travel together as one batch. croc does not report how far a batch has got, so CrocApp shows "A batch of small files" with no percent until the batch arrives, beside a spinner on iPhone and iPad and over a moving bar on Mac. The transfer is still running.
 
 ## No internet
 

@@ -12,7 +12,7 @@ extra sections where a release needs them, and the project follows
 
 ### Changed
 
-- The transfer engine is now croc 11.6.4. When both devices run croc 11.6 or newer, four or more small files travel together as one batch. croc does not report how far a batch has got, so while one moves CrocApp shows "A batch of small files" with a moving bar and no percent.
+- The transfer engine is now croc 11.6.4. When both devices run croc 11.6 or newer, four or more small files travel together as one batch. croc does not report how far a batch has got, so while one moves CrocApp shows "A batch of small files" with no percent, beside a spinner on iPhone and iPad and over a moving bar on Mac.
 - A receive started before the send now waits up to 5 seconds for the sender, and a send started in that time goes through.
 
 ### Fixed
