@@ -41,7 +41,7 @@ A [Send as link](send-as-link.md) row shows the link server's host and when the 
 ## Delete
 
 - **Delete** in a row's context menu (or a swipe on iOS) removes that entry.
-- **Clear History** in the toolbar, then **Clear All**, removes the whole list.
+- **Clear History** in the toolbar, then **Clear All**, removes the whole list. On a Mac or an iPad with a keyboard, **Clear History…** in the File menu does the same.
 
 Both remove the list only. Files you already received stay where they were saved.
 

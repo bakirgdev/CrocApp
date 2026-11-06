@@ -36,6 +36,9 @@ struct HistoryView: View {
     var body: some View {
         content
             .navigationTitle("History")
+            // Published for the Clear History… menu item (`AppCommands`), which
+            // opens the same dialog; nil while there is nothing to clear.
+            .focusedSceneValue(\.confirmClearHistory, records.isEmpty ? nil : $confirmClear)
             .toolbar {
                 if !records.isEmpty {
                     Button("Clear History") { confirmClear = true }
@@ -312,11 +315,15 @@ private struct HistoryRow: View {
 }
 
 extension TransferRecord {
+    /// The names as drawn: a record an earlier build wrote can still hold a
+    /// name as the sender sent it, so it goes through `ReceivedName.shown`.
+    var shownNames: [String] { names.map(ReceivedName.shown) }
+
     /// The first file name plus how many more, "Text snippet", or a generic
     /// name when the record kept none.
     var title: String {
         if isText { return String(localized: "Text snippet") }
-        guard let first = names.first else {
+        guard let first = shownNames.first else {
             return isSend ? String(localized: "Sent files") : String(localized: "Received files")
         }
         let extras = fileCount - 1

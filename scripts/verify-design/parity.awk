@@ -144,6 +144,32 @@ function check_colors(   n, i, f, set, tok, th, want, got, w, g, k, mode, path) 
   }
 }
 
+# The widget bundle has no asset catalog, so LastTransferWidget.swift copies
+# ColorTextSecondary as two Color(.sRGB, ...) literals, dark first. Each must
+# equal the color set's matching appearance, which the table above ties to the token.
+function check_widget_color(   path, line, ln, n, k, mode, v, p, got, w, g) {
+  path = ENVIRON["WIDGET_FILE"]
+  if (!load_colorset("ColorTextSecondary")) return
+  n = 0; ln = 0
+  while ((getline line < path) > 0) {
+    ln++
+    if (line !~ /Color\(\.sRGB,/) continue
+    n++
+    mode = (n == 1) ? "dark" : "any"
+    got = ""
+    for (k = 1; k <= 4; k++) {
+      v = line; p = (k == 1) ? "red:" : (k == 2) ? "green:" : (k == 3) ? "blue:" : "opacity:"
+      sub("^.*" p "[ \t]*", "", v); sub(/[^0-9.].*$/, "", v)
+      got = got (k > 1 ? " " : "") (k == 4 ? v + 0 : (v + 0) * 255)
+    }
+    split(got, g, " "); split(CS["ColorTextSecondary", mode], w, " ")
+    if (w[1] - g[1] > 1 || g[1] - w[1] > 1 || w[2] - g[2] > 1 || g[2] - w[2] > 1 || w[3] - g[3] > 1 || g[3] - w[3] > 1 || w[4] - g[4] > 0.01 || g[4] - w[4] > 0.01)
+      finding(path, ln, "the " mode " widget copy is " sprintf("%.0f %.0f %.0f a%.3f", g[1], g[2], g[3], g[4]) " but ColorTextSecondary is " sprintf("%.0f %.0f %.0f a%.3f", w[1], w[2], w[3], w[4]))
+  }
+  close(path)
+  if (n != 2) finding(path, 1, "expected two Color(.sRGB, ...) literals for the ColorTextSecondary copy, found " n)
+}
+
 # Every shared token is mirrored or deliberately not.
 function check_complete(   i, name, nn, pats, k, ok) {
   nn = split(ENVIRON["NOT_MIRRORED"], pats, "\n")
@@ -165,6 +191,7 @@ BEGIN {
   load_swift(swiftfile)
   check_numeric()
   check_colors()
+  check_widget_color()
   check_complete()
   if (nfind) {
     printf "parity: FAIL (%d finding%s)\n", nfind, (nfind == 1 ? "" : "s")

@@ -6,11 +6,19 @@ import AppKit
 import UIKit
 #endif
 
+extension FocusedValues {
+    /// The History screen's "Clear all history?" dialog flag, so a menu item
+    /// can open the same dialog the toolbar button does.
+    @Entry var confirmClearHistory: Binding<Bool>?
+}
+
 /// The menu bar, on the Mac and in the iPadOS 26 hardware-keyboard menu bar.
 /// Anything a toolbar button can do, a menu item can do with a shortcut
 /// (design/principles.md → Platform adaptation: the menu bar is a real surface).
 /// The receive folder opens in Finder on the Mac and in Files on iPad.
 struct AppCommands: Commands {
+    /// Set by the History screen only while it is shown and has records.
+    @FocusedBinding(\.confirmClearHistory) private var confirmClearHistory: Bool?
     let router: AppRouter
     let outputFolder: OutputFolderStore
     let controller: TransferController
@@ -46,6 +54,8 @@ struct AppCommands: Commands {
                 .disabled(controller.isActive)
             Button("History") { router.showHistory() }
                 .keyboardShortcut("3")
+            Button("Clear History…") { confirmClearHistory = true }
+                .disabled(confirmClearHistory == nil)
             Divider()
             #if os(macOS)
             Button("Show Receive Folder in Finder") {

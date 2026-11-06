@@ -10,7 +10,13 @@ extra sections where a release needs them, and the project follows
 
 ## [Unreleased]
 
+### Added
+
+- **Clear History…** in the File menu opens the same confirmation as the **Clear History** button on History. It is available while History is open and has entries.
+
 ### Fixed
+
+- History shows a file name that contains text-direction or line-break characters with those characters spelled out, as the accept sheet does, including entries an earlier version recorded.
 
 - Sending a file whose name contains a line break now says the file name can't be sent and to rename the file, instead of pointing to an Advanced setting.
 - At the largest text sizes, saved codes under the code field stack in a column instead of running off the edge of the screen.

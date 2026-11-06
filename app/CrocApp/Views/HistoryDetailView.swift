@@ -113,7 +113,7 @@ struct HistoryDetailView: View {
 
     private var fileNamesSection: some View {
         Section("File names") {
-            ForEach(Array(record.names.enumerated()), id: \.offset) { _, name in
+            ForEach(Array(record.shownNames.enumerated()), id: \.offset) { _, name in
                 Text(name)
             }
             // A record keeps at most `TransferRecord.maxNames` names.
