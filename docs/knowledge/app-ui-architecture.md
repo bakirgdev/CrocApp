@@ -50,7 +50,7 @@ Every entry point sets `path` and so lands in either layout: `openSend(with:)`, 
 
 **The cap.** Send, Receive and How It Works cap their own column (`LayoutCap`) and the detail leaves them alone. The detail caps the list and form screens (`Route.isFullWidthList`: History, Settings, Advanced settings) with `safeAreaPadding(.horizontal)` of half the width above the cap, measured with `onGeometryChange`. On iPad that keeps the grouped background full width and the margin is the page. `contentMargins` on a list put it off-centre on iPad (measured), and on macOS it did nothing. On the Mac the list is a column of its own, so the scroll edge under the toolbar is as wide as the column. Do not add a `safeAreaPadding` or a `contentMargins` to a screen that caps itself.
 
-**The Mac window.** The sidebar's default width is 144, which truncates "Receive" beside its Review badge, so the sidebar column takes `min 200, ideal 240, max 320` on macOS ("Windows and keyboard focus", below). The iPad sidebar is the system's.
+**The Mac window.** The sidebar's default width is 144, which truncates "Receive" beside its Review badge, so the sidebar column takes `min 200, ideal 240, max 320` on macOS ("Windows and keyboard focus", below). The iPad sidebar is the system's 320 pt, widened to 440 pt at accessibility text sizes so "Receive" and "Settings" do not break mid-word.
 
 **Limits.** A screen's `@State` (staged files, typed text) is not kept when the selection changes or when the layout flips, and a pushed screen is not kept when the layout flips (`known-issues.md`).
 

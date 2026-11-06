@@ -209,6 +209,8 @@ private struct LabeledField<Field: View>: View {
             Text(title).accessibilityHidden(true)
             field
                 .labelsHidden()
+                // `labelsHidden` left the field with no accessibility label: only its prompt showed in the hierarchy.
+                .accessibilityLabel(title)
                 .autocorrectionDisabled()
                 .frame(
                     maxWidth: .infinity, minHeight: ControlHeight.hitTargetMin, alignment: .leading)

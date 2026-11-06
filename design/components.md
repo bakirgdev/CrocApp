@@ -53,7 +53,7 @@ The empty send target: the Send screen's staging area, the menu bar window and t
 
 ### CodeField
 
-Monospaced entry for `word-word-word`, wherever a code phrase is typed. Mono at the code-body style with `--tracking-code`, no autocapitalization, autocorrection or spell check, and the system `PasteButton` trailing. The border is `--color-separator` idle, `--color-accent` focused and `--color-status-error` invalid. Invalid shows a one-line footnote under the field and never the word "invalid". A code that is still too short is unfinished, not wrong: the border and message wait until Return or the field is left, and clear as soon as the value is right.
+Monospaced entry for `word-word-word`, wherever a code phrase is typed. Mono at the code-body style with `--tracking-code`, no autocapitalization, autocorrection or spell check, and the system `PasteButton` trailing. The border is `--color-border-control` idle (3:1, stronger under Increase Contrast), `--color-accent` focused and `--color-status-error` invalid. Invalid shows a one-line footnote under the field and never the word "invalid". Send's text editor takes the same idle border. A code that is still too short is unfinished, not wrong: the border and message wait until Return or the field is left, and clear as soon as the value is right.
 
 ### CodePhraseDisplay and QRFrame
 

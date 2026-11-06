@@ -30,6 +30,7 @@ WCAG 2.2 AA is the floor: 4.5:1 for body text, 3:1 for large text and for UI bou
 | `--label-2` on base / grouped | 3.44 / 3.30 | glyphs and large text only (Apple's secondaryLabel) |
 | `--label-2-text` on base / grouped | 5.63 / 5.26 | AA body |
 | `--color-text-secondary` on accent tint / fill wash over grouped / error tint over grouped | 5.17 / 4.83 / 4.70 | AA body; the error tint is the weakest of the status tints |
+| `--color-border-control` on base / grouped | 3.44 / 3.30 | a text field's idle border |
 | `--label-3` on base | 1.73 | decorative only |
 | `--color-on-accent` on `--color-accent-solid` / `--color-accent-pressed` | 5.84 / 7.54 | AA body |
 | `--color-on-status` on `--color-status-error` | 3.55 | filled destructive, see below |
@@ -43,6 +44,7 @@ WCAG 2.2 AA is the floor: 4.5:1 for body text, 3:1 for large text and for UI bou
 | `--color-on-accent` on `--color-accent-solid` / `--color-accent-pressed` | 5.99 / 7.13 | AA body |
 | `--color-on-status` on `--color-status-error` | 3.41 | filled destructive, see below |
 | `--label-2` on base | 6.36 | AA body |
+| `--color-border-control` on base | 6.36 | a text field's idle border |
 | `--color-text-secondary` on a card / on a success tint over a card | 5.95 / 4.74 | AA body; the success tint is its weakest dark surface |
 | status success / warning / error / info on its own tint | 8.05 / 7.93 / 5.25 / 4.92 | AA body |
 
@@ -55,6 +57,7 @@ WCAG 2.2 AA is the floor: 4.5:1 for body text, 3:1 for large text and for UI bou
 5. **`--color-text-tertiary` is neither text nor a UI boundary.** At 1.73:1 it is decorative. Anything a sighted user must see (disclosure chevrons, remove controls, empty-state glyphs) takes secondary or better.
 6. **Links are `--color-accent-text`**, never the plain accent.
 7. **The focus ring owes 3:1.** On web it is two 2px bands, `--color-surface-base` inside and `--color-accent` outside, so one band always has a 3:1 edge against whatever it surrounds. A tint cannot do this job: at 1.14:1 it leaves the ring invisible.
+8. **A text field's border is `--color-border-control`, not `--color-separator`.** A boundary a sighted user must find owes 3:1, and the separator is 1.2:1. The token is the system secondary label, and Increase Contrast (`prefers-contrast: more` on web, `colorSchemeContrast` in the app) moves it to the primary label. Hairlines on cards and lists stay `--color-separator`: the content carries those, not the line.
 
 ## Type
 

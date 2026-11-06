@@ -165,6 +165,7 @@ NOT_MIRRORED='
 ^--color-text-(primary|tertiary|quaternary|link)$
 ^--color-fill
 ^--color-separator$
+^--color-border-control$
 ^--color-on-status$
 ^--color-status-(success|warning|error|info)$
 '
@@ -197,6 +198,8 @@ light|--label-2|--color-surface-base|3.44
 light|--label-2-text|--color-surface-base|5.63
 light|--label-2-text|--color-surface-grouped|5.26
 light|--label-2|--color-surface-grouped|3.30
+light|--color-border-control|--color-surface-base|3.44
+light|--color-border-control|--color-surface-grouped|3.30
 light|--color-text-secondary|--color-accent-tint>--color-surface-base|5.17
 light|--color-text-secondary|--color-fill-tertiary>--color-surface-grouped|4.83
 light|--color-text-secondary|--color-status-error-tint>--color-surface-grouped|4.70
@@ -219,6 +222,7 @@ dark|--color-on-accent|--color-accent-solid|5.99
 dark|--color-on-accent|--color-accent-pressed|7.13
 dark|--color-on-status|--color-status-error|3.41
 dark|--label-2|--color-surface-base|6.36
+dark|--color-border-control|--color-surface-base|6.36
 dark|--color-text-secondary|--color-surface-card|5.95
 dark|--color-text-secondary|--color-status-success-tint>--color-surface-card|4.74
 dark|--color-status-success|--color-status-success-tint>--color-surface-base|8.05
@@ -254,6 +258,8 @@ secondary text clears AA on an info tint over a card, dark (rule 4)|dark|--color
 secondary text clears AA on the accent tint over a card, dark (rule 4)|dark|--color-text-secondary|--color-accent-tint>--color-surface-card|min|4.5
 the system secondary label clears the 3:1 glyph floor on grouped (rule 4)|light|--label-2|--color-surface-grouped|min|3.0
 the system secondary label is NOT text on grouped (rule 4)|light|--label-2|--color-surface-grouped|max|4.5
+a text field border clears 3:1 on grouped (rule 8)|light|--color-border-control|--color-surface-grouped|min|3.0
+a text field border clears 3:1 on base, dark (rule 8)|dark|--color-border-control|--color-surface-base|min|3.0
 accent-text clears AA on a card|light|--color-accent-text|--color-surface-card|min|4.5
 accent-text clears AA on grouped|light|--color-accent-text|--color-surface-grouped|min|4.5
 accent-text clears AA on the accent tint|light|--color-accent-text|--color-accent-tint>--color-surface-base|min|4.5

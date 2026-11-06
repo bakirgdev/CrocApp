@@ -13,6 +13,7 @@ struct SendView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
 
     enum Mode: CaseIterable {
         case files
@@ -425,8 +426,10 @@ struct SendView: View {
     @ViewBuilder private var importButtons: some View {
         Button("Add Files") { showFileImporter = true }
             .buttonVariant(.secondary)
+            .touchControlSize()
         Button("Add Folder") { showFolderImporter = true }
             .buttonVariant(.secondary)
+            .touchControlSize()
         #if os(iOS)
         Button {
             showPhotoPicker = true
@@ -438,6 +441,7 @@ struct SendView: View {
             }
         }
         .buttonVariant(.secondary)
+        .touchControlSize()
         .disabled(isLoadingPhotos)
         #endif
     }
@@ -486,7 +490,7 @@ struct SendView: View {
                 .overlay {
                     RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                         .strokeBorder(
-                            textFocused ? Color.accentFill : Color.separatorToken,
+                            textFocused ? Color.accentFill : Color.controlBorder(contrast),
                             lineWidth: BorderWidth.hairline)
                 }
             PasteButton(payloadType: String.self) { strings in
@@ -494,6 +498,9 @@ struct SendView: View {
                     Task { @MainActor in text = pasted }
                 }
             }
+            // The code field has a second PasteButton, and the system names both "Paste".
+            .accessibilityLabel("Paste text")
+            .accessibilityInputLabels(["Paste text"])
         }
     }
 }

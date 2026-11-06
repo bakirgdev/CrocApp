@@ -115,6 +115,7 @@ struct ReceiveView: View {
                 Label("Scan QR Code", systemImage: "qrcode.viewfinder")
             }
             .buttonVariant(.secondary)
+            .touchControlSize()
             .sheet(isPresented: $showScanner) {
                 QRScannerSheet { link in
                     scanCount += 1
