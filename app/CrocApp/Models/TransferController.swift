@@ -474,9 +474,11 @@ final class TransferController {
                 finishRecord(.failed, summary: summary)
             } else if let storedReceipt {
                 phase = .stored(storedReceipt)
+                settings.recordSuccessfulTransfer()
                 finishRecord(.completed, summary: summary)
             } else {
                 phase = .done(summary, receivedText: receivedText)
+                if summary.success { settings.recordSuccessfulTransfer() }
                 finishRecord(summary.success ? .completed : .failed, summary: summary)
             }
         case .failed(let failure):

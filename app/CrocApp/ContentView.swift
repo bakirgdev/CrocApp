@@ -1,6 +1,10 @@
+import StoreKit
 import SwiftUI
 
 struct ContentView: View {
+    #if !DIRECT
+    @Environment(\.requestReview) private var requestReview
+    #endif
     @Environment(TransferController.self) private var controller
     @Environment(LocalNetworkChecker.self) private var localNetwork
     @Environment(AppRouter.self) private var router
@@ -60,14 +64,32 @@ struct ContentView: View {
             .onChange(of: controller.isActive) { _, active in
                 if active { localNetwork.checkIfNeeded() }
             }
-            .onChange(of: scenePhase) { _, phase in
-                // A secret typed a moment ago is still waiting for its Keychain write.
-                if phase != .active { controller.settings.flushSecrets() }
-                if phase == .active { localNetwork.recheckIfDenied() }
-                guard phase == .active else { return }
-                offerStagedFiles()
-            }
-            #if os(macOS)
+            #if !DIRECT
+        // The id is the success count, so this restarts on each success and
+        // not at launch (the phase is .idle then). A new transfer or a sheet
+        // within the delay cancels or vetoes the request.
+        .task(id: controller.settings.successfulTransfers) {
+            guard case .done = controller.phase else { return }
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled, case .done = controller.phase,
+                !showStagedSheet, !showOnboarding, scenePhase == .active,
+                ReviewPrompt.shouldAsk(
+                    successfulTransfers: controller.settings.successfulTransfers,
+                    lastPromptedVersion: controller.settings.lastReviewPromptVersion,
+                    currentVersion: AppInfo.marketingVersion)
+            else { return }
+            controller.settings.lastReviewPromptVersion = AppInfo.marketingVersion
+            requestReview()
+        }
+        #endif
+        .onChange(of: scenePhase) { _, phase in
+            // A secret typed a moment ago is still waiting for its Keychain write.
+            if phase != .active { controller.settings.flushSecrets() }
+            if phase == .active { localNetwork.recheckIfDenied() }
+            guard phase == .active else { return }
+            offerStagedFiles()
+        }
+        #if os(macOS)
         // scenePhase stays .active while the window is open, so a share
         // that arrives while the app runs is only seen on activation.
         .onReceive(

@@ -62,6 +62,8 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | **Recent transfers** on Home: the latest three records below Send and Receive, hidden while **Save Transfer History** is off. A row opens the History list, not the record's detail. Home exists only at compact width, so a wide iPad window and the Mac show the History sidebar row instead; the dates refresh each minute | iPhone, and iPad at compact width | shipped |
 | Waiting-screen QR and **Share Link** encode `https://crocapp.dev/r/#<code>` (see below) | all | shipped |
 | Send as Link (stored transfers; see below) | all | shipped |
+| **Rate CrocApp** link in About, and a review request through `requestReview` after a successful transfer (3rd success on, once per app version, never after a failure) | all, App Store builds only | shipped, not verified on a device (TestFlight never shows the prompt) |
+| **Support CrocApp** link in About, to the landing page's sponsor section | macOS, disk image build only | shipped |
 | **Haptics** setting (on by default): a short tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer | iPhone only | shipped |
 | Menu bar quick send and receive, with an icon that shows the transfer state (see below) | macOS only | shipped |
 | **Notifications** and **Show File Names in Notifications** settings: a local notification when a transfer finishes, fails or needs your answer while the app is in the background (see below) | all | shipped, not verified on a device |
