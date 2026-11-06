@@ -4,29 +4,38 @@ import SwiftUI
 /// Draws nothing until the user has saved a code.
 struct SavedCodePicker: View {
     @Environment(SavedCodes.self) private var savedCodes
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let selection: String
     let onPick: (String) -> Void
 
     var body: some View {
         if !savedCodes.codes.isEmpty {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.space2) {
-                    ForEach(savedCodes.codes) { saved in
-                        Button {
-                            onPick(saved.code)
-                        } label: {
-                            Label(saved.name, systemImage: "key")
-                        }
-                        .buttonVariant(.secondary)
-                        .controlSize(.small)
-                        .accessibilityValue(
-                            selection.trimmingCharacters(in: .whitespacesAndNewlines) == saved.code
-                                ? "Selected" : ""
-                        )
-                        .accessibilityHint("Fills in the saved code")
-                    }
+            // A sideways scroll hides chips off-screen at accessibility sizes,
+            // so they stack there.
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: Spacing.space2) { chips }
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Spacing.space2) { chips }
                 }
             }
+        }
+    }
+
+    @ViewBuilder private var chips: some View {
+        ForEach(savedCodes.codes) { saved in
+            Button {
+                onPick(saved.code)
+            } label: {
+                Label(saved.name, systemImage: "key")
+            }
+            .buttonVariant(.secondary)
+            .controlSize(.small)
+            .accessibilityValue(
+                selection.trimmingCharacters(in: .whitespacesAndNewlines) == saved.code
+                    ? "Selected" : ""
+            )
+            .accessibilityHint("Fills in the saved code")
         }
     }
 }

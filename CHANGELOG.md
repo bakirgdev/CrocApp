@@ -8,6 +8,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 extra sections where a release needs them, and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- At the largest text sizes, saved codes under the code field stack in a column instead of running off the edge of the screen.
+- At the largest text sizes, the iPad sidebar is wider, so "Receive" and "Settings" no longer break across two lines.
+- The border of the code field and of the text box on Send is darker, so it is easier to see, and darker again when Increase Contrast is on.
+- The two paste buttons on Send are named **Paste code** and **Paste text**, so VoiceOver and Voice Control can tell them apart.
+- **Add Files**, **Add Folder**, **Add Photos** and **Scan QR Code** are taller on iPhone and iPad, so they are easier to tap.
+- The text fields on the Advanced settings page are named for VoiceOver, so each reads with its label.
+- Voice Control accepts "How It Works" and "Privacy" for the privacy button in the toolbar.
+
 ## [1.1.1] - 2026-11-06
 
 ### Changed
