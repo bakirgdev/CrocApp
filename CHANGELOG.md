@@ -12,11 +12,13 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
+- **Clear History…** in the File menu opens the same confirmation as the **Clear History** button on History. It is available while History is open and has entries.
 - The App Store builds ask for a rating after a transfer succeeds, from the third success on, at most once per version and never after a failed transfer. The system decides whether the prompt shows. **Rate CrocApp** in Settings, About opens the review page at any time.
 - The disk image build has a **Support CrocApp** link in Settings, About, which opens the sponsor options on the project site. The App Store builds have no such link.
 
 ### Fixed
 
+- History shows a file name that contains text-direction or line-break characters with those characters spelled out, as the accept sheet does, including entries an earlier version recorded.
 - Sending a file whose name contains a line break now says the file name can't be sent and to rename the file, instead of pointing to an Advanced setting.
 - At the largest text sizes, saved codes under the code field stack in a column instead of running off the edge of the screen.
 - At the largest text sizes, the iPad sidebar is wider, so "Receive" and "Settings" no longer break across two lines.

@@ -76,7 +76,7 @@ WHAT YOU CAN DO
 - Receive with a code phrase, a scanned QR code, or a link. Opening a link only fills in the code; nothing connects until you tap Receive.
 - See the file list before you accept, and choose Keep Both or Replace when a name is already taken.
 - Watch progress and speed, cancel at any time, and resume an interrupted transfer.
-- Send as Link: share encrypted files for someone who is not online, with a lifetime of 1 hour, 1 day or 7 days and a limit on downloads (up to 100 files and 1 GiB). You can revoke the link from History.
+- Send as Link: share encrypted files for someone who is not online, with a lifetime of 1 hour, 1 day or 7 days. A link holds up to 100 files and 1 GiB in total, and can be downloaded up to 100 times. You can revoke the link from History.
 - Use your own relay, force local-network-only transfers, or route through a proxy, from Settings.
 - iPhone and iPad: send from any app with the share sheet, find received files in the Files app, and use Shortcuts and Siri actions.
 - Mac: drag and drop, a menu bar window for quick sends, and Shortcuts actions.

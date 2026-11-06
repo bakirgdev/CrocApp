@@ -20,6 +20,14 @@ import Testing
             expiresAt: expiresAt)
     }
 
+    // MARK: - Names
+
+    @Test func aRecordedBlockedNameIsDrawnInItsShownForm() {
+        let r = record(names: ["invoice\u{202E}fdp.exe", "b.txt"])
+        #expect(r.shownNames == ["invoice\\u{202E}fdp.exe", "b.txt"])
+        #expect(r.title == "invoice\\u{202E}fdp.exe + 1 more")
+    }
+
     // MARK: - Dates (design/voice.md → Dates)
 
     @Test func aDateInsideTheLastWeekIsRelative() {

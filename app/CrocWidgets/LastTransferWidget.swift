@@ -97,8 +97,8 @@ struct LastTransferView: View {
     /// `Color.textSecondary` (`ColorTextSecondary` in the app's asset catalog,
     /// `--color-text-secondary` in `design/tokens.css`) for text that must reach
     /// 4.5:1, which `.secondary` does not. The widget bundle has no asset
-    /// catalog, so the two themes' values are copied here: change them with the
-    /// token, `scripts/verify-design.sh` does not check this copy.
+    /// catalog, so the two themes' values are copied here, dark first.
+    /// `scripts/verify-design.sh` checks both against the color set.
     static func secondaryText(_ scheme: ColorScheme) -> Color {
         scheme == .dark
             ? Color(.sRGB, red: 0.922, green: 0.922, blue: 0.961, opacity: 0.60)

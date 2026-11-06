@@ -45,6 +45,7 @@ export LC_ALL=C
 TOKENS=design/tokens.css
 SWIFT_TOKENS=app/CrocApp/Support/DesignTokens.swift
 COLORSETS=app/CrocApp/Assets.xcassets
+WIDGET_FILE=app/CrocWidgets/LastTransferWidget.swift
 PRINCIPLES_MD=design/principles.md
 MANIFEST=web/landing/assets/img/favicon/site.webmanifest
 [ -r "$TOKENS" ] || {
@@ -300,7 +301,7 @@ WEB_FILES=$(
   find web/landing -name '*.html' | sort
 )
 
-export TOKENS SWIFT_TOKENS COLORSETS PRINCIPLES_MD MANIFEST NUMERIC_TABLE COLOR_TABLE CONTRAST_TABLE NOT_MIRRORED \
+export TOKENS SWIFT_TOKENS COLORSETS WIDGET_FILE PRINCIPLES_MD MANIFEST NUMERIC_TABLE COLOR_TABLE CONTRAST_TABLE NOT_MIRRORED \
   ALLOW_WEB WEB_FILES
 export QUIET
 
