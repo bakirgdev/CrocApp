@@ -173,7 +173,7 @@ For any future screenshot work:
 - **`iphone/onboarding` is a real sheet.** On iOS the onboarding is a `.sheet`, so the light shot shows the dimmed home screen above and around it. Dark shows the same over black.
 
 - **`ipad/` is the phone layout stretched.** See `../known-issues.md`, "Design system".
-- **No `iphone-duo-inner`, and `iphone-duo-outer` is not upload-ready.** See "iPhone Duo" above. The outer shots lay out sideways and clip the bottom of taller screens (`02-send-code-dark` loses "Waiting for the receiver…"). Recapture before an upload that needs them, once a runtime or Simulator.app can drive the Duo properly.
+- **No `iphone-duo-inner`, and `iphone-duo-outer` cuts taller screens off at the bottom.** See "iPhone Duo" above. The outer set is uploaded (iOS 1.1.1), but a screen taller than the outer display ends mid-content: `02-send-code-dark` cuts its hint line and loses "Waiting for the receiver…". Recapture when a runtime or Simulator.app can drive the Duo's inner display.
 - **No menu-bar shot.** The menu-bar popover cannot be captured reliably: macOS hides the status item when the menu bar is full, so no script can click it.
 - **`mac/onboarding` is not captured** (see the table above).
 

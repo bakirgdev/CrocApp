@@ -13,7 +13,7 @@ Source-of-truth design and marketing files. Mostly binary and committed as-is, e
 | `github-social-preview.png` | 1280×640, dark; same layout as `web/landing/assets/img/og.jpg` | Only the repository's GitHub Settings > Social preview, uploaded by hand. No file references it |
 | `app-store-header.png` | 5244×2950 PNG, no alpha; same layout as `og.jpg` without the URL | Only App Store Connect > Asset Library, as the iOS header and search results asset, uploaded by hand. No file references it |
 | `screenshots/{mac,iphone,ipad}/<screen>-{light,dark}.png` | Full-resolution app screenshots, one pair per screen. Gitignored | The tracked WebP copies under `web/` (README, docs site, landing hero) |
-| `screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` | App Store Connect upload set, one folder per size class (`iphone-6.9`, `iphone-6.3`, `iphone-duo-outer`, `ipad-13`, `mac`): ten per class, odd `NN` light and even dark, no alpha, Apple's exact sizes, `NN` is the upload order. Gitignored, generated at submission | Uploaded by hand in App Store Connect. `iphone-duo-outer` is not upload-ready yet (see `docs/knowledge/screenshots.md`, "App Store sizes") |
+| `screenshots/app-store/<class>/NN-<screen>-{light,dark}.png` | App Store Connect upload set, one folder per size class (`iphone-6.9`, `iphone-6.3`, `iphone-duo-outer`, `ipad-13`, `mac`): ten per class, odd `NN` light and even dark, no alpha, Apple's exact sizes, `NN` is the upload order. Gitignored, generated at submission | Uploaded by hand in App Store Connect. `iphone-duo-outer` cuts taller screens off at the bottom (`docs/knowledge/screenshots.md`, "Known soft spots") |
 
 ## Rules
 
