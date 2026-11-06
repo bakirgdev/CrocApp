@@ -51,6 +51,7 @@ trap cleanup EXIT
 use_relay "$TMPROOT/mac-relay.log"
 CLI_R=${RELAY:+--relay=$RELAY} # one word, empty on the public pool: the CLI takes --relay before its command
 
+ensure_xcframework "$TMPROOT/mac-xcframework.log"
 logged "$TMPROOT/mac-build.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
   -destination 'platform=macOS' -derivedDataPath "$DD" -allowProvisioningUpdates build
 APP=$(find "$DD/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)

@@ -41,6 +41,20 @@ logged() { # logged LOG CMD...
   }
 }
 
+# Rebuilds CrocKit/Croc.xcframework (all slices) when it is missing, has no
+# macOS slice, or is older than anything in crocmobile/ or the build script.
+# The xcframework is untracked, so a checkout that pulled a Go change would
+# otherwise link the old one and fail on the new symbol.
+ensure_xcframework() { # ensure_xcframework LOG
+  local xcf=CrocKit/Croc.xcframework
+  if [ ! -d "$xcf/macos-arm64" ] \
+    || [ -n "$(find crocmobile scripts/build-xcframework.sh -type f -newer "$xcf/Info.plist" \
+      -not -path 'crocmobile/cmd/croctest/croctest' -print -quit)" ]; then
+    echo "Rebuilding $xcf (missing or older than crocmobile/)"
+    logged "$1" scripts/build-xcframework.sh
+  fi
+}
+
 # One harness run at a time on this Mac, across checkouts: the app harnesses
 # share the app container, ~/Downloads/CrocApp and the pasteboard, and
 # verify-interop.sh binds croc's default ports and multicast group, so a second

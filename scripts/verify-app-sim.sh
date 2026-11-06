@@ -38,6 +38,7 @@ use_relay "$TMPROOT/sim-relay.log"
 CLI_R=${RELAY:+--relay=$RELAY} # one word, empty on the public pool: the CLI takes --relay before its command
 
 xcrun simctl bootstatus "$SIM" -b > /dev/null
+ensure_xcframework "$TMPROOT/sim-xcframework.log"
 logged "$TMPROOT/sim-build.log" xcodebuild -project app/CrocApp.xcodeproj -scheme CrocApp \
   -destination "platform=iOS Simulator,name=$SIM" -derivedDataPath "$DD" build
 APP=$(find "$DD/Build/Products" -maxdepth 3 -name CrocApp.app | head -1)
