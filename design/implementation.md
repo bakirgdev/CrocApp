@@ -23,6 +23,7 @@ Views use the `Color` aliases in `DesignTokens.swift`, never a color set name, a
 | `--color-status-*-tint` | `ColorStatus*Tint`, `Color.status*Tint` |
 | `--color-surface-grouped` | no alias: the system supplies it through grouped containers such as `Form` |
 | `--color-surface-card`, `--color-surface-base`, `--color-separator` | `Color.surfaceCard`, `.surfaceBase`, `.separatorToken` |
+| `--color-border-control` | `Color.controlBorder(contrast)` with `@Environment(\.colorSchemeContrast)`: the system secondary label, the primary label under Increase Contrast |
 | `--color-scrim`, `--paper` | `ColorScrim` and `ColorPaper` sets, `Color.scrim`, `Color.paper` (a glyph knocked out of a solid fill) |
 
 UIKit and AppKit colors need an `#if os()` split, which `DesignTokens.swift` alone carries. `AccentColor` is the global tint, so a bordered or plain button label inherits it at 4.06:1 unless the variant sets the label, which is why buttons go through `ButtonVariants.swift`. Text takes `Color.textSecondary`, including a footer or an EmptyState description inside a system control; `.secondary` is for glyphs and large text (`principles.md`, "Contrast").
@@ -92,7 +93,7 @@ These shared tokens have no Swift form on purpose. `scripts/verify-design.sh` sk
 | `--shadow-sm`, `--shadow-lg`, `--shadow-focus-ring` | system controls carry their own depth and focus |
 | `--type-*`, `--weight-*`, `--font-*`, and `--tracking-*` except code and eyebrow | `Font.TextStyle` is the scale and carries Apple's tracking |
 | `--icon-stroke-*` | SF Symbols have weights, not strokes |
-| `--color-text-primary/tertiary/quaternary/link`, `--color-fill*`, `--color-surface-*`, `--color-separator`, `--color-status-*` (not the tints), `--color-on-status` | values come from the OS (or `.white`), so there is no number to compare |
+| `--color-text-primary/tertiary/quaternary/link`, `--color-fill*`, `--color-surface-*`, `--color-separator`, `--color-border-control`, `--color-status-*` (not the tints), `--color-on-status` | values come from the OS (or `.white`), so there is no number to compare |
 
 ## Web
 

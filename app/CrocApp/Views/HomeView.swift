@@ -67,6 +67,7 @@ struct HomeView: View {
                         Image(systemName: "lock.shield")
                     }
                     .accessibilityLabel("How croc keeps transfers private")
+                    .accessibilityInputLabels(["How It Works", "Privacy"])
                     .help("How It Works")
                 }
                 #endif

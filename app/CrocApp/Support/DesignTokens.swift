@@ -252,6 +252,22 @@ extension Color {
         #endif
     }
 
+    /// `--color-border-control`: the idle border of a text field. The system
+    /// secondary label, 3.44:1 on base, where `separatorToken` is 1.2:1 and
+    /// fails the 3:1 floor for a UI boundary (principles.md → Contrast).
+    /// Increase Contrast moves it to the primary label.
+    static func controlBorder(_ contrast: ColorSchemeContrast) -> Color {
+        contrast == .increased ? textPrimary : secondaryLabel
+    }
+
+    private static var secondaryLabel: Color {
+        #if os(iOS)
+        Color(uiColor: .secondaryLabel)
+        #else
+        Color(nsColor: .secondaryLabelColor)
+        #endif
+    }
+
     /// `--paper` (principles.md): the literal white/black ink color, not a
     /// themed surface. Used directly where a component knocks a glyph out
     /// of a solid fill (e.g. TrustBadge `full`), never as a page background.

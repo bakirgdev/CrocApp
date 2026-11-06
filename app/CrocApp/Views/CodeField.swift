@@ -29,6 +29,7 @@ struct CodeField: View {
     /// Puts the caret here when the field appears (`HardwareKeyboard.isExpected`).
     var focusesOnAppear = false
 
+    @Environment(\.colorSchemeContrast) private var contrast
     @FocusState private var isFocused: Bool
     /// The user has said they are done with a value that is wrong: Return, or
     /// leaving the field. Until then a short code is just unfinished, so the
@@ -99,6 +100,9 @@ struct CodeField: View {
                 .labelStyle(.iconOnly)
                 .buttonBorderShape(.roundedRectangle(radius: Radius.sm))
                 .tint(Color.accentFill)
+                // Send has a second PasteButton, and the system names both "Paste".
+                .accessibilityLabel("Paste code")
+                .accessibilityInputLabels(["Paste code"])
             }
         }
         .padding(.leading, Self.leadingPadding)
@@ -115,10 +119,10 @@ struct CodeField: View {
         .opacity(isDisabled ? Opacity.disabledContainer : 1)
     }
 
-    // components.md → CodeField: separator idle, accent focused, error invalid.
+    // components.md → CodeField: control border idle, accent focused, error invalid.
     private var borderColor: Color {
         if showsInvalid { return .statusError }
         if isFocused { return .accentFill }
-        return .separatorToken
+        return .controlBorder(contrast)
     }
 }

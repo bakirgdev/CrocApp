@@ -10,6 +10,9 @@ import SwiftUI
 struct RegularLayout: View {
     @Environment(TransferController.self) private var controller
     @Environment(AppRouter.self) private var router
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private static let accessibilitySidebarWidth: CGFloat = 440
 
     /// The row of the transfer in flight and what it shows, if anything.
     private struct ActiveRow: Equatable {
@@ -59,6 +62,13 @@ struct RegularLayout: View {
         // ellipsis beside its Review badge. 240 is the sidebar the window
         // minimum is budgeted for (docs/knowledge/app-ui-architecture.md → Windows and keyboard focus).
         .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 320)
+        #else
+        // The iPad's own 320pt sidebar breaks "Receive" and "Settings" mid-word
+        // at accessibility sizes, so it widens there.
+        .navigationSplitViewColumnWidth(
+            min: dynamicTypeSize.isAccessibilitySize ? Self.accessibilitySidebarWidth : nil,
+            ideal: dynamicTypeSize.isAccessibilitySize ? Self.accessibilitySidebarWidth : 320,
+            max: dynamicTypeSize.isAccessibilitySize ? Self.accessibilitySidebarWidth : nil)
         #endif
     }
 
@@ -109,6 +119,7 @@ private struct DetailStack: View {
                             Image(systemName: "lock.shield")
                         }
                         .accessibilityLabel("How croc keeps transfers private")
+                        .accessibilityInputLabels(["How It Works", "Privacy"])
                     }
                 }
                 .navigationDestination(for: AppRouter.Route.self) { route in

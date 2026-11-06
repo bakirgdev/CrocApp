@@ -96,6 +96,9 @@
   --color-surface-glass-thick: var(--glass-thick);
 
   --color-separator:      var(--separator);
+  /* A text field's idle border. A UI boundary owes 3:1, which --color-separator (1.2:1) does not
+     clear; it is the system secondary label, and Increase Contrast moves it to the primary label. */
+  --color-border-control: var(--label-2);
   --color-fill:           var(--fill-1);
   --color-fill-secondary: var(--fill-2);
   --color-fill-tertiary:  var(--fill-3);
@@ -325,6 +328,10 @@ a { color: var(--color-text-link); text-decoration: none; }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --press-scale-web: 1; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
+}
+
+@media (prefers-contrast: more) {
+  :root { --color-border-control: var(--label-1); }
 }
 
 /* Glass is decoration; legibility never depends on it. principles.md, Materials and Liquid Glass. */

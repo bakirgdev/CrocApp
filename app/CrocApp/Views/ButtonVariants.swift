@@ -79,6 +79,16 @@ extension View {
         buttonStyle(ButtonVariantStyle(variant: variant))
     }
 
+    /// A bordered button that is 44pt or taller on iOS (`ControlHeight.large`),
+    /// where the regular size is about 34pt. macOS keeps its own control sizing.
+    func touchControlSize() -> some View {
+        #if os(iOS)
+        controlSize(.large)
+        #else
+        self
+        #endif
+    }
+
     /// design/principles.md → Accessibility: bare text buttons still get a
     /// 44pt target on iOS. macOS keeps its own control sizing.
     func hitTarget() -> some View {
