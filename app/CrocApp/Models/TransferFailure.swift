@@ -308,6 +308,12 @@ extension TransferFailure {
                         "Start the send there first, or use a faster connection, then enter the code again."
                 ),
                 remedy: nil)
+        case .invalidFileName:
+            return TransferFailure(
+                title: String(localized: "A file name can't be sent"),
+                detail: String(
+                    localized: "Rename the file so its name has no line break, then send it again."),
+                remedy: nil)
         case .other:
             return TransferFailure(
                 title: String(localized: "The transfer failed"),

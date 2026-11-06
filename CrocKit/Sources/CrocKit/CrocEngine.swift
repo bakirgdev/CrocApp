@@ -223,12 +223,19 @@ public actor CrocEngine {
         bridge = nil
     }
 
+    /// Points croc's small-file bundle spool (`$TMPDIR` in Go's own environment copy,
+    /// which Swift's `setenv` does not reach) at `path`. Call it once at launch, before
+    /// any transfer, because the Go side must not change it while threads run.
+    public static func setTemporaryDirectory(_ path: String) {
+        CrocmobileSetTempDir(path)
+    }
+
     /// The Go side splits the list on "\n", so a path holding a line break would
     /// turn into several send paths (`a.jpg\n..` sends the parent folder).
     private static func joinedPaths(_ paths: [String]) throws -> String {
         if paths.contains(where: { $0.contains(where: \.isNewline) }) {
             throw CrocEngineError.startFailed(
-                EngineFailure(code: .invalidSetting, message: "a file name contains a line break"))
+                EngineFailure(code: .invalidFileName, message: "a file name contains a line break"))
         }
         return paths.joined(separator: "\n")
     }

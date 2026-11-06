@@ -27,6 +27,10 @@ A receiver that starts first waits up to 5 seconds for the sender. A send starte
 
 When both devices run croc 11.6 or newer, four or more small files can travel together as one batch. croc does not report how far a batch has got, so CrocApp shows "A batch of small files" with no percent until the batch arrives, beside a spinner on iPhone and iPad and over a moving bar on Mac. The transfer is still running.
 
+## A file name can't be sent
+
+CrocApp refuses a file whose name contains a line break, because the list of files to send cannot carry one. Rename the file so its name has no line break, then send it again.
+
 ## No internet
 
 With no connection, a send with a generated code fails before a code appears, with "No public relay answered". Reconnect and tap **Try Again**, or turn on **Local Network Only** in [Settings](guide/settings.md#transfer) when both devices share a network.
