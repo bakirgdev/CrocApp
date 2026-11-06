@@ -63,7 +63,8 @@ Rules that follow from the payloads:
 - `portInUse` is raised only by `StartRelay`, for a taken port. A transfer never reports it.
 - An unknown code, or a payload that is not JSON, decodes as `other` with the raw text.
 - `message` is croc's text and is for logs only. The UI maps wording from the code.
-- A recovered panic reports `other`.
+- A recovered panic reports `other`, except one in `Cancel` or `Respond`: the transfer still runs and `run` owns its single final event, so that panic is only logged (`logPanic`).
+- `invalidFileName` is set by CrocKit, never by the engine: `CrocEngine` refuses a send path with a line break before the start, because the Go side splits the path list on `\n`.
 
 How `classify` picks a code:
 
@@ -140,7 +141,7 @@ Limits and error mapping:
   - Go frees `activeMu` after it restores every process global and before `OnDone` or `OnError` (`run` in `session.go`, `runStore` in `store.go`). Each transfer has its own delegate, so the last event of one cannot reach the next.
   - `DelegateBridge` records the terminal call (`hasEnded`). `CrocEngine` frees its slot on it instead of waiting for `onTermination`'s task. A stream finished early on a malformed payload does not count, because its Go session still runs.
   - `TestStartFromTheTerminalEventGetsTheEngine` (a start from inside `OnError`) and `crockit-verify twice` prove it.
-- A receiver must set `outDir`. Both sides set `workDir` to a writable temp directory: a sender's text and zip temp files go there (the iOS cwd is `/`), and crocmobile points `$TMPDIR` at it for croc's bundle spool (see "Small-file bundles").
+- A receiver must set `outDir`. Both sides set `workDir` to a writable temp directory: a sender's text and zip temp files go there (the iOS cwd is `/`), and the app points `$TMPDIR` at the same directory once at launch for croc's bundle spool (see "Small-file bundles").
 - `os.Chdir` restore failures are logged (`restoreWD` in `session.go`), and an `os.Getwd` failure fails the start.
 - `Quiet` stays false, because `Quiet = true` replaces `os.Stderr` process-wide with `/dev/null`. croc's progress bar noise on stderr is accepted.
 
@@ -267,7 +268,7 @@ Since croc v11.6, a receiver asks for a run of four or more small files as one b
 - During a bundle croc never sets `Step3RecipientRequestFile` or moves `FilesToTransferCurrentNum`. The receiver writes bundle data without adding to `TotalSent` (`receiveData` in `croc.go`); the sender does add to it. The bundle's progress lives only in an unexported display (`transfer_progress.go`), and the `Client` has no progress callback.
 - croc offers no option to turn bundles off. Every client advertises them, and a receiver takes the hash algorithm, one of the eligibility checks (`bundleTransferEligible`), from the sender.
 - `poll` therefore reports `step` `bundling` once `bundleGap` (`session.go`) has counted 3 ticks within one unbroken stretch of this state: at least four files (`bundle.MinFiles`), file info sent, no single file requested, and not finished. Any tick outside it resets the count. A receiver counts every such tick, and the 3 absorb its round trip between two single files. A sender counts only ticks on which `TotalSent` grew, because it stays put while the sender waits for the accept and between two single files, and grows in bursts through a bundle under a throttle. A receiver of four or more files that hashes an existing file before resuming it also shows `bundling` while it hashes.
-- Each side spools a bundle with `os.CreateTemp("", ...)` (`bundle.go`), so in `$TMPDIR`. The sandboxed Mac app inherits the user's `/var/folders/.../T/` there, which its sandbox denies (`deny file-write-create`), and the transfer fails. `startSession` sets `$TMPDIR` to `Options.WorkDir`, the app's own temporary directory, until the transfer ends.
+- Each side spools a bundle with `os.CreateTemp("", ...)` (`bundle.go`), so in `$TMPDIR`. The sandboxed Mac app inherits the user's `/var/folders/.../T/` there, which its sandbox denies (`deny file-write-create`), and the transfer fails. `CrocAppApp.init` therefore calls `CrocEngine.setTemporaryDirectory` with `FileManager.default.temporaryDirectory`, the app's own temporary directory, once at launch, before any transfer. It reaches Go's `SetTempDir`, because Go reads `$TMPDIR` from its own copy of the environment, which Swift's `setenv` does not update (a launch-time `setenv` in Swift failed the Mac harness's bundle receive). Nothing sets `$TMPDIR` per transfer: `os.Setenv` also calls libc `setenv`, which is not proven safe against a `getenv` on another thread of the host process, and the directory is the same for every transfer.
 
 ### Prompts beyond the accept prompt
 

@@ -281,26 +281,9 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		activeMu.Unlock()
 		return nil, fmt.Errorf("working directory: %w", err)
 	}
-	// croc v11.6 spools small-file bundles in os.TempDir(), and a sandboxed Mac
-	// app inherits a $TMPDIR it cannot write (crocmobile-bridge.md, "Small-file bundles").
-	origTMPDIR, hadTMPDIR := os.LookupEnv("TMPDIR")
-	if o.WorkDir != "" {
-		if err := os.Setenv("TMPDIR", o.WorkDir); err != nil {
-			activeMu.Unlock()
-			return nil, fmt.Errorf("workdir: %w", err)
-		}
-	}
 	restoreNetwork := setNetworkGlobals(o)
 	release := func() {
 		restoreNetwork()
-		// Neither call can fail: the key is valid and the value came from the environment.
-		switch {
-		case o.WorkDir == "": // TMPDIR was never changed
-		case hadTMPDIR:
-			_ = os.Setenv("TMPDIR", origTMPDIR)
-		default:
-			_ = os.Unsetenv("TMPDIR")
-		}
 		activeMu.Unlock()
 	}
 	// The session's context exists before the slow setup (the public relay
@@ -615,6 +598,12 @@ func removeTempFiles() {
 
 // reportPanic converts a recovered panic into an OnError delegate call,
 // guarded against the delegate itself panicking again on the way out.
+// logPanic records a panic recovered where no terminal event may be sent (Cancel
+// and Respond run while the transfer's own run goroutine still owns that event).
+func logPanic(where string, r any) {
+	log.Printf("crocmobile: panic in %s: %v\n%s", where, r, debug.Stack())
+}
+
 func reportPanic(s *session, r any) {
 	defer func() { recover() }() //nolint:errcheck // OnError may panic again; never let that escape
 	s.delegate.OnError(failureJSON(codeOther, fmt.Sprintf("croc panic: %v\n%s", r, debug.Stack())))

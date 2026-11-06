@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -276,6 +277,50 @@ func TestReportPanicPayloadIsOther(t *testing.T) {
 	}
 }
 
+// syncBuffer lets a test read the log while Respond's goroutine may still write it.
+type syncBuffer struct {
+	mu sync.Mutex
+	b  strings.Builder
+}
+
+func (w *syncBuffer) Write(p []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.b.Write(p)
+}
+
+func (w *syncBuffer) String() string {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.b.String()
+}
+
+// A panic in Cancel or Respond is logged and never reaches OnError: the
+// transfer still runs, and run owns its single final event.
+func TestTransferCallPanicIsLoggedNotReported(t *testing.T) {
+	var logged syncBuffer
+	log.SetOutput(&logged)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+
+	d := &errorDelegate{}
+	// No ctxCancel, so cancel() panics; a nil session makes respond() panic.
+	(&Transfer{s: &session{delegate: d}}).Cancel()
+	(&Transfer{}).Respond(true, "")
+
+	deadline := time.Now().Add(5 * time.Second)
+	for strings.Count(logged.String(), "crocmobile: panic in ") < 2 && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	for _, where := range []string{"Cancel", "Respond"} {
+		if !strings.Contains(logged.String(), "crocmobile: panic in "+where+":") {
+			t.Errorf("log lacks a %s panic entry:\n%s", where, logged.String())
+		}
+	}
+	if len(d.errors) != 0 {
+		t.Errorf("OnError calls = %v, want none", d.errors)
+	}
+}
+
 func TestStartErrorsCarryPayload(t *testing.T) {
 	_, err := StartReceive("short", NewOptionsDefault(), &errorDelegate{})
 	if err == nil {
@@ -327,4 +372,13 @@ func FuzzClassify(f *testing.F) {
 			t.Fatalf("errorJSON(%q) decoded to %+v, %v; want code %s", msg, f, jerr, got)
 		}
 	})
+}
+
+func TestSetTempDirPointsOsTempDirAtIt(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("TMPDIR", "/before") // restores the original after the test
+	SetTempDir(dir)
+	if got := os.TempDir(); got != dir {
+		t.Errorf("os.TempDir() = %q, want %q", got, dir)
+	}
 }

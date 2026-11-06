@@ -3,6 +3,8 @@ package crocmobile
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"runtime/debug"
 	"strings"
 
@@ -20,7 +22,7 @@ type Options struct {
 	ThrottleUpload string
 	Code           string // custom code phrase (send); empty = auto-generate
 	OutDir         string // receive destination (required on receive)
-	WorkDir        string // writable temp dir: send's cwd (text/zip) and, both ways, $TMPDIR for croc's bundle spool; required on iOS and in the Mac sandbox
+	WorkDir        string // writable temp dir: send's cwd (text/zip), required on iOS and in the Mac sandbox
 	Exclude        string // newline-joined substring patterns
 	ExcludePaths   string // newline-joined relative paths excluded exactly, inside a sent folder or by a picked file's name (croc --exclude-file)
 	DisableLocal   bool
@@ -91,12 +93,13 @@ type Transfer struct {
 // Cancel aborts the transfer; the peer is notified via croc's SendError.
 //
 // Exported across the gobind boundary like StartSend/StartReceive, so it
-// gets the same recover: a panic here must become a reported error, never
-// crash the host app.
+// gets the same recover: a panic here must never crash the host app. It is
+// only logged (logPanic), because the transfer's terminal event is claimed by
+// run, and a second one would break the single-final-event guarantee.
 func (t *Transfer) Cancel() {
 	defer func() {
 		if r := recover(); r != nil {
-			reportPanic(t.s, r)
+			logPanic("Cancel", r)
 		}
 	}()
 	t.s.cancel()
@@ -117,11 +120,23 @@ func (t *Transfer) Respond(accept bool, policy string) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				reportPanic(t.s, r)
+				logPanic("Respond", r)
 			}
 		}()
 		t.s.respond(accept, parsePolicy(policy))
 	}()
+}
+
+// SetTempDir points $TMPDIR, where croc v11.6 spools small-file bundles
+// (os.CreateTemp("", ...)), at dir for the whole process. The sandboxed Mac app
+// inherits a $TMPDIR it cannot write. Call it once at launch, before any
+// transfer: os.Setenv also calls libc setenv, which is not safe against a
+// getenv on another thread, so it must never run per transfer. A failure is
+// logged, like restoreWD, because a bundle then fails with its own error.
+func SetTempDir(dir string) {
+	if err := os.Setenv("TMPDIR", dir); err != nil {
+		log.Printf("crocmobile: set TMPDIR: %v", err)
+	}
 }
 
 // CancelStart cancels a StartSend or StartReceive that has not returned yet,

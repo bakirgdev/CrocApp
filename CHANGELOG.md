@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 extra sections where a release needs them, and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Sending a file whose name contains a line break now says the file name can't be sent and to rename the file, instead of pointing to an Advanced setting.
+
 ## [1.1.1] - 2026-11-06
 
 ### Changed

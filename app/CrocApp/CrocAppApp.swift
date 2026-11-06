@@ -6,6 +6,7 @@
 //
 
 import AppIntents
+import CrocKit
 import SwiftData
 import SwiftUI
 
@@ -30,6 +31,10 @@ struct CrocAppApp: App {
     #endif
 
     init() {
+        // croc spools small-file bundles in $TMPDIR, and a Mac app started from a
+        // shell inherits one its sandbox denies. Once here, before any transfer:
+        // changing it per transfer would race a getenv on another thread.
+        CrocEngine.setTemporaryDirectory(FileManager.default.temporaryDirectory.path)
         // Harness runs must not touch real settings, history or secrets: point
         // every store at memory.
         let harness = AutoVerify.isHarnessRun
