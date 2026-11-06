@@ -12,6 +12,7 @@ extra sections where a release needs them, and the project follows
 
 ### Fixed
 
+- Sending a file whose name contains a line break now says the file name can't be sent and to rename the file, instead of pointing to an Advanced setting.
 - At the largest text sizes, saved codes under the code field stack in a column instead of running off the edge of the screen.
 - At the largest text sizes, the iPad sidebar is wider, so "Receive" and "Settings" no longer break across two lines.
 - The border of the code field and of the text box on Send is darker, so it is easier to see, and darker again when Increase Contrast is on.

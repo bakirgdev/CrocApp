@@ -78,6 +78,7 @@
     "A code phrase needs at least ^[%lld character](inflect: true)." : {
       "comment" : "The placeholder is the minimum number of characters a code needs."
     },
+    "A file name can't be sent" : {},
     "A photo in iCloud needs a connection to download. Check yours and try again." : {
       "comment" : "Says what to do after picked photos could not be loaded."
     },
@@ -455,6 +456,7 @@
     "Remove %@" : {
       "comment" : "VoiceOver label of the button that removes a staged file. The placeholder is the file name."
     },
+    "Rename the file so its name has no line break, then send it again." : {},
     "Replace" : {},
     "Reset" : {
       "comment" : "Button that sets the receive folder back to the default."

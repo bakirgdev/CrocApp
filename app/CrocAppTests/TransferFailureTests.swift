@@ -35,6 +35,7 @@ import Testing
         (.engineStuck, nil),
         (.joinedEarly, nil),
         (.portInUse, nil),
+        (.invalidFileName, nil),
         (.other, .tryAgain),
     ]
 
@@ -132,6 +133,14 @@ import Testing
         let expired = failure(.storeExpired, .init(direction: .receive, isStored: true))
         #expect(expired.title == "This link no longer works")
         #expect(expired.text.hasPrefix("This link no longer works. "))
+    }
+
+    /// A file name with a line break is not an Advanced setting: no Open Settings.
+    @Test func aLineBreakInAFileNameIsNotASettingProblem() {
+        let f = failure(.invalidFileName)
+        #expect(f.title == "A file name can't be sent")
+        #expect(f.detail?.contains("line break") == true)
+        #expect(f.remedy == nil)
     }
 
     @Test(arguments: [EngineFailure.Code.connectionLost, .other, .declined])

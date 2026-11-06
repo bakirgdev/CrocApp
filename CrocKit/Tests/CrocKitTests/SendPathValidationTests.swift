@@ -11,7 +11,7 @@ import Testing
             _ = try await start()
             return false
         } catch CrocEngineError.startFailed(let failure) {
-            return failure.code == .invalidSetting
+            return failure.code == .invalidFileName
         } catch {
             return false
         }

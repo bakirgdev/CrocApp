@@ -216,7 +216,7 @@ public struct StoredSendOptions: Sendable {
 /// `code`; `message` is croc's own text, for logs only, and changes between
 /// croc releases.
 public struct EngineFailure: Error, Equatable, Sendable {
-    /// Mirrors the codes in `crocmobile/errors.go`. An unknown code decodes as
+    /// Mirrors the codes in `crocmobile/errors.go`, plus `.invalidFileName`. An unknown code decodes as
     /// `.other`, so a newer engine never breaks an older decoder.
     public enum Code: String, Sendable, CaseIterable {
         case peerVersion, relayUnreachable, noPublicRelay, declined, refused
@@ -237,6 +237,8 @@ public struct EngineFailure: Error, Equatable, Sendable {
         case joinedEarly
         /// Hosting a relay: a port it needs is taken.
         case portInUse
+        /// A path to send has a line break in its name. Set by `CrocEngine`, never by the engine (the Go side would split the list on it).
+        case invalidFileName
     }
 
     public let code: Code

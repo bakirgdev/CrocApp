@@ -110,7 +110,7 @@ Network settings:
 What it deliberately does not do:
 
 - Run more than one transfer at a time. A package-global `activeMu` mutex makes a second `Start*` call fail with code `transferActive`. The lock is freed before the terminal `OnDone` or `OnError`, so a start made on that event succeeds.
-- Let a Go panic cross into Swift. `StartSend`, `StartReceive`, `Cancel` and `Respond` each recover. `run()` recovers around `xfer()` and around the final `OnError`, `OnText` and `OnDone` calls. `poll()` recovers on every tick. A recovered panic reports code `other` (`reportPanic` in `session.go`).
+- Let a Go panic cross into Swift. `StartSend`, `StartReceive`, `Cancel` and `Respond` each recover; a panic in `Cancel` or `Respond` is only logged (`logPanic`), because the transfer's single final event belongs to `run`. `run()` recovers around `xfer()` and around the final `OnError`, `OnText` and `OnDone` calls. `poll()` recovers on every tick. A recovered panic reports code `other` (`reportPanic` in `session.go`).
 - Force the lock open when croc hangs inside `xfer()` past a cancel. A watchdog reports `engineStuck` after 15 s and later starts fail fast with it, but `activeMu` stays held until relaunch (`docs/known-issues.md`, "Accepted").
 
 Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols get a `Crocmobile` prefix in Objective-C: `CrocmobileOptions`, `CrocmobileTransfer`, `CrocmobileStartSend`. The Go interface `Delegate` is the Objective-C protocol `CrocmobileDelegate`, which Swift imports as `CrocmobileDelegateProtocol`. The full type rules and the JSON field list are in `docs/knowledge/crocmobile-bridge.md`.
