@@ -435,11 +435,22 @@ struct TransferStatusView: View {
     /// bar indeterminate (components.md, "Loading").
     private func bundleView(_ p: TransferProgress) -> some View {
         VStack(alignment: .leading, spacing: Spacing.space3) {
+            #if os(macOS)
             Text("A batch of small files")
                 .font(.callout)
             ProgressView()
                 .progressViewStyle(.linear)
                 .accessibilityLabel("Overall progress")
+            #else
+            // iOS draws an indeterminate linear ProgressView as a still, empty
+            // track, which reads as stuck at 0%; a spinner shows it is moving.
+            HStack(spacing: Spacing.space3) {
+                ProgressView()
+                    .accessibilityLabel("Overall progress")
+                Text("A batch of small files")
+            }
+            .font(.callout)
+            #endif
             HStack {
                 Text("^[\(p.totalFiles) file](inflect: true)")
                 Spacer()
