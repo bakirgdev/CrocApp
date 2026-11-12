@@ -775,6 +775,58 @@ func TestClosePromptIdempotent(t *testing.T) {
 	empty.closePrompt()
 }
 
+// An accept with more answers than the pipe buffer holds blocks in the write
+// until croc reads them. If croc never does, cancel must still return and
+// unblock that write, and a second answer must not interleave with the first.
+func TestCancelUnblocksAStuckRespond(t *testing.T) {
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pr.Close()
+	s := &session{promptW: pw, promptAnswers: 40000, sender: true, ctxCancel: func() {}, done: make(chan struct{})}
+	defer close(s.done) // stops the cancel watchdog
+
+	responded := make(chan struct{})
+	go func() { s.respond(true, keepBoth); close(responded) }()
+	for deadline := time.Now().Add(3 * time.Second); ; time.Sleep(10 * time.Millisecond) {
+		s.promptM.Lock()
+		writing := s.answering
+		s.promptM.Unlock()
+		if writing {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("first respond never started writing")
+		}
+	}
+
+	second := make(chan struct{})
+	go func() { s.respond(false, keepBoth); close(second) }()
+	select {
+	case <-second:
+	case <-time.After(3 * time.Second):
+		t.Fatal("second respond still blocked after 3s")
+	}
+
+	cancelled := make(chan struct{})
+	go func() { s.cancel(); close(cancelled) }()
+	for name, ch := range map[string]chan struct{}{"cancel": cancelled, "respond": responded} {
+		select {
+		case <-ch:
+		case <-time.After(3 * time.Second):
+			t.Fatalf("%s still blocked 3s after cancel", name)
+		}
+	}
+	got, err := io.ReadAll(pr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(got), "n") {
+		t.Fatalf("pipe received a decline inside the accept answers: %q", head(got))
+	}
+}
+
 type errorDelegate struct{ errors []string }
 
 func (d *errorDelegate) OnCodeReady(string) {}

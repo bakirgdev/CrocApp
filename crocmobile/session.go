@@ -98,6 +98,9 @@ type session struct {
 	tempPath string   // absolute path of the text-send temp file, if any; removed in run()
 	promptW  *os.File // write end of the stdin pipe; nil once closed
 	promptM  sync.Mutex
+	// answering: a respond write is in flight outside promptM, so a second
+	// answer (a double tap) is dropped instead of interleaving with it.
+	answering bool
 	// promptAnswers: how many "y\n" lines an accept writes to promptW. croc's
 	// sender-side Ask prompt (TypeRecipientReady handler, croc.go) fires once
 	// PER FILE, so a single answer starves every prompt after the first and
@@ -627,8 +630,8 @@ func restoreWD(dir string) {
 // so it's always safe to call.
 func (s *session) cancel() {
 	s.ctxCancel()
-	s.closePrompt()
 	s.watchOnce.Do(func() { go s.watchCancel(stuckAfter) })
+	s.closePrompt()
 }
 
 // watchCancel reports the session stuck when croc has not returned within
@@ -679,21 +682,22 @@ func (s *session) respond(accept bool, policy filePolicy) {
 		return
 	}
 	s.promptM.Lock()
-	defer s.promptM.Unlock()
-	if s.promptW == nil {
+	w := s.promptW
+	if w == nil || s.answering {
+		s.promptM.Unlock()
 		return
 	}
+	s.answering = true
+	answers := "n\n"
 	if accept {
 		// One "y\n" per file for the sender's Ask path (croc prompts once per
 		// file, see promptAnswers doc); receiver accept/decline only ever
-		// needs the one. Writes can block once the answers outgrow the pipe
-		// buffer, which is why Transfer.Respond runs this off the caller's
-		// goroutine.
+		// needs the one.
 		n := s.promptAnswers
 		if n < 1 {
 			n = 1
 		}
-		answers := strings.Repeat("y\n", n)
+		answers = strings.Repeat("y\n", n)
 		if !s.sender {
 			// Before the write: croc reads Rename and Overwrite only once the
 			// accept prompt has its answer (croc.go updateIfRecipientHasFileInfo).
@@ -702,14 +706,25 @@ func (s *session) respond(accept bool, policy filePolicy) {
 			}
 			answers += keptPromptAnswers
 		}
-		_, _ = s.promptW.WriteString(answers)
-	} else {
-		_, _ = s.promptW.WriteString("n\n")
 	}
+	s.promptM.Unlock()
+
+	// The write blocks once the answers outgrow the pipe buffer and croc
+	// stops reading, so it runs outside promptM: cancel's closePrompt must
+	// still get the lock, and its Close evicts this write with ErrClosed
+	// (os.Pipe files are pollable on darwin). Transfer.Respond runs this off
+	// the caller's goroutine for the same reason.
+	_, _ = w.WriteString(answers)
+
+	s.promptM.Lock()
+	defer s.promptM.Unlock()
+	s.answering = false
 	// Close so any later un-gated prompt hits EOF instead of hanging (see the
 	// AutoAccept note in startReceiveSession).
-	s.promptW.Close()
-	s.promptW = nil
+	if s.promptW == w {
+		w.Close()
+		s.promptW = nil
+	}
 }
 
 // answerUngatedPrompts queues answers for an AutoAccept receive, which has no

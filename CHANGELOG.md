@@ -10,6 +10,10 @@ extra sections where a release needs them, and the project follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A send of thousands of files with **Confirm on Both Sides** on no longer hangs after you tap **Send** when the other device stops answering or you tap **Cancel**. The transfer ends and CrocApp is ready for the next one.
+
 ### Security
 
 - The transfer engine is built with Go 1.27.4, which fixes a `net/http` vulnerability (GO-2026-6859).
