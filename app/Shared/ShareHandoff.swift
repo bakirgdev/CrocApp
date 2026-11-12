@@ -85,13 +85,13 @@ enum ShareHandoff {
 
     /// The name a shared file stages under. A name `ReceivedName` rejects, or
     /// a hidden one, becomes `shared-file`, because the app drops such names
-    /// when it reads the manifest. A taken name, or the manifest's own, gets a
-    /// `2-`, `3-` prefix.
+    /// when it reads the manifest. A taken name, or the manifest's own in any
+    /// case (a Mac volume is case-insensitive), gets a `2-`, `3-` prefix.
     nonisolated static func stagedName(for name: String, isTaken: (String) -> Bool) -> String {
         let base = name.hasPrefix(".") || ReceivedName.isUnsafe(name) ? "shared-file" : name
         var candidate = base
         var counter = 2
-        while candidate == manifestName || isTaken(candidate) {
+        while candidate.lowercased() == manifestName || isTaken(candidate) {
             candidate = "\(counter)-\(base)"
             counter += 1
         }

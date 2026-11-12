@@ -71,6 +71,11 @@ struct ContentView: View {
                 default: break
                 }
             }
+            // A share that arrived during a transfer, or waits behind the one
+            // just sent, is offered once the app is idle again.
+            .onChange(of: controller.isActive) { _, active in
+                if !active { offerStagedFiles() }
+            }
             #if !DIRECT
         // The id is the success count, so this restarts on each success and
         // not at launch (the phase is .idle then). A new transfer or a sheet
@@ -125,8 +130,8 @@ struct ContentView: View {
                 },
                 discard: {
                     if let batch = shareInbox.batch { shareInbox.discard(batch) }
-                    shareInbox.refresh()
-                    showStagedSheet = false
+                    // Shows the next waiting share, or closes the sheet.
+                    offerStagedFiles()
                 })
         }
         .sheet(
@@ -169,10 +174,10 @@ struct ContentView: View {
     private func offerStagedFiles() {
         // Gate on !controller.isActive before touching the inbox at
         // all, not just before presenting: refresh() purges batches
-        // no manifest points to, and purgeStaleBatches()'s "don't
+        // without a manifest, and purgeAndListPending()'s "don't
         // delete the batch behind an active send" guard only works
-        // for repeat refreshes on THIS instance (it checks this
-        // instance's own `staged` cache). A transfer started
+        // for refreshes on THIS instance (it checks `sendingBatch`,
+        // which is per instance). A transfer started
         // elsewhere (e.g. AutoVerify's own short-lived ShareInbox for
         // --auto-share-send) already consumed the manifest by the
         // time it calls start, so if this instance's first-ever

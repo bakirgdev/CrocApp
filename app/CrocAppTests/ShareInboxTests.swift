@@ -44,9 +44,9 @@ import Testing
         #expect(ShareHandoff.stagedName(for: "a.txt") { taken.contains($0) } == "3-a.txt")
     }
 
-    @Test func theManifestNameIsNeverUsedForAFile() {
-        let name = ShareHandoff.stagedName(for: ShareHandoff.manifestName) { _ in false }
-        #expect(name == "2-" + ShareHandoff.manifestName)
+    @Test(arguments: ["manifest.json", "Manifest.JSON"])
+    func theManifestNameIsNeverUsedForAFile(name: String) {
+        #expect(ShareHandoff.stagedName(for: name) { _ in false } == "2-" + name)
     }
 
     @Test(arguments: [".hidden", "../escape.txt", "invoice\u{202E}fdp.exe", "line\u{2028}break"])

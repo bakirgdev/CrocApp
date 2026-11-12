@@ -26,7 +26,7 @@ enum ShareStager {
             throw ShareStagerError.noAppGroup
         }
         // Never wipe the inbox here: a prior batch may be mid-send, with croc
-        // actively reading its files. The main app's purgeStaleBatches()
+        // actively reading its files. The main app's purgeAndListPending()
         // sweeps orphaned batches once it's idle.
         let batchName = ShareHandoff.makeBatchName()
         let batchDir = inbox.appendingPathComponent(batchName, isDirectory: true)
