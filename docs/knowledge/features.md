@@ -62,7 +62,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | **Recent transfers** on Home: the latest three records below Send and Receive, hidden while **Save Transfer History** is off. A row opens the History list, not the record's detail. Home exists only at compact width, so a wide iPad window and the Mac show the History sidebar row instead; the dates refresh each minute | iPhone, and iPad at compact width | shipped |
 | Waiting-screen QR and **Share Link** encode `https://crocapp.dev/r/#<code>` (see below) | all | shipped |
 | Send as Link (stored transfers; see below) | all | shipped |
-| **Rate CrocApp** link in About, and a review request through `requestReview` after a successful transfer (3rd success on, once per app version, never after a failure) | all, App Store builds only | shipped, not verified on a device (TestFlight never shows the prompt) |
+| **Rate CrocApp** link in About, and a review request through `requestReview` after a successful transfer (3rd success on, once per app version, never after a failure) | all, App Store builds only | shipped; the owner saw the prompt in a live App Store build (TestFlight never shows it) |
 | **Support CrocApp** link in About, to the landing page's sponsor section | macOS, disk image build only | shipped |
 | **Haptics** setting (on by default): a short tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer | iPhone only | shipped |
 | Menu bar quick send and receive, with an icon that shows the transfer state (see below) | macOS only | shipped |
@@ -122,7 +122,7 @@ Details:
   - The layout follows the window width, live: a Mac window, an iPad at full width or in a wide Split View gets the sidebar, and iPhone, Slide Over and a narrow Split View get Home.
   - While a transfer runs, its row says **Connecting**, **Waiting**, or the percent. When a request waits for an answer the row carries a **Review** badge and every other screen shows the same banner at its top, so a hidden sidebar never hides it.
   - Design: `design/principles.md`, "Platform adaptation". Code and measurements: `app-ui-architecture.md`, "Layout by width".
-- **Menu bar commands.** **Send…** (⌘1), **Send Clipboard Text…** (⌥⌘1), **Receive…** (⌘2), **Paste Code…** (⌥⌘2), **History** (⌘3), **Clear History…** (enabled while History is open and not empty), **Show Receive Folder in Finder** or **Show Receive Folder in Files** (⇧⌘R), **Cancel Transfer** (⌘.), **Copy Code** (⇧⌘C), **How It Works** (⌘?), and **Settings…** (⌘,) on iPad. The two clipboard commands only fill in Send and Receive, and a transfer starts when you tap the button. iPad has them in the hardware-keyboard menu bar, not verified on a device.
+- **Menu bar commands.** **Send…** (⌘1), **Send Clipboard Text…** (⌥⌘1), **Receive…** (⌘2), **Paste Code…** (⌥⌘2), **History** (⌘3), **Clear History…** (enabled while History is open and not empty; the owner confirmed it is greyed out on the other screens), **Show Receive Folder in Finder** or **Show Receive Folder in Files** (⇧⌘R), **Cancel Transfer** (⌘.), **Copy Code** (⇧⌘C), **How It Works** (⌘?), and **Settings…** (⌘,) on iPad. The two clipboard commands only fill in Send and Receive, and a transfer starts when you tap the button. iPad has them in the hardware-keyboard menu bar, not verified on a device.
 - **File menu item.** On iPadOS the hand-off to the Files app is not verified on a device. A user-picked provider folder is expected to do nothing there.
 
 ## Skipped
