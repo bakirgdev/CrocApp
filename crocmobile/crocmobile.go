@@ -114,8 +114,9 @@ func (t *Transfer) Cancel() {
 // and a large enough sender-Ask batch overruns the pipe buffer, blocking the
 // write until croc drains it over the network. The caller is CrocKit's
 // CrocEngine actor, which runs queued work to completion, so a blocking Respond
-// would strand a following Cancel behind it. session.respond self-serialises on
-// promptM, so running it off the caller's goroutine is safe.
+// would strand a following Cancel behind it. session.respond writes outside
+// promptM, so a Cancel is never held up behind it, and drops an answer that
+// arrives while another is being written.
 func (t *Transfer) Respond(accept bool, policy string) {
 	go func() {
 		defer func() {

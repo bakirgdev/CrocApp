@@ -53,7 +53,7 @@ Rules that follow from the payloads:
 - `policy` is `PolicyKeepBoth` (`"keepBoth"`) or `PolicyReplace` (`"replace"`). It is read only on a receive accept. Swift mirrors the strings as `FilePolicy` and `CrocEngine.respond(accept:policy:)`.
 - A sender-side Ask accept writes one `y\n` per file. A large batch can fill the pipe buffer and block until croc drains it over the network.
 - The caller is the `CrocEngine` actor, which runs queued work to completion. A synchronous write would hold up a following `Cancel`.
-- Do not make it synchronous for "ordering": `session.respond` serialises on `promptM`, and `closePrompt` is idempotent.
+- Do not make it synchronous for "ordering". `session.respond` builds the answer under `promptM`, then writes outside it, so a `Cancel` during a blocked write still gets the lock: `closePrompt` closes the pipe, which ends the write with `ErrClosed` (`os.Pipe` files are pollable on darwin). A second answer while one is in flight (`answering`) is dropped, so a double tap cannot interleave `y` and `n`. `closePrompt` is idempotent.
 
 ## Failure codes
 
@@ -158,7 +158,7 @@ A start is cancellable before it returns:
 
 The cancel watchdog (`watchCancel`, `session.go`):
 
-- A cancel arms it. If croc's call has not returned 15 s later (`stuckAfter`), the delegate gets `engineStuck` as its terminal event and the session is marked stuck. Every later start then fails at once with `engineStuck`.
+- A cancel arms it before closing the prompt pipe. If croc's call has not returned 15 s later (`stuckAfter`), the delegate gets `engineStuck` as its terminal event and the session is marked stuck. Every later start then fails at once with `engineStuck`.
 - The lock stays held. Forcing it open would let a new session change the cwd, stdin and stdout under a croc that still runs. Only a relaunch frees it (`../known-issues.md`, "Accepted").
 - A session sends one terminal event (`session.terminal`). If croc returns after all, `run` clears the mark and frees the lock without a second event.
 - Why 15 s: croc v11.6.4's dials and reads follow its context, its reconnect backoff is capped at 5 s, and `run`'s own teardown waits (the stdin drain and the poller join) are bounded at 2 s each.
