@@ -47,7 +47,7 @@ public protocol TransferEngine: Sendable {
         link: String, outDir: String, proxy: ProxySettings
     ) async throws -> EngineTransfer
 
-    func respond(accept: Bool, policy: FilePolicy) async
+    func respond(_ id: TransferID, accept: Bool, policy: FilePolicy) async
 
     func cancel(_ id: TransferID) async
 
@@ -102,7 +102,7 @@ public actor CrocEngine {
     }
 
     /// Opens a stored-transfer link: `.fileList` first, then wait for
-    /// `respond(accept:policy:)`; on accept the files land in `outDir`.
+    /// `respond(_:accept:policy:)`; on accept the files land in `outDir`.
     public func startStoreReceive(
         link: String, outDir: String, proxy: ProxySettings
     ) async throws -> EngineTransfer {
@@ -136,10 +136,12 @@ public actor CrocEngine {
         if let failure { throw failure }
     }
 
-    /// Answer the accept/decline request raised by a `.fileList` event. On
-    /// accept, `policy` decides what happens to files that already exist;
-    /// senders ignore it.
-    public func respond(accept: Bool, policy: FilePolicy) {
+    /// Answer the accept/decline request raised by a `.fileList` event of the
+    /// transfer `id`; a stale ID is ignored, so a late answer cannot reach the
+    /// next transfer. On accept, `policy` decides what happens to files that
+    /// already exist; senders ignore it.
+    public func respond(_ id: TransferID, accept: Bool, policy: FilePolicy) {
+        guard id == activeID else { return }
         activeTransfer?.respond(accept, policy: policy.rawValue)
     }
 

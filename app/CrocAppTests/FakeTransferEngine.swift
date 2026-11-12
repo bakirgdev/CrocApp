@@ -18,6 +18,7 @@ actor FakeTransferEngine: TransferEngine {
     }
 
     nonisolated struct Response: Equatable, Sendable {
+        let id: TransferID
         let accept: Bool
         let policy: FilePolicy
     }
@@ -72,8 +73,8 @@ actor FakeTransferEngine: TransferEngine {
         try await start(.storeReceive(link: link, outDir: outDir, proxy: proxy))
     }
 
-    func respond(accept: Bool, policy: FilePolicy) {
-        responses.append(Response(accept: accept, policy: policy))
+    func respond(_ id: TransferID, accept: Bool, policy: FilePolicy) {
+        responses.append(Response(id: id, accept: accept, policy: policy))
     }
 
     func cancel(_ id: TransferID) {

@@ -255,7 +255,10 @@ final class TransferController {
     /// `policy` decides what an accepted receive does with files that already
     /// exist; a send ignores it.
     func respond(accept: Bool, policy: FilePolicy = .keepBoth) {
-        Task { await engine.respond(accept: accept, policy: policy) }
+        // A prompt only shows after the transfer's own events, so its ID exists.
+        if let id = transferID {
+            Task { await engine.respond(id, accept: accept, policy: policy) }
+        }
         if accept {
             phase = .connecting
         } else {

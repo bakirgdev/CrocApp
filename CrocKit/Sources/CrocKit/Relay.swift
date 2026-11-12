@@ -30,7 +30,9 @@ public final class RelayHost: RelayHandle, @unchecked Sendable {
     /// `password` means croc's default, which anyone can use. Throws an
     /// `EngineFailure`: `.portInUse` for a taken port, `.invalidSetting` for a
     /// base port outside `basePortRange`. `onStopped` runs, on any thread, if
-    /// the relay stops by itself; never after `stop()`.
+    /// the relay stops by itself. It can still run after `stop()` returns when a
+    /// port died just before, so a caller ignores a callback from a relay it
+    /// already stopped.
     public static func start(
         port: Int, password: String, onStopped: @escaping @Sendable (EngineFailure) -> Void
     ) throws -> RelayHost {
@@ -111,8 +113,9 @@ public enum RelayCheck {
     }
 
     /// Blocks up to five seconds off the caller's thread. Never throws: every
-    /// outcome is a verdict. A blank `password` means croc's default. The
-    /// password never leaves the process, and the result never repeats it.
+    /// outcome is a verdict. A blank `password` means croc's default. croc's
+    /// handshake sends the password to the relay being checked, which decrypts
+    /// it to compare, so that relay learns it; the result never repeats it.
     public static func run(
         address: String, password: String, family: RelayFamily
     ) async -> RelayCheckResult {
