@@ -1,6 +1,7 @@
 package crocmobile
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -180,6 +181,35 @@ func TestClassifyLiveCrocErrors(t *testing.T) {
 		}
 	})
 
+	// croc's sender does not check its own text cap; the receiver refuses the
+	// offer, and the sender sees that as a decline.
+	t.Run("text over croc's 1 MiB limit", func(t *testing.T) {
+		ctx := timeout(t, 20*time.Second)
+		f := filepath.Join(t.TempDir(), "text.txt")
+		if err := os.WriteFile(f, bytes.Repeat([]byte("a"), 2<<20), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		files, empty, folders, err := croc.GetFilesInfo([]string{f}, false, false, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		send := testClientOptions(true, relay, testRelayPassword, "quebec-bravo-charlie")
+		send.SendingText = true
+		sendErr := make(chan error, 1)
+		go func() {
+			c, err := croc.NewCtx(ctx, send)
+			if err != nil {
+				sendErr <- err
+				return
+			}
+			sendErr <- c.Send(files, empty, folders)
+		}()
+		time.Sleep(500 * time.Millisecond)
+		recv := runClient(t, ctx, testClientOptions(false, relay, testRelayPassword, "quebec-bravo-charlie"))
+		wantCode(t, "receive", recv, codeTextTooLong)
+		wantCode(t, "send", <-sendErr, codeDeclined)
+	})
+
 	// Through croc's control-connection call, the one its clients use.
 	t.Run("room full", func(t *testing.T) {
 		for i := range 2 {
@@ -205,6 +235,7 @@ func TestClassifyCrocErrorText(t *testing.T) {
 		{errors.New("pake not successful: peer uses unsupported PAKE protocol version 0; upgrade both croc clients"), codePeerVersion},
 		{errors.New("peer error: refusing files"), codeDeclined},
 		{errors.New("refused files"), codeRefused},
+		{errors.New("text transfer size must be between 1 byte and 1 MiB: 2097152"), codeTextTooLong},
 		{fmt.Errorf("could not connect: %w", tcp.ErrAdmissionLimited), codeRelayUnreachable},
 		{fmt.Errorf("data path: %w", croc.ErrDERPConnection), codeRelayUnreachable},
 		{fmt.Errorf("transfer disconnected: %w", io.ErrUnexpectedEOF), codeConnectionLost},
@@ -346,7 +377,7 @@ func FuzzClassify(f *testing.F) {
 		codePeerVersion, codeRelayUnreachable, codeNoPublicRelay, codeDeclined, codeRefused,
 		codeRoomFull, codeBadPassword, codeWrongCode, codeCancelled, codeConnectionLost,
 		codeStoreLimit, codeStoreExpired, codeInvalidSetting, codeTransferActive,
-		codeEngineStuck, codeJoinedEarly, codePortInUse, codeOther,
+		codeEngineStuck, codeJoinedEarly, codePortInUse, codeTextTooLong, codeOther,
 	}
 	f.Fuzz(func(t *testing.T, msg string) {
 		err := errors.New(msg)

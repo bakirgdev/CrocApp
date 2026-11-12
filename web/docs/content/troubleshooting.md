@@ -23,6 +23,10 @@ If a transfer says "Couldn't reach the relay" or "The relay rejected its passwor
 
 A receiver that starts first waits up to 5 seconds for the sender. A send started in that time goes through. After that the receive fails with "The other device wasn't ready" and "Start the send there first, or use a faster connection, then enter the code again." This hits custom codes, and the croc command line sending with a fixed code. Start the send first, then the receive.
 
+## This text is too long
+
+CrocApp receives text up to 1 MB, the limit croc itself sets. A longer text from another device, for example the croc command line with `--text`, fails with "This text is too long" before anything is sent. Ask the sender to save it to a file and send the file. On the sending device it looks like a decline.
+
 ## Progress pauses on many small files
 
 When both devices run croc 11.6 or newer, four or more small files can travel together as one batch. croc does not report how far a batch has got, so CrocApp shows "A batch of small files" with no percent until the batch arrives, beside a spinner on iPhone and iPad and over a moving bar on Mac. The transfer is still running.

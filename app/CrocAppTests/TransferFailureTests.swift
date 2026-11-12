@@ -35,6 +35,7 @@ import Testing
         (.engineStuck, nil),
         (.joinedEarly, nil),
         (.portInUse, nil),
+        (.textTooLong, nil),
         (.invalidFileName, nil),
         (.other, .tryAgain),
     ]

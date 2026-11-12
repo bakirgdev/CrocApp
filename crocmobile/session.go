@@ -500,7 +500,9 @@ func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code st
 			n, err := cr.Read(buf)
 			if n > 0 {
 				s.stdoutM.Lock()
-				if len(s.stdoutBuf) < 10*1024*1024 { // cap: text snippets only
+				// croc refuses text over 1 MiB before it streams (textTooLong), so
+				// this cap only bounds memory if that check ever goes away.
+				if len(s.stdoutBuf) < 10*1024*1024 {
 					s.stdoutBuf = append(s.stdoutBuf, buf[:n]...)
 				}
 				s.stdoutM.Unlock()

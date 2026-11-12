@@ -200,6 +200,7 @@
     "CrocApp asks github.com for a newer version about once a day. It sends no system profile and no transfer data. Choose Check for Updates in the CrocApp menu to check once." : {},
     "CrocApp is already sending or receiving. Wait for it to finish." : {},
     "CrocApp lost access to the folder you chose, so files now save to Downloads/CrocApp. Choose a folder to change it." : {},
+    "CrocApp receives text up to 1 MB, so ask the other device to send it as a file." : {},
     "CrocApp will ask to use your camera (to scan QR codes) and your local network (for faster nearby transfers)." : {},
     "Current file progress" : {},
     "Custom code (optional)" : {},
@@ -625,6 +626,7 @@
     "This link no longer works" : {},
     "This relay has no password" : {},
     "This removes the list, not the files you received." : {},
+    "This text is too long" : {},
     "Those files aren't available anymore" : {},
     "Total %@ / %@" : {
       "comment" : "Total progress of a transfer: bytes done, then the total size. Both placeholders are file sizes such as 12 MB.",
