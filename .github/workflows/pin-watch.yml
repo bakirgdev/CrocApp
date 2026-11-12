@@ -97,7 +97,7 @@ jobs:
               `**Run:** ${runUrl}`,
               `**Commit:** \`${context.sha}\``,
               "",
-              "`scripts/pin-watch.sh` exited with something other than 0 (every pin current) or 10 (updates to report), so the \"Pinned versions to update\" issue was not synced.",
+              "The pin-watch job failed, so the \"Pinned versions to update\" issue may not be in step. Usually `scripts/pin-watch.sh` exited with something other than 0 (every pin current) or 10 (updates to report).",
               "",
               "### Next steps",
               "1. Open the run log above. A lookup that failed (a release API, a rate limit, a renamed runner label) is the usual cause.",
