@@ -199,6 +199,7 @@
     },
     "CrocApp asks github.com for a newer version about once a day. It sends no system profile and no transfer data. Choose Check for Updates in the CrocApp menu to check once." : {},
     "CrocApp is already sending or receiving. Wait for it to finish." : {},
+    "CrocApp lost access to the folder you chose, so files now save to Downloads/CrocApp. Choose a folder to change it." : {},
     "CrocApp will ask to use your camera (to scan QR codes) and your local network (for faster nearby transfers)." : {},
     "Current file progress" : {},
     "Custom code (optional)" : {},
@@ -701,6 +702,9 @@
     },
     "You declined the transfer" : {},
     "You stay in control" : {},
+    "Your receive folder was reset" : {
+      "comment" : "Settings banner: the chosen receive folder could no longer be opened."
+    },
     "Zip Folders Before Sending" : {},
     "^[%lld file](inflect: true)" : {},
     "^[%lld file](inflect: true) waiting to send" : {
