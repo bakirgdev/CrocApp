@@ -19,11 +19,13 @@ Open items left from the 1.1.0 release (`docs/README.md`, "Status").
   - Run by the owner with VoiceOver on the iPhone, iPad and Mac App Store builds, through Send, Receive and Settings: every button read by name. The macOS suspicion that `buttonVariant` buttons expose no name to VoiceOver (System Events showed none) did not reproduce.
   - Not looked at: the macOS layout of the changed views.
   - Not measured with Accessibility Inspector: the rendered size of the code field's system `PasteButton` against the 44 pt hit target. SwiftUI lets the app set only its border shape, label style and tint, so the system decides its size. A simulator screenshot suggests about 34 pt.
-  - Not run by ear: the two `PasteButton` names (**Paste code** and **Paste text**) and the Voice Control phrases for the **How It Works** button (`accessibilityInputLabels`).
+  - Run by the owner: Voice Control on the App Store builds works.
+  - Not run by ear: the two `PasteButton` names (**Paste code** and **Paste text**).
 - **A local Sparkle update test once hung after "Install and Relaunch".**
   - The test is in `RELEASING.md`, "Testing a Sparkle update locally". On the first launch of the `com.bakirgdev.CrocApp.direct` bundle ID on that Mac, the update downloaded and prepared. Then the app never terminated, its Quit menu item was ignored, and the installer kept waiting.
   - Later runs passed, some with Sparkle's first-launch defaults deleted, so first-launch state alone does not explain it. The cause is unknown.
   - If it recurs, watch `log stream` for `org.sparkle-project.Sparkle` and for the app's termination, and repeat the release rehearsal from a clean macOS account.
+  - Run by the owner for 1.2.0: an installed 1.1.1 disk image build offered the 1.2.0 update.
 
 ## Harnesses
 

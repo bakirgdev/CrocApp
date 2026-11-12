@@ -12,7 +12,7 @@ CrocApp has one maintainer. The maintainer makes the final call on everything: w
 | Known defect or papercut the project lives with | Same as above | The "Accepted" section of [`docs/known-issues.md`](docs/known-issues.md) |
 | Release | The maintainer | [`CHANGELOG.md`](CHANGELOG.md) (Keep a Changelog, [Semantic Versioning](https://semver.org/spec/v2.0.0.html)) |
 
-`main` requires a pull request and a passing `ci pass` check, and merging is squash-only. Admin bypass of those rules exists for the maintainer.
+`main` requires a pull request and a passing `ci pass` check on a branch that is up to date with `main`, and merging is squash-only. The rules apply to admins too, so the maintainer has no bypass.
 
 ## Disagreements
 
