@@ -678,7 +678,8 @@ private struct ReceivedFilesList: View {
 
     @State private var items: [ReceivedItem] = []
     @State private var preview: URL?
-    @State private var holdsScope = false
+    /// The folder whose security scope this list holds, so a new `folder` swaps scopes.
+    @State private var heldScope: URL?
     @ScaledMetric private var listMaxHeight = TransferStatusView.fileListMaxHeight
 
     var body: some View {
@@ -703,8 +704,9 @@ private struct ReceivedFilesList: View {
         }
         .quickLookPreview($preview, in: items.filter { !$0.isFolder }.map(\.url))
         .task(id: folder) {
-            if isScoped, !holdsScope {
-                holdsScope = folder.startAccessingSecurityScopedResource()
+            if heldScope != folder {
+                heldScope?.stopAccessingSecurityScopedResource()
+                heldScope = isScoped && folder.startAccessingSecurityScopedResource() ? folder : nil
             }
             let names = names
             let folder = folder
@@ -714,9 +716,8 @@ private struct ReceivedFilesList: View {
             }.value
         }
         .onDisappear {
-            guard holdsScope else { return }
-            folder.stopAccessingSecurityScopedResource()
-            holdsScope = false
+            heldScope?.stopAccessingSecurityScopedResource()
+            heldScope = nil
         }
     }
 }

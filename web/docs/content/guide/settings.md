@@ -14,7 +14,7 @@ Settings stay on the device. There is no sync and no account. Defaults suit most
 
 ## Receive and Menu bar (Mac)
 
-The **Receive** section shows **Save Received Files To**, with **Change…**, **Reset** and **Show in Finder**. On iOS, change the destination from the **Receive** screen instead.
+The **Receive** section shows **Save Received Files To**, with **Change…**, **Reset** and **Show in Finder**. If the folder you chose moves or its drive mounts again, CrocApp keeps it. If CrocApp can no longer open it at all, files go to Downloads/CrocApp and the section says your receive folder was reset. On iOS, change the destination from the **Receive** screen instead.
 
 The **Menu bar** section has **Show in Menu Bar** (on by default), **Show Progress in the Dock** (on by default) and **Open at Login** (off by default). **Show Progress in the Dock** puts the percent on the Dock icon while a transfer moves, and a badge while a request waits for you; it shows no names. **Open at Login** follows what macOS reports, so a change in System Settings > General > Login Items shows up here. If macOS needs your approval, an **Open Settings** button takes you to Login Items. See [Mac menu bar and keyboard shortcuts](menu-bar.md).
 

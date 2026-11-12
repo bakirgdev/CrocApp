@@ -40,6 +40,19 @@ struct SettingsView: View {
     private var general: some View {
         Form {
             Section("Receive") {
+                if outputFolder.bookmarkWasReset {
+                    StatusBanner(
+                        kind: .info,
+                        title: String(
+                            localized: "Your receive folder was reset",
+                            comment:
+                                "Settings banner: the chosen receive folder could no longer be opened."
+                        ),
+                        detail: String(
+                            localized:
+                                "CrocApp lost access to the folder you chose, so files now save to Downloads/CrocApp. Choose a folder to change it."
+                        ))
+                }
                 LabeledContent("Save Received Files To") {
                     HStack(spacing: Spacing.space3) {
                         Text(

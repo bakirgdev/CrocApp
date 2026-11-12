@@ -158,7 +158,7 @@ Permanent or deferred, each with its reason.
 - **Photos that fail to load are counted, not named.** The banner says how many items could not be added and suggests checking the connection, because the likeliest cause is a photo that lives in iCloud. The picker gives no reason per item.
 - **A staged copy outlives a crash until the next launch.** `SendStaging` sweeps its folder on the first Send screen of a launch. Anything a crash leaves behind uses disk space until then.
 - **The macOS focus-ring change on the Send screen is not verified by eye.** The paste target switches its ring off and back on for its children (`SendView.swift`, `SendPasteTarget`). Check the buttons still show a ring under keyboard navigation.
-- **`OutputFolderStore.select` silently does nothing if bookmarking fails.** It is rare, and the alternative is an error path for a condition the user cannot act on.
+- **`OutputFolderStore.select` shows nothing if bookmarking fails.** The folder stays unchanged and the error is logged (category `bookmark`). It is rare, and the alternative is an error path for a condition the user cannot act on.
 - **Receive list identity is by file name.** Duplicate names within one transfer are a croc-level concern, not a UI one.
 - **A name with an LRM, RLM or ALM mark blocks the whole transfer.**
   - `ReceivedName` blocks every Unicode bidi control, which includes the left-to-right, right-to-left and Arabic letter marks. Some Hebrew and Arabic names may contain them, and the transfer is then blocked (Accept disabled, or cancelled under auto-accept).

@@ -10,13 +10,13 @@ import Observation
 final class OutputFolderStore {
     private static let bookmarkKey = "outputFolderBookmark"
 
+    private let defaults: UserDefaults
     private(set) var url: URL
     private(set) var isUserSelected: Bool
-    /// True when a stored bookmark existed but failed to resolve (stale --
-    /// external drive remounted elsewhere, network share, iCloud) and the
-    /// store silently fell back to `defaultFolder`. Not surfaced in UI yet;
-    /// a future settings screen could use this to tell the user their
-    /// chosen folder reverted.
+    /// True when a stored bookmark existed but failed to resolve (the folder
+    /// was deleted, or its drive or share is gone) and the store fell back to
+    /// `defaultFolder`. Settings shows it for this launch only: the key is
+    /// cleared, so the next launch starts quietly on the default.
     private(set) var bookmarkWasReset = false
 
     static var defaultFolder: URL {
@@ -51,24 +51,35 @@ final class OutputFolderStore {
         #endif
     }
 
-    init() {
-        guard let data = UserDefaults.standard.data(forKey: Self.bookmarkKey) else {
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        guard let data = defaults.data(forKey: Self.bookmarkKey) else {
             url = Self.defaultFolder
             isUserSelected = false
             return
         }
-        if let resolved = SecurityScopedBookmark.resolve(data) {
+        if let (resolved, isStale) = SecurityScopedBookmark.resolve(data) {
             url = resolved
             isUserSelected = true
+            if isStale { refreshBookmark(for: resolved) }
         } else {
             // Dangling bookmark: clear the key so this fallback doesn't
             // silently repeat on every launch with stored state (isUserSelected)
             // disagreeing with what's actually on UserDefaults.
-            UserDefaults.standard.removeObject(forKey: Self.bookmarkKey)
+            defaults.removeObject(forKey: Self.bookmarkKey)
             url = Self.defaultFolder
             isUserSelected = false
             bookmarkWasReset = true
         }
+    }
+
+    /// A stale bookmark still resolved; a new one from the resolved URL stops it
+    /// going stale for good. If that fails the old one is kept, as it still resolves.
+    private func refreshBookmark(for resolved: URL) {
+        let scoped = resolved.startAccessingSecurityScopedResource()
+        defer { if scoped { resolved.stopAccessingSecurityScopedResource() } }
+        guard let data = SecurityScopedBookmark.create(for: resolved) else { return }
+        defaults.set(data, forKey: Self.bookmarkKey)
     }
 
     func select(_ picked: URL) {
@@ -77,14 +88,14 @@ final class OutputFolderStore {
         // Silently no-ops on failure (accepted papercut, docs/known-issues.md):
         // rare, and the alternative is an error path the user cannot act on.
         guard let data = SecurityScopedBookmark.create(for: picked) else { return }
-        UserDefaults.standard.set(data, forKey: Self.bookmarkKey)
+        defaults.set(data, forKey: Self.bookmarkKey)
         url = picked
         isUserSelected = true
         bookmarkWasReset = false
     }
 
     func resetToDefault() {
-        UserDefaults.standard.removeObject(forKey: Self.bookmarkKey)
+        defaults.removeObject(forKey: Self.bookmarkKey)
         url = Self.defaultFolder
         isUserSelected = false
         bookmarkWasReset = false
