@@ -57,7 +57,7 @@ Every pin, and what updates it. Dependabot opens its PRs on Mondays, grouped per
 | Go toolchain | `go` line in `crocmobile/go.mod` | pin-watch |
 | Xcode | `.xcode-version` | pin-watch, against the newest stable Xcode on the `xcode-27` runner image (`../BUILDING.md`, "When the toolchain changes") |
 | Node | `web/docs/.nvmrc`, `engines` in `web/docs/package.json` | pin-watch (newest Node 26) |
-| pnpm | `packageManager` in `web/docs/package.json` | pin-watch |
+| pnpm | `packageManager` in `web/docs/package.json` | pin-watch; run `pnpm install` in `web/docs` too, because `pnpm-lock.yaml` records pnpm itself (`packageManagerDependencies`) and CI installs with a frozen lockfile |
 | croc v10 test peer | `scripts/croc-v10.version` | pin-watch |
 | golangci-lint | `version:` in `.github/workflows/reusable-go.yml` | pin-watch |
 | Runner labels (`ubuntu-26.04`, `macos-26`, `xcode-27`) | `runs-on:` in the workflows | pin-watch, against the `actions/runner-images` toolsets |
