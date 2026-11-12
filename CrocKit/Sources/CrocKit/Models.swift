@@ -237,6 +237,8 @@ public struct EngineFailure: Error, Equatable, Sendable {
         case joinedEarly
         /// Hosting a relay: a port it needs is taken.
         case portInUse
+        /// Receiving: the sender offered text over croc's 1 MiB limit, and croc refused it.
+        case textTooLong
         /// A path to send has a line break in its name. Set by `CrocEngine`, never by the engine (the Go side would split the list on it).
         case invalidFileName
     }

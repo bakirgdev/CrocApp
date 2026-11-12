@@ -99,7 +99,7 @@ Key types:
 Errors:
 
 - `OnError` receives JSON `{"code","message"}`. `StartSend` and `StartReceive` return the same JSON as their error text, because gobind gives Swift only the text.
-- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.6.4 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `other`.
+- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.6.4 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `textTooLong`, `other`.
 - The app picks its wording from the code and never reads croc's text.
 
 Network settings:

@@ -36,6 +36,7 @@ const (
 	codeEngineStuck      = "engineStuck"      // a cancelled transfer never returned from croc; only a relaunch frees the engine
 	codeJoinedEarly      = "joinedEarly"      // this receiver joined the room before the sender (croc's local-probe race)
 	codePortInUse        = "portInUse"        // relay host: a port it needs is taken
+	codeTextTooLong      = "textTooLong"      // receiver: croc refused a text over its 1 MiB limit
 	codeOther            = "other"
 )
 
@@ -91,6 +92,10 @@ func classify(err error) string {
 	switch {
 	case strings.Contains(m, "unsupported pake protocol version"):
 		return codePeerVersion
+	// croc's receiver refuses a text offer over maxTextTransferBytes before any
+	// byte streams (validateSendingTextOffer); the sender then sees "refusing files".
+	case strings.Contains(m, "text transfer size must be between"):
+		return codeTextTooLong
 	case strings.Contains(m, "refusing files"):
 		return codeDeclined
 	case strings.Contains(m, "refused files"):

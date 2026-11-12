@@ -59,7 +59,7 @@ Rules that follow from the payloads:
 
 `OnError` receives `{"code","message"}` JSON (`crocmobile/errors.go`). `StartSend` and `StartReceive` errors carry the same JSON as their text, because gobind exposes only the text (as `NSError.localizedDescription`). CrocKit decodes both into `EngineFailure`.
 
-- `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `other`.
+- `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `textTooLong`, `other`.
 - `portInUse` is raised only by `StartRelay`, for a taken port. A transfer never reports it.
 - An unknown code, or a payload that is not JSON, decodes as `other` with the raw text.
 - `message` is croc's text and is for logs only. The UI maps wording from the code.
@@ -80,6 +80,7 @@ How `classify` picks a code:
 | `relayUnreachable` | `croc.ErrRelayConnection`, `croc.ErrDERPConnection`, `tcp.ErrAdmissionLimited`, rate limiting, dial and DNS failures |
 | `connectionLost` | unexpected EOF, reset, broken pipe, `transfer disconnected` |
 | `joinedEarly` | text `local discovery failed` with `i/o timeout`: a receiver that waited 5 s for the sender (see "Start order: sender first"). It is matched before the plain `i/o timeout` of `relayUnreachable` |
+| `textTooLong` | receiver only: croc's `text transfer size must be between 1 byte and 1 MiB` (`validateSendingTextOffer`, limit `maxTextTransferBytes`). The sender's croc reports `refusing files`, so it shows `declined` |
 | `portInUse` | `StartRelay` only: a relay port is taken (`syscall.EADDRINUSE` on bind), set directly by `listenError` |
 | `noPublicRelay` | this package's own `codedError`, raised by `generatePublicCode`. A start cancelled during the probe reports `cancelled` instead |
 | `transferActive` | this package's own `codedError`: a start while another transfer holds `activeMu`. CrocKit throws `CrocEngineError.transferActive` for it |

@@ -308,6 +308,16 @@ extension TransferFailure {
                         "Start the send there first, or use a faster connection, then enter the code again."
                 ),
                 remedy: nil)
+        case .textTooLong:
+            // croc's own limit is 1 MiB (maxTextTransferBytes); the sender's
+            // croc reports a decline, so only this side can say why.
+            return TransferFailure(
+                title: String(localized: "This text is too long"),
+                detail: String(
+                    localized:
+                        "CrocApp receives text up to 1 MB, so ask the other device to send it as a file."
+                ),
+                remedy: nil)
         case .invalidFileName:
             return TransferFailure(
                 title: String(localized: "A file name can't be sent"),

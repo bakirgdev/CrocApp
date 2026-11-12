@@ -17,6 +17,7 @@ extra sections where a release needs them, and the project follows
 - A share that arrives while a transfer is running is kept and offered in the **Shared Files** sheet once the transfer ends, instead of being dropped. If the sheet is already open, **Send** is off until then.
 - The copies CrocApp keeps of shared files are deleted once they are sent, rather than an hour later.
 - On a Mac, a receive folder you chose is kept when it is moved or its drive mounts again, instead of quietly going back to Downloads/CrocApp. If CrocApp can no longer open it at all, **Settings** now says the folder was reset.
+- Receiving a text longer than 1 MB now says **This text is too long** and suggests sending it as a file, instead of a general failure that suggested trying again.
 
 ### Security
 
