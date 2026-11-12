@@ -61,6 +61,14 @@ button {
   display: none !important;
 }
 
+/* With scripts on (theme-init.js sets data-js), the toggle keeps its slot until
+   app.js unhides it: unhiding it after an early paint pushed the nav controls
+   52px left. With scripts off it stays out of the layout. */
+:root[data-js] .icon-btn[hidden] {
+  display: inline-flex !important;
+  visibility: hidden;
+}
+
 /* The 1px clip box is the one literal the reset allows; it is repeated in the
    < 30rem nav rule, because a media query cannot borrow a class. The skip link
    uses the same pattern until it takes focus. */
@@ -642,6 +650,9 @@ html {
   justify-content: center;
   align-items: center;
   gap: var(--space-5);
+  /* Auto margins make a grid item shrink to fit, and until the images load that
+     is about 50px wide: the whole hero shifts when they do. */
+  width: 100%;
   max-width: var(--content-max-width-prose-web);
   margin: 0;
   margin-inline: auto;
