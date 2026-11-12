@@ -45,7 +45,7 @@ The build settings that must not change casually (Swift 6 mode, deployment targe
 
 ## Keeping versions current
 
-Every pin, and what updates it. Dependabot opens its PRs on Mondays, grouped per ecosystem; the weekly pin-watch workflow (`.github/workflows/pin-watch.yml`, running `scripts/pin-watch.sh`) checks the rest and keeps one issue, "Pinned versions to update", open while any of them differs from the newest stable release.
+Every pin, and what updates it. Dependabot opens its PRs on Mondays, grouped per ecosystem; the weekly pin-watch workflow (`.github/workflows/pin-watch.yml`, running `scripts/pin-watch.sh`) checks the rest and keeps one issue, "Pinned versions to update", open while any of them differs from the newest stable release. If the script fails (an exit other than 0 or 10), a `report` job files or comments on a "Weekly pin watch failed" issue instead, as `go-weekly.yml` does.
 
 | Pin | Where | Updated by |
 |---|---|---|
