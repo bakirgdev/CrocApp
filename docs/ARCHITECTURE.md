@@ -163,7 +163,7 @@ Folder: `app/CrocApp/Views/`.
 
 - `ContentView` picks the layout from the horizontal size class. Compact width shows `HomeView`, which owns the one `NavigationStack`. Regular width shows `RegularLayout`, a `NavigationSplitView` whose detail has one `NavigationStack` per sidebar row. Both use value-based `AppRouter.Route` links and the one `AppRouter.path` (`docs/knowledge/app-ui-architecture.md`, "Layout by width").
 - `SendView` and `ReceiveView` show an input form when `controller.isActive` is false, otherwise `TransferStatusView`.
-- `TransferStatusView` draws every non-idle `Phase`. `IncomingRequestView` (same file) is the accept screen.
+- `TransferStatusView` draws every non-idle `Phase`. `IncomingRequestView` (its own file, like `StoredLinkView` and `ReceivedFilesList`) is the accept screen.
 - `SettingsScreen` (iOS, a route) and `SettingsView` (macOS `Settings` scene) both embed `PowerSettingsSections`.
 - Others: `HistoryView`, `HowItWorksView`, `OnboardingView`, `StagedFilesSheet`, `QRCodeView`, `QRScannerView`, `TrustBadge`.
 - `Models/TransferLink.swift` is the one parser for every way a link or code arrives: a bare code, a stored-transfer link, `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>`, `https://getcroc.com/?code=`.
