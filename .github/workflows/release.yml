@@ -15,6 +15,46 @@ permissions:
   contents: read
 
 jobs:
+  # A tag releases only a commit that is on main and passed CI there, so a
+  # tag pushed on a branch, or ahead of main's CI, signs nothing.
+  gate:
+    name: gate
+
+    runs-on: ubuntu-26.04
+
+    timeout-minutes: 5
+
+    permissions:
+      contents: read # compares the tagged commit with main
+      checks: read # reads its ci pass check run
+
+    steps:
+      - name: Require a commit on main with a green ci pass
+        env:
+          EVENT: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" != "push" ]; then
+            echo "Rehearsal: publishes nothing, so no gate."
+            exit 0
+          fi
+
+          # "behind" or "identical": main contains the commit.
+          status=$(gh api "repos/$GH_REPO/compare/main...$SHA" --jq .status)
+          case "$status" in
+            behind | identical) ;;
+            *) echo "error: $SHA is not on main (compare status: $status). Tag the squashed commit on main."; exit 1 ;;
+          esac
+
+          passed=$(gh api "repos/$GH_REPO/commits/$SHA/check-runs?check_name=ci%20pass" \
+            --jq '[.check_runs[] | select(.conclusion == "success")] | length')
+          if [ "$passed" = "0" ]; then
+            echo "error: $SHA has no successful 'ci pass' check run. Wait for main's CI to pass, then re-run this workflow."
+            exit 1
+          fi
+
   swift-format:
     uses: ./.github/workflows/reusable-swift-format.yml
 
@@ -24,7 +64,7 @@ jobs:
   build:
     name: build
 
-    needs: [swift-format, go]
+    needs: [gate, swift-format, go]
 
     runs-on: xcode-27
 
