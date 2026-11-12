@@ -49,7 +49,7 @@ Every landing page links `site.webmanifest`, the 96px PNG, `favicon.ico` and the
 
 ## Performance checks
 
-Lighthouse is `npx lighthouse` (13.6.0 when last run, the chrome-devtools MCP tool omits performance) against the output of `scripts/assemble-site.sh` served locally, mobile (the default preset) and `--preset=desktop`. `python3 -m http.server` sends no compression, which drags mobile scores down (landing 80, docs home 70); GitHub Pages compresses, so serve through a gzip server for numbers that mean anything. The landing page's intermittent mobile 81 comes from a layout shift before first paint. It was found by repeating the run 6 to 8 times and reading `LayoutShift` events from the saved trace (`--save-assets`); see `known-issues.md`, "Landing page".
+Lighthouse is `npx lighthouse` (13.6.0 when last run, the chrome-devtools MCP tool omits performance) against the output of `scripts/assemble-site.sh` served locally, mobile (the default preset) and `--preset=desktop`. `python3 -m http.server` sends no compression, which drags mobile scores down (landing 80, docs home 70); GitHub Pages compresses, so serve through a gzip server for numbers that mean anything. A layout shift that shows only in some runs is found by repeating the run 6 to 8 times and reading `LayoutShift` events from the saved trace (`--save-assets`). That is how the hero's 0.39 shift was traced: `.hero__mockup` is a grid item with auto inline margins, so without `width: 100%` it shrink-wraps to about 50 px until its images load. The theme toggle keeps its slot while hidden (`:root[data-js] .icon-btn[hidden]`, with `data-js` set by `theme-init.js`), so `app.js` unhiding it does not move the nav.
 
 ## security.txt
 
