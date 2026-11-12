@@ -37,14 +37,14 @@ func defaultOptions() -> EngineOptions {
 
 /// Drains a transfer's event stream to completion, printing EVENT lines.
 /// Returns true iff the transfer reached `.done(success: true)`.
-func drive(_ stream: AsyncStream<TransferEvent>, answer: Bool) async -> Bool {
-    for await event in stream {
+func drive(_ transfer: EngineTransfer, answer: Bool) async -> Bool {
+    for await event in transfer.events {
         switch event {
         case .codeReady(let code): print("EVENT code \(code)")
         case .connected: print("EVENT connected")
         case .fileList(let list):
             print("EVENT filelist files=\(list.files.count) total=\(list.totalSize)")
-            await engine.respond(accept: answer, policy: .keepBoth)
+            await engine.respond(transfer.id, accept: answer, policy: .keepBoth)
             print("EVENT responded \(answer ? "y" : "n")")
         case .progress(let p):
             print("EVENT progress \(p.step) \(p.fileSent)/\(p.fileSize)")
@@ -72,7 +72,7 @@ func receiveToCompletion(code: String, options: EngineOptions) async -> Bool {
         print("EVENT error \(error)")
         return false
     }
-    return await drive(transfer.events, answer: true)
+    return await drive(transfer, answer: true)
 }
 
 func run() async {
@@ -83,7 +83,7 @@ func run() async {
             options.customCode = args[2]
             let transfer = try await engine.startSend(
                 paths: [args[3]], text: nil, options: options)
-            let ok = await drive(transfer.events, answer: true)
+            let ok = await drive(transfer, answer: true)
             exit(ok ? 0 : 1)
         case "receive":
             var options = defaultOptions()
@@ -97,7 +97,7 @@ func run() async {
                     await engine.cancel(transfer.id)
                 }
             }
-            let ok = await drive(transfer.events, answer: answer)
+            let ok = await drive(transfer, answer: answer)
             exit(ok ? 0 : 1)
         case "twice":
             guard args.count >= 5 else { exit(2) }

@@ -99,7 +99,7 @@ public struct EngineOptions: Sendable {
     public var onlyLocal = false
     public var autoAccept = false
     /// Receive: applies as is under `autoAccept`; otherwise
-    /// `respond(accept:policy:)` replaces it.
+    /// `respond(_:accept:policy:)` replaces it.
     public var whenFileExists = FilePolicy.keepBoth
     public var noCompress = false
     public var zipFolder = false
@@ -110,7 +110,7 @@ public struct EngineOptions: Sendable {
     /// file's name (croc --exclude-file). Unlike `exclude`, no substring match.
     public var excludePaths: [String] = []
     /// Both-sides confirm (croc --ask). Sender prompt is bridged via the
-    /// stdin pipe; respond(accept:policy:) answers it.
+    /// stdin pipe; respond(_:accept:policy:) answers it.
     public var ask = false
 
     // Advanced options. The defaults are croc's own (`EngineOptionsDefaultsTests`

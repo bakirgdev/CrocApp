@@ -129,7 +129,7 @@ Gobind naming: the xcframework's module is `Croc` (`import Croc`). Go symbols ge
   - Holds the one active `CrocmobileTransfer` (`activeTransfer`).
   - `startSend` and `startReceive` return an `EngineTransfer` with an `id: TransferID` and `events: AsyncStream<TransferEvent>`.
   - `startStoreSend`, `startStoreReceive` and `revokeStored` do the same for stored transfers.
-  - `respond(accept:policy:)` answers the accept prompt.
+  - `respond(_:accept:policy:)` answers the accept prompt of the transfer with that ID. Like `cancel(_:)`, it ignores a stale ID, so a late answer cannot reach the next transfer (a stored receive's preview included).
   - `cancel(_ id: TransferID)` ignores a stale ID, so a late cancel cannot reach the next transfer.
   - `crocOptions(from:)` maps Swift `EngineOptions` to `CrocmobileOptions`. It is the list of settings the app can reach. A Go option not copied there is unused by the app.
   - `CrocEngineError` is `.transferActive` or `.startFailed(EngineFailure)`. Go's own `transferActive` code is thrown as `.transferActive` too.

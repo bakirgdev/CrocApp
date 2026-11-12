@@ -197,10 +197,11 @@ import Testing
         try await deliver(.progress(Self.progress()))
         #expect(controller.phase.name == "confirmSend", "a tick must not clobber the prompt")
 
+        let id = try #require(await engine.transferIDs.last)
         controller.respond(accept: true)
         #expect(controller.phase.name == "connecting")
         try await waitUntil("the engine to get the answer") { await engine.responses.count == 1 }
-        #expect(await engine.responses == [.init(accept: true, policy: .keepBoth)])
+        #expect(await engine.responses == [.init(id: id, accept: true, policy: .keepBoth)])
         await engine.finish()
     }
 
@@ -246,9 +247,10 @@ import Testing
         try await deliver(.progress(Self.progress()))
         #expect(controller.phase.name == "incoming", "a tick must not clobber the prompt")
 
+        let id = try #require(await engine.transferIDs.last)
         controller.respond(accept: false)
         try await waitUntil("the engine to get the answer") { await engine.responses.count == 1 }
-        #expect(await engine.responses == [.init(accept: false, policy: .keepBoth)])
+        #expect(await engine.responses == [.init(id: id, accept: false, policy: .keepBoth)])
         #expect(controller.phase.name == "incoming", "the stream, not the tap, ends a decline")
 
         try await deliver(.failed(EngineFailure(code: .refused, message: "refused files")))

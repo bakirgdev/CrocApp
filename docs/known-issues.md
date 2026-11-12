@@ -101,6 +101,7 @@ Open items left from the 1.1.0 release (`docs/README.md`, "Status").
   - `packageManager` in `web/docs/package.json` has no `+sha512` hash. `github-pages.yml` installs pnpm with `pnpm/action-setup`, so pnpm is pinned by version only.
   - The four `overrides` in `web/docs/pnpm-workspace.yaml` are open-ended `>=` floors.
   - `pnpm audit` no longer lists `braces@3.0.3` (see "Accepted"), and reports one Low advisory with no fix: `deepmerge` <= 4.3.1 (GHSA-gcqx-w48m-w2h4, prototype poisoning), reached through `@svgr/plugin-svgo` at build time over our own SVG config.
+  - Any Dependabot alert for `deepmerge` is dismissed as a tolerable risk for that reason. Revisit it when a patched release exists.
   - Re-run the audit on each Docusaurus upgrade.
 
 ## Accepted
@@ -243,9 +244,13 @@ Permanent or deferred, each with its reason.
   - croc's relay dial race (`raceRelayTCPWithDialer`, `src/croc/relay_dial.go`) returns on a cancel without waiting for its dial goroutine. That goroutine can still read the globals `setNetworkGlobals` set (`network.go`) while this transfer's restore, or the next transfer's setup, writes them.
   - `go test -race` reported it for a receive cancelled during its relay dial. The read happens in a dial that is already cancelled, but a torn read of a Go string can in principle crash the process. Not seen outside the race detector.
   - A fix needs croc to take these settings per client instead of as package globals.
-- **`poll()` reads `croc.Client` scalar and slice fields with no synchronization** (croc's own goroutines write them unguarded).
-  - The worst case is a briefly wrong progress number. It is bounds-checked (`progressSnapshot` in `session.go`), so it cannot panic.
-  - A real fix needs upstream locking.
+- **`poll()` reads `croc.Client` fields with no synchronization** (croc's own goroutines write them unguarded).
+  - `go test -race` reports it on a multi-file receive slow enough for `poll` to tick during it: `fileListJSON` and `progressSnapshot` (`session.go`) read `FilesToTransfer`, its names and sizes, `FilesToTransferCurrentNum` and `TotalSent` while croc's `processSenderInfo`, `restoreBundleDestinations` and bundle code write them (croc v11.6.4). `TestStartRelayServesCrocClients` hits it now and then, so a `-race` run can fail on it.
+  - Indexes are bounds-checked, so a stale count cannot panic. A torn read of a name or of the slice header itself could in principle show a wrong name or crash the process. Not seen outside the race detector.
+  - croc v11.6.4 exports no lock, accessor or progress callback, and no lock of its own covers those writes, so crocmobile cannot read them safely. The file list the incoming sheet needs exists only there. A fix needs croc to publish a synchronized snapshot.
+- **croc itself has data races that `go test -race` reports through crocmobile.**
+  - The sender resets `TotalSent` for each new file without `c.mutex` while a chunk goroutine of the previous file still adds to it under `c.mutex` (`croc.go`, croc v11.6.4).
+  - After a cancel at a prompt, croc's abandoned prompt-read goroutine and `drainPromptInput` both use croc's one shared `stdinReader` (`src/utils/utils.go`) with no synchronization. Both end on the closed pipe's EOF, and in 50 runs the next session's answer always reached its own prompt, so no answer is lost. Not fixable from crocmobile, because `drainPromptInput` has to read through that reader.
 - **A generated-code send with no internet or no reachable pool relay fails before a code is shown.**
   - With default settings, no pool relay answers the 1 s probe (`generatePublicCode` in `crocmobile/relay.go`), so the send fails with code `noPublicRelay` (croc's `no public relay available`, the same as the v11 CLI).
   - A "draw a code anyway and let a LAN peer join" fallback does not work: after the relay dial fails, croc waits for a LAN peer for only 10 s (`defaultAlternateSenderRouteTimeout`, unexported), and a `croctest send -relay 127.0.0.1:1` with no receiver printed its code and failed about 11 s later.
