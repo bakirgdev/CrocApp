@@ -79,11 +79,11 @@ GROUP_DIR=$(xcrun simctl get_app_container "$SIM" "$BUNDLE" groups | awk -v g="$
 rm -rf "$GROUP_DIR/ShareInbox"
 
 # Stage a batch the way CrocShare's ShareStager does: batch dir, payload, then
-# manifest.json written last.
+# the batch's manifest.json written last.
 BATCH="batch-$(uuidgen)"
 mkdir -p "$GROUP_DIR/ShareInbox/$BATCH"
 head -c 1048576 /dev/urandom > "$GROUP_DIR/ShareInbox/$BATCH/payload.bin"
-printf '{"batch":"%s","files":["payload.bin"]}\n' "$BATCH" > "$GROUP_DIR/ShareInbox/manifest.json"
+printf '{"files":["payload.bin"]}\n' > "$GROUP_DIR/ShareInbox/$BATCH/manifest.json"
 
 mark_relay
 launch --auto-share-send "$C"

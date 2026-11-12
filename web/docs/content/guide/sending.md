@@ -52,6 +52,7 @@ You cannot start a second send or receive while one is running. Finish or cancel
 
 - **Finder's Share menu (Mac).** Select files or folders in Finder, choose **Share**, then **CrocApp**. CrocApp opens with the **Shared Files** sheet, where **Send** starts the transfer and **Discard** drops them. If CrocApp is not in the Share menu, turn it on in System Settings, Extensions, Sharing (or **More…** in the Share menu).
 - **Share sheet (iOS).** Share files into CrocApp from any app. A **Shared Files** sheet lists what arrived, with **Discard** and **Send**.
+- **More than one share.** If you share again before CrocApp opens the first, each share waits its turn in the **Shared Files** sheet. While a transfer runs, **Send** in the sheet is off until it ends. CrocApp deletes its copies of shared files once they are sent, or at once when you choose **Discard**.
 - **Shared text and links.** Share selected text or a web link to CrocApp from any app (iOS, or the Share menu on a Mac). CrocApp opens the Send screen with it as text, and nothing is sent until you press **Send**. A link is sent as its full address. Text is limited to 1 MiB. If a share has both files and text, only the files are kept.
 - **Mac menu bar.** Send without opening the main window. See [Mac menu bar and keyboard shortcuts](menu-bar.md).
 - **Shortcuts and Siri.** See [Shortcuts and Siri](shortcuts.md).

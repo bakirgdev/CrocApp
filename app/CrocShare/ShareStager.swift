@@ -26,7 +26,7 @@ enum ShareStager {
             throw ShareStagerError.noAppGroup
         }
         // Never wipe the inbox here: a prior batch may be mid-send, with croc
-        // actively reading its files. The main app's purgeStaleBatches()
+        // actively reading its files. The main app's purgeAndListPending()
         // sweeps orphaned batches once it's idle.
         let batchName = ShareHandoff.makeBatchName()
         let batchDir = inbox.appendingPathComponent(batchName, isDirectory: true)
@@ -43,17 +43,15 @@ enum ShareStager {
                 }
             }
         }
-        // Files win over text in a mixed share: a batch is either files or
-        // text, and the files are the heavier thing to lose.
-        let text = names.isEmpty ? ShareHandoff.joinText(texts) : nil
+        let text = ShareHandoff.batchText(fileCount: names.count, texts: texts)
         guard !names.isEmpty || text != nil else { throw ShareStagerError.nothingUsable }
         if let text, text.utf8.count > ShareHandoff.maxTextBytes {
             throw ShareStagerError.textTooLong
         }
 
-        let manifest = ShareHandoff.Manifest(batch: batchName, files: names, text: text)
+        let manifest = ShareHandoff.Manifest(files: names, text: text)
         let data = try JSONEncoder().encode(manifest)
-        try data.write(to: ShareHandoff.manifestURL(in: inbox), options: .atomic)
+        try data.write(to: ShareHandoff.manifestURL(inBatch: batchDir), options: .atomic)
         return manifest
     }
 
@@ -124,21 +122,20 @@ enum ShareStager {
         return try copy(url, into: dir, taken: taken)
     }
 
-    // shortcut: a same-volume source is assumed to clone, which only APFS does.
-    // Check the space there too if a non-APFS volume ever matters.
     nonisolated private static func checkSpace(for url: URL, in dir: URL) throws {
         let source = try url.resourceValues(forKeys: [.volumeIdentifierKey])
         let target = try dir.resourceValues(forKeys: [
             .volumeIdentifierKey, .volumeAvailableCapacityForImportantUsageKey,
         ])
-        if let a = source.volumeIdentifier, let b = target.volumeIdentifier, a.isEqual(b) {
-            return
+        var sameVolume = false
+        if let a = source.volumeIdentifier, let b = target.volumeIdentifier {
+            sameVolume = a.isEqual(b)
         }
-        if let free = target.volumeAvailableCapacityForImportantUsage,
-            FileSize.bytes(of: url) > free
-        {
-            throw ShareStagerError.notEnoughSpace
-        }
+        guard
+            ShareHandoff.copyFits(
+                sameVolume: sameVolume, free: target.volumeAvailableCapacityForImportantUsage,
+                needed: { FileSize.bytes(of: url) })
+        else { throw ShareStagerError.notEnoughSpace }
     }
     #else
     private static let sourceType = UTType.data
@@ -164,17 +161,9 @@ enum ShareStager {
     nonisolated private static func copy(_ url: URL, into dir: URL, taken: [String]) throws
         -> String
     {
-        // The app drops a name `ReceivedName` rejects when it reads
-        // the manifest, so stage such a file under a safe name instead.
-        var name = url.lastPathComponent
-        if name.hasPrefix(".") || ReceivedName.isUnsafe(name) { name = "shared-file" }
-        var candidate = name
-        var counter = 2
-        while taken.contains(candidate)
-            || FileManager.default.fileExists(atPath: dir.appendingPathComponent(candidate).path)
-        {
-            candidate = "\(counter)-\(name)"
-            counter += 1
+        let candidate = ShareHandoff.stagedName(for: url.lastPathComponent) {
+            taken.contains($0)
+                || FileManager.default.fileExists(atPath: dir.appendingPathComponent($0).path)
         }
         try FileManager.default.copyItem(at: url, to: dir.appendingPathComponent(candidate))
         return candidate

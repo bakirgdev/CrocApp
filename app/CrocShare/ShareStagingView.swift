@@ -41,7 +41,7 @@ struct ShareStagingView: View {
                 .toolbar {
                     // Same as the macOS Cancel: ending the extension ends an
                     // in-flight copy, and the app sweeps the partial batch later
-                    // (`ShareInbox.purgeStaleBatches`).
+                    // (`ShareInbox.purgeAndListPending`).
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel", role: .cancel) { cancel(CocoaError(.userCancelled)) }
                     }
