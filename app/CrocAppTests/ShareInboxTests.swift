@@ -32,13 +32,59 @@ import Testing
     }
 }
 
-/// The manifest is data read out of the App Group container, so `ShareInbox`
-/// treats it as untrusted. Each test works in a temp directory standing in for
-/// the container's inbox.
+/// The extension's decisions, which live in `ShareHandoff` because tests
+/// cannot import the extension target.
+@Suite struct ShareStagingRulesTests {
+    @Test func aFreeNameStaysAsIs() {
+        #expect(ShareHandoff.stagedName(for: "report.pdf") { _ in false } == "report.pdf")
+    }
+
+    @Test func aTakenNameGetsTheNextFreePrefix() {
+        let taken: Set = ["a.txt", "2-a.txt"]
+        #expect(ShareHandoff.stagedName(for: "a.txt") { taken.contains($0) } == "3-a.txt")
+    }
+
+    @Test func theManifestNameIsNeverUsedForAFile() {
+        let name = ShareHandoff.stagedName(for: ShareHandoff.manifestName) { _ in false }
+        #expect(name == "2-" + ShareHandoff.manifestName)
+    }
+
+    @Test(arguments: [".hidden", "../escape.txt", "invoice\u{202E}fdp.exe", "line\u{2028}break"])
+    func anUnusableNameBecomesSharedFile(name: String) {
+        #expect(ShareHandoff.stagedName(for: name) { _ in false } == "shared-file")
+        #expect(ShareHandoff.stagedName(for: name) { $0 == "shared-file" } == "2-shared-file")
+    }
+
+    @Test func filesTakePrecedenceOverText() {
+        #expect(ShareHandoff.batchText(fileCount: 1, texts: ["hello"]) == nil)
+        #expect(
+            ShareHandoff.batchText(fileCount: 0, texts: ["hello", " ", "https://a.b"])
+                == "hello\nhttps://a.b")
+        #expect(ShareHandoff.batchText(fileCount: 0, texts: [" "]) == nil)
+    }
+
+    @Test func theSpaceCheckMeasuresOnlyACrossVolumeCopy() {
+        var measured = false
+        #expect(
+            ShareHandoff.copyFits(sameVolume: true, free: 0) {
+                measured = true
+                return 1
+            })
+        #expect(!measured, "a same-volume copy clones, so the folder is never walked")
+        #expect(ShareHandoff.copyFits(sameVolume: false, free: 10) { 10 })
+        #expect(!ShareHandoff.copyFits(sameVolume: false, free: 10) { 11 })
+        #expect(
+            ShareHandoff.copyFits(sameVolume: false, free: nil) { 11 }, "unknown space never blocks"
+        )
+    }
+}
+
+/// The inbox is in the App Group container, so `ShareInbox` treats what it
+/// finds there as untrusted. Each test works in a temp directory standing in
+/// for the container's inbox.
 @MainActor
 @Suite struct ShareInboxTests {
-    /// `root` holds `inbox` plus anything a hostile batch name could reach
-    /// from it.
+    /// `root` holds `inbox` plus anything a hostile name could reach from it.
     private struct Sandbox {
         let root: URL
         let inbox: URL
@@ -52,9 +98,25 @@ import Testing
         return Sandbox(root: root, inbox: inbox)
     }
 
-    private func writeManifest(batch: String, files: [String], in inbox: URL) throws {
-        let data = try JSONEncoder().encode(ShareHandoff.Manifest(batch: batch, files: files))
-        try data.write(to: ShareHandoff.manifestURL(in: inbox))
+    /// A batch as the extension leaves it: its files, then its manifest.
+    /// `age` back-dates its creation, which orders batches and drives the purge.
+    @discardableResult
+    private func stageBatch(
+        _ files: [String], present: [String]? = nil, text: String? = nil,
+        named name: String = ShareHandoff.makeBatchName(), age: TimeInterval = 0, in inbox: URL
+    ) throws -> URL {
+        let dir = inbox.appendingPathComponent(name, isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        for file in present ?? files { try touch(dir.appendingPathComponent(file)) }
+        let data = try JSONEncoder().encode(ShareHandoff.Manifest(files: files, text: text))
+        try data.write(to: ShareHandoff.manifestURL(inBatch: dir))
+        try backdate(dir, by: age)
+        return dir
+    }
+
+    private func backdate(_ url: URL, by age: TimeInterval) throws {
+        try FileManager.default.setAttributes(
+            [.creationDate: Date.now.addingTimeInterval(-age)], ofItemAtPath: url.path)
     }
 
     private func touch(_ url: URL) throws {
@@ -67,38 +129,41 @@ import Testing
         FileManager.default.fileExists(atPath: url.path)
     }
 
+    /// An inbox whose purge sees every batch as older than the grace period.
+    private func lateInbox() -> ShareInbox {
+        let inbox = ShareInbox()
+        inbox.now = { .now.addingTimeInterval(2 * ShareInbox.stagingGrace) }
+        return inbox
+    }
+
     @Test func stagesTheFilesOfAValidBatch() throws {
         let box = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: box.root) }
-        let batch = ShareHandoff.makeBatchName()
-        let batchDir = box.inbox.appendingPathComponent(batch, isDirectory: true)
-        try touch(batchDir.appendingPathComponent("a.txt"))
-        try touch(batchDir.appendingPathComponent("b.txt"))
-        try writeManifest(batch: batch, files: ["a.txt", "b.txt", "missing.txt"], in: box.inbox)
+        let dir = try stageBatch(
+            ["a.txt", "b.txt", "missing.txt"], present: ["a.txt", "b.txt"], in: box.inbox)
 
         let inbox = ShareInbox()
         inbox.refresh(in: box.inbox)
 
+        #expect(inbox.batch == dir.lastPathComponent)
         #expect(inbox.staged.map(\.lastPathComponent) == ["a.txt", "b.txt"])
-        #expect(inbox.staged.allSatisfy { $0.deletingLastPathComponent().path == batchDir.path })
+        #expect(inbox.staged.allSatisfy { $0.deletingLastPathComponent().path == dir.path })
     }
 
     @Test func anUnsafeNameDropsOnlyThatName() throws {
         let box = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: box.root) }
-        let batch = ShareHandoff.makeBatchName()
-        let batchDir = box.inbox.appendingPathComponent(batch, isDirectory: true)
         let unsafe = [
             "../escape.txt", "invoice\u{202E}fdp.exe", "line\u{2028}break.txt", "a\\b.txt",
             "/abs.txt",
         ]
-        try touch(batchDir.appendingPathComponent("ok.txt"))
         // The names that can exist on disk do, so only the name check can be
         // what drops them.
         try touch(box.inbox.appendingPathComponent("escape.txt"))
-        try touch(batchDir.appendingPathComponent("invoice\u{202E}fdp.exe"))
-        try touch(batchDir.appendingPathComponent("line\u{2028}break.txt"))
-        try writeManifest(batch: batch, files: ["ok.txt"] + unsafe, in: box.inbox)
+        try stageBatch(
+            ["ok.txt"] + unsafe,
+            present: ["ok.txt", "invoice\u{202E}fdp.exe", "line\u{2028}break.txt"],
+            in: box.inbox)
 
         let inbox = ShareInbox()
         inbox.refresh(in: box.inbox)
@@ -106,79 +171,92 @@ import Testing
         #expect(inbox.staged.map(\.lastPathComponent) == ["ok.txt"])
     }
 
-    @Test(arguments: ["../x", "", "..", "x", "batch-", "batch-not-a-uuid"])
-    func anInvalidBatchIsIgnored(batch: String) throws {
+    @Test(arguments: [
+        "x", "batch-", "batch-not-a-uuid", "Batch-00000000-0000-0000-0000-000000000000",
+    ])
+    func aDirectoryWithAnotherNameIsNeverOffered(name: String) throws {
         let box = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: box.root) }
-        // A file in the directory the name would reach if it were joined to
-        // the inbox, and one in a directory outside the inbox.
-        let reached = box.inbox.appendingPathComponent(batch, isDirectory: true)
-        try touch(reached.appendingPathComponent("f.txt"))
-        let outside = box.root.appendingPathComponent("x/f.txt")
-        try touch(outside)
-        try writeManifest(batch: batch, files: ["f.txt"], in: box.inbox)
+        try stageBatch(["f.txt"], named: name, in: box.inbox)
 
         let inbox = ShareInbox()
         inbox.refresh(in: box.inbox)
 
+        #expect(inbox.batch == nil)
         #expect(inbox.staged.isEmpty)
-        #expect(exists(outside))
     }
 
-    /// `purgeStaleBatches` deletes the first component of "a/b" before the
-    /// files are looked up, which would hide a missing check. A symlink is not
-    /// a directory path, so the purge leaves it and only the batch check stands
-    /// between the name and the file.
-    @Test(arguments: ["a/b", "batch-00000000-0000-0000-0000-000000000000/.."])
-    func aTraversingBatchIsIgnoredEvenWhenPurgeLeavesItsPath(batch: String) throws {
+    /// A batch-shaped symlink is not a directory the extension made, so it is
+    /// neither offered nor followed when the purge deletes.
+    @Test func aBatchNamedSymlinkIsNeitherOfferedNorFollowed() throws {
         let box = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: box.root) }
-        // root/target/b/f.txt is reached by "a/b", root/f.txt by "<name>/..".
-        let target = box.root.appendingPathComponent("target", isDirectory: true)
-        try touch(target.appendingPathComponent("b/f.txt"))
-        try touch(box.root.appendingPathComponent("f.txt"))
-        let first = String(batch.split(separator: "/")[0])
+        let outside = try stageBatch(["f.txt"], in: box.root)
         try FileManager.default.createSymbolicLink(
-            at: box.inbox.appendingPathComponent(first), withDestinationURL: target)
-        try writeManifest(batch: batch, files: ["f.txt"], in: box.inbox)
+            at: box.inbox.appendingPathComponent(ShareHandoff.makeBatchName()),
+            withDestinationURL: outside)
 
-        let inbox = ShareInbox()
+        let inbox = lateInbox()
         inbox.refresh(in: box.inbox)
 
         #expect(inbox.staged.isEmpty)
-        #expect(exists(target.appendingPathComponent("b/f.txt")))
+        #expect(exists(outside.appendingPathComponent("f.txt")))
     }
 
-    @Test func aBatchFailingValidationClearsEarlierStaging() throws {
+    @Test func aSecondShareWaitsForTheFirst() throws {
         let box = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: box.root) }
-        let batch = ShareHandoff.makeBatchName()
-        try touch(box.inbox.appendingPathComponent(batch).appendingPathComponent("a.txt"))
-        try writeManifest(batch: batch, files: ["a.txt"], in: box.inbox)
+        let first = try stageBatch(["a.txt"], age: 20, in: box.inbox)
+        let second = try stageBatch(["b.txt"], age: 10, in: box.inbox)
+        let inbox = ShareInbox()
+
+        inbox.refresh(in: box.inbox)
+        #expect(inbox.batch == first.lastPathComponent, "oldest first")
+
+        inbox.consume(first.lastPathComponent)
+        inbox.refresh(in: box.inbox)
+        #expect(inbox.batch == second.lastPathComponent)
+        #expect(inbox.staged.map(\.lastPathComponent) == ["b.txt"])
+        #expect(exists(first.appendingPathComponent("a.txt")), "the first send still reads it")
+    }
+
+    @Test func aConsumedBatchStaysUntilItsSendFinishes() throws {
+        let box = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: box.root) }
+        let dir = try stageBatch(["a.txt"], in: box.inbox)
+        let inbox = lateInbox()
+        inbox.refresh(in: box.inbox)
+
+        inbox.consume(dir.lastPathComponent)
+        inbox.refresh(in: box.inbox)
+        #expect(inbox.batch == nil, "consumed: not offered again")
+        #expect(exists(dir.appendingPathComponent("a.txt")), "kept past the grace for a retry")
+
+        inbox.sendFinished()
+        #expect(!exists(dir))
+        inbox.sendFinished()  // nothing left to delete
+    }
+
+    @Test func discardDeletesTheBatchAtOnce() throws {
+        let box = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: box.root) }
+        let dir = try stageBatch(["a.txt"], in: box.inbox)
         let inbox = ShareInbox()
         inbox.refresh(in: box.inbox)
-        #expect(inbox.staged.count == 1)
 
-        // The second manifest's batch would reach root/x, which holds the file.
-        try touch(box.root.appendingPathComponent("x/a.txt"))
-        try writeManifest(batch: "../x", files: ["a.txt"], in: box.inbox)
-        inbox.refresh(in: box.inbox)
+        inbox.discard(dir.lastPathComponent)
 
-        #expect(inbox.staged.isEmpty)
+        #expect(!exists(dir))
     }
 
-    @Test func purgeKeepsOnlyTheBatchAValidManifestNames() throws {
+    @Test func purgeRemovesABatchThatNeverGotItsManifest() throws {
         let box = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: box.root) }
-        let live = box.inbox.appendingPathComponent(ShareHandoff.makeBatchName())
+        let live = try stageBatch(["a.txt"], in: box.inbox)
         let stale = box.inbox.appendingPathComponent(ShareHandoff.makeBatchName())
-        try touch(live.appendingPathComponent("a.txt"))
         try touch(stale.appendingPathComponent("b.txt"))
-        try writeManifest(batch: live.lastPathComponent, files: ["a.txt"], in: box.inbox)
 
-        let inbox = ShareInbox()
-        inbox.now = { .now.addingTimeInterval(2 * ShareInbox.stagingGrace) }
-        inbox.refresh(in: box.inbox)
+        lateInbox().refresh(in: box.inbox)
 
         #expect(exists(live))
         #expect(!exists(stale))
@@ -198,13 +276,9 @@ import Testing
     @Test func purgeDoesNotKeepAnInvalidBatchName() throws {
         let box = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: box.root) }
-        let named = box.inbox.appendingPathComponent("x")
-        try touch(named.appendingPathComponent("f.txt"))
-        try writeManifest(batch: "x", files: ["f.txt"], in: box.inbox)
+        let named = try stageBatch(["f.txt"], named: "x", in: box.inbox)
 
-        let inbox = ShareInbox()
-        inbox.now = { .now.addingTimeInterval(2 * ShareInbox.stagingGrace) }
-        inbox.refresh(in: box.inbox)
+        lateInbox().refresh(in: box.inbox)
 
         #expect(!exists(named))
     }
@@ -219,35 +293,32 @@ import Testing
         return inbox
     }
 
-    private func writeManifest(
-        files: [String] = [], text: String?, in inbox: URL
-    ) throws -> String {
-        let batch = ShareHandoff.makeBatchName()
-        let dir = inbox.appendingPathComponent(batch, isDirectory: true)
+    private func stageBatch(files: [String] = [], text: String?, in inbox: URL) throws {
+        let dir = inbox.appendingPathComponent(ShareHandoff.makeBatchName(), isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         for file in files { try Data("x".utf8).write(to: dir.appendingPathComponent(file)) }
-        let data = try JSONEncoder().encode(
-            ShareHandoff.Manifest(batch: batch, files: files, text: text))
-        try data.write(to: ShareHandoff.manifestURL(in: inbox))
-        return batch
+        let data = try JSONEncoder().encode(ShareHandoff.Manifest(files: files, text: text))
+        try data.write(to: ShareHandoff.manifestURL(inBatch: dir))
+    }
+
+    /// The text a fresh inbox holding one batch with `text` offers.
+    private func offered(_ text: String) throws -> String? {
+        let inbox = try makeInbox()
+        defer { try? FileManager.default.removeItem(at: inbox) }
+        try stageBatch(text: text, in: inbox)
+        let model = ShareInbox()
+        model.refresh(in: inbox)
+        return model.text
     }
 
     @Test func readsSharedText() throws {
-        let inbox = try makeInbox()
-        defer { try? FileManager.default.removeItem(at: inbox) }
-        _ = try writeManifest(text: "https://example.com/a\nhello", in: inbox)
-
-        let model = ShareInbox()
-        model.refresh(in: inbox)
-
-        #expect(model.text == "https://example.com/a\nhello")
-        #expect(model.staged.isEmpty)
+        #expect(try offered("https://example.com/a\nhello") == "https://example.com/a\nhello")
     }
 
     @Test func filesTakePrecedenceOverText() throws {
         let inbox = try makeInbox()
         defer { try? FileManager.default.removeItem(at: inbox) }
-        _ = try writeManifest(files: ["a.txt"], text: "hello", in: inbox)
+        try stageBatch(files: ["a.txt"], text: "hello", in: inbox)
 
         let model = ShareInbox()
         model.refresh(in: inbox)
@@ -257,41 +328,30 @@ import Testing
     }
 
     @Test func dropsBlankAndOversizedText() throws {
-        let inbox = try makeInbox()
-        defer { try? FileManager.default.removeItem(at: inbox) }
-        let model = ShareInbox()
-
-        _ = try writeManifest(text: " \n\t", in: inbox)
-        model.refresh(in: inbox)
-        #expect(model.text == nil)
-
-        _ = try writeManifest(
-            text: String(repeating: "a", count: ShareHandoff.maxTextBytes), in: inbox)
-        model.refresh(in: inbox)
-        #expect(model.text?.utf8.count == ShareHandoff.maxTextBytes)
-
-        _ = try writeManifest(
-            text: String(repeating: "a", count: ShareHandoff.maxTextBytes + 1), in: inbox)
-        model.refresh(in: inbox)
-        #expect(model.text == nil)
+        #expect(try offered(" \n\t") == nil)
+        let max = String(repeating: "a", count: ShareHandoff.maxTextBytes)
+        #expect(try offered(max)?.utf8.count == ShareHandoff.maxTextBytes)
+        #expect(try offered(max + "a") == nil)
     }
 
-    @Test func consumingTheManifestForgetsTheText() throws {
+    @Test func discardingTheBatchForgetsTheText() throws {
         let inbox = try makeInbox()
         defer { try? FileManager.default.removeItem(at: inbox) }
-        _ = try writeManifest(text: "secret", in: inbox)
+        try stageBatch(text: "secret", in: inbox)
         let model = ShareInbox()
         model.refresh(in: inbox)
+        let batch = try #require(model.batch)
         #expect(model.text == "secret")
 
-        try FileManager.default.removeItem(at: ShareHandoff.manifestURL(in: inbox))
+        model.discard(batch)
         model.refresh(in: inbox)
 
         #expect(model.text == nil)
+        #expect(model.batch == nil)
     }
 
-    @Test func oldManifestsWithoutTextStillDecode() throws {
-        let json = Data(#"{"batch":"b","files":["a"]}"#.utf8)
+    @Test func manifestsWithoutTextStillDecode() throws {
+        let json = Data(#"{"files":["a"]}"#.utf8)
         let manifest = try JSONDecoder().decode(ShareHandoff.Manifest.self, from: json)
         #expect(manifest.text == nil)
     }

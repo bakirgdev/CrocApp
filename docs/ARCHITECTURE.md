@@ -244,7 +244,7 @@ Persistence:
 | Output folder | `UserDefaults` key `outputFolderBookmark` | `OutputFolderStore`; security-scoped bookmark on macOS |
 | Transfer history | SwiftData, `TransferRecord` `@Model` | `HistoryStore`; in memory under the harness |
 | Stored-upload receipts | Keychain, one item `storedReceipts` | `StoredTransferVault`; removed on revoke and when expired; in memory under the harness |
-| Share-extension handoff | App Group container: `group.com.bakirgdev.CrocApp` on iOS; on macOS the team-prefixed `HBSU359M33.com.bakirgdev.CrocApp` (Direct: `...direct`) | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/` plus `manifest.json`; `ShareInbox` (app) reads; the names, the manifest type and the batch-name check are `app/Shared/ShareHandoff.swift`, compiled into both |
+| Share-extension handoff | App Group container: `group.com.bakirgdev.CrocApp` on iOS; on macOS the team-prefixed `HBSU359M33.com.bakirgdev.CrocApp` (Direct: `...direct`) | `ShareStager` (extension) writes `ShareInbox/batch-<UUID>/`, its files and then its own `manifest.json`; `ShareInbox` (app) reads; the names, the manifest type and the batch-name check are `app/Shared/ShareHandoff.swift`, compiled into both |
 | Onboarding seen flag | `UserDefaults` via `@AppStorage("onboarding.seen")` | Read in `ContentView` |
 
 ## Platform split

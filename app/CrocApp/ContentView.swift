@@ -64,6 +64,13 @@ struct ContentView: View {
             .onChange(of: controller.isActive) { _, active in
                 if active { localNetwork.checkIfNeeded() }
             }
+            .onChange(of: controller.phase) { _, phase in
+                // A failed send keeps its shared batch: Try Again reuses the files.
+                switch phase {
+                case .done, .stored: shareInbox.sendFinished()
+                default: break
+                }
+            }
             #if !DIRECT
         // The id is the success count, so this restarts on each success and
         // not at launch (the phase is .idle then). A new transfer or a sheet
@@ -101,19 +108,23 @@ struct ContentView: View {
         .sheet(isPresented: $showStagedSheet) {
             StagedFilesSheet(
                 files: shareInbox.staged,
+                // A Shortcut, the menu bar or a drop can start a transfer
+                // while the sheet is open; the share then waits, still staged.
+                canSend: !controller.isActive,
                 send: {
-                    let urls = shareInbox.staged
-                    shareInbox.consumeManifest()
+                    guard let batch = shareInbox.batch,
+                        controller.start(.sendFiles(urls: shareInbox.staged, code: ""))
+                    else { return }
+                    shareInbox.consume(batch)
                     showStagedSheet = false
-                    // Navigate to Send first: TransferStatusView only
-                    // renders inside SendView/ReceiveView, so without
-                    // this the transfer would run invisibly under
-                    // HomeView. Mirrors AppDelegate's dock-drop routing.
+                    // TransferStatusView only renders inside SendView and
+                    // ReceiveView, so without this the transfer would run
+                    // invisibly under HomeView. Mirrors AppDelegate's
+                    // dock-drop routing.
                     router.path = [.send]
-                    controller.start(.sendFiles(urls: urls, code: ""))
                 },
                 discard: {
-                    shareInbox.consumeManifest()
+                    if let batch = shareInbox.batch { shareInbox.discard(batch) }
                     shareInbox.refresh()
                     showStagedSheet = false
                 })
@@ -174,8 +185,8 @@ struct ContentView: View {
         shareInbox.refresh()
         // Shared text needs no sheet: the Send screen is where it waits for
         // the user's Send, like a Services-menu selection.
-        if let text = shareInbox.text {
-            shareInbox.consumeManifest()
+        if let text = shareInbox.text, let batch = shareInbox.batch {
+            shareInbox.discard(batch)
             shareInbox.refresh()
             router.openSend(text: text)
         }

@@ -4,6 +4,7 @@ import SwiftUI
 /// The rows are display only: Discard is the way to drop files from it.
 struct StagedFilesSheet: View {
     let files: [URL]
+    let canSend: Bool
     let send: () -> Void
     let discard: () -> Void
 
@@ -38,6 +39,7 @@ struct StagedFilesSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Send") { send() }
+                        .disabled(!canSend)
                 }
             }
         }
@@ -50,5 +52,5 @@ struct StagedFilesSheet: View {
             URL(filePath: "/tmp/Holiday-photo-album.zip"),
             URL(filePath: "/tmp/notes.txt"),
             URL(filePath: "/tmp/IMG_0042.HEIC"),
-        ], send: {}, discard: {})
+        ], canSend: true, send: {}, discard: {})
 }

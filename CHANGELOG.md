@@ -13,6 +13,9 @@ extra sections where a release needs them, and the project follows
 ### Fixed
 
 - A send of thousands of files with **Confirm on Both Sides** on no longer hangs after you tap **Send** when the other device stops answering or you tap **Cancel**. The transfer ends and CrocApp is ready for the next one.
+- Sharing to CrocApp twice before opening it no longer loses the first share. Each share waits its turn in the **Shared Files** sheet.
+- A share that arrives while a transfer is running stays in the **Shared Files** sheet, with **Send** turned off until the transfer ends, instead of being dropped.
+- The copies CrocApp keeps of shared files are deleted once they are sent, rather than an hour later.
 
 ### Security
 

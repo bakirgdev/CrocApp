@@ -203,13 +203,13 @@ enum AutoVerify {
         } else if let i = args.firstIndex(of: "--auto-share-send"), i + 1 < args.count {
             let inbox = ShareInbox()
             inbox.refresh()
-            guard !inbox.staged.isEmpty else {
+            guard let batch = inbox.batch, !inbox.staged.isEmpty else {
                 try? "error no staged files in share inbox".write(
                     to: resultURL, atomically: true, encoding: .utf8)
                 return
             }
             let urls = inbox.staged
-            inbox.consumeManifest()
+            inbox.consume(batch)
             controller.start(.sendFiles(urls: urls, code: args[i + 1]))
             await watch(controller, resultURL: resultURL, autoAccept: false)
         }
