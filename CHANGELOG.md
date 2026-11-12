@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 extra sections where a release needs them, and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- The transfer engine is built with Go 1.27.4, which fixes a `net/http` vulnerability (GO-2026-6859).
+
 ## [1.2.0] - 2026-11-06
 
 ### Added

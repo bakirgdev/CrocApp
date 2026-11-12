@@ -235,7 +235,7 @@ Any change to `crocmobile/session.go`, `CrocKit/Sources/` or `TransferController
 - **macOS is arm64 only.** `"ARCHS[sdk=macosx*]" = arm64` in the pbxproj. The xcframework has no `x86_64` macOS slice (golang/go#73119), so the pin makes an Intel archive fail the link cleanly instead of attempting a link that cannot succeed.
 - **`DEAD_CODE_STRIPPING = YES` on the project-level Release configuration.** Xcode resolves it to `NO` for macOS when nothing sets it, and the iOS default is already `YES`, so the pbxproj sets it for every target. The saving on macOS is small: about 5 KB for `CrocApp` and 21 KB for `CrocApp Direct` (measured). The likely reason (inferred) is that the Go engine arrives as one large archive that the linker mostly keeps.
 - **One version source, `app/Config/Version.xcconfig`.** It holds `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` and is the base configuration of the project-level Debug and Release configurations, so every target inherits it. Never set either in a target's build settings. `RELEASING.md`, "Each release", covers when to bump them.
-- **The Go toolchain pin is `>= 1.27.3` in `crocmobile/go.mod`.** After bumping it, rerun `scripts/build-xcframework.sh` to confirm the bind still works before trusting anything downstream.
+- **The Go toolchain pin is `>= 1.27.4` in `crocmobile/go.mod`.** After bumping it, rerun `scripts/build-xcframework.sh` to confirm the bind still works before trusting anything downstream.
 
 ## Troubleshooting
 
