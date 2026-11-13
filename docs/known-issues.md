@@ -11,7 +11,7 @@ Engine and bridge invariants are in `knowledge/crocmobile-bridge.md`. UI state-m
 Open items left from the 1.1.0 release (`docs/README.md`, "Status").
 
 - **France is excluded from App Store availability** until an ANSSI encryption declaration exists (issue #115). The position is in `RELEASING.md`, "Export compliance"; the research is in `knowledge/app-store-listing.md`, "Export compliance".
-- **The Accessibility Inspector and VoiceOver audit has not run on any view.**
+- **The Accessibility Inspector audit has not run, and VoiceOver has covered only Send, Receive and Settings.**
   - It needs Accessibility Inspector and VoiceOver on iOS and macOS, so no automated session can do it.
   - Views to cover: the Keep Both / Replace sheet, the **When a File Already Exists** picker, the waiting screen's QR code, Share Link and relay note, Send as Link and its result screen, the stored-link row on Receive, History (Revoke and the row layout), the stored-server field, the Advanced settings page, and the menu-bar window.
   - Checked so far without the tools: a code pass over every view against `design/principles.md`, and the iPhone 17 Pro simulator at the largest accessibility text size. The sheet's buttons stack, status screens scroll, the code wraps, and the picker reads in full. Long names in the incoming list are middle-truncated by design.
