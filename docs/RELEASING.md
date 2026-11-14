@@ -44,7 +44,7 @@ To run it locally you need:
 
 `.github/workflows/release.yml` runs the same script. It starts on a `v*` tag push or on `workflow_dispatch`.
 
-- **A tag run** runs `swift-format`, the Go checks and a `gate` job, then the build job. `gate` fails unless the tagged commit is on `main` and has a successful `ci pass` check run, so nothing is signed for a commit CI never passed.
+- **A tag run** runs the Go checks and a `gate` job, then the build job (which lints Swift formatting first). `gate` fails unless the tagged commit is on `main` and has a successful `ci pass` check run, so nothing is signed for a commit CI never passed.
   - It checks the tag against `MARKETING_VERSION` and against a dated heading in `CHANGELOG.md` (see "Each release").
   - It builds, signs and notarizes, then writes a signed `appcast.xml` with Sparkle's `generate_appcast`, seeded with the latest release's appcast and with the CHANGELOG section embedded as release notes.
   - It attests the stapled files, then publishes (as a draft until every file is attached) the disk image, `appcast.xml`, the `Croc.xcframework` zip and `SHA256SUMS.txt`.

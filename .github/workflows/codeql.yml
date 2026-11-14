@@ -1,16 +1,14 @@
 name: CodeQL
 
 # Advanced setup instead of GitHub's default one, so a docs-only change does
-# not start three analyses. Swift is left out: CodeQL supports Swift up to 6.3
+# not start an analysis per language. JavaScript and TypeScript are left out
+# (Biome lints the site code). Swift is left out: CodeQL supports Swift up to 6.3
 # and the app builds with Swift 6.4 (docs/known-issues.md, "Build and CI").
 on:
   push:
     branches: [main]
     paths: &paths
       - "crocmobile/**"
-      - "web/landing/**/*.js"
-      - "web/docs/**/*.[jt]s"
-      - "web/docs/**/*.[jt]sx"
       - ".github/workflows/**"
   pull_request:
     paths: *paths
@@ -43,8 +41,6 @@ jobs:
       matrix:
         include:
           - language: actions
-            build-mode: none
-          - language: javascript-typescript
             build-mode: none
           - language: go
             build-mode: manual

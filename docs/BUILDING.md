@@ -83,7 +83,7 @@ Exact command CI runs, from the repo root:
 scripts/format-swift.sh --lint
 ```
 
-It is the only Swift lint check CI runs. Locally, run it without the flag to rewrite files first; the script lints afterwards either way:
+It is the only Swift lint check CI runs, in the macOS leg of `build` and in the `release.yml` build job. Locally, run it without the flag to rewrite files first; the script lints afterwards either way:
 
 ```bash
 scripts/format-swift.sh
