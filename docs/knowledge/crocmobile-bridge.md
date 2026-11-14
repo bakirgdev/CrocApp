@@ -5,7 +5,7 @@ The engine contract between Go and Swift, and the croc behaviours it has to work
 ## Layers
 
 ```
-croc v11.6.5 (go.mod pin) → crocmobile/ (Go wrapper) → gomobile bind →
+croc 11 (go.mod pin) → crocmobile/ (Go wrapper) → gomobile bind →
 CrocKit/Croc.xcframework (gitignored, scripts/build-xcframework.sh) →
 CrocKit Swift package (CrocEngine actor, AsyncStream<TransferEvent>) → app
 ```
@@ -91,14 +91,14 @@ How `classify` picks a code:
 Notes:
 
 - Order matters in `classify`: a peer's refusal also cancels croc's context, and a bad relay password is reported as `could not connect to`.
-- croc exports sentinels for relay failures only, so the rest is matched on croc v11.6.5 text. `errors_test.go` pins the live ones against real croc clients and an in-process relay.
+- croc exports sentinels for relay failures only, so the rest is matched on croc 11 text. `errors_test.go` pins the live ones against real croc clients and an in-process relay.
 - A local `Cancel()` during the accept prompt cancels the context before it closes the prompt pipe, and `GetInputContext` returns the context error whenever the context is done. By reading the source that failure is `cancelled`, not `refused`. Not verified live.
 
 ## Relay host and relay check
 
 Neither takes `activeMu`, touches stdio, the working directory or croc's proxy globals, so both run beside a transfer.
 
-**`StartRelay(host, port, password, delegate)`** (`relayhost.go`) is `croc relay` in the process: the CLI's relay wiring (`RelayCommand` in `cli.go`), `RelayPortCount` (4) ports counted from `port`, the first the control port whose banner announces the other three: one data port fewer than a stock `croc relay`, whose default is 1 control port plus 4 data ports (`--ports`, `--transfers 5`, croc v11.6.5). It follows the CLI's wiring: `tcp.WithBanner` on the control port, one `tcp.NewRelayCapabilitySet` shared by all ports with `tcp.WithFastAdmission`, and `tcp.WithCtx`. Limits stay at croc's defaults (`tcp/defaults.go`), which are the CLI flags' defaults.
+**`StartRelay(host, port, password, delegate)`** (`relayhost.go`) is `croc relay` in the process: the CLI's relay wiring (`RelayCommand` in `cli.go`), `RelayPortCount` (4) ports counted from `port`, the first the control port whose banner announces the other three: one data port fewer than a stock `croc relay`, whose default is 1 control port plus 4 data ports (`--ports`, `--transfers 5`, croc 11). It follows the CLI's wiring: `tcp.WithBanner` on the control port, one `tcp.NewRelayCapabilitySet` shared by all ports with `tcp.WithFastAdmission`, and `tcp.WithCtx`. Limits stay at croc's defaults (`tcp/defaults.go`), which are the CLI flags' defaults.
 - It binds every port itself and serves each with `tcp.RunWithListener`, because `RunWithOptionsAsync` blocks and reports a bind failure only after the fact. A taken port fails the start at once with code `portInUse`, an out-of-range base port with `invalidSetting`, and no listener is left open.
 - A blank password is croc's default. An empty host listens on every interface. The relay logs at `warn`: croc logs each client's address at debug.
 - `RelayHost.Stop()` cancels the context and waits at most 3 s for the listeners. If one port dies on its own, the whole relay stops and `RelayDelegate.OnRelayStopped` gets the failure payload, once. It runs on its own goroutine, which `Stop()` does not wait for, so it can arrive after `Stop()` returns when a port died just before. `RelayHostController` ignores a callback from a relay it already stopped or replaced (`handle` and `generation`). `serveRelay` takes the listeners, so a test hands it one whose `Accept` fails to provoke that path.
@@ -162,7 +162,7 @@ The cancel watchdog (`watchCancel`, `session.go`):
 - A cancel arms it before closing the prompt pipe. If croc's call has not returned 15 s later (`stuckAfter`), the delegate gets `engineStuck` as its terminal event and the session is marked stuck. Every later start then fails at once with `engineStuck`.
 - The lock stays held. Forcing it open would let a new session change the cwd, stdin and stdout under a croc that still runs. Only a relaunch frees it (`../known-issues.md`, "Accepted").
 - A session sends one terminal event (`session.terminal`). If croc returns after all, `run` clears the mark and frees the lock without a second event.
-- Why 15 s: croc v11.6.5's dials and reads follow its context, its reconnect backoff is capped at 5 s, and `run`'s own teardown waits (the stdin drain and the poller join) are bounded at 2 s each.
+- Why 15 s: croc 11's dials and reads follow its context, its reconnect backoff is capped at 5 s, and `run`'s own teardown waits (the stdin drain and the poller join) are bounded at 2 s each.
 
 ### Ask (both sides confirm)
 
@@ -216,7 +216,7 @@ Generated codes on the public pool:
 - The probe runs on the session's context, so `CancelStart` ends it at once (see "Cancel and teardown").
 - There is deliberately no "draw a code anyway" fallback. After the relay dial fails, croc waits only about 10 s for a LAN peer (`defaultAlternateSenderRouteTimeout`), so a code shown offline would expire before the receiver could type it.
 
-## croc v11.6.5 gotchas (verified against source)
+## croc 11 gotchas (verified against source)
 
 ### Rooms and codes
 
@@ -230,7 +230,7 @@ How Tailcat works, its 128 MiB threshold and the servers it contacts: `what-is-c
 - `scripts/build-xcframework.sh` passes `-tags croc_no_tailcat` to `gomobile bind`. The tag swaps croc's `tailcattransport` for a stub (`src/tailcattransport/transport_unsupported.go` in croc; `Available()` is false), which drops Tailscale's WireGuard, gVisor and DERP from the binary. `go list -tags croc_no_tailcat -deps` in `crocmobile/` finds 0 gVisor packages and 0 `wireguard-go` packages (42 gVisor packages without the tag).
 - Every other Go build of `crocmobile/` carries the same tag, so tests match what ships (`BUILDING.md`, "What build-xcframework.sh does"). `TestBuildIsRelayOnly` fails a test run without it by checking `tailcattransport.Available()`.
 - Size: the shipped executable halves (`BUILDING.md`; measured sizes are in `BUILDING.md`, "Build settings that must not change casually").
-- Effect on a transfer, observed with the stock croc v11.6.5 CLI (`verify-interop.sh` scenario 13):
+- Effect on a transfer, observed with the stock croc 11 CLI (`verify-interop.sh` scenario 13):
   - A CLI on its default `--transport auto` still logs `Tailcat bootstrap region prepared` and `auto transport size decision: ... selected=derp` for a send of 128 MiB or more, because it prepares Tailcat before it knows the peer. Neither line means Tailcat carried data.
   - The peer does not advertise Tailcat, so the CLI logs the plain line `selected croc relay data transport` and sends no `tailcat-offer`. Against a Tailcat-capable CLI the same send logs `tailcat-offer`, `starting Tailcat server` and `selected staged croc relay data transport` or `... after Tailcat fallback`.
   - With `tailcat.dev` unreachable (a dead proxy in the CLI's environment) the transfer still completes over the relay, in the same time.
@@ -260,7 +260,7 @@ croc retries a dropped transfer up to 10 times (backoff from 100 ms, doubling, c
 - A receiver with LAN off sends no probe, so the window does not apply to it.
 - A sender that arrives after the receiver failed finds an empty room and waits for a new receiver (inferred from the source, not verified live).
 - Generated-code GUI flows are sender-first. Custom codes are not: a receiver who types an agreed code more than 5 s before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it (`../known-issues.md`, "Accepted").
-- Harnesses start the receiver only after the sender is in its room: see "Verification harnesses".
+- Harnesses start the receiver only after the sender is in its room: `scripts/lib.sh` `await_sender` does this.
 
 ### Small-file bundles
 
@@ -307,7 +307,7 @@ The batch fixes this. `verify-interop.sh` scenario 12 covers it.
 
 The curve, hash, base port and transfers are not options. croc settles the curve and hash between the peers itself: a sender adopts the receiver's curve (`c.pakeCurve = string(m.Bytes2)` in `croc.go`, "initialize curve based on the recipient's choice") and a receiver adopts the sender's hash (receiver `--debug`: `using hash algorithm: md5`), so two devices never need to match. The ports matter only to a receiver that dials the sender by `PeerIP`, which a CrocApp sender serves on 9009. A busy port is skipped and the next free ones bind, scanning at most 200 ports (`reserveLocalRelayListeners` in `local_relay.go`, read from source, not observed), so the announced port can differ. If croc cannot bind them all, the send fails at start with `start local relay: not enough open ports to run local relay: reserved N of M` (code `other`).
 
-`verify-interop.sh` scenario 15 runs each against the croc v11.6.5 CLI. The table records what that scenario observed, with the croc source (`src/croc/croc.go`, `comm/comm.go`) read for the reason.
+`verify-interop.sh` scenario 15 runs each against the croc 11 CLI. The table records what that scenario observed, with the croc source (`src/croc/croc.go`, `comm/comm.go`) read for the reason.
 
 | Option | Which side it matters on | Peer must match? | Mismatch |
 |---|---|---|---|
@@ -317,6 +317,7 @@ The curve, hash, base port and transfers are not options. croc settles the curve
 
 Two limits of the harness:
 
+- The proxy cases run on the local relay, which they dial as `localhost:PORT`. croc's dialer skips the proxy when `utils.IsLocalIP` accepts the address, and that function never resolves a name: `127.0.0.1:PORT` is local, `localhost:PORT` is not. The tunnel count each case asserts is what proves the proxy carried the connection. If a croc release resolves names first, those cases fail with "tunnelled no connection" and belong back on the public pool.
 - A transfer across two hosts on a shared multicast group is not covered. croc drops discovery packets from the host's own addresses (`peerdiscovery` `AllowSelf` false), so two peers on one host never find each other, not even two CLIs.
 - `NoMultiplexing` and `ThrottleUpload` are sender-side only. A receiver with `NoMultiplexing` set hangs against a multiplexing sender, so the app sets it for sends only (`EngineStart`). They are not a mismatch case; scenarios 6, 7 and 11 use them.
 - The sender-IP case needs ports 9009 to 9013 free on the host, because a wrapper sender no longer takes a different base port. The harness waits up to 30 s for them and then fails.
@@ -331,115 +332,7 @@ Two limits of the harness:
 - **Normalization.** Each check trims the value the way the engine does: `buildCrocOptions` trims the upload limit, sender IP and multicast address, `proxyURL` and `setNetworkGlobals` trim the proxies, and croc's `normalizeOrigin` trims the server. The app passes the text as typed. Blank is valid for every field except `SettingStoreServer`, which needs an origin.
 - **Proxy errors never quote the value**, which can carry credentials. `TestValidateSettingNeverQuotesAProxy` includes refusals that come from `url.Parse`.
 - **`SettingStoreServer` wraps `validateStoreOrigin`**, the check `StartStoreSend` runs, in code `invalidSetting`. `StartStoreSend` keeps the plain error, so a refused server there still has code `other`.
-- **The rules are the engine's, not a mirror of them.** Checked on Go 1.27.3 and croc v11.6.5: `normalizeOrigin` compares the loopback host case-sensitively (`http://LOCALHOST` is refused) and accepts an empty query or fragment (`https://host?`) and an empty host name before a port (`https://:8080`), which `validateStoreOrigin` refuses on top. `net/url` refuses an unbracketed colon in a host for `http` and `https` only and allows a non-ASCII space in any host, so `proxyURL` refuses both for every scheme (`::1:1080`, `socks5://host:1080:2`, a no-break space in the host).
-
-## Verification harnesses
-
-Each harness checks a different layer. `BUILDING.md`, "Verification harnesses" says how to run them. Shell traps are in `tooling.md`, "Shell and harness traps".
-
-### `scripts/lib.sh`
-
-Sourced by `verify-interop.sh`, `verify-app-mac.sh`, `verify-app-sim.sh`, `capture-screenshots.sh`, `build-appstore.sh` and `build-devid.sh`. It provides:
-
-- the `timeout(1)` shim;
-- `fail` and `pass`;
-- `logged`, which runs a build step into a log and shows its tail on failure;
-- `require_croc`;
-- `kill_jobs`, run from an EXIT trap so a failed assertion cannot leak a croc, relay or app process;
-- `await_file`, `await_log` and `local_ip`;
-- the relay helpers: `use_relay` (settles which relay the run uses and starts a local `croc relay` unless `PUBLIC_POOL=1` or `RELAY` says otherwise), `mark_relay` and `await_sender` (see "Start order in the harness" below), and `free_port`.
-
-### `scripts/verify-interop.sh`
-
-16 scenarios, crocmobile against the croc CLI.
-
-| Scenario | What it covers |
-|---|---|
-| 1 to 4 | File, folder and text, in both directions |
-| 5 | Decline notifies the sender |
-| 6, 7 | Receiver cancels, then sender cancels, mid-wire (`--throttleUpload 200k`). They assert a received-file mismatch, which log noise cannot fake. |
-| 8 | Forced relay (LAN off on both sides) |
-| 9 | LAN, via `--ip` |
-| 10 | A croc v10 peer, both ways, expecting `peerVersion` |
-| 11 | Every public pool relay (see below) |
-| 12 | File policy (see below) |
-| 13 | Large files without Tailcat (see below) |
-| 14 | Stored transfers (see below) |
-| 15 | Advanced options, described in "Advanced options on the wire" |
-| 16 | A small-file bundle, both ways: 20 files of 64 KiB at 200 KB/s, asserting the wrapper reports `step` `bundling` (see "Small-file bundles") |
-
-By default every transfer goes through a `croc relay` the script starts on free loopback ports. Scenario 11 needs the public pool, so it runs only with `PUBLIC_POOL=1`, which also adds the 60 s waits that keep the run under the pool's admission limit. `RELAY=host:port` routes every transfer through a relay that is already running instead, and skips scenario 11 and the proxy cases of scenario 15. Scenario 13 runs on any of them, because the relay carries its data and the CLI finishes without `tailcat.dev`. Scenario 15's sender IP and multicast cases need no relay.
-
-The proxy cases run on the local relay, which they dial as `localhost:PORT`. croc's dialer skips the proxy when `utils.IsLocalIP` accepts the address, and that function never resolves a name: `127.0.0.1:PORT` is local, `localhost:PORT` is not. The tunnel count each case asserts is what proves the proxy carried the connection (observed with croc v11.6.5). If a croc release resolves names first, those cases fail with "tunnelled no connection" and belong back on the public pool.
-
-Start order in the harness (see "Start order: sender first"):
-
-- The relay runs with `--debug`, and logs `room has first peer` once it has admitted the first client of a room. A sender opens exactly one room before a receiver exists (its control connection; the data connections open after the receiver joins).
-- So the harness marks the count of those lines before it starts a sender (`mark_relay`) and waits for the count to grow (`await_sender`, 30 s at most, then it fails and names the relay log) before it starts the receiver. A croctest sender is also awaited on `EVENT code` first, which fires before croc dials the relay.
-- Where nothing observable says the sender is in its room, the wait is a fixed 3 s: on the public pool, with `RELAY=host:port`, and for the `-only-local` senders of scenarios 9 and 15, whose room lives inside the sender. The `--local` CLI sender of scenario 15 prints `local connection established` under `--debug`, which the harness waits on instead.
-
-Scenario 11 (pool), only with `PUBLIC_POOL=1`:
-
-- Each of the 4 pool relays gets a custom code that maps to it, sent wrapper to CLI and CLI to wrapper, and a wrapper-generated code forced onto it with `croctest send -relay-index N`. One CLI-generated code is added (the CLI caches its probed relay, so that covers one index).
-- LAN is off on both sides (`-no-local` and `send --no-local`) so only matching relays meet. It asserts croctest's `EVENT relay <addr>` and the CLI `--debug` line `public relay index N selected: <addr>`.
-- It waits 60 s first, runs with multiplexing off (`-no-multi`, `--no-multi`), and makes one pass over the pool per kind of transfer. A relay admits 30 connections a minute from one address (`../known-issues.md`, "Accepted").
-
-Scenario 12 (file policy), which runs on the local relay, so CI covers it:
-
-- A CLI sends a file onto an existing one and `croctest` receives with Keep Both and with Replace, answered at the prompt and preset with `-yes` (4 cases).
-- Then a zipped folder (`croc send --zip`) is received twice into one folder with each policy and each accept mode (4 cases).
-- `croctest receive` takes `-policy keepBoth|replace` (default `keepBoth`, other values exit 2).
-
-Scenario 13 (large files without Tailcat):
-
-- A 130 MiB transfer, wrapper to CLI and CLI to wrapper, with the CLI on its default `--transport auto`. It asserts byte equality, and in the CLI `--debug` log the plain `selected croc relay data transport` line with no `tailcat-offer`, `starting Tailcat server`, `Tailcat fallback` or `selected staged` line ("Transport and Tailcat").
-- Then a CLI sender with `--transport derp` to the wrapper: the wrapper must exit non-zero within 30 s with the peer-requires-Tailcat error above, and receive nothing.
-
-Scenario 14 (stored transfers), which needs neither a relay nor the internet:
-
-- It starts `croctest store-server` on a loopback port.
-- It checks wrapper upload then CLI download, wrapper revoke then CLI download fails, CLI upload then wrapper download, and CLI revoke giving `storeExpired`.
-- It checks an existing name with Keep Both, Replace and a declined preview.
-- The CLI's revoke receipts go to a throwaway `CROC_CONFIG_DIR`.
-
-`croctest` also has `relay CODE` and `relays`. The relay cache lives in `crocmobile/internal/relaycache`, so `croctest` can seed it without adding to the gobind API.
-
-### `scripts/verify-app-sim.sh`
-
-Boots the simulator and installs the app. It runs two scenarios: CLI to app via the `--auto-receive CODE` launch argument, then the share-extension handoff via `--auto-share-send CODE`. Each gates on an exact `ok success=true` plus a byte diff.
-
-The launch arguments drive the real UI state machine (`AutoVerify` and `TransferController`, accepting through `respond(true)`), not engine-level auto-accept. The point is that the verified path is the one users take.
-
-### `scripts/verify-app-mac.sh`
-
-13 scenarios, the macOS app through launch arguments. Every transfer gates on a byte-identical diff and the app's `verify-result.txt`.
-
-- CLI to app receive (with history)
-- app to CLI send with a custom code (`--auto-send PATH --code CODE`; the source file must live in the app container because of the sandbox)
-- local-only send (`--local`; a sandboxed relay-listener proof, the CLI receives via `--ip`)
-- send through a custom self-hosted relay (`--relay ADDRESS --disable-local`: the second flag turns the app's LAN route off, so the transfer must cross the relay, and the scenario asserts that the relay log gained a `room has second peer` line). Every other relay scenario passes `--relay` alone, so the app runs with its default LAN route on; this one uses the harness relay too, and with `PUBLIC_POOL=1` it starts a relay of its own for this scenario only
-- `--no-compress` send
-- `--ask` both-sides confirm (auto-answered by `AutoVerify` through `.confirmSend`)
-- receive onto an existing file in the app's Documents, with `--when-exists keepBoth|replace` (the answer `AutoVerify` gives the incoming sheet; prints `MAC-COLLIDE-OK`)
-- a 130 MiB transfer in each direction against a CLI on `--transport auto`, which must show the plain relay line and no Tailcat offer (prints `MAC-TRANSPORT-OK`; same log assertions as interop scenario 13)
-- stored transfers against a local store server
-- menu-bar quick send
-- Open at login
-- the Shortcuts actions
-- a folder of 8 small files in each direction, which croc 11.6 moves as a bundle spooled in `$TMPDIR` (prints `MAC-BUNDLE-OK`; see "Small-file bundles")
-
-Traps:
-
-- The app declares document types, so bare adjacent argv tokens are document-open candidates. Pass flags only (`--code CODE`).
-- Every launch needs `-ApplePersistenceIgnoreState YES`, or a headless window restoration hangs.
-- App-as-sender scenarios wait for the `verify-code-ready.txt` marker that `AutoVerify` writes when a send reaches its code, then for the app's room to show in the relay log (see "Start order in the harness" above). The `--relay ADDRESS` argument goes before any value-less flag (`--ask`, `--local`, `--disable-local`), because AppKit reads the token after such a flag as its value.
-- The container Documents folder is `~/Library/Containers/com.bakirgdev.CrocApp/Data/Documents/`.
-
-### `crockit-verify`
-
-A CrocKit executable for the Swift layer. Subcommands: `send`, `receive` (optionally answering `y` or `n` and cancelling after a number of milliseconds) and `twice`.
-
-`twice` runs two transfers in one process, the second receiving with `.replace`. It proves that the restoration of fd 0, stdout, cwd and the mutex composes across transfers, and that the second start succeeds right after the first one's terminal event, with no retry.
+- **The rules are the engine's, not a mirror of them.** Checked on Go 1.27.3 and croc 11: `normalizeOrigin` compares the loopback host case-sensitively (`http://LOCALHOST` is refused) and accepts an empty query or fragment (`https://host?`) and an empty host name before a port (`https://:8080`), which `validateStoreOrigin` refuses on top. `net/url` refuses an unbracketed colon in a host for `http` and `https` only and allows a non-ASCII space in any host, so `proxyURL` refuses both for every scheme (`::1:1080`, `socks5://host:1080:2`, a no-break space in the host).
 
 ## Toolchain
 

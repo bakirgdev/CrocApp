@@ -100,6 +100,7 @@ const config: Config = {
       '@docusaurus/plugin-client-redirects',
       {
         redirects: [
+          {from: '/contribute', to: '/'},
           {from: '/guide/stored-transfers', to: '/guide/send-as-link'},
           {
             from: ['/guide/power-options', '/guide/settings-and-trust'],

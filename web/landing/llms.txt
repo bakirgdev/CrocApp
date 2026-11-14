@@ -69,7 +69,6 @@ Compared with the alternatives: AirDrop needs Apple devices in the same room. LA
 
 ## Optional
 
-- [Contribute](https://crocapp.dev/docs/contribute/): how to help, how it was made, and what inspired it
 - [Source and issue tracker](https://github.com/bakirgdev/CrocApp): the repository, MIT licensed
 - [Releases](https://github.com/bakirgdev/CrocApp/releases): release notes and downloads
 - [croc](https://github.com/schollz/croc): the underlying engine

@@ -13,7 +13,6 @@ How CrocApp is signed, notarized, updated and uploaded, and the checklist for cu
 - The App Store builds come from the `CrocApp` target and scheme. Its product is also `CrocApp.app`.
 - One channel per Mac: both targets produce `CrocApp.app`, so the disk image copy replaces an App Store copy in /Applications. Their data stays apart (separate bundle IDs). The landing download section and the docs site install page say so; keep them in step.
 - In one shared DerivedData, each scheme's build replaces the other's. The harness scripts and CI use their own `-derivedDataPath`; otherwise build Direct last.
-- Which channels have shipped: `docs/README.md`, "Status".
 
 ## Direct download (Developer ID)
 
@@ -171,10 +170,10 @@ Both app `Info.plist` files (`app/Config/CrocApp-Info.plist`, `app/Config/CrocAp
 
 - `false` is a position, not only a way past the check. croc's encryption (AES-256-GCM, PAKE) is standard and its source is public, so the app relies on the open-source exemption (EAR 742.15(b)).
 - Apple's own table makes `false` coherent only while France is excluded. The first App Store release therefore ships without France in its availability. A later release adds France after an ANSSI declaration, and the key then becomes `true` with an issued code.
-- SIEC is no longer a separate question for the app: CrocApp has no curve setting and uses P-256 itself. croc still links the `siec` curve and a sender adopts its receiver's curve, so a CLI receiver can pick it (`app-store-listing.md`, "Export compliance").
+- SIEC is no longer a separate question for the app: CrocApp has no curve setting and uses P-256 itself. croc still links the `siec` curve and a sender adopts its receiver's curve, so a CLI receiver can pick it (issue #115).
 - If the exemption does not hold, set the key to `true` and add the `ITSEncryptionExportComplianceCode` that App Store Connect issues after the documentation is approved.
 
-The research and the exact answers to give if App Store Connect asks are in `docs/knowledge/app-store-listing.md`, "Export compliance". The owner's open actions are in `known-issues.md`, "Release".
+The research is in issue #115, and the answers to give if App Store Connect asks are in `docs/knowledge/app-store-listing.md`, "Export compliance". The owner's open actions are in `known-issues.md`, "Release".
 
 ## One-time setup
 
@@ -209,7 +208,7 @@ These steps are done by a person, not by a script. Follow them on a new machine,
 ## Each release
 
 1. **Bump the version.** In `app/Config/Version.xcconfig`, set `MARKETING_VERSION` for a new version, and raise `CURRENT_PROJECT_VERSION` for every upload or tag. Do this in its own pull request or commit. A tag run fails when the build number is not above every build in the published `appcast.xml`. App Store Connect refuses a build number it has already seen for that version.
-2. **Write the CHANGELOG heading.** Rename `## [Unreleased]` and date it as `## [X.Y.Z] - YYYY-MM-DD` (Keep a Changelog). `release.yml` requires exactly that heading for the tagged version, requires the section to be non-empty, and publishes the section as the release notes and the Sparkle notes. `X.Y.Z` must be a plain dotted version. Rename the `[unreleased]:` link label at the end of `CHANGELOG.md` to the version too.
+2. **Write the CHANGELOG heading.** Rename `## [Unreleased]` and date it as `## [X.Y.Z] - YYYY-MM-DD` (Keep a Changelog). `release.yml` requires exactly that heading for the tagged version, requires the section to be non-empty, and publishes the section as the release notes and the Sparkle notes. `X.Y.Z` must be a plain dotted version. Add the `[X.Y.Z]:` link line at the end of `CHANGELOG.md` too.
 3. **Rehearse.** With the change on `main`, start the workflow from GitHub Actions with `workflow_dispatch`. Approve the `release` environment deployment as the required reviewer (in the run's page, or with `gh api -X POST repos/<owner>/<repo>/actions/runs/<id>/pending_deployments -F 'environment_ids[]=<env id>' -f state=approved -f comment=...`). The rehearsal builds, signs, notarizes and writes the appcast, and publishes nothing.
 4. **Tag.** On an up-to-date `main`, run `scripts/release-check.sh X.Y.Z`: it checks what the tag run checks and the rehearsal skips (`MARKETING_VERSION`, the dated CHANGELOG heading, its `[X.Y.Z]:` link and a section the release notes will not cut short, a build number above the published appcast, no existing release or tag). The `v*` tag ruleset forbids deleting or moving a tag, so a tag run that fails burns the version. Then wait for `ci pass` on that commit on `main`, tag it as `vX.Y.Z` and push the tag. Approve the `release` environment again. If `gate` failed because main's CI had not finished, re-run the failed jobs once it is green: a re-run keeps the tag, so the version is not burned.
 5. **Verify the published DMG.** Download it from the release and run `xcrun stapler validate <dmg>` and `spctl -a -vv -t open --context context:primary-signature <dmg>`. Expect "Notarized Developer ID". Compare it against `SHA256SUMS.txt`, and run `gh attestation verify <file> --repo bakirgdev/CrocApp`.
@@ -219,3 +218,39 @@ These steps are done by a person, not by a script. Follow them on a new machine,
 9. **Submit for Review.** Fill the listing from `docs/knowledge/app-store-listing.md`, work through its "Open checks before submitting", then follow its "Submitting".
 
 The websites need no edit for a release: no page carries a version number, and `scripts/assemble-site.sh` writes the landing sitemap from git dates.
+
+## Calendar and cadence
+
+One maintainer holds the Apple account, the signing secrets, the domain and repository admin. Credentials live in the maintainer's password manager, so nobody else can renew a certificate or ship a release today.
+
+| When | What |
+| --- | --- |
+| Every Monday | Read the "Pinned versions to update" issue (`.github/workflows/pin-watch.yml`) and the Dependabot PRs; merge what is green |
+| A month before the Developer ID certificate expires (developer.apple.com, Certificates) | Renew the certificate and its profile ("One-time setup", steps 2 and 5) |
+| A month before the `Expires` field lapses | Bump `Expires` in `web/landing/.well-known/security.txt` |
+| Yearly, before the renewal date in the Apple Developer account | Renew the Apple Developer Program membership |
+| Whenever App Store Connect shows one | Accept the updated agreements; uploads are blocked until then |
+| June (WWDC) to September | Build on the new Xcode beta from the third beta, and ship a compatibility release by the OS launch |
+
+### croc updates
+
+Owner decision, 14 November 2026, also stated publicly in schollz/croc#1427. The rule is about reading, not about the version number on the release.
+
+- Read the diff of every croc release, including its dependency diffs, within 3 days.
+- Take security, protocol and bug fixes at once.
+- Ship croc majors and minors within 7 days of the release, at the latest patch, once `docs/knowledge/croc-upgrade-playbook.md` and the interop harness pass. A major is a new module path (`/v12`) that Dependabot does not propose, so the release notification starts that bump.
+- Skip a patch only after its diff shows no effect on CrocApp. A release labelled a dependency update can carry a fix: croc 11.6.5 was labelled that way and carried a pake panic fix.
+- Hold a release back when it breaks progress, interop or error classification, and say why in the hold's issue.
+
+### OS cycle
+
+- Support iOS, iPadOS and macOS 26 and later. A new OS release does not raise the minimum; raising it is a separate decision.
+- Test on betas from the third beta, and file Feedback for regressions in system frameworks instead of working around them early.
+- The Xcode pin follows `BUILDING.md`, "When the toolchain changes". A release candidate never builds a release.
+
+### Rhythm
+
+- Ship when ready, with no fixed rhythm. A patch (`X.Y.Z+1`) carries fixes, toolchain bumps and small polish; a minor (`X.Y+1.0`) carries features or visible UI changes.
+- The disk image and both App Store builds come from the same commit and version. The disk image ships first because it needs no review; the App Store builds follow when App Review allows.
+- A security fix ships as a disk image first (Sparkle reaches Direct users within a day), then as App Store builds with an expedited review request. Reports and response times are in `SECURITY.md`.
+- The app collects no data. Crashes are read in Xcode Organizer and TestFlight, and downloads in App Store Connect and on the GitHub release assets.

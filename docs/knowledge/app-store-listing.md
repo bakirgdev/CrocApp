@@ -1,12 +1,12 @@
 # App Store listing
 
-The copy for CrocApp's App Store Connect record, written to be pasted field by field and reused for every App Store release. One app record holds iOS, iPadOS and macOS (universal purchase, bundle ID `com.bakirgdev.CrocApp`). The first App Store release, 1.1.0, was submitted from this copy (`../RELEASING.md`, "App Store builds"). The iOS and iPadOS build is released; the Mac build is in App Review with manual release.
+The copy for CrocApp's App Store Connect record, written to be pasted field by field and reused for every App Store release. One app record holds iOS, iPadOS and macOS (universal purchase, bundle ID `com.bakirgdev.CrocApp`).
 
 Every fenced block under a field heading is the exact text to paste. Character counts were measured with a script (Python `len()` for characters, `len(s.encode())` for the two byte-limited fields). When you change a block, recount it.
 
 How to read the claims:
 
-- **Documented**: an Apple, ANSSI or eCFR page says it. The URL is in "Sources".
+- **Documented**: an Apple page says it. The URL is in "Sources".
 - **Verified locally**: read in this repo or in its Go module cache.
 - **Inference** and **unknown**: labelled where they appear.
 
@@ -52,7 +52,7 @@ Free, open source, no account. Send files, folders or text to another device wit
 
 ## Description
 
-Length: 2883 characters. The security statements follow the approved list in `design/voice.md`, "Claims".
+Length: 2918 characters. The security statements follow the approved list in `design/voice.md`, "Claims".
 
 ```text
 CrocApp sends files, folders and text from one device to another with a short code phrase such as cape-junky-widow. No account, no sign-up, and the two devices do not need to be on the same network.
@@ -97,7 +97,7 @@ The description does not claim VoiceOver support. Add it only after the accessib
 - Comma separated, no spaces.
 - Words already in the name or subtitle (`crocapp`, `send`, `files`, `code`, `phrase`) and the category (`utilities`) are left out because Apple already indexes them.
 - `croc` is a deliberate keep: the name is one token, and the protocol name is what people search.
-- `airdrop` is left out on purpose (another company's trademark). `wormhole` is left out too: it names other transfer products (Magic Wormhole, Wormhole), which guideline 2.3.7 treats as trademark-adjacent. The 1.1.0 submission still carried it, so the swap for `link,mac` goes in with the 1.1.1 submission.
+- `airdrop` is left out on purpose (another company's trademark). `wormhole` is left out too: it names other transfer products (Magic Wormhole, Wormhole), which guideline 2.3.7 treats as trademark-adjacent.
 - `secure`, `p2p` and `peer` are search terms people type; keywords are never shown, so `design/voice.md`, "Terminology", which binds displayed copy, does not apply to them.
 
 ```text
@@ -106,7 +106,7 @@ croc,transfer,share,encrypted,secure,private,qr,p2p,link,mac,folder,lan,nearby,e
 
 ## What's New
 
-App Store Connect shows no What's New field on an app's first version (the 1.1.0 iOS and macOS pages had none). From the second App Store release on, write it from that release's `[x.y.z]` section of `CHANGELOG.md`, in the voice of the description.
+App Store Connect shows no What's New field on an app's first version. From the second App Store release on, write it from that release's `[x.y.z]` section of `CHANGELOG.md`, in the voice of the description.
 
 ## URLs, category, price
 
@@ -116,16 +116,16 @@ App Store Connect shows no What's New field on an app's first version (the 1.1.0
 | Marketing URL | `https://crocapp.dev` |
 | Privacy Policy URL | `https://crocapp.dev/privacy/` |
 | Primary category | Utilities (matches `LSApplicationCategoryType` `public.app-category.utilities` in the build settings, verified locally) |
-| Secondary category | Productivity (optional; a judgement call, drop it if unsure). Unknown whether the iOS and macOS platforms of one record share categories; check that the App Information page shows both. |
+| Secondary category | Productivity (optional; a judgement call, drop it if unsure). Both platforms of the record share the categories. |
 | Copyright | `2026 Bakir Gracić` (the holder in `LICENSE` is "Bakir Gracić", with the accent; Apple adds the symbol) |
 | Price | Free (USD 0), no In-App Purchases |
 | Version | `MARKETING_VERSION` in `app/Config/Version.xcconfig`; attach the iOS and macOS builds that finished processing in TestFlight |
 | Privacy choices URL | leave empty (optional per Apple) |
 | Sign-in required (App Review) | off; the app has no account |
 | Content Rights (App Information) | No, the app does not contain, show, or access third-party content (owner's answer) |
-| Advertising Identifier | not asked when 1.1.0 was submitted; the app uses no IDFA |
+| Advertising Identifier | the app uses no IDFA |
 | iPhone and iPad Apps on Apple Silicon Macs (Pricing and Availability) | off, so the native macOS app is the only one Macs see |
-| Product page Header and Search Results asset (universal 16:9, 5244x2950) | `assets/app-store-header.png`, from `scripts/social-cards.swift`; submitted through the Asset Library after the 1.1.0 iOS release. Shown on iOS and iPadOS 27 and later only |
+| Product page Header and Search Results asset (universal 16:9, 5244x2950) | `assets/app-store-header.png`, from `scripts/social-cards.swift`; uploaded through the Asset Library. Shown on iOS and iPadOS 27 and later only |
 
 The Direct build's **Support CrocApp** link points at a payment destination outside In-App Purchase, so the App Store builds omit it (guideline 3.1.1); `AboutSection` picks the link with `#if DIRECT`. **Rate CrocApp** opens `https://apps.apple.com/app/id6805675003?action=write-review` and appears in App Store builds only.
 
@@ -135,7 +135,7 @@ The support and privacy pages exist in `web/landing/` (`support/`, `privacy/`). 
 
 Recommended: **All countries or regions except France.** In App Store Connect: your app, Pricing and Availability, App Availability, Set Up Availability, "Specific Countries or Regions", select all but France, tick the box that keeps new regions available (documented steps in "Sources"). If you used "All Countries or Regions", use Manage, Manage Availability and deselect France.
 
-Basis (details and uncertainty in "Export compliance" below):
+Basis (details and uncertainty in issue #115):
 
 - Apple documents that a French encryption declaration is required for an app that uses an industry-standard algorithm not provided by the Apple operating system, "only if you're distributing your app on the App Store in France."
 - croc, linked into the app, implements the cryptography (AES-256-GCM, P-256 and related primitives, verified locally); CrocApp adds none. The app still falls in that row of Apple's table, because the algorithms are not provided by the operating system.
@@ -233,92 +233,17 @@ MAC ENTITLEMENTS. network.server: the Mac accepts incoming TCP in two features. 
 
 Check the notes by hand before pasting, as listed in "Open checks before submitting".
 
-Keep the "MAC ENTITLEMENTS" paragraph while the macOS app carries `network.server`. Apple's automated Mac check rejects the build under guideline 2.4.5 when the entitlement "does not appear to have matching functionality", because the listeners live in the statically linked Go engine, where the check does not find them. The rejection asks for a reply to App Review that explains the use, plus the same explanation in these notes. The entitlement cannot go: croc starts its local relay on every send unless **Skip Local Network** is on, and fails the send when the port cannot be bound (`setupLocalRelay` in croc v11.6.5 `src/croc/local_relay.go`).
-
-Run on TestFlight build 1.1.0 (4): step 2 on an iPhone; step 4 on a Mac with outgoing TCP 9009 to 9013 blocked, where a code transfer showed "No public relay answered"; and a code transfer on an iPhone on an IPv6-only (NAT64) network. Steps 1 and 3 and the macOS build's step 2 were not run on that build. Neither the description nor these notes mention the Live Activity, which has not been seen on a device.
+Keep the "MAC ENTITLEMENTS" paragraph while the macOS app carries `network.server`. Apple's automated Mac check rejects the build under guideline 2.4.5 when the entitlement "does not appear to have matching functionality", because the listeners live in the statically linked Go engine, where the check does not find them. The rejection asks for a reply to App Review that explains the use, plus the same explanation in these notes. The entitlement cannot go: croc starts its local relay on every send unless **Skip Local Network** is on, and fails the send when the port cannot be bound (`setupLocalRelay` in croc 11 `src/croc/local_relay.go`).
 
 ## Export compliance
 
-Status: written after re-reading Apple's, ANSSI's and eCFR's pages as listed in "Sources". The App Store Connect encryption screens themselves could not be read, so the on-screen wording below comes from third parties and is flagged as such.
+`ITSAppUsesNonExemptEncryption` is `false` in both App Store Info.plists (`../RELEASING.md`, "Export compliance"), and France is excluded from availability: Apple's own table makes `false` coherent only while France is out. The research (Apple, US and French sources, what is unknown) is in [issue #115](https://github.com/bakirgdev/CrocApp/issues/115).
 
-### Recommended answers (what to click)
-
-Keep `ITSAppUsesNonExemptEncryption` = `false` in both App Store Info.plists, and exclude France from availability. Then:
-
-| Step | Action |
+| If App Store Connect asks | Answer |
 | :--- | :--- |
-| 1 | Pricing and Availability: remove France (see "Availability"). |
-| 2 | Open each uploaded build (iOS, macOS). With the key set to `false`, Apple documents that the encryption questions are bypassed. Expect no "Missing Compliance" status. If a build does show it, go to step 3. |
-| 3 | Fallback only if App Store Connect still asks. Answers, using the question flow third parties report (wording may differ today, so read each question): "Does your app use encryption?" Yes. "Does your app qualify for any of the exemptions provided in Category 5, Part 2 of the U.S. Export Administration Regulations?" No (the listed exemptions are medical end-use, IP and copyright protection, authentication/signature/decryption only, banking, fixed data compression; file transfer is none of these). "Is your app going to be available on the App Store in France?" No. Type of algorithms: "standard encryption algorithms instead of, or in addition to, using or accessing the encryption within Apple's operating system", not "proprietary". |
-| 4 | If, after step 3, App Store Connect demands documentation upload for a "standard algorithm" answer with France excluded, stop and do not guess: that contradicts Apple's own table (documented) and means the flow changed. Ask Apple Developer Support. |
-
-**Must anything be filed before submitting?** For a submission that excludes France: no declaration is needed by Apple's own rule (documented: the French form "is only required if you're distributing your app on the App Store in France"). For the US side the owner's position is the open-source exemption (below). No BIS email is required on the standard-algorithm reading. CrocApp offers no curve choice, so the SIEC curve is not a setting of the app (see "Unknown"). **With France included:** a French declaration would be needed first (see "Documented facts (France)").
-
-### Documented facts (Apple)
-
-- Apple: if your app "uses, accesses, contains, implements, or incorporates encryption", it is an export of encryption software subject to US export rules and to the import rules of the countries where it is distributed. Apple: "you're responsible for all liabilities associated with misinterpretation of export regulations or claiming exemption inaccurately."
-- Apple's table ("Export compliance documentation for encryption"): encryption limited to the OS needs no documentation; "an industry standard algorithm, not provided within the Apple operating system" needs the French encryption declaration uploaded; proprietary algorithms not accepted by IEEE, IETF or ITU need a CCATS and the French declaration. Footnote: the French form is only required for distribution in France.
-- Info.plist key: set `ITSAppUsesNonExemptEncryption` to NO if the app, "including any third-party libraries it links against", does not use encryption "or if it only uses forms of encryption that are exempt from export compliance documentation requirements". After Apple approves documentation it issues a code for `ITSEncryptionExportComplianceCode`. The same pages say the key lets you skip the per-submission questions.
-- Apple on France: controls focus on "Secure Storage, Secure Communications, and Security Anti-Virus applications. Exemptions include Banking and Medical applications." CrocApp is secure communications (inference on the category).
-- Apple's definition of "non-standard cryptography" (quoted from its overview): proprietary or unpublished cryptographic functionality, including algorithms or protocols not adopted or approved by a duly recognized standards body (IEEE, IETF, ISO, ITU, ETSI, 3GPP, TIA, GSMA) and not otherwise published.
-
-### Documented facts (US law, eCFR)
-
-- 15 CFR 742.15(b): publicly available encryption source code (ECCN 5D002) "is not subject to the EAR". If that code provides or performs "non-standard cryptography", you must notify BIS and the NSA ENC coordinator by email (`crypt@bis.doc.gov`, `enc@nsa.gov`) with the code's internet location, and again when the location changes or cryptographic functionality is updated.
-- 15 CFR 734.3 note: publicly available encryption object code is not subject to the EAR when its source meets the 742.15(b) criteria.
-- The eCFR pages read carry amendment citations up to 89 FR 23885 (for 742.15) and 61 FR 12746 (for 734.3). Whether later amendments changed these paragraphs is unknown.
-
-### Documented facts (France)
-
-- ANSSI (cyber.gouv.fr): "L'utilisation d'un moyen de cryptologie est libre. En revanche, la fourniture, l'importation, le transfert intracommunautaire et l'exportation d'un moyen de cryptologie sont soumis, sauf exception, à déclaration ou à demande d'autorisation." The duty falls on "le fournisseur ou le primo-importateur".
-- The ANSSI pages say procedures run on the demarches.numeriques platform, where a form "Déclaration relative à un moyen de cryptologie" is linked. An older ANSSI page lists the file contents (company presentation, Kbis under 3 months or foreign equivalent, brochure, technical description, guides) and the address `controle@ssi.gouv.fr`.
-- Décret 2007-663 (original 2 May 2007 text, read in full):
-  - Art. 3 puts the supply of cryptology means that are not exclusively authentication or integrity under prior declaration, unless Annex 1 dispenses them.
-  - Art. 4: file "un mois au moins avant l'opération"; ANSSI issues a receipt with a registration number.
-  - Art. 5: after one month of silence the declarant may proceed; ANSSI may issue an attestation sooner.
-  - Art. 6: a supplier's declaration also covers the intermediaries that distribute the means (this is why Apple, as distributor, asks for it).
-  - Art. 7: within a year the Prime Minister may ask for the technical characteristics and the source code, and two copies for up to six months.
-  - Annex 1 (dispensed) lists smart cards, broadcast receivers, banking equipment, mobile phones' network encryption, copy-protection, and similar. General file-transfer or secure-communication software is not in it.
-- This is the 2007 text as published. A later consolidated version was not readable (Légifrance returned 403). Annex 1 may have been amended; unknown.
-
-### Verified locally (project facts)
-
-- The two App Store Info.plists set `ITSAppUsesNonExemptEncryption` to `false` (`../RELEASING.md`, "Export compliance"). The Direct build plist and the share extension plist do not set it.
-- Engine: croc v11.6.5 with `pake/v3` v3.2.1. Traffic encryption is AES-256-GCM (`crypt.go`, `crypto/aes`), with ChaCha20-Poly1305, PBKDF2 and Argon2 from `golang.org/x/crypto` in the same package. The session key comes from PAKE2, then HKDF-SHA256. The curve is p256 on CrocApp's side (`crocCurve` in `crocmobile/network.go`, the croc CLI default). Available curves in `pake.AvailableCurves()`: p521, p256, p384, **siec**, ed25519. The engine is built with croc's `croc_no_tailcat` tag (`scripts/build-xcframework.sh`), so Tailcat and its Tailscale WireGuard path are not in the binary. No `wireguard-go` or gVisor package is in the build (`go list -tags croc_no_tailcat -deps` in `crocmobile/`: 0 matches for each, against 42 gVisor packages without the tag). A few `tailscale.com/types` helper packages stay linked, because croc's stub for the tag still names Tailscale's key types; they run no tunnel (inference). TLS to getcroc.com uses the platform or Go stack (inference; not traced).
-- CrocApp has no curve setting: it always starts the key exchange on p256. croc still links the other curves, and a sender adopts the curve its receiver announces (`croc.go`, "initialize curve based on the recipient's choice"), so a CLI receiver can make a CrocApp sender use siec. CrocApp neither offers nor requests it (read from source, not observed on the wire).
-- The app source is public under MIT, so "publicly available" holds for the app's own code (inference that the whole build qualifies, since the Go modules are public too).
-
-### Inference
-
-- **Declaring `false` is consistent with Apple's own table only while France is excluded.** The key means "only exempt forms". The table makes the French declaration the documentation for standard algorithms outside the OS, and removes the requirement outside France. So `false` plus France excluded is coherent. `false` plus France available is not: you would be claiming no documentation is needed where Apple's table says it is.
-- Apple's table has no open-source branch. The open-source exemption is a US-law argument that Apple accepts through the plist; Apple's table and the French law do not mention it.
-- The French requirement probably applies to a free open-source app supplied from outside France by an individual, because Décret 2007-663 turns on "fourniture" of a means that does more than authenticate, with no open-source or free-software dispense in Annex 1. Whether ANSSI would treat a free, source-published app differently in practice is unknown.
-- If you later offer France, the key must change to `true` and carry an `ITSEncryptionExportComplianceCode`, because uploaded documentation produces a code that goes in the plist. That is a change to both Info.plists and a new build upload.
-- If the owner files with ANSSI, the filing identity matters: ANSSI asks for a Kbis or the foreign equivalent, which an individual developer account may not have. Unknown how ANSSI treats it.
-
-### Unknown (not found, not guessed)
-
-- The exact current on-screen App Store Connect questions. Apple's help pages describe them but do not list them. The question text above comes from third-party forum threads and a GitHub pull request, not from Apple.
-- Whether App Store Connect accepts a French declaration receipt, an attestation, or only the form, and whether Apple's review rejects `false` when France is available.
-- Whether CrocApp's PAKE composition counts as "non-standard cryptography" for 742.15(b)(2) notification.
-  - The P-256, AES-GCM, ChaCha20-Poly1305, HKDF, HMAC, PBKDF2 and Argon2 parts are standard.
-  - SIEC is published open source but not from a standards body. It was the largest open risk while the app offered it as a setting. With the setting gone the question is moot for CrocApp's own behavior, because the app starts every exchange on p256. The curve code stays linked inside croc, and a CLI receiver can still request it from a CrocApp sender (read from source). Whether that residual use matters is unknown.
-- Whether other countries have import rules that matter. Apple's pages mention only France. Apple removes or restricts regions on its own for legal reasons ("Your app may not be available ... due to legal or regulatory requirements").
-- The current consolidated French decree and ANSSI's current filing steps, delays and fees.
-
-### Conflicts between sources
-
-- Apple's plist wording ("exempt from export compliance documentation requirements") and Apple's own table (standard non-OS algorithms need the French declaration) conflict when France is available. They agree when France is excluded.
-- Third-party guides say a one-month wait applies and France stays out until a complete file is received. The ANSSI pages read do not state it, but Décret 2007-663 Art. 4 and 5 do. Consistent, but the decree text read is the 2007 one.
-- A developer blog (Cryptomator, found by search, not read) says a US ERN may also be needed. Apple's current table names CCATS only for proprietary algorithms and mentions no ERN. Not resolved.
-
-### What to do and when
-
-1. Before submitting: remove France from availability, keep the key `false`, and confirm no build shows "Missing Compliance". Nothing else must be filed for the first App Store release.
-2. Track a `future` item: file the ANSSI declaration (demarches.numeriques platform), switch the key to `true` with the issued code, upload new builds, and add France back. Allow at least a month from a complete file (Décret 2007-663 Art. 4, 2007 text).
-3. SIEC needs no decision for the app's own behavior: the curve picker is gone. If the owner wants certainty about the residual case (a CLI receiver choosing siec), the options are the notification email to `crypt@bis.doc.gov` and `enc@nsa.gov` with `https://github.com/bakirgdev/CrocApp`, or advice. This is the owner's judgement; Apple states the owner is responsible for the classification.
-
-This is research, not legal advice. `../known-issues.md`, "Release", tracks the owner actions.
+| Availability | All countries or regions except France |
+| "Missing Compliance" on an uploaded build | Not expected with the key set. If it appears: uses encryption, yes; Category 5, Part 2 exemption, no; available in France, no; standard algorithms, not proprietary |
+| It then demands a French declaration with France excluded | Stop and ask Apple Developer Support: that contradicts Apple's table |
 
 ## Open checks before submitting
 
@@ -336,7 +261,6 @@ Before every submission:
 - Press **Add for Review** on each platform's version page. It only builds a draft; nothing reaches Apple until **Submit for Review**.
 - App Store Connect keeps one draft submission per platform, so iOS and macOS go in as two submissions, one right after the other.
 - A screenshot that is still processing blocks **Add for Review** with "1 or more screenshots must finish processing". Reload after a minute and press it again.
-- iPhone Duo screenshots were not required: **Add for Review** accepted the 1.1.0 iOS build without them.
 - Version release is Manual, so the website's store links can go live before the listing does. Approval does not publish the app; **Release This Version** on each platform does.
 - **A later version.** The **+** next to "iOS App" or "macOS App" in the sidebar adds it; enter `MARKETING_VERSION`, paste "What's New" from the version's `CHANGELOG.md` section, and pick the build once it has processed. Description, keywords, screenshots and "What's New" change only with a new version; promotional text changes any time without review.
 - While either platform has a version in review, App Information and App Privacy are locked for both.
@@ -352,20 +276,6 @@ Apple's pages change. Re-read them before you rely on a limit or a rule.
 - Set an app age rating: https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating
 - Manage app privacy: https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy
 - App privacy details (definition of collect, third-party partners): https://developer.apple.com/app-store/app-privacy-details/
-- Overview of export compliance: https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance
-- Export compliance documentation for encryption (the table): https://developer.apple.com/help/app-store-connect/reference/export-compliance-documentation-for-encryption
-- Determine and upload app encryption documentation: https://developer.apple.com/help/app-store-connect/manage-app-information/determine-and-upload-app-encryption-documentation
-- Complying with encryption export regulations (key semantics, read from the JSON behind the page): https://developer.apple.com/documentation/security/complying-with-encryption-export-regulations
-- Provide export compliance information for beta builds: https://developer.apple.com/help/app-store-connect/test-a-beta-version/provide-export-compliance-information-for-beta-builds
 - Manage availability: https://developer.apple.com/help/app-store-connect/manage-your-apps-availability/manage-availability-for-your-app-on-the-app-store
-- ANSSI, contrôle relatif à un moyen de cryptologie: https://cyber.gouv.fr/reglementation/reglementation-identite-confiance-numerique/controles-reglementaires-cryptographie/controle-moyen-de-cryptologie/
-- ANSSI, formulaires: https://cyber.gouv.fr/reglementation/reglementation-identite-confiance-numerique/controles-reglementaires-cryptographie/controle-moyen-de-cryptologie/controle-reglementaire-cryptographie-formulaires/
-- ANSSI, FAQ (file contents): https://cyber.gouv.fr/reglementation/reglementation-identite-confiance-numerique/controles-reglementaires-cryptographie/controle-moyen-de-cryptologie/faq-demande-dautorisation/
-- Décret 2007-663 (2007 text, PDF): https://www.arcep.fr/fileadmin/reprise/textes/decrets/d2007-663.pdf
-- 15 CFR 742.15: https://www.ecfr.gov/current/title-15/part-742/section-742.15
-- 15 CFR 734.3: https://www.ecfr.gov/current/title-15/part-734/section-734.3
-- 15 CFR 772.1 (non-standard cryptography): https://www.ecfr.gov/current/title-15/part-772/section-772.1
-- Third party, App Store Connect question wording (not Apple): https://developer.apple.com/forums/thread/127505 and https://github.com/straff2002/OpenGlasses/pull/472
-- Third party, French filing practice: https://developer.apple.com/forums/thread/741830 and https://gist.github.com/safaiyeh/f6ee55b19eeaa81354275046803e69af
 - getcroc.com page and its bundled script (labels, Umami, AdSense): https://getcroc.com
-- Local: `app/Config/*.plist`, `app/CrocApp/PrivacyInfo.xcprivacy`, `app/CrocApp.xcodeproj/project.pbxproj` (purpose strings, category), `LICENSE`, croc v11.6.5 and pake v3.2.1 in the Go module cache, `../known-issues.md`, `../RELEASING.md`.
+- Local: `app/Config/*.plist`, `app/CrocApp/PrivacyInfo.xcprivacy`, `app/CrocApp.xcodeproj/project.pbxproj` (purpose strings, category), `LICENSE`, `../known-issues.md`, `../RELEASING.md`.

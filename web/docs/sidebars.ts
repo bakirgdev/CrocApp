@@ -37,7 +37,6 @@ const sidebars: SidebarsConfig = {
     ]),
     ...group('Help', ['troubleshooting', 'faq', 'security-and-privacy', 'uninstall']),
     ...group('Reference', ['reference/croc-cli-interop']),
-    'contribute',
   ],
 };
 

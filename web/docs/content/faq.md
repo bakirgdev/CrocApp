@@ -40,7 +40,7 @@ CrocApp uses the current SwiftUI and the Liquid Glass design, which need the 26 
 
 ## Will there be a Windows, Linux or Android version?
 
-No. CrocApp is for Apple platforms only. Use the [croc command line](https://github.com/schollz/croc) elsewhere: it works with this app. The [other croc apps](contribute.md#inspirations) include an Android client.
+No. CrocApp is for Apple platforms only. Use the [croc command line](https://github.com/schollz/croc) elsewhere: it works with this app. The [croc-app](https://github.com/Dking08/croc-app) project is an Android client.
 
 ## Glossary
 

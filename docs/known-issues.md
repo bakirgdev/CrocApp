@@ -8,7 +8,7 @@ Engine and bridge invariants are in `knowledge/crocmobile-bridge.md`. UI state-m
 
 ## Release
 
-Open items left from the 1.1.0 release (`docs/README.md`, "Status").
+Defects and limits the project lives with.
 
 - **France is excluded from App Store availability** until an ANSSI encryption declaration exists (issue #115). The position is in `RELEASING.md`, "Export compliance"; the research is in `knowledge/app-store-listing.md`, "Export compliance".
 - **The Accessibility Inspector audit has not run, and VoiceOver has covered only Send, Receive and Settings.**

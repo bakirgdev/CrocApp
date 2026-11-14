@@ -143,7 +143,7 @@ These cost real debugging time on this machine. All are environment quirks, not 
 
 ## Localization
 
-The app ships in English only and is ready for more languages. The catalogs exist and every user-facing string reaches one. No second language is in them yet, and the project knows only the `en` and `Base` regions. The plan for languages is in `docs/ROADMAP.md`.
+The app ships in English only and is ready for more languages. The catalogs exist and every user-facing string reaches one. No second language is in them yet, and the project knows only the `en` and `Base` regions. A new language needs a maintainer who keeps it current (`CONTRIBUTING.md`, "Unlikely to be merged").
 
 | Catalog | Bundle | Holds |
 | --- | --- | --- |

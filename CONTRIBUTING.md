@@ -7,21 +7,6 @@ Two things make this repo different from a typical SwiftUI app, and most review 
 1. **A green build is not evidence a transfer works.** Real behavior is proven by live-transfer harnesses in `scripts/`, not by the compiler.
 2. **Anything visual is bound to `design/`.** Tokens and system styles, SF Symbols only in the app, system font only.
 
-| | |
-|---|---|
-| [Code of Conduct](#code-of-conduct) | How we behave here |
-| [Where to start](#where-to-start) | Issues, discussions, upstream |
-| [Setup](#setup) | First build, repo layout |
-| [Commits](#commits) | Message conventions |
-| [Code style](#code-style) | Formatters, linters, scope |
-| [Design rules](#design-rules) | Tokens, symbols, screenshots |
-| [Verification](#verification) | What to run, and how to report it |
-| [Docs](#docs) | Changelog, knowledge, known issues |
-| [AI-assisted contributions](#ai-assisted-contributions) | Allowed, with disclosure |
-| [Opening a pull request](#opening-a-pull-request) | Flow and expectations |
-| [Unlikely to be merged](#unlikely-to-be-merged) | Save yourself the work |
-| [Licensing](#licensing) | Inbound equals outbound |
-
 ## Code of Conduct
 
 This project follows the [Contributor Covenant 3.0](CODE_OF_CONDUCT.md). Taking part means agreeing to it. Report problems to <bakirgdev@gmail.com>.
@@ -36,7 +21,7 @@ This project follows the [Contributor Covenant 3.0](CODE_OF_CONDUCT.md). Taking 
 | Report a vulnerability | [Private advisory](https://github.com/bakirgdev/CrocApp/security/advisories/new), never a public issue. See [SECURITY.md](SECURITY.md) |
 | Report a transfer, relay, or crypto bug that also reproduces with the `croc` CLI | [Upstream croc](https://github.com/schollz/croc/issues) |
 
-Issues labeled `help wanted` or `good first issue` are open for anyone to pick up. Area labels (`macos`, `ios`, `ipados`, `engine`, `ui`, `docs-site`, `ci`) say which part of the project an issue touches.
+Area labels (`macos`, `ios`, `ipados`, `engine`, `ui`, `docs-site`, `ci`) say which part of the project an issue touches.
 
 > [!TIP]
 > For a large feature or a refactor that touches the transfer engine, open an issue or a discussion first. Not for approval, just so you do not spend a weekend on something that collides with work already in flight.
@@ -50,22 +35,11 @@ git clone https://github.com/bakirgdev/CrocApp.git
 cd CrocApp
 ```
 
-Also needed: `croc` CLI (`brew install croc`; `croc --version` must match the pin in `crocmobile/go.mod`, otherwise `go install github.com/schollz/croc/v11@<pin>`) and, only for `PUBLIC_POOL=1` harness runs, outbound network access to the public relay (the harnesses otherwise start a local relay).
-
-The first build, the full toolchain table and every check are in [`docs/BUILDING.md`](docs/BUILDING.md). How the code fits together: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+The harnesses also need the `croc` CLI at the version pinned in `crocmobile/go.mod`. The first build, the toolchain table and every check are in [`docs/BUILDING.md`](docs/BUILDING.md); how the code fits together is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ### Editor setup
 
-Xcode needs nothing extra. For another editor with SourceKit-LSP (VS Code, Zed, Neovim), generate a `buildServer.json` once, after one Xcode or `xcodebuild` build of the scheme:
-
-```bash
-brew install xcode-build-server
-xcode-build-server config -project app/CrocApp.xcodeproj -scheme CrocApp
-```
-
-The file holds absolute paths for your machine, so it is gitignored. Run the command again after you move the clone, rename the scheme or switch Xcode. For Go, `gopls` in `crocmobile/` works as is; set `GOFLAGS=-tags=croc_no_tailcat` so it sees the same files the build does. `.editorconfig` sets the shell script style that `shfmt` checks.
-
-The committed `.mcp.json` gives AI agents the Xcode MCP bridge (`xcrun mcpbridge`) and `gopls` (`go install golang.org/x/tools/gopls@latest`). It holds no tokens and never may: a server that needs one reads it from an environment variable.
+Xcode needs nothing extra. For another SourceKit-LSP editor, run `xcode-build-server config -project app/CrocApp.xcodeproj -scheme CrocApp` once after a build (`brew install xcode-build-server`); the gitignored `buildServer.json` holds paths for your machine. For Go, set `GOFLAGS=-tags=croc_no_tailcat` so `gopls` sees the files the build does.
 
 ## Commits
 
@@ -106,17 +80,13 @@ go tool govulncheck ./...
 
 ## Design rules
 
-Anything visual, in the app, the web or elsewhere, follows [`design/AGENTS.md`](design/AGENTS.md). In short, fixed design principles (brandbook), like: design tokens and system text styles instead of raw colors and fixed sizes; the system control first; SF Symbols only in the app; system font only; a light and a dark value for every surface.
-
-One script enforces it, and CI runs it on any change to `design/`, app Swift or color sets, or web CSS. Run it yourself after touching a value:
+Anything visual, in the app, the web or elsewhere, follows [`design/AGENTS.md`](design/AGENTS.md): design tokens and system text styles instead of raw colors and fixed sizes, the system control first, SF Symbols only in the app, system font only, a light and a dark value for every surface.
 
 ```bash
 scripts/verify-design.sh   # tokens.css = DesignTokens.swift = color sets, every contrast ratio in `design/principles.md`, and no raw colors in web code
 ```
 
-A failure means your change or `design/` is wrong. Fix one of them, never the check.
-
-UI pull requests need **before and after screenshots in both light and dark**, and on both platforms if both are affected.
+CI runs it on any change to `design/`, app Swift, color sets or web CSS. A failure means your change or `design/` is wrong: fix one of them, never the check. UI pull requests need **before and after screenshots in light and dark**, on both platforms if both are affected.
 
 ## Verification
 
@@ -132,29 +102,20 @@ A build that compiles proves nothing about a transfer. CI runs formatting, lint,
 
 The commands, and what each harness covers and needs, are in [`docs/BUILDING.md`](docs/BUILDING.md) under "Format and lint" and "Verification harnesses".
 
-### Translations
-
-The app ships in English only. Every new user-facing string goes through a String Catalog (`docs/knowledge/tooling.md`, "Localization"), so a later language needs no code change. Pull requests that add a language are not accepted yet: open an issue first, because each language needs a maintainer who keeps it current.
-
 ### Tests
 
-Non-UI logic gets unit tests: Go's `testing` in `crocmobile/`, Swift Testing in `CrocKit/Tests/` and `app/CrocAppTests/`. Tests that write settings or secrets use an injected store (`MemorySettingsStorage`, `FakeSecretStore`), never the real `UserDefaults` or Keychain. Never use `UserDefaults(suiteName:)`: it leaves a `CrocAppTests.*.plist` behind in the sandbox container. There is no XCUITest: gestures, the camera and taps are checked by hand, and transfers by the harnesses. A unit test never replaces a harness run.
+Non-UI logic gets unit tests: Go's `testing` in `crocmobile/`, Swift Testing in `CrocKit/Tests/` and `app/CrocAppTests/`. Tests that write settings or secrets use an injected store (`MemorySettingsStorage`, `FakeSecretStore`), never the real `UserDefaults` or Keychain, and never `UserDefaults(suiteName:)`, which leaves a plist behind in the sandbox container. There is no XCUITest: gestures and the camera are checked by hand, and transfers by the harnesses. A unit test never replaces a harness run.
 
-**Paste the harness output into the pull request**, the summary lines and any failures. If you could not run something, write **"not verified"** and say why. That is an acceptable answer, and the maintainer runs it before merge. A claim that something passed when it never ran is not.
+**Paste the harness output into the pull request**, the summary lines and any failures. If you could not run something, write **"not verified"** and say why: the maintainer runs it before merge. Claiming a pass for something that never ran is the one answer that is not acceptable.
 
 ## Docs
 
-Documentation is part of the change. Before you open the pull request:
+Documentation is part of the change.
 
-| What happened | Where it goes |
-|---|---|
-| A user-visible change | A line under `## [Unreleased]` in [`CHANGELOG.md`](CHANGELOG.md), written for someone deciding whether to update |
-| You changed how something works inside | The doc that describes it: [`docs/AGENTS.md`](docs/AGENTS.md) says which file owns which fact |
-| You fixed a listed defect | Delete its item from [`docs/known-issues.md`](docs/known-issues.md) |
-| You found a defect and left it | Add an item to `docs/known-issues.md` |
-| You noticed a stale or wrong doc | Fix or delete it in the same pull request |
-
-Docs state what is true now, without dates or tracking IDs; [`docs/AGENTS.md`](docs/AGENTS.md) has the writing rules. Run `scripts/verify-docs.sh` after editing any markdown.
+- A user-visible change gets a line under `## [Unreleased]` in [`CHANGELOG.md`](CHANGELOG.md), written for someone deciding whether to update.
+- A change to how something works inside updates the doc that describes it: [`docs/AGENTS.md`](docs/AGENTS.md) says which file owns which fact, and has the writing rules.
+- Fixing a listed defect deletes its item from [`docs/known-issues.md`](docs/known-issues.md); finding one and leaving it adds an item.
+- Run `scripts/verify-docs.sh` after editing any markdown.
 
 ## AI-assisted contributions
 
@@ -178,6 +139,16 @@ Draft PRs are welcome for early feedback.
 
 CrocApp has one maintainer, so review time varies and there is no response-time promise. Review comments are direct and about the code, never about you.
 
+## Decisions and maintainers
+
+CrocApp has one maintainer, Bakir Gracić ([@bakirgdev](https://github.com/bakirgdev)), who makes the final call on what is merged, what ships and what the project will not do. A bug fix, docs change or small change is decided in pull request review. A feature or larger change starts as an issue or discussion; ideas deferred for later carry the `future` label. A release is the maintainer's call ([`docs/RELEASING.md`](docs/RELEASING.md)).
+
+To disagree, argue the case in the issue or pull request in terms of the code and the recorded decisions. If it does not settle, the maintainer decides and writes the reasoning in the thread. Conduct problems go through the [Code of Conduct](CODE_OF_CONDUCT.md), not this process.
+
+`main` requires a pull request and a passing `ci pass` check on a branch that is up to date, and merging is squash-only. The rules apply to admins too, so the maintainer has no bypass.
+
+Becoming a maintainer takes sustained, good contributions and an invitation. Continuity is an accepted gap: no second person has release or repository admin access, so if the maintainer becomes unavailable, releases, security responses and merges stop. The code is MIT-licensed, so anyone can fork it.
+
 ## Unlikely to be merged
 
 Not a hard no, but open an issue first and expect a long conversation. These run against decisions that are already recorded:
@@ -189,6 +160,7 @@ Not a hard no, but open an issue first and expect a long conversation. These run
 | A paid tier, license keys, or in-app purchases | MIT and free, permanently. Funding is optional sponsorship only |
 | A UIKit or AppKit rewrite of a SwiftUI surface | Native SwiftUI is the deliberate choice |
 | Bundled fonts or icon sets | Apple's fonts are not redistributable, and SF Symbols and the system font make the rest unnecessary |
+| A new UI language | The app ships in English only. Every new string still goes through a String Catalog (`docs/knowledge/tooling.md`, "Localization"), so a language needs no code change. Each language needs a maintainer who keeps it current |
 | Rewriting croc's protocol or crypto | Belongs [upstream](https://github.com/schollz/croc), where the whole ecosystem gets it |
 
 ## Licensing
