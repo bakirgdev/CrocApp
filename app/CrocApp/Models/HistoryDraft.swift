@@ -17,7 +17,6 @@ struct HistoryDraft {
     var storedID: String?
     var expiresAt: Date?
 
-    /// `storedServer` is the link server a stored send uploads to.
     init(_ request: TransferRequest, storedServer: String) {
         switch request {
         case .sendFiles(let urls, let code):

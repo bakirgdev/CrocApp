@@ -56,7 +56,6 @@ enum ShareHandoff {
             .appendingPathComponent(inboxDirName, isDirectory: true)
     }
 
-    /// A fresh batch directory name: `batch-` and a UUID.
     static func makeBatchName() -> String {
         batchPrefix + UUID().uuidString
     }

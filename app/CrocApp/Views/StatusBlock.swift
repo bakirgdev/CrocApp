@@ -116,7 +116,6 @@ extension StatusBlock {
         }
     }
 
-    /// A stored upload's link is ready to share.
     init(receipt: StoredReceipt) {
         self.init(
             kind: .success, title: String(localized: "Link ready"),

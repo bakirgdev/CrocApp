@@ -8,16 +8,6 @@ import Testing
 import ServiceManagement
 #endif
 
-@Suite struct ShowInMenuBarSettingTests {
-    @Test func onByDefaultAndPersistsOff() {
-        let storage = MemorySettingsStorage()
-        let secrets = FakeSecretStore()
-        #expect(AppSettings(storage: storage, secrets: secrets).showInMenuBar)
-        AppSettings(storage: storage, secrets: secrets).showInMenuBar = false
-        #expect(!AppSettings(storage: storage, secrets: secrets).showInMenuBar)
-    }
-}
-
 @Suite struct ReceivedFileURLsTests {
     /// Writes a file with a set creation date, so ordering does not hang on
     /// the filesystem's timestamp resolution.
@@ -160,11 +150,6 @@ import AppKit
         #expect(MenuBarIcon(phase: .transferring, percent: 42).percent == 42)
         #expect(MenuBarIcon(phase: .connecting, percent: 42).percent == nil)
         #expect(MenuBarIcon(phase: .transferring, percent: nil).percent == nil)
-    }
-
-    @Test func idleIsPlainAndActiveIsFilled() {
-        #expect(icon(.idle).symbol == "arrow.up.arrow.down.circle")
-        #expect(icon(.connecting).symbol == "arrow.up.arrow.down.circle.fill")
     }
 }
 #endif

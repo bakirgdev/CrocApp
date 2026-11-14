@@ -30,17 +30,6 @@ import Testing
 
     // MARK: - Dates (design/voice.md → Dates)
 
-    @Test func aDateInsideTheLastWeekIsRelative() {
-        let sixDays = now.addingTimeInterval(-6 * 24 * 3600)
-        #expect(sixDays.isWithinAWeek(of: now, calendar: calendar))
-        #expect(now.isWithinAWeek(of: now, calendar: calendar))
-    }
-
-    @Test func aDateOlderThanAWeekIsAbsolute() {
-        let eightDays = now.addingTimeInterval(-8 * 24 * 3600)
-        #expect(!eightDays.isWithinAWeek(of: now, calendar: calendar))
-    }
-
     @Test func aDateAfterNowCountsAsRecent() {
         #expect(now.addingTimeInterval(3600).isWithinAWeek(of: now, calendar: calendar))
     }

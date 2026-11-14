@@ -10,6 +10,5 @@ enum EngineConstraints {
     /// stricter one for non-ASCII codes.
     static let minCodeLength = 6
 
-    /// Whether `code` is long enough for the engine to accept.
     static func isValidCode(_ code: String) -> Bool { code.count >= minCodeLength }
 }

@@ -71,7 +71,6 @@ final class TransferNotifier {
         }
     }
 
-    /// One observed change. Internal so tests can feed phases without a transfer.
     func handle(phase: TransferController.Phase, percent: Int?, enabled: Bool) {
         setDockBadge(settings.showDockBadge ? Self.dockBadge(for: phase, percent: percent) : nil)
         defer {
@@ -98,8 +97,6 @@ final class TransferNotifier {
         if notice != lastNotice, !isAppActive() { center.post(notice) }
     }
 
-    /// The Dock tile's badge: the percent while bytes move, "1" while a
-    /// request waits for an answer, nothing otherwise.
     static func dockBadge(for phase: TransferController.Phase, percent: Int?) -> String? {
         if phase.needsAnswer { return "1" }
         guard phase == .transferring, let percent else { return nil }

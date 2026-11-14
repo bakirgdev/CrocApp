@@ -72,7 +72,6 @@ struct StatusBanner: View {
                         .hitTarget()
                 }
             }
-            // A banner fills its column, like the buttons it sits beside.
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, Spacing.space5)

@@ -52,11 +52,6 @@ nonisolated enum SendStaging {
         return name
     }
 
-    /// True for a file `stage(copying:)` made.
-    static func isStaged(_ url: URL) -> Bool {
-        slotFolder(for: url, under: root) != nil
-    }
-
     /// Deletes a staged file with its folder. Anything else is left alone, so
     /// a file the user picked is never removed.
     static func discard(_ url: URL) {

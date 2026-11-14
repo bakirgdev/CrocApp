@@ -26,8 +26,7 @@ struct ContentView: View {
         layout
             #if os(macOS)
         .dropDestination(for: URL.self) { urls, _ in
-            // Anywhere-on-window drop routes to the Send screen; the
-            // SendView list's own dropDestination takes precedence when
+            // The SendView list's own dropDestination takes precedence when
             // hovering the list itself.
             guard !controller.isActive else { return false }
             let files = urls.filter(\.isFileURL)

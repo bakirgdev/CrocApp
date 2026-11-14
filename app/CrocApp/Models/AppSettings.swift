@@ -69,7 +69,6 @@ final class AppSettings {
     @ObservationIgnored private let storage: any SettingsStorage
     @ObservationIgnored private let secrets: any SecretStore
     @ObservationIgnored private let secretWriteDelay: Duration
-    /// Secrets edited since their last write to `secrets`.
     @ObservationIgnored private var dirtySecrets: Set<Secret> = []
     @ObservationIgnored private var secretWriteTask: Task<Void, Never>?
 
@@ -97,7 +96,7 @@ final class AppSettings {
     /// on loopback.
     var storedServer: String { didSet { save(storedServer, .storedServer) } }
     static let defaultStoredServer = StoredSendOptions().server
-    /// macOS menu-bar quick send. On by default; the menu-bar scene is
+    /// macOS menu-bar quick send. The menu-bar scene is
     /// inserted only while this is true.
     var showInMenuBar: Bool { didSet { save(showInMenuBar, .showInMenuBar) } }
     /// macOS Dock tile badge: the percent while bytes move, "1" while a request
@@ -129,13 +128,13 @@ final class AppSettings {
     var notificationsEnabled: Bool {
         didSet { save(notificationsEnabled, .notificationsEnabled) }
     }
-    /// Off by default: a notification can be read on a locked screen, so it
+    /// A notification can be read on a locked screen, so it
     /// says "Transfer complete" unless the user asks for file names.
     var notificationsShowFileNames: Bool {
         didSet { save(notificationsShowFileNames, .notificationsShowFileNames) }
     }
 
-    /// Off by default: widgets and the iOS Live Activity show on a locked
+    /// Widgets and the iOS Live Activity show on a locked
     /// screen, so they say "Sending" or "Received" unless the user asks for
     /// file names (`TransferSnapshotWriter`, `BackgroundCoordinator`).
     var systemSurfacesShowFileNames: Bool {
@@ -311,7 +310,6 @@ final class AppSettings {
         flushSecrets()
     }
 
-    /// True when every Advanced control already holds its default.
     var advancedIsDefault: Bool {
         let croc = Self.advancedDefaults
         return throttleUpload.isEmpty && multicastAddress == croc.multicastAddress

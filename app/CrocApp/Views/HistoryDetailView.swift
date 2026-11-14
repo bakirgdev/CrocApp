@@ -94,7 +94,6 @@ struct HistoryDetailView: View {
         LabeledContent(label) { value().foregroundStyle(Color.textSecondary) }
     }
 
-    /// A stored send's link: when it was revoked, else when it expires.
     @ViewBuilder private var linkRow: some View {
         if record.storedID != nil {
             if let revokedAt = record.revokedAt {

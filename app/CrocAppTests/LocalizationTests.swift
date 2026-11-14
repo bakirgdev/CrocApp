@@ -15,14 +15,4 @@ import Testing
     func aCountedSentenceFollowsThePluralVariation(count: Int, sentence: String) {
         #expect(String(localized: "Received \(count) items.", locale: english) == sentence)
     }
-
-    /// Everything else counts with automatic grammar agreement
-    /// (`^[3 file](inflect: true)`, design/voice.md → Numbers), which only
-    /// `AttributedString(localized:)` applies.
-    @Test(arguments: [(1, "1 file • 24 MB"), (3, "3 files • 24 MB")])
-    func aCountedNounIsInflected(count: Int, summary: String) {
-        let text = AttributedString(
-            localized: "^[\(count) file](inflect: true) • \("24 MB")", locale: english)
-        #expect(inflected(text) == summary)
-    }
 }

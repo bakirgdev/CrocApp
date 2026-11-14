@@ -8,8 +8,6 @@ import AppKit
 import UIKit
 #endif
 
-/// `UserNotifications` behind `NotificationPosting`, and the delegate that
-/// brings the app to the transfer when a notification is tapped.
 @MainActor
 final class SystemNotificationCenter: NSObject, NotificationPosting,
     UNUserNotificationCenterDelegate

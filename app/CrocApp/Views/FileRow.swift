@@ -127,7 +127,6 @@ struct FileRow: View {
         .modifier(ReceivedRowActions(received: received))
     }
 
-    /// Glyph, name and size.
     private var info: some View {
         HStack(spacing: Spacing.space3) {
             Image(systemName: symbolName)

@@ -41,7 +41,6 @@ var stuck struct {
 	s *session
 }
 
-// lockTransfer takes activeMu for a new transfer, or says why it cannot.
 func lockTransfer() error {
 	if activeMu.TryLock() {
 		return nil
@@ -529,8 +528,6 @@ func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code st
 	return s, nil
 }
 
-// run executes the transfer, then restores globals and reports the outcome.
-//
 // The three terminal delegate calls are recover-protected like xfer() itself:
 // gomobile turns an ObjC exception raised inside a delegate callback into a Go
 // panic, and OnError/OnText/OnDone fire on every transfer, so an unrecovered
@@ -601,12 +598,10 @@ func removeTempFiles() {
 // reporting.
 func ignorePanic() { _ = recover() }
 
-// panicError turns a recovered panic into the error a failed transfer reports.
 func panicError(r any) error {
 	return fmt.Errorf("croc panic: %v\n%s", r, debug.Stack())
 }
 
-// recoverInto stores a panic in *err as the transfer's failure.
 func recoverInto(err *error) {
 	if r := recover(); r != nil {
 		*err = panicError(r)
@@ -631,7 +626,6 @@ func logRecovered(where string) {
 	}
 }
 
-// reportRecovered converts a panic into an OnError delegate call.
 func reportRecovered(s *session) {
 	if r := recover(); r != nil {
 		reportPanic(s, r)
@@ -810,7 +804,6 @@ func (s *session) closePrompt() {
 // startReceiveSession); used on the send path only when Ask is set, since
 // croc's sender-side "Send to machine X? (Y/n)" prompt (croc.go, gated
 // only on Options.Ask, not NoPrompt) otherwise blocks forever.
-// Returns the restore func; caller stores it in s.restoreIO.
 func (s *session) installPromptPipe() (func(), error) {
 	pr, pw, err := os.Pipe()
 	if err != nil {

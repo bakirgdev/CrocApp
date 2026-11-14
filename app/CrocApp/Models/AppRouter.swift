@@ -53,7 +53,6 @@ final class AppRouter {
             self = item
         }
 
-        /// The row a transfer of `direction` shows its state on.
         init(direction: TransferController.Direction) {
             self = direction == .send ? .send : .receive
         }
@@ -150,7 +149,6 @@ final class AppRouter {
         if !isBusy, path != [.send] { path = [.send] }
     }
 
-    /// Staged text goes after what is already there, on its own line.
     nonisolated static func appending(_ new: String, to existing: String) -> String {
         existing.isEmpty ? new : existing + "\n" + new
     }

@@ -55,7 +55,6 @@ struct KeychainStore: SecretStore {
     private static let service = "com.bakirgdev.CrocApp"
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "keychain")
 
-    /// The item for `account`, in the data-protection keychain.
     private static func query(account: String) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
@@ -93,7 +92,6 @@ struct KeychainStore: SecretStore {
         return true
     }
 
-    /// Read the value stored under `account`, or nil if absent.
     func get(account: String) -> String? {
         var query = Self.query(account: account)
         query[kSecReturnData as String] = true

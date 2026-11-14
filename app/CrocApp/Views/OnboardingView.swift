@@ -12,7 +12,6 @@ struct OnboardingView: View {
     @ScaledMetric(relativeTo: .largeTitle) private var markSize: CGFloat = 56
     // components.md → OnboardingSheet: bullet glyphs at --icon-size-lg.
     @ScaledMetric(relativeTo: .title3) private var bulletGlyphSize: CGFloat = IconSize.large
-    /// The glyph column's minimum width, as a multiple of the glyph size.
     private static let glyphColumnRatio: CGFloat = 1.25
 
     var body: some View {
