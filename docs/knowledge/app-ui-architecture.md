@@ -42,7 +42,7 @@ Every entry point sets `path` and so lands in either layout: `openSend(with:)`, 
 **Files.**
 - `Views/RegularLayout.swift`: `NavigationSplitView`, the sidebar `List(selection:)`, `DetailStack` (one `NavigationStack` per row, rebuilt with `.id(selection)`, with the **How It Works** toolbar button) and `Route.destination`, the screen a route pushes. `HomeView` keeps its own copy of that switch, because the views it hosts are owned elsewhere.
 - `Views/SidebarRow.swift`: the row and its spoken label.
-- `Models/SidebarRowState.swift`: the row's state, derived from the phase and progress. It also holds three `TransferController.Phase` questions: `needsAnswer`, `canCancel` and `shownCode`.
+- `Models/SidebarRowState.swift`: the row's state, derived from the phase and progress. The `TransferController.Phase` questions (`needsAnswer`, `canCancel`, `shownCode`) and `Phase.kind`, the case without its payload, live on `Phase` in `TransferController.swift`.
 
 **The sidebar state.** Only the row of the active transfer's direction (`SidebarItem(direction:)`) has one: Connecting, Waiting, a **Review** badge for `.incoming` and `.confirmSend`, or the percent of the whole transfer (the direction word while the total is unknown). A finished or failed transfer leaves every row at rest. The row speaks one label ("Send, 42 percent"), and `RegularLayout` posts an announcement when the state's kind changes, never on a progress tick, because it watches the kind and the percent is not part of it. The trailing view is hidden from VoiceOver and the label sits on the `Label`, so the row stays the system's one selectable element (with `.accessibilityElement(children: .ignore)` an accessibility press from System Events did not select the row on macOS; VoiceOver itself was not run).
 
@@ -60,7 +60,7 @@ Every entry point sets `path` and so lands in either layout: `openSend(with:)`, 
 
 It reaches the engine through the `TransferEngine` protocol. `init(settings:vault:engine:)` defaults to `CrocEngine()`, so the app passes none. `app/CrocAppTests/TransferControllerTests.swift` passes `FakeTransferEngine`, which emits events one at a time and records every call, and checks the rules below against it. `TransferFailureTests` and `EngineStartTests` check the failure mapping and the engine options with no engine at all. A change to one of these rules needs its test updated in the same change.
 
-`Phase`: `idle` → `starting` → `waiting(code)` / `connecting` → `confirmSend` | `incoming(FileList, conflicts, blocked)` → `transferring` → `done(Summary, receivedText?)` | `stored(StoredReceipt)` | `failed(TransferFailure)`. Views switch on it. `reset()` has no guard, but the UI offers it only from a terminal phase.
+`Phase`: `idle` → `starting` → `waiting(code)` / `connecting` → `confirmSend` | `incoming(FileList, conflicts, blocked)` → `transferring` → `done(Summary, receivedText?)` | `stored(StoredReceipt)` | `failed(TransferFailure)`. Views switch on it. `reset()` has no guard, but the UI offers it only from a terminal phase. The controller's per-transfer state (end reason, tasks, transfer ID, scopes, output folder, history draft) is one private `Run` that `start(_:)` and `reset()` replace. `currentCode`, `offeredFileNames` and `storedReceiptSaved` stay outside it, because a Shortcuts action reads them after the transfer ends, and `run()` clears them.
 
 The controller is the one `@Observable` the views use. Its pure pieces live in their own files under `Models/`:
 
@@ -88,20 +88,21 @@ The controller is the one `@Observable` the views use. Its pure pieces live in t
 - `handle(.failed)` does not call the engine. The stream's `onTermination` cancels and clears the transfer by its ID.
 - `TransferController` keeps that `transferID`. Every cancel (user, background expiry, auto-accept block) targets it.
 - A cancel before the ID exists cancels `startTask`, the task awaiting the engine's start, and `CrocEngine` then cancels the start in Go (`CrocmobileCancelStart`). The start runs in its own task because cancelling `streamTask` would also end the event loop. `run()` still cancels by ID once a start returns, in case it finished first.
-- The auto-accept block cancels through `cancelEngineTransfer()`, which leaves `cancelRequested` unset. `TransferFailure.blockedAutoAccept` has `endedByUser` false, so the failure haptic plays: the user tapped nothing.
-- Precedence when several conditions apply, highest first: code `engineStuck`, `blockedAutoAccept`, `backgroundExpired`, the auto-accept-versus-remote-`--ask` case, then the user's cancel and decline, then the code. `TransferFailure.Situation` carries the controller's flags, so `handle(.failed)` and the `catch` in `run()` share the one mapping, and a thrown expiry keeps the resume hint.
+- The auto-accept block cancels with `cancel(reason: .unsafeName)`, not the user's `.cancelled`. `TransferFailure.blockedAutoAccept` has `endedByUser` false, so the failure haptic plays: the user tapped nothing.
+- Why a transfer ended besides its result is one `TransferController.EndReason` (`declined`, `cancelled`, `backgroundExpired`, `unsafeName`), kept in the controller's private `Run`. When several apply, the later case in that order wins, so a Cancel tap after the block still reads as the block. The History status follows `EndReason.recordStatus`.
+- Failure precedence, highest first: code `engineStuck`, `unsafeName`, `backgroundExpired`, the auto-accept-versus-remote-`--ask` case, then `cancelled` and `declined`, then the code. `TransferFailure.Situation` carries the end reason, so `handle(.failed)` and the `catch` in `run()` share the one mapping, and a thrown expiry keeps the resume hint. The two outputs differ in one place: a `backgroundExpired` copy says iOS paused the transfer, and the record says Cancelled; `engineStuck` shows its copy over a Cancelled record.
 - `engineStuck` outranks a Cancel tap too. Only a relaunch frees the engine, and every later start fails the same way. It offers no **Try Again**, and `endedByUser` is false.
 - `textTooLong` (croc refused a text offer over its 1 MiB limit) asks the sender to send it as a file, with no **Try Again**: the same text would fail again.
 - `joinedEarly` (a receiver that joined before the sender) says to start the send first. There is no automatic retry and no **Try Again**, because the sender has failed by then too, and a generated code changes when it starts again.
-- A reset and a new start (**Try Again**) can come before the last event loop ends. The loop releases its security scopes only while `transferGeneration` still matches, so it cannot release the next transfer's.
-- `blockedAutoAccept` is checked in `.done` as well as `.failed` (`TransferFailure.blockedAutoAccept`). The block's cancel is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed`, because the history schema has no blocked case and "Cancelled" reads as a user action.
+- A reset and a new start (**Try Again**) can come before the last event loop ends. The loop releases its security scopes only while `Run.token` still matches, so it cannot release the next transfer's.
+- `unsafeName` is checked in `.done` as well as `.failed` (`TransferFailure.blockedAutoAccept`). The block's cancel is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed`, because the history schema has no blocked case and "Cancelled" reads as a user action.
 - `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) in `.starting` or `.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips. The clock survives the `.starting` to `.connecting` handoff, because the user sees one stall.
 
 ### Code `refused` under auto-accept is not a peer decline
 
 croc forces the receiver prompt whenever the remote sender ran `--ask` (upstream `croc.go`, not re-read here). Engine auto-accept has already closed the prompt pipe, so `GetInput` hits EOF and croc reports its local `refused files`.
 
-`autoAcceptActive && !cancelRequested && failure.code == .refused` identifies this case. The check runs after the `blockedAutoAccept` and `backgroundExpired` branches. `respond()` is never called on the auto-accept path, so `declineRequested` cannot be set.
+`autoAcceptActive && endReason != .cancelled && failure.code == .refused` identifies this case. The check runs after the `unsafeName` and `backgroundExpired` branches. `respond()` is never called on the auto-accept path, so the end reason cannot be `declined`.
 
 Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answers for croc's other prompts (empty folder, unzip member) and then closes it (`crocmobile-bridge.md`, "Engine behavior invariants"). The forced remote-`--ask` prompt reads the first `n` answers and ends as `refused` under either file policy. The batch is `n` even for Replace for that reason. A manual accept behaves the same, because a croc v11 reconnect re-runs the accept prompt (`scripts/verify-interop.sh` checks it).
 
@@ -120,7 +121,7 @@ Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answ
 - `start(_:)` sets a `HistoryDraft` from the request. Send: names capped at 20, bookmarks all-or-nothing up to 200, built while the security scope is held. Receive: `offer(_:)` fills it from `.fileList`. `codeHint` is backfilled at `.codeReady` for generated codes.
 - `finishRecord(status:summary:)` runs at `.done`, `.failed` and the startup `catch`. It sets `pendingRecord = nil` first, so a double terminal event is harmless, and returns right after that while **Save Transfer History** is off. It must run while `receivedText` is still set, so `isText` backfills (`HistoryDraft.record(status:summary:receivedText:)`).
 - A receive's names come from the sender and `ReceivedName.isUnsafe` runs only after `offer(_:)`, so the draft stores them in their shown form (`ReceivedName.shown`: every scalar `isSpoofingScalar` flags is written as `\u{XXXX}`), never raw. `FileRow` and the progress line draw the same form. `HistoryDraftTests` and `ReceivedNameTests` pin it.
-- Status mapping: `done` becomes completed or failed per the summary. `failed` plus `cancelRequested` becomes cancelled. `failed` plus `declineRequested` becomes declined.
+- Status mapping: `done` becomes completed or failed per the summary. `failed` becomes `EndReason.recordStatus`: cancelled for `cancelled` and `backgroundExpired`, declined for `declined`, failed for `unsafeName` or no reason.
 
 ## Settings and trust
 
@@ -451,13 +452,13 @@ Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookma
 
 ## Conflict scan
 
-The scan is asynchronous. `.incoming` is shown immediately with `conflicts: []`. `Self.scanConflicts` runs in `Task.detached` and stats off the main actor. The write-back happens only when the result is non-empty, only `if case .incoming`, and only if `transferGeneration` still matches the value captured at `.fileList`.
+The scan is asynchronous. `.incoming` is shown immediately with `conflicts: []`. `Self.scanConflicts` runs in `Task.detached` and stats off the main actor. The write-back happens only when the result is non-empty, only `if case .incoming`, and only if `Run.token` still matches the value captured at `.fileList`.
 
 The shape check alone is not enough: a scan can outlive a whole fast transfer and land on the next one's `.incoming`. A synchronous scan froze the accept UI on large file lists.
 
 With conflicts, the sheet offers Decline, Replace and Keep Both (Keep Both prominent) and a banner. Without conflicts, or while the scan runs, it offers a single Accept, which means Keep Both. A zipped folder arrives as one `.zip` name, so the scan sees none of its members (#225).
 
-A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookmarkData` calls) runs off the main actor the same way and writes back into `pendingRecord`, under the same `transferGeneration` check, so a capture that outlives its send cannot land on the next transfer's record. If a transfer terminates first, `pendingRecord` is already nil and the record carries no bookmarks, so **Send Again** hides instead of breaking. `SecurityScopedBookmark.create` is `nonisolated` for this.
+A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookmarkData` calls) runs off the main actor the same way and writes back into `pendingRecord`, under the same `Run.token` check, so a capture that outlives its send cannot land on the next transfer's record. If a transfer terminates first, `pendingRecord` is already nil and the record carries no bookmarks, so **Send Again** hides instead of breaking. `SecurityScopedBookmark.create` is `nonisolated` for this.
 
 ## Receive links
 
@@ -476,7 +477,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 
 - `Platform/BackgroundCoordinator.swift` is a cross-platform class with `#if os(iOS)` bodies (no-ops on macOS). It wraps a transfer in a `BGContinuedProcessingTask` and holds `isIdleTimerDisabled`.
 - Controller hooks: `transferStarted` in `run()`, `progressChanged` inside the accepted `.progress` path only (the `.incoming` guard stays untouched), and `transferEnded` at `.done`, `.failed` and the startup `catch`. `transferEnded` is idempotent.
-- Expiration sets `backgroundExpired` and cancels, which produces the dedicated "iOS paused the transfer…" copy. A generation token rejects stale late task launches.
+- Expiration calls `cancel(reason: .backgroundExpired)`, which produces the dedicated "iOS paused the transfer…" copy. A generation token rejects stale late task launches.
 - `Platform/LocalNetworkChecker.swift` is cross-platform. It is a Bonjour self-probe on `_crocapp._tcp`: seeing its own service means access is granted, and a browser stuck in `.waiting` means denied.
 - `checkIfNeeded()` probes once per process, triggered by `ContentView.onChange(controller.isActive)`.
 - `recheckIfDenied()` re-probes from `.denied` when `scenePhase` goes `.active` (for example after the user granted access in Settings). It never re-probes `.granted` or unresolved states and never stacks a second in-flight probe.

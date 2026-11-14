@@ -46,17 +46,12 @@ enum SettingsPlace: Equatable {
 }
 
 extension TransferFailure {
-    /// What the controller knew when the transfer ended. Each of these
+    /// What the controller knew when the transfer ended. The end reason
     /// outranks the engine's code.
     struct Situation {
         var direction: TransferController.Direction = .send
         var isStored = false
-        var cancelRequested = false
-        var declineRequested = false
-        /// iOS ended the background task, which cancelled the transfer.
-        var backgroundExpired = false
-        /// Auto-accept cancelled an offer that holds an unsafe name.
-        var blockedAutoAccept = false
+        var endReason: TransferController.EndReason?
         var autoAcceptActive = false
         /// Payload bytes moved, so starting again can resume.
         var bytesMoved = false
@@ -64,7 +59,7 @@ extension TransferFailure {
 
     /// Precedence, highest first: a stuck engine, the auto-accept block, a
     /// background expiry, auto-accept meeting a sender's `--ask`, the user's
-    /// own cancel or decline, then the engine's code.
+    /// own cancel, their decline, then the engine's code.
     ///
     /// Never echoes `failure.message`: croc adds new error text every release,
     /// and a recovered Go panic arrives with a full stack trace attached.
@@ -73,22 +68,22 @@ extension TransferFailure {
             // Only a relaunch frees the engine, so this outranks every other
             // reason, a Cancel tap included.
             self = .engineStuck
-        } else if s.blockedAutoAccept {
+        } else if s.endReason == .unsafeName {
             self = .blockedAutoAccept
-        } else if s.backgroundExpired {
+        } else if s.endReason == .backgroundExpired {
             self = .backgroundExpired(stored: s.isStored, direction: s.direction)
-        } else if s.autoAcceptActive, !s.cancelRequested, failure.code == .refused {
+        } else if s.autoAcceptActive, s.endReason != .cancelled, failure.code == .refused {
             // This side's prompt refused without anyone answering it. croc
             // forces the receiver prompt whenever the remote sender ran
             // --ask, regardless of NoPrompt; engine auto-accept has already
             // closed the prompt pipe, so GetInput hits EOF. While
-            // autoAcceptActive is true respond() is never called, so
-            // declineRequested cannot be set, and the condition excludes a
-            // cancel -- what is left can only be this.
+            // autoAcceptActive is true respond() is never called, so the
+            // transfer was not declined, and the condition excludes a cancel --
+            // what is left can only be this.
             self = .autoAcceptCannotConfirm
-        } else if s.cancelRequested {
+        } else if s.endReason == .cancelled {
             self = .cancelledByUser
-        } else if s.declineRequested {
+        } else if s.endReason == .declined {
             self = .declinedByUser
         } else {
             let copy = Self.copy(for: failure.code, stored: s.isStored, direction: s.direction)

@@ -39,27 +39,9 @@ struct TransferStatusView: View {
         }
     }
 
-    /// The phase case without its payload: the cross-fade keys on this, not on
-    /// every progress tick (design/principles.md → Motion).
-    private enum PhaseKind: Hashable {
-        case idle, starting, waiting, connecting, confirmSend, incoming
-        case transferring, done, stored, failed
-    }
-
-    private var phaseKind: PhaseKind {
-        switch controller.phase {
-        case .idle: .idle
-        case .starting: .starting
-        case .waiting: .waiting
-        case .connecting: .connecting
-        case .confirmSend: .confirmSend
-        case .incoming: .incoming
-        case .transferring: .transferring
-        case .done: .done
-        case .stored: .stored
-        case .failed: .failed
-        }
-    }
+    /// The cross-fade keys on this, not on every progress tick
+    /// (design/principles.md → Motion).
+    private var phaseKind: TransferController.Phase.Kind { controller.phase.kind }
 
     /// A running transfer shows the direction header and the trust badge on
     /// top; a result does not.
@@ -219,14 +201,8 @@ struct TransferStatusView: View {
         .multilineTextAlignment(.center)
     }
 
-    /// Cancel is not offered at the accept gate: it would answer the sender on
-    /// the user's behalf. Decline is the way to say no (components.md → AcceptGate).
-    private var showsCancel: Bool {
-        switch controller.phase {
-        case .starting, .waiting, .connecting, .transferring: return true
-        default: return false
-        }
-    }
+    /// `confirmSendView` draws its own Cancel, so this one is left off it.
+    private var showsCancel: Bool { controller.phase.canCancel && phaseKind != .confirmSend }
 
     // MARK: - Local network denied
 

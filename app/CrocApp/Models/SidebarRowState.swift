@@ -34,30 +34,3 @@ struct SidebarRowState: Equatable {
         return min(100, max(0, Int((done / Double(progress.totalSize) * 100).rounded())))
     }
 }
-
-extension TransferController.Phase {
-    /// A question waits for the user's answer: the accept gate of a receive, or
-    /// the confirm of a send that asked both sides to confirm.
-    var needsAnswer: Bool {
-        switch self {
-        case .confirmSend, .incoming: true
-        default: false
-        }
-    }
-
-    /// Cancel is on screen, or would be: not at the accept gate, where it would
-    /// answer the sender on the user's behalf (components.md → AcceptGate), and
-    /// not once the transfer has ended.
-    var canCancel: Bool {
-        switch self {
-        case .starting, .waiting, .connecting, .confirmSend, .transferring: true
-        default: false
-        }
-    }
-
-    /// The code phrase of a send that waits for the other device.
-    var shownCode: String? {
-        guard case .waiting(let code) = self else { return nil }
-        return code
-    }
-}

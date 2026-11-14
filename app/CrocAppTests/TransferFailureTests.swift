@@ -54,9 +54,9 @@ import Testing
     /// Done alone, and no haptic.
     @Test(arguments: EngineFailure.Code.allCases.filter { $0 != .engineStuck })
     func theUsersOwnCancelOrDeclineIsNotAFailure(code: EngineFailure.Code) {
-        let cancelled = failure(code, .init(cancelRequested: true, declineRequested: true))
+        let cancelled = failure(code, .init(endReason: .cancelled))
         #expect(cancelled == .cancelledByUser)
-        let declined = failure(code, .init(declineRequested: true))
+        let declined = failure(code, .init(endReason: .declined))
         #expect(declined == .declinedByUser)
         for ended in [cancelled, declined] {
             #expect(ended.endedByUser)
@@ -68,25 +68,21 @@ import Testing
     /// A stuck engine refuses every later start, so a Cancel tap must not hide it.
     @Test func aStuckEngineOutranksEverything() {
         let s = TransferFailure.Situation(
-            isStored: true, cancelRequested: true, declineRequested: true,
-            backgroundExpired: true, blockedAutoAccept: true, autoAcceptActive: true,
-            bytesMoved: true)
+            isStored: true, endReason: .unsafeName, autoAcceptActive: true, bytesMoved: true)
         #expect(failure(.engineStuck, s) == .engineStuck)
         #expect(!failure(.engineStuck, s).endedByUser)
         #expect(failure(.engineStuck).remedy == nil)
     }
 
     @Test func controllerReasonsOutrankTheCancelInThisOrder() {
-        var s = TransferFailure.Situation(
-            cancelRequested: true, backgroundExpired: true, blockedAutoAccept: true,
-            autoAcceptActive: true)
+        var s = TransferFailure.Situation(endReason: .unsafeName, autoAcceptActive: true)
         #expect(failure(.cancelled, s) == .blockedAutoAccept)
-        s.blockedAutoAccept = false
+        s.endReason = .backgroundExpired
         #expect(failure(.cancelled, s) == .backgroundExpired(stored: false, direction: .send))
         #expect(!failure(.cancelled, s).endedByUser, "iOS cancelled it, not the user")
-        s.backgroundExpired = false
+        s.endReason = .cancelled
         #expect(failure(.refused, s) == .cancelledByUser, "a Cancel tap is not the --ask case")
-        s.cancelRequested = false
+        s.endReason = nil
         #expect(failure(.refused, s) == .autoAcceptCannotConfirm)
         #expect(failure(.declined, s) != .autoAcceptCannotConfirm, "only croc's local refusal")
         #expect(failure(.refused, .init()) != .autoAcceptCannotConfirm, "only under auto-accept")
@@ -99,7 +95,7 @@ import Testing
     func aBackgroundExpiryIsWorthAnotherTry(stored: Bool, direction: TransferController.Direction) {
         let expired = failure(
             .cancelled,
-            .init(direction: direction, isStored: stored, backgroundExpired: true))
+            .init(direction: direction, isStored: stored, endReason: .backgroundExpired))
         #expect(expired.remedy == .tryAgain)
         #expect(
             (expired.detail == TransferFailure.resumeHint) == !stored,
@@ -125,7 +121,7 @@ import Testing
     @Test func storedKeepsStoreCodesAndTheUsersCancel() {
         #expect(failure(.storeExpired, .init(isStored: true)) == failure(.storeExpired))
         #expect(
-            failure(.relayUnreachable, .init(isStored: true, cancelRequested: true))
+            failure(.relayUnreachable, .init(isStored: true, endReason: .cancelled))
                 == .cancelledByUser)
     }
 
