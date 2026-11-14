@@ -79,49 +79,27 @@ jobs:
       issues: write # files or updates the security issue on a failure
 
     steps:
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            const title = "Weekly Go checks failed";
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-
-            const { data: openIssues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: "open",
-              labels: "security",
-            });
-            const existing = openIssues.find((issue) => issue.title === title);
-
-            if (existing) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: existing.number,
-                body: `Still failing on \`${context.sha}\`: ${runUrl}`,
-              });
-              return;
-            }
-
-            const body = [
-              "## The weekly run of the Go checks failed",
-              "",
-              `**Run:** ${runUrl}`,
-              `**Commit:** \`${context.sha}\``,
-              "",
-              "### Next steps",
-              "1. Open the run log above and find which step failed: `go build`, `go vet`, golangci-lint, govulncheck, or a fuzz target.",
-              "2. A fuzz failure: download the `fuzz-failures` artifact into `crocmobile/testdata/fuzz/`, reproduce with the `go test -run` line from the log, fix, and commit the input as a regression seed.",
-              "3. A govulncheck finding: bump the affected dependency in `crocmobile/go.mod`, re-run `go tool govulncheck ./...` locally to confirm clean, close this issue.",
-              "4. A lint or build failure with no source change behind it usually means a new golangci-lint or Go toolchain release changed the defaults. Pin or adapt, then close this issue.",
-              "5. If not fixable yet: record it in `docs/known-issues.md` per project convention, close this issue.",
-            ].join("\n");
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title,
-              body,
-              labels: ["bug", "security"],
-              assignees: ["bakirgdev"],
-            });
+      - name: File or update the security issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          title="Weekly Go checks failed"
+          issue=$(gh issue list --state open --label security --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "Still failing on $SHA: $RUN_URL"
+            exit 0
+          fi
+          {
+            printf '## The weekly run of the Go checks failed\n\n**Run:** %s\n**Commit:** %s\n\n' "$RUN_URL" "$SHA"
+            cat << 'EOF'
+          ### Next steps
+          1. Open the run log above and find which step failed: `go build`, `go vet`, golangci-lint, govulncheck, or a fuzz target.
+          2. A fuzz failure: download the `fuzz-failures` artifact into `crocmobile/testdata/fuzz/`, reproduce with the `go test -run` line from the log, fix, and commit the input as a regression seed.
+          3. A govulncheck finding: bump the affected dependency in `crocmobile/go.mod`, re-run `go tool govulncheck ./...` locally to confirm clean, close this issue.
+          4. A lint or build failure with no source change behind it usually means a new golangci-lint or Go toolchain release changed the defaults. Pin or adapt, then close this issue.
+          5. If not fixable yet: record it in `docs/known-issues.md` per project convention, close this issue.
+          EOF
+          } | gh issue create --title "$title" --label bug --label security --assignee bakirgdev --body-file -

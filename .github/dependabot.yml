@@ -43,37 +43,3 @@ updates:
     commit-message:
       prefix: "build"
       include: "scope"
-
-  - package-ecosystem: "swift"
-    directory: "/app"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    groups:
-      swift-deps:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-    labels:
-      - "dependencies"
-    commit-message:
-      prefix: "build"
-      include: "scope"
-
-  # Pins Dependabot cannot see are checked by .github/workflows/pin-watch.yml.
-  - package-ecosystem: "npm"
-    directory: "/web/docs"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    cooldown:
-      default-days: 7
-    groups:
-      docs-site-deps:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-    labels:
-      - "dependencies"
-      - "documentation"
-    commit-message:
-      prefix: "build"
-      include: "scope"

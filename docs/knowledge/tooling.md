@@ -6,38 +6,38 @@ What is wired up, what was deliberately skipped, the traps in each, and how the 
 
 | Tool | Config | Where it runs |
 |---|---|---|
-| swift-format (Xcode 27 toolchain, Swift 6.4) | `.swift-format` (rules) + `scripts/format-swift.sh` (source set) | local + CI |
+| swift-format (Xcode 27 toolchain, Swift 6.4) | `.swift-format` (rules) + `scripts/format-swift.sh` (source set) | local + CI (macOS leg of `build` and the `release.yml` build job) |
 | golangci-lint 2.x (CI pins the version in `reusable-go.yml`) | `crocmobile/.golangci.yml` | local + CI |
 | govulncheck (`tool` block in `crocmobile/go.mod`) | none | CI go job + weekly schedule |
 | `go build ./...` + `go vet ./...` | none | CI (go job, alongside lint/vuln) |
 | `go test -race ./...` (Go `testing`) | `crocmobile/*_test.go` | local + CI (go job, `GOOS`/`GOARCH` unset) |
 | Swift Testing (Xcode's built-in) | `CrocKit/Tests/CrocKitTests/`, `app/CrocAppTests/` (shared `CrocApp` scheme) | local + CI (macOS leg of `build`) |
-| xcbeautify | none | CI only (`ci.yml`; `release.yml` does not use it) |
+| xcbeautify | none; ships on the runner image | CI only (`ci.yml`; `release.yml` does not use it) |
 | create-dmg (Homebrew locally; `release.yml` downloads the release tarball and checks its SHA-256) | none; called by `scripts/build-dmg.sh` | local + `release.yml` |
 | croc v10 CLI (the v10 peer of `verify-interop.sh` scenario 10) | `scripts/croc-v10.version` (read by the script and the `interop` job) | local + CI |
 | Node | `web/docs/.nvmrc` (pinned exact), `engines` in `web/docs/package.json` | docs site, local + CI |
 | pnpm | `packageManager` in `web/docs/package.json` (CI: `pnpm/action-setup` reads it) | docs site, local + CI |
 | Docusaurus, React, TypeScript | `web/docs/package.json`, `pnpm-lock.yaml`; `pnpm-workspace.yaml` holds `overrides` for transitive advisories | docs site, local + CI (`pnpm run typecheck` in the `site build` job and `github-pages.yml`). `@docusaurus/plugin-client-redirects` writes the old-URL redirects (`docs-site.md`) |
 | Biome (linter and formatter for the landing JS and CSS and the docs-site TS, CSS and JSON) | `@biomejs/biome` pinned exact in `web/docs/package.json`; `biome.jsonc` at the repo root lists the files it covers and holds the formatter settings and the three disabled rules, each with its reason | docs site and landing page, local + CI (`pnpm run lint` in the `site build` job). `pnpm exec biome check --write ../..` in `web/docs/` applies the fixes |
-| Sparkle (SwiftPM, `CrocApp Direct` only; auto-update for the direct-download build) | `Package.resolved` under `app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/`, minimum in the `XCRemoteSwiftPackageReference` in `project.pbxproj`; Dependabot (`swift`, `/app`) reads the Xcode project's `Package.resolved` and opens the bump | `CrocApp Direct` build, local + CI (unsigned build step) |
+| Sparkle (SwiftPM, `CrocApp Direct` only; auto-update for the direct-download build) | `Package.resolved` under `app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/`, minimum in the `XCRemoteSwiftPackageReference` in `project.pbxproj`; pin-watch reads `Package.resolved` against the latest release | `CrocApp Direct` build, local + CI (unsigned build step) |
 | MCP servers `xcode` (`xcrun mcpbridge`) and `gopls` (`gopls mcp`) for AI sessions | `.mcp.json` (Claude Code asks each user to approve them); `gopls` starts in `crocmobile/` because the Go module lives there, not at the repo root | local AI sessions. Use `xcode` to build, run tests, render previews and read diagnostics; it needs the project open in Xcode with MCP enabled, and never replaces the harnesses (`BUILDING.md`, "Verification harnesses"). Use `gopls` for symbol search and references in `crocmobile/` |
-| `scripts/verify-design.sh` (pure bash and awk, no toolchain; the awk programs are `scripts/verify-design/*.awk`) | none; also lints the landing and docs CSS, `app.js`, `theme-init.js`, `prismTheme.ts` and `site.webmanifest` (the `design` filter in `ci.yml` covers those paths). Holds the token parity and contrast tables (the ratios must also appear in `design/principles.md`, "Contrast") and the raw-color lint | local + CI (`contrast` job, shown as `design checks`) |
+| `scripts/verify-design.sh` (pure bash and awk, no toolchain; the awk programs are `scripts/verify-design/*.awk`) | none; also lints the landing and docs CSS, `app.js`, `theme-init.js`, `prismTheme.ts` and `site.webmanifest`. Holds the token parity and contrast tables (the ratios must also appear in `design/principles.md`, "Contrast") and the raw-color lint | local + CI (`contrast` job, shown as `design checks`, on every push and pull request) |
 | `cwebp` (Homebrew `webp`) | none; called by `scripts/capture-screenshots.sh --copy-web` to write the web WebP files | local only |
 | `scripts/verify-docs.sh` (pure bash and awk) | none; the rules it enforces are in `docs/AGENTS.md` | local + CI (`docs checks`, on every push and pull request, because renaming any file can break a path a doc names) |
 | `scripts/release-check.sh` (bash, awk, an authenticated `gh`) | none; mirrors the tag-run checks in `release.yml` | local only, before pushing a `v*` tag (`../RELEASING.md`, "Each release") |
 | `scripts/verify-swift.sh` (Xcode 27; Go only to rebuild the xcframework) | none; runs `swift test` on CrocKit and `xcodebuild test` on the `CrocApp` scheme for this Mac | local only, before pushing a Swift change. CI runs the same suites in the macOS leg of `build` |
 | ShellCheck 0.11 (Homebrew locally; preinstalled on `ubuntu-26.04`) | none (`shellcheck -x scripts/*.sh`, default checks) | local + CI (`shellcheck` job) |
 | shfmt 3.14 (Homebrew locally; CI downloads the pinned binary and checks its SHA-256) | `.editorconfig` (`shfmt -d scripts`; `shfmt -w scripts` fixes) | local + CI (`shellcheck` job) |
-| CodeQL (advanced setup; GitHub's default setup is off) | `.github/workflows/codeql.yml`: actions, Go, JavaScript/TypeScript, path-filtered, plus a weekly run | CI. No Swift (`../known-issues.md`, "Build and CI") |
-| actionlint 1.7 (Homebrew locally; CI downloads the pinned binary and checks its SHA-256) | `.github/actionlint.yaml` (runner labels newer than actionlint's list) | local + CI (`shellcheck` job, which runs when a workflow changes) |
+| CodeQL (advanced setup; GitHub's default setup is off) | `.github/workflows/codeql.yml`: actions and Go only (Biome lints the site code), path-filtered, plus a weekly run | CI. No Swift (`../known-issues.md`, "Build and CI") |
+| actionlint 1.7 (Homebrew locally; CI downloads the pinned binary and checks its SHA-256) | `.github/actionlint.yaml` (runner labels newer than actionlint's list) | local + CI (`shellcheck` job, on every push and pull request) |
 | zizmor (Homebrew) | none | local, before pushing a workflow change; `zizmor --pedantic .github/workflows` reports only the `self-repository` finding (`../known-issues.md`, "Accepted") |
-| GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips the jobs whose area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26`, which starts its own local `croc relay` |
+| GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips `build`, `interop` and `go` when their area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26`, which starts its own local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:17 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | Push to `main` only, on changes to `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh`, `scripts/lib.sh` and the workflow file: builds `_site` and deploys. The pre-merge build is the `site build` job in `ci.yml` |
 | GitHub Actions | `.github/workflows/release.yml` | `v*` tag publishes; `workflow_dispatch` is a rehearsal that publishes nothing |
 
 - Xcode baseline lives in `.xcode-version` (plain text, one line).
-- CI reads it into `maxim-lobanov/setup-xcode`; `xcodes` and `mise` read the same file.
+- CI selects it with `sudo xcode-select -s /Applications/Xcode_<version>.app` (the image's default Xcode is older than the pin); `xcodes` and `mise` read the same file.
 - Jobs that need Xcode 27 run on the `xcode-27` runner label (a public preview; `macos-26` does not carry Xcode 27, not verified here).
 - The pin must name a version that image carries (see the `actions/runner-images` toolset file; not verified for the current pin).
 - Simulator runtimes on that image depend on the Xcode version (`install_runtimes` in `images/macos/toolsets/toolset-xcode-27.json`; not verified for the current pin).
@@ -47,16 +47,17 @@ The build settings that must not change casually (Swift 6 mode, deployment targe
 
 ## Keeping versions current
 
-Every pin, and what updates it. Dependabot opens its PRs on Mondays, grouped per ecosystem (gomod checks daily so croc PRs arrive on time); the weekly pin-watch workflow (`.github/workflows/pin-watch.yml`, running `scripts/pin-watch.sh`) checks the rest and keeps one issue, "Pinned versions to update", open while any of them differs from the newest stable release. If the script fails (an exit other than 0 or 10), a `report` job files or comments on a "Weekly pin watch failed" issue instead, as `go-weekly.yml` does.
+Every pin, and what updates it. Dependabot covers only `github-actions` and `gomod`, opening its PRs on Mondays, grouped per ecosystem (gomod checks daily so croc PRs arrive on time); security updates for every ecosystem need no config. The weekly pin-watch workflow (`.github/workflows/pin-watch.yml`, running `scripts/pin-watch.sh`) checks the rest and keeps one issue, "Pinned versions to update", open while any of them differs from the newest stable release. A failed run is visible in the Actions tab and emails the maintainer; it files no issue.
 
 | Pin | Where | Updated by |
 |---|---|---|
 | GitHub Actions (full SHAs) | `.github/workflows/*.yml` | Dependabot `github-actions` |
 | croc, Go modules | `crocmobile/go.mod` (`require` block) | Dependabot `gomod`; a croc bump follows `croc-upgrade-playbook.md` |
 | gomobile (`golang.org/x/mobile`), govulncheck (`golang.org/x/vuln`) | `crocmobile/go.mod` (`tool` block, `// indirect`) | pin-watch reports a newer release; bump by hand (`../BUILDING.md`, "When the toolchain changes") |
-| Sparkle | `Package.resolved` in the Xcode project | Dependabot `swift` |
-| Docusaurus, React, TypeScript | `web/docs/package.json`, `pnpm-lock.yaml` | Dependabot `npm` |
-| Biome | `@biomejs/biome` in `web/docs/package.json` (exact) | pin-watch and Dependabot `npm` |
+| Sparkle | `Package.resolved` in the Xcode project | pin-watch |
+| Docusaurus (`^`), TypeScript (`~`) | `web/docs/package.json`, `pnpm-lock.yaml` | pin-watch compares the range's lowest version with the newest release; move both with `pnpm update` and the range. `~` holds TypeScript to patch updates, because a minor can add checks that fail `tsc`: take a minor by hand |
+| React, the other docs-site dependencies | `web/docs/package.json`, `pnpm-lock.yaml` | Dependabot security updates only; update by hand |
+| Biome | `@biomejs/biome` in `web/docs/package.json` (exact) | pin-watch |
 | Go toolchain | `go` line in `crocmobile/go.mod` | pin-watch |
 | Xcode | `.xcode-version` | pin-watch, against the newest stable Xcode on the `xcode-27` runner image (`../BUILDING.md`, "When the toolchain changes") |
 | Node | `web/docs/.nvmrc`, `engines` in `web/docs/package.json` | pin-watch (newest Node 26) |
@@ -65,7 +66,7 @@ Every pin, and what updates it. Dependabot opens its PRs on Mondays, grouped per
 | golangci-lint | `version:` in `.github/workflows/reusable-go.yml` | pin-watch |
 | Runner labels (`ubuntu-26.04`, `macos-26`, `xcode-27`) | `runs-on:` in the workflows | pin-watch, against the `actions/runner-images` toolsets |
 | shfmt, actionlint, create-dmg | `*_VERSION` and `*_SHA256` env in `ci.yml` and `release.yml` | pin-watch (bump both values together) |
-| xcbeautify | `brew install` in `ci.yml` | unpinned (it only formats logs) |
+| xcbeautify | the runner image | unpinned (it only formats logs; the image owns its version) |
 
 The Swift language mode (6) and the deployment targets (26.0) are not version pins: they change only by decision (`../BUILDING.md`, "Build settings that must not change casually").
 
@@ -73,8 +74,8 @@ The Swift language mode (6) and the deployment targets (26.0) are not version pi
 
 - **`ci.yml` has no workflow-level `paths:`.** A filtered-out workflow never reports, so a required check would stay pending. Jobs skip through `if:` instead (see the next bullet).
 - **A newer push cancels a superseded pull request run, never a `main` run.** `cancel-in-progress` is true only for `pull_request`, so every commit on `main` gets a result and saves its caches.
-- **The `changes` job decides which jobs run.**
-  - It diffs the PR base (or the push's `before`) against the head with `git diff --name-only` and sets one output per area: `swift`, `go`, `build`, `design`, `interop`, `scripts` and `site`. Each job gates on its output with `if:`.
+- **The `changes` job decides which of the three slow jobs run.**
+  - It diffs the PR base (or the push's `before`) against the head with `git diff --name-only` and sets one output per area: `go`, `build` and `interop`. Each of those jobs gates on its output with `if:`. `docs checks`, `design checks`, `shellcheck` and `site build` (pull requests only) run every time: each takes under 30 s on a free runner, which is cheaper than keeping their path lists current.
   - The regexes in the `changes` job of `ci.yml` are the source of truth for what each area covers; the rule for new files is in `.github/AGENTS.md`.
   - An unknown base (a new branch, a force push) runs everything.
 - **Branch protection requires only `ci pass`** (`.github/AGENTS.md`). The reason: a skipped matrix job reports under its unexpanded name and stays pending, while `ci pass` treats `success` and `skipped` as passing.
@@ -85,7 +86,7 @@ The Swift language mode (6) and the deployment targets (26.0) are not version pi
   - The key is the leg's slice list, the Xcode version and a hash of `crocmobile/**` and `scripts/build-xcframework.sh`. `crocmobile/go.mod` carries the Go and gomobile pins, so a toolchain bump misses too.
   - A hit skips `setup-go` and the bind, the slowest steps of a cold runner (150 to 176 s before the cache). A miss binds only the leg's slices through `XCFRAMEWORK_TARGETS`: `macos/arm64` on macOS, `ios,iossimulator/arm64` on the iOS leg. The device slice is linked by no CI build, but binding it there makes a change that breaks the device bind fail CI instead of the release.
   - The macOS leg runs `xcodebuild test`, which builds the app first, so it has no separate build step. Both legs pass `COMPILER_INDEX_STORE_ENABLE=NO`.
-  - The DerivedData cache (macOS leg only) saves package resolution, not compiles: a fresh checkout gives every source a new mtime, so Xcode recompiles the app. A cache of `CrocKit/.build` would fail the same way, so there is none. The iOS leg has none: its restore took 4 to 20 s with no compile to save, and its entries filled half of the repo's 10 GB cache cap.
+  - There is no DerivedData cache. It saved package resolution, not compiles: a fresh checkout gives every source a new mtime, so Xcode recompiles the app. Removing it from the iOS leg moved that leg's build from a 59 s to a 65 s median while dropping an 11 s restore, and the macOS leg's entries held 4 GB of the repo's 10 GB cache cap. A cache of `CrocKit/.build` would fail the same way, so there is none.
 - **The `interop (local relay)` job (`macos-26`) runs `scripts/verify-interop.sh` against a local relay.**
   - The script starts `croc relay` on 127.0.0.1 itself, with raised admission limits, because the public relays rate-limit a shared runner address (`scripts/lib.sh`, "The relay a harness sends through"). The job only provides the CLI binaries.
   - It installs the v11 CLI with `go install` at the version in `crocmobile/go.mod`, because Homebrew's bottle can lag that pin and the store scenario needs `croc store`. It installs the v10 peer the same way, at the version in `scripts/croc-v10.version`.

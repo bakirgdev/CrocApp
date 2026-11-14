@@ -47,6 +47,18 @@ row pnpm web/docs/package.json "$pnpm_pin" "$(curl -fsS https://registry.npmjs.o
 row Biome web/docs/package.json "$(jq -r '.devDependencies["@biomejs/biome"]' web/docs/package.json)" \
   "$(curl -fsS https://registry.npmjs.org/@biomejs/biome/latest | jq -r .version)"
 
+# Docusaurus and TypeScript: the lowest version the range allows. Dependabot
+# does not cover npm; `pnpm update` moves the lockfile within the range.
+row Docusaurus web/docs/package.json "$(jq -r '.dependencies["@docusaurus/core"] | ltrimstr("^")' web/docs/package.json)" \
+  "$(curl -fsS https://registry.npmjs.org/@docusaurus/core/latest | jq -r .version)"
+row TypeScript web/docs/package.json "$(jq -r '.devDependencies.typescript | ltrimstr("~")' web/docs/package.json)" \
+  "$(curl -fsS https://registry.npmjs.org/typescript/latest | jq -r .version)"
+
+# Sparkle is the only SwiftPM dependency, and Dependabot does not cover swift.
+sparkle_resolved=app/CrocApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+row Sparkle "$sparkle_resolved" "$(jq -r '.pins[] | select(.identity == "sparkle") | .state.version' "$sparkle_resolved")" \
+  "$(gh api repos/sparkle-project/Sparkle/releases/latest --jq .tag_name)"
+
 go_pin=$(awk '$1 == "go" {print $2}' crocmobile/go.mod)
 row Go crocmobile/go.mod "$go_pin" "$(curl -fsS 'https://go.dev/dl/?mode=json' | jq -r '.[0].version | ltrimstr("go")')"
 

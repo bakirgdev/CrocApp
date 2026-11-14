@@ -55,16 +55,13 @@ jobs:
             exit 1
           fi
 
-  swift-format:
-    uses: ./.github/workflows/reusable-swift-format.yml
-
   go:
     uses: ./.github/workflows/reusable-go.yml
 
   build:
     name: build
 
-    needs: [gate, swift-format, go]
+    needs: [gate, go]
 
     runs-on: xcode-27
 
@@ -158,12 +155,13 @@ jobs:
           # No cache in the release build: a cache any PR run can write must not feed shipped bytes.
           cache: false
 
-      - id: xcode
-        run: echo "version=$(cat .xcode-version)" >> "$GITHUB_OUTPUT"
+      # The image's default Xcode is older than the pin; the path fails loudly
+      # when the image lacks the pinned version.
+      - name: Select Xcode
+        run: sudo xcode-select -s "/Applications/Xcode_$(cat .xcode-version).app"
 
-      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
-        with:
-          xcode-version: ${{ steps.xcode.outputs.version }}
+      - name: Lint formatting
+        run: scripts/format-swift.sh --lint || { echo "::error::Formatting check failed. Run scripts/format-swift.sh locally, then commit and push."; exit 1; }
 
       # The build number in the log says which Xcode built the release.
       - name: Print the toolchain versions
