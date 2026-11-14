@@ -249,6 +249,13 @@ import Testing
         #expect(!TransferController.Phase.done(summary, receivedText: nil).canCancel)
     }
 
+    @Test func aPhaseKindIgnoresThePayload() {
+        #expect(
+            TransferController.Phase.waiting(code: "a-b-c").kind
+                == TransferController.Phase.waiting(code: "d-e-f").kind)
+        #expect(TransferController.Phase.waiting(code: "a-b-c").kind != .connecting)
+    }
+
     @Test func onlyAWaitingSendHasACodeToCopy() {
         #expect(
             TransferController.Phase.waiting(code: "wiry-alpha-bravo").shownCode

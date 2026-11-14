@@ -399,6 +399,48 @@ import Testing
         #expect(await engine.cancels == [id], "cancelled once")
     }
 
+    /// The screen says iOS paused it and the user tapped nothing; History
+    /// records Cancelled (known issue).
+    @Test func aBackgroundExpiryShowsItsCopyAndIsRecordedCancelled() async throws {
+        controller.start(.sendFiles(urls: [file], code: ""))
+        try await waitForTransfer()
+        try await deliver(.codeReady(Self.code))
+        controller.cancel(reason: .backgroundExpired)
+        let id = try #require(await engine.transferIDs.first)
+        try await waitUntil("the engine to get the cancel") { await engine.cancels == [id] }
+
+        try await deliver(.failed(EngineFailure(code: .cancelled, message: "context canceled")))
+        #expect(controller.phase.failure == .backgroundExpired(stored: false, direction: .send))
+        #expect(controller.phase.failure?.endedByUser == false)
+        #expect(try onlyRecord().status == .cancelled)
+    }
+
+    /// A Cancel tap after the block, or a Decline before a Cancel, must not
+    /// change what the transfer ended for.
+    @Test func theStrongerEndReasonWinsWhateverTheOrder() async throws {
+        settings.autoAccept = true
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
+        try await waitForTransfer()
+        try await deliver(.connected)
+        try await deliver(.fileList(Self.fileList(["/etc/hosts"])))
+        controller.cancel()
+        try await deliver(.failed(EngineFailure(code: .cancelled, message: "context canceled")))
+        #expect(controller.phase.failure == .blockedAutoAccept)
+        #expect(try onlyRecord().status == .failed)
+    }
+
+    @Test func aCancelAfterADeclineEndsCancelled() async throws {
+        controller.start(.receive(code: Self.code, folder: folder, folderIsScoped: false))
+        try await waitForTransfer()
+        try await deliver(.connected)
+        try await deliver(.fileList(Self.fileList(["notes.txt"])))
+        controller.respond(accept: false)
+        controller.cancel()
+        try await deliver(.failed(EngineFailure(code: .refused, message: "refused files")))
+        #expect(controller.phase.failure == .cancelledByUser)
+        #expect(try onlyRecord().status == .cancelled)
+    }
+
     /// The engine frees itself before its terminal event, so a busy engine
     /// means a transfer that is really running: no retry.
     @Test func aBusyEngineFailsTheStartWithoutRetry() async throws {
