@@ -28,9 +28,9 @@ What is wired up, what was deliberately skipped, the traps in each, and how the 
 | `scripts/verify-swift.sh` (Xcode 27; Go only to rebuild the xcframework) | none; runs `swift test` on CrocKit and `xcodebuild test` on the `CrocApp` scheme for this Mac | local only, before pushing a Swift change. CI runs the same suites in the macOS leg of `build` |
 | ShellCheck 0.11 (Homebrew locally; preinstalled on `ubuntu-26.04`) | none (`shellcheck -x scripts/*.sh`, default checks) | local + CI (`shellcheck` job) |
 | shfmt 3.14 (Homebrew locally; CI downloads the pinned binary and checks its SHA-256) | `.editorconfig` (`shfmt -d scripts`; `shfmt -w scripts` fixes) | local + CI (`shellcheck` job) |
-| CodeQL (advanced setup; GitHub's default setup is off) | `.github/workflows/codeql.yml`: actions and Go only (Biome lints the site code), path-filtered, plus a weekly run | CI. No Swift (`../known-issues.md`, "Build and CI") |
+| CodeQL (advanced setup; GitHub's default setup is off) | `.github/workflows/codeql.yml`: actions and Go only (Biome lints the site code), path-filtered, plus a weekly run | CI. No Swift (CodeQL does not support Swift 6.4 yet; `.github/workflows/codeql.yml` says when to add it) |
 | actionlint 1.7 (Homebrew locally; CI downloads the pinned binary and checks its SHA-256) | `.github/actionlint.yaml` (runner labels newer than actionlint's list) | local + CI (`shellcheck` job, on every push and pull request) |
-| zizmor (Homebrew) | none | local, before pushing a workflow change; `zizmor --pedantic .github/workflows` reports only the `self-repository` finding (`../known-issues.md`, "Accepted") |
+| zizmor (Homebrew) | none | local, before pushing a workflow change; `zizmor --pedantic .github/workflows` reports only the `self-repository` finding (GitHub documents `uses: $/.github/workflows/...`, but actionlint 1.7.12 rejects it, so switch when actionlint accepts `$/`) |
 | GitHub Actions | `.github/workflows/ci.yml` | push to main, every PR; a `changes` job skips `build`, `interop` and `go` when their area is untouched (see "CI gotchas"); `interop (local relay)` runs `scripts/verify-interop.sh` on `macos-26`, which starts its own local `croc relay` |
 | GitHub Actions | `.github/workflows/go-weekly.yml` | Mondays 06:17 UTC + manual |
 | GitHub Actions | `.github/workflows/github-pages.yml` | Push to `main` only, on changes to `web/landing/**`, `web/docs/**`, `design/tokens.css`, `scripts/assemble-site.sh`, `scripts/lib.sh` and the workflow file: builds `_site` and deploys. The pre-merge build is the `site build` job in `ci.yml` |
@@ -172,8 +172,6 @@ Never localize:
 - `Logger` messages, test strings and preview-only labels (use `Text(verbatim:)` there, as `ButtonVariants.swift` does).
 - The `AutoVerify` markers and the failure copy the harness scripts match, such as "This link no longer works" in `scripts/verify-app-mac.sh`. The harnesses expect English, so run them on an English system.
 - The names `CrocApp` and `croc`.
-
-Not localizable yet: `known-issues.md`, "Design system", lists the on-screen strings that still bypass the catalogs.
 
 ### Keeping a catalog in step
 

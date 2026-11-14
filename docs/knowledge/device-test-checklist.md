@@ -73,9 +73,9 @@ Use an iPhone and a Mac signed in to the same iCloud account with Handoff on, wh
 
 ## Menu bar on a Mac
 
-Use a real Mac with the croc CLI as the receiver (`croc --yes <code>` in an empty folder). `scripts/verify-app-mac.sh` already covers a menu-bar send of a file and of clipboard text received by the CLI, and Open at Login following the system status. These items cover the real gestures and the real login. Compare SHA-256 values. VoiceOver in the menu-bar window belongs to the accessibility audit in `docs/known-issues.md`, "Release".
+Use a real Mac with the croc CLI as the receiver (`croc --yes <code>` in an empty folder). `scripts/verify-app-mac.sh` already covers a menu-bar send of a file and of clipboard text received by the CLI, and Open at Login following the system status. These items cover the real gestures and the real login. Compare SHA-256 values. VoiceOver in the menu-bar window belongs to the accessibility audit (#124).
 
-- [ ] 1. Click the menu-bar icon, then drag a file from Finder onto "Drop files to send". Pass: the window shows the code, a QR code and **Copy Code**, the CLI receives the file, and its SHA-256 equals the source's. Dropping onto the icon itself is expected to do nothing (`docs/known-issues.md`, "Accepted").
+- [ ] 1. Click the menu-bar icon, then drag a file from Finder onto "Drop files to send". Pass: the window shows the code, a QR code and **Copy Code**, the CLI receives the file, and its SHA-256 equals the source's. Dropping onto the icon itself is expected to do nothing.
 - [ ] 2. Click **Choose Files…** and pick a file and a folder in the open panel. Pass: the panel stays open until you confirm, the send starts, and the CLI receives both with equal SHA-256.
 - [ ] 3. Copy some text and click **Send Clipboard Text**. Pass: the CLI receives the text. With an empty clipboard the window says "The clipboard has no text to send."
 - [ ] 4. Start a send from the main window. Pass: the menu-bar window shows the same transfer, and its drop zone and buttons are not offered until it ends.

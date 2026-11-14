@@ -1,4 +1,4 @@
-# Read by OpenSSF Scorecard's Vulnerabilities check. Keep in step with docs/known-issues.md.
+# Read by OpenSSF Scorecard's Vulnerabilities check. Remove an entry when its package publishes a fix (#217).
 
 [[IgnoredVulns]]
 id = "GHSA-vfj7-8cjw-p6xm"

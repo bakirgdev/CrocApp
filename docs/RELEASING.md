@@ -124,7 +124,7 @@ Sparkle's tools come with the package, at `<DerivedData>/SourcePackages/artifact
 5. Copy build 1 somewhere writable (`ditto dd1/Build/Products/Release/CrocApp.app apps/CrocApp.app`) and launch it. Choose **Check for Updates…**, then **Install Update**, then **Install and Relaunch** in Sparkle's standard UI. From the second launch on, Sparkle first asks about automatic checks.
 6. Expect the old process to exit, a new process to start, and `apps/CrocApp.app` to report `CFBundleVersion` 2.
 
-A known hang after **Install and Relaunch** on the first launch of the Direct bundle ID on a Mac is tracked in `known-issues.md`, "Release".
+A known hang after **Install and Relaunch** on the first launch of the Direct bundle ID on a Mac is tracked in #213.
 
 ## App Store builds
 
@@ -147,7 +147,7 @@ To run it you need:
 Facts about the upload that look like problems but are not:
 
 - **`MinimumOSVersion = 100.0`.** gomobile writes this into the framework `Info.plist` (x/mobile `bind_iosapp.go`, an SwiftPM workaround). App Store Connect accepts it, so `build-xcframework.sh` does not patch it.
-- **"Upload Symbols Failed".** This is the only warning, for `Croc.framework` (iOS) and `A` (macOS). Xcode embeds a 50 KB stub `Croc.framework` dylib with no dSYM, because the gomobile xcframework is a static archive linked into the app binary. It is not an ITMS warning (`known-issues.md`, "Accepted").
+- **"Upload Symbols Failed".** This is the only warning, for `Croc.framework` (iOS) and `A` (macOS). Xcode embeds a 50 KB stub `Croc.framework` dylib with no dSYM, because the gomobile xcframework is a static archive linked into the app binary. It is not an ITMS warning.
 - **App category.** `LSApplicationCategoryType` is `public.app-category.utilities`, set as `INFOPLIST_KEY_LSApplicationCategoryType` on `CrocApp` and `CrocApp Direct`. Without it the macOS archive warns "No App Category is set".
 
 ### Privacy manifest
@@ -173,7 +173,7 @@ Both app `Info.plist` files (`app/Config/CrocApp-Info.plist`, `app/Config/CrocAp
 - SIEC is no longer a separate question for the app: CrocApp has no curve setting and uses P-256 itself. croc still links the `siec` curve and a sender adopts its receiver's curve, so a CLI receiver can pick it (issue #115).
 - If the exemption does not hold, set the key to `true` and add the `ITSEncryptionExportComplianceCode` that App Store Connect issues after the documentation is approved.
 
-The research is in issue #115, and the answers to give if App Store Connect asks are in `docs/knowledge/app-store-listing.md`, "Export compliance". The owner's open actions are in `known-issues.md`, "Release".
+The research is in issue #115, and the answers to give if App Store Connect asks are in `docs/knowledge/app-store-listing.md`, "Export compliance". The owner's open action (the ANSSI declaration) is issue #115.
 
 ## One-time setup
 

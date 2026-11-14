@@ -12,7 +12,7 @@ body:
       options:
         - label: I searched existing issues and this is not a duplicate.
           required: true
-        - label: It is not covered by [Troubleshooting](https://crocapp.dev/docs/troubleshooting/) or listed in [known issues](https://github.com/bakirgdev/CrocApp/blob/main/docs/known-issues.md).
+        - label: It is not covered by [Troubleshooting](https://crocapp.dev/docs/troubleshooting/) or listed in [known issues](https://github.com/bakirgdev/CrocApp/issues?q=is%3Aissue+label%3Aknown).
           required: true
         - label: It does not also happen with the [croc CLI](https://github.com/schollz/croc). If it does, it belongs upstream.
           required: true

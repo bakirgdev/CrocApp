@@ -59,7 +59,7 @@ ensure_xcframework() { # ensure_xcframework LOG
 # share the app container, ~/Downloads/CrocApp and the pasteboard, and
 # verify-interop.sh binds croc's default ports and multicast group, so a second
 # run breaks the first in ways that look like transfer failures
-# (docs/known-issues.md, "Harnesses"). Release it from the caller's EXIT trap.
+# Release it from the caller's EXIT trap.
 take_harness_lock() {
   HARNESS_LOCK="$TMPROOT/crocapp-harness.lock"
   mkdir "$HARNESS_LOCK" 2> /dev/null \

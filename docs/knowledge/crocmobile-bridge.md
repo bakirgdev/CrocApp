@@ -160,7 +160,7 @@ A start is cancellable before it returns:
 The cancel watchdog (`watchCancel`, `session.go`):
 
 - A cancel arms it before closing the prompt pipe. If croc's call has not returned 15 s later (`stuckAfter`), the delegate gets `engineStuck` as its terminal event and the session is marked stuck. Every later start then fails at once with `engineStuck`.
-- The lock stays held. Forcing it open would let a new session change the cwd, stdin and stdout under a croc that still runs. Only a relaunch frees it (`../known-issues.md`, "Accepted").
+- The lock stays held. Forcing it open would let a new session change the cwd, stdin and stdout under a croc that still runs. Only a relaunch frees it.
 - A session sends one terminal event (`session.terminal`). If croc returns after all, `run` clears the mark and frees the lock without a second event.
 - Why 15 s: croc 11's dials and reads follow its context, its reconnect backoff is capped at 5 s, and `run`'s own teardown waits (the stdin drain and the poller join) are bounded at 2 s each.
 
@@ -184,10 +184,10 @@ Answers queued for croc's stdin prompts:
 - On accept, `respond` sets the policy on the live `croc.Client` before writing `y`, because croc reads `Rename` and `Overwrite` only once the accept prompt is answered.
 - It then queues 4096 more answers (`promptPolicyAnswers`) for the prompts that ignore both flags: the empty-folder prompt and the per-member unzip prompt `Overwrite '<path>'? (y/N)`.
 - Every queued answer is `n`, under either policy (`keptPromptAnswers`). The unzip then skips an existing member and keeps the local copy. So Replace overwrites files through `Overwrite` but never a zip member.
-- Never `y`: croc v11 re-runs the accept prompt on the sender's new file list after each reconnect, and a queued `y` would accept a list the user never saw. As a result, a reconnect after a manual accept is refused (`../known-issues.md`, "Accepted").
+- Never `y`: croc v11 re-runs the accept prompt on the sender's new file list after each reconnect, and a queued `y` would accept a list the user never saw. As a result, a reconnect after a manual accept is refused (#226).
 - 4096 two-byte lines fit a fresh pipe buffer on Darwin and Linux, so the write never blocks.
 - With `AutoAccept` there is no accept prompt. The same `n` batch is written at session start and the pipe is closed (`answerUngatedPrompts`). It must be `n` because croc still forces the accept prompt when the remote sender ran `--ask`. That prompt reads the first queued line, and `y` would accept a transfer the sender wanted confirmed by hand.
-- Past 4096 colliding zip members an unzip hits EOF and fails, leaving the received zip (`../known-issues.md`, "Accepted").
+- Past 4096 colliding zip members an unzip hits EOF and fails, leaving the received zip (#225).
 
 ### Options that Swift wires
 
@@ -205,7 +205,7 @@ Swift passes the relay settings as stored. `crocmobile/relay.go` resolves them f
 
 - A relay setting that is blank or equals `models.DEFAULT_RELAY` or `DEFAULT_RELAY6` (`croc.schollz.com:9009`, `croc6.schollz.com:9009`) is not custom (`customRelays`). `models` no longer resolves relay DNS at import, so those are plain strings.
 - With no custom relay and **Local Network Only** off, the relay is `publicrelay.Relays()[codephrase.RelayIndex(code, len(relays))]`, with v6 blanked and `PublicRelay` set.
-- A custom relay is passed as set and the other side is blanked. A custom pair keeps both (`../known-issues.md`, "Accepted").
+- A custom relay is passed as set and the other side is blanked. A custom pair keeps both.
 - A blank password means croc's default.
 - `RelayForCode` exposes the code's pool relay.
 
@@ -259,7 +259,7 @@ croc retries a dropped transfer up to 10 times (backoff from 100 ms, doubling, c
 - With no answer after 5 s the receive fails with `local discovery failed: read tcp ...: i/o timeout`, and `classify` reports `joinedEarly`. `errors_test.go`, "receiver joined before the sender", reproduces it.
 - A receiver with LAN off sends no probe, so the window does not apply to it.
 - A sender that arrives after the receiver failed finds an empty room and waits for a new receiver (inferred from the source, not verified live).
-- Generated-code GUI flows are sender-first. Custom codes are not: a receiver who types an agreed code more than 5 s before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it (`../known-issues.md`, "Accepted").
+- Generated-code GUI flows are sender-first. Custom codes are not: a receiver who types an agreed code more than 5 s before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it.
 - Harnesses start the receiver only after the sender is in its room: `scripts/lib.sh` `await_sender` does this.
 
 ### Small-file bundles

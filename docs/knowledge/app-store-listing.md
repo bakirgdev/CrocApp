@@ -18,7 +18,7 @@ Limits come from Apple's App Store Connect Help (URLs in "Sources"). Two are byt
 | :--- | :--- | :--- | :--- |
 | Name | 30 characters (min 2) | 7 | App information page |
 | Subtitle | 30 characters | 29 | App information page |
-| Promotional text | 170 characters | 152 | Platform version information page |
+| Promotional text | 170 characters | 146 | Platform version information page |
 | Description | 4000 characters | see "Description" | Platform version information page |
 | Keywords | 100 **bytes** (each keyword more than two characters) | 98 | Platform version information page |
 | What's New | 4000 characters | see "What's New" | Platform version information page |
@@ -47,7 +47,7 @@ Send files with a code phrase
 Editable without a new build or review.
 
 ```text
-Free, open source, no account. Send files, folders or text to another device with a short code phrase, end-to-end encrypted. An unofficial app for croc.
+Send files, folders or text to another device with a short code phrase. End-to-end encrypted, no account, open source. An unofficial app for croc.
 ```
 
 ## Description
@@ -249,7 +249,7 @@ Keep the "MAC ENTITLEMENTS" paragraph while the macOS app carries `network.serve
 
 Before every submission:
 
-- From 1.2.1, App Accessibility claims VoiceOver and Voice Control on iPhone, iPad and Mac, on the owner's runs with the App Store builds. The rest of the accessibility audit is still open (`../known-issues.md`, "Release"). Until it passes, keep VoiceOver and "largest text sizes" claims out of the description and What's New.
+- From 1.2.1, App Accessibility claims VoiceOver and Voice Control on iPhone, iPad and Mac, on the owner's runs with the App Store builds. The rest of the accessibility audit is still open (#124). Until it passes, keep VoiceOver and "largest text sizes" claims out of the description and What's New.
 - Read getcroc.com's current labels (Send, Receive, Choose files, "Croc code or stored link", Copy code) and compare them with the review notes. The page belongs to the croc project and can change.
 - Check the contact name, phone and email in App Review Information. They are not in the repo, and the developer-account address is not necessarily the public support contact.
 - Confirm `https://crocapp.dev/support/` and `https://crocapp.dev/privacy/` return HTTP 200.
@@ -278,4 +278,4 @@ Apple's pages change. Re-read them before you rely on a limit or a rule.
 - App privacy details (definition of collect, third-party partners): https://developer.apple.com/app-store/app-privacy-details/
 - Manage availability: https://developer.apple.com/help/app-store-connect/manage-your-apps-availability/manage-availability-for-your-app-on-the-app-store
 - getcroc.com page and its bundled script (labels, Umami, AdSense): https://getcroc.com
-- Local: `app/Config/*.plist`, `app/CrocApp/PrivacyInfo.xcprivacy`, `app/CrocApp.xcodeproj/project.pbxproj` (purpose strings, category), `LICENSE`, `../known-issues.md`, `../RELEASING.md`.
+- Local: `app/Config/*.plist`, `app/CrocApp/PrivacyInfo.xcprivacy`, `app/CrocApp.xcodeproj/project.pbxproj` (purpose strings, category), `LICENSE`, `../RELEASING.md`.

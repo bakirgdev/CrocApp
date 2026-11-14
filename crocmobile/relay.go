@@ -48,7 +48,7 @@ type relayRoute struct {
 func resolveRelay(code string, o *Options) (relayRoute, error) {
 	// A custom relay is passed as set, the other side blanked. Unlike the CLI,
 	// which always blanks v6 when v4 is custom, a custom pair keeps both
-	// (docs/known-issues.md, Accepted).
+	// (deliberate: the CLI silently discards a custom v6 relay).
 	if v4, v6 := customRelays(o); v4 != "" || v6 != "" {
 		return relayRoute{v4: v4, v6: v6}, nil
 	}

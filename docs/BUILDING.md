@@ -128,7 +128,7 @@ Design and docs, no toolchain needed:
 
 ```bash
 scripts/verify-design.sh   # token mirrors, contrast, no raw web colors (design/AGENTS.md)
-scripts/verify-docs.sh     # links, repo paths, quoted headings and stale markers in the markdown (docs/AGENTS.md)
+scripts/verify-docs.sh     # links, repo paths, quoted headings, stale markers, croc version literals, deleted-doc citations and llms.txt URLs (docs/AGENTS.md)
 ```
 
 Before tagging a release, `scripts/release-check.sh X.Y.Z` (needs `gh`) runs the checks the release rehearsal skips (`RELEASING.md`, "Each release").
@@ -156,7 +156,7 @@ Every suite is a unit test with no network. Transfers are proven by the harnesse
 
 ## Verification harnesses
 
-A green build is not evidence that a transfer works. Every harness starts its own `croc relay` on free loopback ports and sends through it, so a run needs no internet and its relay never collides with another run's (`scripts/lib.sh`, "The relay a harness sends through"). Two runs still share croc's default ports 9009 to 9013 and its multicast group, so the harnesses run one at a time: each takes a lock, and a second run stops with a message naming the first (`docs/known-issues.md`, "Harnesses"). CI runs only `scripts/verify-interop.sh` (job `interop (local relay)`, see `docs/knowledge/tooling.md`, "CI gotchas"). The app harnesses need an app build and a Mac or a simulator and are not in CI, so running them is on whoever touched the transfer path. The public relay pool is opt-in with `PUBLIC_POOL=1`: it is the only way to run interop scenario 11, and it fails at random when the pool rate-limits (`docs/known-issues.md`, "Harnesses"). Run with `PUBLIC_POOL=1` for a croc upgrade (`docs/knowledge/croc-upgrade-playbook.md`) and for any change to relay selection or the public-pool path (`crocmobile/relay.go`, the relay and code-to-relay mapping); the default local relay never touches that path.
+A green build is not evidence that a transfer works. Every harness starts its own `croc relay` on free loopback ports and sends through it, so a run needs no internet and its relay never collides with another run's (`scripts/lib.sh`, "The relay a harness sends through"). Two runs still share croc's default ports 9009 to 9013 and its multicast group, so the harnesses run one at a time: each takes a lock, and a second run stops with a message naming the first. CI runs only `scripts/verify-interop.sh` (job `interop (local relay)`, see `docs/knowledge/tooling.md`, "CI gotchas"). The app harnesses need an app build and a Mac or a simulator and are not in CI, so running them is on whoever touched the transfer path. The public relay pool is opt-in with `PUBLIC_POOL=1`: it is the only way to run interop scenario 11, and it fails at random when the pool rate-limits. Run with `PUBLIC_POOL=1` for a croc upgrade (`docs/knowledge/croc-upgrade-playbook.md`) and for any change to relay selection or the public-pool path (`crocmobile/relay.go`, the relay and code-to-relay mapping); the default local relay never touches that path.
 
 | Harness | Proves | Needs | Env vars |
 |---|---|---|---|
@@ -174,17 +174,17 @@ In the app-as-sender scenarios the CLI receiver starts only after the app writes
 - `CROC`: the CLI path. Default `$HOMEBREW_PREFIX/bin/croc`, falling back to `/opt/homebrew/bin/croc`.
 - `SIM`: the simulator for `verify-app-sim.sh`. Default `iPhone 17 Pro`. List installed devices with `xcrun simctl list devices`.
 - `CROC_V10`: the croc v10 binary for `verify-interop.sh` scenario 10. Default `$(go env GOPATH)/bin/croc`. Install it with `go install github.com/schollz/croc/v10@$(cat scripts/croc-v10.version)`. The script fails at start if the binary is not the version in `scripts/croc-v10.version`.
-- `PUBLIC_POOL=1`: sends through the public relay pool instead of a local relay. It adds interop scenario 11 and the 60 s waits that scenario and scenario 15 need to stay under the pool's admission limit (`docs/known-issues.md`, "Harnesses"). Setting it together with `RELAY` is an error.
+- `PUBLIC_POOL=1`: sends through the public relay pool instead of a local relay. It adds interop scenario 11 and the 60 s waits that scenario and scenario 15 need to stay under the pool's admission limit. Setting it together with `RELAY` is an error.
 - `RELAY=host:port`: sends every transfer through a relay that is already running instead of starting one. The harness cannot read that relay's log, so it waits a fixed 3 s after each sender instead of watching for its room.
 
-The harness starts the relay as `$CROC --debug relay --host 127.0.0.1` on five free ports, with `--source-join-limit` and `--room-join-limit` raised to 1000: every connection comes from 127.0.0.1, which a croc v11 relay admits 30 times a minute by default. `CROC` must be a v11 binary, because a v10 `croc` first on `PATH` rejects those flags (`docs/known-issues.md`, "Harnesses"). `--debug` makes the relay log `room has first peer` when a sender's room opens, which is what the harness waits on before it starts a receiver. The relay's log is `$TMPROOT/mac-relay.log` and `$TMPROOT/sim-relay.log` for the app harnesses and `relay.log` in the temp directory of `verify-interop.sh`, which prints its tail on a failure.
+The harness starts the relay as `$CROC --debug relay --host 127.0.0.1` on five free ports, with `--source-join-limit` and `--room-join-limit` raised to 1000: every connection comes from 127.0.0.1, which a croc v11 relay admits 30 times a minute by default. `CROC` must be a v11 binary, because a v10 `croc` first on `PATH` rejects those flags. `--debug` makes the relay log `room has first peer` when a sender's room opens, which is what the harness waits on before it starts a receiver. The relay's log is `$TMPROOT/mac-relay.log` and `$TMPROOT/sim-relay.log` for the app harnesses and `relay.log` in the temp directory of `verify-interop.sh`, which prints its tail on a failure.
 
 **Signing for local macOS harness builds.** `app/CrocApp/CrocApp.entitlements` carries Associated Domains (`applinks:crocapp.dev`), so a signed local macOS build of `CrocApp` needs a provisioning profile.
 
 - `scripts/verify-app-mac.sh` and `scripts/capture-screenshots.sh` pass `-allowProvisioningUpdates` to their macOS `xcodebuild`.
 - Xcode needs an account in team `HBSU359M33`.
 - On a new Mac, also pass `-allowProvisioningDeviceRegistration` once, so the Mac is registered as a development device.
-- A contributor outside that team cannot sign these builds. Unsigned builds (`CODE_SIGNING_ALLOWED=NO`, what CI does) still build and pass the tests, but an unsigned Mac app cannot use the Keychain: the relay password, the proxies and Send as Link receipts do not persist (`docs/known-issues.md`, "App and UI").
+- A contributor outside that team cannot sign these builds. Unsigned builds (`CODE_SIGNING_ALLOWED=NO`, what CI does) still build and pass the tests, but an unsigned Mac app cannot use the Keychain: the relay password, the proxies and Send as Link receipts do not persist.
 
 **Trap**: a harness case that tests an answer given mid-transfer must start the transfer with the opposite or default setting, or it proves only the start options. `croctest -policy` sets the Options only under `-yes`, and `AutoVerify --when-exists` answers the sheet without touching `settings.whenFileExists`.
 
