@@ -40,7 +40,6 @@ struct SavedCodePicker: View {
     }
 }
 
-/// Settings section that lists, adds, renames and deletes saved codes.
 /// A code is never shown in the list, only in the editor.
 struct SavedCodesSection: View {
     @Environment(SavedCodes.self) private var savedCodes

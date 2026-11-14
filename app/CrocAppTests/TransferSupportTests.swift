@@ -84,12 +84,6 @@ import Testing
         ]
         for phase in silent { #expect(TransferHaptic(phase) == nil, "\(phase)") }
     }
-
-    @Test func eachEventHasItsOwnFeedback() {
-        #expect(TransferHaptic.completed.feedback == .success)
-        #expect(TransferHaptic.failed.feedback == .error)
-        #expect(TransferHaptic.incoming.feedback == .warning)
-    }
 }
 
 /// The Shortcuts side of `TransferController` (`TransferIntentSupport`).

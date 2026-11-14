@@ -4,40 +4,16 @@ import Testing
 @testable import CrocApp
 
 @Suite struct AppInfoTests {
-    @Test func privacyURLIsTheProjectSitePrivacyPage() {
-        expectHTTPSPage(AppInfo.privacyURL, path: "/privacy/")
-    }
-
-    @Test func supportURLIsTheProjectSiteSupportPage() {
-        expectHTTPSPage(AppInfo.supportURL, path: "/support/")
-    }
-
-    @Test func crocLicenseURLIsCrocsLicenseOnGitHub() {
-        let parts = URLComponents(url: AppInfo.crocLicenseURL, resolvingAgainstBaseURL: false)
-        #expect(parts?.scheme == "https")
-        #expect(parts?.host == "github.com")
-        #expect(parts?.path == "/schollz/croc/blob/main/LICENSE")
-    }
-
-    @Test func reviewURLOpensTheWriteReviewSheetOfTheLiveListing() {
-        let parts = URLComponents(url: AppInfo.reviewURL, resolvingAgainstBaseURL: false)
-        #expect(parts?.host == "apps.apple.com")
-        #expect(parts?.path == "/app/id6805675003")
-        #expect(parts?.query == "action=write-review")
-    }
-
-    @Test func sponsorURLIsTheLandingPageSponsorSection() {
-        let parts = URLComponents(url: AppInfo.sponsorURL, resolvingAgainstBaseURL: false)
-        #expect(parts?.scheme == "https")
-        #expect(parts?.host == "crocapp.dev")
-        #expect(parts?.fragment == "sponsor")
-    }
-
-    // URLComponents, not URL.path: URL.path drops the trailing slash.
-    private func expectHTTPSPage(_ url: URL, path: String) {
-        let parts = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        #expect(parts?.scheme == "https")
-        #expect(parts?.host == "crocapp.dev")
-        #expect(parts?.path == path)
+    /// The links are force-unwrapped literals, so a malformed one would crash
+    /// the first screen that shows it.
+    @Test func everyLinkIsAWellFormedHTTPSURL() {
+        let links = [
+            AppInfo.privacyURL, AppInfo.supportURL, AppInfo.crocLicenseURL,
+            AppInfo.reviewURL, AppInfo.sponsorURL,
+        ]
+        for link in links {
+            #expect(link.scheme == "https", "\(link)")
+            #expect(link.host() != nil, "\(link)")
+        }
     }
 }

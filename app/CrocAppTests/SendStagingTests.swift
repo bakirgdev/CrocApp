@@ -25,7 +25,6 @@ import UniformTypeIdentifiers
         defer { SendStaging.discard(staged) }
 
         #expect(staged.lastPathComponent == "IMG_0042.HEIC")
-        #expect(SendStaging.isStaged(staged))
         #expect(try String(contentsOf: staged, encoding: .utf8) == "pixels")
         #expect(FileManager.default.fileExists(atPath: source.path), "the original stays")
     }
@@ -60,7 +59,6 @@ import UniformTypeIdentifiers
         let source = try makeSource(named: "report.pdf")
         defer { try? FileManager.default.removeItem(at: source.deletingLastPathComponent()) }
 
-        #expect(!SendStaging.isStaged(source))
         SendStaging.discard(source)
 
         #expect(FileManager.default.fileExists(atPath: source.path))

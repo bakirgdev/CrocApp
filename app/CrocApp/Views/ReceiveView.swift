@@ -2,7 +2,6 @@ import Accessibility
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Receive flow (code entry, QR scan + paste, output folder).
 struct ReceiveView: View {
     @Environment(TransferController.self) private var controller
     @Environment(OutputFolderStore.self) private var outputFolder
@@ -126,7 +125,6 @@ struct ReceiveView: View {
             }
             #endif
 
-            // Side by side until the name and the buttons no longer fit.
             ViewThatFits(in: .horizontal) {
                 HStack {
                     folderLabel

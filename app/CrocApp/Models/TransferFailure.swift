@@ -39,7 +39,6 @@ struct TransferFailure: Equatable {
 enum SettingsPlace: Equatable {
     /// CrocApp's Settings: the relay, Local Network Only, Auto-Accept Transfers.
     case general
-    /// CrocApp's Advanced settings.
     case advanced
     /// The system's Local Network permission for CrocApp.
     case localNetworkAccess
@@ -141,7 +140,6 @@ extension TransferFailure {
             remedy: nil)
     }
 
-    /// The next step after the other device said no or stopped the transfer.
     private static func askAgain(_ direction: TransferController.Direction) -> String {
         direction == .receive
             ? String(localized: "Ask them to send it again.")

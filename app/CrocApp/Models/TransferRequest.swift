@@ -23,7 +23,6 @@ enum TransferRequest: Equatable {
         }
     }
 
-    /// Goes through a stored-transfer server rather than a croc peer.
     var isStored: Bool {
         switch self {
         case .storedSend, .storedReceive: true

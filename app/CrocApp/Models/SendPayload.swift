@@ -32,7 +32,6 @@ nonisolated enum SendPayload: Transferable {
 }
 
 extension SendPayload {
-    /// What a paste can carry for Send.
     static let pasteTypes: [UTType] = [.fileURL, .url, .image, .movie, .text]
 
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "send")

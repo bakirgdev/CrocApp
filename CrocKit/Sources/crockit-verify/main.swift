@@ -4,7 +4,6 @@ import CrocKit
 //   crockit-verify send <code> <path>
 //   crockit-verify receive <code> <outdir> [y|n] [cancel-after-ms]
 //   crockit-verify twice <code1> <code2> <outdir>
-// Prints EVENT lines like croctest; exits 0 on done, 1 on error.
 // cancel-after-ms: fires engine.cancel(_:) from a detached timer after the
 // given delay, to prove the Swift-side cancel path actually tears down a
 // transfer mid-wire (as opposed to only being exercised pre/post-transfer).
@@ -35,8 +34,6 @@ func defaultOptions() -> EngineOptions {
     return options
 }
 
-/// Drains a transfer's event stream to completion, printing EVENT lines.
-/// Returns true iff the transfer reached `.done(success: true)`.
 func drive(_ transfer: EngineTransfer, answer: Bool) async -> Bool {
     for await event in transfer.events {
         switch event {

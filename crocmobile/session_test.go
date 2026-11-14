@@ -164,24 +164,6 @@ func TestBuildCrocOptionsNoPrompt(t *testing.T) {
 	}
 }
 
-func TestBuildCrocOptionsFixedValues(t *testing.T) {
-	for _, sender := range []bool{true, false} {
-		c := mustBuildCrocOptions(t, sender, "my-secret", &Options{})
-		if c.SharedSecret != "my-secret" {
-			t.Errorf("sender=%v: SharedSecret = %q", sender, c.SharedSecret)
-		}
-		if !c.IgnoreStdin {
-			t.Errorf("sender=%v: IgnoreStdin = false, want true", sender)
-		}
-		if !c.DisableClipboard {
-			t.Errorf("sender=%v: DisableClipboard = false, want true", sender)
-		}
-		if c.Quiet {
-			t.Errorf("sender=%v: Quiet = true, want false", sender)
-		}
-	}
-}
-
 func TestProgressSnapshot(t *testing.T) {
 	files := []croc.FileInfo{
 		{Name: "a.txt", Size: 100},

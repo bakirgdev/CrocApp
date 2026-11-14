@@ -62,7 +62,6 @@ struct HowItWorksView: View {
 private struct ParagraphLabelStyle: LabelStyle {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .title3) private var glyphSize: CGFloat = IconSize.large
-    /// The glyph column's minimum width, as a multiple of the glyph size.
     private static let glyphColumnRatio: CGFloat = 1.25
 
     func makeBody(configuration: Configuration) -> some View {

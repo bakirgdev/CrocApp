@@ -105,9 +105,6 @@ struct HistoryView: View {
     }
 
     #if os(macOS)
-    /// A click selects, so the Delete key has a target. Double-click or
-    /// Return opens the record, as in any Mac list. The context menu is the
-    /// selection's, so a right-click on a row acts on that row.
     private var list: some View {
         List(selection: $selection) {
             ForEach(shown) { HistoryRow(record: $0, isRevoking: actions.isRevoking($0)) }
@@ -228,7 +225,6 @@ private struct HistoryRow: View {
     @ScaledMetric(relativeTo: .title3) private var glyphSize: CGFloat = IconSize.medium
 
     private static let titleLines = 1
-    /// At accessibility sizes the title wraps instead of truncating.
     private static let largeTextTitleLines = 3
 
     private var isLargeText: Bool { dynamicTypeSize.isAccessibilitySize }

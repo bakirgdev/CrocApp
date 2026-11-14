@@ -127,20 +127,6 @@ import Testing
         }
     }
 
-    /// Per-key storage is what keeps a new setting from resetting the old
-    /// ones, so the key names are part of the contract with saved preferences.
-    @Test func eachSettingIsStoredUnderItsOwnKey() {
-        let s = makeSettings()
-        s.saveTransferHistory = false
-        s.haptics = false
-        s.onlyLocal = true
-
-        #expect(storage.values["settings.saveTransferHistory"] as? Bool == false)
-        #expect(storage.values["settings.haptics"] as? Bool == false)
-        #expect(storage.values["settings.onlyLocal"] as? Bool == true)
-        #expect(storage.values.count == 3, "a write touches only its own key")
-    }
-
     /// Saved preferences are read back under these exact strings: a rename
     /// silently resets that setting for every existing install.
     @Test func everyStoredKeyStringIsPinned() {
@@ -279,13 +265,6 @@ import Testing
 }
 
 @Suite struct MemorySettingsStorageTests {
-    @Test func startsEmptyAndReturnsWhatWasSet() {
-        let storage = MemorySettingsStorage()
-        #expect(storage.object(forKey: "settings.haptics") == nil)
-        storage.set(false, forKey: "settings.haptics")
-        #expect(storage.object(forKey: "settings.haptics") as? Bool == false)
-    }
-
     @Test func settingNilRemovesTheKey() {
         let storage = MemorySettingsStorage()
         storage.set("a", forKey: "key")

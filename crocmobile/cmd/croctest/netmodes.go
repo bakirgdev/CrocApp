@@ -37,8 +37,6 @@ func listenProxy() net.Listener {
 	return l
 }
 
-// tunnel dials target, runs ready on the client once that worked, then copies
-// both ways until either side closes.
 func tunnel(client net.Conn, target string, ready func() error) {
 	defer client.Close()
 	remote, err := net.DialTimeout("tcp", target, 15*time.Second)

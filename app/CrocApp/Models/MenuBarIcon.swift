@@ -8,7 +8,6 @@ struct MenuBarIcon: Equatable {
     let symbol: String
     /// The state in words for VoiceOver; never a code phrase.
     let label: String
-    /// The integer percent shown beside the glyph while bytes move.
     let percent: Int?
 
     /// Takes the percent, not the progress, so the label depends on the percent

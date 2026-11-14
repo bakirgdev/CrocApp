@@ -54,8 +54,6 @@ struct TransferStatusView: View {
     /// (design/principles.md → Motion).
     private var phaseKind: TransferController.Phase.Kind { controller.phase.kind }
 
-    /// A running transfer shows the direction header and the trust badge on
-    /// top; a result does not.
     private var showsHeader: Bool {
         switch phaseKind {
         case .idle, .done, .stored, .failed: false

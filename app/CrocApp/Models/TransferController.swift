@@ -21,7 +21,6 @@ final class TransferController {
         /// phase alone.
         case transferring
         case done(Summary, receivedText: String?)
-        /// A stored upload finished. The receipt holds the link to share.
         case stored(StoredReceipt)
         case failed(TransferFailure)
 
@@ -47,8 +46,6 @@ final class TransferController {
             }
         }
 
-        /// A question waits for the user's answer: the accept gate of a receive,
-        /// or the confirm of a send that asked both sides to confirm.
         var needsAnswer: Bool {
             switch self {
             case .confirmSend, .incoming: true
@@ -66,7 +63,6 @@ final class TransferController {
             }
         }
 
-        /// The code phrase of a send that waits for the other device.
         var shownCode: String? {
             guard case .waiting(let code) = self else { return nil }
             return code
@@ -78,7 +74,6 @@ final class TransferController {
     /// case outranks the earlier, in the order below, for the failure screen
     /// and the history record alike.
     enum EndReason: Int, Comparable {
-        /// The user's Decline.
         case declined
         /// The user's Cancel, or a Shortcuts action that was cancelled.
         case cancelled
@@ -148,8 +143,6 @@ final class TransferController {
     /// (the menu-bar label) reads this and redraws no more often than it moves.
     private(set) var progressPercent: Int?
     private(set) var speedBytesPerSec: Double = 0
-    /// The transfer goes through a stored-transfer server rather
-    /// than a croc peer.
     private(set) var isStoredTransfer = false
 
     let settings: AppSettings
@@ -255,7 +248,6 @@ final class TransferController {
         let relay: AppSettings.RelayKind =
             if case .receive = request { settings.receiveRelayKind } else { settings.relayKind }
         activeRelay = shownRelay ?? relay
-        // Both-sides confirm holds a live send at .confirmSend once connected.
         run.sendConfirmArmed =
             request.direction == .send && !request.isStored && settings.bothSidesConfirm
         run.autoAcceptActive = call.autoAccept
@@ -292,8 +284,6 @@ final class TransferController {
         return start(request)
     }
 
-    /// Whether History can offer Revoke: an unexpired, unrevoked upload whose
-    /// receipt this device still holds.
     func canRevoke(_ record: TransferRecord, now: Date = .now) -> Bool {
         guard let id = record.storedID, record.revokedAt == nil,
             let expiresAt = record.expiresAt, expiresAt > now
@@ -539,7 +529,6 @@ final class TransferController {
         }
     }
 
-    /// What the failure copy is chosen by, besides the engine's code.
     private var situation: TransferFailure.Situation {
         TransferFailure.Situation(
             direction: direction, isStored: isStoredTransfer, endReason: run.endReason,
@@ -578,7 +567,6 @@ final class TransferController {
         history?.add(draft.record(status: status, summary: summary, receivedText: run.receivedText))
     }
 
-    /// A start error as the failure the copy is chosen by.
     private static func startFailure(_ error: any Error) -> EngineFailure {
         switch error {
         case CrocEngineError.startFailed(let failure): failure

@@ -6,7 +6,6 @@ import UniformTypeIdentifiers
 import PhotosUI
 #endif
 
-/// Send flow (files, folders, text/clipboard, custom code).
 struct SendView: View {
     @Environment(TransferController.self) private var controller
     @Environment(AppRouter.self) private var router
@@ -47,7 +46,6 @@ struct SendView: View {
     @State private var photoItems: [PhotosPickerItem] = []
     @State private var isLoadingPhotos = false
     #endif
-    /// Photos or videos the last pick could not bring in.
     @State private var photoFailures = 0
     @FocusState private var textFocused: Bool
 
@@ -371,7 +369,6 @@ struct SendView: View {
                 isDropTargeted = $0
             }
 
-            // Side by side until the labels no longer fit (accessibility sizes).
             ViewThatFits(in: .horizontal) {
                 HStack { importButtons }
                 VStack { importButtons }

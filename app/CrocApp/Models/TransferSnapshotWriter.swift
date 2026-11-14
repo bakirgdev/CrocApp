@@ -63,7 +63,6 @@ final class TransferSnapshotWriter: HistoryChangeObserver {
         }
     }
 
-    /// One observed change. Internal so tests can feed phases without a transfer.
     func handle(phase: TransferController.Phase, saveHistory: Bool, showNames: Bool) {
         defer {
             lastPhase = phase

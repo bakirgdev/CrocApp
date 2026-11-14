@@ -13,7 +13,6 @@ struct TrustBadge: View {
     }
 
     let relay: AppSettings.RelayKind
-    /// Defaulted so existing `TrustBadge(relay:)` call sites keep compiling.
     var variant: Variant = .pill
 
     // components.md → TrustBadge: pill lock at 14, full glyph at 19, scaled
