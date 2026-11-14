@@ -505,7 +505,6 @@
     "Shared Files" : {},
     "Show File Names in Notifications" : {},
     "Show File Names on the Lock Screen and in Widgets" : {},
-    "Show History in Spotlight" : {},
     "Show Receive Folder in Files" : {},
     "Show Receive Folder in Finder" : {},
     "Show in Files" : {},
@@ -516,7 +515,6 @@
     "Skip Local Network" : {},
     "Skips finding the other device on your local network, so a transfer goes through a relay. Applies to sending and receiving." : {},
     "Some names are already taken" : {},
-    "Spotlight on this device can find past transfers by their file names." : {},
     "Start the same transfer again; replacing the partly received files resumes it." : {
       "comment" : "Replace is the label of a button in the incoming-files prompt."
     },

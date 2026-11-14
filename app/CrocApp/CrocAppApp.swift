@@ -51,9 +51,7 @@ struct CrocAppApp: App {
         // Shortcuts actions can run right after launch, before any window.
         AppDependencyManager.shared.add(dependency: controller)
         AppDependencyManager.shared.add(dependency: outputFolder)
-        // History for Shortcuts and Spotlight; only the app's history is the user's to index.
-        HistoryEntityStore.install(
-            for: history, settings: settings, index: mode.isLive ? SpotlightHistoryIndex() : nil)
+        HistoryEntityStore.install(for: history, settings: settings)
         #if os(macOS)
         _quickSend = State(
             initialValue: MenuBarQuickSend(controller: controller, outputFolder: outputFolder))
@@ -79,6 +77,7 @@ struct CrocAppApp: App {
             notifier.start()
             snapshotWriter.start()
             history.observers.append(snapshotWriter)
+            Task { await SpotlightPurge.runOnce() }
         }
         // Widget buttons and the Control Center control land here.
         OpenScreen.handler = { target in

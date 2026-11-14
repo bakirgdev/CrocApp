@@ -48,4 +48,4 @@ If you send to or receive from the same person often, keep their code. In **Sett
 
 A saved code is no longer single-use. Anyone who learns it and connects first can receive your next transfer, so use one only with someone you trust, and delete it when you stop needing it. When receiving, keep **Auto-Accept Transfers** off so you see the file list and can decline. When sending, turn on **Confirm on Both Sides** in [Settings](settings.md) to confirm the connection before anything is sent.
 
-Saved codes are kept in this device's Keychain. They are not synced to other devices or iCloud, and they never appear in History, Spotlight or notifications.
+Saved codes are kept in this device's Keychain. They are not synced to other devices or iCloud, and they never appear in History or notifications.
