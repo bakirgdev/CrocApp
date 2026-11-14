@@ -51,20 +51,12 @@ More pairs: "The other device declined" and "Ask them to send it again."; "The c
 - If the user can fix it, the detail names the fix, with an adjacent **Open Settings** or **Try Again** (`components.md`, "StatusBlock"). If not, say so and offer no button that will not help.
 - A cancel or decline the user made is not a failure: its title stands alone ("Transfer cancelled"), with **Done**.
 
-## Numbers
+## Numbers and dates
 
-| Thing | Format |
-|---|---|
-| File and transfer sizes | decimal kB, MB, GB as `.byteCount(style: .file)` writes them, matching Finder. Never hand-format a size |
-| Speed | the same units plus `/s` ("4.2 MB/s"); an em-dash placeholder at rest or unknown, never "0 B/s" |
-| Exact technical thresholds | binary MiB or GiB ("128 MiB"), because croc defines them that way. Never for a measured size |
-| Progress | integer percent |
-| Counts | "File 3 of 12"; inflected nouns ("1 file", "3 files"), never "file(s)" |
-| Live readouts | tabular figures |
-
-## Dates
-
-Relative inside a week ("yesterday", "3 days ago"), short absolute after. Never a raw timestamp.
+- **Sizes** are decimal kB, MB and GB as `.byteCount(style: .file)` writes them, matching Finder. Never hand-format a size. Exact technical thresholds are binary MiB or GiB ("128 MiB"), because croc defines them that way, and never for a measured size.
+- **Speed** is the same units plus `/s` ("4.2 MB/s"), with an em-dash placeholder at rest or unknown, never "0 B/s". Progress is an integer percent.
+- **Counts** read "File 3 of 12" with inflected nouns ("1 file", "3 files"), never "file(s)".
+- **Dates** are relative inside a week ("yesterday", "3 days ago") and short absolute after. Never a raw timestamp.
 
 ## The code phrase
 

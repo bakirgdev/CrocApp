@@ -1,5 +1,6 @@
-/* CrocApp design tokens: hand-written web mirror. Canonical values;
-   the rules behind them are design/principles.md, start at design/AGENTS.md.
+/* CrocApp design tokens, for the landing page and the docs site only: the app
+   uses system styles and has no mirror of this file. The rules behind the values
+   are design/principles.md, start at design/AGENTS.md.
 
    Themed values are light-dark() pairs, so dark is not a second block: :root
    declares `light dark` and follows the OS, [data-theme] pins it.
@@ -9,18 +10,14 @@
 :root {
   color-scheme: light dark;
 
-  /* Brand: the mascot's olive, khaki belly and ink (assets/mascot.png). 500 is
-     the body, 600 its shade, 900 the ink. Theme-independent literals; the
-     aliases pick a step. */
-  --olive-200: #D3DDB4;
+  /* Brand olive, sampled from the mascot's body (assets/mascot.png). Theme-independent
+     literals; the aliases pick a step. 700 and 400 are the app's AccentColor. */
   --olive-300: #B5C77F;
   --olive-400: #A3B86A;
-  --olive-500: #83974F;
   --olive-600: #748543;
   --olive-700: #5C6B2E;
   --olive-800: #4B5A22;
   --olive-900: #28350D;
-  --khaki-400: #C9CA64;
 
   /* Apple system semantics */
   --sys-green:  light-dark(#34C759, #30D158);
@@ -29,35 +26,23 @@
   --sys-blue:   light-dark(#007AFF, #0A84FF);
 
   /* Labels, fills, separators */
-  --paper:            light-dark(#FFFFFF, #000000);
   --label-1:          light-dark(rgba(0,0,0,1),         rgba(255,255,255,1));
-  --label-2:          light-dark(rgba(60,60,67,0.60),   rgba(235,235,245,0.60));
-  /* --label-2 is Apple's secondaryLabel: 3.44:1 on white, so large text and non-text only.
-     --label-2-text is the secondary label for any text. principles.md, Contrast. */
+  /* Apple's secondaryLabel is 3.44:1 on white, too weak for text, so the web
+     secondary text is this darker step. principles.md, Contrast. */
   --label-2-text:     light-dark(rgba(60,60,67,0.78),   rgba(235,235,245,0.60));
-  --label-3:          light-dark(rgba(60,60,67,0.30),   rgba(235,235,245,0.30));
-  --label-4:          light-dark(rgba(60,60,67,0.18),   rgba(235,235,245,0.16));
   --separator:        light-dark(rgba(60,60,67,0.29),   rgba(84,84,88,0.65));
-  --separator-opaque: light-dark(#C6C6C8, #38383A);
   --fill-1:           light-dark(rgba(120,120,128,0.20), rgba(120,120,128,0.36));
   --fill-2:           light-dark(rgba(120,120,128,0.16), rgba(120,120,128,0.32));
   --fill-3:           light-dark(rgba(118,118,128,0.12), rgba(118,118,128,0.24));
-  --fill-4:           light-dark(rgba(116,116,128,0.08), rgba(118,118,128,0.18));
 
   /* Backgrounds */
   --bg-base:             light-dark(#FFFFFF, #000000);
-  --bg-secondary:        light-dark(#F2F2F7, #1C1C1E);
-  --bg-tertiary:         light-dark(#FFFFFF, #2C2C2E);
-  --bg-grouped:          light-dark(#F2F2F7, #000000);
   --bg-grouped-elevated: light-dark(#FFFFFF, #1C1C1E);
 
-  /* Liquid Glass fills */
-  --glass-thin:        light-dark(rgba(255,255,255,0.55), rgba(30,30,32,0.55));
+  /* Glass fills */
   --glass-regular:     light-dark(rgba(255,255,255,0.72), rgba(28,28,30,0.68));
-  --glass-thick:       light-dark(rgba(255,255,255,0.86), rgba(28,28,30,0.86));
   --glass-tint-accent: light-dark(rgba(116,133,67,0.12), rgba(163,184,106,0.16));
   --glass-border:      light-dark(rgba(255,255,255,0.60), rgba(255,255,255,0.14));
-  --glass-highlight:   light-dark(rgba(255,255,255,0.75), rgba(255,255,255,0.10));
 
   /* Semantic aliases: consume these */
   --color-accent:         light-dark(var(--olive-600), var(--olive-400));
@@ -67,7 +52,6 @@
   --color-accent-pressed: light-dark(var(--olive-800), var(--olive-300));
   --color-accent-tint:    var(--glass-tint-accent);
   --color-on-accent:      light-dark(#FFFFFF, var(--olive-900));
-  --color-on-status:      #FFFFFF;
   /* Accent as text is not accent as a fill. Anything with a letter in it takes
      one of these two; -on-tint is the stronger step. principles.md, Contrast. */
   --color-accent-text:         light-dark(var(--olive-700), var(--olive-400));
@@ -75,8 +59,6 @@
 
   --color-text-primary:    var(--label-1);
   --color-text-secondary:  var(--label-2-text);
-  --color-text-tertiary:   var(--label-3);
-  --color-text-quaternary: var(--label-4);
   --color-text-link:       var(--color-accent-text);
 
   --color-status-success: var(--sys-green);
@@ -88,22 +70,15 @@
   --color-status-error-tint:   light-dark(rgba(255,59,48,0.14),  rgba(255,69,58,0.18));
   --color-status-info-tint:    light-dark(rgba(0,122,255,0.14),  rgba(10,132,255,0.18));
 
-  --color-surface-base:        var(--bg-base);
-  --color-surface-grouped:     var(--bg-grouped);
-  --color-surface-card:        var(--bg-grouped-elevated);
-  --color-surface-glass:       var(--glass-regular);
-  --color-surface-glass-thin:  var(--glass-thin);
-  --color-surface-glass-thick: var(--glass-thick);
+  --color-surface-base:  var(--bg-base);
+  --color-surface-card:  var(--bg-grouped-elevated);
+  --color-surface-glass: var(--glass-regular);
 
   --color-separator:      var(--separator);
-  /* A text field's idle border. A UI boundary owes 3:1, which --color-separator (1.2:1) does not
-     clear; it is the system secondary label, and Increase Contrast moves it to the primary label. */
-  --color-border-control: var(--label-2);
   --color-fill:           var(--fill-1);
   --color-fill-secondary: var(--fill-2);
   --color-fill-tertiary:  var(--fill-3);
   --color-glass-border:   var(--glass-border);
-  --color-scrim:          light-dark(rgba(0,0,0,0.25), rgba(0,0,0,0.5));
 
   /* Typography */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
@@ -111,28 +86,18 @@
   --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Monaco,
                "Cascadia Mono", "Roboto Mono", monospace;
 
-  --weight-regular:  400;
   --weight-medium:   500;
   --weight-semibold: 600;
   --weight-bold:     700;
 
-  --type-large-title-size: 34px;  --type-large-title-lh: 41px;  --type-large-title-weight: 700;
-  --type-title1-size: 28px;       --type-title1-lh: 34px;       --type-title1-weight: 700;
-  --type-title2-size: 22px;       --type-title2-lh: 28px;       --type-title2-weight: 700;
-  --type-title3-size: 20px;       --type-title3-lh: 25px;       --type-title3-weight: 600;
   --type-headline-size: 17px;     --type-headline-lh: 22px;     --type-headline-weight: 600;
   --type-body-size: 17px;         --type-body-lh: 22px;         --type-body-weight: 400;
   --type-callout-size: 16px;      --type-callout-lh: 21px;      --type-callout-weight: 400;
-  --type-subhead-size: 15px;      --type-subhead-lh: 20px;      --type-subhead-weight: 400;
   --type-footnote-size: 13px;     --type-footnote-lh: 18px;     --type-footnote-weight: 400;
-  --type-caption1-size: 12px;     --type-caption1-lh: 16px;     --type-caption1-weight: 400;
-  --type-caption2-size: 11px;     --type-caption2-lh: 13px;     --type-caption2-weight: 400;
-
-  --type-code-hero-size: 30px;    --type-code-hero-lh: 38px;
   --type-code-body-size: 15px;    --type-code-body-lh: 22px;
 
-  /* Web display scale (landing + docs), never used by the app. Unitless
-     line-heights. design/principles.md, Type. */
+  /* Display scale for hero and section headings. Unitless line-heights.
+     design/principles.md, Type. */
   --type-web-hero-size:      clamp(40px, 6.2vw, 68px);
   --type-web-hero-lh:        1.06;
   --type-web-hero-weight:    700;
@@ -146,12 +111,9 @@
   --type-web-lead-lh:        1.5;
   --type-web-lead-weight:    400;
 
-  --tracking-large-title: 0.37px;
-  --tracking-title2:      0.35px;
   --tracking-headline:   -0.43px;
   --tracking-body:       -0.41px;
   --tracking-code:        0.5px;
-  --tracking-eyebrow:     0.6px;
   --tracking-web-hero:   -1.5px;
   --tracking-web-section: -0.6px;
   --tracking-web-lead:   -0.2px;
@@ -164,9 +126,6 @@
   --space-5: 16px;
   --space-6: 20px;
   --space-7: 24px;
-  --space-8: 32px;
-  --space-9: 40px;
-  --space-10: 48px;
   --space-11: 64px;
 
   /* Concentric radii */
@@ -175,13 +134,9 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
-  --radius-2xl: 36px;
   --radius-capsule: 999px;
 
-  /* Layout: app */
-  --content-max-width: 480px;
-
-  /* Layout: web only (landing + docs). Both clamp() ends sit on the 4pt grid. */
+  /* Layout. Both clamp() ends sit on the 4pt grid. */
   --content-max-width-wide-web:  1280px;
   --content-max-width-web:   1080px;
   --content-max-width-prose-web:  680px;
@@ -199,8 +154,7 @@
   --icon-size-lg: 28px;
 
   /* Lucide stroke weights. Unitless on purpose: a unit here breaks every
-     glyph, since stroke-width scales with the viewBox. design/implementation.md, Icons. */
-  --icon-stroke-light:    1.5;
+     glyph, since stroke-width scales with the viewBox. design/principles.md, Type. */
   --icon-stroke:          1.8;
   --icon-stroke-medium:   2;
   --icon-stroke-heavy:    2.2;
@@ -211,14 +165,8 @@
   --z-skip-link-web: 3;
 
   --border-hairline: 1px;
-  --border-hairline-half: 0.5px;
 
-  /* A row or field dims as one composite; controls use the platform's own
-     disabled look. design/components.md, States. */
-  --opacity-disabled-container: 0.5;
-
-  /* Component metrics, web only: styles.css cannot hold a raw px the way a
-     SwiftUI component can. each value is the component's own constant in the app. */
+  /* Component metrics: styles.css cannot hold a raw px next to the tokens. */
   --btn-pad-x-lg-web: 22px;
   --btn-pad-x-md-web: var(--space-5);
   --btn-pad-x-sm-web: var(--space-4);
@@ -241,13 +189,11 @@
   --mascot-size-web:  64px;
   --phone-shot-max-width-web: 260px;
   --nav-height-web: 56px;
-  /* auto-fit column floor: 4-up at 1080, 2-up at 768. design/principles.md, Spacing and layout. */
+  /* auto-fit column floor: 4-up at 1080, 2-up at 768. */
   --grid-min-card-web:  232px;
 
   /* Glass blur */
-  --blur-thin: 12px;
   --blur-regular: 24px;
-  --blur-thick: 40px;
   --glass-saturate: 180%;
 
   /* Elevation. Geometry is theme-independent so only the colors flip. */
@@ -257,9 +203,6 @@
                0 1px 3px  light-dark(rgba(0,0,0,0.05), rgba(0,0,0,0.40));
   --shadow-lg: 0 12px 40px light-dark(rgba(0,0,0,0.14), rgba(0,0,0,0.60)),
                0 4px 12px  light-dark(rgba(0,0,0,0.08), rgba(0,0,0,0.50));
-  /* The inset highlight is the top edge-light that sells the material. Keep it. */
-  --shadow-glass: 0 8px 32px light-dark(rgba(0,0,0,0.12), rgba(0,0,0,0.55)),
-                  inset 0 1px 0 var(--glass-highlight);
   /* Two solid bands, never a tint: whatever the ring lands on, one band has a
      3:1 edge against it. Do not collapse it. principles.md, Contrast. */
   --shadow-focus-ring: 0 0 0 2px var(--color-surface-base),
@@ -270,7 +213,6 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 120ms;
   --dur-base: 220ms;
-  --dur-slow: 360ms;
   --press-scale-web: 0.97;
 }
 
@@ -327,23 +269,15 @@ a { color: var(--color-text-link); text-decoration: none; }
 .t-web-lead    { font-family: var(--font-sans); font-size: var(--type-web-lead-size);    line-height: var(--type-web-lead-lh);    font-weight: var(--type-web-lead-weight);    letter-spacing: var(--tracking-web-lead); }
 
 @media (prefers-reduced-motion: reduce) {
-  :root { --press-scale-web: 1; --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
+  :root { --press-scale-web: 1; --dur-fast: 0ms; --dur-base: 0ms; }
 }
 
-@media (prefers-contrast: more) {
-  :root { --color-border-control: var(--label-1); }
-}
-
-/* Glass is decoration; legibility never depends on it. principles.md, Materials and Liquid Glass. */
+/* Glass is decoration; legibility never depends on it. principles.md, Materials. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
-    --blur-thin: 0px;
     --blur-regular: 0px;
-    --blur-thick: 0px;
     --glass-saturate: 100%;
-    --color-surface-glass:       var(--color-surface-card);
-    --color-surface-glass-thin:  var(--color-surface-card);
-    --color-surface-glass-thick: var(--color-surface-card);
-    --color-glass-border:        var(--color-separator);
+    --color-surface-glass: var(--color-surface-card);
+    --color-glass-border:  var(--color-separator);
   }
 }

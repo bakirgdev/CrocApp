@@ -1,6 +1,6 @@
 # Brand
 
-Anyone making something that carries the CrocApp name (a screen, a page, a release image, a store listing, a post) starts here. Tone and copy are `voice.md`; values are `tokens.css`.
+Anyone making something that carries the CrocApp name (a screen, a page, a release image, a store listing, a post) starts here. Tone and copy are `voice.md`; the web's values are `tokens.css`.
 
 ## Positioning
 
@@ -21,7 +21,7 @@ Approved boilerplate, used verbatim:
 
 - Source: `assets/CrocAppIcon.icon` (Icon Composer). The mascot's body, belly and outline layers sit on a pale khaki gradient in light and a deep olive gradient in dark, with a tinted variant. `app/CrocApp/AppIcon.icon` is the copy Xcode builds; keep the two identical (`assets/AGENTS.md`).
 - Show the icon as the platform renders it, in its system mask. Do not redraw, recolor, rotate, crop or outline it, put type or a badge on it, or set it on a busy photo. Leave clear space of at least a quarter of its width, and do not go below 16px (the favicon).
-- **Wordmark**: the word "CrocApp" in the system font (`--font-sans`, `--weight-bold`) in `--color-text-primary`, beside the icon or the mascot, never inside it.
+- **Wordmark**: the word "CrocApp" in the system font, bold, in the primary text color.
 
 ## Mascot
 
@@ -32,7 +32,7 @@ The croc character in `assets/mascot.png` (1024px source, never edited, never se
 
 ## Palette
 
-Taken from the mascot: **olive** is the brand color (500 `#83974F` is the mascot's body, 900 `#28350D` its ink), **khaki** (`--khaki-400`, the belly) is the second color, and dark olive is the ink. The accent aliases pick olive steps per theme (`principles.md`, "Color"). Khaki belongs to the icon, the mascot and illustration. The app and web UI stay olive plus Apple's neutrals and status colors.
+**Olive** is the brand color, and the accent is sampled from the mascot's body. In the app it is the accent tint only (`AccentColor`: olive-700 `#5C6B2E` in light, olive-400 `#A3B86A` in dark, `principles.md`, "Color") and appears in artwork. The web picks olive steps per theme through `tokens.css`. Khaki belongs to the icon, the mascot and illustration. UI stays olive plus Apple's neutrals and status colors.
 
 Type is the system font, SF Mono for code. Glyphs are SF Symbols in the app and Lucide on the web, with no illustration style beyond the mascot.
 

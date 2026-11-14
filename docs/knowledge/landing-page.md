@@ -57,7 +57,7 @@ Lighthouse is `npx lighthouse` (13.6.0 when last run, the chrome-devtools MCP to
 
 ## Rules
 
-- Visual and copy rules are `design/principles.md`, `design/implementation.md`, "Web", and `design/voice.md`. Colors come from the tokens, with no raw color in the page or its stylesheet (`scripts/verify-design.sh` checks).
+- Visual and copy rules are `design/principles.md`, "Web", and `design/voice.md`. Colors come from the tokens, with no raw color in the page or its stylesheet (`scripts/verify-design.sh` checks).
 - Run `scripts/verify-design.sh` after touching `styles.css` or the page, and `scripts/verify-docs.sh` after touching a path this file names.
 
 ## Hand-maintained

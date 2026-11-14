@@ -10,7 +10,7 @@ What reviewers (people, the managed Code Review service) weigh in this repo. The
 | Settings, secrets, persistence | it loses user data or exposes a secret | a write deletes the old value before the new one is saved, a secret leaves the Keychain or device, a failed save is hidden |
 | CI and release (`.github/`, `scripts/`) | it breaks the gate or ships wrong | a step cannot run, `ci pass` can go green without its checks, a release is signed, tagged or versioned wrongly |
 | Docs | it lies | a claim does not match the code, or a "verified" claim names no version |
-| UI and design | it breaks `design/` | a raw color replaces a token, a theme or contrast rule fails, copy ignores `design/voice.md` |
+| UI and design | it breaks `design/` | a custom control or color replaces a system one, a raw color replaces a web token, a theme or contrast rule fails, copy ignores `design/voice.md` |
 
 Style and wording are Nit at most, and at most 5 are reported.
 
@@ -18,7 +18,7 @@ Style and wording are Nit at most, and at most 5 are reported.
 
 - Lockfiles and resolved pins: `crocmobile/go.sum`, `web/docs/pnpm-lock.yaml`, `Package.resolved`.
 - `project.pbxproj` diffs that only register files, and `*.xcstrings` catalogs unless an English source string changed.
-- Anything CI already enforces: link and path validity (`scripts/verify-docs.sh`), token parity, contrast and the raw-color lint (`scripts/verify-design.sh`), swift-format, golangci, `ci pass`.
+- Anything CI already enforces: link and path validity (`scripts/verify-docs.sh`), the web raw-color and theme-color lint (`scripts/verify-design.sh`), swift-format, golangci, `ci pass`.
 
 ## Evidence
 

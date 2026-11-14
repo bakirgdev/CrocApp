@@ -24,7 +24,7 @@ A green build is not evidence a transfer works. A change to `crocmobile/session.
 
 ## Design
 
-Anything a user sees (app views, the landing page, the docs site, release artwork, store copy, UI strings) follows `design/`: principles first, system controls and system semantic colors before anything custom. Start at `design/AGENTS.md`. Run `scripts/verify-design.sh` after touching any of it; CI runs it.
+Anything a user sees (app views, the landing page, the docs site, release artwork, store copy, UI strings) follows `design/`: principles first, system controls and system semantic colors before anything custom. Start at `design/AGENTS.md`. Run `scripts/verify-design.sh` after touching web code or `design/tokens.css` (it checks the web only); CI runs it.
 
 New app text must be localizable (String Catalogs, English only today). How each kind of string is written, what is never localized, and how to sync the catalogs: `docs/knowledge/tooling.md`, "Localization".
 
