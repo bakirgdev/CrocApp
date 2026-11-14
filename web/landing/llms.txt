@@ -8,7 +8,7 @@ Facts:
 
 - License: MIT. croc is also MIT.
 - Price: free. No paid tier, no subscription, no ads, no analytics, no tracking.
-- Release status: version 1.2.1, released 12 November 2026, is available as a notarized disk image for Mac on GitHub Releases. Both App Stores, for iPhone and iPad and for Mac, have earlier versions until 1.2.1 passes App Review. App Store: https://apps.apple.com/app/crocapp/id6805675003
+- Release status: version 1.2.1, released 12 November 2026, is available on the App Store for iPhone, iPad and Mac, and as a notarized disk image for Mac on GitHub Releases. App Store: https://apps.apple.com/app/crocapp/id6805675003
 - Platforms: iOS 26 or later, iPadOS 26 or later, macOS 26 or later. The Mac build is for Apple silicon only. Apple platforms only: there is no Windows, Linux or Android client.
 - Updates: only the disk image build contains an updater (Sparkle). App Store builds update through the App Store.
 - The other device needs croc 11 or newer, whether it runs CrocApp or the croc command line. croc 10 cannot complete a transfer with CrocApp.

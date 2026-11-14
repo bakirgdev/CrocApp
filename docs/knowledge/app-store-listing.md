@@ -324,7 +324,7 @@ This is research, not legal advice. `../known-issues.md`, "Release", tracks the 
 
 Before every submission:
 
-- The Accessibility Inspector and VoiceOver audit is still open (`../known-issues.md`, "Release"). Until it passes, keep VoiceOver and "largest text sizes" claims out of the description and What's New.
+- From 1.2.1, App Accessibility claims VoiceOver and Voice Control on iPhone, iPad and Mac, on the owner's runs with the App Store builds. The rest of the accessibility audit is still open (`../known-issues.md`, "Release"). Until it passes, keep VoiceOver and "largest text sizes" claims out of the description and What's New.
 - Read getcroc.com's current labels (Send, Receive, Choose files, "Croc code or stored link", Copy code) and compare them with the review notes. The page belongs to the croc project and can change.
 - Check the contact name, phone and email in App Review Information. They are not in the repo, and the developer-account address is not necessarily the public support contact.
 - Confirm `https://crocapp.dev/support/` and `https://crocapp.dev/privacy/` return HTTP 200.
