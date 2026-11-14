@@ -217,8 +217,8 @@ JSON field lists, the per-file `fileSent` detail, and transfers under 100 ms tha
 
 `CrocAppApp.init()` (`app/CrocApp/CrocAppApp.swift`) creates, in this order:
 
-1. `AppSettings(storage:secrets:)`, on `UserDefaults` and the Keychain, or on in-memory stores when `AutoVerify.isHarnessRun` is true. `TransferController` takes it as a constructor argument.
-2. `HistoryStore(container:)`. The `ModelContainer` is in memory when `AutoVerify.isHarnessRun` is true (see `AutoVerify harness` in `docs/GLOSSARY.md`), on disk otherwise.
+1. `AppSettings(storage:secrets:)`, on `UserDefaults` and the Keychain, or on in-memory stores unless `LaunchMode.current` is `.app` (a harness or hosted-test run). `TransferController` takes it as a constructor argument.
+2. `HistoryStore(container:)`. The `ModelContainer` is in memory unless `LaunchMode.current` is `.app` (see `AutoVerify harness` in `docs/GLOSSARY.md`), on disk otherwise.
 3. `StoredTransferVault`, backed by the Keychain (or an in-memory store under the harness).
 4. `TransferController(settings:vault:)`, then `controller.history = history`.
 5. `OutputFolderStore()` and `LocalNetworkChecker()`.

@@ -57,10 +57,6 @@ final class TransferController {
     /// names, so a run through a local relay photographs like a default one.
     var harnessShownRelay: AppSettings.RelayKind?
 
-    /// Harness-only (AutoVerify --disable-local): kills the LAN race so the
-    /// custom relay path is provably exercised. Not a user setting.
-    var harnessDisableLocal = false
-
     /// Harness-only (AutoVerify --shown-link-origin): scheme and host the
     /// stored link shows and encodes, so a local store server photographs
     /// like a real one. The upload itself still goes to the configured server.
@@ -175,7 +171,7 @@ final class TransferController {
         startedAt = .now
         direction = request.direction
         isStoredTransfer = request.isStored
-        let call = EngineStart(request, settings: settings, disableLocal: disablesLocal)
+        let call = EngineStart(request, settings: settings)
         let relay: AppSettings.RelayKind =
             if case .receive = request { settings.receiveRelayKind } else { settings.relayKind }
         activeRelay = shownRelay ?? relay
@@ -303,21 +299,12 @@ final class TransferController {
 
     // MARK: - Engine plumbing
 
-    /// The relay the trust UI names and whether the LAN route is off. Only a
-    /// harness run overrides either.
+    /// The relay the trust UI names. Only a harness run overrides it.
     private var shownRelay: AppSettings.RelayKind? {
         #if DEBUG
         harnessShownRelay
         #else
         nil
-        #endif
-    }
-
-    private var disablesLocal: Bool {
-        #if DEBUG
-        harnessDisableLocal
-        #else
-        false
         #endif
     }
 

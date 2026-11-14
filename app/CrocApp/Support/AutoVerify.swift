@@ -65,7 +65,7 @@ import ServiceManagement
 /// the harness drives the controller directly, so without them the UI sits on
 /// HomeView while the transfer runs behind it, and no screen holds still to
 /// photograph.
-// The type itself must exist in Release too (CrocAppApp.swift and ContentView.swift
+// The type itself must exist in Release too (LaunchMode.swift and ContentView.swift
 // call it unconditionally), but the harness it drives -- real transfers, settings
 // overrides, writes into Documents -- must not ship. Only the bodies are #if DEBUG;
 // in Release isHarnessRun is a hardcoded false and runIfRequested is a no-op.
@@ -123,7 +123,7 @@ enum AutoVerify {
             controller.settings.relayAddress = args[i + 1]
         }
         // Kill the LAN race so success provably went through the relay.
-        if args.contains("--disable-local") { controller.harnessDisableLocal = true }
+        if args.contains("--disable-local") { controller.settings.disableLocal = true }
         if let i = args.firstIndex(of: "--relay-password"), i + 1 < args.count {
             controller.settings.relayPassword = args[i + 1]
         }
@@ -251,7 +251,7 @@ enum AutoVerify {
                 controller.settings.autoAccept = true
                 let intent = ReceiveIntent()
                 intent.controller = controller
-                intent.outputFolder = OutputFolderStore()
+                intent.outputFolder = LaunchMode.current.makeOutputFolder()
                 intent.codeOrLink = argument
                 let files = try await intent.perform().value ?? []
                 let names = files.compactMap { $0.fileURL?.lastPathComponent }.joined(
@@ -275,7 +275,8 @@ enum AutoVerify {
         func fail(_ message: String) {
             try? "error \(message)".write(to: resultURL, atomically: true, encoding: .utf8)
         }
-        let quickSend = MenuBarQuickSend(controller: controller, outputFolder: OutputFolderStore())
+        let quickSend = MenuBarQuickSend(
+            controller: controller, outputFolder: LaunchMode.current.makeOutputFolder())
         if let i = args.firstIndex(of: "--auto-menubar-send"), i + 1 < args.count {
             guard quickSend.send(urls: [URL(fileURLWithPath: args[i + 1])]) else {
                 fail("menu-bar send did not start")

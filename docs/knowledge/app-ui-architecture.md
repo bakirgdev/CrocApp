@@ -107,13 +107,13 @@ Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answ
 
 ### Options, security scope, progress
 
-- `EngineStart(_:settings:disableLocal:)` builds the engine call and its `EngineOptions` or `StoredSendOptions` from the request and `AppSettings`. Receive also passes `whenFileExists` (`AppSettings.whenFileExists`, key `settings.whenFileExists`, default Keep Both; an unknown stored value reads as Keep Both).
+- `EngineStart(_:settings:)` builds the engine call and its `EngineOptions` or `StoredSendOptions` from the request and `AppSettings`. Receive also passes `whenFileExists` (`AppSettings.whenFileExists`, key `settings.whenFileExists`, default Keep Both; an unknown stored value reads as Keep Both).
 - Receive passes `autoAccept && !bothSidesConfirm`, so confirmation wins. Engine auto-accept closes the prompt pipe, which croc reads as a decline.
 - `start(_:)` opens security scope on send URLs and on the user-picked output folder (`SecurityScopes`), and releases it at stream end or on reset. `startAccessingSecurityScopedResource() == false` is fine for non-scoped drops. Keep the call anyway.
 - Speed (`TransferSpeed`) is an exponential moving average (0.25 new, 0.75 old) over `bytesFinished + fileSent` deltas, sampled at most every 0.2 s. Overall progress is `(bytesFinished + fileSent) / totalSize`. `fileSent` is per current file.
 - While croc moves a batch of small files (`TransferProgress.isBundling`, engine step `bundling`) no byte count is current (`crocmobile-bridge.md`, "Small-file bundles"). `TransferStatusView.bundleView` and the menu-bar window show "A batch of small files" with an indeterminate bar on macOS and a spinner on iOS (whose indeterminate linear `ProgressView` is a still, empty track), `SidebarRowState.percent` is nil (so the sidebar, menu bar label and Dock badge show no percent), and the iOS background task gets a negative completed count, which makes its progress indeterminate.
 - `activeRelay` is captured at start, for the trust badge.
-- `harnessDisableLocal`, `harnessShownRelay` and `harnessShownLinkOrigin` are harness-only, not user settings, and exist only in Debug builds.
+- `harnessShownRelay` and `harnessShownLinkOrigin` are harness-only, not user settings, and exist only in Debug builds.
 
 ### History capture
 
@@ -133,7 +133,7 @@ Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answ
 
 Each setting has its own key, starting with `settings.`, and a `didSet` writes just that key. There is no `Codable` blob: a synthesized `Codable` struct resets every field to its default when a build adds one. A key that is absent, or holds another type, reads as the setting's default, and the keys are part of the contract with saved preferences, so never rename one. `AppSettingsPersistenceTests` pins them.
 
-A harness run is decided in `CrocAppApp.init` (`AutoVerify.isHarnessRun`), which builds `AppSettings` on `MemorySettingsStorage` and `MemorySecretStore`. Its overrides start from the defaults and reach neither `UserDefaults` nor the Keychain, so a manual run's settings cannot bleed into a harness run, and a harness run cannot blank a real stored password. Every test suite does the same: a `UserDefaults(suiteName:)` writes a `CrocAppTests.*.plist` into the sandbox container's `Library/Preferences` that `removePersistentDomain` does not delete.
+`LaunchMode.current` (`Support/LaunchMode.swift`) decides once whether a launch is the app, a harness run (`AutoVerify.isHarnessRun`) or a hosted unit-test run (`XCTestConfigurationFilePath` is set). Only `.app` is live: `CrocAppApp.init` builds the other two on `MemorySettingsStorage`, `MemorySecretStore`, an in-memory history and an in-memory receive-folder bookmark (`OutputFolderStore`), and starts neither the notifier, the snapshot writer, the relay autostart nor the Spotlight index. `ContentView` reads the mode from the `launchMode` environment value. For a harness run, the app builds `AppSettings` on `MemorySettingsStorage` and `MemorySecretStore`. Its overrides start from the defaults and reach neither `UserDefaults` nor the Keychain, so a manual run's settings cannot bleed into a harness run, and a harness run cannot blank a real stored password. Every test suite does the same: a `UserDefaults(suiteName:)` writes a `CrocAppTests.*.plist` into the sandbox container's `Library/Preferences` that `removePersistentDomain` does not delete.
 
 The relay passwords (`relayPassword`, `relayHostPassword`) and the two proxies are the settings that are not in `storage`. They live in `secrets` (the Keychain). Their `didSet` calls `secretEdited(_:)`: the new value applies at once, and the write waits until 500 ms pass with no further edit (`secretWriteDelay`), so typing is one Keychain write, not one per keystroke. `flushSecrets()` writes what is pending now. It runs from `resetAdvancedToDefaults()`, when the main window's scene phase leaves active (`ContentView`) and on `willTerminateNotification` (`CrocAppApp`, macOS). A test that checks the store calls it after editing. `persistRelayPassword()` and `persistRelayHostPassword()` delete the item instead of storing a blank.
 
@@ -224,7 +224,7 @@ History never holds the token or the link. A stored record's `codeHint` is the s
 
 croc's own options are edited in `Views/AdvancedSettingsView.swift`. iOS pushes it from `SettingsScreen` (`Route.advancedSettings`, `--screen advanced`). macOS Settings is a `TabView` with **General**, **Relay** and **Advanced** tabs, because the Advanced controls and their footnotes would double a form that already scrolls.
 
-- `AppSettings` has one property per control under `settings.advanced.<name>`: `throttleUpload`, `multicastAddress`, `peerIP`, `disableLocal` (**Skip Local Network**), `noMultiplexing` (**Single Connection**), `internalDNS` (**Built-in DNS Resolver**) and `excludePaths` (**Exact Paths**). Defaults come from `EngineOptions()`, so they are croc's. The curve, hash and ports are not settings, and `features.md`, "Skipped", says why. `EngineStart` ORs the harness's `disableLocal` with the user's.
+- `AppSettings` has one property per control under `settings.advanced.<name>`: `throttleUpload`, `multicastAddress`, `peerIP`, `disableLocal` (**Skip Local Network**), `noMultiplexing` (**Single Connection**), `internalDNS` (**Built-in DNS Resolver**) and `excludePaths` (**Exact Paths**). Defaults come from `EngineOptions()`, so they are croc's. The curve, hash and ports are not settings, and `features.md`, "Skipped", says why. The harness's `--disable-local` sets `disableLocal` on its in-memory settings.
 - `resetAdvancedToDefaults()` backs the **Reset to Defaults** button and persists.
 - **The two proxies are Keychain-only.** The `SecretStore` accounts are `advanced.socks5Proxy` and `advanced.httpProxy`. They are deleted when blank, like `relayPassword`.
 - Proxies can carry credentials. `ProxySettings`, `EngineOptions` and `StoredSendOptions` describe themselves without the value. The Go engine never quotes a proxy in an error, and nothing logs them. `AppSettingsAdvancedTests` asserts that `UserDefaults` holds no proxy key or value.
@@ -416,7 +416,7 @@ The shared views route onto `design/`. A screen picks one of these instead of st
 
 Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookmarks`), and the store keeps at most 300 records (`maxRecords`). `HistoryStore.add()` deletes the oldest records beyond that.
 
-`HistoryStore` is `@MainActor @Observable` and wraps `container.mainContext`. It exposes `add`, `delete`, `clear`, `recordCount`, `record(storedID:)` and `markRevoked`. `delete` and `markRevoked` return early for a record whose `modelContext` is nil, because a record that a prune or a delete removed must not be written to or deleted again (a revoke that finishes after its record is gone is the case). The container is in memory when `AutoVerify.isHarnessRun`. It is injected twice: as `.environment(history)` and as `.modelContainer(history.container)`.
+`HistoryStore` is `@MainActor @Observable` and wraps `container.mainContext`. It exposes `add`, `delete`, `clear`, `recordCount`, `record(storedID:)` and `markRevoked`. `delete` and `markRevoked` return early for a record whose `modelContext` is nil, because a record that a prune or a delete removed must not be written to or deleted again (a revoke that finishes after its record is gone is the case). The container is in memory unless `LaunchMode.current` is `.app`. It is injected twice: as `.environment(history)` and as `.modelContainer(history.container)`.
 
 `Views/HistoryView.swift` (`Route.history`, clock toolbar icon on both platforms):
 - `@Query` sorted newest first.
@@ -520,7 +520,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 
 ## Onboarding and store compliance
 
-- `OnboardingView` is a sheet from `ContentView.task`. It is shown when `!onboardingSeen && !AutoVerify.isHarnessRun`, or when a harness run asks for it with `--screen onboarding` (`AutoVerify.forcesOnboarding`). `onboarding.seen` is written in `onDismiss`.
+- `OnboardingView` is a sheet from `ContentView.task`. It is shown when `!onboardingSeen` in a live launch (`launchMode.isLive`), or when a harness run asks for it with `--screen onboarding` (`AutoVerify.forcesOnboarding`). `onboarding.seen` is written in `onDismiss`.
 - `OnboardingView` is a `ScrollView` (`.scrollBounceBehavior(.basedOnSize)`, `.defaultScrollAnchor(.center, for: .alignment)`), so content that fits stays centered and large text scrolls instead of clipping. At accessibility sizes each bullet's glyph (`--icon-size-lg` through `@ScaledMetric`) sits above its text; `HowItWorksView` does the same through `ParagraphLabelStyle`. Beside the text the glyph frame is `minWidth` 1.25 times the glyph, so every bullet's text starts at one x.
 - The staged-files sheet yields to onboarding (`&& !showOnboarding`) and is offered again when onboarding dismisses.
 - Onboarding also primes the two system permission prompts its copy names. On iOS, `onDismiss` awaits `CameraPermission.requestIfNeeded()` and then calls `localNetwork.checkIfNeeded()`. They run in sequence so the user never sees two system prompts stacked. Neither is requested during an `AutoVerify` harness run.
@@ -552,13 +552,13 @@ Launch arguments drive the real controller, not the engine directly, so the veri
 - `--auto-send PATH --code CODE` needs both flags. Without `--code`, nothing happens.
 - On macOS the `--auto-send` source must be container-resident (sandbox).
 - The `.confirmSend` auto-answer happens in every harness mode, with or without `--ask`.
-- `--relay ADDR` sets only the relay, so the LAN route stays on. `--disable-local` sets `harnessDisableLocal`, to kill the LAN race: the custom-relay scenario of `verify-app-mac.sh` and `capture-screenshots.sh` pass it. It has no value, so on macOS it goes last (`crocmobile-bridge.md`, "`scripts/verify-app-mac.sh`").
+- `--relay ADDR` sets only the relay, so the LAN route stays on. `--disable-local` sets `settings.disableLocal` (in memory, so Advanced shows it on), to kill the LAN race: the custom-relay scenario of `verify-app-mac.sh` and `capture-screenshots.sh` pass it. It has no value, so on macOS it goes last (`crocmobile-bridge.md`, "`scripts/verify-app-mac.sh`").
 - `--when-exists` is the policy `AutoVerify` answers the incoming sheet with. The setting itself stays Keep Both, so the late answer must reach croc.
 - The screenshot flags (`--screen`, `--stage`, `--seed-history`, `--hold`) are documented in `screenshots.md`.
 
-`AutoVerify`'s bodies are `#if DEBUG`. In Release, `isHarnessRun` is a hardcoded `false` and `runIfRequested` is a no-op, so the harness cannot run in a store build. The type still exists in Release because `CrocAppApp.swift` and `ContentView.swift` call it unconditionally. The verify scripts build Debug.
+`AutoVerify`'s bodies are `#if DEBUG`. In Release, `isHarnessRun` is a hardcoded `false` and `runIfRequested` is a no-op, so the harness cannot run in a store build. The type still exists in Release because `LaunchMode.swift` and `ContentView.swift` call it unconditionally. The verify scripts build Debug.
 
-`isHarnessRun` is true for any `--auto-*` mode or `--screen`. Settings overrides apply in any harness run. `CrocAppApp.init` builds `AppSettings` on `MemorySettingsStorage` and `MemorySecretStore` for it ("Settings and trust"), so the overrides start from the defaults and real `UserDefaults` and the Keychain are never touched.
+`isHarnessRun` is true for any `--auto-*` mode or `--screen`. Settings overrides apply in any harness run. `LaunchMode.makeSettings()` builds `AppSettings` on `MemorySettingsStorage` and `MemorySecretStore` for it ("Settings and trust"), so the overrides start from the defaults and real `UserDefaults` and the Keychain are never touched.
 
 Result files, all written to the container's Documents folder (hardcoded, independent of `OutputFolderStore.defaultFolder`):
 

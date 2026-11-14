@@ -10,7 +10,7 @@ import Observation
 final class OutputFolderStore {
     private static let bookmarkKey = "outputFolderBookmark"
 
-    private let defaults: UserDefaults
+    private let defaults: any SettingsStorage
     private(set) var url: URL
     private(set) var isUserSelected: Bool
     /// True when a stored bookmark existed but failed to resolve (the folder
@@ -51,9 +51,9 @@ final class OutputFolderStore {
         #endif
     }
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: any SettingsStorage = UserDefaults.standard) {
         self.defaults = defaults
-        guard let data = defaults.data(forKey: Self.bookmarkKey) else {
+        guard let data = defaults.object(forKey: Self.bookmarkKey) as? Data else {
             url = Self.defaultFolder
             isUserSelected = false
             return
@@ -66,7 +66,7 @@ final class OutputFolderStore {
             // Dangling bookmark: clear the key so this fallback doesn't
             // silently repeat on every launch with stored state (isUserSelected)
             // disagreeing with what's actually on UserDefaults.
-            defaults.removeObject(forKey: Self.bookmarkKey)
+            defaults.set(nil, forKey: Self.bookmarkKey)
             url = Self.defaultFolder
             isUserSelected = false
             bookmarkWasReset = true
@@ -95,7 +95,7 @@ final class OutputFolderStore {
     }
 
     func resetToDefault() {
-        defaults.removeObject(forKey: Self.bookmarkKey)
+        defaults.set(nil, forKey: Self.bookmarkKey)
         url = Self.defaultFolder
         isUserSelected = false
         bookmarkWasReset = false
