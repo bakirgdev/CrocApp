@@ -74,11 +74,7 @@ enum AutoVerify {
     static var isHarnessRun: Bool {
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments
-        return args.contains("--auto-receive") || args.contains("--auto-send")
-            || args.contains("--auto-share-send") || args.contains("--auto-store-send")
-            || args.contains("--auto-store-receive") || args.contains("--screen")
-            || args.contains("--auto-menubar-send") || args.contains("--auto-menubar-clipboard")
-            || args.contains("--auto-login-item") || args.contains("--auto-intent")
+        return args.contains { $0.hasPrefix("--auto-") } || args.contains("--screen")
         #else
         return false
         #endif
@@ -493,7 +489,7 @@ enum AutoVerify {
             if let p = controller.progress, p.isBundling {
                 "transferring bundling"
             } else if let p = controller.progress, p.totalSize > 0 {
-                "transferring percent=\(Int(100 * (p.bytesFinished + p.fileSent) / p.totalSize))"
+                "transferring percent=\(Int(100 * p.bytesDone / p.totalSize))"
             } else {
                 "transferring percent=0"
             }

@@ -1,4 +1,4 @@
-import OSLog
+import CrocKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -48,8 +48,6 @@ struct SendView: View {
     #endif
     @State private var photoFailures = 0
     @FocusState private var textFocused: Bool
-
-    private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "send")
 
     // components.md → DropZone, "Staged list and text box": both keep the
     // DropZone's floor (so the Files tab does not change height as files
@@ -236,7 +234,7 @@ struct SendView: View {
                     Picker("Link Lasts", selection: $linkLifetime) {
                         ForEach(LinkLifetime.allCases, id: \.self) { Text($0.label) }
                     }
-                    Stepper(value: $linkDownloads, in: 1...100) {
+                    Stepper(value: $linkDownloads, in: 1...EngineLimits.storeMaxDownloads) {
                         Text("Downloads allowed: \(linkDownloads)")
                     }
                     if let problem = storedServerProblem {

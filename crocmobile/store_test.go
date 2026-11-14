@@ -380,6 +380,12 @@ func TestStoreSendLimitsFailBeforeUpload(t *testing.T) {
 	}
 }
 
+func TestStoreLimitsMirrorCrocDefaults(t *testing.T) {
+	if storeMaxBytes != store.DefaultMaxTransfer {
+		t.Errorf("storeMaxBytes = %d, croc's store.DefaultMaxTransfer = %d", storeMaxBytes, store.DefaultMaxTransfer)
+	}
+}
+
 func TestStoreSendOversizeFailsBeforeHashing(t *testing.T) {
 	src := t.TempDir()
 	big := filepath.Join(src, "big.bin")

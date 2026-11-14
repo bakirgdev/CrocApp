@@ -78,11 +78,7 @@ var settingChecks = map[string]func(value string) error{
 // credentials. Exported across gobind like StartSend, so it recovers a panic
 // into an error.
 func ValidateSetting(field, value string) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = startError(fmt.Errorf("croc panic: %v", r))
-		}
-	}()
+	defer recoverStart(&err)
 	check, ok := settingChecks[field]
 	if !ok {
 		return startError(fmt.Errorf("unknown setting %q", field))

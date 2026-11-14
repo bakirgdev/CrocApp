@@ -22,16 +22,6 @@ func DefaultRelayAddress() string { return models.DEFAULT_RELAY }
 // DefaultRelayAddress6 is croc's default IPv6 relay; see DefaultRelayAddress.
 func DefaultRelayAddress6() string { return models.DEFAULT_RELAY6 }
 
-// RelayForCode returns the public pool relay that code maps to, the one both
-// peers use when neither sets a custom relay. Empty only if the pool is empty.
-func RelayForCode(code string) string {
-	relay, err := poolRelay(code)
-	if err != nil {
-		return ""
-	}
-	return relay
-}
-
 // PublicRelays returns the public relay pool, one address per line, in the
 // order the code phrase indexes it.
 func PublicRelays() string { return strings.Join(publicrelay.Relays(), "\n") }
@@ -55,7 +45,7 @@ func resolveRelay(code string, o *Options) (relayRoute, error) {
 	if !usesPublicRelay(o) {
 		return relayRoute{v4: models.DEFAULT_RELAY, v6: models.DEFAULT_RELAY6}, nil
 	}
-	relay, err := poolRelay(code)
+	relay, err := relaycache.ForCode(code)
 	if err != nil {
 		return relayRoute{}, err
 	}
@@ -79,15 +69,6 @@ func customRelays(o *Options) (v4, v6 string) {
 		v6 = ""
 	}
 	return v4, v6
-}
-
-func poolRelay(code string) (string, error) {
-	relays := publicrelay.Relays()
-	index, err := codephrase.RelayIndex(code, len(relays))
-	if err != nil {
-		return "", err
-	}
-	return relays[index], nil
 }
 
 // generatePublicCode is the CLI's generated-code path for the public pool: the

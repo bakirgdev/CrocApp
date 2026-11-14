@@ -20,11 +20,12 @@ import (
 // Limits a stored upload checks before it hashes or uploads anything. They
 // mirror croc's store defaults (store.DefaultMaxTransfer, storecrypto.MaxFiles),
 // so a server configured with a lower cap still refuses at upload time with
-// codeStoreLimit.
+// codeStoreLimit. StoreMaxDownloads is exported for CrocKit, which reads it as
+// CrocmobileStoreMaxDownloads.
 const (
 	storeMaxBytes     int64 = 1 << 30
 	storeMaxFiles           = storecrypto.MaxFiles
-	storeMaxDownloads       = 100
+	StoreMaxDownloads       = 100
 	storeRevokeWait         = 30 * time.Second
 )
 
@@ -122,8 +123,8 @@ func StartStoreSend(pathsJoined string, o *StoreOptions, d Delegate) (t *Transfe
 	if downloads == 0 {
 		downloads = 1
 	}
-	if downloads < 1 || downloads > storeMaxDownloads {
-		return nil, startError(&codedError{codeStoreLimit, fmt.Errorf("downloads must be between 1 and %d", storeMaxDownloads)})
+	if downloads < 1 || downloads > StoreMaxDownloads {
+		return nil, startError(&codedError{codeStoreLimit, fmt.Errorf("downloads must be between 1 and %d", StoreMaxDownloads)})
 	}
 	if o.LifetimeSeconds < 0 {
 		return nil, startError(errors.New("lifetime cannot be negative"))
@@ -289,8 +290,7 @@ func (s *session) runStore(ctx context.Context, work func(context.Context, *sess
 		s.delegate.OnError(errorJSON(err))
 		return
 	}
-	b, _ := json.Marshal(map[string]any{"success": true, "files": sum.files, "totalSize": sum.totalSize})
-	s.delegate.OnDone(string(b))
+	s.delegate.OnDone(summaryPayload{sum.files, true, sum.totalSize}.json())
 }
 
 // answerStore hands a Respond to the stored receive waiting at its preview.
@@ -339,8 +339,7 @@ func storeFileListJSON(m storecrypto.Manifest) string {
 	for i, f := range m.Files {
 		files[i] = fileEntry{Name: f.Name, Size: f.Size}
 	}
-	b, _ := json.Marshal(map[string]any{"files": files, "emptyFolders": 0, "totalSize": manifestTotal(m)})
-	return string(b)
+	return fileListPayload{0, files, manifestTotal(m)}.json()
 }
 
 func manifestTotal(m storecrypto.Manifest) int64 {

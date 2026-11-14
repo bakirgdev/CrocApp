@@ -83,19 +83,7 @@ final class SavedCodes {
     }
 
     private func persist(_ operation: String) {
-        if codes.isEmpty {
-            saveFailed = !secrets.delete(account: Self.account)
-        } else {
-            do {
-                let data = try JSONEncoder().encode(codes)
-                saveFailed = !secrets.set(
-                    String(decoding: data, as: UTF8.self), account: Self.account)
-            } catch {
-                // The error text could quote nothing secret, but stay generic anyway.
-                Self.log.error("saved codes \(operation, privacy: .public) encode failed")
-                saveFailed = true
-            }
-        }
+        saveFailed = !secrets.storeList(codes, account: Self.account)
         if saveFailed {
             Self.log.error("saved codes \(operation, privacy: .public) not saved to the Keychain")
         }
@@ -104,12 +92,8 @@ final class SavedCodes {
     /// A Keychain read failure throws. An item that is there but not valid
     /// JSON is logged and treated as empty; the next write replaces it.
     private static func load(from secrets: any SecretStore) throws -> [SavedCode] {
-        guard let json = try secrets.load(account: account) else { return [] }
-        do {
-            return try JSONDecoder().decode([SavedCode].self, from: Data(json.utf8))
-        } catch {
+        try secrets.loadList(account: account) { _ in
             log.error("saved codes unreadable, starting empty")
-            return []
         }
     }
 }

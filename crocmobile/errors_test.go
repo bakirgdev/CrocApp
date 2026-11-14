@@ -6,11 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
 	"log"
 	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -365,6 +369,63 @@ func TestStartErrorsCarryPayload(t *testing.T) {
 	}
 }
 
+// failureCodes returns the values of the code* constants in errors.go.
+func failureCodes(tb testing.TB) []string {
+	tb.Helper()
+	file, err := parser.ParseFile(token.NewFileSet(), "errors.go", nil, 0)
+	if err != nil {
+		tb.Fatal(err)
+	}
+	var codes []string
+	for _, decl := range file.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.CONST {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			vs := spec.(*ast.ValueSpec)
+			if !strings.HasPrefix(vs.Names[0].Name, "code") {
+				continue
+			}
+			value, err := strconv.Unquote(vs.Values[0].(*ast.BasicLit).Value)
+			if err != nil {
+				tb.Fatal(err)
+			}
+			codes = append(codes, value)
+		}
+	}
+	return codes
+}
+
+// The Swift side decodes an unknown code as .other, so a Go code missing from
+// EngineFailure.Code, or a typo in either list, would ship as generic copy
+// without any failure.
+func TestFailureCodesMatchSwift(t *testing.T) {
+	src, err := os.ReadFile("../CrocKit/Sources/CrocKit/Models.swift")
+	if err != nil {
+		t.Fatal(err)
+	}
+	block := regexp.MustCompile(`(?s)enum Code: String.*?\n    \}\n`).Find(src)
+	if block == nil {
+		t.Fatal("EngineFailure.Code not found in Models.swift")
+	}
+	var swift []string
+	for _, m := range regexp.MustCompile(`(?m)^\s+case ([A-Za-z, ]+)$`).FindAllSubmatch(block, -1) {
+		for _, name := range strings.Split(string(m[1]), ",") {
+			swift = append(swift, strings.TrimSpace(name))
+		}
+	}
+	// invalidFileName is set by CrocEngine and never crosses the bridge.
+	swift = slices.DeleteFunc(swift, func(c string) bool { return c == "invalidFileName" })
+
+	got, want := slices.Clone(failureCodes(t)), slices.Clone(swift)
+	slices.Sort(got)
+	slices.Sort(want)
+	if !slices.Equal(got, want) {
+		t.Errorf("Go failure codes %v differ from EngineFailure.Code %v", got, want)
+	}
+}
+
 func FuzzClassify(f *testing.F) {
 	for _, s := range []string{
 		"pake not successful: peer uses unsupported PAKE protocol version 0",
@@ -373,12 +434,7 @@ func FuzzClassify(f *testing.F) {
 	} {
 		f.Add(s)
 	}
-	codes := []string{
-		codePeerVersion, codeRelayUnreachable, codeNoPublicRelay, codeDeclined, codeRefused,
-		codeRoomFull, codeBadPassword, codeWrongCode, codeCancelled, codeConnectionLost,
-		codeStoreLimit, codeStoreExpired, codeInvalidSetting, codeTransferActive,
-		codeEngineStuck, codeJoinedEarly, codePortInUse, codeTextTooLong, codeOther,
-	}
+	codes := failureCodes(f)
 	f.Fuzz(func(t *testing.T, msg string) {
 		err := errors.New(msg)
 		got := classify(err)

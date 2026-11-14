@@ -103,10 +103,10 @@ type session struct {
 	// promptAnswers: how many "y\n" lines an accept writes to promptW. croc's
 	// sender-side Ask prompt (TypeRecipientReady handler, croc.go) fires once
 	// PER FILE, so a single answer starves every prompt after the first and
-	// croc aborts with "refusing files". Set to len(filesInfo) (floor 1) in
-	// the sender Ask branch of startSession; left at the zero value (treated
-	// as 1 by respond) everywhere else, since the receiver's accept/decline
-	// prompt only fires once per transfer.
+	// croc aborts with "refusing files". Set to len(filesInfo) in the sender
+	// Ask branch of startSession; respond treats anything below 1 (the zero
+	// value included) as 1, since the receiver's accept/decline prompt only
+	// fires once per transfer.
 	promptAnswers int
 
 	restoreIO func() // restore os.Stdin (sender Ask) or os.Stdin/os.Stdout+capture (receive)
@@ -321,8 +321,8 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 				return nil, fmt.Errorf("could not generate code phrase: %w", err)
 			}
 		}
-		if len(secret) < minCodeLength {
-			return nil, fmt.Errorf("code is too short (must be at least %d characters)", minCodeLength)
+		if len(secret) < MinCodeLength {
+			return nil, fmt.Errorf("code is too short (must be at least %d characters)", MinCodeLength)
 		}
 		if o.WorkDir != "" {
 			if err := os.Chdir(o.WorkDir); err != nil {
@@ -351,25 +351,15 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		}
 		filesInfo, emptyFolders, totalFolders, err := sendFilesInfo(ctx, paths, o)
 		if err != nil {
-			if tempPath != "" {
-				os.Remove(tempPath)
-			}
 			return nil, err
 		}
 		co, err := buildCrocOptions(true, secret, o)
 		if err != nil {
-			if tempPath != "" {
-				os.Remove(tempPath)
-			}
 			return nil, err
 		}
 		co.SendingText = text != ""
 		c, err := croc.NewCtx(ctx, co)
 		if err != nil {
-			cancel()
-			if tempPath != "" {
-				os.Remove(tempPath)
-			}
 			return nil, err
 		}
 		s := &session{client: c, ctxCancel: cancel, delegate: d, sender: true, tempPath: tempPath, done: make(chan struct{}), pollDone: make(chan struct{})}
@@ -385,17 +375,10 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		if o.Ask {
 			restore, rerr := s.installPromptPipe()
 			if rerr != nil {
-				cancel()
-				if tempPath != "" {
-					os.Remove(tempPath)
-				}
 				return nil, rerr
 			}
 			s.restoreIO = restore
 			s.promptAnswers = len(filesInfo)
-			if s.promptAnswers < 1 {
-				s.promptAnswers = 1
-			}
 		}
 		committed = true
 		go s.run(func() error {
@@ -437,7 +420,6 @@ func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code st
 	}
 	c, err := croc.NewCtx(ctx, co)
 	if err != nil {
-		cancel()
 		return nil, err
 	}
 	s := &session{client: c, ctxCancel: cancel, delegate: d, sender: false, done: make(chan struct{}), pollDone: make(chan struct{})}
@@ -453,21 +435,18 @@ func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code st
 	// them hits EOF instead of hanging.
 	pr, pw, err := os.Pipe()
 	if err != nil {
-		cancel()
 		return nil, err
 	}
 	savedStdinFd, err := syscall.Dup(syscall.Stdin)
 	if err != nil {
 		pr.Close()
 		pw.Close()
-		cancel()
 		return nil, err
 	}
 	if err := syscall.Dup2(int(pr.Fd()), syscall.Stdin); err != nil {
 		syscall.Close(savedStdinFd)
 		pr.Close()
 		pw.Close()
-		cancel()
 		return nil, err
 	}
 	origStdin := os.Stdin
@@ -485,7 +464,6 @@ func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code st
 		syscall.Close(savedStdinFd)
 		s.closePrompt() // closes pw unless AutoAccept already did
 		pr.Close()
-		cancel()
 		return nil, err
 	}
 	origStdout := os.Stdout
@@ -728,9 +706,7 @@ func (s *session) respond(accept bool, policy filePolicy) {
 		if !s.sender {
 			// Before the write: croc reads Rename and Overwrite only once the
 			// accept prompt has its answer (croc.go updateIfRecipientHasFileInfo).
-			if s.client != nil {
-				policy.apply(&s.client.Options)
-			}
+			policy.apply(&s.client.Options)
 			answers += keptPromptAnswers
 		}
 	}
@@ -941,6 +917,31 @@ type fileEntry struct {
 	Size int64  `json:"size"`
 }
 
+// fileListPayload and summaryPayload are the fileList and done events' JSON,
+// shared by CLI and stored sessions. Fields stay in key order: the interop
+// harness greps the exact bytes.
+type fileListPayload struct {
+	EmptyFolders int         `json:"emptyFolders"`
+	Files        []fileEntry `json:"files"`
+	TotalSize    int64       `json:"totalSize"`
+}
+
+func (p fileListPayload) json() string {
+	b, _ := json.Marshal(p)
+	return string(b)
+}
+
+type summaryPayload struct {
+	Files     int   `json:"files"`
+	Success   bool  `json:"success"`
+	TotalSize int64 `json:"totalSize"`
+}
+
+func (p summaryPayload) json() string {
+	b, _ := json.Marshal(p)
+	return string(b)
+}
+
 func (s *session) fileListJSON() string {
 	c := s.client
 	// Not nil: an empty list must marshal as [], which DelegateBridge expects.
@@ -951,10 +952,7 @@ func (s *session) fileListJSON() string {
 		files = append(files, fileEntry{Name: name, Size: addReported(0, f.Size)})
 		total = addReported(total, f.Size)
 	}
-	b, _ := json.Marshal(map[string]any{
-		"files": files, "emptyFolders": len(c.EmptyFoldersToTransfer), "totalSize": total,
-	})
-	return string(b)
+	return fileListPayload{len(c.EmptyFoldersToTransfer), files, total}.json()
 }
 
 // progressState is the whole progress payload as comparable scalars, so poll
@@ -1011,8 +1009,5 @@ func (s *session) summaryJSON() string {
 	for _, f := range c.FilesToTransfer {
 		total = addReported(total, f.Size)
 	}
-	b, _ := json.Marshal(map[string]any{
-		"success": c.SuccessfulTransfer, "files": len(c.FilesToTransfer), "totalSize": total,
-	})
-	return string(b)
+	return summaryPayload{len(c.FilesToTransfer), c.SuccessfulTransfer, total}.json()
 }

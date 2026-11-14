@@ -148,7 +148,7 @@ struct MenuBarQuickSendView: View {
     }
 
     private func transferring(_ p: TransferProgress) -> some View {
-        let done = p.bytesFinished + p.fileSent
+        let done = p.bytesDone
         let total = max(p.totalSize, 1)
         let fraction = min(1, Double(done) / Double(total))
         return VStack(spacing: Spacing.space3) {

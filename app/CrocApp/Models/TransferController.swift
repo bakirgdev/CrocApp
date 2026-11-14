@@ -134,7 +134,7 @@ final class TransferController {
     /// the first one.
     private(set) var progress: TransferProgress? {
         didSet {
-            let percent = SidebarRowState.percent(of: progress)
+            let percent = progress?.percent
             if percent != progressPercent { progressPercent = percent }
         }
     }
@@ -299,9 +299,7 @@ final class TransferController {
         guard let id = record.storedID, let receipt = vault.receipt(id: id) else {
             throw EngineFailure(code: .other, message: "no receipt for this upload")
         }
-        try await engine.revokeStored(receipt, proxy: EngineStart.proxies(settings))
-        vault.remove(id: id)
-        history?.markRevoked(record)
+        try await revoke(receipt)
     }
 
     /// Revokes the link the `.stored` screen shows. Unlike `revoke(_ record:)`
@@ -470,13 +468,12 @@ final class TransferController {
             }
         case .progress(let p):
             // step "waiting" ticks arrive while the code screen should stay up.
-            guard p.step != "waiting" else { return }
+            guard !p.isWaiting else { return }
             // Progress ticks keep flowing while a prompt is unanswered --
             // never clobber .incoming/.confirmSend; respond() moves the
             // phase forward.
-            if case .incoming = phase { return }
-            if case .confirmSend = phase { return }
-            let doneBytes = p.bytesFinished + p.fileSent
+            if phase.needsAnswer { return }
+            let doneBytes = p.bytesDone
             run.speed.record(doneBytes)
             speedBytesPerSec = run.speed.bytesPerSecond
             if doneBytes > 0 { run.sawTransferBytes = true }

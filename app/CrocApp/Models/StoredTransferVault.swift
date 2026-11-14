@@ -72,20 +72,7 @@ final class StoredTransferVault {
                 "receipts \(operation, privacy: .public) not saved: the Keychain is unreadable")
             return false
         }
-        let stored: Bool
-        if receipts.isEmpty {
-            stored = secrets.delete(account: Self.account)
-        } else {
-            do {
-                let data = try JSONEncoder().encode(receipts)
-                stored = secrets.set(String(decoding: data, as: UTF8.self), account: Self.account)
-            } catch {
-                Self.log.error(
-                    "receipts \(operation, privacy: .public) encode failed: \(String(describing: error), privacy: .public)"
-                )
-                return false
-            }
-        }
+        let stored = secrets.storeList(receipts, account: Self.account)
         if !stored {
             Self.log.error("receipts \(operation, privacy: .public) not saved to the Keychain")
         }
@@ -95,14 +82,10 @@ final class StoredTransferVault {
     /// A Keychain read failure throws. An item that is there but not valid
     /// JSON is logged and treated as empty; the next write replaces it.
     private static func load(from secrets: any SecretStore) throws -> [StoredReceipt] {
-        guard let json = try secrets.load(account: account) else { return [] }
-        do {
-            return try JSONDecoder().decode([StoredReceipt].self, from: Data(json.utf8))
-        } catch {
+        try secrets.loadList(account: account) { error in
             log.error(
                 "receipts unreadable, starting empty: \(String(describing: error), privacy: .private)"
             )
-            return []
         }
     }
 }

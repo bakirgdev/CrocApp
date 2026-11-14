@@ -53,7 +53,8 @@ struct HistoryEntity: AppEntity, IndexedEntity {
         // every plain stored property in place first.
         self.id = id
         self.summary = parts.joined(separator: " • ")
-        self.name = Self.name(isSend: isSend, isText: isText, fileCount: fileCount, names: names)
+        self.name = TransferRecord.name(
+            isSend: isSend, isText: isText, fileCount: fileCount, names: names)
         self.direction = direction
         self.status = HistoryStatus(status)
         self.date = date
@@ -89,22 +90,6 @@ struct HistoryEntity: AppEntity, IndexedEntity {
         attributes.keywords = fileNames
         attributes.contentCreationDate = date
         return attributes
-    }
-
-    /// The History row's title (`design/components.md`, "HistoryRow"): the
-    /// first file name plus "+ N more", or "Text snippet".
-    static func name(isSend: Bool, isText: Bool, fileCount: Int, names: [String]) -> String {
-        if isText { return String(localized: "Text snippet") }
-        guard let first = names.first else {
-            return isSend ? String(localized: "Sent files") : String(localized: "Received files")
-        }
-        let extras = fileCount - 1
-        return extras > 0
-            ? String(
-                localized: "\(first) + \(extras) more",
-                comment:
-                    "The first placeholder is a file name, the second how many other files the transfer had."
-            ) : first
     }
 
     /// Whether `text` appears in the name or in any file name, the way Finder

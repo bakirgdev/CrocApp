@@ -182,24 +182,9 @@ import Testing
         #expect(SidebarRowState(phase: .failed(failure), percent: nil) == nil)
     }
 
-    @Test func transferringShowsTheWholeTransfersIntegerPercent() throws {
-        let half = try Self.progress(finished: 30, sent: 20, total: 100)
-        #expect(SidebarRowState.percent(of: half) == 50)
+    @Test func transferringShowsThePercentItIsGiven() {
         #expect(SidebarRowState(phase: .transferring, percent: 50)?.percent == 50)
-
-        let third = try Self.progress(finished: 0, sent: 1, total: 3)
-        #expect(SidebarRowState.percent(of: third) == 33)
-
-        let over = try Self.progress(finished: 90, sent: 40, total: 100)
-        #expect(SidebarRowState.percent(of: over) == 100, "never past 100")
-    }
-
-    @Test func anUnknownTotalHasNoPercent() throws {
         #expect(SidebarRowState(phase: .transferring, percent: nil)?.percent == nil)
-        let unknown = try Self.progress(finished: 0, sent: 5, total: 0)
-        #expect(SidebarRowState.percent(of: unknown) == nil)
-        let bundling = try Self.progress(finished: 0, sent: 5, total: 100, step: "bundling")
-        #expect(SidebarRowState.percent(of: bundling) == nil)
     }
 
     @Test func aProgressTickChangesThePercentAndNotThePhaseKind() throws {
@@ -268,15 +253,5 @@ import Testing
 
     private static func decode<T: Decodable>(_ object: [String: Any]) throws -> T {
         try JSONDecoder().decode(T.self, from: JSONSerialization.data(withJSONObject: object))
-    }
-
-    private static func progress(
-        finished: Int, sent: Int, total: Int, step: String = "transferring"
-    ) throws -> TransferProgress {
-        try decode([
-            "currentFile": 0, "totalFiles": 1, "fileName": "notes.txt", "fileSent": sent,
-            "fileSize": total, "bytesFinished": finished, "totalSize": total,
-            "step": step,
-        ])
     }
 }

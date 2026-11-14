@@ -29,15 +29,7 @@ struct ReceiveIntent: AppIntent {
         let started = Date()
         let folder = outputFolder.url
         AppRouter.shared.openReceive()
-        switch link {
-        case .code(let code):
-            controller.start(
-                .receive(code: code, folder: folder, folderIsScoped: outputFolder.isUserSelected))
-        case .stored(let url):
-            controller.start(
-                .storedReceive(
-                    link: url, folder: folder, folderIsScoped: outputFolder.isUserSelected))
-        }
+        controller.start(TransferRequest(link, into: outputFolder))
         let text = try await controller.awaitReceive()
         // The controller let go of a chosen folder when the transfer ended.
         let scoped = outputFolder.isUserSelected && folder.startAccessingSecurityScopedResource()

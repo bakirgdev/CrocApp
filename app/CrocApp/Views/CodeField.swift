@@ -18,7 +18,6 @@ struct CodeField: View {
     /// Says in words what is wrong, shown under the field and read by
     /// VoiceOver with it; the red border alone is not enough.
     var invalidMessage: String?
-    var isDisabled: Bool = false
     /// Receives the pasted string on the main actor; the call site decides
     /// what counts as a valid paste (e.g. ReceiveView's deeplink parsing).
     /// Nil hides the paste button entirely.
@@ -115,8 +114,6 @@ struct CodeField: View {
             RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                 .strokeBorder(borderColor, lineWidth: BorderWidth.hairline)
         )
-        .disabled(isDisabled)
-        .opacity(isDisabled ? Opacity.disabledContainer : 1)
     }
 
     // components.md → CodeField: control border idle, accent focused, error invalid.

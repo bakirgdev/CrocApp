@@ -1,6 +1,4 @@
-import Accessibility
 import CrocKit
-import QuickLook
 import SwiftUI
 
 #if os(macOS)
@@ -357,7 +355,7 @@ struct TransferStatusView: View {
 
     private func transferringView(_ p: TransferProgress) -> some View {
         let fileFraction = fraction(p.fileSent, of: p.fileSize)
-        let totalDone = p.bytesFinished + p.fileSent
+        let totalDone = p.bytesDone
         let totalFraction = fraction(totalDone, of: p.totalSize)
         let fileNumber = min(p.currentFile + 1, p.totalFiles)
         return VStack(spacing: Spacing.space5) {

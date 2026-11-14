@@ -1,6 +1,5 @@
 import Foundation
 import SwiftData
-import SwiftUI
 
 /// What this launch is for, decided once. Only `.app` reads the user's
 /// preferences and Keychain, opens the on-disk history, and starts notifications,
@@ -38,8 +37,4 @@ enum LaunchMode {
     func makeHistoryContainer() -> ModelContainer {
         HistoryStore.makeContainer(inMemory: !isLive)
     }
-}
-
-extension EnvironmentValues {
-    @Entry var launchMode: LaunchMode = .app
 }
