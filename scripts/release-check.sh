@@ -50,14 +50,6 @@ whole=$(awk -v h="## [$v]" '
   || fail "a '[label]: url' line inside the '## [$v]' section would end the release notes there"
 pass "CHANGELOG.md section for $v"
 
-# The landing page's JSON-LD names the version and links its own notes, so a
-# release that forgets them advertises the previous version to search engines.
-ld=web/landing/index.html
-grep -qF "\"softwareVersion\": \"$v\"" "$ld" || fail "$ld: JSON-LD softwareVersion is not \"$v\""
-grep -qF "\"releaseNotes\": \"https://github.com/bakirgdev/CrocApp/releases/tag/v$v\"" "$ld" \
-  || fail "$ld: JSON-LD releaseNotes does not link releases/tag/v$v"
-pass "landing page JSON-LD names $v"
-
 build=$(sed -nE 's/^CURRENT_PROJECT_VERSION = ([0-9]+)$/\1/p' app/Config/Version.xcconfig)
 [ -n "$build" ] || fail "Version.xcconfig declares no numeric CURRENT_PROJECT_VERSION"
 newest=0

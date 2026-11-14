@@ -24,6 +24,22 @@ cp design/tokens.css "$OUT/tokens.css"
 
 test -s "$OUT/CNAME" || fail "CNAME missing from $OUT"
 
+# lastmod is each page's last commit date, so it needs the full history
+# (github-pages.yml checks out with fetch-depth 0).
+{
+  echo '<?xml version="1.0" encoding="UTF-8"?>'
+  echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+  for page in index.html support/index.html privacy/index.html; do
+    lastmod=$(git log -1 --format=%cs -- "web/landing/$page")
+    [ -n "$lastmod" ] || fail "no git history for web/landing/$page (shallow clone?)"
+    echo "  <url>"
+    echo "    <loc>https://crocapp.dev/${page%index.html}</loc>"
+    echo "    <lastmod>$lastmod</lastmod>"
+    echo "  </url>"
+  done
+  echo '</urlset>'
+} > "$OUT/sitemap.xml"
+
 pnpm --dir web/docs install --frozen-lockfile
 pnpm --dir web/docs run build
 mkdir -p "$OUT/docs"

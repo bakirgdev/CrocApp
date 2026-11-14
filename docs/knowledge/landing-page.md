@@ -44,7 +44,7 @@ Every landing page links `site.webmanifest`, the 96px PNG, `favicon.ico` and the
 ## Crawler files
 
 - `llms.txt` is hand-written to the llmstxt.org shape: an H1, a blockquote, then H2 sections of `- [Title](url): note` lines. It links every docs page, so a docs page added, renamed or removed is edited here too, and in `web/docs/static/llms.txt` (served at `/docs/llms.txt`, `docs-site.md`, "Crawler files").
-- `sitemap.xml` lists the landing, support and privacy pages with a `lastmod`. Update the date when a page's content changes. The JSON-LD in `index.html` is one `@graph` (`SoftwareApplication`, `Person`, `WebSite`); validate it by parsing it as JSON and with the Schema.org validator after an edit. The docs sitemap is generated.
+- `sitemap.xml` is not in the tree: `scripts/assemble-site.sh` writes it, listing the landing, support and privacy pages with each page's last commit date as `lastmod` (hence the Pages workflow's `fetch-depth: 0`). A new indexable page is added to the loop there. The JSON-LD in `index.html` is one `@graph` (`SoftwareApplication`, `Person`, `WebSite`); validate it by parsing it as JSON and with the Schema.org validator after an edit. The docs sitemap is generated.
 - `robots.txt` lists both sitemaps.
 
 ## Performance checks
@@ -64,7 +64,7 @@ Lighthouse is `npx lighthouse` (13.6.0 when last run, the chrome-devtools MCP to
 
 Nothing checks these. They are listed in `docs/known-issues.md`, "Landing page":
 
-- All three channels carry v1.1.0 (the Mac App Store build is set to manual release, so its card can read "available now" before the build is live): the Download section says "available now", the Mac card's **Download Disk Image** button links the latest GitHub release, and both store badges link the App Store listing (`https://apps.apple.com/app/crocapp/id6805675003`, one record for iOS and macOS). The JSON-LD carries `softwareVersion`, `downloadUrl`, `installUrl` (the App Store listing), `releaseNotes` and `datePublished`. Each release PR updates the version, the notes link and the copy in `index.html`, `llms.txt` and the docs install page (`RELEASING.md`, "Each release"). `datePublished` stays the first public release.
+- No page, JSON-LD or crawler file names a release version, so a release edits none of them. The Download section says "available now" (the Mac App Store build is set to manual release, so its card can read that before the build is live), the Mac card's **Download Disk Image** button links the latest GitHub release, and both store badges link the App Store listing (`https://apps.apple.com/app/crocapp/id6805675003`, one record for iOS and macOS). The JSON-LD carries `downloadUrl`, `installUrl` (the App Store listing) and `datePublished`, which stays the first public release. Keep it that way: a new version string on the site is a new hand edit.
 - `security.txt` has an `Expires` field to renew (keep it at least six months out).
 - The site-wide copy (`index.html` feature lists, `llms.txt`) describes what `main` ships. It can run ahead of the released version, so merge copy for an unreleased feature with the release.
 - The AASA `/r/*` component is wider than the one page that exists.

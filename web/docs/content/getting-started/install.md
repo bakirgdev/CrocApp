@@ -12,7 +12,7 @@ The other device needs **croc 11 or newer**, whether it runs CrocApp or the croc
 
 ## Where to get it
 
-Version 1.2.1 is available on the App Store for iPhone, iPad and Mac, and as a disk image for Mac on GitHub Releases.
+CrocApp is available on the App Store for iPhone, iPad and Mac, and as a disk image for Mac on GitHub Releases.
 
 | Channel | For | Where |
 |---|---|---|
