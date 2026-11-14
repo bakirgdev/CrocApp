@@ -28,12 +28,7 @@ const sidebars: SidebarsConfig = {
       'guide/code-phrases',
       'guide/send-as-link',
     ]),
-    ...group('Customize', [
-      'guide/settings',
-      'guide/history',
-      'guide/menu-bar',
-      'guide/shortcuts',
-    ]),
+    ...group('Customize', ['guide/settings', 'guide/history', 'guide/menu-bar', 'guide/shortcuts']),
     ...group('Help', ['troubleshooting', 'faq', 'security-and-privacy', 'uninstall']),
     ...group('Reference', ['reference/croc-cli-interop']),
   ],
