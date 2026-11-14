@@ -224,7 +224,7 @@ func addReported(total, size int64) int64 {
 // path holding '*' with filepath.Glob, so a picked file named "*.pdf" would
 // also send every PDF beside it; escaping the pattern makes it match only
 // itself.
-func sendFilesInfo(paths []string, o *Options) ([]croc.FileInfo, []croc.FileInfo, int, error) {
+func sendFilesInfo(ctx context.Context, paths []string, o *Options) ([]croc.FileInfo, []croc.FileInfo, int, error) {
 	literal := make([]string, len(paths))
 	for i, p := range paths {
 		if strings.Contains(p, "*") {
@@ -232,7 +232,7 @@ func sendFilesInfo(paths []string, o *Options) ([]croc.FileInfo, []croc.FileInfo
 		}
 		literal[i] = p
 	}
-	return croc.GetFilesInfoWithExactExclusions(literal, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"), exactExclusions(o.ExcludePaths))
+	return croc.GetFilesInfoWithExactExclusionsContext(ctx, literal, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"), exactExclusions(o.ExcludePaths))
 }
 
 // exactExclusions is croc's --exclude-file list: relative paths, normalized the
@@ -265,7 +265,7 @@ func splitNonEmpty(s, sep string) []string {
 //
 // The deferred cleanup below fires whenever startSession returns or panics
 // without having committed to an async run — every error path, any panic
-// from croc.GetFilesInfoWithExactExclusions/croc.NewCtx, and (because
+// from croc.GetFilesInfoWithExactExclusionsContext/croc.NewCtx, and (because
 // `committed` is only set true right before the `go s.run(...)` call, after
 // d.OnCodeReady returns) any panic raised by the delegate's OnCodeReady
 // itself. This is what guarantees the lock, cwd, temp file and croc's network
@@ -350,7 +350,7 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			}
 			paths = []string{f.Name()}
 		}
-		filesInfo, emptyFolders, totalFolders, err := sendFilesInfo(paths, o)
+		filesInfo, emptyFolders, totalFolders, err := sendFilesInfo(ctx, paths, o)
 		if err != nil {
 			if tempPath != "" {
 				os.Remove(tempPath)
@@ -494,7 +494,7 @@ func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code st
 	captureDone := make(chan struct{})
 	go func() {
 		defer close(captureDone)
-		defer func() { recover() }() //nolint:errcheck // gobind: a goroutine panic kills the host app
+		defer ignorePanic() // gobind: a goroutine panic kills the host app
 		buf := make([]byte, 32*1024)
 		for {
 			n, err := cr.Read(buf)
@@ -539,11 +539,7 @@ func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code st
 func (s *session) run(xfer func() error, origWD string, release func()) {
 	var err error
 	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				err = fmt.Errorf("croc panic: %v\n%s", r, debug.Stack())
-			}
-		}()
+		defer recoverInto(&err)
 		err = xfer()
 	}()
 	close(s.done)
@@ -576,11 +572,7 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 	if !s.terminal.CompareAndSwap(false, true) {
 		return // the cancel watchdog already reported this session stuck
 	}
-	defer func() {
-		if r := recover(); r != nil {
-			reportPanic(s, r)
-		}
-	}()
+	defer reportRecovered(s)
 	if err != nil {
 		s.delegate.OnError(errorJSON(err))
 		return
@@ -601,17 +593,56 @@ func removeTempFiles() {
 	}
 }
 
-// reportPanic converts a recovered panic into an OnError delegate call,
-// guarded against the delegate itself panicking again on the way out.
-// logPanic records a panic recovered where no terminal event may be sent (Cancel
-// and Respond run while the transfer's own run goroutine still owns that event).
-func logPanic(where string, r any) {
-	log.Printf("crocmobile: panic in %s: %v\n%s", where, r, debug.Stack())
+// The recover helpers below are deferred directly (defer ignorePanic()):
+// recover only works in the deferred function itself.
+
+// ignorePanic swallows a panic where nothing can report it: a goroutine whose
+// panic would kill the host app, or a delegate call made while already
+// reporting.
+func ignorePanic() { _ = recover() }
+
+// panicError turns a recovered panic into the error a failed transfer reports.
+func panicError(r any) error {
+	return fmt.Errorf("croc panic: %v\n%s", r, debug.Stack())
 }
 
+// recoverInto stores a panic in *err as the transfer's failure.
+func recoverInto(err *error) {
+	if r := recover(); r != nil {
+		*err = panicError(r)
+	}
+}
+
+// recoverStart stores a panic in *err as a start failure payload, so an
+// exported start function returns an error instead of crashing the host app.
+// Its other results keep their zero values: none is assigned before the
+// function's last statement.
+func recoverStart(err *error) {
+	if r := recover(); r != nil {
+		*err = startError(panicError(r))
+	}
+}
+
+// logRecovered records a panic where no terminal event may be sent (Cancel and
+// Respond run while the transfer's own run goroutine still owns that event).
+func logRecovered(where string) {
+	if r := recover(); r != nil {
+		log.Printf("crocmobile: panic in %s: %v\n%s", where, r, debug.Stack())
+	}
+}
+
+// reportRecovered converts a panic into an OnError delegate call.
+func reportRecovered(s *session) {
+	if r := recover(); r != nil {
+		reportPanic(s, r)
+	}
+}
+
+// reportPanic sends r as OnError, guarded against the delegate itself
+// panicking again on the way out.
 func reportPanic(s *session, r any) {
-	defer func() { recover() }() //nolint:errcheck // OnError may panic again; never let that escape
-	s.delegate.OnError(failureJSON(codeOther, fmt.Sprintf("croc panic: %v\n%s", r, debug.Stack())))
+	defer ignorePanic()
+	s.delegate.OnError(failureJSON(codeOther, panicError(r).Error()))
 }
 
 // restoreWD puts back the cwd a transfer changed. A failure cannot be undone
@@ -643,7 +674,7 @@ func (s *session) cancel() {
 // (see stuck). If croc returns after all, run clears the mark and frees the
 // engine.
 func (s *session) watchCancel(after time.Duration) {
-	defer func() { recover() }() //nolint:errcheck // gobind: a goroutine panic kills the host app
+	defer ignorePanic() // gobind: a goroutine panic kills the host app
 	t := time.NewTimer(after)
 	defer t.Stop()
 	select {
@@ -829,8 +860,8 @@ func (s *session) finishStdoutCapture() string {
 // local connection) can race s.done and skip an intermediate OnConnected or
 // OnProgress call entirely — OnDone still fires reliably.
 func (s *session) poll() {
-	defer close(s.pollDone)      // run() waits on this; must close even if the loop below panics
-	defer func() { recover() }() //nolint:errcheck // backstop: anything escaping the per-tick recover must not kill the goroutine
+	defer close(s.pollDone) // run() waits on this; must close even if the loop below panics
+	defer ignorePanic()     // backstop: anything escaping the per-tick recover must not kill the goroutine
 	t := time.NewTicker(100 * time.Millisecond)
 	defer t.Stop()
 	connected, listSent := false, false
@@ -846,7 +877,7 @@ func (s *session) poll() {
 			// link, auto-accepted) would otherwise never report its list.
 			if !s.sender && !listSent && len(s.client.FilesToTransfer) > 0 {
 				func() {
-					defer func() { recover() }() //nolint:errcheck // a delegate panic must not skip close(pollDone)
+					defer ignorePanic() // a delegate panic must not skip close(pollDone)
 					s.delegate.OnFileList(s.fileListJSON())
 				}()
 			}
@@ -856,7 +887,7 @@ func (s *session) poll() {
 		func() {
 			// Per-tick recover: one bad delegate call must not silently
 			// freeze progress for the rest of the transfer.
-			defer func() { recover() }() //nolint:errcheck // racy field reads / delegate panics must never crash the app
+			defer ignorePanic() // racy field reads / delegate panics must never crash the app
 			c := s.client
 			if !connected && c.Step1ChannelSecured {
 				connected = true
