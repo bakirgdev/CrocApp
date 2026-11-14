@@ -1,0 +1,43 @@
+{
+  "$schema": "./web/docs/node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "web/landing/**/*.js",
+      "web/landing/**/*.css",
+      "web/docs/src/**",
+      "web/docs/*.ts",
+      "web/docs/package.json",
+      "web/docs/tsconfig.json",
+      "!**/node_modules",
+      "!web/landing/tokens.css",
+      "!web/docs/src/css/tokens.css"
+    ]
+  },
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
+  "javascript": { "formatter": { "quoteStyle": "double", "trailingCommas": "es5" } },
+  "linter": {
+    "rules": {
+      "suspicious": {
+        // The landing scripts load as classic scripts, where "use strict" is not redundant; Biome assumes modules.
+        "noRedundantUseStrict": "off"
+      },
+      "complexity": {
+        // [hidden] must beat author display rules, which only !important does.
+        "noImportantStyles": "off"
+      },
+      "style": {
+        // Flagged pairs set different properties; reordering the cascade risks visual regressions for no gain.
+        "noDescendingSpecificity": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["web/docs/**/*.ts", "web/docs/**/*.tsx", "web/docs/**/*.css"],
+      "javascript": {
+        "formatter": { "quoteStyle": "single", "bracketSpacing": false, "trailingCommas": "all" }
+      },
+      "css": { "formatter": { "quoteStyle": "single" } }
+    }
+  ]
+}

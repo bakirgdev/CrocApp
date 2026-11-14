@@ -36,8 +36,8 @@
       else if (media.includes("dark")) metaFor.dark = meta;
     }
     const shipped = {
-      light: metaFor.light && metaFor.light.getAttribute("content"),
-      dark: metaFor.dark && metaFor.dark.getAttribute("content"),
+      light: metaFor.light?.getAttribute("content"),
+      dark: metaFor.dark?.getAttribute("content"),
     };
 
     const syncChrome = () => {
@@ -65,7 +65,10 @@
     const syncPictures = () => {
       const pinned = root.dataset.theme;
       for (const source of sources) {
-        source.setAttribute("media", pinned ? (pinned === "dark" ? "all" : "not all") : source.dataset.media);
+        source.setAttribute(
+          "media",
+          pinned ? (pinned === "dark" ? "all" : "not all") : source.dataset.media
+        );
       }
     };
 
@@ -82,7 +85,7 @@
       relabel();
       try {
         localStorage.setItem("theme", next);
-      } catch (e) {
+      } catch {
         /* Storage disabled: the toggle still works, it just is not remembered. */
       }
     });
