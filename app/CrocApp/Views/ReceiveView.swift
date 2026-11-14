@@ -67,17 +67,9 @@ struct ReceiveView: View {
     /// the Receive button both come here, and `start(_:)` ignores a second call.
     private func start() {
         guard canStart else { return }
-        if let storedLink {
-            controller.start(
-                .storedReceive(
-                    link: storedLink, folder: outputFolder.url,
-                    folderIsScoped: outputFolder.isUserSelected))
-        } else {
-            controller.start(
-                .receive(
-                    code: trimmedCode, folder: outputFolder.url,
-                    folderIsScoped: outputFolder.isUserSelected))
-        }
+        controller.start(
+            TransferRequest(
+                storedLink.map(TransferLink.stored) ?? .code(trimmedCode), into: outputFolder))
     }
 
     private var formContent: some View {

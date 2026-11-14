@@ -1,6 +1,7 @@
 // Package relaycache holds the public relay index picked for generated codes,
-// in memory for the process (the v11 CLI keeps it in a file). It is internal so
-// croctest can seed it without adding to the gobind API.
+// in memory for the process (the v11 CLI keeps it in a file), and ForCode, the
+// pool lookup that maps a code to its relay. It is internal so croctest can
+// seed it without adding to the gobind API.
 package relaycache
 
 import (

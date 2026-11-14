@@ -311,32 +311,6 @@ private struct HistoryRow: View {
 }
 
 extension TransferRecord {
-    /// The names as drawn: a record an earlier build wrote can still hold a
-    /// name as the sender sent it, so it goes through `ReceivedName.shown`.
-    var shownNames: [String] { names.map(ReceivedName.shown) }
-
-    /// The first file name plus how many more, "Text snippet", or a generic
-    /// name when the record kept none.
-    var title: String {
-        Self.name(isSend: isSend, isText: isText, fileCount: fileCount, names: shownNames)
-    }
-
-    /// The History row's title (`design/components.md`, "HistoryRow"): the
-    /// first file name plus "+ N more", or "Text snippet".
-    static func name(isSend: Bool, isText: Bool, fileCount: Int, names: [String]) -> String {
-        if isText { return String(localized: "Text snippet") }
-        guard let first = names.first else {
-            return isSend ? String(localized: "Sent files") : String(localized: "Received files")
-        }
-        let extras = fileCount - 1
-        return extras > 0
-            ? String(
-                localized: "\(first) + \(extras) more",
-                comment:
-                    "The first placeholder is a file name, the second how many other files the transfer had."
-            ) : first
-    }
-
     /// Past tense, because a record is a transfer that ended.
     var directionTitle: String {
         isSend ? String(localized: "Sent") : String(localized: "Received")

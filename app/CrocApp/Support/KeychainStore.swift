@@ -34,7 +34,12 @@ extension SecretStore {
     /// when the list did not encode or the Keychain refused.
     func storeList<T: Encodable>(_ list: [T], account: String) -> Bool {
         if list.isEmpty { return delete(account: account) }
-        guard let data = try? JSONEncoder().encode(list) else { return false }
+        guard let data = try? JSONEncoder().encode(list) else {
+            // Generic text: the list holds secrets, so no error or value is logged.
+            Logger(subsystem: "com.bakirgdev.CrocApp", category: "keychain")
+                .error("\(account, privacy: .public) encode failed")
+            return false
+        }
         return set(String(decoding: data, as: UTF8.self), account: account)
     }
 }

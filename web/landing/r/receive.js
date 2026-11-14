@@ -10,7 +10,7 @@
 
   function render() {
     var code = readCode();
-    // croc rejects shorter codes (crocmobile minCodeLength); a stray
+    // croc rejects shorter codes (crocmobile MinCodeLength; 6 here is a copy); a stray
     // fragment such as "#top" must not read as one.
     var valid = code.length >= 6 && !/\s/.test(code);
     document.getElementById("has-code").hidden = !valid;
