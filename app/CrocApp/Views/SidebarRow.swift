@@ -119,8 +119,8 @@ extension AppRouter.SidebarItem {
 #Preview("States") {
     List {
         SidebarRow(
-            item: .send, state: SidebarRowState(phase: .waiting(code: "a-b-c"), progress: nil))
-        SidebarRow(item: .receive, state: SidebarRowState(phase: .confirmSend, progress: nil))
+            item: .send, state: SidebarRowState(phase: .waiting(code: "a-b-c"), percent: nil))
+        SidebarRow(item: .receive, state: SidebarRowState(phase: .confirmSend, percent: nil))
         SidebarRow(item: .history, state: nil)
         SidebarRow(item: .settings, state: nil)
     }

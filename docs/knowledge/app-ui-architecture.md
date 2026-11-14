@@ -42,7 +42,7 @@ Every entry point sets `path` and so lands in either layout: `openSend(with:)`, 
 **Files.**
 - `Views/RegularLayout.swift`: `NavigationSplitView`, the sidebar `List(selection:)`, `DetailStack` (one `NavigationStack` per row, rebuilt with `.id(selection)`, with the **How It Works** toolbar button) and `Route.destination`, the screen a route pushes. `HomeView` keeps its own copy of that switch, because the views it hosts are owned elsewhere.
 - `Views/SidebarRow.swift`: the row and its spoken label.
-- `Models/SidebarRowState.swift`: the row's state, derived from the phase and progress. The `TransferController.Phase` questions (`needsAnswer`, `canCancel`, `shownCode`) and `Phase.kind`, the case without its payload, live on `Phase` in `TransferController.swift`.
+- `Models/SidebarRowState.swift`: the row's state, derived from the phase and `progressPercent`. The `TransferController.Phase` questions (`needsAnswer`, `canCancel`, `shownCode`) and `Phase.kind`, the case without its payload, live on `Phase` in `TransferController.swift`.
 
 **The sidebar state.** Only the row of the active transfer's direction (`SidebarItem(direction:)`) has one: Connecting, Waiting, a **Review** badge for `.incoming` and `.confirmSend`, or the percent of the whole transfer (the direction word while the total is unknown). A finished or failed transfer leaves every row at rest. The row speaks one label ("Send, 42 percent"), and `RegularLayout` posts an announcement when the state's kind changes, never on a progress tick, because it watches the kind and the percent is not part of it. The trailing view is hidden from VoiceOver and the label sits on the `Label`, so the row stays the system's one selectable element (with `.accessibilityElement(children: .ignore)` an accessibility press from System Events did not select the row on macOS; VoiceOver itself was not run).
 
@@ -74,7 +74,7 @@ The controller is the one `@Observable` the views use. Its pure pieces live in t
 | `CodeHint.swift`, `SecurityScopes.swift`, `TransferSpeed.swift` | the code hint, the security-scope bookkeeping, the speed smoothing |
 
 - **One start.** `start(_ request: TransferRequest)` starts every kind of transfer. While one is active it does nothing and returns false. It stamps `startedAt` (the result screen tells a file this receive wrote from an older one by it), and keeps the request, and `retry()` runs it again, only from a failure whose remedy is `.tryAgain`. `retry()` resets first, so the start is not refused as busy.
-- **Progress is not part of the phase.** `.transferring` has no payload. Each accepted tick sets `progress` and `speedBytesPerSec`, and only the first one sets the phase. `Phase` is `Equatable`, so whatever reads only the phase (the haptics in `ContentView`, `HomeView`, `AppRouter.isBusy`) does not redraw at the tick rate.
+- **Progress is not part of the phase.** `.transferring` has no payload. Each accepted tick sets `progress` and `speedBytesPerSec`, and only the first one sets the phase. `Phase` is `Equatable`, so whatever reads only the phase (the haptics in `ContentView`, `HomeView`, `AppRouter.isBusy`) does not redraw at the tick rate. What shows only the percent (`RegularLayout`'s sidebar, the Dock badge, the menu-bar label) reads `progressPercent`, which moves at most 101 times a transfer. What shows bytes (`TransferStatusView`, the menu-bar window) places them inside `ProgressTick`, a leaf view that reads `progress` itself, so the tick redraws the bars and byte lines and nothing around them.
 
 ### Event handling
 

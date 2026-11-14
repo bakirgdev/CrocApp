@@ -61,7 +61,7 @@ final class TransferNotifier {
         let updates = Observations { [controller, settings] in
             Snapshot(
                 phase: controller.phase,
-                percent: SidebarRowState.percent(of: controller.progress),
+                percent: controller.progressPercent,
                 enabled: settings.notificationsEnabled, dockBadge: settings.showDockBadge)
         }
         task = Task { [weak self] in
