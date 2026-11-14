@@ -9,6 +9,7 @@ struct ContentView: View {
     @Environment(LocalNetworkChecker.self) private var localNetwork
     @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.launchMode) private var launchMode
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var shareInbox = ShareInbox()
     @State private var showStagedSheet = false
@@ -51,7 +52,7 @@ struct ContentView: View {
                 router.isRegularWidth = sizeClass != .compact
             }
             .task {
-                if AutoVerify.forcesOnboarding || (!onboardingSeen && !AutoVerify.isHarnessRun) {
+                if AutoVerify.forcesOnboarding || (!onboardingSeen && launchMode.isLive) {
                     showOnboarding = true
                 }
                 // Cold launch renders .active with no prior phase, so

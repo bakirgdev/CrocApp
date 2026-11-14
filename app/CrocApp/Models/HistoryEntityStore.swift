@@ -51,22 +51,18 @@ final class HistoryEntityStore: HistoryChangeObserver {
     /// Wires the store into the app: Shortcuts finds it as a dependency, and
     /// `history` tells it of every change. Called once, from `CrocAppApp.init`.
     @discardableResult
-    static func install(for history: HistoryStore, settings: AppSettings, indexed: Bool)
+    static func install(
+        for history: HistoryStore, settings: AppSettings, index: (any HistoryIndexing)?
+    )
         -> HistoryEntityStore
     {
         let store = HistoryEntityStore(
             container: history.container, settings: settings,
-            index: indexed && !isHostingTests ? SpotlightHistoryIndex() : nil)
+            index: index)
         history.observers.append(store)
         AppDependencyManager.shared.add(dependency: store)
         store.start()
         return store
-    }
-
-    /// A unit-test run launches the real app as its host. That launch must not
-    /// write the developer's Spotlight index.
-    static var isHostingTests: Bool {
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
     func start() {

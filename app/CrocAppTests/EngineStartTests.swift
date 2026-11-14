@@ -29,9 +29,9 @@ import Testing
         settings.excludePaths = "src/secret.txt\n  build/out.bin  \n"
         settings.socks5Proxy = " socks5://user:secret@proxy.example:1080 "
         settings.httpProxy = " http://proxy.example:8080 "
+        settings.disableLocal = true
         let start = EngineStart(
-            .sendFiles(urls: [file], code: "custom-code-word"), settings: settings,
-            disableLocal: true)
+            .sendFiles(urls: [file], code: "custom-code-word"), settings: settings)
         guard case .send(let paths, let text, let o) = start else {
             Issue.record("built \(start), not a send")
             return
@@ -57,20 +57,6 @@ import Testing
         #expect(o.outDir.isEmpty)
         #expect(!o.autoAccept)
         #expect(!start.autoAccept)
-    }
-
-    @Test func skipLocalNetworkIsTheUsersOrTheHarnesss() {
-        func skips(setting: Bool, harness: Bool) -> Bool {
-            settings.disableLocal = setting
-            guard
-                case .send(_, _, let o) = EngineStart(
-                    .sendText(text: "hi", code: ""), settings: settings, disableLocal: harness)
-            else { return false }
-            return o.disableLocal
-        }
-        #expect(!skips(setting: false, harness: false))
-        #expect(skips(setting: true, harness: false))
-        #expect(skips(setting: false, harness: true))
     }
 
     @Test func aTextSendCarriesSingleConnection() {
@@ -100,7 +86,7 @@ import Testing
         #expect(!o.gitIgnore)
         #expect(o.exclude.isEmpty)
         #expect(o.excludePaths.isEmpty)
-        #expect(!o.disableLocal, "only a harness run turns the LAN route off")
+        #expect(!o.disableLocal, "Skip Local Network is off unless the user turns it on")
     }
 
     @Test func aReceiveCarriesTheFolderSenderIPAndPolicy() {

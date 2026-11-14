@@ -35,38 +35,31 @@ struct CrocAppApp: App {
         // shell inherits one its sandbox denies. Once here, before any transfer:
         // changing it per transfer would race a getenv on another thread.
         CrocEngine.setTemporaryDirectory(FileManager.default.temporaryDirectory.path)
-        // Harness runs must not touch real settings, history or secrets: point
-        // every store at memory.
-        let harness = AutoVerify.isHarnessRun
-        let settings =
-            harness
-            ? AppSettings(storage: MemorySettingsStorage(), secrets: MemorySecretStore())
-            : AppSettings()
+        let mode = LaunchMode.current
+        let settings = mode.makeSettings()
         _settings = State(initialValue: settings)
-        let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: harness))
+        let history = HistoryStore(container: mode.makeHistoryContainer())
         _history = State(initialValue: history)
-        let savedCodesStore = SavedCodes(secrets: harness ? MemorySecretStore() : KeychainStore())
+        let savedCodesStore = SavedCodes(secrets: mode.makeSecrets())
         _savedCodes = State(initialValue: savedCodesStore)
-        let vault = StoredTransferVault(secrets: harness ? MemorySecretStore() : KeychainStore())
+        let vault = StoredTransferVault(secrets: mode.makeSecrets())
         let controller = TransferController(settings: settings, vault: vault)
         controller.history = history
         controller.savedCodes = savedCodesStore
         _controller = State(initialValue: controller)
-        let outputFolder = OutputFolderStore()
+        let outputFolder = mode.makeOutputFolder()
         _outputFolder = State(initialValue: outputFolder)
         // Shortcuts actions can run right after launch, before any window.
         AppDependencyManager.shared.add(dependency: controller)
         AppDependencyManager.shared.add(dependency: outputFolder)
-        // History for Shortcuts and Spotlight; a harness run's history is not the user's.
-        HistoryEntityStore.install(for: history, settings: settings, indexed: !harness)
+        // History for Shortcuts and Spotlight; only the app's history is the user's to index.
+        HistoryEntityStore.install(
+            for: history, settings: settings, index: mode.isLive ? SpotlightHistoryIndex() : nil)
         #if os(macOS)
         _quickSend = State(
             initialValue: MenuBarQuickSend(controller: controller, outputFolder: outputFolder))
         let relayHost = RelayHostController(settings: settings)
         _relayHost = State(initialValue: relayHost)
-        // The relay listens on the network, so it starts only when the user's
-        // setting says so, never in a harness run.
-        if !harness { relayHost.startAtLaunchIfWanted() }
         // A secret typed just before quitting is still waiting for its Keychain
         // write (`AppSettings.flushSecrets`).
         NotificationCenter.default.addObserver(
@@ -81,15 +74,17 @@ struct CrocAppApp: App {
             isAppActive: { SystemNotificationCenter.isAppActive },
             setDockBadge: Self.setDockBadge)
         _notifier = State(initialValue: notifier)
-        // A harness run must not ask for permission or badge the Dock.
-        if !harness {
-            center.install()
-            notifier.start()
-        }
         let snapshotWriter = TransferSnapshotWriter(controller: controller, settings: settings)
         _snapshotWriter = State(initialValue: snapshotWriter)
-        // A harness run must not write the user's widget data.
-        if !harness {
+        // These ask for permission, badge the Dock, write the user's widget data and
+        // listen on the network, so only the real app starts them.
+        if mode.isLive {
+            #if os(macOS)
+            // Only when the user's setting says so.
+            relayHost.startAtLaunchIfWanted()
+            #endif
+            center.install()
+            notifier.start()
             snapshotWriter.start()
             history.observers.append(snapshotWriter)
         }
@@ -179,6 +174,7 @@ struct CrocAppApp: App {
             .environment(router)
             .environment(history)
             .environment(savedCodes)
+            .environment(\.launchMode, LaunchMode.current)
             .modelContainer(history.container)
             #if os(macOS)
         .modifier(CaptureWindowOpener(router: router))
