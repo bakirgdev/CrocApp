@@ -1,12 +1,11 @@
 import AppIntents
-import CoreSpotlight
 import Foundation
 import SwiftData
 import Testing
 
 @testable import CrocApp
 
-/// How a `TransferRecord` becomes the entity Shortcuts and Spotlight see:
+/// How a `TransferRecord` becomes the entity Shortcuts sees:
 /// the words, the id, and what must never be in it.
 @MainActor @Suite struct HistoryEntityTests {
     private static let hint = "wiry-…"
@@ -72,7 +71,7 @@ import Testing
 
     // MARK: - What never leaves the app
 
-    @Test func neitherTheCodeHintNorTheCodeReachesTheEntityOrItsIndexEntry() throws {
+    @Test func neitherTheCodeHintNorTheCodeReachesTheEntity() throws {
         let store = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
         let record = TransferRecord(
             isSend: true, status: .completed, isText: false, fileCount: 1, totalBytes: 10,
@@ -80,26 +79,12 @@ import Testing
         store.add(record)
         let found = try #require(HistoryEntity(record: record))
 
-        let attributes = found.attributeSet
-        var seen = [found.id, found.name, found.summary] + found.fileNames
-        seen += [attributes.title, attributes.displayName, attributes.contentDescription]
-            .compactMap(
-                \.self)
-        seen += attributes.keywords ?? []
+        let seen = [found.id, found.name, found.summary] + found.fileNames
         #expect(seen.contains("report.pdf"))
         for text in seen {
             #expect(!text.contains("wiry"), "a code hint reached \(text)")
             #expect(!text.contains("bookmark"))
         }
-    }
-
-    @Test func theIndexEntryCarriesTheNameSummaryFileNamesAndDate() {
-        let found = entity(fileCount: 2, names: ["a.txt", "b.txt"])
-        let attributes = found.attributeSet
-        #expect(attributes.title == "a.txt + 1 more")
-        #expect(attributes.contentDescription == "Sent • 24 MB")
-        #expect(attributes.keywords == ["a.txt", "b.txt"])
-        #expect(attributes.contentCreationDate == found.date)
     }
 
     // MARK: - The id
@@ -134,7 +119,7 @@ import Testing
     }
 }
 
-/// Opening a transfer from Spotlight or Shortcuts: History opens, and a
+/// Opening a transfer from Shortcuts: History opens, and a
 /// running transfer keeps the screen.
 @MainActor @Suite struct OpenHistoryTests {
     @Test func historyOpens() {

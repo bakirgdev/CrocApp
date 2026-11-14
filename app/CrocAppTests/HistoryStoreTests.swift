@@ -38,4 +38,16 @@ import Testing
 
         #expect(history.record(storedID: "up1") == nil)
     }
+
+    @Test func theOldestRecordsGoBeyondTheCap() {
+        for number in 0...TransferRecord.maxRecords {
+            let old = record(storedID: "up\(number)")
+            old.date = Date(timeIntervalSinceNow: Double(number - TransferRecord.maxRecords))
+            history.add(old)
+        }
+
+        #expect(history.recordCount() == TransferRecord.maxRecords)
+        #expect(history.record(storedID: "up0") == nil)
+        #expect(history.record(storedID: "up1") != nil)
+    }
 }

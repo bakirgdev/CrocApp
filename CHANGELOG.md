@@ -13,6 +13,7 @@ extra sections where a release needs them, and the project follows
 ### Removed
 
 - **Run a Relay** and **Check Relay…** are gone, with the Relay tab in Mac Settings and the switch in the menu bar window. The relay address, IPv6 address and password you set in Settings still work as before. To host a relay, run `croc relay` on a machine you control. The port, password and launch setting the relay left behind are deleted the first time 1.3.0 opens.
+- **Show History in Spotlight** is gone, and Spotlight no longer finds past transfers by their file names. If you had it on, the entries CrocApp added to Spotlight are removed the first time 1.3.0 opens. The **Find Transfers** and **Open Transfer** actions in Shortcuts still work.
 
 ### Security
 

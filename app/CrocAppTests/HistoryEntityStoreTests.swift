@@ -1,73 +1,18 @@
 import AppIntents
 import Foundation
 import SwiftData
-import Synchronization
 import Testing
 
 @testable import CrocApp
 
-/// Records what the store asks of the Spotlight index. The real index is never
-/// touched: a test run must not put rows in the developer's Spotlight.
-private final class RecordingIndex: HistoryIndexing {
-    enum Call: Hashable {
-        case index(names: [String])
-        case remove(count: Int)
-        case removeAll
-    }
-
-    private let recorded = Mutex<[Call]>([])
-    private let failures = Mutex<Int>(0)
-
-    var calls: [Call] { recorded.withLock { $0 } }
-
-    /// Makes the next `count` calls throw.
-    func failNext(_ count: Int) { failures.withLock { $0 = count } }
-
-    private func record(_ call: Call) throws {
-        recorded.withLock { $0.append(call) }
-        let fails = failures.withLock { remaining -> Bool in
-            defer { remaining = max(0, remaining - 1) }
-            return remaining > 0
-        }
-        if fails { throw Failure() }
-    }
-
-    struct Failure: Error {}
-
-    func index(_ entities: [HistoryEntity]) async throws {
-        try record(.index(names: entities.map(\.name)))
-    }
-
-    func remove(ids: [String]) async throws { try record(.remove(count: ids.count)) }
-    func removeAll() async throws { try record(.removeAll) }
-}
-
-/// Save Transfer History governs everything History offers outside the app, and
-/// Show History in Spotlight governs the index: the index follows the store
-/// while both are on, and is gone while either is off. The tests start with
-/// Spotlight on; the default is pinned separately.
+/// Save Transfer History governs everything History offers outside the app:
+/// while it is off every query answers with nothing.
 @MainActor @Suite struct HistoryEntityStoreTests {
     private let settings = AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore())
     private let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
-    private let index = RecordingIndex()
 
-    init() {
-        settings.indexHistoryInSpotlight = true
-    }
-
-    /// A store wired to `history`, started, and settled. `index` is what the
-    /// app passes: the system index, or nil for a harness run.
-    private func started(index: (any HistoryIndexing)?) async -> HistoryEntityStore {
-        let store = HistoryEntityStore(
-            container: history.container, settings: settings, index: index)
-        history.observers.append(store)
-        store.start()
-        await store.settled()
-        return store
-    }
-
-    private func started() async -> HistoryEntityStore {
-        await started(index: index)
+    private func makeStore() -> HistoryEntityStore {
+        HistoryEntityStore(container: history.container, settings: settings)
     }
 
     @discardableResult
@@ -83,207 +28,8 @@ private final class RecordingIndex: HistoryIndexing {
         return record
     }
 
-    /// The setting is observed on the main actor; this waits for the rebuild it
-    /// triggers to have run.
-    private func settle(_ store: HistoryEntityStore, after calls: Int) async {
-        for _ in 0..<200 where index.calls.count < calls {
-            try? await Task.sleep(for: .milliseconds(5))
-        }
-        await store.settled()
-    }
-
-    // MARK: - The index follows the store
-
-    @Test func launchEmptiesTheIndexAndIndexesWhatIsThere() async {
-        addRecord("old.txt")
-        _ = await started()
-        #expect(index.calls == [.removeAll, .index(names: ["old.txt"])])
-    }
-
-    @Test func aSavedRecordIsIndexed() async {
-        let store = await started()
-        addRecord("new.txt")
-        await store.settled()
-        #expect(index.calls.last == .index(names: ["new.txt"]))
-    }
-
-    @Test func aDeletedRecordIsRemoved() async {
-        let store = await started()
-        let record = addRecord("gone.txt")
-        history.delete(record)
-        await store.settled()
-        #expect(index.calls.suffix(2) == [.index(names: ["gone.txt"]), .remove(count: 1)])
-    }
-
-    @Test func clearingHistoryEmptiesTheIndex() async {
-        let store = await started()
-        addRecord("a.txt")
-        addRecord("b.txt")
-        history.clear()
-        await store.settled()
-        #expect(index.calls.last == .removeAll)
-        #expect(store.all().isEmpty)
-    }
-
-    @Test func recordsPrunedBeyondTheCapAreRemoved() async {
-        let store = await started()
-        for number in 0...TransferRecord.maxRecords {
-            addRecord("file-\(number).txt", daysAgo: Double(TransferRecord.maxRecords - number))
-        }
-        await store.settled()
-        #expect(index.calls.last == .remove(count: 1))
-        #expect(history.recordCount() == TransferRecord.maxRecords)
-    }
-
-    // MARK: - The setting
-
-    @Test func nothingIsIndexedWhileTheSettingIsOff() async {
-        settings.saveTransferHistory = false
-        let store = await started()
-        #expect(index.calls == [.removeAll], "launch only clears the index")
-        addRecord("hidden.txt")
-        await store.settled()
-        #expect(index.calls == [.removeAll])
-    }
-
-    @Test func turningTheSettingOffEmptiesTheIndex() async {
-        addRecord("a.txt")
-        let store = await started()
-        let before = index.calls.count
-        settings.saveTransferHistory = false
-        await settle(store, after: before + 1)
-        #expect(Array(index.calls.dropFirst(before)) == [.removeAll])
-    }
-
-    @Test func turningTheSettingBackOnIndexesTheHistoryAgain() async {
-        addRecord("a.txt")
-        settings.saveTransferHistory = false
-        let store = await started()
-        let before = index.calls.count
-        settings.saveTransferHistory = true
-        await settle(store, after: before + 2)
-        #expect(Array(index.calls.dropFirst(before)) == [.removeAll, .index(names: ["a.txt"])])
-    }
-
-    @Test func aDeleteWhileTheSettingIsOffStillReachesTheIndex() async {
-        let record = addRecord("a.txt")
-        settings.saveTransferHistory = false
-        let store = await started()
-        history.delete(record)
-        await store.settled()
-        #expect(index.calls.last == .remove(count: 1))
-    }
-
-    // MARK: - The Spotlight setting
-
-    @Test func spotlightIndexingIsOffByDefault() {
-        let fresh = AppSettings(storage: MemorySettingsStorage(), secrets: FakeSecretStore())
-        #expect(!fresh.indexHistoryInSpotlight)
-    }
-
-    @Test func nothingIsIndexedWhileSpotlightIsOff() async {
-        settings.indexHistoryInSpotlight = false
-        addRecord("before.txt")
-        let store = await started()
-        #expect(index.calls == [.removeAll], "launch only clears the index")
-        addRecord("hidden.txt")
-        await store.settled()
-        #expect(index.calls == [.removeAll])
-        #expect(store.all().count == 2, "Shortcuts still sees History")
-    }
-
-    @Test func turningSpotlightOffRemovesWhatIsIndexedAndStopsIndexing() async {
-        addRecord("a.txt")
-        let store = await started()
-        let before = index.calls.count
-        settings.indexHistoryInSpotlight = false
-        await settle(store, after: before + 1)
-        #expect(Array(index.calls.dropFirst(before)) == [.removeAll])
-        addRecord("b.txt")
-        await store.settled()
-        #expect(Array(index.calls.dropFirst(before)) == [.removeAll])
-    }
-
-    @Test func turningSpotlightOnIndexesTheExistingRecords() async {
-        settings.indexHistoryInSpotlight = false
-        addRecord("a.txt")
-        addRecord("b.txt", daysAgo: 1)
-        let store = await started()
-        let before = index.calls.count
-        settings.indexHistoryInSpotlight = true
-        await settle(store, after: before + 2)
-        #expect(
-            Array(index.calls.dropFirst(before))
-                == [.removeAll, .index(names: ["a.txt", "b.txt"])])
-    }
-
-    @Test func spotlightOnDoesNotIndexWhileHistoryIsOff() async {
-        settings.saveTransferHistory = false
-        addRecord("a.txt")
-        let store = await started()
-        let before = index.calls.count
-        settings.indexHistoryInSpotlight = false
-        settings.indexHistoryInSpotlight = true
-        await settle(store, after: before + 1)
-        #expect(Set(index.calls.dropFirst(before)) == [.removeAll], "never an index call")
-    }
-
-    // MARK: - Failure
-
-    @Test func aFailedRemovalIsRetriedWithAFullRebuildAtTheNextChange() async {
-        let store = await started()
-        let record = addRecord("gone.txt")
-        await store.settled()
-        index.failNext(1)
-        history.delete(record)
-        await store.settled()
-        let before = index.calls.count
-        addRecord("next.txt")
-        await store.settled()
-        #expect(
-            Array(index.calls.dropFirst(before))
-                == [.removeAll, .index(names: ["next.txt"])],
-            "the retry replaces the index with what History holds")
-        let after = index.calls.count
-        addRecord("again.txt")
-        await store.settled()
-        #expect(Array(index.calls.dropFirst(after)) == [.index(names: ["again.txt"])])
-    }
-
-    @Test func aFailedSaveIsNotAnnouncedToTheIndex() async {
-        let store = await started()
-        let before = index.calls.count
-        history.saveOverride = { throw RecordingIndex.Failure() }
-        let record = addRecord("unsaved.txt")
-        history.delete(record)
-        history.clear()
-        await store.settled()
-        #expect(index.calls.count == before, "no index call for a change that never saved")
-    }
-
-    @Test func aFailedIndexCallDoesNotStopTheNextOne() async {
-        let store = await started()
-        index.failNext(1)
-        addRecord("first.txt")
-        addRecord("second.txt")
-        await store.settled()
-        #expect(
-            index.calls.suffix(2) == [.index(names: ["first.txt"]), .index(names: ["second.txt"])])
-        #expect(history.recordCount() == 2, "History keeps the record")
-    }
-
-    @Test func aHarnessRunHasNoIndexAndStillWorks() async {
-        let store = await started(index: nil)
-        addRecord("a.txt")
-        await store.settled()
-        #expect(store.all().count == 1)
-        #expect(index.calls.isEmpty)
-    }
-
-    // MARK: - Queries
-
-    @Test func queriesAnswerNewestFirstAndFindById() async throws {
-        let store = await started()
+    @Test func queriesAnswerNewestFirstAndFindById() throws {
+        let store = makeStore()
         addRecord("old.txt", daysAgo: 3)
         let recent = addRecord("recent.txt", daysAgo: 1)
         #expect(store.all().map(\.name) == ["recent.txt", "old.txt"])
@@ -292,16 +38,16 @@ private final class RecordingIndex: HistoryIndexing {
         #expect(store.entities(for: [id, "unknown"]).map(\.name) == ["recent.txt"])
     }
 
-    @Test func aTextSearchMatchesFileNames() async {
-        let store = await started()
+    @Test func aTextSearchMatchesFileNames() {
+        let store = makeStore()
         addRecord("Holiday.jpg")
         addRecord("invoice.pdf")
         #expect(store.entities(matching: "holiday").map(\.name) == ["Holiday.jpg"])
         #expect(store.entities(matching: "zzz").isEmpty)
     }
 
-    @Test func queriesAnswerNothingWhileTheSettingIsOff() async throws {
-        let store = await started()
+    @Test func queriesAnswerNothingWhileTheSettingIsOff() throws {
+        let store = makeStore()
         let record = addRecord("a.txt")
         let id = try #require(HistoryEntityID.string(for: record.persistentModelID))
         settings.saveTransferHistory = false
@@ -311,8 +57,8 @@ private final class RecordingIndex: HistoryIndexing {
         #expect(store.entities(matching: "a").isEmpty)
     }
 
-    @Test func filtersCombineByModeAndHonourOrderAndLimit() async {
-        let store = await started()
+    @Test func filtersCombineByModeAndHonourOrderAndLimit() {
+        let store = makeStore()
         addRecord("sent-new.txt", isSend: true, daysAgo: 1)
         addRecord("sent-old.txt", isSend: true, daysAgo: 5)
         addRecord("got.txt", isSend: false, daysAgo: 2)

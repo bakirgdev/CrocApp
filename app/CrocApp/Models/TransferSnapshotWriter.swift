@@ -2,7 +2,6 @@ import CrocKit
 import Foundation
 import OSLog
 import Observation
-import SwiftData
 
 #if canImport(WidgetKit)
 import WidgetKit
@@ -105,8 +104,6 @@ final class TransferSnapshotWriter: HistoryChangeObserver {
     /// writes a new one.
     func historyDidClear() { forget() }
     func historyDidDelete() { forget() }
-    func historyDidAdd(_ record: TransferRecord) {}
-    func historyDidRemove(_ ids: [PersistentIdentifier]) {}
 
     private func forget() {
         current = nil

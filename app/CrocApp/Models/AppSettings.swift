@@ -47,7 +47,6 @@ final class AppSettings {
         case showInMenuBar = "settings.showInMenuBar"
         case showDockBadge = "settings.showDockBadge"
         case saveTransferHistory = "settings.saveTransferHistory"
-        case indexHistoryInSpotlight = "settings.indexHistoryInSpotlight"
         case haptics = "settings.haptics"
         case successfulTransfers = "settings.successfulTransfers"
         case lastReviewPromptVersion = "settings.lastReviewPromptVersion"
@@ -97,12 +96,6 @@ final class AppSettings {
     /// there stay until the user deletes them.
     var saveTransferHistory: Bool {
         didSet { save(saveTransferHistory, .saveTransferHistory) }
-    }
-    /// Off by default: History's file names reach the system Spotlight index
-    /// only on the user's say-so. Needs `saveTransferHistory` too; turning
-    /// either off empties the index (`HistoryEntityStore`).
-    var indexHistoryInSpotlight: Bool {
-        didSet { save(indexHistoryInSpotlight, .indexHistoryInSpotlight) }
     }
     /// iPhone only. Off silences every haptic; the screen still shows each event.
     var haptics: Bool { didSet { save(haptics, .haptics) } }
@@ -210,6 +203,8 @@ final class AppSettings {
         // 1.3.0 removed the relay this Mac ran; drop what it left behind.
         storage.set(nil, forKey: "settings.relayHostPort")
         storage.set(nil, forKey: "settings.relayHostAtLaunch")
+        // 1.3.0 removed Spotlight indexing (`SpotlightPurge` empties the index).
+        storage.set(nil, forKey: "settings.indexHistoryInSpotlight")
         if secrets.get(account: "relayHostPassword") != nil {
             secrets.delete(account: "relayHostPassword")
         }
@@ -230,7 +225,6 @@ final class AppSettings {
         showInMenuBar = Self.read(storage, .showInMenuBar, default: true)
         showDockBadge = Self.read(storage, .showDockBadge, default: true)
         saveTransferHistory = Self.read(storage, .saveTransferHistory, default: true)
-        indexHistoryInSpotlight = Self.read(storage, .indexHistoryInSpotlight, default: false)
         haptics = Self.read(storage, .haptics, default: true)
         successfulTransfers = Self.read(storage, .successfulTransfers, default: 0)
         lastReviewPromptVersion = Self.read(storage, .lastReviewPromptVersion, default: "")

@@ -1,18 +1,16 @@
 import AppIntents
-import CoreSpotlight
 import Foundation
 import OSLog
 import SwiftData
 
-/// A past transfer as Shortcuts and Spotlight see it: file names, direction,
+/// A past transfer as Shortcuts sees it: file names, direction,
 /// status, date and size. Never the code phrase and never the code hint
 /// (`docs/knowledge/app-ui-architecture.md`, "System surfaces"), so nothing a bystander could
 /// reuse leaves the History screen.
 ///
 /// The id is the record's SwiftData identifier (`HistoryEntityID`), which
-/// outlives a relaunch. Spotlight indexes the entity too (`IndexedEntity`),
-/// through `HistoryEntityStore`.
-struct HistoryEntity: AppEntity, IndexedEntity {
+/// outlives a relaunch.
+struct HistoryEntity: AppEntity {
     static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Transfer")
     static let defaultQuery = HistoryEntityQuery()
 
@@ -80,18 +78,6 @@ struct HistoryEntity: AppEntity, IndexedEntity {
             image: .init(systemName: direction.symbol))
     }
 
-    /// Each file name is a keyword, so a search finds a transfer by any file in
-    /// it, not just the first one the name shows.
-    var attributeSet: CSSearchableItemAttributeSet {
-        let attributes = defaultAttributeSet
-        attributes.title = name
-        attributes.displayName = name
-        attributes.contentDescription = summary
-        attributes.keywords = fileNames
-        attributes.contentCreationDate = date
-        return attributes
-    }
-
     /// Whether `text` appears in the name or in any file name, the way Finder
     /// matches: case, diacritics and width ignored.
     func matches(_ text: String) -> Bool {
@@ -153,16 +139,14 @@ nonisolated enum HistoryStatus: String, AppEnum {
 }
 
 /// The entity id of a record: its SwiftData identifier, JSON-encoded. Stable
-/// for the life of the store, so a Spotlight entry or a saved shortcut still
-/// finds its record after a relaunch. Not a format to rely on across an OS
-/// update; `HistoryEntityStore` rebuilds the index at every launch, and an id
-/// that no longer decodes finds nothing.
+/// for the life of the store, so a saved shortcut still finds its record after
+/// a relaunch. Not a format to rely on across an OS update: an id that no
+/// longer decodes finds nothing.
 nonisolated enum HistoryEntityID {
-    private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "spotlight")
+    private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "shortcuts")
 
     static func string(for id: PersistentIdentifier) -> String? {
-        // Sorted keys: the same record must give the same text every time, or
-        // an index entry could never be updated or removed by id.
+        // Sorted keys: the same record must give the same text every time.
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         do {
@@ -173,8 +157,8 @@ nonisolated enum HistoryEntityID {
         }
     }
 
-    /// nil for text that is not an id this store wrote: Shortcuts and
-    /// Spotlight hand back whatever they kept, so an unknown id is expected.
+    /// nil for text that is not an id this store wrote: Shortcuts hands back
+    /// whatever it kept, so an unknown id is expected.
     static func identifier(from string: String) -> PersistentIdentifier? {
         try? JSONDecoder().decode(PersistentIdentifier.self, from: Data(string.utf8))
     }

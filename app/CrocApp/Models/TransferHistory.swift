@@ -95,19 +95,13 @@ extension TransferRecord {
     }
 }
 
-/// Told once a change to the store has been saved, so a Spotlight index can
-/// follow it (`HistoryEntityStore`). Never told of a change that failed to save.
+/// Told once a change to the store has been saved, so the widget snapshot can
+/// forget a deleted record. Never told of a change that failed to save.
 @MainActor
 protocol HistoryChangeObserver: AnyObject {
-    func historyDidAdd(_ record: TransferRecord)
-    func historyDidRemove(_ ids: [PersistentIdentifier])
     func historyDidClear()
-    /// The user deleted one record (a prune is `historyDidRemove` alone).
+    /// The user deleted one record.
     func historyDidDelete()
-}
-
-extension HistoryChangeObserver {
-    func historyDidDelete() {}
 }
 
 /// Thin MainActor wrapper over the ModelContainer so TransferController can
@@ -153,7 +147,7 @@ final class HistoryStore {
 
     func add(_ record: TransferRecord) {
         container.mainContext.insert(record)
-        if save("add") { for observer in observers { observer.historyDidAdd(record) } }
+        save("add")
         pruneToRetentionCap()
     }
 
@@ -176,9 +170,8 @@ final class HistoryStore {
                 "history prune fetch failed: \(String(describing: error), privacy: .public)")
             return
         }
-        let ids = stale.map(\.persistentModelID)
         for record in stale { container.mainContext.delete(record) }
-        if save("prune") { for observer in observers { observer.historyDidRemove(ids) } }
+        save("prune")
     }
 
     /// The record of the stored upload `storedID`, or nil when history holds
@@ -207,14 +200,8 @@ final class HistoryStore {
 
     func delete(_ record: TransferRecord) {
         guard record.modelContext != nil else { return }
-        let id = record.persistentModelID
         container.mainContext.delete(record)
-        if save("delete") {
-            for observer in observers {
-                observer.historyDidRemove([id])
-                observer.historyDidDelete()
-            }
-        }
+        if save("delete") { for observer in observers { observer.historyDidDelete() } }
     }
 
     func clear() {

@@ -143,7 +143,6 @@ import Testing
                 "settings.bothSidesConfirm",
                 "settings.excludePatterns",
                 "settings.haptics",
-                "settings.indexHistoryInSpotlight",
                 "settings.lastReviewPromptVersion",
                 "settings.noCompress",
                 "settings.notificationsEnabled",
@@ -161,6 +160,14 @@ import Testing
                 "settings.whenFileExists",
                 "settings.zipFolder",
             ])
+    }
+
+    @Test func launchRemovesWhatTheRemovedSpotlightSettingLeftBehind() {
+        storage.set(true, forKey: "settings.indexHistoryInSpotlight")
+
+        _ = makeSettings()
+
+        #expect(storage.values["settings.indexHistoryInSpotlight"] == nil)
     }
 
     @Test func launchRemovesWhatTheRemovedRelayHostLeftBehind() {
