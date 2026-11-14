@@ -142,7 +142,7 @@ Limits and error mapping:
   - Go frees `activeMu` after it restores every process global and before `OnDone` or `OnError` (`run` in `session.go`, `runStore` in `store.go`). Each transfer has its own delegate, so the last event of one cannot reach the next.
   - `DelegateBridge` records the terminal call (`hasEnded`). `CrocEngine` frees its slot on it instead of waiting for `onTermination`'s task. A stream finished early on a malformed payload does not count, because its Go session still runs.
   - `TestStartFromTheTerminalEventGetsTheEngine` (a start from inside `OnError`) and `crockit-verify twice` prove it.
-- A receiver must set `outDir`. Both sides set `workDir` to a writable temp directory: a sender's text and zip temp files go there (the iOS cwd is `/`), and the app points `$TMPDIR` at the same directory once at launch for croc's bundle spool (see "Small-file bundles").
+- A receiver must set `outDir`. A sender sets `workDir` to a writable temp directory (the Go side reads it only on a send): its text and zip temp files go there (the iOS cwd is `/`), and the app points `$TMPDIR` at the same directory once at launch for croc's bundle spool (see "Small-file bundles").
 - `os.Chdir` restore failures are logged (`restoreWD` in `session.go`), and an `os.Getwd` failure fails the start.
 - `Quiet` stays false, because `Quiet = true` replaces `os.Stderr` process-wide with `/dev/null`. croc's progress bar noise on stderr is accepted.
 

@@ -11,8 +11,7 @@ struct SavedCode: Identifiable, Codable, Equatable {
     /// Whether the trimmed name and code could be saved.
     static func isValid(name: String, code: String) -> Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && code.trimmingCharacters(in: .whitespacesAndNewlines).count
-                >= EngineConstraints.minCodeLength
+            && EngineConstraints.isValidCode(code.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 }
 

@@ -61,7 +61,7 @@ struct ReceiveView: View {
     private var trimmedCode: String { code.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     private var canStart: Bool {
-        storedLink != nil || trimmedCode.count >= EngineConstraints.minCodeLength
+        storedLink != nil || EngineConstraints.isValidCode(trimmedCode)
     }
 
     /// Starts the receive when there is something valid to receive. Return and
@@ -90,7 +90,7 @@ struct ReceiveView: View {
                     CodeField(
                         placeholder: "Code phrase",
                         text: $code,
-                        isInvalid: !code.isEmpty && code.count < EngineConstraints.minCodeLength,
+                        isInvalid: !code.isEmpty && !EngineConstraints.isValidCode(code),
                         invalidMessage: CodeField.tooShortMessage,
                         onPaste: { pasted in
                             if let link = TransferLink.parse(pasted) { router.open(link) }

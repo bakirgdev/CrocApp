@@ -153,7 +153,7 @@ struct SendReadiness {
         // without them.
         guard !isLoadingPhotos else { return false }
         if sendsAsLink { return hasFiles && storedServerIsValid }
-        let codeOK = customCode.isEmpty || customCode.count >= EngineConstraints.minCodeLength
+        let codeOK = customCode.isEmpty || EngineConstraints.isValidCode(customCode)
         return codeOK && (isFilesMode ? hasFiles : hasText)
     }
 }

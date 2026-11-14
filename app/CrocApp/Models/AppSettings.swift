@@ -30,6 +30,42 @@ final class AppSettings {
         case directToSender
     }
 
+    /// The `storage` key of every setting kept there, typed once. The strings are what
+    /// existing installs saved: change none of them (`AppSettingsPersistenceTests`
+    /// pins them).
+    enum Key: String, CaseIterable {
+        case relayAddress = "settings.relayAddress"
+        case relayAddress6 = "settings.relayAddress6"
+        case relayHostPort = "settings.relayHostPort"
+        case relayHostAtLaunch = "settings.relayHostAtLaunch"
+        case onlyLocal = "settings.onlyLocal"
+        case noCompress = "settings.noCompress"
+        case zipFolder = "settings.zipFolder"
+        case excludePatterns = "settings.excludePatterns"
+        case useGitIgnore = "settings.useGitIgnore"
+        case autoAccept = "settings.autoAccept"
+        case bothSidesConfirm = "settings.bothSidesConfirm"
+        case whenFileExists = "settings.whenFileExists"
+        case storedServer = "settings.storedServer"
+        case showInMenuBar = "settings.showInMenuBar"
+        case showDockBadge = "settings.showDockBadge"
+        case saveTransferHistory = "settings.saveTransferHistory"
+        case indexHistoryInSpotlight = "settings.indexHistoryInSpotlight"
+        case haptics = "settings.haptics"
+        case successfulTransfers = "settings.successfulTransfers"
+        case lastReviewPromptVersion = "settings.lastReviewPromptVersion"
+        case notificationsEnabled = "settings.notificationsEnabled"
+        case notificationsShowFileNames = "settings.notificationsShowFileNames"
+        case systemSurfacesShowFileNames = "settings.systemSurfacesShowFileNames"
+        case throttleUpload = "settings.advanced.throttleUpload"
+        case multicastAddress = "settings.advanced.multicastAddress"
+        case peerIP = "settings.advanced.peerIP"
+        case disableLocal = "settings.advanced.disableLocal"
+        case noMultiplexing = "settings.advanced.noMultiplexing"
+        case internalDNS = "settings.advanced.internalDNS"
+        case excludePaths = "settings.advanced.excludePaths"
+    }
+
     @ObservationIgnored private let storage: any SettingsStorage
     @ObservationIgnored private let secrets: any SecretStore
     @ObservationIgnored private let secretWriteDelay: Duration
@@ -37,73 +73,73 @@ final class AppSettings {
     @ObservationIgnored private var dirtySecrets: Set<Secret> = []
     @ObservationIgnored private var secretWriteTask: Task<Void, Never>?
 
-    var relayAddress: String { didSet { save(relayAddress, "settings.relayAddress") } }
-    var relayAddress6: String { didSet { save(relayAddress6, "settings.relayAddress6") } }
+    var relayAddress: String { didSet { save(relayAddress, .relayAddress) } }
+    var relayAddress6: String { didSet { save(relayAddress6, .relayAddress6) } }
     var relayPassword: String { didSet { secretEdited(.relayPassword) } }
     /// Mac only: the relay this Mac runs (`RelayHostController`). Its own
     /// password, apart from `relayPassword`, which this device uses to join a relay.
-    var relayHostPort: Int { didSet { save(relayHostPort, "settings.relayHostPort") } }
+    var relayHostPort: Int { didSet { save(relayHostPort, .relayHostPort) } }
     var relayHostPassword: String { didSet { secretEdited(.relayHostPassword) } }
     /// Off by default: the relay never starts by itself unless the user says so.
-    var relayHostAtLaunch: Bool { didSet { save(relayHostAtLaunch, "settings.relayHostAtLaunch") } }
-    var onlyLocal: Bool { didSet { save(onlyLocal, "settings.onlyLocal") } }
-    var noCompress: Bool { didSet { save(noCompress, "settings.noCompress") } }
-    var zipFolder: Bool { didSet { save(zipFolder, "settings.zipFolder") } }
-    var excludePatterns: String { didSet { save(excludePatterns, "settings.excludePatterns") } }
-    var useGitIgnore: Bool { didSet { save(useGitIgnore, "settings.useGitIgnore") } }
-    var autoAccept: Bool { didSet { save(autoAccept, "settings.autoAccept") } }
-    var bothSidesConfirm: Bool { didSet { save(bothSidesConfirm, "settings.bothSidesConfirm") } }
+    var relayHostAtLaunch: Bool { didSet { save(relayHostAtLaunch, .relayHostAtLaunch) } }
+    var onlyLocal: Bool { didSet { save(onlyLocal, .onlyLocal) } }
+    var noCompress: Bool { didSet { save(noCompress, .noCompress) } }
+    var zipFolder: Bool { didSet { save(zipFolder, .zipFolder) } }
+    var excludePatterns: String { didSet { save(excludePatterns, .excludePatterns) } }
+    var useGitIgnore: Bool { didSet { save(useGitIgnore, .useGitIgnore) } }
+    var autoAccept: Bool { didSet { save(autoAccept, .autoAccept) } }
+    var bothSidesConfirm: Bool { didSet { save(bothSidesConfirm, .bothSidesConfirm) } }
     /// Used under auto-accept; the incoming sheet asks instead.
     var whenFileExists: FilePolicy {
-        didSet { save(whenFileExists.rawValue, "settings.whenFileExists") }
+        didSet { save(whenFileExists.rawValue, .whenFileExists) }
     }
     /// Where "Send as link" uploads. The engine refuses `http` except
     /// on loopback.
-    var storedServer: String { didSet { save(storedServer, "settings.storedServer") } }
+    var storedServer: String { didSet { save(storedServer, .storedServer) } }
     static let defaultStoredServer = StoredSendOptions().server
     /// macOS menu-bar quick send. On by default; the menu-bar scene is
     /// inserted only while this is true.
-    var showInMenuBar: Bool { didSet { save(showInMenuBar, "settings.showInMenuBar") } }
+    var showInMenuBar: Bool { didSet { save(showInMenuBar, .showInMenuBar) } }
     /// macOS Dock tile badge: the percent while bytes move, "1" while a request
     /// waits. No names, so on by default.
-    var showDockBadge: Bool { didSet { save(showDockBadge, "settings.showDockBadge") } }
+    var showDockBadge: Bool { didSet { save(showDockBadge, .showDockBadge) } }
     /// Off: a finished transfer leaves no History record. Records already
     /// there stay until the user deletes them.
     var saveTransferHistory: Bool {
-        didSet { save(saveTransferHistory, "settings.saveTransferHistory") }
+        didSet { save(saveTransferHistory, .saveTransferHistory) }
     }
     /// Off by default: History's file names reach the system Spotlight index
     /// only on the user's say-so. Needs `saveTransferHistory` too; turning
     /// either off empties the index (`HistoryEntityStore`).
     var indexHistoryInSpotlight: Bool {
-        didSet { save(indexHistoryInSpotlight, "settings.indexHistoryInSpotlight") }
+        didSet { save(indexHistoryInSpotlight, .indexHistoryInSpotlight) }
     }
     /// iPhone only. Off silences every haptic; the screen still shows each event.
-    var haptics: Bool { didSet { save(haptics, "settings.haptics") } }
+    var haptics: Bool { didSet { save(haptics, .haptics) } }
     /// Transfers that finished successfully, for `ReviewPrompt`.
     private(set) var successfulTransfers: Int {
-        didSet { save(successfulTransfers, "settings.successfulTransfers") }
+        didSet { save(successfulTransfers, .successfulTransfers) }
     }
     /// The app version the review prompt was last requested in; empty before the first.
     var lastReviewPromptVersion: String {
-        didSet { save(lastReviewPromptVersion, "settings.lastReviewPromptVersion") }
+        didSet { save(lastReviewPromptVersion, .lastReviewPromptVersion) }
     }
     /// On by default because the permission prompt comes with the first
     /// transfer, when a notification is useful (`TransferNotifier`).
     var notificationsEnabled: Bool {
-        didSet { save(notificationsEnabled, "settings.notificationsEnabled") }
+        didSet { save(notificationsEnabled, .notificationsEnabled) }
     }
     /// Off by default: a notification can be read on a locked screen, so it
     /// says "Transfer complete" unless the user asks for file names.
     var notificationsShowFileNames: Bool {
-        didSet { save(notificationsShowFileNames, "settings.notificationsShowFileNames") }
+        didSet { save(notificationsShowFileNames, .notificationsShowFileNames) }
     }
 
     /// Off by default: widgets and the iOS Live Activity show on a locked
     /// screen, so they say "Sending" or "Received" unless the user asks for
     /// file names (`TransferSnapshotWriter`, `BackgroundCoordinator`).
     var systemSurfacesShowFileNames: Bool {
-        didSet { save(systemSurfacesShowFileNames, "settings.systemSurfacesShowFileNames") }
+        didSet { save(systemSurfacesShowFileNames, .systemSurfacesShowFileNames) }
     }
 
     // Advanced. Defaults are croc's, read from `EngineOptions`.
@@ -111,26 +147,26 @@ final class AppSettings {
 
     /// croc's format ("500k"); blank means no limit. Send only.
     var throttleUpload: String {
-        didSet { save(throttleUpload, "settings.advanced.throttleUpload") }
+        didSet { save(throttleUpload, .throttleUpload) }
     }
     /// Blank means croc's default group.
     var multicastAddress: String {
-        didSet { save(multicastAddress, "settings.advanced.multicastAddress") }
+        didSet { save(multicastAddress, .multicastAddress) }
     }
     /// Receive only: the sender's ip:port.
-    var peerIP: String { didSet { save(peerIP, "settings.advanced.peerIP") } }
+    var peerIP: String { didSet { save(peerIP, .peerIP) } }
     /// Skips the local network for transfers: no LAN discovery or local relay.
     /// croc's `--no-local`. Excludes `onlyLocal`.
-    var disableLocal: Bool { didSet { save(disableLocal, "settings.advanced.disableLocal") } }
+    var disableLocal: Bool { didSet { save(disableLocal, .disableLocal) } }
     /// One data connection instead of several. croc's `--no-multi`. Send only.
     var noMultiplexing: Bool {
-        didSet { save(noMultiplexing, "settings.advanced.noMultiplexing") }
+        didSet { save(noMultiplexing, .noMultiplexing) }
     }
     /// croc's `--internal-dns`: a direct relay's host name is looked up by
     /// croc's own resolver, which asks public DNS servers.
-    var internalDNS: Bool { didSet { save(internalDNS, "settings.advanced.internalDNS") } }
+    var internalDNS: Bool { didSet { save(internalDNS, .internalDNS) } }
     /// One relative path per line, excluded exactly (croc's `--exclude-file`).
-    var excludePaths: String { didSet { save(excludePaths, "settings.advanced.excludePaths") } }
+    var excludePaths: String { didSet { save(excludePaths, .excludePaths) } }
     /// Proxies may carry credentials: Keychain only, see `persistProxy`.
     var socks5Proxy: String {
         didSet { secretEdited(.socks5Proxy) }
@@ -181,63 +217,55 @@ final class AppSettings {
         self.storage = storage
         self.secrets = secrets
         self.secretWriteDelay = secretWriteDelay
-        relayAddress = Self.read(storage, "settings.relayAddress", default: "")
-        relayAddress6 = Self.read(storage, "settings.relayAddress6", default: "")
+        relayAddress = Self.read(storage, .relayAddress, default: "")
+        relayAddress6 = Self.read(storage, .relayAddress6, default: "")
         relayPassword = secrets.get(account: Self.relayPasswordAccount) ?? ""
-        relayHostPort = Self.read(
-            storage, "settings.relayHostPort", default: Self.defaultRelayHostPort)
+        relayHostPort = Self.read(storage, .relayHostPort, default: Self.defaultRelayHostPort)
         relayHostPassword = secrets.get(account: Self.relayHostPasswordAccount) ?? ""
-        relayHostAtLaunch = Self.read(storage, "settings.relayHostAtLaunch", default: false)
-        onlyLocal = Self.read(storage, "settings.onlyLocal", default: false)
-        noCompress = Self.read(storage, "settings.noCompress", default: false)
-        zipFolder = Self.read(storage, "settings.zipFolder", default: false)
-        excludePatterns = Self.read(storage, "settings.excludePatterns", default: "")
-        useGitIgnore = Self.read(storage, "settings.useGitIgnore", default: false)
-        autoAccept = Self.read(storage, "settings.autoAccept", default: false)
-        bothSidesConfirm = Self.read(storage, "settings.bothSidesConfirm", default: false)
+        relayHostAtLaunch = Self.read(storage, .relayHostAtLaunch, default: false)
+        onlyLocal = Self.read(storage, .onlyLocal, default: false)
+        noCompress = Self.read(storage, .noCompress, default: false)
+        zipFolder = Self.read(storage, .zipFolder, default: false)
+        excludePatterns = Self.read(storage, .excludePatterns, default: "")
+        useGitIgnore = Self.read(storage, .useGitIgnore, default: false)
+        autoAccept = Self.read(storage, .autoAccept, default: false)
+        bothSidesConfirm = Self.read(storage, .bothSidesConfirm, default: false)
         whenFileExists =
-            (storage.object(forKey: "settings.whenFileExists") as? String)
+            (storage.object(forKey: Key.whenFileExists.rawValue) as? String)
             .flatMap(FilePolicy.init(rawValue:)) ?? .keepBoth
-        storedServer = Self.read(
-            storage, "settings.storedServer", default: Self.defaultStoredServer)
-        showInMenuBar = Self.read(storage, "settings.showInMenuBar", default: true)
-        showDockBadge = Self.read(storage, "settings.showDockBadge", default: true)
-        saveTransferHistory = Self.read(storage, "settings.saveTransferHistory", default: true)
-        indexHistoryInSpotlight = Self.read(
-            storage, "settings.indexHistoryInSpotlight", default: false)
-        haptics = Self.read(storage, "settings.haptics", default: true)
-        successfulTransfers = Self.read(storage, "settings.successfulTransfers", default: 0)
-        lastReviewPromptVersion = Self.read(
-            storage, "settings.lastReviewPromptVersion", default: "")
-        notificationsEnabled = Self.read(storage, "settings.notificationsEnabled", default: true)
-        notificationsShowFileNames = Self.read(
-            storage, "settings.notificationsShowFileNames", default: false)
+        storedServer = Self.read(storage, .storedServer, default: Self.defaultStoredServer)
+        showInMenuBar = Self.read(storage, .showInMenuBar, default: true)
+        showDockBadge = Self.read(storage, .showDockBadge, default: true)
+        saveTransferHistory = Self.read(storage, .saveTransferHistory, default: true)
+        indexHistoryInSpotlight = Self.read(storage, .indexHistoryInSpotlight, default: false)
+        haptics = Self.read(storage, .haptics, default: true)
+        successfulTransfers = Self.read(storage, .successfulTransfers, default: 0)
+        lastReviewPromptVersion = Self.read(storage, .lastReviewPromptVersion, default: "")
+        notificationsEnabled = Self.read(storage, .notificationsEnabled, default: true)
+        notificationsShowFileNames = Self.read(storage, .notificationsShowFileNames, default: false)
         systemSurfacesShowFileNames = Self.read(
-            storage, "settings.systemSurfacesShowFileNames", default: false)
+            storage, .systemSurfacesShowFileNames, default: false)
         let croc = Self.advancedDefaults
-        throttleUpload = Self.read(
-            storage, "settings.advanced.throttleUpload", default: croc.throttleUpload)
-        multicastAddress = Self.read(
-            storage, "settings.advanced.multicastAddress", default: croc.multicastAddress)
-        peerIP = Self.read(storage, "settings.advanced.peerIP", default: croc.peerIP)
-        disableLocal = Self.read(
-            storage, "settings.advanced.disableLocal", default: croc.disableLocal)
-        noMultiplexing = Self.read(
-            storage, "settings.advanced.noMultiplexing", default: croc.noMultiplexing)
-        internalDNS = Self.read(
-            storage, "settings.advanced.internalDNS", default: croc.internalDNS)
-        excludePaths = Self.read(storage, "settings.advanced.excludePaths", default: "")
+        throttleUpload = Self.read(storage, .throttleUpload, default: croc.throttleUpload)
+        multicastAddress = Self.read(storage, .multicastAddress, default: croc.multicastAddress)
+        peerIP = Self.read(storage, .peerIP, default: croc.peerIP)
+        disableLocal = Self.read(storage, .disableLocal, default: croc.disableLocal)
+        noMultiplexing = Self.read(storage, .noMultiplexing, default: croc.noMultiplexing)
+        internalDNS = Self.read(storage, .internalDNS, default: croc.internalDNS)
+        excludePaths = Self.read(storage, .excludePaths, default: "")
         socks5Proxy = secrets.get(account: Self.socks5ProxyAccount) ?? ""
         httpProxy = secrets.get(account: Self.httpProxyAccount) ?? ""
     }
 
     /// The stored value, or `fallback` when the key is absent or holds another type.
     private static func read<Value>(
-        _ storage: any SettingsStorage, _ key: String, default fallback: Value
+        _ storage: any SettingsStorage, _ key: Key, default fallback: Value
     ) -> Value {
-        storage.object(forKey: key) as? Value ?? fallback
+        storage.object(forKey: key.rawValue) as? Value ?? fallback
     }
 
+    /// Mirrors `usesPublicRelay` and `customRelays` in crocmobile/relay.go, so the trust
+    /// UI predicts the relay the engine picks. Change them together.
     var relayKind: RelayKind {
         if onlyLocal { return .localOnly }
         let addr = relayAddress.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -293,8 +321,8 @@ final class AppSettings {
 
     func recordSuccessfulTransfer() { successfulTransfers += 1 }
 
-    private func save(_ value: Any, _ key: String) {
-        storage.set(value, forKey: key)
+    private func save(_ value: Any, _ key: Key) {
+        storage.set(value, forKey: key.rawValue)
     }
 
     /// A secret field changed: the new value applies now, and the Keychain write

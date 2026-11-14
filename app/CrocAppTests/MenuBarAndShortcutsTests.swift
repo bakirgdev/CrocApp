@@ -18,23 +18,12 @@ import ServiceManagement
     }
 }
 
-@Suite struct ReceivedFileLocatorTests {
+@Suite struct ReceivedFileURLsTests {
     /// Writes a file with a set creation date, so ordering does not hang on
     /// the filesystem's timestamp resolution.
     private func write(_ text: String, to url: URL, created: Date) throws {
         try Data(text.utf8).write(to: url)
         try FileManager.default.setAttributes([.creationDate: created], ofItemAtPath: url.path)
-    }
-
-    @Test func copyNamesFollowKeepBoth() {
-        #expect(ReceivedFileLocator.isCopy("a.txt", stem: "a", suffix: ".txt"))
-        #expect(ReceivedFileLocator.isCopy("a (1).txt", stem: "a", suffix: ".txt"))
-        #expect(ReceivedFileLocator.isCopy("a (12).txt", stem: "a", suffix: ".txt"))
-        #expect(!ReceivedFileLocator.isCopy("a (x).txt", stem: "a", suffix: ".txt"))
-        #expect(!ReceivedFileLocator.isCopy("ab.txt", stem: "a", suffix: ".txt"))
-        #expect(!ReceivedFileLocator.isCopy("a.txt.bak", stem: "a", suffix: ".txt"))
-        #expect(ReceivedFileLocator.isCopy("README", stem: "README", suffix: ""))
-        #expect(ReceivedFileLocator.isCopy("README (2)", stem: "README", suffix: ""))
     }
 
     @Test func prefersTheNewKeepBothCopyOverTheOldFile() throws {
@@ -44,7 +33,7 @@ import ServiceManagement
         let started = Date()
         try write("old", to: dir.appendingPathComponent("a.txt"), created: started - 60)
         try write("new", to: dir.appendingPathComponent("a (1).txt"), created: started + 1)
-        let found = ReceivedFileLocator.locate(names: ["a.txt"], in: dir, since: started)
+        let found = ReceivedItems.locateFiles(names: ["a.txt"], in: dir, since: started)
         #expect(found.map(\.lastPathComponent) == ["a (1).txt"])
     }
 
@@ -55,7 +44,7 @@ import ServiceManagement
         let started = Date()
         try write("1", to: dir.appendingPathComponent("a.txt"), created: started + 1)
         try write("2", to: dir.appendingPathComponent("a (1).txt"), created: started + 2)
-        let found = ReceivedFileLocator.locate(
+        let found = ReceivedItems.locateFiles(
             names: ["a.txt", "a (1).txt"], in: dir, since: started)
         #expect(found.map(\.lastPathComponent) == ["a.txt", "a (1).txt"])
     }
@@ -66,7 +55,7 @@ import ServiceManagement
             at: dir.appendingPathComponent("sub"), withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
         try Data("x".utf8).write(to: dir.appendingPathComponent("sub/b.txt"))
-        let found = ReceivedFileLocator.locate(
+        let found = ReceivedItems.locateFiles(
             names: ["sub/b.txt", "missing.txt"], in: dir, since: Date().addingTimeInterval(60))
         #expect(found.map(\.lastPathComponent) == ["b.txt"])
     }

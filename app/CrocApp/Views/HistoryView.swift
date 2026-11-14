@@ -322,17 +322,7 @@ extension TransferRecord {
     /// The first file name plus how many more, "Text snippet", or a generic
     /// name when the record kept none.
     var title: String {
-        if isText { return String(localized: "Text snippet") }
-        guard let first = shownNames.first else {
-            return isSend ? String(localized: "Sent files") : String(localized: "Received files")
-        }
-        let extras = fileCount - 1
-        return extras > 0
-            ? String(
-                localized: "\(first) + \(extras) more",
-                comment:
-                    "The first placeholder is a file name, the second how many other files the transfer had."
-            ) : first
+        HistoryEntity.name(isSend: isSend, isText: isText, fileCount: fileCount, names: shownNames)
     }
 
     /// Past tense, because a record is a transfer that ended.
@@ -364,7 +354,7 @@ extension TransferRecord {
 extension TransferRecord.Status {
     /// The status as a word: the glyph's accessibility label and the detail's
     /// status row.
-    var statusTitle: String {
+    nonisolated var statusTitle: String {
         switch self {
         case .completed: String(localized: "Completed")
         case .failed: String(localized: "Failed")

@@ -141,6 +141,44 @@ import Testing
         #expect(storage.values.count == 3, "a write touches only its own key")
     }
 
+    /// Saved preferences are read back under these exact strings: a rename
+    /// silently resets that setting for every existing install.
+    @Test func everyStoredKeyStringIsPinned() {
+        #expect(
+            Set(AppSettings.Key.allCases.map(\.rawValue)) == [
+                "settings.advanced.disableLocal",
+                "settings.advanced.excludePaths",
+                "settings.advanced.internalDNS",
+                "settings.advanced.multicastAddress",
+                "settings.advanced.noMultiplexing",
+                "settings.advanced.peerIP",
+                "settings.advanced.throttleUpload",
+                "settings.autoAccept",
+                "settings.bothSidesConfirm",
+                "settings.excludePatterns",
+                "settings.haptics",
+                "settings.indexHistoryInSpotlight",
+                "settings.lastReviewPromptVersion",
+                "settings.noCompress",
+                "settings.notificationsEnabled",
+                "settings.notificationsShowFileNames",
+                "settings.onlyLocal",
+                "settings.relayAddress",
+                "settings.relayAddress6",
+                "settings.relayHostAtLaunch",
+                "settings.relayHostPort",
+                "settings.saveTransferHistory",
+                "settings.showDockBadge",
+                "settings.showInMenuBar",
+                "settings.storedServer",
+                "settings.successfulTransfers",
+                "settings.systemSurfacesShowFileNames",
+                "settings.useGitIgnore",
+                "settings.whenFileExists",
+                "settings.zipFolder",
+            ])
+    }
+
     @Test func settingsSavedBeforeANewSettingExistedStillLoad() {
         storage.set("relay.example:9009", forKey: "settings.relayAddress")
         storage.set(true, forKey: "settings.autoAccept")
