@@ -133,10 +133,13 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/bakirgdev/CrocApp/tree/main/web/docs/',
           showLastUpdateTime: true,
+          // The sidebar groups are plain headings, so every page's trail is one item.
+          breadcrumbs: false,
         },
         sitemap: {
           lastmod: 'date',
-          ignorePatterns: ['/docs/category/**'],
+          changefreq: null,
+          priority: null,
         },
         // No blog. Release notes belong in GitHub Releases and CHANGELOG.md.
         blog: false,

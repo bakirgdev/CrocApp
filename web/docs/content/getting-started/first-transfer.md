@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 title: Your first transfer
-description: One send and one receive in CrocApp, using the app's on-screen labels.
+description: Your first send and receive in CrocApp, step by step, using the app's on-screen labels.
 ---
 
 # Your first transfer
