@@ -16,7 +16,7 @@ extra sections where a release needs them, and the project follows
 
 ### Security
 
-- A malformed connection to the relay a send starts on your local network could quit CrocApp, without any password. The transfer engine is now croc 11.6.5, whose relay turns such a connection away.
+- croc's relay code, which CrocApp runs on your local network while it sends, could be crashed by a malformed connection before any password check. The transfer engine is now croc 11.6.5, whose relay turns such a connection away.
 
 ## [1.2.1] - 2026-11-12
 
