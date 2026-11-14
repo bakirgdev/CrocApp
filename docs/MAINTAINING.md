@@ -6,6 +6,7 @@ How the project runs after 1.1.0: recurring dates, release cadence, support chan
 
 | When | What | Where it is tracked |
 | --- | --- | --- |
+| Each croc release (GitHub notification, then a Dependabot PR) | Ship or skip it within the windows in "croc upstream" | `dependabot.yml`, `docs/knowledge/croc-upgrade-playbook.md` |
 | Every Monday | Read the "Pinned versions to update" issue and the Dependabot PRs; merge what is green | `.github/workflows/pin-watch.yml`, `dependabot.yml` |
 | A month before the certificate expires (developer.apple.com > Certificates) | Renew the Developer ID certificate and its profile | `RELEASING.md`, "One-time setup", steps 2 and 5 |
 | A month before its `Expires` field | Bump `Expires` in `web/landing/.well-known/security.txt` | `known-issues.md`, "Landing page" |
@@ -21,8 +22,9 @@ How the project runs after 1.1.0: recurring dates, release cadence, support chan
 
 ## croc upstream
 
-- Follow croc minor releases only; a patch-only release is skipped. Wait about two weeks after a minor ships so its early patches land, then upgrade to that minor's latest patch once `docs/knowledge/croc-upgrade-playbook.md` and the interop harness pass.
-- A croc patch that fixes a security issue is the exception and is taken at once.
+- The maintainer watches `schollz/croc` for releases (Watch, Custom, Releases), so every release notifies the day it ships.
+- Ship every croc major and minor release within 7 days of its release, at its latest patch, once `docs/knowledge/croc-upgrade-playbook.md` and the interop harness pass. Dependabot opens a minor's PR on day 3. A major is a new module path (`/v12`) that Dependabot does not propose, so the release notification starts that bump.
+- Review every croc patch release when Dependabot opens its PR on day 1: take it, or close the PR to skip that version. A patch that fixes a security issue is taken at once.
 - Hold a release back (as with croc 11.6) when it breaks progress, interop or error classification, and say why in the hold's issue.
 
 ## Releases
