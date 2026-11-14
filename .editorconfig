@@ -1,24 +1,6 @@
 root = true
 
-[*]
-charset = utf-8
-end_of_line = lf
-insert_final_newline = true
-trim_trailing_whitespace = true
-
-[*.{yml,yaml,json}]
-indent_size = 2
-
-[*.md]
-trim_trailing_whitespace = false
-
-[*.go]
-indent_style = tab
-
-[*.swift]
-indent_size = 4
-
-# Read by shfmt (CI runs `shfmt -d scripts`).
+# Read by shfmt (CI runs `shfmt -d scripts`); all five keys are needed to match the scripts.
 [*.sh]
 indent_style = space
 indent_size = 2

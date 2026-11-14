@@ -67,6 +67,8 @@ row golangci-lint .github/workflows/reusable-go.yml "$lint_pin" "$(gh api repos/
 pinned_env() { awk -v k="$1:" '$1 == k {print $2; exit}' "$2"; }
 row shfmt .github/workflows/ci.yml "$(pinned_env SHFMT_VERSION .github/workflows/ci.yml)" \
   "$(gh api repos/mvdan/sh/releases/latest --jq .tag_name)"
+row actionlint .github/workflows/ci.yml "$(pinned_env ACTIONLINT_VERSION .github/workflows/ci.yml)" \
+  "$(gh api repos/rhysd/actionlint/releases/latest --jq .tag_name)"
 row create-dmg .github/workflows/release.yml "$(pinned_env CREATE_DMG_VERSION .github/workflows/release.yml)" \
   "$(gh api repos/create-dmg/create-dmg/releases/latest --jq .tag_name)"
 
