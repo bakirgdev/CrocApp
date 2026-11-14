@@ -398,8 +398,8 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 // tail call from within startSession's own frame: the `committed` guard defer
 // declared there is still armed for every error path below, so on failure we
 // only need to unwind whatever this function itself set up (pipes, os.Stdin/
-// os.Stdout swaps, the croc ctx) — cwd restore and release (network globals,
-// then the activeMu unlock) are handled by that defer once we return. Only
+// os.Stdout swaps) — the croc ctx cancel, cwd restore and release (network
+// globals, then the activeMu unlock) are handled by that defer once we return. Only
 // right before the async run actually starts do we flip *committed to true,
 // handing ownership of cwd and the lock to s.run/release.
 func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code string, o *Options, d Delegate, origWD string, release func(), committed *bool) (*session, error) {

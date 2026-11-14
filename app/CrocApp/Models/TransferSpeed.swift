@@ -8,7 +8,7 @@ struct TransferSpeed {
     private var lastBytes: Int64 = 0
     private var lastDate: Date?
 
-    /// `doneBytes` is the transfer's running total (`bytesFinished + fileSent`).
+    /// `doneBytes` is the transfer's running total (`TransferProgress.bytesDone`).
     mutating func record(_ doneBytes: Int64, at now: Date = Date()) {
         guard let last = lastDate else {
             lastDate = now
