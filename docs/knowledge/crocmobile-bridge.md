@@ -63,7 +63,7 @@ Rules that follow from the payloads:
 - `portInUse` is raised only by `StartRelay`, for a taken port. A transfer never reports it.
 - An unknown code, or a payload that is not JSON, decodes as `other` with the raw text.
 - `message` is croc's text and is for logs only. The UI maps wording from the code.
-- A recovered panic reports `other`, except one in `Cancel` or `Respond`: the transfer still runs and `run` owns its single final event, so that panic is only logged (`logPanic`).
+- A recovered panic reports `other`, except one in `Cancel` or `Respond`: the transfer still runs and `run` owns its single final event, so that panic is only logged (`logRecovered`).
 - `invalidFileName` is set by CrocKit, never by the engine: `CrocEngine` refuses a send path with a line break before the start, because the Go side splits the path list on `\n`.
 
 How `classify` picks a code:
@@ -302,7 +302,7 @@ The batch fixes this. `verify-interop.sh` scenario 12 covers it.
 `InternalDNS` and `ExcludePaths` are the remaining croc flags the app exposes (`--internal-dns`, `--exclude-file`):
 
 - `InternalDNS` sets `models.INTERNAL_DNS` in `setNetworkGlobals`, under `activeMu` like the proxies, and the restore puts the previous value back. croc reads it when it dials a relay by name without a proxy (`models.ResolveRelayAddress` from `comm.go`); a proxy keeps the host name, and the store client never reads it. croc's own `init` sets the flag from `--internal-dns` in `os.Args` or an `internal-dns` file in its config directory, which the app overrides for the transfer.
-- `ExcludePaths` is newline-joined. `sendFilesInfo` hands the normalized list (`utils.NormalizeRelativePath`, as `cli.go` does) to `GetFilesInfoWithExactExclusions`. A path is compared to the path inside the sent folder, or to a picked file's name. `validateExcludePaths` refuses an absolute path, `.` and a path that leaves the folder.
+- `ExcludePaths` is newline-joined. `sendFilesInfo` hands the normalized list (`utils.NormalizeRelativePath`, as `cli.go` does) to `GetFilesInfoWithExactExclusionsContext`, so a cancel stops a long folder walk or zip. A path is compared to the path inside the sent folder, or to a picked file's name. `validateExcludePaths` refuses an absolute path, `.` and a path that leaves the folder.
 - `validateNetworkOptions` also refuses `OnlyLocal` together with `DisableLocal`, which would leave a transfer with no route.
 
 The curve, hash, base port and transfers are not options. croc settles the curve and hash between the peers itself: a sender adopts the receiver's curve (`c.pakeCurve = string(m.Bytes2)` in `croc.go`, "initialize curve based on the recipient's choice") and a receiver adopts the sender's hash (receiver `--debug`: `using hash algorithm: md5`), so two devices never need to match. The ports matter only to a receiver that dials the sender by `PeerIP`, which a CrocApp sender serves on 9009. A busy port is skipped and the next free ones bind, scanning at most 200 ports (`reserveLocalRelayListeners` in `local_relay.go`, read from source, not observed), so the announced port can differ. If croc cannot bind them all, the send fails at start with `start local relay: not enough open ports to run local relay: reserved N of M` (code `other`).

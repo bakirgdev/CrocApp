@@ -3,9 +3,7 @@ package crocmobile
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -50,11 +48,7 @@ type RelayHost struct {
 //
 // Exported across gobind like StartSend, so it recovers a panic into an error.
 func StartRelay(host string, port int, password string, d RelayDelegate) (h *RelayHost, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			h, err = nil, startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
-		}
-	}()
+	defer recoverStart(&err)
 	if port < 1 || port+RelayPortCount-1 > 65535 {
 		return nil, startError(invalidSetting("relay port must be 1 to %d", 65535-RelayPortCount+1))
 	}
@@ -117,7 +111,7 @@ func serveRelay(listeners []net.Listener, ports []string, password string, d Rel
 				cancel()
 				if d != nil {
 					go func() {
-						defer func() { recover() }() //nolint:errcheck // gobind: a panic here must never cross into the host app
+						defer ignorePanic() // gobind: a panic here must never cross into the host app
 						d.OnRelayStopped(errorJSON(err))
 					}()
 				}
@@ -137,7 +131,7 @@ func (h *RelayHost) Ports() string { return strings.Join(h.ports, ",") }
 // Stop closes the relay's listeners and connections and waits briefly for
 // them. Safe to call more than once, and after the relay stopped itself.
 func (h *RelayHost) Stop() {
-	defer func() { recover() }() //nolint:errcheck // gobind: a panic here must never cross into the host app
+	defer ignorePanic() // gobind: a panic here must never cross into the host app
 	h.cancel()
 	select {
 	case <-h.done:

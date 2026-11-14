@@ -44,6 +44,10 @@ jobs:
       - name: go test -race
         run: env -u GOOS -u GOARCH go test -race ./...
 
+      # poll_test.go is excluded under -race (issue #184), so it runs here.
+      - name: go test
+        run: env -u GOOS -u GOARCH go test ./...
+
       - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           version: v2.15.0
