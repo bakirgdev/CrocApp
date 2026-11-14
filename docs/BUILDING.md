@@ -139,6 +139,8 @@ pnpm --dir web/docs install
 scripts/assemble-site.sh _site   # landing at /, docs at /docs/
 ```
 
+Biome lints and formats the landing JS and CSS and the docs-site TS, CSS and JSON (`biome.jsonc`; `tooling.md`). CI runs `pnpm --dir web/docs run lint` in the `site build` job. Locally, `pnpm --dir web/docs exec biome check --write ../..` applies the fixes.
+
 CI runs the Go checks with `GOFLAGS=-tags=croc_no_tailcat` and `GOOS=darwin GOARCH=arm64` set for the whole job, so `go build` and `go vet` analyze the platform the code ships on while running on a cheap Linux runner. Only `go test` unsets them. See "Troubleshooting" for the `go install` trap this causes.
 
 ## Tests

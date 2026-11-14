@@ -1,5 +1,5 @@
-import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import type {Config} from '@docusaurus/types';
 import prismTheme from './src/prismTheme';
 
 // crocapp.dev is the landing page. GitHub Pages serves one site per repo, so

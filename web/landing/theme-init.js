@@ -3,8 +3,8 @@
    follows the OS. A script file, not inline, so the CSP needs no hash. */
 document.documentElement.dataset.js = "";
 try {
-  var theme = localStorage.getItem("theme");
+  const theme = localStorage.getItem("theme");
   if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
-} catch (e) {
+} catch {
   /* Storage blocked: the page follows the OS, which is the default. */
 }

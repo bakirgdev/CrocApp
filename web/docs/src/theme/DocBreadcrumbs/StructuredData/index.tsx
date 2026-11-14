@@ -1,6 +1,6 @@
-import type {ReactNode} from 'react';
-import StructuredData from '@theme-original/DocBreadcrumbs/StructuredData';
 import type {Props} from '@theme/DocBreadcrumbs/StructuredData';
+import StructuredData from '@theme-original/DocBreadcrumbs/StructuredData';
+import type {ReactNode} from 'react';
 
 // Docusaurus writes each BreadcrumbList item as siteConfig.url + href, without
 // the trailingSlash the pages are built with, so every item answered with a 301.

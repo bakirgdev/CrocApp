@@ -44,6 +44,9 @@ row "Node ${node_pin%%.*}" web/docs/.nvmrc "$node_pin" "$node_latest"
 pnpm_pin=$(jq -r '.packageManager | ltrimstr("pnpm@")' web/docs/package.json)
 row pnpm web/docs/package.json "$pnpm_pin" "$(curl -fsS https://registry.npmjs.org/pnpm/latest | jq -r .version)"
 
+row Biome web/docs/package.json "$(jq -r '.devDependencies["@biomejs/biome"]' web/docs/package.json)" \
+  "$(curl -fsS https://registry.npmjs.org/@biomejs/biome/latest | jq -r .version)"
+
 go_pin=$(awk '$1 == "go" {print $2}' crocmobile/go.mod)
 row Go crocmobile/go.mod "$go_pin" "$(curl -fsS 'https://go.dev/dl/?mode=json' | jq -r '.[0].version | ltrimstr("go")')"
 

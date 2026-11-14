@@ -1,8 +1,8 @@
-(function () {
+(() => {
   function readCode() {
     try {
       return decodeURIComponent(location.hash.slice(1));
-    } catch (e) {
+    } catch {
       /* A malformed escape in the fragment: treat it as no code. */
       return "";
     }
@@ -18,8 +18,8 @@
     if (!valid) return;
     var encoded = encodeURIComponent(code);
     document.getElementById("code").textContent = code;
-    document.getElementById("open-app").href = "crocapp://receive?code=" + encoded;
-    document.getElementById("open-browser").href = "https://getcroc.com/?code=" + encoded;
+    document.getElementById("open-app").href = `crocapp://receive?code=${encoded}`;
+    document.getElementById("open-browser").href = `https://getcroc.com/?code=${encoded}`;
   }
 
   render();
