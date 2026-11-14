@@ -34,17 +34,13 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Disable Compression | `--no-compress` | all | shipped |
 | Zip folders before sending | `--zip` | all | shipped |
 | Exclude patterns, respect `.gitignore` | `--exclude`, `--git` | all | shipped |
-| Exclude exact paths (Settings > Advanced) | `--exclude-file` | all | shipped |
 | Skip Local Network (Settings > Advanced; refused together with Local Network Only) | `--no-local` | all | shipped |
-| Single Connection (Settings > Advanced; sending) | `--no-multi` | all | shipped |
-| Built-in DNS Resolver (Settings > Advanced; off by default, tells public DNS servers the relay's name) | `--internal-dns` | all | shipped |
 | Auto-Accept Transfers (off by default, warning shown) | `--yes` | all | shipped |
 | Confirm on Both Sides | `--ask` | all | shipped |
 | SOCKS5 proxy (Settings > Advanced) | `--socks5` | all | shipped |
 | HTTP proxy | `--connect` | all | shipped |
 | Upload speed limit (sender side) | `--throttleUpload` | all | shipped |
 | Sender IP, direct connect (receive side) | `--ip` | all | shipped |
-| Custom multicast address | `--multicast` | all | shipped |
 
 ## App-native features
 
@@ -77,9 +73,6 @@ Details:
 
 - **Advanced connection options.**
   - **Skip Local Network** (`--no-local`, `disableLocal`) drops LAN discovery and the local relay for sends and receives. It and **Local Network Only** (`--local`) cancel each other: each switch is disabled while the other is on, and the engine refuses both (`invalidSetting`). A CrocApp sender with it on cannot be reached by **Sender IP**, because that connects to the sender's local relay.
-  - **Single Connection** (`--no-multi`, `noMultiplexing`) sends the data over one connection. Sending only: `EngineStart` leaves it off for a receive, because a receiver on one connection hangs against a sender that multiplexes.
-  - **Built-in DNS Resolver** (`--internal-dns`, `internalDNS`) makes croc look up a direct relay's host name through public DNS servers it ships a list of, not the system resolver. croc queries all 18 servers in its list (Cloudflare, Google, Quad9, Comodo, Cisco OpenDNS) at once over plain port 53, bypassing the system, VPN and encrypted DNS, and tells each the relay's name. So it is off by default, the footnote says so, and the privacy page lists the operators (`THREAT-MODEL.md`, "Built-in DNS resolver"). A proxy keeps resolving the name itself, and Send as Link ignores it. The engine sets croc's process-wide flag for the length of a transfer and restores it (`setNetworkGlobals`).
-  - **Exact Paths** (`--exclude-file`, `excludePaths`) skips exact relative paths inside a sent folder, or a picked file by its name. The check refuses an absolute path or one that leaves the folder. **Exclude from sends** in Settings matches substrings instead.
 
 - **Saved codes.**
   - `SavedCodes` (`Models/SavedCodes.swift`) keeps every saved code, with its peer name, as one JSON array in the Keychain item `savedCodes` (this device only, not synced, as `KeychainStore` stores everything). Never in `UserDefaults`, the App Group, History, logs or notifications. Entries are sorted by name. A transfer that used a custom or saved code leaves no code hint in History.
@@ -132,6 +125,7 @@ Details:
 | `--remember` | app settings persist anyway |
 | `--curve` | Not a choice for the user: a sender adopts the receiver's curve, so the two devices never need to match (`crocmobile-bridge.md`, "Advanced options on the wire"). The engine fixes it at croc's default `p256` |
 | `--hash` | Left at croc's default (xxhash). A receiver adopts the sender's hash, so the choice would not need to match and gives a user nothing to decide |
+| `--multicast`, `--internal-dns`, `--no-multi`, `--exclude-file` | Removed in 1.3.0 to keep Advanced to what people need: they were rare, and `--internal-dns` sends a relay's name to 18 public DNS servers in plain text. The engine uses croc's default for each (`buildCrocOptions` sets the multicast group `239.255.255.250`, as the CLI does). **Exclude from sends** in Settings still matches substrings (`--exclude`) |
 | `--port`, `--transfers` | The base port and the number of transfer ports matter only to a peer that dials this device directly, and the engine fixes them at croc's defaults (9009 and 4). A receiver reaches a CrocApp sender with **Sender IP** on 9009 |
 | `--debug`, `--quiet`, `--testing` | Developer output. `--debug` would put more into croc's stderr, and `--quiet` silences stderr for the whole process (`session.go`, `Quiet`) |
 | `--ignore-stdin`, `--disable-clipboard`, `--extended-clipboard` | The engine always sets the first two (no stdin, and the app has its own **Copy Code** with a clipboard expiry). The extended clipboard command is CLI only |

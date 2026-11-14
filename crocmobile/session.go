@@ -153,12 +153,11 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 		Exclude:          splitNonEmpty(o.Exclude, "\n"),
 		NoPrompt:         sender || o.AutoAccept, // sender-side prompts only exist for Ask
 		Ask:              o.Ask,
-		NoMultiplexing:   o.NoMultiplexing,
 		IgnoreStdin:      true,
 		DisableClipboard: true,
 		Quiet:            false, // Quiet=true nukes process stderr globally
 		IP:               strings.TrimSpace(o.PeerIP),
-		MulticastAddress: strings.TrimSpace(o.MulticastAddress),
+		MulticastAddress: crocMulticastAddress,
 	}
 	optionsPolicy(o).apply(&co)
 	return co, nil
@@ -231,19 +230,7 @@ func sendFilesInfo(ctx context.Context, paths []string, o *Options) ([]croc.File
 		}
 		literal[i] = p
 	}
-	return croc.GetFilesInfoWithExactExclusionsContext(ctx, literal, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"), exactExclusions(o.ExcludePaths))
-}
-
-// exactExclusions is croc's --exclude-file list: relative paths, normalized the
-// way the CLI does before it compares them.
-func exactExclusions(joined string) []string {
-	var out []string
-	for _, p := range splitNonEmpty(joined, "\n") {
-		if p = utils.NormalizeRelativePath(p); p != "." {
-			out = append(out, p)
-		}
-	}
-	return out
+	return croc.GetFilesInfoContext(ctx, literal, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"))
 }
 
 var globEscaper = strings.NewReplacer(`\`, `\\`, `*`, `\*`, `?`, `\?`, `[`, `\[`)

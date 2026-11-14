@@ -133,10 +133,6 @@ import Testing
         #expect(
             Set(AppSettings.Key.allCases.map(\.rawValue)) == [
                 "settings.advanced.disableLocal",
-                "settings.advanced.excludePaths",
-                "settings.advanced.internalDNS",
-                "settings.advanced.multicastAddress",
-                "settings.advanced.noMultiplexing",
                 "settings.advanced.peerIP",
                 "settings.advanced.throttleUpload",
                 "settings.autoAccept",
@@ -168,6 +164,17 @@ import Testing
         _ = makeSettings()
 
         #expect(storage.values["settings.indexHistoryInSpotlight"] == nil)
+    }
+
+    @Test func launchRemovesWhatTheRemovedAdvancedOptionsLeftBehind() {
+        let removed = ["multicastAddress", "internalDNS", "noMultiplexing", "excludePaths"]
+        for key in removed { storage.set("x", forKey: "settings.advanced.\(key)") }
+        storage.set("500k", forKey: "settings.advanced.throttleUpload")
+
+        _ = makeSettings()
+
+        for key in removed { #expect(storage.values["settings.advanced.\(key)"] == nil, "\(key)") }
+        #expect(storage.values["settings.advanced.throttleUpload"] as? String == "500k")
     }
 
     @Test func launchRemovesWhatTheRemovedRelayHostLeftBehind() {

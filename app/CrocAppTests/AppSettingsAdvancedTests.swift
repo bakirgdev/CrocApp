@@ -15,26 +15,18 @@ import Testing
 
     private func setNonDefaults(_ s: AppSettings) {
         s.throttleUpload = "500k"
-        s.multicastAddress = "224.0.0.251"
         s.peerIP = "10.0.0.1:9100"
         s.socks5Proxy = "socks5://user:secret@proxy.example:1080"
         s.httpProxy = "http://user:secret@proxy.example:3128"
         s.disableLocal = true
-        s.noMultiplexing = true
-        s.internalDNS = true
-        s.excludePaths = "src/notes.txt\nbuild"
         s.flushSecrets()
     }
 
     @Test func freshDefaultsAreCrocs() {
         let s = makeSettings()
         #expect(s.throttleUpload == "")
-        #expect(s.multicastAddress == "239.255.255.250")
         #expect(s.peerIP == "")
         #expect(!s.disableLocal)
-        #expect(!s.noMultiplexing)
-        #expect(!s.internalDNS)
-        #expect(s.excludePaths == "")
         #expect(s.socks5Proxy == "")
         #expect(s.httpProxy == "")
         #expect(s.advancedIsDefault)
@@ -45,12 +37,8 @@ import Testing
 
         let r = makeSettings()
         #expect(r.throttleUpload == "500k")
-        #expect(r.multicastAddress == "224.0.0.251")
         #expect(r.peerIP == "10.0.0.1:9100")
         #expect(r.disableLocal)
-        #expect(r.noMultiplexing)
-        #expect(r.internalDNS)
-        #expect(r.excludePaths == "src/notes.txt\nbuild")
         #expect(r.socks5Proxy == "socks5://user:secret@proxy.example:1080")
         #expect(r.httpProxy == "http://user:secret@proxy.example:3128")
         #expect(!r.advancedIsDefault)
@@ -60,12 +48,8 @@ import Testing
     @Test func eachSettingPersistsAlone() {
         let edits: [(String, (AppSettings) -> Void)] = [
             ("throttle", { $0.throttleUpload = "2m" }),
-            ("multicast", { $0.multicastAddress = "224.0.0.251" }),
             ("peerIP", { $0.peerIP = "10.0.0.1:9009" }),
             ("disableLocal", { $0.disableLocal = true }),
-            ("noMultiplexing", { $0.noMultiplexing = true }),
-            ("internalDNS", { $0.internalDNS = true }),
-            ("excludePaths", { $0.excludePaths = "a.txt" }),
             ("socks5", { $0.socks5Proxy = "proxy.example:1080" }),
             ("http", { $0.httpProxy = "proxy.example:3128" }),
         ]
@@ -78,9 +62,7 @@ import Testing
             let r = AppSettings(storage: storage, secrets: secrets)
             let changed = [
                 "throttle": r.throttleUpload != "",
-                "multicast": r.multicastAddress != "239.255.255.250", "peerIP": r.peerIP != "",
-                "disableLocal": r.disableLocal, "noMultiplexing": r.noMultiplexing,
-                "internalDNS": r.internalDNS, "excludePaths": r.excludePaths != "",
+                "peerIP": r.peerIP != "", "disableLocal": r.disableLocal,
                 "socks5": r.socks5Proxy != "", "http": r.httpProxy != "",
             ]
             for (other, isChanged) in changed {
@@ -163,9 +145,7 @@ import Testing
         let r = makeSettings()
         #expect(r.advancedIsDefault)
         #expect(r.throttleUpload == "")
-        #expect(r.multicastAddress == "239.255.255.250")
-        #expect(!r.disableLocal && !r.noMultiplexing && !r.internalDNS)
-        #expect(r.excludePaths == "")
+        #expect(!r.disableLocal)
         #expect(r.socks5Proxy == "")
         #expect(secrets.items.isEmpty, "reset deletes the saved proxies")
         #expect(r.relayAddress == "relay.example:9009", "reset leaves the other settings alone")

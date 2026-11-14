@@ -64,21 +64,19 @@ func mustBuildCrocOptions(t *testing.T, sender bool, secret string, o *Options) 
 
 func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 	o := &Options{
-		RelayAddress:     "relay4.example:9009",
-		RelayAddress6:    "relay6.example:9009",
-		RelayPassword:    "relaypass",
-		PeerIP:           "10.0.0.1:9100",
-		MulticastAddress: " 239.1.2.3 ",
-		ThrottleUpload:   "500k",
-		Exclude:          "node_modules\n .git \n\nbuild",
-		DisableLocal:     true,
-		OnlyLocal:        true,
-		NoCompress:       true,
-		ZipFolder:        true,
-		GitIgnore:        true,
-		Overwrite:        true,
-		Ask:              true,
-		NoMultiplexing:   true,
+		RelayAddress:   "relay4.example:9009",
+		RelayAddress6:  "relay6.example:9009",
+		RelayPassword:  "relaypass",
+		PeerIP:         "10.0.0.1:9100",
+		ThrottleUpload: "500k",
+		Exclude:        "node_modules\n .git \n\nbuild",
+		DisableLocal:   true,
+		OnlyLocal:      true,
+		NoCompress:     true,
+		ZipFolder:      true,
+		GitIgnore:      true,
+		Overwrite:      true,
+		Ask:            true,
 	}
 	got := mustBuildCrocOptions(t, false, "secret-code", o)
 
@@ -90,7 +88,7 @@ func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 		RelayPassword:    "relaypass",
 		RelayPorts:       []string{"9009", "9010", "9011", "9012", "9013"},
 		IP:               "10.0.0.1:9100",
-		MulticastAddress: "239.1.2.3",
+		MulticastAddress: "239.255.255.250",
 		Curve:            "p256",
 		ThrottleUpload:   "500k",
 		DisableLocal:     true,
@@ -102,7 +100,6 @@ func TestBuildCrocOptionsFieldMapping(t *testing.T) {
 		Overwrite:        true,
 		NoPrompt:         false,
 		Ask:              true,
-		NoMultiplexing:   true,
 		IgnoreStdin:      true,
 		DisableClipboard: true,
 		Quiet:            false,
@@ -126,7 +123,6 @@ func TestBuildCrocOptionsBoolsMapIndependently(t *testing.T) {
 		{"GitIgnore", func(o *Options) { o.GitIgnore = true }, func(c croc.Options) bool { return c.GitIgnore }},
 		{"Overwrite", func(o *Options) { o.Overwrite = true }, func(c croc.Options) bool { return c.Overwrite }},
 		{"Ask", func(o *Options) { o.Ask = true }, func(c croc.Options) bool { return c.Ask }},
-		{"NoMultiplexing", func(o *Options) { o.NoMultiplexing = true }, func(c croc.Options) bool { return c.NoMultiplexing }},
 	}
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1167,40 +1163,4 @@ func TestCancelWatchdogQuietWhenCrocReturns(t *testing.T) {
 		t.Fatal(err)
 	}
 	activeMu.Unlock()
-}
-
-// ExcludePaths matches whole relative paths inside a sent folder, and a picked
-// file by its name, unlike Exclude, which matches substrings.
-func TestSendFilesInfoExcludesExactPaths(t *testing.T) {
-	dir := t.TempDir()
-	root := filepath.Join(dir, "proj")
-	for _, rel := range []string{"keep.txt", "secret.txt", "src/secret.txt", "src/secret.txt.bak", "node/x.js"} {
-		p := filepath.Join(root, rel)
-		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(p, []byte(rel), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	names := func(o *Options, paths ...string) []string {
-		files, _, _, err := sendFilesInfo(context.Background(), paths, o)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var got []string
-		for _, f := range files {
-			got = append(got, strings.TrimPrefix(f.FolderRemote+f.Name, "./"))
-		}
-		sort.Strings(got)
-		return got
-	}
-	got := names(&Options{ExcludePaths: " src/secret.txt \n\n./node\n"}, root)
-	want := []string{"proj/keep.txt", "proj/secret.txt", "proj/src/secret.txt.bak"}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("folder send = %q, want %q", got, want)
-	}
-	if got := names(&Options{ExcludePaths: "keep.txt"}, filepath.Join(root, "keep.txt")); len(got) != 0 {
-		t.Errorf("picked file named in ExcludePaths still sent: %q", got)
-	}
 }

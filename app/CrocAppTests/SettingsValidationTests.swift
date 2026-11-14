@@ -35,11 +35,6 @@ import Testing
             valid: ["", "proxy.example:3128", "https://user:secret@proxy.example:443/"],
             invalid: ["socks5://proxy.example:1080", "user:secret@proxy.example", "http://:3128"]),
         Field(
-            name: "multicast address", check: { AppSettings.multicastAddressError($0) },
-            message: "Enter an IPv4 multicast address from 224.0.0.0 to 239.255.255.255.",
-            valid: ["", "239.255.255.250", " 224.0.0.1 "],
-            invalid: ["10.0.0.1", "ff02::1", "239.255.255.0250", "239.255.255.256"]),
-        Field(
             name: "sender IP", check: { AppSettings.senderIPError($0) },
             message:
                 "Enter the sender's address and port, such as 192.168.1.20:9009. The port must be a number from 1 to 65535.",
@@ -51,12 +46,6 @@ import Testing
             valid: ["", "500k", "2M", "1g", "1000", "10"],
             // "5": croc quietly ignores a one-character value.
             invalid: ["5", "k", "0k", "-5k", "1.5m", "5kb"]),
-        Field(
-            name: "excluded paths", check: { AppSettings.excludePathsError($0) },
-            message:
-                "Enter one path per line, relative to the folder you send, such as src/secret.txt. Use / between folders. Paths that start with /, contain \\ or leave the folder are not allowed.",
-            valid: ["", "  ", "src/secret.txt", "a.txt\n\n ./b/c.txt "],
-            invalid: ["/etc/passwd", "../outside", "ok.txt\n..", ".", "dir\\file.txt"]),
         Field(
             name: "link server", check: { AppSettings.storedServerError($0) },
             message:
@@ -95,8 +84,8 @@ import Testing
             #expect(AppSettings.throttleError("500k") == nil)
             #expect(AppSettings.throttleError("5") != nil)
             #expect(AppSettings.throttleError("5") != nil)
-            #expect(AppSettings.multicastAddressError("5") != nil)
-            #expect(AppSettings.multicastAddressError("224.0.0.1") == nil)
+            #expect(AppSettings.senderIPError("5") != nil)
+            #expect(AppSettings.senderIPError("10.0.0.1:9009") == nil)
             #expect(
                 AppSettings.throttleError("500k") == nil, "another field's check changed nothing")
         }
@@ -104,7 +93,6 @@ import Testing
 
     @Test func defaultsAreValid() {
         let defaults = AppSettings.advancedDefaults
-        #expect(AppSettings.multicastAddressError(defaults.multicastAddress) == nil)
         #expect(AppSettings.throttleError(defaults.throttleUpload) == nil)
         #expect(AppSettings.senderIPError(defaults.peerIP) == nil)
         #expect(AppSettings.storedServerError(AppSettings.defaultStoredServer) == nil)

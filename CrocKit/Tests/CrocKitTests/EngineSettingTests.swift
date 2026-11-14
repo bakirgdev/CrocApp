@@ -12,9 +12,7 @@ import Testing
         .socks5Proxy: "proxy.example:1080",
         .httpProxy: "http://proxy.example:3128",
         .throttleUpload: "500k",
-        .multicastAddress: "239.255.255.250",
         .peerIP: "10.0.0.1:9009",
-        .excludePaths: "src/secret.txt\nbuild",
         .storeServer: "https://getcroc.com",
     ]
 
@@ -23,9 +21,7 @@ import Testing
         .socks5Proxy: "proxy.example",
         .httpProxy: "ftp://proxy.example:21",
         .throttleUpload: "5",
-        .multicastAddress: "10.0.0.1",
         .peerIP: "10.0.0.1",
-        .excludePaths: "../outside",
         .storeServer: "http://example.com",
     ]
 

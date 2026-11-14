@@ -4,11 +4,9 @@
 # forced relay (LAN disabled), LAN-only, a croc v10 peer both directions, a
 # receive onto existing files with Keep Both and Replace, a 130 MiB transfer
 # in each direction that must not use Tailcat, stored transfers against a
-# local store server,
-# the Advanced options that change the wire (sender IP,
-# multicast group, proxies), a small-file bundle in each direction, and, with
-# PUBLIC_POOL=1, every public pool relay
-# (custom, wrapper-generated and CLI-generated codes).
+# local store server, the Advanced options that change the wire (sender IP,
+# proxies), a small-file bundle in each direction, and, with PUBLIC_POOL=1,
+# every public pool relay (custom, wrapper-generated and CLI-generated codes).
 # Exits non-zero on first failure.
 #
 # Every transfer goes through a `croc relay` this script starts on free
@@ -452,9 +450,6 @@ wait "$STORE_PID" 2> /dev/null || true
 #    and the four after it, so a receiver given the sender IP reaches it
 #    there, and the banner it reads lists the data ports. A CLI sender on
 #    another port is reached by the same setting.
-#  - multicast: croc's peer discovery drops packets from the host's own
-#    addresses, so two peers on one host never find each other. A listener on
-#    the group sees what each side announces instead.
 #  - proxies: further down, with the public pool.
 # The CLI runs with a throwaway config dir, because it remembers its flags.
 SCENARIO=15
@@ -505,55 +500,6 @@ P=$(free_port) || fail "sender IP: no free port range"
 timeout 30 "$CT" receive -ip "127.0.0.1:$P" -out "$TMP/dst15pt3" -answer y "$(code pt3)" > "$TMP/15pt3.log" 2>&1 && fail "sender IP: receive from a dead sender IP exited 0"
 grep -q 'EVENT error {"code":"relayUnreachable"' "$TMP/15pt3.log" || fail "sender IP: dead sender IP: not relayUnreachable"
 pass "sender IP: a sender IP with nothing listening fails with relayUnreachable"
-
-# 15 multicast. Each side announces on the group it was given: a sender
-# "croc<base port>", a receiver "ok". The CLI cases show the listener sees what
-# real croc sends, and the last case that another group stays unheard.
-MC_GROUP=239.255.42.99
-MC_OTHER=239.255.42.98
-mc_listen() { # mc_listen GROUP LOG: join for 6 s in the background
-  "$CT" multicast-listen "$1" 6 > "$2" 2>&1 &
-  MC_PID=$!
-  sleep 1
-}
-mc_heard() { # mc_heard LOG PAYLOAD LABEL
-  wait "$MC_PID" || fail "multicast: listener failed ($3)"
-  grep -qx "MULTICAST-PAYLOAD $2" "$1" || fail "multicast: $3: group did not carry '$2'"
-}
-if "$CT" multicast-listen "$MC_GROUP" 1 > "$TMP/15mcprobe.log" 2>&1; then
-  default_ports_free
-  C=$(code mc1)
-  mc_listen "$MC_GROUP" "$TMP/15mc1.listen"
-  timeout 4 "$CT" send -only-local -multicast "$MC_GROUP" -code "$C" "$TMP/src/a.txt" > "$TMP/15mc1.log" 2>&1 || true
-  mc_heard "$TMP/15mc1.listen" "croc9009" "wrapper sender"
-  pass "multicast: wrapper -multicast $MC_GROUP announces croc9009 on that group"
-
-  C=$(code mc2)
-  mc_listen "$MC_GROUP" "$TMP/15mc2.listen"
-  timeout 4 "$CT" receive -only-local -multicast "$MC_GROUP" -out "$TMP/dst15mc" -answer y "$C" > "$TMP/15mc2.log" 2>&1 || true
-  mc_heard "$TMP/15mc2.listen" "ok" "wrapper receiver"
-  pass "multicast: wrapper receive -multicast $MC_GROUP looks for senders on that group"
-
-  P=$(free_port) || fail "multicast: no free port range"
-  C=$(code mc3)
-  mc_listen "$MC_GROUP" "$TMP/15mc3.listen"
-  (cd "$TMP/src" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 4 "$CROC" --disable-clipboard --ignore-stdin --local --multicast "$MC_GROUP" send --port "$P" a.txt) > "$TMP/15mc3.cli" 2>&1 || true
-  mc_heard "$TMP/15mc3.listen" "croc$P" "CLI sender"
-  C=$(code mc4)
-  mc_listen "$MC_GROUP" "$TMP/15mc4.listen"
-  CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 4 "$CROC" --disable-clipboard --local --multicast "$MC_GROUP" --yes --out "$TMP/dst15mc" > "$TMP/15mc4.cli" 2>&1 || true
-  mc_heard "$TMP/15mc4.listen" "ok" "CLI receiver"
-  pass "multicast: the CLI announces the same payloads on the same group"
-
-  C=$(code mc5)
-  mc_listen "$MC_GROUP" "$TMP/15mc5.listen"
-  timeout 4 "$CT" send -only-local -multicast "$MC_OTHER" -code "$C" "$TMP/src/a.txt" > "$TMP/15mc5.log" 2>&1 || true
-  wait "$MC_PID" || fail "multicast: listener failed (mismatch)"
-  ! grep -q '^MULTICAST-PAYLOAD' "$TMP/15mc5.listen" || fail "multicast mismatch: a sender on $MC_OTHER was heard on $MC_GROUP"
-  pass "multicast mismatch: a sender on $MC_OTHER is not heard on $MC_GROUP"
-else
-  echo "SKIP: multicast cases (15): this host has no multicast interface to join"
-fi
 
 # 13. Large files without Tailcat. crocmobile is built with croc's
 # croc_no_tailcat tag, so a transfer of 128 MiB or more, which the stock CLI
@@ -646,7 +592,7 @@ proxy_send() { # proxy_send KIND FLAG: wrapper sends through the proxy, CLI rece
   mkdir -p "$L"
   start_proxy "$kind"
   mark_relay
-  timeout 100 "$CT" send ${PX_R:+"$PX_R"} -no-local -no-multi "$flag" "$PROXY_ADDR" -code "$C" "$TMP/src/a.txt" > "$L.log" 2>&1 &
+  timeout 100 "$CT" send ${PX_R:+"$PX_R"} -no-local "$flag" "$PROXY_ADDR" -code "$C" "$TMP/src/a.txt" > "$L.log" 2>&1 &
   job=$!
   sender_ready "$L.log" 4
   (cd "$L" && CROC_CONFIG_DIR="$CFG15" CROC_SECRET="$C" timeout 80 "$CROC" ${CLI_R:+"$CLI_R"} --debug --yes --overwrite) > "$L.cli" 2>&1 || true
@@ -739,7 +685,7 @@ pool_send_custom() { # pool_send_custom INDEX RELAY
   local L="$TMP/11-$1-cs" C
   C=$(pool_code "p$1" "$2") || fail "relay $1: no custom code maps to $2"
   mark_relay
-  timeout 120 "$CT" send -no-local -no-multi -code "$C" "$TMP/src/a.txt" > "$L.log" 2>&1 &
+  timeout 120 "$CT" send -no-local -code "$C" "$TMP/src/a.txt" > "$L.log" 2>&1 &
   sender_ready "$L.log"
   mkdir -p "$L"
   (cd "$L" && CROC_SECRET="$C" timeout 90 "$CROC" --debug --yes --overwrite) > "$L.cli" 2>&1 || true
@@ -764,7 +710,7 @@ pool_receive_custom() { # pool_receive_custom INDEX RELAY
 }
 pool_send_generated() { # pool_send_generated INDEX RELAY
   local L="$TMP/11-$1-gs" C
-  timeout 120 "$CT" send -no-local -no-multi -relay-index "$1" "$TMP/src/a.txt" > "$L.log" 2>&1 &
+  timeout 120 "$CT" send -no-local -relay-index "$1" "$TMP/src/a.txt" > "$L.log" 2>&1 &
   C=$(await_code "$L.log") || fail "relay $1: wrapper printed no generated code"
   grep -q "EVENT relay $2" "$L.log" || fail "relay $1: generated code not on $2"
   sleep 3 # a pool relay's log is not ours to read: no signal, so a fixed wait

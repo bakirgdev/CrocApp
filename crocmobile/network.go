@@ -6,25 +6,23 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/schollz/croc/v11/src/comm"
-	"github.com/schollz/croc/v11/src/models"
 	"github.com/schollz/croc/v11/src/storeclient"
 )
 
 // croc CLI defaults the library does not apply itself (cli.go: --port,
-// --transfers, --curve, --multicast). Curve and ports are fixed: neither is a
-// setting, because a receiver's curve is adopted by the sender and the ports
-// only matter to a peer that dials this side directly.
+// --transfers, --curve, --multicast). None is a setting: a receiver's curve is
+// adopted by the sender, the ports only matter to a peer that dials this side
+// directly, and a LAN peer must use the same multicast group.
 const (
-	crocBasePort            = 9009
-	crocTransfers           = 4
-	crocCurve               = "p256"
-	DefaultMulticastAddress = "239.255.255.250"
+	crocBasePort         = 9009
+	crocTransfers        = 4
+	crocCurve            = "p256"
+	crocMulticastAddress = "239.255.255.250"
 )
 
 // relayPorts is the send command's port list (cli.go send): the base port,
@@ -44,27 +42,23 @@ func invalidSetting(format string, args ...any) error {
 // The names ValidateSetting accepts. Each is the Options field of the same
 // name, except SettingStoreServer, which is StoreOptions.Server.
 const (
-	SettingSocks5Proxy      = "Socks5Proxy"
-	SettingHTTPProxy        = "HTTPProxy"
-	SettingThrottleUpload   = "ThrottleUpload"
-	SettingMulticastAddress = "MulticastAddress"
-	SettingPeerIP           = "PeerIP"
-	SettingExcludePaths     = "ExcludePaths"
-	SettingStoreServer      = "StoreServer"
+	SettingSocks5Proxy    = "Socks5Proxy"
+	SettingHTTPProxy      = "HTTPProxy"
+	SettingThrottleUpload = "ThrottleUpload"
+	SettingPeerIP         = "PeerIP"
+	SettingStoreServer    = "StoreServer"
 )
 
 // settingChecks is the one place a setting's check is named. A transfer start
-// runs the six network checks through validateNetworkOptions, and
+// runs the four network checks through validateNetworkOptions, and
 // ValidateSetting runs any of them for a settings form, so the two cannot
 // disagree.
 var settingChecks = map[string]func(value string) error{
-	SettingSocks5Proxy:      validateSocks5Proxy,
-	SettingHTTPProxy:        validateHTTPProxy,
-	SettingThrottleUpload:   validateThrottle,
-	SettingMulticastAddress: validateMulticastAddress,
-	SettingPeerIP:           validatePeerIP,
-	SettingExcludePaths:     validateExcludePaths,
-	SettingStoreServer:      validateStoreServer,
+	SettingSocks5Proxy:    validateSocks5Proxy,
+	SettingHTTPProxy:      validateHTTPProxy,
+	SettingThrottleUpload: validateThrottle,
+	SettingPeerIP:         validatePeerIP,
+	SettingStoreServer:    validateStoreServer,
 }
 
 // ValidateSetting reports whether the engine accepts value for the setting
@@ -94,9 +88,7 @@ func validateNetworkOptions(o *Options) error {
 		{SettingSocks5Proxy, o.Socks5Proxy},
 		{SettingHTTPProxy, o.HTTPProxy},
 		{SettingThrottleUpload, o.ThrottleUpload},
-		{SettingMulticastAddress, o.MulticastAddress},
 		{SettingPeerIP, o.PeerIP},
-		{SettingExcludePaths, o.ExcludePaths},
 	} {
 		if err := settingChecks[c.field](c.value); err != nil {
 			return err
@@ -116,18 +108,6 @@ func validateNetworkOptions(o *Options) error {
 func validateStoreServer(value string) error {
 	if err := validateStoreOrigin(value); err != nil {
 		return &codedError{codeInvalidSetting, err}
-	}
-	return nil
-}
-
-func validateMulticastAddress(value string) error {
-	m := strings.TrimSpace(value)
-	if m == "" {
-		return nil
-	}
-	ip := net.ParseIP(m)
-	if ip == nil || ip.To4() == nil || !ip.IsMulticast() {
-		return invalidSetting("multicast address %q is not an IPv4 multicast address", m)
 	}
 	return nil
 }
@@ -195,28 +175,6 @@ func proxyURL(value, defaultScheme string, schemes ...string) (*url.URL, error) 
 	return nil, invalidSetting("%s proxy scheme must be one of %s", defaultScheme, strings.Join(schemes, ", "))
 }
 
-// validateExcludePaths accepts one relative path per line, as croc's
-// --exclude-file compares them: exactly, against a path inside the sent folder.
-// An absolute path or one that climbs out with ".." can never match, so a typo
-// would silently exclude nothing.
-func validateExcludePaths(value string) error {
-	for _, line := range strings.Split(value, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		// Almost always a mistyped separator, and it would silently exclude nothing.
-		if strings.Contains(line, `\`) {
-			return invalidSetting("excluded path %q uses a backslash, write / between folders", line)
-		}
-		clean := path.Clean(line)
-		if path.IsAbs(clean) || clean == "." || clean == ".." || strings.HasPrefix(clean, "../") {
-			return invalidSetting("excluded path %q is not a path inside the folder", line)
-		}
-	}
-	return nil
-}
-
 // validateThrottle accepts croc's upload limit format: bytes per second,
 // optionally followed by k, m or g. croc panics on anything else and on zero,
 // and silently ignores a one-character value, so those are refused here.
@@ -236,17 +194,16 @@ func validateThrottle(value string) error {
 	return nil
 }
 
-// setNetworkGlobals points croc's process-wide proxy and DNS settings at o and returns
+// setNetworkGlobals points croc's process-wide proxy settings at o and returns
 // the function that puts the previous values back. croc reads these at dial
 // time, so they are only written while activeMu is held, and the restore runs
 // before the lock is released.
 func setNetworkGlobals(o *Options) (restore func()) {
-	socks5, httpProxy, internalDNS := comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS
+	socks5, httpProxy := comm.Socks5Proxy, comm.HttpProxy
 	comm.Socks5Proxy = strings.TrimSpace(o.Socks5Proxy)
 	comm.HttpProxy = strings.TrimSpace(o.HTTPProxy)
-	models.INTERNAL_DNS = o.InternalDNS
 	return func() {
-		comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS = socks5, httpProxy, internalDNS
+		comm.Socks5Proxy, comm.HttpProxy = socks5, httpProxy
 	}
 }
 
