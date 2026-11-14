@@ -93,12 +93,13 @@ The script owns the list of paths swift-format covers: `app/CrocApp`, `app/CrocA
 
 **Trap**: `format --in-place` does not fix lint-only rules. Several enabled rules only flag and never rewrite (for example `ReplaceForEachWithForLoop`, `OnlyOneTrailingClosureArgument`, `AlwaysUseLowerCamelCase`). A clean `format` run is not evidence that `lint --strict` passes, which is why the script always runs both. The full list is in `docs/knowledge/tooling.md`, "swift-format traps".
 
-Shell scripts and workflows, from the repo root (the first two are what CI runs; every script answers `--help`):
+Shell scripts and workflows, from the repo root (the first three are what CI runs; every script answers `--help`):
 
 ```bash
 shellcheck -x scripts/*.sh
 shfmt -d scripts              # style from .editorconfig; shfmt -w scripts rewrites
-actionlint && zizmor --pedantic .github/workflows/
+actionlint                    # CI runs a pinned release of it too
+zizmor --pedantic .github/workflows/
 ```
 
 Go, from `crocmobile/`. The engine ships without Tailcat, so every command needs the build tag (`golangci-lint` reads it from `.golangci.yml`). Export it once per shell:

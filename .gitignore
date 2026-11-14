@@ -1,10 +1,9 @@
-# macOS
+# OS
 .DS_Store
 ._*
 
-# Secrets and signing material
+# Secrets and signing
 .env*
-!.envrc.example
 *.p8
 *.p12
 *.cer
@@ -12,45 +11,28 @@
 *.mobileprovision
 *.provisionprofile
 
-# Xcode
+# Swift and Xcode
 DerivedData/
 xcuserdata/
-
-# Swift Package Manager
 .build/
 .swiftpm/
+/buildServer.json
 
-# gomobile toolchain and its output
+# Engine and site output
 /.tools/
 CrocKit/Croc.xcframework/
-
-# croctest built in place
 crocmobile/cmd/croctest/croctest
-
-# Node / Docusaurus
 node_modules/
 .docusaurus/
-
-# Build output
 /web/docs/build/
 /_site/
 /dist/
-
-# Screenshot captures: only their WebP copies under web/ are tracked
 /assets/screenshots/
-
-# Copied from design/ and web/landing/ at build time
 web/landing/tokens.css
 web/docs/src/css/tokens.css
 web/docs/static/img/mascot.webp
 
-# Editors
-.idea/
-.vscode/
-*.swp
-
 # Local tooling
 *.log
 .claude/settings.local.json
-/buildServer.json
 .claude/worktrees/
