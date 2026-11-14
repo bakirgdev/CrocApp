@@ -126,7 +126,8 @@ func serveStore(dir string) {
 }
 
 func printRelay(code string) {
-	fmt.Fprintf(os.Stderr, "EVENT relay %s\n", crocmobile.RelayForCode(code))
+	relay, _ := relaycache.ForCode(code)
+	fmt.Fprintf(os.Stderr, "EVENT relay %s\n", relay)
 }
 
 func main() {
@@ -141,7 +142,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "relay needs CODE")
 			os.Exit(2)
 		}
-		fmt.Println(crocmobile.RelayForCode(os.Args[2]))
+		relay, _ := relaycache.ForCode(os.Args[2])
+		fmt.Println(relay)
 		return
 	case "store-server":
 		if len(os.Args) != 3 {

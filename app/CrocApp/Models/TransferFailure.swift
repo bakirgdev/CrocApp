@@ -33,6 +33,14 @@ struct TransferFailure: Equatable {
         guard let detail else { return title }
         return "\(title). \(detail)"
     }
+
+    /// What to tell the user when revoking a stored link threw `error`.
+    static func revokeText(for error: any Error) -> String {
+        guard let failure = error as? EngineFailure else {
+            return String(localized: "Try again in a moment.")
+        }
+        return TransferFailure(failure, situation: .init(isStored: true)).text
+    }
 }
 
 /// Where the fix for a failure lives.

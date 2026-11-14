@@ -12,6 +12,14 @@ public enum RelayDefaults {
     }
 }
 
+/// Limits the engine enforces, read from its constants so the UI cannot drift.
+public enum EngineLimits {
+    /// The shortest code phrase a transfer accepts, in bytes.
+    public static let minCodeLength = Int(CrocmobileMinCodeLength)
+    /// The most downloads a stored upload can allow.
+    public static let storeMaxDownloads = Int(CrocmobileStoreMaxDownloads)
+}
+
 /// A setting whose value the engine checks. `validate(_:)` runs the check a
 /// transfer start runs, so a settings form shows an error exactly when the
 /// transfer would refuse the value, and never tells the two apart.
@@ -54,8 +62,8 @@ public enum EngineSetting: Sendable, CaseIterable {
 }
 
 /// What a receive does with an incoming file whose name already exists.
-/// Raw values mirror `PolicyKeepBoth` and `PolicyReplace` in
-/// `crocmobile/crocmobile.go`.
+/// Raw values are `PolicyKeepBoth` and `PolicyReplace` in
+/// `crocmobile/crocmobile.go`; a CrocKit test pins them.
 public enum FilePolicy: String, Sendable, CaseIterable {
     /// The existing file stays; croc saves the new one as "name (1).ext". A
     /// partly received file is not resumed. In a zipped folder, members that
@@ -183,10 +191,6 @@ public struct StoredReceipt: Codable, Sendable, Equatable {
         self.downloads = downloads
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case id, origin, uploadToken, link, expiresAt, downloads
-    }
-
     /// The engine writes `expiresAt` as RFC 3339 in UTC, whole seconds.
     static func decoder() -> JSONDecoder {
         let decoder = JSONDecoder()
@@ -205,7 +209,7 @@ extension StoredReceipt: CustomStringConvertible, CustomDebugStringConvertible {
 /// a `downloads` above its limit with `EngineFailure.Code.storeLimit`.
 public struct StoredSendOptions: Sendable {
     public var server = "https://getcroc.com"
-    /// 1 to 100.
+    /// 1 through `EngineLimits.storeMaxDownloads`.
     public var downloads = 1
     public var lifetimeSeconds = 86_400
     public var proxy = ProxySettings()
@@ -295,6 +299,19 @@ public struct TransferProgress: Codable, Sendable, Equatable {
     /// no byte count or percent here is current (`crocmobile-bridge.md`, "Event
     /// and JSON contract").
     public var isBundling: Bool { step == "bundling" }
+
+    /// The sender is still waiting for the receiver; the code screen stays up.
+    public var isWaiting: Bool { step == "waiting" }
+
+    /// Bytes moved so far across the whole transfer.
+    public var bytesDone: Int64 { bytesFinished + fileSent }
+
+    /// The whole transfer as an integer percent, clamped to 0...100; nil when
+    /// its total size is unknown or the bytes are not tracked (bundling).
+    public var percent: Int? {
+        guard totalSize > 0, !isBundling else { return nil }
+        return min(100, max(0, Int((Double(bytesDone) / Double(totalSize) * 100).rounded())))
+    }
 }
 
 public struct Summary: Codable, Sendable, Equatable {

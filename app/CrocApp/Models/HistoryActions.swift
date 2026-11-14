@@ -25,10 +25,8 @@ final class HistoryActions {
         do {
             try await controller.revoke(record)
             return nil
-        } catch let failure as EngineFailure {
-            return TransferFailure(failure, situation: .init(isStored: true)).text
         } catch {
-            return String(localized: "Try again in a moment.")
+            return TransferFailure.revokeText(for: error)
         }
     }
 

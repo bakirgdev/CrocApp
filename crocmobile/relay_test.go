@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bakirgdev/CrocApp/crocmobile/internal/relaycache"
 	"github.com/schollz/croc/v11/src/publicrelay"
 )
 
@@ -56,8 +57,8 @@ func TestPublicRelays(t *testing.T) {
 
 func TestRelayForCode(t *testing.T) {
 	for idx, code := range customCodes(t) {
-		if got := RelayForCode(code); got != wantPool[idx] {
-			t.Errorf("RelayForCode(%q) = %q, want %q", code, got, wantPool[idx])
+		if got, err := relaycache.ForCode(code); err != nil || got != wantPool[idx] {
+			t.Errorf("relaycache.ForCode(%q) = %q, %v, want %q", code, got, err, wantPool[idx])
 		}
 	}
 }

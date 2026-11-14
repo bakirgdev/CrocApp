@@ -61,7 +61,7 @@ jobs:
           }
 
           {
-            out go '^crocmobile/|^\.github/workflows/(ci|reusable-go)\.yml$'
+            out go '^crocmobile/|^CrocKit/Sources/CrocKit/Models\.swift$|^\.github/workflows/(ci|reusable-go)\.yml$'
             out build '^(app|CrocKit|crocmobile)/|^scripts/(screenshots/|.*\.swift$)|^scripts/(lib|build-xcframework|format-swift)\.sh$|^\.swift-format$|^\.xcode-version$|^\.github/workflows/ci\.yml$'
             out interop '^(crocmobile|CrocKit)/|^scripts/(lib|verify-interop)\.sh$|^scripts/croc-v10\.version$|^\.github/workflows/ci\.yml$'
           } | tee -a "$GITHUB_OUTPUT"

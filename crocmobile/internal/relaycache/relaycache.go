@@ -3,7 +3,23 @@
 // croctest can seed it without adding to the gobind API.
 package relaycache
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/schollz/croc/v11/src/codephrase"
+	"github.com/schollz/croc/v11/src/publicrelay"
+)
+
+// ForCode returns the public pool relay that code maps to, the one both peers
+// use when neither sets a custom relay.
+func ForCode(code string) (string, error) {
+	relays := publicrelay.Relays()
+	index, err := codephrase.RelayIndex(code, len(relays))
+	if err != nil {
+		return "", err
+	}
+	return relays[index], nil
+}
 
 var best struct {
 	sync.Mutex

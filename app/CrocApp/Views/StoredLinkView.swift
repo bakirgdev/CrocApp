@@ -1,11 +1,5 @@
-import Accessibility
 import CrocKit
-import QuickLook
 import SwiftUI
-
-#if os(macOS)
-import AppKit
-#endif
 
 /// The result of a Send as Link: the link, its QR, Copy and Share, and Revoke
 /// (components.md → StatusBlock). Revoke is here for every link, so one sent
@@ -123,10 +117,8 @@ struct StoredLinkView: View {
             do {
                 try await controller.revoke(receipt)
                 revoked = true
-            } catch let failure as EngineFailure {
-                revokeFailure = TransferFailure(failure, situation: .init(isStored: true)).text
             } catch {
-                revokeFailure = String(localized: "Try again in a moment.")
+                revokeFailure = TransferFailure.revokeText(for: error)
             }
         }
     }

@@ -472,6 +472,16 @@ func TestProgressStateJSON(t *testing.T) {
 	}
 }
 
+// The interop harness greps these exact bytes.
+func TestPayloadKeyOrder(t *testing.T) {
+	if got, want := (summaryPayload{2, true, 42}).json(), `{"files":2,"success":true,"totalSize":42}`; got != want {
+		t.Errorf("summary = %s, want %s", got, want)
+	}
+	if got, want := (fileListPayload{1, []fileEntry{{"a", 3}}, 3}).json(), `{"emptyFolders":1,"files":[{"name":"a","size":3}],"totalSize":3}`; got != want {
+		t.Errorf("fileList = %s, want %s", got, want)
+	}
+}
+
 func TestSummaryJSON(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -530,7 +540,7 @@ func TestRespond(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer pr.Close()
-			s := &session{promptW: pw, promptAnswers: tt.answers, sender: tt.sender}
+			s := &session{client: &croc.Client{}, promptW: pw, promptAnswers: tt.answers, sender: tt.sender}
 
 			s.respond(tt.accept, tt.policy)
 

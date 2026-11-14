@@ -1,11 +1,5 @@
-import Accessibility
-import CrocKit
 import QuickLook
 import SwiftUI
-
-#if os(macOS)
-import AppKit
-#endif
 
 /// What a completed receive wrote, as `FileRow`s (docs/knowledge/app-ui-architecture.md →
 /// System surfaces). Quick Look previews a file; the app never opens one itself.

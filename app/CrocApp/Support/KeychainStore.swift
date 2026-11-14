@@ -16,6 +16,27 @@ protocol SecretStore {
 
 extension SecretStore {
     func load(account: String) throws -> String? { get(account: account) }
+
+    /// A list kept as one JSON item. A read failure throws; an item that is
+    /// there but not valid JSON reads as empty after `onUndecodable`, and the
+    /// next write replaces it.
+    func loadList<T: Decodable>(account: String, onUndecodable: (any Error) -> Void) throws -> [T] {
+        guard let json = try load(account: account) else { return [] }
+        do {
+            return try JSONDecoder().decode([T].self, from: Data(json.utf8))
+        } catch {
+            onUndecodable(error)
+            return []
+        }
+    }
+
+    /// Writes `list` as one JSON item; an empty list deletes the item. False
+    /// when the list did not encode or the Keychain refused.
+    func storeList<T: Encodable>(_ list: [T], account: String) -> Bool {
+        if list.isEmpty { return delete(account: account) }
+        guard let data = try? JSONEncoder().encode(list) else { return false }
+        return set(String(decoding: data, as: UTF8.self), account: account)
+    }
 }
 
 struct KeychainReadError: Error {
@@ -92,18 +113,7 @@ struct KeychainStore: SecretStore {
         return true
     }
 
-    func get(account: String) -> String? {
-        var query = Self.query(account: account)
-        query[kSecReturnData as String] = true
-        query[kSecMatchLimit as String] = kSecMatchLimitOne
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-        if status != errSecSuccess, status != errSecItemNotFound {
-            Self.log.error("read \(account, privacy: .public) failed: OSStatus \(status)")
-        }
-        guard status == errSecSuccess, let data = result as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
-    }
+    func get(account: String) -> String? { (try? load(account: account)) ?? nil }
 
     func load(account: String) throws -> String? {
         var query = Self.query(account: account)

@@ -174,7 +174,6 @@ struct CrocAppApp: App {
             .environment(router)
             .environment(history)
             .environment(savedCodes)
-            .environment(\.launchMode, LaunchMode.current)
             .modelContainer(history.container)
             #if os(macOS)
         .modifier(CaptureWindowOpener(router: router))

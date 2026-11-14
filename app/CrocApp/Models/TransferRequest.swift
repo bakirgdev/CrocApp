@@ -30,3 +30,18 @@ enum TransferRequest: Equatable {
         }
     }
 }
+
+extension TransferRequest {
+    /// Receives what `link` names into the configured output folder.
+    @MainActor
+    init(_ link: TransferLink, into folder: OutputFolderStore) {
+        switch link {
+        case .code(let code):
+            self = .receive(
+                code: code, folder: folder.url, folderIsScoped: folder.isUserSelected)
+        case .stored(let url):
+            self = .storedReceive(
+                link: url, folder: folder.url, folderIsScoped: folder.isUserSelected)
+        }
+    }
+}

@@ -20,6 +20,12 @@ import Testing
         #expect(!o.ask)
     }
 
+    /// `respond` passes the raw value to Go, where an unknown policy means Keep Both.
+    @Test func filePolicyRawValuesAreTheEnginesPolicies() {
+        #expect(FilePolicy.keepBoth.rawValue == CrocmobilePolicyKeepBoth)
+        #expect(FilePolicy.replace.rawValue == CrocmobilePolicyReplace)
+    }
+
     @Test(arguments: FilePolicy.allCases)
     func filePolicyMapsToExactlyOneFlag(_ policy: FilePolicy) throws {
         var e = EngineOptions()

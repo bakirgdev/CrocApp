@@ -1,11 +1,6 @@
 import Accessibility
 import CrocKit
-import QuickLook
 import SwiftUI
-
-#if os(macOS)
-import AppKit
-#endif
 
 /// The accept gate. design/components.md → AcceptGate: a phase of the transfer
 /// screen, not a sheet or an alert. Decline says no to the other device, Accept

@@ -30,14 +30,7 @@ final class MenuBarQuickSend {
             return false
         }
         notice = nil
-        let folder = outputFolder.url
-        let scoped = outputFolder.isUserSelected
-        switch link {
-        case .code(let code):
-            controller.start(.receive(code: code, folder: folder, folderIsScoped: scoped))
-        case .stored(let url):
-            controller.start(.storedReceive(link: url, folder: folder, folderIsScoped: scoped))
-        }
+        controller.start(TransferRequest(link, into: outputFolder))
         return true
     }
 

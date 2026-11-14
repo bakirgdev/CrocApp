@@ -65,6 +65,25 @@ private func events(_ drive: (DelegateBridge) -> Void) async -> [TransferEvent] 
         #expect(p.isBundling)
     }
 
+    @Test func percentIsTheWholeTransfersClampedInteger() throws {
+        func progress(finished: Int, sent: Int, total: Int, step: String = "transferring") throws
+            -> TransferProgress
+        {
+            let json = """
+                {"currentFile":0,"totalFiles":1,"fileName":"a","fileSent":\(sent),"fileSize":\(total),\
+                "bytesFinished":\(finished),"totalSize":\(total),"step":"\(step)"}
+                """
+            return try JSONDecoder().decode(TransferProgress.self, from: Data(json.utf8))
+        }
+        let half = try progress(finished: 30, sent: 20, total: 100)
+        #expect(half.bytesDone == 50)
+        #expect(half.percent == 50)
+        #expect(try progress(finished: 0, sent: 1, total: 3).percent == 33)
+        #expect(try progress(finished: 90, sent: 40, total: 100).percent == 100, "never past 100")
+        #expect(try progress(finished: 0, sent: 5, total: 0).percent == nil)
+        #expect(try progress(finished: 0, sent: 5, total: 100, step: "bundling").percent == nil)
+    }
+
     @Test func decodesDoneAndFinishesStream() async throws {
         let got = await events {
             $0.onDone(#"{"success":true,"files":2,"totalSize":8}"#)

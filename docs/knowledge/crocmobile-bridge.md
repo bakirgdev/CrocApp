@@ -50,7 +50,7 @@ Rules that follow from the payloads:
 
 `Respond(accept bool, policy string)` returns at once and answers on its own goroutine.
 
-- `policy` is `PolicyKeepBoth` (`"keepBoth"`) or `PolicyReplace` (`"replace"`). It is read only on a receive accept. Swift mirrors the strings as `FilePolicy` and `CrocEngine.respond(_:accept:policy:)`, which takes the transfer's ID and ignores a stale one, as `cancel(_:)` does.
+- `policy` is `PolicyKeepBoth` (`"keepBoth"`) or `PolicyReplace` (`"replace"`). It is read only on a receive accept. Swift mirrors the strings as `FilePolicy` (a CrocKit test pins them to the generated `CrocmobilePolicyKeepBoth` and `CrocmobilePolicyReplace`) and `CrocEngine.respond(_:accept:policy:)`, which takes the transfer's ID and ignores a stale one, as `cancel(_:)` does.
 - A sender-side Ask accept writes one `y\n` per file. A large batch can fill the pipe buffer and block until croc drains it over the network.
 - The caller is the `CrocEngine` actor, which runs queued work to completion. A synchronous write would hold up a following `Cancel`.
 - Do not make it synchronous for "ordering". `session.respond` builds the answer under `promptM`, then writes outside it, so a `Cancel` during a blocked write still gets the lock: `closePrompt` closes the pipe, which ends the write with `ErrClosed` (`os.Pipe` files are pollable on darwin). A second answer while one is in flight (`answering`) is dropped, so a double tap cannot interleave `y` and `n`. `closePrompt` is idempotent.
@@ -59,7 +59,7 @@ Rules that follow from the payloads:
 
 `OnError` receives `{"code","message"}` JSON (`crocmobile/errors.go`). `StartSend` and `StartReceive` errors carry the same JSON as their text, because gobind exposes only the text (as `NSError.localizedDescription`). CrocKit decodes both into `EngineFailure`.
 
-- `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `textTooLong`, `other`.
+- `code` is one of `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `textTooLong`, `other`. `TestFailureCodesMatchSwift` reads `EngineFailure.Code` from `Models.swift` and fails when the two sets differ (`invalidFileName` is Swift-only).
 - `portInUse` is raised only by `StartRelay`, for a taken port. A transfer never reports it.
 - An unknown code, or a payload that is not JSON, decodes as `other` with the raw text.
 - `message` is croc's text and is for logs only. The UI maps wording from the code.
@@ -207,7 +207,7 @@ Swift passes the relay settings as stored. `crocmobile/relay.go` resolves them f
 - With no custom relay and **Local Network Only** off, the relay is `publicrelay.Relays()[codephrase.RelayIndex(code, len(relays))]`, with v6 blanked and `PublicRelay` set.
 - A custom relay is passed as set and the other side is blanked. A custom pair keeps both.
 - A blank password means croc's default.
-- `RelayForCode` exposes the code's pool relay.
+- `croctest relay CODE` prints the code's pool relay (`internal/relaycache.ForCode`), which is not in the gobind API.
 
 Generated codes on the public pool:
 

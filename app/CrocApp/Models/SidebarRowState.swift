@@ -27,10 +27,4 @@ struct SidebarRowState: Equatable {
         }
         self.percent = kind == .transferring ? percent : nil
     }
-
-    static func percent(of progress: TransferProgress?) -> Int? {
-        guard let progress, progress.totalSize > 0, !progress.isBundling else { return nil }
-        let done = Double(progress.bytesFinished + progress.fileSent)
-        return min(100, max(0, Int((done / Double(progress.totalSize) * 100).rounded())))
-    }
 }
