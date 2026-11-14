@@ -23,12 +23,12 @@ import Testing
         settings.useGitIgnore = true
         settings.excludePatterns = "node_modules\n  .DS_Store  \n"
         settings.bothSidesConfirm = true
-        settings.throttleUpload = " 500k "
+        settings.throttleUpload = "500k"
         settings.noMultiplexing = true
         settings.internalDNS = true
         settings.excludePaths = "src/secret.txt\n  build/out.bin  \n"
-        settings.socks5Proxy = " socks5://user:secret@proxy.example:1080 "
-        settings.httpProxy = " http://proxy.example:8080 "
+        settings.socks5Proxy = "socks5://user:secret@proxy.example:1080"
+        settings.httpProxy = "http://proxy.example:8080"
         settings.disableLocal = true
         let start = EngineStart(
             .sendFiles(urls: [file], code: "custom-code-word"), settings: settings)
@@ -90,7 +90,7 @@ import Testing
     }
 
     @Test func aReceiveCarriesTheFolderSenderIPAndPolicy() {
-        settings.peerIP = " 192.0.2.7:9009 "
+        settings.peerIP = "192.0.2.7:9009"
         settings.noMultiplexing = true
         settings.whenFileExists = .replace
         settings.onlyLocal = true
@@ -103,7 +103,7 @@ import Testing
         }
         #expect(code == "wiry-alpha-bravo")
         #expect(o.outDir == folder.path)
-        #expect(o.workDir == FileManager.default.temporaryDirectory.path)
+        #expect(o.workDir.isEmpty, "a receive writes to outDir, so it has no send cwd")
         #expect(o.peerIP == "192.0.2.7:9009")
         #expect(o.whenFileExists == .replace)
         #expect(o.onlyLocal)
@@ -134,7 +134,7 @@ import Testing
 
     @Test func aStoredSendGoesToTheTrimmedServer() {
         settings.storedServer = " https://store.example "
-        settings.socks5Proxy = " socks5://proxy.example:1080 "
+        settings.socks5Proxy = "socks5://proxy.example:1080"
         settings.autoAccept = true
         let start = EngineStart(
             .storedSend(urls: [file], downloads: 3, lifetimeSeconds: 3600), settings: settings)

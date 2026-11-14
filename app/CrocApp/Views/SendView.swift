@@ -147,7 +147,7 @@ struct SendView: View {
                         placeholder: "Custom code (optional)",
                         text: $customCode,
                         isInvalid: !customCodeTrimmed.isEmpty
-                            && customCodeTrimmed.count < EngineConstraints.minCodeLength,
+                            && !EngineConstraints.isValidCode(customCodeTrimmed),
                         invalidMessage: CodeField.tooShortMessage
                     ) { pasted in
                         customCode = pasted

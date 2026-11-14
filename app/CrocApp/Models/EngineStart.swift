@@ -13,28 +13,18 @@ enum EngineStart {
     init(_ request: TransferRequest, settings: AppSettings) {
         switch request {
         case .sendFiles(let urls, let code):
-            var options = Self.baseOptions(settings)
-            options.customCode = code
-            options.workDir = FileManager.default.temporaryDirectory.path
+            var options = Self.sendOptions(settings, code: code)
             options.zipFolder = settings.zipFolder
             options.gitIgnore = settings.useGitIgnore
             options.exclude = settings.excludeList
             options.excludePaths = settings.excludePathList
-            // Send only: a receiver on one connection hangs against a sender that multiplexes.
-            options.noMultiplexing = settings.noMultiplexing
             self = .send(paths: urls.map(\.path), text: nil, options: options)
         case .sendText(let text, let code):
-            var options = Self.baseOptions(settings)
-            options.customCode = code
-            options.workDir = FileManager.default.temporaryDirectory.path
-            // Send only: a receiver on one connection hangs against a sender that multiplexes.
-            options.noMultiplexing = settings.noMultiplexing
-            self = .send(paths: [], text: text, options: options)
+            self = .send(paths: [], text: text, options: Self.sendOptions(settings, code: code))
         case .receive(let code, let folder, _):
             var options = Self.baseOptions(settings)
             options.outDir = folder.path
-            options.workDir = FileManager.default.temporaryDirectory.path
-            options.peerIP = settings.peerIP.trimmingCharacters(in: .whitespacesAndNewlines)
+            options.peerIP = settings.peerIP
             // Auto-accept uses the setting; otherwise the incoming sheet's answer
             // replaces it.
             options.whenFileExists = settings.whenFileExists
@@ -75,18 +65,27 @@ enum EngineStart {
         }
     }
 
-    /// The Advanced proxies, trimmed. Credentials may be inside: pass them on,
-    /// never log or describe them.
+    /// The Advanced proxies, as typed: the engine trims them. Credentials may be
+    /// inside: pass them on, never log or describe them.
     static func proxies(_ settings: AppSettings) -> ProxySettings {
-        ProxySettings(
-            socks5: settings.socks5Proxy.trimmingCharacters(in: .whitespacesAndNewlines),
-            http: settings.httpProxy.trimmingCharacters(in: .whitespacesAndNewlines))
+        ProxySettings(socks5: settings.socks5Proxy, http: settings.httpProxy)
     }
 
     static func storedServer(_ settings: AppSettings) -> String {
         settings.storedServer.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// `workDir` is the sender's cwd for the text and zip temp files; a receive writes to `outDir`.
+    private static func sendOptions(_ settings: AppSettings, code: String) -> EngineOptions {
+        var options = baseOptions(settings)
+        options.customCode = code
+        options.workDir = FileManager.default.temporaryDirectory.path
+        // Send only: a receiver on one connection hangs against a sender that multiplexes.
+        options.noMultiplexing = settings.noMultiplexing
+        return options
+    }
+
+    /// Values the engine trims (throttle, sender IP, proxies) go through as typed.
     private static func baseOptions(_ settings: AppSettings) -> EngineOptions {
         var o = EngineOptions()
         o.relayAddress = settings.relayAddress
@@ -97,7 +96,7 @@ enum EngineStart {
         o.internalDNS = settings.internalDNS
         o.noCompress = settings.noCompress
         o.ask = settings.bothSidesConfirm
-        o.throttleUpload = settings.throttleUpload.trimmingCharacters(in: .whitespacesAndNewlines)
+        o.throttleUpload = settings.throttleUpload
         let proxies = proxies(settings)
         o.socks5Proxy = proxies.socks5
         o.httpProxy = proxies.http

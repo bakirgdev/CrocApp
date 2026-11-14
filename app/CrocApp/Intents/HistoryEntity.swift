@@ -46,9 +46,8 @@ struct HistoryEntity: AppEntity, IndexedEntity {
         totalBytes: Int64, names: [String], date: Date
     ) {
         let direction: HistoryDirection = isSend ? .sent : .received
-        let status = HistoryStatus(status)
         var parts = [String(localized: direction.title)]
-        if status != .completed { parts.append(String(localized: status.title)) }
+        if status != .completed { parts.append(status.statusTitle) }
         if totalBytes > 0 { parts.append(totalBytes.formatted(.byteCount(style: .file))) }
         // The wrapped properties below are set through accessors, which need
         // every plain stored property in place first.
@@ -56,7 +55,7 @@ struct HistoryEntity: AppEntity, IndexedEntity {
         self.summary = parts.joined(separator: " • ")
         self.name = Self.name(isSend: isSend, isText: isText, fileCount: fileCount, names: names)
         self.direction = direction
-        self.status = status
+        self.status = HistoryStatus(status)
         self.date = date
         self.fileNames = names
         self.size = Measurement(value: Double(totalBytes), unit: .bytes)
@@ -148,6 +147,8 @@ nonisolated enum HistoryStatus: String, AppEnum {
     case completed, failed, cancelled, declined
 
     static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Status")
+    // The metadata exporter reads these as literals: keep them literal, and in
+    // step with `TransferRecord.Status.statusTitle`.
     static let caseDisplayRepresentations: [HistoryStatus: DisplayRepresentation] = [
         .completed: "Completed",
         .failed: "Failed",
@@ -164,14 +165,6 @@ nonisolated enum HistoryStatus: String, AppEnum {
         }
     }
 
-    var title: LocalizedStringResource {
-        switch self {
-        case .completed: "Completed"
-        case .failed: "Failed"
-        case .cancelled: "Cancelled"
-        case .declined: "Declined"
-        }
-    }
 }
 
 /// The entity id of a record: its SwiftData identifier, JSON-encoded. Stable

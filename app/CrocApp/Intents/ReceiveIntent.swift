@@ -42,7 +42,7 @@ struct ReceiveIntent: AppIntent {
         // The controller let go of a chosen folder when the transfer ended.
         let scoped = outputFolder.isUserSelected && folder.startAccessingSecurityScopedResource()
         defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
-        var urls = ReceivedFileLocator.locate(
+        var urls = ReceivedItems.locateFiles(
             names: controller.offeredFileNames, in: folder, since: started)
         if let text { urls.append(try IntentStaging.textFile(text)) }
         let files = urls.map { IntentFile(fileURL: $0) }

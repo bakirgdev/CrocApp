@@ -161,7 +161,7 @@ struct SavedCodeEditor: View {
                     .textInputAutocapitalization(.never)
                         #endif
                 } footer: {
-                    if !trimmedCode.isEmpty, trimmedCode.count < EngineConstraints.minCodeLength {
+                    if !trimmedCode.isEmpty, !EngineConstraints.isValidCode(trimmedCode) {
                         Text(CodeField.tooShortMessage).foregroundStyle(Color.textSecondary)
                     }
                 }

@@ -9,4 +9,7 @@ enum EngineConstraints {
     /// Go counts bytes and this counts characters, so the UI check is the
     /// stricter one for non-ASCII codes.
     static let minCodeLength = 6
+
+    /// Whether `code` is long enough for the engine to accept.
+    static func isValidCode(_ code: String) -> Bool { code.count >= minCodeLength }
 }

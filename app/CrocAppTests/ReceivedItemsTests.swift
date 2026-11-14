@@ -29,12 +29,12 @@ import Testing
         ("my file (3).png", "my file.png"),
     ])
     func namesTheFileACopyWasMadeFrom(copy: String, original: String) {
-        #expect(ReceivedFileLocator.keepBothOriginal(of: copy) == original)
+        #expect(ReceivedItems.keepBothOriginal(of: copy) == original)
     }
 
     @Test(arguments: ["a.txt", "a (x).txt", "a(1).txt", "(1).txt", "README"])
     func aPlainNameIsNoCopy(name: String) {
-        #expect(ReceivedFileLocator.keepBothOriginal(of: name) == nil)
+        #expect(ReceivedItems.keepBothOriginal(of: name) == nil)
     }
 
     // MARK: - locate

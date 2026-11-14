@@ -58,7 +58,7 @@ enum TransferLink: Equatable {
     }
 
     private static func validCode(_ candidate: String?) -> String? {
-        guard let candidate, candidate.count >= EngineConstraints.minCodeLength,
+        guard let candidate, EngineConstraints.isValidCode(candidate),
             !candidate.contains(where: { $0.isWhitespace || $0.isNewline })
         else { return nil }
         return candidate

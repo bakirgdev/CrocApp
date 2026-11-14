@@ -20,9 +20,11 @@ nonisolated enum ReceivedItems {
     /// The top-level items of `names` (paths relative to `folder`), in the
     /// order offered: a folder once for every name inside it, a file at the
     /// name it was saved under. Keep Both saves a taken name as
-    /// "name (n).ext" (`ReceivedFileLocator.keepBothOriginal`), so a file
-    /// resolves as `ReceivedFileLocator` resolves one: the newest such copy created since `since`, else the name itself.
-    /// An item that is not there is left out.
+    /// "name (n).ext" (`keepBothOriginal`), so a file resolves to the newest
+    /// such copy created since `since`, else the name itself. croc keeps the
+    /// sender's modification dates, so the files that arrived are told apart by
+    /// creation date: a Keep Both copy is new, while a Replace overwrites the
+    /// file at its name. An item that is not there is left out.
     static func locate(names: [String], in folder: URL, since: Date) -> [ReceivedItem] {
         var tops: [String] = []
         var seen: Set<String> = []
@@ -48,7 +50,7 @@ nonisolated enum ReceivedItems {
         var copiesByName: [String: [URL]] = [:]
         for entry in entries {
             byName[entry.lastPathComponent] = entry
-            if let original = ReceivedFileLocator.keepBothOriginal(of: entry.lastPathComponent) {
+            if let original = keepBothOriginal(of: entry.lastPathComponent) {
                 copiesByName[original, default: []].append(entry)
             }
         }
@@ -68,6 +70,33 @@ nonisolated enum ReceivedItems {
             let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init)
             return ReceivedItem(url: url, isFolder: false, size: size)
         }
+    }
+
+    /// Every offered name resolved as `locate` resolves a file, folders
+    /// expanded: what a Shortcuts action hands back, files and not folders.
+    static func locateFiles(names: [String], in folder: URL, since: Date) -> [URL] {
+        let parents = names.map { ($0 as NSString).deletingLastPathComponent }
+        return parents.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
+            .flatMap { parent in
+                let dir =
+                    parent.isEmpty
+                    ? folder : folder.appending(path: parent, directoryHint: .isDirectory)
+                let files = zip(names, parents).filter { $0.1 == parent }
+                    .map { ($0.0 as NSString).lastPathComponent }
+                return locate(names: files, in: dir, since: since).map(\.url)
+            }
+    }
+
+    /// The name a Keep Both copy was made from: "a.txt" for "a (2).txt",
+    /// "README" for "README (2)". nil for a name that is not such a copy.
+    static func keepBothOriginal(of name: String) -> String? {
+        let url = URL(filePath: name)
+        let ext = url.pathExtension
+        guard
+            let match = url.deletingPathExtension().lastPathComponent
+                .wholeMatch(of: /(.+) \(\d+\)/)
+        else { return nil }
+        return ext.isEmpty ? String(match.1) : "\(match.1).\(ext)"
     }
 
     private static func creation(_ url: URL) -> Date {
