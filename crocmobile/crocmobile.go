@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"runtime/debug"
 	"strings"
 
 	"github.com/schollz/croc/v11/src/models"
@@ -97,11 +96,7 @@ type Transfer struct {
 // only logged (logPanic), because the transfer's terminal event is claimed by
 // run, and a second one would break the single-final-event guarantee.
 func (t *Transfer) Cancel() {
-	defer func() {
-		if r := recover(); r != nil {
-			logPanic("Cancel", r)
-		}
-	}()
+	defer logRecovered("Cancel")
 	t.s.cancel()
 }
 
@@ -119,11 +114,7 @@ func (t *Transfer) Cancel() {
 // arrives while another is being written.
 func (t *Transfer) Respond(accept bool, policy string) {
 	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				logPanic("Respond", r)
-			}
-		}()
+		defer logRecovered("Respond")
 		t.s.respond(accept, parsePolicy(policy))
 	}()
 }
@@ -149,7 +140,7 @@ func SetTempDir(dir string) {
 // caller with more than one start in flight cannot tell them apart; CrocKit
 // runs one start at a time.
 func CancelStart() {
-	defer func() { recover() }() //nolint:errcheck // gobind: a panic here must never cross into the host app
+	defer ignorePanic() // gobind: a panic here must never cross into the host app
 	cancelPendingStart()
 }
 
@@ -160,11 +151,7 @@ func CancelStart() {
 // the caller's goroutine) is wrapped in a recover: a panic here must become
 // an error, never crash the host app across the gobind boundary.
 func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *Transfer, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			t, err = nil, startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
-		}
-	}()
+	defer recoverStart(&err)
 	if opts == nil {
 		opts = NewOptionsDefault()
 	}
@@ -186,11 +173,7 @@ func StartSend(pathsJoined string, text string, opts *Options, d Delegate) (t *T
 //
 // See StartSend for why the synchronous body is wrapped in a recover.
 func StartReceive(code string, opts *Options, d Delegate) (t *Transfer, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			t, err = nil, startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
-		}
-	}()
+	defer recoverStart(&err)
 	if opts == nil {
 		opts = NewOptionsDefault()
 	}

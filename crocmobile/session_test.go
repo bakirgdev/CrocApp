@@ -363,7 +363,7 @@ func TestSendFilesInfoTakesPathsLiterally(t *testing.T) {
 		}
 	}
 	for _, name := range []string{"*.pdf", "[x]*", `a\*`} {
-		files, _, _, err := sendFilesInfo([]string{filepath.Join(dir, name)}, &Options{})
+		files, _, _, err := sendFilesInfo(context.Background(), []string{filepath.Join(dir, name)}, &Options{})
 		if err != nil {
 			t.Fatalf("%q: %v", name, err)
 		}
@@ -1192,7 +1192,7 @@ func TestSendFilesInfoExcludesExactPaths(t *testing.T) {
 		}
 	}
 	names := func(o *Options, paths ...string) []string {
-		files, _, _, err := sendFilesInfo(paths, o)
+		files, _, _, err := sendFilesInfo(context.Background(), paths, o)
 		if err != nil {
 			t.Fatal(err)
 		}

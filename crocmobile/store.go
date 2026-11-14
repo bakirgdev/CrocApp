@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strings"
 	"time"
 
@@ -108,11 +107,7 @@ func checkStoreLimits(paths []string) error {
 // encrypted on this device; the server never sees names or keys. Shares
 // activeMu with live transfers: one transfer at a time.
 func StartStoreSend(pathsJoined string, o *StoreOptions, d Delegate) (t *Transfer, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			t, err = nil, startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
-		}
-	}()
+	defer recoverStart(&err)
 	if o == nil {
 		return nil, startError(errors.New("store options required"))
 	}
@@ -173,11 +168,7 @@ func StartStoreSend(pathsJoined string, o *StoreOptions, d Delegate) (t *Transfe
 // names that already exist, then reports OnDone. Decline ends it with the
 // "refused" failure and leaves the transfer unclaimed.
 func StartStoreReceive(link, outDir string, o *StoreOptions, d Delegate) (t *Transfer, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			t, err = nil, startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
-		}
-	}()
+	defer recoverStart(&err)
 	if d == nil {
 		return nil, startError(errors.New("delegate required"))
 	}
@@ -229,11 +220,7 @@ func StartStoreReceive(link, outDir string, o *StoreOptions, d Delegate) (t *Tra
 // Blocking; it does not take the transfer lock, so a History row can revoke
 // while another transfer runs.
 func RevokeStored(origin, id, token string, o *StoreOptions) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = startError(fmt.Errorf("croc panic: %v\n%s", r, debug.Stack()))
-		}
-	}()
+	defer recoverStart(&err)
 	// Revoke authenticates with the token alone, but storeclient validates the
 	// whole share first, so a zero key stands in for the one the receipt keeps
 	// in its link.
@@ -287,11 +274,7 @@ func (s *session) runStore(ctx context.Context, work func(context.Context, *sess
 		err error
 	)
 	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				err = fmt.Errorf("croc panic: %v\n%s", r, debug.Stack())
-			}
-		}()
+		defer recoverInto(&err)
 		sum, err = work(ctx, s)
 	}()
 	close(s.done)
@@ -301,11 +284,7 @@ func (s *session) runStore(ctx context.Context, work func(context.Context, *sess
 	if !s.terminal.CompareAndSwap(false, true) {
 		return
 	}
-	defer func() {
-		if r := recover(); r != nil {
-			reportPanic(s, r)
-		}
-	}()
+	defer reportRecovered(s)
 	if err != nil {
 		s.delegate.OnError(errorJSON(err))
 		return
@@ -338,7 +317,7 @@ func (s *session) storeCallbacks() storeclient.Callbacks {
 }
 
 func (s *session) emitProgress(p progressState) {
-	defer func() { recover() }() //nolint:errcheck // a delegate panic must not escape into storeclient's goroutines
+	defer ignorePanic() // a delegate panic must not escape into storeclient's goroutines
 	b, _ := json.Marshal(p)
 	s.delegate.OnProgress(string(b))
 }
