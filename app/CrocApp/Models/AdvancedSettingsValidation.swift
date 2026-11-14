@@ -21,12 +21,6 @@ extension AppSettings {
             .httpProxy, text, "Enter host:port, or an address starting with http:// or https://.")
     }
 
-    nonisolated static func multicastAddressError(_ text: String) -> String? {
-        engineError(
-            .multicastAddress, text,
-            "Enter an IPv4 multicast address from 224.0.0.0 to 239.255.255.255.")
-    }
-
     nonisolated static func senderIPError(_ text: String) -> String? {
         engineError(
             .peerIP, text,
@@ -38,13 +32,6 @@ extension AppSettings {
         engineError(
             .throttleUpload, text,
             "Enter a speed such as 500k, 2m or 1g, or leave it blank for no limit.")
-    }
-
-    nonisolated static func excludePathsError(_ text: String) -> String? {
-        engineError(
-            .excludePaths, text,
-            "Enter one path per line, relative to the folder you send, such as src/secret.txt. Use / between folders. Paths that start with /, contain \\ or leave the folder are not allowed."
-        )
     }
 
     /// The last text each setting was checked with, and whether the engine

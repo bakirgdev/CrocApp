@@ -15,10 +15,9 @@ struct AdvancedSettingsView: View {
         @Bindable var settings = settings
 
         Form {
-            Section("Network") {
+            Section {
                 AdvancedRow(
-                    footnote:
-                        "Sends this device's connections, and Send as Link, through a SOCKS5 proxy, which wins over the HTTP proxy if both are set. Your local network skips it, and the address, with any password in it, is saved in the Keychain.",
+                    footnote: "Wins over the HTTP proxy. Your local network skips it.",
                     error: AppSettings.socks5ProxyError(settings.socks5Proxy),
                     notSaved: settings.unsavedSecrets.contains(.socks5Proxy)
                 ) {
@@ -31,8 +30,7 @@ struct AdvancedSettingsView: View {
                     }
                 }
                 AdvancedRow(
-                    footnote:
-                        "Sends this device's connections, and Send as Link, through an HTTP proxy, unless a SOCKS5 proxy is set. Your local network skips it, and the address, with any password in it, is saved in the Keychain.",
+                    footnote: "Used unless a SOCKS5 proxy is set. Your local network skips it.",
                     error: AppSettings.httpProxyError(settings.httpProxy),
                     notSaved: settings.unsavedSecrets.contains(.httpProxy)
                 ) {
@@ -45,21 +43,7 @@ struct AdvancedSettingsView: View {
                     }
                 }
                 AdvancedRow(
-                    footnote:
-                        "Both devices need the same address to find each other on the local network, and blank uses \(AppSettings.advancedDefaults.multicastAddress).",
-                    error: AppSettings.multicastAddressError(settings.multicastAddress)
-                ) {
-                    LabeledField("Multicast Address") {
-                        TextField(
-                            "Multicast Address", text: $settings.multicastAddress,
-                            prompt: Text(AppSettings.advancedDefaults.multicastAddress)
-                        )
-                        .addressEntry()
-                    }
-                }
-                AdvancedRow(
-                    footnote:
-                        "When receiving, connects straight to the sender at this address and base port (9009 unless changed), skipping relays.",
+                    footnote: "Receiving only: connects straight to the sender, skipping relays.",
                     error: AppSettings.senderIPError(settings.peerIP)
                 ) {
                     LabeledField("Sender IP") {
@@ -70,35 +54,29 @@ struct AdvancedSettingsView: View {
                         .addressEntry()
                     }
                 }
+            } header: {
+                Text("Network")
+            } footer: {
+                Text(
+                    "Proxies also carry Send as Link. Their addresses, with any password in them, are saved in the Keychain."
+                )
+                .foregroundStyle(Color.textSecondary)
             }
 
             Section("Connection") {
                 AdvancedRow(
                     footnote: settings.onlyLocal
-                        ? "Turn off Local Network Only to use this. It is in Settings."
-                        : "Skips finding the other device on your local network, so a transfer goes through a relay. Applies to sending and receiving."
+                        ? "Turn off Local Network Only in Settings to use this."
+                        : "Sends and receives through a relay instead of finding the other device on your network."
                 ) {
                     Toggle("Skip Local Network", isOn: $settings.disableLocal)
                         .disabled(settings.onlyLocal)
-                }
-                AdvancedRow(
-                    footnote:
-                        "Looks up a relay's address by asking 18 public DNS servers (Cloudflare, Google, Quad9, Comodo and OpenDNS) at once, in plain text. This skips your system, VPN and encrypted DNS settings and tells them the relay's name. It does not apply through a proxy or to Send as Link."
-                ) {
-                    Toggle("Built-in DNS Resolver", isOn: $settings.internalDNS)
                 }
             }
 
             Section("Performance") {
                 AdvancedRow(
-                    footnote:
-                        "Affects sending only: moves the data over one connection instead of several. This can be slower."
-                ) {
-                    Toggle("Single Connection", isOn: $settings.noMultiplexing)
-                }
-                AdvancedRow(
-                    footnote:
-                        "The most this device sends per second, such as 500k, 2m or 1g.",
+                    footnote: "The most this device sends per second, such as 500k, 2m or 1g.",
                     error: AppSettings.throttleError(settings.throttleUpload)
                 ) {
                     LabeledField("Send Speed Limit") {
@@ -107,23 +85,6 @@ struct AdvancedSettingsView: View {
                             prompt: Text("No limit")
                         )
                         .addressEntry()
-                    }
-                }
-            }
-
-            Section("Exclude from sends") {
-                AdvancedRow(
-                    footnote:
-                        "Leaves out these exact paths, one per line, relative to the folder you send, such as src/secret.txt. The patterns in Settings match any part of a name instead.",
-                    error: AppSettings.excludePathsError(settings.excludePaths)
-                ) {
-                    LabeledField("Exact Paths") {
-                        TextField(
-                            "Exact Paths", text: $settings.excludePaths,
-                            prompt: Text("One path per line"), axis: .vertical
-                        )
-                        .lineLimit(3...6)
-                        .urlEntry()
                     }
                 }
             }
@@ -137,10 +98,8 @@ struct AdvancedSettingsView: View {
                 .buttonVariant(.plain)
                 .disabled(settings.advancedIsDefault)
             } footer: {
-                Text(
-                    "Puts every setting on this page back to croc's default, clears the excluded paths and removes the saved proxies."
-                )
-                .foregroundStyle(Color.textSecondary)
+                Text("Back to croc's defaults. Also removes the saved proxies.")
+                    .foregroundStyle(Color.textSecondary)
             }
         }
         .formStyle(.grouped)

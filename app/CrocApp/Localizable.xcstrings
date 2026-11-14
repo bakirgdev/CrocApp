@@ -94,7 +94,6 @@
     "Add Saved Code" : {},
     "Address" : {},
     "Advanced" : {},
-    "Affects sending only: moves the data over one connection instead of several. This can be slower." : {},
     "Allow CrocApp in System Settings > General > Login Items." : {},
     "Allow camera access in Settings to scan QR codes." : {},
     "An Advanced setting can't be used" : {},
@@ -107,8 +106,8 @@
     "Auto-Accept Transfers saves files without a preview, so leave it off unless you fully trust the sender." : {},
     "Auto-accept can't answer this sender" : {},
     "Auto-accept cancelled the transfer, so ask the sender to rename the files." : {},
+    "Back to croc's defaults. Also removes the saved proxies." : {},
     "Blocked: unsafe file names in this transfer." : {},
-    "Both devices need the same address to find each other on the local network, and blank uses %@." : {},
     "Both devices run PAKE (password-authenticated key exchange) to turn the code phrase into a strong encryption key. The code itself never crosses the network, and a wrong code fails immediately." : {},
     "Both sides need croc 11 or newer, so update croc there." : {
       "comment" : "croc is the name of the file-transfer tool and stays untranslated."
@@ -116,7 +115,6 @@
     "Built on croc by Zack Scholl (MIT). CrocApp is unofficial and not affiliated with croc." : {
       "comment" : "Footer of the About section. croc is the open-source tool CrocApp is built on; keep croc and CrocApp untranslated."
     },
-    "Built-in DNS Resolver" : {},
     "Camera access denied" : {},
     "Camera access is restricted on this device and can't be changed here." : {},
     "Camera access restricted" : {},
@@ -229,10 +227,8 @@
     "End-to-end encrypted" : {},
     "Enter a code phrase or a download link." : {},
     "Enter a speed such as 500k, 2m or 1g, or leave it blank for no limit." : {},
-    "Enter an IPv4 multicast address from 224.0.0.0 to 239.255.255.255." : {},
     "Enter host:port, or an address starting with http:// or https://." : {},
     "Enter host:port, or an address starting with socks5:// or socks5h://." : {},
-    "Enter one path per line, relative to the folder you send, such as src/secret.txt. Use / between folders. Paths that start with /, contain \\ or leave the folder are not allowed." : {},
     "Enter the code phrase instead." : {},
     "Enter the sender's address and port, such as 192.168.1.20:9009. The port must be a number from 1 to 65535." : {},
     "Enter the server's address only, such as %@. It must use https, or http for localhost." : {
@@ -240,7 +236,6 @@
     },
     "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner. Share it over a channel you trust; it expires with the transfer." : {},
     "Everything is encrypted on your device and decrypted only on the other one. Nothing in between can read it." : {},
-    "Exact Paths" : {},
     "Exclude from sends" : {},
     "Expired" : {},
     "Expires" : {},
@@ -284,7 +279,6 @@
     "It expired, was revoked or has no downloads left, so ask the sender for a new link." : {},
     "It no longer works for anyone." : {},
     "Keep Both" : {},
-    "Leaves out these exact paths, one per line, relative to the folder you send, such as src/secret.txt. The patterns in Settings match any part of a name instead." : {},
     "Link" : {
       "comment" : "VoiceOver label of the text that shows a link."
     },
@@ -307,10 +301,8 @@
     "Local network only: nothing leaves your network" : {},
     "Local network when possible" : {},
     "Local-only transfers never touch a relay on the internet." : {},
-    "Looks up a relay's address by asking 18 public DNS servers (Cloudflare, Google, Quad9, Comodo and OpenDNS) at once, in plain text. This skips your system, VPN and encrypted DNS settings and tells them the relay's name. It does not apply through a proxy or to Send as Link." : {},
     "Lost connection to the other device" : {},
     "Menu bar" : {},
-    "Multicast Address" : {},
     "Name" : {},
     "Network" : {},
     "No limit" : {},
@@ -343,9 +335,9 @@
     "Point the camera at the QR code on the other device." : {},
     "Privacy" : {},
     "Privacy Policy" : {},
+    "Proxies also carry Send as Link. Their addresses, with any password in them, are saved in the Keychain." : {},
     "Proxies, sender IP, speed limit and more. The defaults suit most people." : {},
     "Public relay pool" : {},
-    "Puts every setting on this page back to croc's default, clears the excluded paths and removes the saved proxies." : {},
     "QR code for the code phrase" : {},
     "QR code for the link" : {},
     "Quick Look" : {},
@@ -401,6 +393,7 @@
     "Receiving" : {},
     "Receiving in a browser needs the default relays. This transfer stays on your local network." : {},
     "Receiving in a browser needs the default relays. This transfer uses a custom relay." : {},
+    "Receiving only: connects straight to the sender, skipping relays." : {},
     "Receiving progress" : {},
     "Receiving was interrupted" : {},
     "Receiving with CrocApp" : {
@@ -432,6 +425,7 @@
     "Revoke works only until CrocApp quits" : {},
     "Revoked" : {},
     "Revoking link" : {},
+    "Sends and receives through a relay instead of finding the other device on your network." : {},
     "Show Progress in the Dock" : {},
     "SOCKS5 Proxy" : {},
     "Same Wi-Fi or different continents, transfers find the fastest path automatically." : {},
@@ -480,8 +474,6 @@
     },
     "Sends files or folders with a croc code and returns the code. Keep CrocApp open until the transfer ends." : {},
     "Sends text with a croc code and returns the code. Keep CrocApp open until the transfer ends." : {},
-    "Sends this device's connections, and Send as Link, through a SOCKS5 proxy, which wins over the HTTP proxy if both are set. Your local network skips it, and the address, with any password in it, is saved in the Keychain." : {},
-    "Sends this device's connections, and Send as Link, through an HTTP proxy, unless a SOCKS5 proxy is set. Your local network skips it, and the address, with any password in it, is saved in the Keychain." : {},
     "Send…" : {},
     "Sent" : {},
     "Sent %@, %@" : {
@@ -510,10 +502,8 @@
     "Show in Files" : {},
     "Show in Finder" : {},
     "Show in Menu Bar" : {},
-    "Single Connection" : {},
     "Size" : {},
     "Skip Local Network" : {},
-    "Skips finding the other device on your local network, so a transfer goes through a relay. Applies to sending and receiving." : {},
     "Some names are already taken" : {},
     "Start the same transfer again; replacing the partly received files resumes it." : {
       "comment" : "Replace is the label of a button in the incoming-files prompt."
@@ -602,11 +592,12 @@
     "Turn off Auto-Accept Transfers in Settings and try again, or ask the sender to resend without their confirmation option." : {
       "comment" : "Auto-Accept Transfers is the label of a switch in Settings."
     },
-    "Turn off Local Network Only to use this. It is in Settings." : {},
+    "Turn off Local Network Only in Settings to use this." : {},
     "Turn off Skip Local Network in Advanced to use Local Network Only." : {},
     "Turn on Save Transfer History in Settings to list finished transfers here." : {},
     "Type or paste the text to send." : {},
     "Unsafe file names were blocked" : {},
+    "Used unless a SOCKS5 proxy is set. Your local network skips it." : {},
     "Version" : {},
     "Via custom relay %@, which sees only encrypted data" : {
       "comment" : "Line of the trust badge. The placeholder is the relay's address."
@@ -624,9 +615,9 @@
     "When CrocApp is in the background, a transfer that finishes, fails or needs your answer sends a notification. It never shows a code phrase or link, and shows file names only if you turn that on. CrocApp asks the system for permission when you start your first transfer." : {},
     "When a File Already Exists" : {},
     "When devices can't connect directly, an internet relay forwards the encrypted stream. By default that is one of croc's public relays, 1.getcroc.com to 4.getcroc.com (or the relay you set in Settings). The relay never has the key: it sees only ciphertext. You can also run your own relay." : {},
-    "When receiving, connects straight to the sender at this address and base port (9009 unless changed), skipping relays." : {},
     "Who it is for" : {},
     "Widgets, and the Live Activity on iPhone, show only whether a transfer is sending or receiving unless you turn this on. They never show a code phrase or link. Widgets show the last transfer only while Save Transfer History is on." : {},
+    "Wins over the HTTP proxy. Your local network skips it." : {},
     "Works anywhere" : {},
     "Works until %@, for ^[%lld download](inflect: true)" : {
       "comment" : "Result of Send as Link. The first placeholder is the date and time the link expires, the second how many downloads it allows.",

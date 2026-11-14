@@ -269,12 +269,8 @@ public actor CrocEngine {
         opts.zipFolder = o.zipFolder
         opts.gitIgnore = o.gitIgnore
         opts.exclude = o.exclude.joined(separator: "\n")
-        opts.excludePaths = o.excludePaths.joined(separator: "\n")
         opts.ask = o.ask
-        opts.noMultiplexing = o.noMultiplexing
-        opts.internalDNS = o.internalDNS
         opts.throttleUpload = o.throttleUpload
-        opts.multicastAddress = o.multicastAddress
         opts.peerIP = o.peerIP
         opts.socks5Proxy = o.socks5Proxy
         opts.httpProxy = o.httpProxy

@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	"github.com/schollz/croc/v11/src/comm"
-	"github.com/schollz/croc/v11/src/models"
 	"github.com/schollz/croc/v11/src/store"
 )
 
@@ -41,15 +40,12 @@ func TestValidateNetworkOptions(t *testing.T) {
 		{Socks5Proxy: "socks5h://proxy.example:1080"},
 		{HTTPProxy: "http://user:secret@proxy.example:3128"},
 		{HTTPProxy: " https://proxy.example:443 "},
-		{MulticastAddress: "239.255.255.250"},
-		{MulticastAddress: "224.0.0.251"},
 		{PeerIP: "10.0.0.1:9009"},
 		{PeerIP: "[::1]:9009"},
 		{ThrottleUpload: "500k"},
 		{ThrottleUpload: " 2M "},
 		{ThrottleUpload: "1g"},
 		{ThrottleUpload: "12"},
-		{ExcludePaths: "node_modules\n src/secret.txt \n\n./build/out.bin"},
 		{DisableLocal: true},
 		{OnlyLocal: true},
 	}
@@ -64,9 +60,6 @@ func TestValidateNetworkOptions(t *testing.T) {
 		{Socks5Proxy: "socks5://:1080"},
 		{HTTPProxy: "socks5://user:secret@proxy.example:1080"},
 		{HTTPProxy: "user:secret@proxy.example"},
-		{MulticastAddress: "10.0.0.1"},
-		{MulticastAddress: "ff02::1"},
-		{MulticastAddress: "not an address"},
 		{PeerIP: "10.0.0.1"},
 		{PeerIP: "sender.local:9009"},
 		{PeerIP: "10.0.0.1:0"},
@@ -81,10 +74,6 @@ func TestValidateNetworkOptions(t *testing.T) {
 		{ThrottleUpload: "+5k"},
 		{ThrottleUpload: "5kb"},
 		{ThrottleUpload: "1.5m"},
-		{ExcludePaths: "/etc/passwd"},
-		{ExcludePaths: "ok.txt\n../outside"},
-		{ExcludePaths: "a/../../b"},
-		{ExcludePaths: "."},
 		{OnlyLocal: true, DisableLocal: true},
 	}
 	for _, o := range invalid {
@@ -133,14 +122,6 @@ var settingCases = []struct {
 		},
 	},
 	{
-		SettingMulticastAddress,
-		[]string{"", "239.255.255.250", "224.0.0.251", "239.255.255.255", " 224.0.0.1 "},
-		[]string{
-			"10.0.0.1", "ff02::1", "not an address", "223.255.255.255", "240.0.0.0", "239.255.255",
-			"239.255.255.256", "239.255.255.250.1", "239.255.255.0250",
-		},
-	},
-	{
 		SettingPeerIP,
 		[]string{"", "10.0.0.1:9009", "[::1]:9009", " 192.168.1.20:65535 ", "[fe80::1]:1"},
 		[]string{
@@ -155,11 +136,6 @@ var settingCases = []struct {
 			"k", "xk", "5", "0k", "0", "00", "-5k", "+5k", "1.5m", "5kb", "5 k", "fast",
 			"99999999999999999999k", "٣k",
 		},
-	},
-	{
-		SettingExcludePaths,
-		[]string{"", "  ", "a.txt", "dir/sub/file.txt", "./dir/file.txt", "a.txt\n\nb.txt", " a.txt \n b/c.txt ", "a/../b"},
-		[]string{`back\slash`, `dir\file.txt`, "/abs", "..", "../x", "a\n../x", "a/../../x", ".", "a\n.", "dir/.."},
 	},
 	{
 		SettingStoreServer,
@@ -203,8 +179,7 @@ func payloadCode(err error) string {
 
 func TestValidateSettingCoversEverySetting(t *testing.T) {
 	fields := []string{
-		SettingSocks5Proxy, SettingHTTPProxy, SettingThrottleUpload, SettingMulticastAddress, SettingPeerIP,
-		SettingExcludePaths, SettingStoreServer,
+		SettingSocks5Proxy, SettingHTTPProxy, SettingThrottleUpload, SettingPeerIP, SettingStoreServer,
 	}
 	if len(settingChecks) != len(fields) || len(settingCases) != len(fields) {
 		t.Fatalf("%d checks and %d case tables for %d settings", len(settingChecks), len(settingCases), len(fields))
@@ -228,13 +203,11 @@ func TestValidateSettingCoversEverySetting(t *testing.T) {
 // the tables, the start's own check and ValidateSetting accept or refuse alike.
 func TestValidateSettingMatchesTransferStart(t *testing.T) {
 	starts := map[string]func(v string) error{
-		SettingSocks5Proxy:      func(v string) error { return validateNetworkOptions(&Options{Socks5Proxy: v}) },
-		SettingHTTPProxy:        func(v string) error { return validateNetworkOptions(&Options{HTTPProxy: v}) },
-		SettingThrottleUpload:   func(v string) error { return validateNetworkOptions(&Options{ThrottleUpload: v}) },
-		SettingMulticastAddress: func(v string) error { return validateNetworkOptions(&Options{MulticastAddress: v}) },
-		SettingPeerIP:           func(v string) error { return validateNetworkOptions(&Options{PeerIP: v}) },
-		SettingExcludePaths:     func(v string) error { return validateNetworkOptions(&Options{ExcludePaths: v}) },
-		SettingStoreServer:      validateStoreOrigin,
+		SettingSocks5Proxy:    func(v string) error { return validateNetworkOptions(&Options{Socks5Proxy: v}) },
+		SettingHTTPProxy:      func(v string) error { return validateNetworkOptions(&Options{HTTPProxy: v}) },
+		SettingThrottleUpload: func(v string) error { return validateNetworkOptions(&Options{ThrottleUpload: v}) },
+		SettingPeerIP:         func(v string) error { return validateNetworkOptions(&Options{PeerIP: v}) },
+		SettingStoreServer:    validateStoreOrigin,
 	}
 	for _, c := range settingCases {
 		for _, v := range append(slices.Clone(c.valid), c.invalid...) {
@@ -297,14 +270,13 @@ func TestInvalidSettingFailsBeforeTheLock(t *testing.T) {
 
 type networkGlobals struct {
 	socks5, httpProxy string
-	internalDNS       bool
 }
 
 func readNetworkGlobals() networkGlobals {
-	return networkGlobals{comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS}
+	return networkGlobals{comm.Socks5Proxy, comm.HttpProxy}
 }
 
-var proxiedOptions = Options{Socks5Proxy: "203.0.113.1:1080", HTTPProxy: "203.0.113.2:3128", InternalDNS: true}
+var proxiedOptions = Options{Socks5Proxy: "203.0.113.1:1080", HTTPProxy: "203.0.113.2:3128"}
 
 func assertGlobalsRestored(t *testing.T, before networkGlobals) {
 	t.Helper()
@@ -358,7 +330,7 @@ func TestNetworkGlobalsHeldForTheTransfer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StartSend: %v", err)
 	}
-	want := networkGlobals{proxiedOptions.Socks5Proxy, proxiedOptions.HTTPProxy, true}
+	want := networkGlobals{proxiedOptions.Socks5Proxy, proxiedOptions.HTTPProxy}
 	if got := readNetworkGlobals(); got != want {
 		t.Errorf("during the transfer: network globals = %+v, want %+v", got, want)
 	}

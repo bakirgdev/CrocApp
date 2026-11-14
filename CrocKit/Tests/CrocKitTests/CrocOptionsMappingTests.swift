@@ -11,9 +11,6 @@ import Testing
         #expect(o.relayPassword == "")
         #expect(o.code == "")
         #expect(o.exclude == "")
-        #expect(o.excludePaths == "")
-        #expect(!o.noMultiplexing)
-        #expect(!o.internalDNS)
         #expect(!o.autoAccept)
         #expect(!o.overwrite)
         #expect(o.rename, "Keep Both is the default")
@@ -52,9 +49,6 @@ import Testing
         e.gitIgnore = true
         e.exclude = ["node_modules", ".git"]
         e.ask = true
-        e.excludePaths = ["src/secret.txt", "build"]
-        e.noMultiplexing = true
-        e.internalDNS = true
 
         let o = try CrocEngine.crocOptions(from: e)
         #expect(o.relayAddress == "relay.example:9009")
@@ -73,23 +67,18 @@ import Testing
         #expect(o.gitIgnore)
         #expect(o.exclude == "node_modules\n.git", "Go splits exclude on newlines")
         #expect(o.ask)
-        #expect(o.excludePaths == "src/secret.txt\nbuild", "Go splits excludePaths on newlines")
-        #expect(o.noMultiplexing)
-        #expect(o.internalDNS)
     }
 
     /// One non-default value per Advanced option, and one assert per field.
     @Test func advancedFieldsMap() throws {
         var e = EngineOptions()
         e.throttleUpload = "500k"
-        e.multicastAddress = "224.0.0.251"
         e.peerIP = "10.0.0.1:9100"
         e.socks5Proxy = "socks5://user:pw@proxy.example:1080"
         e.httpProxy = "http://user:pw@proxy.example:3128"
 
         let o = try CrocEngine.crocOptions(from: e)
         #expect(o.throttleUpload == "500k")
-        #expect(o.multicastAddress == "224.0.0.251")
         #expect(o.peerIP == "10.0.0.1:9100")
         #expect(o.socks5Proxy == "socks5://user:pw@proxy.example:1080")
         #expect(o.httpProxy == "http://user:pw@proxy.example:3128")
@@ -128,8 +117,6 @@ import Testing
             Flag(name: "zipFolder", source: \.zipFolder, target: \.zipFolder),
             Flag(name: "gitIgnore", source: \.gitIgnore, target: \.gitIgnore),
             Flag(name: "ask", source: \.ask, target: \.ask),
-            Flag(name: "noMultiplexing", source: \.noMultiplexing, target: \.noMultiplexing),
-            Flag(name: "internalDNS", source: \.internalDNS, target: \.internalDNS),
         ]
         for flag in flags {
             var e = EngineOptions()
@@ -151,14 +138,8 @@ import Testing
         let engine = try #require(CrocmobileNewOptionsDefault())
         let mapped = try CrocEngine.crocOptions(from: EngineOptions())
         #expect(mapped.throttleUpload == engine.throttleUpload)
-        #expect(mapped.multicastAddress == engine.multicastAddress)
         #expect(mapped.peerIP == engine.peerIP)
         #expect(mapped.socks5Proxy == engine.socks5Proxy)
         #expect(mapped.httpProxy == engine.httpProxy)
-    }
-
-    @Test func defaultsAreCrocs() {
-        let e = EngineOptions()
-        #expect(e.multicastAddress == "239.255.255.250")
     }
 }

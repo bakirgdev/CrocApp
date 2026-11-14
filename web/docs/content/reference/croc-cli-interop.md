@@ -69,8 +69,14 @@ croc send --transport relay file.txt
 | **Patterns, one per line** and **Respect .gitignore** | `--exclude` and `--git` |
 | **Auto-Accept Transfers** | `--yes` |
 | **Confirm on Both Sides** | `--ask` |
+| Advanced: **SOCKS5 Proxy**, **HTTP Proxy** | `--socks5`, `--connect` |
+| Advanced: **Sender IP** | `--ip` |
+| Advanced: **Send Speed Limit** | `--throttleUpload` |
+| Advanced: **Skip Local Network** | `--no-local` |
 
 The file list preview, progress and history are CrocApp's own. The croc command line has no equivalent.
+
+CrocApp no longer exposes `--multicast`, `--internal-dns`, `--no-multi` and `--exclude-file`. It uses croc's default for each, which is what the command line does when you leave them out.
 
 ## Version and relay compatibility
 

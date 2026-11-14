@@ -54,12 +54,8 @@ final class AppSettings {
         case notificationsShowFileNames = "settings.notificationsShowFileNames"
         case systemSurfacesShowFileNames = "settings.systemSurfacesShowFileNames"
         case throttleUpload = "settings.advanced.throttleUpload"
-        case multicastAddress = "settings.advanced.multicastAddress"
         case peerIP = "settings.advanced.peerIP"
         case disableLocal = "settings.advanced.disableLocal"
-        case noMultiplexing = "settings.advanced.noMultiplexing"
-        case internalDNS = "settings.advanced.internalDNS"
-        case excludePaths = "settings.advanced.excludePaths"
     }
 
     @ObservationIgnored private let storage: any SettingsStorage
@@ -132,24 +128,11 @@ final class AppSettings {
     var throttleUpload: String {
         didSet { save(throttleUpload, .throttleUpload) }
     }
-    /// Blank means croc's default group.
-    var multicastAddress: String {
-        didSet { save(multicastAddress, .multicastAddress) }
-    }
     /// Receive only: the sender's ip:port.
     var peerIP: String { didSet { save(peerIP, .peerIP) } }
     /// Skips the local network for transfers: no LAN discovery or local relay.
     /// croc's `--no-local`. Excludes `onlyLocal`.
     var disableLocal: Bool { didSet { save(disableLocal, .disableLocal) } }
-    /// One data connection instead of several. croc's `--no-multi`. Send only.
-    var noMultiplexing: Bool {
-        didSet { save(noMultiplexing, .noMultiplexing) }
-    }
-    /// croc's `--internal-dns`: a direct relay's host name is looked up by
-    /// croc's own resolver, which asks public DNS servers.
-    var internalDNS: Bool { didSet { save(internalDNS, .internalDNS) } }
-    /// One relative path per line, excluded exactly (croc's `--exclude-file`).
-    var excludePaths: String { didSet { save(excludePaths, .excludePaths) } }
     /// Proxies may carry credentials: Keychain only, see `persistProxy`.
     var socks5Proxy: String {
         didSet { secretEdited(.socks5Proxy) }
@@ -205,6 +188,10 @@ final class AppSettings {
         storage.set(nil, forKey: "settings.relayHostAtLaunch")
         // 1.3.0 removed Spotlight indexing (`SpotlightPurge` empties the index).
         storage.set(nil, forKey: "settings.indexHistoryInSpotlight")
+        // 1.3.0 removed four Advanced options: multicast address, built-in DNS, single connection, exact exclude paths.
+        for key in ["multicastAddress", "internalDNS", "noMultiplexing", "excludePaths"] {
+            storage.set(nil, forKey: "settings.advanced.\(key)")
+        }
         if secrets.get(account: "relayHostPassword") != nil {
             secrets.delete(account: "relayHostPassword")
         }
@@ -234,12 +221,8 @@ final class AppSettings {
             storage, .systemSurfacesShowFileNames, default: false)
         let croc = Self.advancedDefaults
         throttleUpload = Self.read(storage, .throttleUpload, default: croc.throttleUpload)
-        multicastAddress = Self.read(storage, .multicastAddress, default: croc.multicastAddress)
         peerIP = Self.read(storage, .peerIP, default: croc.peerIP)
         disableLocal = Self.read(storage, .disableLocal, default: croc.disableLocal)
-        noMultiplexing = Self.read(storage, .noMultiplexing, default: croc.noMultiplexing)
-        internalDNS = Self.read(storage, .internalDNS, default: croc.internalDNS)
-        excludePaths = Self.read(storage, .excludePaths, default: "")
         socks5Proxy = secrets.get(account: Self.socks5ProxyAccount) ?? ""
         httpProxy = secrets.get(account: Self.httpProxyAccount) ?? ""
     }
@@ -268,13 +251,6 @@ final class AppSettings {
         peerIP.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? relayKind : .directToSender
     }
 
-    /// `excludePaths` as the engine takes it.
-    var excludePathList: [String] {
-        excludePaths.split(separator: "\n")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
-    }
-
     var excludeList: [String] {
         excludePatterns.split(separator: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces) }
@@ -287,22 +263,16 @@ final class AppSettings {
     func resetAdvancedToDefaults() {
         let croc = Self.advancedDefaults
         throttleUpload = croc.throttleUpload
-        multicastAddress = croc.multicastAddress
         peerIP = croc.peerIP
         disableLocal = croc.disableLocal
-        noMultiplexing = croc.noMultiplexing
-        internalDNS = croc.internalDNS
-        excludePaths = ""
         socks5Proxy = ""
         httpProxy = ""
         flushSecrets()
     }
 
     var advancedIsDefault: Bool {
-        let croc = Self.advancedDefaults
-        return throttleUpload.isEmpty && multicastAddress == croc.multicastAddress
-            && peerIP.isEmpty && !disableLocal && !noMultiplexing && !internalDNS
-            && excludePaths.isEmpty && socks5Proxy.isEmpty && httpProxy.isEmpty
+        throttleUpload.isEmpty && peerIP.isEmpty && !disableLocal
+            && socks5Proxy.isEmpty && httpProxy.isEmpty
     }
 
     func recordSuccessfulTransfer() { successfulTransfers += 1 }

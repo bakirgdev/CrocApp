@@ -1,6 +1,6 @@
 // croctest exercises crocmobile from the command line for interop verification.
 //
-//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [-no-multi] [ADVANCED] [PATH...]
+//	croctest send [-relay ADDR] [-no-local] [-only-local] [-text MSG] [-code CODE] [-relay-index N] [-throttle RATE] [ADVANCED] [PATH...]
 //	croctest receive [-relay ADDR] [-no-local] [-only-local] [-out DIR] [-answer y|n] [-yes] [-policy keepBoth|replace] [-cancel-after MS] [ADVANCED] CODE
 //	croctest store-send [-server URL] [-downloads N] [-lifetime SECONDS] [-socks5 ADDR] [-connect ADDR] PATH...
 //	croctest store-receive [-out DIR] [-answer y|n] [-policy keepBoth|replace] [-cancel-after MS] [-socks5 ADDR] [-connect ADDR] LINK
@@ -8,7 +8,6 @@
 //	croctest store-server DIR
 //	croctest socks5-proxy
 //	croctest http-proxy
-//	croctest multicast-listen GROUP SECONDS
 //	croctest relay CODE
 //	croctest relays
 //
@@ -20,19 +19,13 @@
 // Options for -yes, in the accept answer otherwise.
 //
 // ADVANCED are the Options of the app's Advanced settings, named like croc's
-// own flags: -multicast, -ip, -socks5, -connect.
+// own flags: -ip, -socks5, -connect.
 //
 // socks5-proxy and http-proxy run a CONNECT-only proxy without authentication
 // on a loopback port for the harness, and print "PROXY-ADDR <host:port>" once
 // it listens and "PROXY-TUNNEL <target>" for each connection it tunnels. croc's
 // dialer bypasses proxies for local addresses, so a tunnel appears only for a
 // non-local relay such as the public pool.
-//
-// multicast-listen joins the multicast GROUP on discovery's port for SECONDS
-// seconds and prints "MULTICAST-LISTEN <interfaces joined>", then one
-// "MULTICAST-PAYLOAD <text>" per datagram. A croc sender announces "croc<port>"
-// and a receiver "ok". croc drops discovery packets from the machine's own
-// addresses, so on one host this is the only way to see the group in use.
 //
 // -relay-index makes a generated code map to that public pool relay, as if the
 // latency probe had picked it. relay prints the pool relay a code maps to;
@@ -54,7 +47,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -132,7 +124,7 @@ func printRelay(code string) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: croctest send|receive|store-send|store-receive|store-revoke|store-server|socks5-proxy|http-proxy|multicast-listen|relay|relays ...")
+		fmt.Fprintln(os.Stderr, "usage: croctest send|receive|store-send|store-receive|store-revoke|store-server|socks5-proxy|http-proxy|relay|relays ...")
 		os.Exit(2)
 	}
 	mode := os.Args[1]
@@ -158,14 +150,6 @@ func main() {
 	case "http-proxy":
 		serveHTTPProxy()
 		return
-	case "multicast-listen":
-		secs, err := strconv.Atoi(os.Args[len(os.Args)-1])
-		if len(os.Args) != 4 || err != nil {
-			fmt.Fprintln(os.Stderr, "multicast-listen needs GROUP SECONDS")
-			os.Exit(2)
-		}
-		listenMulticast(os.Args[2], time.Duration(secs)*time.Second)
-		return
 	case "relays":
 		for _, r := range publicrelay.Relays() {
 			fmt.Println(r)
@@ -188,8 +172,6 @@ func main() {
 	cancelAfter := fs.Int("cancel-after", 0, "cancel after N ms")
 	throttle := fs.String("throttle", "", "cap sender upload rate, e.g. 200k, 1m (send)")
 	relayIndex := fs.Int("relay-index", -1, "public pool relay a generated code maps to (send)")
-	noMulti := fs.Bool("no-multi", false, "one data connection instead of one per relay port (send)")
-	multicast := fs.String("multicast", crocmobile.DefaultMulticastAddress, "multicast address for LAN discovery")
 	peerIP := fs.String("ip", "", "sender ip:port, skipping relays (receive)")
 	socks5 := fs.String("socks5", "", "SOCKS5 proxy")
 	connect := fs.String("connect", "", "HTTP proxy")
@@ -222,8 +204,6 @@ func main() {
 		opts.Rename = true
 	}
 	opts.ThrottleUpload = *throttle
-	opts.NoMultiplexing = *noMulti
-	opts.MulticastAddress = *multicast
 	opts.PeerIP = *peerIP
 	opts.Socks5Proxy = *socks5
 	opts.HTTPProxy = *connect

@@ -24,11 +24,8 @@ public enum EngineSetting: Sendable, CaseIterable {
     case httpProxy
     /// Send only: `EngineOptions.throttleUpload`.
     case throttleUpload
-    case multicastAddress
     /// Receive only: `EngineOptions.peerIP`.
     case peerIP
-    /// Send only: `EngineOptions.excludePaths`, one relative path per line.
-    case excludePaths
     /// `StoredSendOptions.server`.
     case storeServer
 
@@ -49,9 +46,7 @@ public enum EngineSetting: Sendable, CaseIterable {
         case .socks5Proxy: CrocmobileSettingSocks5Proxy
         case .httpProxy: CrocmobileSettingHTTPProxy
         case .throttleUpload: CrocmobileSettingThrottleUpload
-        case .multicastAddress: CrocmobileSettingMulticastAddress
         case .peerIP: CrocmobileSettingPeerIP
-        case .excludePaths: CrocmobileSettingExcludePaths
         case .storeServer: CrocmobileSettingStoreServer
         }
     }
@@ -110,9 +105,6 @@ public struct EngineOptions: Sendable {
     public var gitIgnore = false
     /// Substring patterns excluded from sends (croc --exclude semantics).
     public var exclude: [String] = []
-    /// Relative paths excluded exactly, inside a sent folder or by a picked
-    /// file's name (croc --exclude-file). Unlike `exclude`, no substring match.
-    public var excludePaths: [String] = []
     /// Both-sides confirm (croc --ask). Sender prompt is bridged via the
     /// stdin pipe; respond(_:accept:policy:) answers it.
     public var ask = false
@@ -123,18 +115,9 @@ public struct EngineOptions: Sendable {
     /// Send only: bytes per second, digits with an optional `k`, `m` or `g`
     /// (`"500k"`). Blank means no limit.
     public var throttleUpload = ""
-    /// IPv4 multicast group for finding peers on the local network. Both sides
-    /// must use the same one.
-    public var multicastAddress = CrocmobileDefaultMulticastAddress
     /// Receive only: the sender's `ip:port` (IPv6 in brackets). Connects
     /// straight to it and turns the public relay pool off.
     public var peerIP = ""
-    /// Send only: one data connection instead of several (croc --no-multi).
-    public var noMultiplexing = false
-    /// Resolve a direct relay's host name with croc's built-in resolver
-    /// (croc --internal-dns). A proxy keeps resolving it, and Send as Link
-    /// ignores it.
-    public var internalDNS = false
     /// May carry credentials; see `ProxySettings`.
     public var socks5Proxy = ""
     /// May carry credentials; see `ProxySettings`.
@@ -225,7 +208,7 @@ public struct EngineFailure: Error, Equatable, Sendable {
         case storeLimit
         /// Stored transfers: the server no longer has it (expired, revoked, used up).
         case storeExpired
-        /// An Advanced option (proxy, speed limit, multicast address, sender IP) failed the engine's check.
+        /// An Advanced option (proxy, speed limit, sender IP) failed the engine's check.
         case invalidSetting
         /// A start while another transfer still holds the engine. `CrocEngine`
         /// throws `CrocEngineError.transferActive` for it.

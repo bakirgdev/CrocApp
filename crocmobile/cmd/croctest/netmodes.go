@@ -9,23 +9,14 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
-
-// peerdiscovery's default port, which croc leaves alone.
-const discoveryPort = 9999
 
 // The proxy modes let the harness prove that crocmobile's -socks5 and -connect
 // reach croc's dialer. Both do CONNECT only, with no authentication, listen on
 // loopback, print "PROXY-ADDR <host:port>" once they listen and one
 // "PROXY-TUNNEL <target>" per connection they tunnel, to stderr.
-//
-// multicast-listen lets the harness see which group crocmobile's -multicast
-// reaches. croc's peer discovery drops packets from the machine's own
-// addresses, so two croc peers on one host never find each other and a
-// transfer cannot prove the option.
 
 func listenProxy() net.Listener {
 	l, err := net.Listen("tcp", "127.0.0.1:0")
@@ -157,45 +148,4 @@ func handleConnect(w http.ResponseWriter, r *http.Request) {
 		_, err := c.Write([]byte("HTTP/1.1 200 Connection Established\r\n\r\n"))
 		return err
 	})
-}
-
-// listenMulticast joins group on every multicast interface for the given time
-// and prints "MULTICAST-PAYLOAD <payload>" for each datagram, "MULTICAST-LISTEN
-// <n>" first with the number of interfaces it joined. It exits 1 when it joined
-// none.
-func listenMulticast(group string, d time.Duration) {
-	ip := net.ParseIP(group)
-	ifaces, _ := net.Interfaces()
-	var wg sync.WaitGroup
-	joined := 0
-	deadline := time.Now().Add(d)
-	for i := range ifaces {
-		if ifaces[i].Flags&net.FlagUp == 0 || ifaces[i].Flags&net.FlagMulticast == 0 {
-			continue
-		}
-		c, err := net.ListenMulticastUDP("udp4", &ifaces[i], &net.UDPAddr{IP: ip, Port: discoveryPort})
-		if err != nil {
-			continue
-		}
-		joined++
-		_ = c.SetReadDeadline(deadline)
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			defer c.Close()
-			buf := make([]byte, 1500)
-			for {
-				n, _, err := c.ReadFromUDP(buf)
-				if err != nil {
-					return
-				}
-				fmt.Fprintf(os.Stderr, "MULTICAST-PAYLOAD %s\n", strings.TrimSpace(string(buf[:n])))
-			}
-		}()
-	}
-	fmt.Fprintf(os.Stderr, "MULTICAST-LISTEN %d\n", joined)
-	if joined == 0 {
-		os.Exit(1)
-	}
-	wg.Wait()
 }

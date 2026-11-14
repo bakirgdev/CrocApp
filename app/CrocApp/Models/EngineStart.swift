@@ -17,7 +17,6 @@ enum EngineStart {
             options.zipFolder = settings.zipFolder
             options.gitIgnore = settings.useGitIgnore
             options.exclude = settings.excludeList
-            options.excludePaths = settings.excludePathList
             self = .send(paths: urls.map(\.path), text: nil, options: options)
         case .sendText(let text, let code):
             self = .send(paths: [], text: text, options: Self.sendOptions(settings, code: code))
@@ -80,8 +79,6 @@ enum EngineStart {
         var options = baseOptions(settings)
         options.customCode = code
         options.workDir = FileManager.default.temporaryDirectory.path
-        // Send only: a receiver on one connection hangs against a sender that multiplexes.
-        options.noMultiplexing = settings.noMultiplexing
         return options
     }
 
@@ -93,15 +90,12 @@ enum EngineStart {
         o.relayPassword = settings.relayPassword
         o.onlyLocal = settings.onlyLocal
         o.disableLocal = settings.disableLocal
-        o.internalDNS = settings.internalDNS
         o.noCompress = settings.noCompress
         o.ask = settings.bothSidesConfirm
         o.throttleUpload = settings.throttleUpload
         let proxies = proxies(settings)
         o.socks5Proxy = proxies.socks5
         o.httpProxy = proxies.http
-        let multicast = settings.multicastAddress.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !multicast.isEmpty { o.multicastAddress = multicast }
         return o
     }
 }
