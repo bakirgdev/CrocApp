@@ -1,6 +1,6 @@
 # What is croc
 
-Facts checked against croc **v11.6.4**, the pinned version: the source read in the Go module cache, and CLI behaviour read in `src/cli`. Before trusting any of this against a newer croc, follow `croc-upgrade-playbook.md`. Terms: `../GLOSSARY.md`.
+Facts checked against croc **v11.6.5**, the pinned version: the source read in the Go module cache, and CLI behaviour read in `src/cli`. Before trusting any of this against a newer croc, follow `croc-upgrade-playbook.md`. Terms: `../GLOSSARY.md`.
 
 Source: https://github.com/schollz/croc
 
@@ -40,7 +40,7 @@ Ports: transfer ports default to 9009-9013, control port first.
 
 ### 3. PAKE
 
-- The passphrase part of the code (the final two words of a three-word code) feeds PAKE2 (`github.com/schollz/pake/v3` v3.2.0, Boneh-Shoup construction) through `src/pakekey`. `pakekey` binds the exchange to the purpose, room and role of each side.
+- The passphrase part of the code (the final two words of a three-word code) feeds PAKE2 (`github.com/schollz/pake/v3` v3.2.1, Boneh-Shoup construction) through `src/pakekey`. `pakekey` binds the exchange to the purpose, room and role of each side.
 - The default curve is P-256 (`--curve`: p256, p384, p521, siec, ed25519). The receiver's choice wins: the sender adopts it. CrocApp always uses P-256 and has no curve setting.
 - It turns the weak phrase into a strong session key. The relay never learns it.
 - The peer PAKE protocol is versioned (`pakekey.ProtocolVersion` = 2) and fails closed on a mismatch.
@@ -53,7 +53,7 @@ Everything is end to end.
 - Each side proves it holds the key (HMAC-SHA256 tags) before data flows.
 - After that, everything on the wire is **AES-256-GCM** (`crypt.NewAESGCM`, a random 12-byte nonce prepended to each message).
 - `crypt.New` (PBKDF2-HMAC-SHA256, 100 iterations) protects only the client-to-relay password handshake (`src/tcp`), not transfer data.
-- `crypt.NewArgon2` (Argon2id with XChaCha20-Poly1305) and `EncryptChaCha` / `DecryptChaCha` exist in the same file but have no non-test call site in v11.6.4. Do not describe croc as Argon2- or ChaCha-based.
+- `crypt.NewArgon2` (Argon2id with XChaCha20-Poly1305) and `EncryptChaCha` / `DecryptChaCha` exist in the same file but have no non-test call site in v11.6.5. Do not describe croc as Argon2- or ChaCha-based.
 - The relay sees ciphertext only. It is untrusted by design.
 
 ### 5. Transport

@@ -115,7 +115,7 @@ Permanent or deferred, each with its reason.
   - `pnpm audit` lists it, and any Dependabot alert for it is dismissed with this reason.
   - `web/docs/osv-scanner.toml` ignores it so OpenSSF Scorecard's Vulnerabilities check does not count it. Remove this item and that entry when `braces` publishes a fix.
 - **`golang.org/x/crypto` carries GO-2026-5932 (the unmaintained `openpgp` package) with no fixed version.**
-  - The advisory covers the whole module, but nothing imports `openpgp`. In non-test code croc v11.6.4 imports only the `argon2`, `chacha20poly1305`, `hkdf`, `pbkdf2` and `ssh` packages of `x/crypto`, and `go tool govulncheck ./...` in `crocmobile/` reports it as required but not called.
+  - The advisory covers the whole module, but nothing imports `openpgp`. In non-test code croc v11.6.5 imports only the `argon2`, `chacha20poly1305`, `hkdf`, `pbkdf2` and `ssh` packages of `x/crypto`, and `go tool govulncheck ./...` in `crocmobile/` reports it as required but not called.
   - `crocmobile/osv-scanner.toml` ignores it for Scorecard. Remove both if `x/crypto` drops `openpgp` or a dependency starts importing it.
 - **Three OpenSSF Scorecard alerts are dismissed as "won't fix".** Scorecard opens a code-scanning alert for every check below 10, and these cannot reach 10 with one maintainer.
   - **Branch-Protection:** 10 needs two approving reviewers with admins included, so nothing could merge. `main` keeps pull requests, the `ci pass` check, linear history, and no force push or deletion.
@@ -225,12 +225,12 @@ Permanent or deferred, each with its reason.
   - Existing members are kept and matching ones in the archive are skipped under every policy, Replace and auto-accept included. The stdin answers croc's unzip prompt reads are always "n", because a queued "y" would also answer the accept prompt croc re-runs after a reconnect or forces when the sender used `--ask` (`knowledge/crocmobile-bridge.md`).
   - The archive's contents are known to croc only after it unpacks, and keeping what is there loses nothing.
 - **A file whose name ends in a space cannot be sent to a croc v11 peer.**
-  - CrocApp sends the exact name (crocmobile `splitPaths`). croc v11 receivers, CLI and crocmobile alike, refuse it (croc v11.6.4 source, `receivefs`): `unsafe receive path in "report.pdf ": Windows-trimmed trailing character`. The sender sees `cancelled`.
+  - CrocApp sends the exact name (crocmobile `splitPaths`). croc v11 receivers, CLI and crocmobile alike, refuse it (croc v11.6.5 source, `receivefs`): `unsafe receive path in "report.pdf ": Windows-trimmed trailing character`. The sender sees `cancelled`.
   - The refusal is croc's receive-path policy. Rename the file to send it.
 - **A croc v11 reconnect after a manually accepted receive ends as `refused`.**
   - croc re-runs the accept prompt on the sender's file list after each reconnect (`resetForReconnectAttempt`, then `processMessageFileInfo`). The next queued stdin answer is "n", so the receive fails instead of resuming.
   - Answering "y" there would accept a list the user never saw, and crocmobile cannot tell that prompt from the unzip prompt on the same pipe.
-  - Read from croc v11.6.4 source; no harness forces a reconnect.
+  - Read from croc v11.6.5 source; no harness forces a reconnect.
 - **A cancelled transfer that croc never returns from keeps the engine until CrocApp is relaunched.**
   - The cancel watchdog reports it after 15 s as `engineStuck`, so the app leaves the transfer and every later start fails at once with "The cancelled transfer didn't stop. Quit and reopen CrocApp to transfer again." (`knowledge/crocmobile-bridge.md`, "Cancel and teardown").
   - The lock itself stays held: forcing it open while croc still runs would let two sessions change the same process-global state (`os.Chdir`, the stdin and stdout swaps).
@@ -240,11 +240,11 @@ Permanent or deferred, each with its reason.
   - `go test -race` reported it for a receive cancelled during its relay dial. The read happens in a dial that is already cancelled, but a torn read of a Go string can in principle crash the process. Not seen outside the race detector.
   - A fix needs croc to take these settings per client instead of as package globals.
 - **`poll()` reads `croc.Client` fields with no synchronization** (croc's own goroutines write them unguarded).
-  - `go test -race` reports it on a multi-file receive slow enough for `poll` to tick during it: `fileListJSON` and `progressSnapshot` (`session.go`) read `FilesToTransfer`, its names and sizes, `FilesToTransferCurrentNum` and `TotalSent` while croc's `processSenderInfo`, `restoreBundleDestinations` and bundle code write them (croc v11.6.4). `TestStartRelayServesCrocClients` hits it now and then, so a `-race` run can fail on it.
+  - `go test -race` reports it on a multi-file receive slow enough for `poll` to tick during it: `fileListJSON` and `progressSnapshot` (`session.go`) read `FilesToTransfer`, its names and sizes, `FilesToTransferCurrentNum` and `TotalSent` while croc's `processSenderInfo`, `restoreBundleDestinations` and bundle code write them (croc v11.6.5). `TestStartRelayServesCrocClients` hits it now and then, so a `-race` run can fail on it.
   - Indexes are bounds-checked, so a stale count cannot panic. A torn read of a name or of the slice header itself could in principle show a wrong name or crash the process. Not seen outside the race detector.
-  - croc v11.6.4 exports no lock, accessor or progress callback, and no lock of its own covers those writes, so crocmobile cannot read them safely. The file list the incoming sheet needs exists only there. A fix needs croc to publish a synchronized snapshot.
+  - croc v11.6.5 exports no lock, accessor or progress callback, and no lock of its own covers those writes, so crocmobile cannot read them safely. The file list the incoming sheet needs exists only there. A fix needs croc to publish a synchronized snapshot.
 - **croc itself has data races that `go test -race` reports through crocmobile.**
-  - The sender resets `TotalSent` for each new file without `c.mutex` while a chunk goroutine of the previous file still adds to it under `c.mutex` (`croc.go`, croc v11.6.4).
+  - The sender resets `TotalSent` for each new file without `c.mutex` while a chunk goroutine of the previous file still adds to it under `c.mutex` (`croc.go`, croc v11.6.5).
   - After a cancel at a prompt, croc's abandoned prompt-read goroutine and `drainPromptInput` both use croc's one shared `stdinReader` (`src/utils/utils.go`) with no synchronization. Both end on the closed pipe's EOF, and in 50 runs the next session's answer always reached its own prompt, so no answer is lost. Not fixable from crocmobile, because `drainPromptInput` has to read through that reader.
 - **A generated-code send with no internet or no reachable pool relay fails before a code is shown.**
   - With default settings, no pool relay answers the 1 s probe (`generatePublicCode` in `crocmobile/relay.go`), so the send fails with code `noPublicRelay` (croc's `no public relay available`, the same as the v11 CLI).
@@ -254,7 +254,7 @@ Permanent or deferred, each with its reason.
   - A receiver with LAN on waits up to 5 s for the sender to answer its `pake1` local probe, then fails with `local discovery failed: ... i/o timeout` (`knowledge/crocmobile-bridge.md`, "Start order: sender first"). A sender that joins inside those 5 s completes the transfer, and a late answer within them no longer fails a receive, so a slow link or a proxy matters only past 5 s.
   - Generated codes are sender-first, but custom codes are not. A receiver who types an agreed code more than 5 s before the sender taps Send, or an app receiver waiting on a CLI sender using `CROC_SECRET`, hits it.
   - The receiver reports `joinedEarly`: "The other device wasn't ready" and "Start the send there first, or use a faster connection, then enter the code again."
-  - A sender that arrives after that finds the room empty and waits for a new receiver (inferred from the croc v11.6.4 source, not verified live), so a second receive with the same code should then work. There is no automatic retry of the receive.
+  - A sender that arrives after that finds the room empty and waits for a new receiver (inferred from the croc v11.6.5 source, not verified live), so a second receive with the same code should then work. There is no automatic retry of the receive.
   - Workaround: start the sender first, then the receiver. `verify-app-sim.sh`, `verify-app-mac.sh` and `verify-interop.sh` all delay their CLI receiver for this reason.
   - The window is croc's `localProbeReadTimeout`, unexported. Not verified whether `schollz/croc` has an upstream issue for it.
 - **A batch of small files shows no progress while it moves.**

@@ -3,6 +3,7 @@ package crocmobile
 import (
 	"encoding/json"
 	"errors"
+	"github.com/schollz/croc/v11/src/comm"
 	"github.com/schollz/croc/v11/src/tcp"
 	"io"
 	"net"
@@ -115,6 +116,31 @@ func TestStartRelayWrongPasswordFailsTheTransfer(t *testing.T) {
 	rec.wait(t)
 	if codes := rec.terminalCodes(); len(codes) != 1 || codes[0] != codeBadPassword {
 		t.Fatalf("send ended %v, want %s", codes, codeBadPassword)
+	}
+}
+
+// An unauthenticated first frame without curve points panicked inside
+// pake.Update on croc's relay goroutine and took the whole app down (pake
+// v3.2.0, fixed in v3.2.1 with croc v11.6.5).
+func TestStartRelaySurvivesMalformedHandshake(t *testing.T) {
+	_, base := startHost(t, "127.0.0.1", "")
+	relay := net.JoinHostPort("127.0.0.1", strconv.Itoa(base))
+	for _, payload := range []string{"null", "{}", `{"Role":0}`} {
+		c, err := comm.NewConnection(relay, time.Second)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := c.Send([]byte(payload)); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.Connection().SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
+			t.Fatal(err)
+		}
+		_, _ = io.Copy(io.Discard, c.Connection()) // waits until the relay drops the connection
+		c.Close()
+		if err := tcp.PingServer(relay); err != nil {
+			t.Fatalf("relay down after %s: %v", payload, err)
+		}
 	}
 }
 

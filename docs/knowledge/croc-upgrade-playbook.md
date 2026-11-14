@@ -2,7 +2,7 @@
 
 How to bump the pinned croc version in `crocmobile/go.mod`. Ship each major and minor within 7 days of its release, at its latest patch, and review each patch release to take or skip it; a security fix is taken at once (`MAINTAINING.md`, "croc upstream"). Dependabot opens the croc PR on day 3 for a minor and day 1 for a patch (`.github/dependabot.yml`). Run the playbook as one session per bump.
 
-**Pinned: v11.6.4.** croc still reports no bundle progress an embedder can read, so a batch of small files shows indeterminate progress (`crocmobile-bridge.md`, "Small-file bundles"). Check each release for an exported bundle progress path, and for any change to the fields `bundleGap` reads.
+**Pinned: v11.6.5.** croc still reports no bundle progress an embedder can read, so a batch of small files shows indeterminate progress (`crocmobile-bridge.md`, "Small-file bundles"). Check each release for an exported bundle progress path, and for any change to the fields `bundleGap` reads.
 
 ## Steps
 
@@ -12,7 +12,7 @@ How to bump the pinned croc version in `crocmobile/go.mod`. Ship each major and 
    - Changes to the `Client` progress fields the poller reads: `TotalSent`, the step booleans, `FilesToTransfer`, `FilesToTransferCurrentNum`, and anything that exports bundle progress (`bundle.go`, `transfer_progress.go`).
    - Prompt sites (`utils.GetInputContext` callers) added or removed. Each one maps to a workaround in `crocmobile-bridge.md`.
    - Wire or protocol changes. A major version bump means incompatible peers.
-2. **Cross-check every documented workaround.** Take each one in `crocmobile-bridge.md`, "croc v11.6.4 gotchas (verified against source)", and decide keep, delete or adapt against the delta. Delete obsolete shims; do not leave dead workarounds. Rename that heading to the new version in step 6.
+2. **Cross-check every documented workaround.** Take each one in `crocmobile-bridge.md`, "croc v11.6.5 gotchas (verified against source)", and decide keep, delete or adapt against the delta. Delete obsolete shims; do not leave dead workarounds. Rename that heading to the new version in step 6.
 3. **Bump.**
    - Run `cd crocmobile && go get github.com/schollz/croc/v11@vNEW && go mod tidy`. A new major changes the `/vN` import path everywhere.
    - Then run `brew upgrade croc` so the test CLI matches the pin (`brew install croc` on a fresh machine). The harnesses default `CROC` to `${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc`.
@@ -27,7 +27,7 @@ How to bump the pinned croc version in `crocmobile/go.mod`. Ship each major and 
 
    Any failure: find the root cause against the upstream delta before touching wrapper semantics.
 6. **Update docs.**
-   - Run `git grep -n "v11.6.4"` (the old version string) and update every hit. The hits include this file's "Pinned" line, `what-is-croc.md` (the version header and any changed facts), `crocmobile-bridge.md` (the version in the layers diagram, the "croc v11.6.4 gotchas" heading and the Advanced options text), `known-issues.md`, and comments in `crocmobile/`.
+   - Run `git grep -n "v11.6.5"` (the old version string) and update every hit. The hits include this file's "Pinned" line, `what-is-croc.md` (the version header and any changed facts), `crocmobile-bridge.md` (the version in the layers diagram, the "croc v11.6.5 gotchas" heading and the Advanced options text), `known-issues.md`, and comments in `crocmobile/`.
    - Also check any other file the grep turns up, and update facts that changed even where the version string is absent.
    - Check the names in `known-issues.md` and `docs/GLOSSARY.md` that the delta touched.
    - Run `scripts/verify-docs.sh`.
