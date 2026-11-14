@@ -37,4 +37,4 @@ Use one channel per Mac. The App Store and disk image builds are both named `Cro
 
 The App Store builds contain no updater, so they never contact github.com to look for updates. What changed in each release is on [GitHub Releases](https://github.com/bakirgdev/CrocApp/releases).
 
-To build from source, see the [contributor docs](../contribute.md).
+To build from source, see the [build instructions](https://github.com/bakirgdev/CrocApp/blob/main/docs/BUILDING.md).

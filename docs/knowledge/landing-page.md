@@ -43,7 +43,7 @@ Every landing page links `site.webmanifest`, the 96px PNG, `favicon.ico` and the
 
 ## Crawler files
 
-- `llms.txt` is hand-written to the llmstxt.org shape: an H1, a blockquote, then H2 sections of `- [Title](url): note` lines. It links every docs page, so a docs page added, renamed or removed is edited here too, and in `web/docs/static/llms.txt` (served at `/docs/llms.txt`, `docs-site.md`, "Crawler files").
+- `llms.txt` is hand-written to the llmstxt.org shape: an H1, a blockquote, then H2 sections of `- [Title](url): note` lines. It is the only `llms.txt` and links every docs page, so a docs page added, renamed or removed is edited here too.
 - `sitemap.xml` is not in the tree: `scripts/assemble-site.sh` writes it, listing the landing, support and privacy pages with each page's last commit date as `lastmod` (hence the Pages workflow's `fetch-depth: 0`). A new indexable page is added to the loop there. The JSON-LD in `index.html` is one `@graph` (`SoftwareApplication`, `Person`, `WebSite`); validate it by parsing it as JSON and with the Schema.org validator after an edit. The docs sitemap is generated.
 - `robots.txt` lists both sitemaps.
 

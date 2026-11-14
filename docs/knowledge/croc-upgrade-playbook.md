@@ -1,8 +1,8 @@
 # croc upgrade playbook
 
-How to bump the pinned croc version in `crocmobile/go.mod`. Ship each major and minor within 7 days of its release, at its latest patch, and review each patch release to take or skip it; a security fix is taken at once (`MAINTAINING.md`, "croc upstream"). Dependabot opens the croc PR on day 3 for a minor and day 1 for a patch (`.github/dependabot.yml`). Run the playbook as one session per bump.
+How to bump the pinned croc version in `crocmobile/go.mod`. The update rule (what to read, how fast to take and ship) is in `RELEASING.md`, "croc updates". Dependabot opens the croc PR on day 3 for a minor and day 1 for a patch (`.github/dependabot.yml`). Run the playbook as one session per bump.
 
-**Pinned: v11.6.5.** croc still reports no bundle progress an embedder can read, so a batch of small files shows indeterminate progress (`crocmobile-bridge.md`, "Small-file bundles"). Check each release for an exported bundle progress path, and for any change to the fields `bundleGap` reads.
+**The pin is in `crocmobile/go.mod`.** croc still reports no bundle progress an embedder can read, so a batch of small files shows indeterminate progress (`crocmobile-bridge.md`, "Small-file bundles"). Check each release for an exported bundle progress path, and for any change to the fields `bundleGap` reads.
 
 ## Steps
 
@@ -12,23 +12,23 @@ How to bump the pinned croc version in `crocmobile/go.mod`. Ship each major and 
    - Changes to the `Client` progress fields the poller reads: `TotalSent`, the step booleans, `FilesToTransfer`, `FilesToTransferCurrentNum`, and anything that exports bundle progress (`bundle.go`, `transfer_progress.go`).
    - Prompt sites (`utils.GetInputContext` callers) added or removed. Each one maps to a workaround in `crocmobile-bridge.md`.
    - Wire or protocol changes. A major version bump means incompatible peers.
-2. **Cross-check every documented workaround.** Take each one in `crocmobile-bridge.md`, "croc v11.6.5 gotchas (verified against source)", and decide keep, delete or adapt against the delta. Delete obsolete shims; do not leave dead workarounds. Rename that heading to the new version in step 6.
+2. **Cross-check every documented workaround.** Take each one in `crocmobile-bridge.md`, "croc 11 gotchas (verified against source)", and decide keep, delete or adapt against the delta. Delete obsolete shims; do not leave dead workarounds. Rename that heading in step 6 if the major changed.
 3. **Bump.**
    - Run `cd crocmobile && go get github.com/schollz/croc/v11@vNEW && go mod tidy`. A new major changes the `/vN` import path everywhere.
    - Then run `brew upgrade croc` so the test CLI matches the pin (`brew install croc` on a fresh machine). The harnesses default `CROC` to `${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc`.
 4. **Build.** Run `go build ./... && go vet ./...` in `crocmobile/` with `GOFLAGS=-tags=croc_no_tailcat` (`BUILDING.md`, "Format and lint"), then `./scripts/build-xcframework.sh`, then `cd CrocKit && swift build`, then build the app for both platforms.
 5. **Verify**, in this order. Each one covers ground the previous one does not (`BUILDING.md`, "Verification harnesses" has the commands):
    - `crockit-verify twice`: the Swift layer. The two-transfer case proves the fd 0, stdout, cwd and mutex restoration still composes.
-   - `PUBLIC_POOL=1 ./scripts/verify-interop.sh`: all 16 crocmobile to CLI scenarios, including the public relay pool (scenario 11), which only runs with `PUBLIC_POOL=1`.
-   - `PUBLIC_POOL=1 ./scripts/verify-app-mac.sh`: the 12 macOS app scenarios. This is the widest coverage of the option surface.
+   - `PUBLIC_POOL=1 ./scripts/verify-interop.sh`: every crocmobile to CLI scenario, including the public relay pool (scenario 11), which only runs with `PUBLIC_POOL=1`.
+   - `PUBLIC_POOL=1 ./scripts/verify-app-mac.sh`: the macOS app scenarios. This is the widest coverage of the option surface.
    - `PUBLIC_POOL=1 ./scripts/verify-app-sim.sh`: iOS simulator receive and the share-extension handoff.
 
    `PUBLIC_POOL=1` sends through the public relays, which is where a croc upgrade can change relay selection or the code-to-relay mapping. A pool relay rate-limits, so wait a minute between harnesses, and a failure counts as a regression only after its log says so (`known-issues.md`, "Harnesses"). Run the same three without `PUBLIC_POOL` as well: that is what CI runs for interop and what finds a local-relay regression.
 
    Any failure: find the root cause against the upstream delta before touching wrapper semantics.
 6. **Update docs.**
-   - Run `git grep -n "v11.6.5"` (the old version string) and update every hit. The hits include this file's "Pinned" line, `what-is-croc.md` (the version header and any changed facts), `crocmobile-bridge.md` (the version in the layers diagram, the "croc v11.6.5 gotchas" heading and the Advanced options text), `known-issues.md`, and comments in `crocmobile/`.
-   - Also check any other file the grep turns up, and update facts that changed even where the version string is absent.
+   - Run `git grep -n "11.6.5"` (the old version string) and update every hit: `what-is-croc.md` (the version header and any changed facts), `web/docs/content/reference/croc-cli-interop.md`, and comments in `crocmobile/` and `scripts/`. Other docs say "croc 11" and need the version only when the major changes.
+   - Update facts that changed even where the version string is absent.
    - Check the names in `known-issues.md` and `docs/GLOSSARY.md` that the delta touched.
    - Run `scripts/verify-docs.sh`.
 

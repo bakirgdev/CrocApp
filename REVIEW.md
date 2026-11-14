@@ -12,17 +12,12 @@ What reviewers (people, the managed Code Review service) weigh in this repo. The
 | Docs | it lies | a claim does not match the code, or a "verified" claim names no version |
 | UI and design | it breaks `design/` | a raw color replaces a token, a theme or contrast rule fails, copy ignores `design/voice.md` |
 
-Style and wording are Nit at most.
-
-## Nits
-
-Report at most 5.
+Style and wording are Nit at most, and at most 5 are reported.
 
 ## Do not report
 
 - Lockfiles and resolved pins: `crocmobile/go.sum`, `web/docs/pnpm-lock.yaml`, `Package.resolved`.
-- `project.pbxproj` diffs that only register files.
-- `*.xcstrings` catalogs, unless the change is to an English source string.
+- `project.pbxproj` diffs that only register files, and `*.xcstrings` catalogs unless an English source string changed.
 - Anything CI already enforces: link and path validity (`scripts/verify-docs.sh`), token parity, contrast and the raw-color lint (`scripts/verify-design.sh`), swift-format, golangci, `ci pass`.
 
 ## Evidence
@@ -33,23 +28,10 @@ Report at most 5.
 
 ## Always check
 
-1. A change to `crocmobile/session.go`, `CrocKit/Sources/` or `TransferController` quotes its transfer harness output (`docs/BUILDING.md`, "Verification harnesses") or says "not verified".
-2. A user-visible change updates `CHANGELOG.md` under `## [Unreleased]` and the matching page in `web/docs/content/`.
-3. The docs named in the "You changed" table of `AGENTS.md` are updated.
-4. New app text is localizable (String Catalogs).
-5. New colors come from `design/` tokens, not literals.
-6. Every action is pinned to a full commit SHA with a `# vX.Y.Z` comment.
-7. A new file that CI reads is in the `changes` regex of the job that reads it.
-8. A write path never deletes the old value before the new one is saved.
+- Every action is pinned to a full commit SHA with a `# vX.Y.Z` comment.
+- A new file that CI reads is in the `changes` regex of the job that reads it.
+- A write path never deletes the old value before the new one is saved.
 
 ## Always human
 
-A person approves changes to these paths.
-
-- `crocmobile/session.go` and `CrocKit/Sources/` (encrypted-transfer path, PAKE handshake)
-- `*.entitlements`
-- Secret storage: `app/CrocApp/Support/KeychainStore.swift` and its callers (`AppSettings`, `StoredTransferVault`)
-- `.github/workflows/` (all workflows, `release.yml` above all)
-- `scripts/build-appstore.sh`, `scripts/build-devid.sh`, `scripts/build-dmg.sh`
-- Sparkle and signing config (`app/Config/CrocApp-Direct-Info.plist`, `app/Config/ExportOptions-*.plist`)
-- `SECURITY.md`, `docs/THREAT-MODEL.md`
+A person approves changes to `crocmobile/session.go`, `CrocKit/Sources/`, `*.entitlements`, secret storage (`KeychainStore.swift` and its callers), `.github/workflows/`, `scripts/build-appstore.sh`, `build-devid.sh` and `build-dmg.sh`, Sparkle and signing config (`CrocApp-Direct-Info.plist`, `ExportOptions-*.plist`), `SECURITY.md` and `docs/THREAT-MODEL.md`.

@@ -25,7 +25,7 @@ scripts/assemble-site.sh          # writes ./_site/, landing at /, docs at /docs
 
 ## Crawler files
 
-`web/docs/static/llms.txt` is the hand-written docs index (llmstxt.org shape), served at `/docs/llms.txt`. A page added, renamed or removed is edited there and in the landing `llms.txt` (`landing-page.md`, "Crawler files"). There is no `llms-full.txt`: Docusaurus does not generate one, and the only route is a third-party plugin, a new dependency this repo has not adopted. The sitemap at `/docs/sitemap.xml` is generated and listed in the landing `robots.txt`.
+The docs site ships no `llms.txt`: the landing `llms.txt` is the one index and lists every docs page, so a page added, renamed or removed is edited there (`landing-page.md`, "Crawler files"). There is no `llms-full.txt`: Docusaurus does not generate one, and the only route is a third-party plugin, a new dependency this repo has not adopted. The sitemap at `/docs/sitemap.xml` is generated and listed in the landing `robots.txt`.
 
 ## Content and styling rules
 
@@ -43,7 +43,7 @@ Moving or deleting a page also needs a redirect, or the old URL, which search en
 
 ## Versions
 
-The site has one version and `docusaurus.config.ts` configures none, so there is no version dropdown and no `versioned_docs/`. `web/docs/package.json` carries the release version, bumped with `app/Config/Version.xcconfig`. When a later release changes behavior that an older version's readers still need described, run `pnpm --dir web/docs run docusaurus docs:version <version>` and add the dropdown to the navbar then. Release notes are not a docs page: the navbar and footer link to GitHub Releases.
+The site has one version and `docusaurus.config.ts` configures none, so there is no version dropdown and no `versioned_docs/`. When a later release changes behavior that an older version's readers still need described, run `pnpm --dir web/docs run docusaurus docs:version <version>` and add the dropdown to the navbar then. Release notes are not a docs page: the navbar and footer link to GitHub Releases.
 
 ## Broken links fail the build
 

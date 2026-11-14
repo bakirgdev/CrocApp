@@ -99,56 +99,6 @@ Transfers are end-to-end encrypted, the code phrase authenticates both devices (
 - You can use your own croc relay instead of the default public ones.
 - Report vulnerabilities privately through [GitHub Security Advisories](https://github.com/bakirgdev/CrocApp/security/advisories/new), never in a public issue. See [`SECURITY.md`](SECURITY.md). The threat model and trust boundaries are in [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md).
 
-## Features
-
-| Area | Guide |
-|---|---|
-| Send files, folders, text and clipboard, with a QR code | [Send](https://crocapp.dev/docs/guide/sending/) |
-| Receive with a code phrase, a QR code or a link, and choose what to keep | [Receive](https://crocapp.dev/docs/guide/receiving/) |
-| Custom and saved code phrases, receive links | [Code phrases and links](https://crocapp.dev/docs/guide/code-phrases/) |
-| Share a file for someone who is not online, with expiry and revoke | [Send as link](https://crocapp.dev/docs/guide/send-as-link/) |
-| Your own relay, local-only transfers, proxies and the other croc options | [Settings](https://crocapp.dev/docs/guide/settings/), [Run your own relay](https://crocapp.dev/docs/guide/own-relay/) |
-| Transfer history | [History](https://crocapp.dev/docs/guide/history/) |
-| Shortcuts, Siri, the menu bar and keyboard shortcuts | [Shortcuts and Siri](https://crocapp.dev/docs/guide/shortcuts/), [Mac menu bar](https://crocapp.dev/docs/guide/menu-bar/) |
-| Which croc options CrocApp covers | [croc CLI interoperability](https://crocapp.dev/docs/reference/croc-cli-interop/), [`docs/knowledge/features.md`](docs/knowledge/features.md) |
-
-## FAQ
-
-<details>
-<summary><strong>How is this different from AirDrop?</strong></summary>
-
-AirDrop needs two Apple devices close to each other. CrocApp works between any two devices running croc or CrocApp, on any network, at any distance, for example from an iPhone to a Linux server on another continent.
-
-</details>
-
-<details>
-<summary><strong>Does it work with the croc CLI?</strong></summary>
-
-Yes, in both directions. CrocApp embeds croc, so `croc send` on a laptop can be received in the app on a phone, and the reverse. The CLI must be croc 11 or newer.
-
-</details>
-
-<details>
-<summary><strong>Why iOS 26 and macOS 26 (or newer) only?</strong></summary>
-
-It lets the app use current SwiftUI APIs and Liquid Glass without availability checks everywhere. The minimum is 26.0, so every 26.x (or newer) release works.
-
-</details>
-
-<details>
-<summary><strong>Is it free? Will it ever have a paid tier?</strong></summary>
-
-Free and MIT-licensed, and it stays that way. Donations are welcome but optional, see [Support the project](#support-the-project).
-
-</details>
-
-<details>
-<summary><strong>Will there be a Windows, Linux, or Android version?</strong></summary>
-
-Not planned yet. If you want to see CrocApp on other platforms, show your interest in an [issue](https://github.com/bakirgdev/CrocApp/issues).
-
-</details>
-
 ## Build from source
 
 You need a Mac with macOS 26 or newer, Xcode and Go ([exact versions](docs/BUILDING.md#prerequisites)).
@@ -162,44 +112,17 @@ open app/CrocApp.xcodeproj     # run the CrocApp scheme
 
 Signing, tests and the transfer harnesses: [`docs/BUILDING.md`](docs/BUILDING.md).
 
-## Project layout
+## More
 
-| Path | What it holds |
-|---|---|
-| `app/` | The SwiftUI app for iPhone, iPad and Mac, its share extension, the direct-download target and the unit tests |
-| `CrocKit/` | Swift package that wraps the Go engine in a Swift API |
-| `crocmobile/` | Go wrapper around croc, bound by gomobile into `Croc.xcframework` |
-| `design/` | Design principles and tokens for every surface |
-| `docs/` | Contributor docs: architecture, building, releasing, threat model |
-| `web/landing/`, `web/docs/` | The crocapp.dev landing page and docs site |
-| `scripts/` | Build, verification and release scripts |
-| `assets/` | Icon source, mascot, favicons, disk image background and social preview |
-
-## Docs
-
-| Read | For |
-|---|---|
-| [crocapp.dev/docs](https://crocapp.dev/docs/) | Using the app |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Setup, conventions and opening a pull request |
-| [`docs/README.md`](docs/README.md) | Index of the contributor docs |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How the layers fit together |
-| [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) | Trust boundaries and what CrocApp defends against |
-| [`CHANGELOG.md`](CHANGELOG.md) | What changed in each release |
-
-## Contributing
-
-Pull requests are welcome: bugs, features, docs, design, landing page. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, commit conventions, design rules, etc. Questions and ideas go to [Discussions](https://github.com/bakirgdev/CrocApp/discussions). Everyone follows the [Code of Conduct](CODE_OF_CONDUCT.md). How decisions are made: [`GOVERNANCE.md`](GOVERNANCE.md). Where the project is headed: [`docs/ROADMAP.md`](docs/ROADMAP.md).
-
-## Support the project
-
-CrocApp does not depend on donations: it has no paid tier and no features behind a paywall. If it saves you time and you want to give back, donations are welcome:
-
-- [GitHub Sponsors](https://github.com/sponsors/bakirgdev): one-time or monthly, also behind the **Sponsor** button at the top of this repo.
-- [Buy Me a Coffee](https://buymeacoffee.com/bakirgdev): one-time.
-
-Starring the repo, reporting bugs, and telling others about CrocApp help just as much.
+[Documentation](https://crocapp.dev/docs/) (guides and the [FAQ](https://crocapp.dev/docs/faq/)), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md), the [contributor docs](docs/README.md) and the [threat model](docs/THREAT-MODEL.md). Questions and ideas go to [Discussions](https://github.com/bakirgdev/CrocApp/discussions), and everyone follows the [Code of Conduct](CODE_OF_CONDUCT.md). CrocApp has no paid tier; donations through [GitHub Sponsors](https://github.com/sponsors/bakirgdev) or [Buy Me a Coffee](https://buymeacoffee.com/bakirgdev) are optional, and so is starring the repo.
 
 ## Credits and license
 
 - [croc](https://github.com/schollz/croc) by [Zack Scholl](https://github.com/schollz), the transfer engine that makes this possible. MIT.
 - CrocApp by [Bakir Gracić](https://github.com/bakirgdev). [MIT](LICENSE).
+- Projects that inspired CrocApp:
+  - [magic-wormhole](https://github.com/magic-wormhole/magic-wormhole): the original code-phrase transfer, and croc's own inspiration.
+  - [LocalSend](https://github.com/localsend/localsend): proof that a cross-platform transfer app can be genuinely pleasant to use.
+  - [croc-app](https://github.com/Dking08/croc-app): the Android client, and the best mobile reference for what a croc GUI should feel like.
+  - [crock](https://github.com/KD-MM2/crock): a desktop croc GUI, and where the QR deeplink idea comes from.
+  - [crocgui](https://github.com/howeyc/crocgui): the long-running cross-platform croc GUI.

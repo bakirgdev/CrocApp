@@ -1,6 +1,6 @@
 # Features
 
-What CrocApp does, what it deliberately skips, and which croc option each feature maps to. Plans live in `docs/ROADMAP.md`.
+What CrocApp does, what it deliberately skips, and which croc option each feature maps to. Plans are GitHub issues.
 
 Status is checked against the code, not against intent. **Shipped** means the feature exists and works in the app. It does not mean it was tested on physical hardware (`device-test-checklist.md`) or that it has no open defects (`docs/known-issues.md`).
 
@@ -144,4 +144,3 @@ Details:
 | A Focus filter (`SetFocusFilterIntent`) | There is nothing to filter. Notifications already follow the system Focus, and the Dock badge, widget and Live Activity show no names unless the user opts in. A filter would add a setting that duplicates the system's |
 | Tailcat, `--transport` | The engine is croc's relay-only build (`croc_no_tailcat`). It halves the app, and the relay and the LAN carry every transfer, so there is no Connection setting. See `crocmobile-bridge.md`, "Transport" |
 
-What the 1.1.0 release left open is listed in `docs/known-issues.md`, "Release".
