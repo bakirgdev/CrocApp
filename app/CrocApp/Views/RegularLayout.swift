@@ -21,7 +21,7 @@ struct RegularLayout: View {
     }
 
     private var activeRow: ActiveRow? {
-        SidebarRowState(phase: controller.phase, progress: controller.progress).map {
+        SidebarRowState(phase: controller.phase, percent: nil).map {
             ActiveRow(item: AppRouter.SidebarItem(direction: controller.direction), kind: $0.kind)
         }
     }
@@ -74,7 +74,7 @@ struct RegularLayout: View {
 
     private func state(for item: AppRouter.SidebarItem) -> SidebarRowState? {
         guard item == AppRouter.SidebarItem(direction: controller.direction) else { return nil }
-        return SidebarRowState(phase: controller.phase, progress: controller.progress)
+        return SidebarRowState(phase: controller.phase, percent: controller.progressPercent)
     }
 }
 

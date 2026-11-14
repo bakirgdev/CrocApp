@@ -17,7 +17,7 @@ struct SidebarRowState: Equatable {
     /// unknown, where the row says the direction word instead.
     let percent: Int?
 
-    init?(phase: TransferController.Phase, progress: TransferProgress?) {
+    init?(phase: TransferController.Phase, percent: Int?) {
         switch phase {
         case .starting, .connecting: kind = .connecting
         case .waiting: kind = .waiting
@@ -25,7 +25,7 @@ struct SidebarRowState: Equatable {
         case .transferring: kind = .transferring
         case .idle, .done, .stored, .failed: return nil
         }
-        percent = kind == .transferring ? Self.percent(of: progress) : nil
+        self.percent = kind == .transferring ? percent : nil
     }
 
     static func percent(of progress: TransferProgress?) -> Int? {

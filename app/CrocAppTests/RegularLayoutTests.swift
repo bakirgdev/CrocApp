@@ -158,7 +158,7 @@ import Testing
             (.confirmSend, .review),
         ]
         for (phase, kind) in cases {
-            let state = SidebarRowState(phase: phase, progress: nil)
+            let state = SidebarRowState(phase: phase, percent: nil)
             #expect(state?.kind == kind)
             #expect(state?.percent == nil)
         }
@@ -169,7 +169,7 @@ import Testing
             "files": [["name": "a.txt", "size": 10]], "emptyFolders": 0, "totalSize": 10,
         ])
         let state = SidebarRowState(
-            phase: .incoming(list, conflicts: [], blocked: []), progress: nil)
+            phase: .incoming(list, conflicts: [], blocked: []), percent: nil)
         #expect(state?.kind == .review)
     }
 
@@ -177,14 +177,15 @@ import Testing
         let summary: Summary = try Self.decode(["success": true, "files": 1, "totalSize": 10])
         let failure = TransferFailure(
             EngineFailure(code: .other, message: "boom"), situation: .init())
-        #expect(SidebarRowState(phase: .idle, progress: nil) == nil)
-        #expect(SidebarRowState(phase: .done(summary, receivedText: nil), progress: nil) == nil)
-        #expect(SidebarRowState(phase: .failed(failure), progress: nil) == nil)
+        #expect(SidebarRowState(phase: .idle, percent: nil) == nil)
+        #expect(SidebarRowState(phase: .done(summary, receivedText: nil), percent: nil) == nil)
+        #expect(SidebarRowState(phase: .failed(failure), percent: nil) == nil)
     }
 
     @Test func transferringShowsTheWholeTransfersIntegerPercent() throws {
         let half = try Self.progress(finished: 30, sent: 20, total: 100)
-        #expect(SidebarRowState(phase: .transferring, progress: half)?.percent == 50)
+        #expect(SidebarRowState.percent(of: half) == 50)
+        #expect(SidebarRowState(phase: .transferring, percent: 50)?.percent == 50)
 
         let third = try Self.progress(finished: 0, sent: 1, total: 3)
         #expect(SidebarRowState.percent(of: third) == 33)
@@ -194,18 +195,16 @@ import Testing
     }
 
     @Test func anUnknownTotalHasNoPercent() throws {
-        #expect(SidebarRowState(phase: .transferring, progress: nil)?.percent == nil)
+        #expect(SidebarRowState(phase: .transferring, percent: nil)?.percent == nil)
         let unknown = try Self.progress(finished: 0, sent: 5, total: 0)
-        #expect(SidebarRowState(phase: .transferring, progress: unknown)?.percent == nil)
+        #expect(SidebarRowState.percent(of: unknown) == nil)
         let bundling = try Self.progress(finished: 0, sent: 5, total: 100, step: "bundling")
-        #expect(SidebarRowState(phase: .transferring, progress: bundling)?.percent == nil)
+        #expect(SidebarRowState.percent(of: bundling) == nil)
     }
 
     @Test func aProgressTickChangesThePercentAndNotThePhaseKind() throws {
-        let early = SidebarRowState(
-            phase: .transferring, progress: try Self.progress(finished: 0, sent: 10, total: 100))
-        let later = SidebarRowState(
-            phase: .transferring, progress: try Self.progress(finished: 0, sent: 11, total: 100))
+        let early = SidebarRowState(phase: .transferring, percent: 10)
+        let later = SidebarRowState(phase: .transferring, percent: 11)
         #expect(early != later)
         #expect(early?.kind == later?.kind, "what is announced watches the kind only")
     }

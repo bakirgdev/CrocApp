@@ -65,7 +65,7 @@ struct MenuBarQuickSendView: View {
                     .buttonVariant(.prominent)
             }
         case .transferring:
-            if let p = controller.progress { transferring(p) }
+            ProgressTick { transferring($0) }
         case .done(let summary, let receivedText):
             VStack(spacing: Spacing.space3) {
                 Label(

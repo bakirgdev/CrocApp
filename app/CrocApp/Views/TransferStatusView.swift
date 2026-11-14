@@ -7,6 +7,17 @@ import SwiftUI
 import AppKit
 #endif
 
+/// Reads the controller's progress tick itself, so a tick (10 Hz) redraws only
+/// `content` and not the view that places it.
+struct ProgressTick<Content: View>: View {
+    @Environment(TransferController.self) private var controller
+    @ViewBuilder let content: (TransferProgress) -> Content
+
+    var body: some View {
+        if let progress = controller.progress { content(progress) }
+    }
+}
+
 /// Renders every non-idle controller phase. Shared by Send and Receive flows.
 struct TransferStatusView: View {
     @Environment(TransferController.self) private var controller
@@ -165,7 +176,7 @@ struct TransferStatusView: View {
         case .incoming(let list, let conflicts, let blocked):
             IncomingRequestView(list: list, conflicts: conflicts, blocked: blocked)
         case .transferring:
-            if let progress = controller.progress {
+            ProgressTick { progress in
                 if progress.isBundling { bundleView(progress) } else { transferringView(progress) }
             }
         case .done(let summary, let receivedText):
