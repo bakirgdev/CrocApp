@@ -106,6 +106,7 @@ const config: Config = {
             from: ['/guide/power-options', '/guide/settings-and-trust'],
             to: '/guide/settings',
           },
+          {from: '/guide/own-relay', to: '/guide/settings#relay'},
           {from: '/guide/advanced-settings', to: '/guide/settings#advanced'},
           {
             from: '/verify-downloads',

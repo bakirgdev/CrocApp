@@ -17,7 +17,6 @@ import Observation
 @Observable
 final class AppSettings {
     private static let relayPasswordAccount = "relayPassword"
-    private static let relayHostPasswordAccount = "relayHostPassword"
 
     private static let socks5ProxyAccount = "advanced.socks5Proxy"
     private static let httpProxyAccount = "advanced.httpProxy"
@@ -36,8 +35,6 @@ final class AppSettings {
     enum Key: String, CaseIterable {
         case relayAddress = "settings.relayAddress"
         case relayAddress6 = "settings.relayAddress6"
-        case relayHostPort = "settings.relayHostPort"
-        case relayHostAtLaunch = "settings.relayHostAtLaunch"
         case onlyLocal = "settings.onlyLocal"
         case noCompress = "settings.noCompress"
         case zipFolder = "settings.zipFolder"
@@ -75,12 +72,6 @@ final class AppSettings {
     var relayAddress: String { didSet { save(relayAddress, .relayAddress) } }
     var relayAddress6: String { didSet { save(relayAddress6, .relayAddress6) } }
     var relayPassword: String { didSet { secretEdited(.relayPassword) } }
-    /// Mac only: the relay this Mac runs (`RelayHostController`). Its own
-    /// password, apart from `relayPassword`, which this device uses to join a relay.
-    var relayHostPort: Int { didSet { save(relayHostPort, .relayHostPort) } }
-    var relayHostPassword: String { didSet { secretEdited(.relayHostPassword) } }
-    /// Off by default: the relay never starts by itself unless the user says so.
-    var relayHostAtLaunch: Bool { didSet { save(relayHostAtLaunch, .relayHostAtLaunch) } }
     var onlyLocal: Bool { didSet { save(onlyLocal, .onlyLocal) } }
     var noCompress: Bool { didSet { save(noCompress, .noCompress) } }
     var zipFolder: Bool { didSet { save(zipFolder, .zipFolder) } }
@@ -176,7 +167,7 @@ final class AppSettings {
 
     /// The settings kept in `secrets` instead of `storage`.
     enum Secret {
-        case relayPassword, relayHostPassword, socks5Proxy, httpProxy
+        case relayPassword, socks5Proxy, httpProxy
     }
 
     /// Secrets whose last write to `secrets` failed. The property keeps the
@@ -216,12 +207,15 @@ final class AppSettings {
         self.storage = storage
         self.secrets = secrets
         self.secretWriteDelay = secretWriteDelay
+        // 1.3.0 removed the relay this Mac ran; drop what it left behind.
+        storage.set(nil, forKey: "settings.relayHostPort")
+        storage.set(nil, forKey: "settings.relayHostAtLaunch")
+        if secrets.get(account: "relayHostPassword") != nil {
+            secrets.delete(account: "relayHostPassword")
+        }
         relayAddress = Self.read(storage, .relayAddress, default: "")
         relayAddress6 = Self.read(storage, .relayAddress6, default: "")
         relayPassword = secrets.get(account: Self.relayPasswordAccount) ?? ""
-        relayHostPort = Self.read(storage, .relayHostPort, default: Self.defaultRelayHostPort)
-        relayHostPassword = secrets.get(account: Self.relayHostPasswordAccount) ?? ""
-        relayHostAtLaunch = Self.read(storage, .relayHostAtLaunch, default: false)
         onlyLocal = Self.read(storage, .onlyLocal, default: false)
         noCompress = Self.read(storage, .noCompress, default: false)
         zipFolder = Self.read(storage, .zipFolder, default: false)
@@ -345,7 +339,6 @@ final class AppSettings {
         for secret in dirty {
             switch secret {
             case .relayPassword: persistRelayPassword()
-            case .relayHostPassword: persistRelayHostPassword()
             case .socks5Proxy:
                 persistProxy(socks5Proxy, account: Self.socks5ProxyAccount, as: .socks5Proxy)
             case .httpProxy:
@@ -362,31 +355,6 @@ final class AppSettings {
             ? secrets.delete(account: Self.relayPasswordAccount)
             : secrets.set(relayPassword, account: Self.relayPasswordAccount)
         record(saved, for: .relayPassword)
-    }
-
-    /// croc's own base port; its transfer ports follow it.
-    static let defaultRelayHostPort = 9009
-
-    /// Why `port` cannot be the hosted relay's base port, or nil when it can.
-    /// The engine's range decides (`RelayHost.basePortRange`).
-    static func relayHostPortError(_ port: Int) -> String? {
-        let range = RelayHost.basePortRange
-        guard !range.contains(port) else { return nil }
-        let (low, high) = (
-            range.lowerBound.formatted(.number.grouping(.never)),
-            range.upperBound.formatted(.number.grouping(.never))
-        )
-        return String(
-            localized: "Enter a port from \(low) to \(high).",
-            comment: "The relay uses this port and the three after it.")
-    }
-
-    private func persistRelayHostPassword() {
-        let saved =
-            relayHostPassword.isEmpty
-            ? secrets.delete(account: Self.relayHostPasswordAccount)
-            : secrets.set(relayHostPassword, account: Self.relayHostPasswordAccount)
-        record(saved, for: .relayHostPassword)
     }
 
     /// Keychain-only: a proxy URL can hold a user name and password. Deletes

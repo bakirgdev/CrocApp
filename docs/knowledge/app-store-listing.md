@@ -228,7 +228,7 @@ Please keep CrocApp in the foreground during a transfer on iPhone and iPad.
 
 Questions: https://crocapp.dev/support/
 
-MAC ENTITLEMENTS. network.server: the Mac accepts incoming TCP in two features. 1) Each send runs croc's local relay on ports 9009-9013 so a receiver on the same network connects directly (during a send, lsof -nP -iTCP:9009 -sTCP:LISTEN lists CrocApp). 2) Settings, Relay tab (or the menu bar window), Run a Relay: off by default; when on, the Mac serves croc's relay protocol on ports 9009-9012. downloads.read-write: received files go to Downloads/CrocApp by default. On Mac, click where the steps say tap.
+MAC ENTITLEMENTS. network.server: the Mac accepts incoming TCP in one feature. Each send runs croc's local relay on ports 9009-9013 so a receiver on the same network connects directly (during a send, lsof -nP -iTCP:9009 -sTCP:LISTEN lists CrocApp). downloads.read-write: received files go to Downloads/CrocApp by default. On Mac, click where the steps say tap.
 ```
 
 Check the notes by hand before pasting, as listed in "Open checks before submitting".

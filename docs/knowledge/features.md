@@ -45,8 +45,6 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Upload speed limit (sender side) | `--throttleUpload` | all | shipped |
 | Sender IP, direct connect (receive side) | `--ip` | all | shipped |
 | Custom multicast address | `--multicast` | all | shipped |
-| Run a relay on this Mac (Settings > Relay, and a toggle in the menu-bar window): port, optional password, address to use on the other device, **Start Relay at Launch** (off by default) | `croc relay` (one data port fewer than a stock `croc relay`: 1 control port and 3 data ports, against 1 and 4) | macOS only | shipped |
-| Relay health check (**Check Relay…** in Settings): reachability and latency over IPv4 and IPv6, whether the relay accepts the password, and the local-network state, with what to change | none (croc's relay handshake) | all | shipped |
 
 ## App-native features
 
@@ -138,7 +136,7 @@ Details:
 | `--debug`, `--quiet`, `--testing` | Developer output. `--debug` would put more into croc's stderr, and `--quiet` silences stderr for the whole process (`session.go`, `Quiet`) |
 | `--ignore-stdin`, `--disable-clipboard`, `--extended-clipboard` | The engine always sets the first two (no stdin, and the app has its own **Copy Code** with a clipboard expiry). The extended clipboard command is CLI only |
 | `croc ssh` | A shared terminal. It has no meaning in a file-transfer app |
-| `croc relay` on iOS and iPadOS, and as a background service | Only the Mac hosts a relay, while the app runs (see "Run a relay on this Mac" above). A phone or tablet cannot keep one up, and a service needs a machine that stays on |
+| `croc relay` | A relay server. CrocApp is a client: it uses a relay's address and password from Settings, and a relay is run with the croc CLI |
 | `croc update` | Updates come from the App Store or CrocApp's own update check (Direct build: **Check for Updates Automatically**) |
 | Handoff (`NSUserActivity` to continue a transfer on another device) | A transfer is a live session on one device: the engine, the relay room and the code belong to that process, so another device could only restart it with a code the activity must not carry (`design/principles.md`, "Bans", 5). Nothing a second device could pick up |
 | A Focus filter (`SetFocusFilterIntent`) | There is nothing to filter. Notifications already follow the system Focus, and the Dock badge, widget and Live Activity show no names unless the user opts in. A filter would add a setting that duplicates the system's |

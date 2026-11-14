@@ -3,7 +3,7 @@ slug: /
 sidebar_position: 1
 sidebar_label: Overview
 title: Documentation
-description: Guides for sending and receiving with CrocApp, running your own relay, and what each server can see.
+description: Guides for sending and receiving with CrocApp, using your own relay, and what each server can see.
 ---
 
 # CrocApp documentation

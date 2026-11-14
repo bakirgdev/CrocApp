@@ -13,8 +13,8 @@ import (
 )
 
 // A full receive through session.poll, against croc's own relay package and a
-// plain croc client, so the path that runs poll against a live croc.Client does
-// not depend on relayhost.go. Both peers cannot be app transfers: crocmobile
+// plain croc client, so the path that runs poll against a live croc.Client is
+// covered. Both peers cannot be app transfers: crocmobile
 // runs one at a time per process.
 func TestReceiveThroughPollOverCrocRelay(t *testing.T) {
 	relay := startTestRelay(t)

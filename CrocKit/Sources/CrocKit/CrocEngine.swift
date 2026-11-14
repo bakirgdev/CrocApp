@@ -114,9 +114,9 @@ public actor CrocEngine {
 
     /// Deletes a stored upload from its server; a transfer the server no longer
     /// has counts as revoked. Throws `EngineFailure`. Blocks up to 30 seconds on
-    /// the network, on a dispatch thread rather than a Swift concurrency one
-    /// (as `RelayCheck.run` does), so a slow server ties up neither the caller's
-    /// actor nor the cooperative pool. Needs no running transfer, so it works
+    /// the network, on a dispatch thread rather than a Swift concurrency one,
+    /// so a slow server ties up neither the caller's actor nor the cooperative
+    /// pool. Needs no running transfer, so it works
     /// while another one is active.
     public nonisolated func revokeStored(
         _ receipt: StoredReceipt, proxy: ProxySettings
