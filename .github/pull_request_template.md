@@ -20,14 +20,7 @@ CI runs formatting, lint, the builds and the unit tests. List what you ran beyon
 harness output: the summary lines and any failures, not the whole log
 ```
 
-## Docs
+## Docs and UI
 
-- [ ] User-visible change: a line under `## [Unreleased]` in `CHANGELOG.md`, written for someone deciding whether to update. That section becomes the release notes verbatim
-- [ ] Docs that describe the change updated (root `AGENTS.md`, "Docs"), and `scripts/verify-docs.sh` passes
-
-## UI changes
-
-Before and after screenshots, light and dark, on every affected platform.
-
-- [ ] Tokens, SF Symbols and the system font only, both themes checked, and `scripts/verify-design.sh` passes
-- [ ] Screenshots recaptured if the UI changed (`scripts/capture-screenshots.sh`)
+- [ ] User-visible change: a line under `## [Unreleased]` in `CHANGELOG.md` (it becomes the release notes verbatim), and the docs that describe the change updated (root `AGENTS.md`, "Docs"; `scripts/verify-docs.sh` passes)
+- [ ] UI change: before and after screenshots on every affected platform; follows `design/`, checked in light and dark, `scripts/verify-design.sh` passes

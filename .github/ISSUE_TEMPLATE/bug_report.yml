@@ -5,17 +5,9 @@ description: Something in the app is broken or behaves wrong
 labels: ["bug"]
 
 body:
-  - type: checkboxes
-    id: checks
+  - type: markdown
     attributes:
-      label: Before filing
-      options:
-        - label: I searched existing issues and this is not a duplicate.
-          required: true
-        - label: It is not covered by [Troubleshooting](https://crocapp.dev/docs/troubleshooting/) or listed in [known issues](https://github.com/bakirgdev/CrocApp/issues?q=is%3Aissue+label%3Aknown).
-          required: true
-        - label: It does not also happen with the [croc CLI](https://github.com/schollz/croc). If it does, it belongs upstream.
-          required: true
+      value: Check the [known problems](https://github.com/bakirgdev/CrocApp/issues?q=is%3Aissue+label%3Aknown) and [Troubleshooting](https://crocapp.dev/docs/troubleshooting/) first.
 
   - type: textarea
     id: what-happened
@@ -29,7 +21,6 @@ body:
     id: steps
     attributes:
       label: Steps to reproduce
-      description: Exact or approximate steps to reproduce the problem.
       placeholder: |
         1. Open Send
         2. Pick a 2 GB file
@@ -37,48 +28,24 @@ body:
     validations:
       required: true
 
-  - type: dropdown
-    id: platform
-    attributes:
-      label: Platform
-      description: Select every platform where you saw the problem.
-      multiple: true
-      options:
-        - macOS
-        - iOS
-        - iPadOS
-    validations:
-      required: true
-
-  - type: dropdown
-    id: channel
-    attributes:
-      label: Installed from
-      options:
-        - App Store
-        - Direct download (macOS disk image)
-        - Built from source
-    validations:
-      required: true
-
   - type: input
     id: versions
     attributes:
-      label: App and OS version
-      description: The app version and build from Settings, under About (or the commit SHA for a source build), plus the OS version.
-      placeholder: "<version> (<build>), <OS version>"
+      label: App version and platform
+      description: The app version from Settings, under About (or the commit SHA for a source build), and the OS (macOS, iOS or iPadOS) with its version.
+      placeholder: "<version> (<build>), macOS <version>"
     validations:
       required: true
 
   - type: dropdown
-    id: peer
+    id: cli
     attributes:
-      label: Other side of the transfer
+      label: Does the plain croc CLI show the same?
+      description: If it does, the bug belongs [upstream](https://github.com/schollz/croc/issues).
       options:
-        - croc CLI
-        - CrocApp
-        - Other croc client
-        - Not applicable
+        - "Yes"
+        - "No"
+        - Not tried
     validations:
       required: true
 
