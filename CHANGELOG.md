@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 extra sections where a release needs them, and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- On a Mac with **Run a Relay** on, a malformed connection to the relay could quit CrocApp, without the relay password. The transfer engine is now croc 11.6.5, whose relay turns such a connection away.
+
 ## [1.2.1] - 2026-11-12
 
 ### Fixed

@@ -39,7 +39,7 @@ The cost of the bridge is real and bounded: the engine is most of an executable 
 ## Layer diagram
 
 ```
-croc v11.6.4 (schollz/croc, pinned in crocmobile/go.mod)
+croc v11.6.5 (schollz/croc, pinned in crocmobile/go.mod)
     │
     ▼
 crocmobile/            Go wrapper package
@@ -99,7 +99,7 @@ Key types:
 Errors:
 
 - `OnError` receives JSON `{"code","message"}`. `StartSend` and `StartReceive` return the same JSON as their error text, because gobind gives Swift only the text.
-- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.6.4 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `textTooLong`, `other`.
+- `errors.go` maps croc's sentinel errors, this package's `codedError` and croc v11.6.5 error text to these codes: `peerVersion`, `relayUnreachable`, `noPublicRelay`, `declined`, `refused`, `roomFull`, `badPassword`, `wrongCode`, `cancelled`, `connectionLost`, `storeLimit`, `storeExpired`, `invalidSetting`, `transferActive`, `engineStuck`, `joinedEarly`, `portInUse`, `textTooLong`, `other`.
 - The app picks its wording from the code and never reads croc's text.
 
 Network settings:
@@ -308,7 +308,7 @@ Six files in `app/Config/` are merged over Xcode's generated plist: `CrocApp-Inf
   - On iOS it copies attachment bytes inside the synchronous `loadFileRepresentation` callback, because the source temp file is deleted when the callback returns. On macOS it loads the Finder file URL and `copyItem`s it off the main actor. On the same APFS volume that clones, so a large folder costs no extra disk; a source on another volume is a full copy, so the free space of the container volume is checked first, and the staging window has a Cancel button. A security-scoped bookmark cannot replace the copy: it does not resolve in another process. After staging, the extension opens its host app (derived from its own bundle path) with `NSWorkspace.openApplication`, and the app's activation refresh offers the staged sheet.
   - It never deletes existing batches, because one may be mid-send.
 - Output folder: iOS defaults to the app's Documents folder, visible in Files through `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace`. macOS defaults to `~/Downloads/CrocApp`, which is why the `files.downloads.read-write` entitlement exists.
-- `network.server` on macOS lets croc's local relay listen inside the sandbox. croc starts it on every send unless **Skip Local Network** is on, and fails the send when it cannot bind (`setupLocalRelay`, croc v11.6.4). **Run a Relay** listens too. App Review needs the reason spelled out (`docs/knowledge/app-store-listing.md`, "Review notes").
+- `network.server` on macOS lets croc's local relay listen inside the sandbox. croc starts it on every send unless **Skip Local Network** is on, and fails the send when it cannot bind (`setupLocalRelay`, croc v11.6.5). **Run a Relay** listens too. App Review needs the reason spelled out (`docs/knowledge/app-store-listing.md`, "Review notes").
 
 ## Concurrency model
 

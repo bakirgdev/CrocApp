@@ -2,7 +2,7 @@ module github.com/bakirgdev/CrocApp/crocmobile
 
 go 1.27.4
 
-require github.com/schollz/croc/v11 v11.6.4
+require github.com/schollz/croc/v11 v11.6.5
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
@@ -35,7 +35,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
 	github.com/safchain/ethtool v0.7.0 // indirect
-	github.com/schollz/pake/v3 v3.2.0 // indirect
+	github.com/schollz/pake/v3 v3.2.1 // indirect
 	github.com/schollz/peerdiscovery v1.7.6 // indirect
 	github.com/schollz/progressbar/v3 v3.19.1 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
