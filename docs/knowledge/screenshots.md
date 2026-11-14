@@ -55,8 +55,6 @@ One vocabulary across devices, kebab-case, named for the state shown.
 | `settings` | Settings (macOS: General tab) |
 | `settings-advanced` | Advanced settings (macOS: Advanced tab) |
 | `receive-saved-codes` | Receive with three saved codes under the code field (placeholder codes, never real) |
-| `settings-relay` | Mac only: the Relay tab, with the relay stopped |
-| `relay-health` | Mac only: the **Check Relay…** sheet, checked against the script's own local relay |
 
 The App Store subset is `send-files`, `send-code`, `sending`, `receive-incoming`, `receiving`, `receive-done`, `stored-link`, `history`, `settings`, `how-it-works`, in that upload order, identical in every class. Change `STORE_SCREENS` in the script to reorder (at most ten).
 

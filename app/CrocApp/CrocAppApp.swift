@@ -26,7 +26,6 @@ struct CrocAppApp: App {
 
     #if os(macOS)
     @State private var quickSend: MenuBarQuickSend
-    @State private var relayHost: RelayHostController
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     #endif
 
@@ -58,8 +57,6 @@ struct CrocAppApp: App {
         #if os(macOS)
         _quickSend = State(
             initialValue: MenuBarQuickSend(controller: controller, outputFolder: outputFolder))
-        let relayHost = RelayHostController(settings: settings)
-        _relayHost = State(initialValue: relayHost)
         // A secret typed just before quitting is still waiting for its Keychain
         // write (`AppSettings.flushSecrets`).
         NotificationCenter.default.addObserver(
@@ -76,13 +73,8 @@ struct CrocAppApp: App {
         _notifier = State(initialValue: notifier)
         let snapshotWriter = TransferSnapshotWriter(controller: controller, settings: settings)
         _snapshotWriter = State(initialValue: snapshotWriter)
-        // These ask for permission, badge the Dock, write the user's widget data and
-        // listen on the network, so only the real app starts them.
+        // These ask for permission, badge the Dock, write the user's widget data, so only the real app starts them.
         if mode.isLive {
-            #if os(macOS)
-            // Only when the user's setting says so.
-            relayHost.startAtLaunchIfWanted()
-            #endif
             center.install()
             notifier.start()
             snapshotWriter.start()
@@ -119,7 +111,6 @@ struct CrocAppApp: App {
         ) {
             MenuBarQuickSendView(quickSend: quickSend)
                 .environment(controller)
-                .environment(relayHost)
         } label: {
             let icon = MenuBarIcon(phase: controller.phase, percent: controller.progressPercent)
             HStack(spacing: Spacing.space1) {
@@ -136,7 +127,6 @@ struct CrocAppApp: App {
                 .environment(outputFolder)
                 .environment(settings)
                 .environment(savedCodes)
-                .environment(relayHost)
                 .environment(localNetwork)
         }
         // A Settings scene's default .automatic resizability resolves to

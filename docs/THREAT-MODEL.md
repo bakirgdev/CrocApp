@@ -112,22 +112,17 @@ The relay hop has its own handshake, separate from the end-to-end exchange. It i
 
 Local Network Only (`OnlyLocal`) keeps the connection on the local network. The engine is croc's relay-only build (`croc_no_tailcat`, set in `scripts/build-xcframework.sh`), so the relay and the LAN are the only data paths. There is no Tailcat, DERP or `tailcat.dev` path in the shipped binary, and no setting to turn one on. The trust badge names the configured route, not the path that carried the data.
 
-### The relay this Mac can run (macOS)
+### The local relay (macOS)
 
-With **Run a Relay** on, the app listens on four TCP ports (the base port, default 9009, and the next three) on every interface, so any device that can reach the Mac can connect to it. This is the only time CrocApp accepts inbound connections other than croc's per-send local relay.
-- It is off by default and never starts by itself. It starts only from the user's switch, or at launch when **Start Relay at Launch** (off by default) is on, and it stops when the app quits. A harness run never starts it.
-- The relay is croc's own relay code, in the same process. It sees ciphertext only, as any croc relay does (Relay and local network). It sees metadata: the IP addresses and timing of devices that use it.
-- croc runs each connection on goroutines it starts itself, which crocmobile's `recover` cannot reach, so a panic there quits the app. Before the pinned release (pake v3.2.0), a first handshake frame without curve points did that, before any password check, for anyone who could reach the port. The pinned croc 11 (pake v3.2.1) rejects the frame (`TestStartRelaySurvivesMalformedHandshake`).
-- Admission is croc's relay password. A blank password is croc's built-in default, which is public, so the relay is then open to anyone who can reach it. The Settings footer says so. A password the user sets is held in the Keychain under its own account, shown only as dots, and never logged or sent anywhere by the app. Each device that uses the relay sends its password in the handshake, and the relay compares it in plaintext (Relay and local network).
-- A relay open to the internet is the user's choice: the app does not open a firewall or router port. Rate and room limits are croc's defaults.
-- The health check dials only the relay the user configured (or croc's public pool) with the configured password, joins a throwaway room and sends nothing else. The handshake hands that password to each relay it probes (Relay and local network). It dials directly and never uses the Advanced proxies, so it shows this device's own IP address to each relay it probes (see Residual risks). With a proxy set it does not run when the screen opens: it says so and waits for **Check Anyway**.
-- The relay listens on every interface, global IPv6 included, so with a blank password it can be an open relay reachable from the internet. The Relay tab says so, and shows a warning while the relay runs without a password. Binding only to chosen addresses was not done: the set of addresses changes with the network and an IPv6 prefix is not stable.
+Unless **Skip Local Network** is on, every send starts croc's own relay in the app's process, on ports 9009 to 9013 on every interface, so a receiver on the same network can connect directly. It lives only for that send, and it is the only time CrocApp accepts inbound connections. It is croc's relay code and sees ciphertext only, as any croc relay does (Relay and local network).
+- croc runs each connection on goroutines it starts itself, which crocmobile's `recover` cannot reach, so a panic there quits the app. Before pake v3.2.1, a first handshake frame without curve points did that, before any password check, for anyone on the network who could reach the port. The pinned croc rejects the frame.
+- Admission is the relay password in Settings, or croc's public default when none is set, so with the default anyone on the network can use it. The data stays end-to-end encrypted.
 
 ### App sandbox and entitlements
 
 | Target | Entitlements | Why |
 |---|---|---|
-| macOS app (`app/CrocApp/CrocApp.entitlements`) | `app-sandbox`, `network.client`, `network.server`, `files.user-selected.read-write`, `files.downloads.read-write`, associated domain `applinks:crocapp.dev` | `network.server` is only for croc's local relay listener and the relay the user can run from Settings; `downloads.read-write` is for the default output folder `~/Downloads/CrocApp` |
+| macOS app (`app/CrocApp/CrocApp.entitlements`) | `app-sandbox`, `network.client`, `network.server`, `files.user-selected.read-write`, `files.downloads.read-write`, associated domain `applinks:crocapp.dev` | `network.server` is only for croc's per-send local relay listener; `downloads.read-write` is for the default output folder `~/Downloads/CrocApp` |
 | iOS app (`app/CrocApp/CrocApp-iOS.entitlements`) | App Group `group.com.bakirgdev.CrocApp`, associated domain, multicast networking | Share extension handoff; universal links; local-network discovery |
 | Direct (DMG) build (`app/CrocAppDirect/CrocAppDirect.entitlements`) | The macOS set plus two `temporary-exception.mach-lookup.global-name` entries for Sparkle's installer services (`-spks`, `-spki`) | Sandboxed Sparkle updates |
 | Share extension, iOS (`app/CrocShare/CrocShare.entitlements`) | App Group only | Copies files into the group container; no network |
@@ -227,8 +222,6 @@ Photos, dropped and pasted images are copied into `SendStaging` under the tempor
 | Metadata (IP, timing, volume) visible to relay and network | Accepted (Non-goals). |
 | The trust badge names the configured route, not the path used | Accepted; the claim that the relay sees ciphertext holds on every path. |
 | Entitlement exceptions: `network.server`, Sparkle mach-lookup (Direct build) | Each has a stated reason (App sandbox and entitlements). |
-| The relay health check bypasses the Advanced proxies, so the relays it probes see this device's real IP address | Mitigated: with a proxy set the check never runs by itself, warns that it connects directly and needs **Check Anyway**. Without a proxy the address is the one a transfer would show anyway. |
-| The Mac relay with a blank password admits anyone who can reach its ports | Accepted: the user turns it on, the footer says so, and a password is one field away (The relay this Mac can run). |
 
 ## Keeping this current
 

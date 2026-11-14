@@ -63,10 +63,7 @@ DEVICES="mac iphone ipad iphone63 duo"
 MAIN_DEVICES="mac iphone ipad"
 SCREENS="onboarding home send-files send-code sending receive-code receive-incoming \
 receive-conflict receiving receive-done stored-link history how-it-works settings \
-settings-advanced receive-saved-codes settings-relay relay-health"
-# Screens a phone or an iPad has no counterpart of: the relay this Mac runs and its
-# health check live in the Mac's Relay tab only.
-MAC_ONLY_SCREENS="settings-relay relay-health"
+settings-advanced receive-saved-codes"
 # The App Store subset, in upload order. The number in a file name is the position.
 STORE_SCREENS="send-files send-code sending receive-incoming receiving receive-done \
 stored-link history settings how-it-works"
@@ -77,9 +74,6 @@ PAYLOAD_NAMES="Quarterly-Report.pdf Ridge-Sunrise.jpg Meeting-Notes.md Design-As
 Project-Archive.zip Field-Recordings.zip"
 
 in_list() { case " $1 " in *" $2 "*) return 0 ;; *) return 1 ;; esac }
-
-# has_screen DEVICE SCREEN: whether the device takes the screen.
-has_screen() { [ "$1" = mac ] || ! in_list "$MAC_ONLY_SCREENS" "$2"; }
 
 store_index() { # store_index SCREEN -> its position, from 1
   local i=1 n
@@ -130,7 +124,6 @@ case "${1:-}" in
       if is_main "$d"; then
         for s in $SCREENS; do
           [ "$d $s" = "mac onboarding" ] && continue
-          has_screen "$d" "$s" || continue
           echo "  $OUT/$d/$s-{light,dark}.png"
         done
       fi
@@ -566,7 +559,6 @@ mac_titles() { # the window title(s) a screen shows
     how-it-works) echo "How It Works" ;;
     settings) echo "CrocApp Settings|General|Settings" ;;
     settings-advanced) echo "Advanced" ;;
-    settings-relay | relay-health) echo "Relay" ;;
     receive-saved-codes) echo "Receive" ;;
   esac
 }
@@ -645,10 +637,9 @@ still() { # still ARGS...
 
 # macOS Settings is a separate window opened with Cmd-comma; the keystroke goes
 # to whatever is frontmost, so the app is raised first. TAB is General or Advanced.
-mac_settings() { # mac_settings TAB [LAUNCH_ARG...]
+mac_settings() { # mac_settings TAB
   local i tab=$1
-  shift
-  launch --screen home "$@"
+  launch --screen home
   for i in 1 2 3; do
     activate_app
     osascript -e 'tell application "System Events" to keystroke "," using command down'
@@ -661,16 +652,6 @@ mac_settings() { # mac_settings TAB [LAUNCH_ARG...]
   # scroll it to its end: the bottom then closes on a whole caption, and the
   # top slides under the toolbar like any scrolled form.
   [ "$tab" != General ] || "$TMP/bin/window" scroll CrocApp
-  if [ "$SCREEN" = relay-health ]; then
-    # The sheet runs its check on open; the relay is the local one, so it answers at once.
-    # Check Relay… exposes no name to System Events, so
-    # click the tab's one button that has neither a name nor a description.
-    osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID)" \
-      -e 'repeat with e in (entire contents of window 1 as list)' \
-      -e 'if class of e is button and name of e is missing value and description of e is "button" then' \
-      -e 'click e' -e 'return' -e 'end if' -e 'end repeat' -e 'error "Check Relay… not found"' -e 'end tell' > /dev/null
-    sleep 3
-  fi
   settle
   snap
   quit_app
@@ -696,8 +677,6 @@ capture_screen() {
     settings-advanced)
       if [ "$DEV" = mac ]; then mac_settings Advanced; else still --screen advanced; fi
       ;;
-    settings-relay) mac_settings Relay ;;
-    relay-health) mac_settings Relay "${RELAY_ARGS[@]}" ;;
     send-code)
       # Parks on "Ready to send", the one state that shows the code and the QR.
       new_code code
@@ -839,7 +818,6 @@ verify_outputs() {
     is_main "$d" || continue
     for s in $RUN_SCREENS; do
       [ "$d $s" = "mac onboarding" ] && continue
-      has_screen "$d" "$s" || continue
       for MODE in light dark; do
         [ -s "$OUT/$d/$s-$MODE.png" ] || fail "missing $OUT/$d/$s-$MODE.png"
       done
@@ -896,7 +874,6 @@ shoot_devices() { # shoot_devices DEVICE...
       # On macOS the first-run welcome is a sheet over a window that then
       # photographs with grey traffic lights.
       [ "$DEV $SCREEN" = "mac onboarding" ] && continue
-      has_screen "$DEV" "$SCREEN" || continue
       # A store-only device takes just the screens that are in the store set,
       # in the one appearance their slot calls for.
       if ! is_main "$DEV"; then

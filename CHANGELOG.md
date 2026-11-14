@@ -10,9 +10,13 @@ extra sections where a release needs them, and the project follows
 
 ## [Unreleased]
 
+### Removed
+
+- **Run a Relay** and **Check Relay…** are gone, with the Relay tab in Mac Settings and the switch in the menu bar window. The relay address, IPv6 address and password you set in Settings still work as before. To host a relay, run `croc relay` on a machine you control. The port, password and launch setting the relay left behind are deleted the first time 1.3.0 opens.
+
 ### Security
 
-- On a Mac with **Run a Relay** on, a malformed connection to the relay could quit CrocApp, without the relay password. The transfer engine is now croc 11.6.5, whose relay turns such a connection away.
+- A malformed connection to the relay a send starts on your local network could quit CrocApp, without any password. The transfer engine is now croc 11.6.5, whose relay turns such a connection away.
 
 ## [1.2.1] - 2026-11-12
 

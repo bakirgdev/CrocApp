@@ -34,7 +34,6 @@ struct PowerSettingsSections: View {
                     kind: .error, title: AppSettings.secretNotSavedTitle,
                     detail: AppSettings.secretNotSavedDetail)
             }
-            RelayHealthButton()
         }
 
         Section {

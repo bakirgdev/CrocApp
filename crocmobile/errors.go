@@ -35,7 +35,6 @@ const (
 	codeTransferActive   = "transferActive"   // a start while another transfer still holds the engine
 	codeEngineStuck      = "engineStuck"      // a cancelled transfer never returned from croc; only a relaunch frees the engine
 	codeJoinedEarly      = "joinedEarly"      // this receiver joined the room before the sender (croc's local-probe race)
-	codePortInUse        = "portInUse"        // relay host: a port it needs is taken
 	codeTextTooLong      = "textTooLong"      // receiver: croc refused a text over its 1 MiB limit
 	codeOther            = "other"
 )

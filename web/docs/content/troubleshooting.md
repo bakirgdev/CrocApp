@@ -17,7 +17,7 @@ CrocApp tries the local network and the relay at once and uses whichever connect
 
 ## Check the relay
 
-If a transfer says "Couldn't reach the relay" or "The relay rejected its password", open **Settings** and tap **Check Relay…** (on a Mac, the button is in the **General** and **Relay** tabs). It tests the relay and the local network and says what to change. [Run your own relay](guide/own-relay.md#check-a-relay) explains each result.
+If a transfer says "Couldn't reach the relay" or "The relay rejected its password", check your internet connection. If you set a custom relay in [Settings](guide/settings.md#relay), check its address, port and password, or clear the fields to use croc's public relays.
 
 ## The receiver started first
 

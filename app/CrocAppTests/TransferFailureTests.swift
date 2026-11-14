@@ -34,7 +34,6 @@ import Testing
         (.transferActive, .tryAgain),
         (.engineStuck, nil),
         (.joinedEarly, nil),
-        (.portInUse, nil),
         (.textTooLong, nil),
         (.invalidFileName, nil),
         (.other, .tryAgain),

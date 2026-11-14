@@ -6,10 +6,6 @@ import Foundation
 public enum RelayDefaults {
     public static var address: String { CrocmobileDefaultRelayAddress() }
     public static var address6: String { CrocmobileDefaultRelayAddress6() }
-    /// The public relay pool a transfer picks from by its code phrase.
-    public static var publicPool: [String] {
-        CrocmobilePublicRelays().split(separator: "\n").map(String.init)
-    }
 }
 
 /// Limits the engine enforces, read from its constants so the UI cannot drift.
@@ -239,8 +235,6 @@ public struct EngineFailure: Error, Equatable, Sendable {
         case engineStuck
         /// This receiver joined the room before the sender (croc's local-probe race).
         case joinedEarly
-        /// Hosting a relay: a port it needs is taken.
-        case portInUse
         /// Receiving: the sender offered text over croc's 1 MiB limit, and croc refused it.
         case textTooLong
         /// A path to send has a line break in its name. Set by `CrocEngine`, never by the engine (the Go side would split the list on it).

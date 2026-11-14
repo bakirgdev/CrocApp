@@ -22,10 +22,6 @@ func DefaultRelayAddress() string { return models.DEFAULT_RELAY }
 // DefaultRelayAddress6 is croc's default IPv6 relay; see DefaultRelayAddress.
 func DefaultRelayAddress6() string { return models.DEFAULT_RELAY6 }
 
-// PublicRelays returns the public relay pool, one address per line, in the
-// order the code phrase indexes it.
-func PublicRelays() string { return strings.Join(publicrelay.Relays(), "\n") }
-
 type relayRoute struct {
 	v4, v6 string
 	public bool

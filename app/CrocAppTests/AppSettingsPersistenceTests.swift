@@ -151,8 +151,6 @@ import Testing
                 "settings.onlyLocal",
                 "settings.relayAddress",
                 "settings.relayAddress6",
-                "settings.relayHostAtLaunch",
-                "settings.relayHostPort",
                 "settings.saveTransferHistory",
                 "settings.showDockBadge",
                 "settings.showInMenuBar",
@@ -163,6 +161,19 @@ import Testing
                 "settings.whenFileExists",
                 "settings.zipFolder",
             ])
+    }
+
+    @Test func launchRemovesWhatTheRemovedRelayHostLeftBehind() {
+        storage.set(9010, forKey: "settings.relayHostPort")
+        storage.set(true, forKey: "settings.relayHostAtLaunch")
+        secrets.items["relayHostPassword"] = "old"
+        secrets.items["relayPassword"] = "kept"
+
+        _ = makeSettings()
+
+        #expect(storage.values["settings.relayHostPort"] == nil)
+        #expect(storage.values["settings.relayHostAtLaunch"] == nil)
+        #expect(secrets.items == ["relayPassword": "kept"])
     }
 
     @Test func settingsSavedBeforeANewSettingExistedStillLoad() {
