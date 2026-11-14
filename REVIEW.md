@@ -29,7 +29,7 @@ Style and wording are Nit at most, and at most 5 are reported.
 ## Always check
 
 - Every action is pinned to a full commit SHA with a `# vX.Y.Z` comment.
-- A new file that CI reads is in the `changes` regex of the job that reads it.
+- A new file that the `build`, `go` or `interop` job reads is in the `changes` regex in `.github/workflows/ci.yml`; the other jobs always run.
 - A write path never deletes the old value before the new one is saved.
 
 ## Always human
