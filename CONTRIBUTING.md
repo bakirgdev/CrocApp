@@ -80,13 +80,13 @@ go tool govulncheck ./...
 
 ## Design rules
 
-Anything visual, in the app, the web or elsewhere, follows [`design/AGENTS.md`](design/AGENTS.md): design tokens and system text styles instead of raw colors and fixed sizes, the system control first, SF Symbols only in the app, system font only, a light and a dark value for every surface.
+Anything visual, in the app, the web or elsewhere, follows [`design/AGENTS.md`](design/AGENTS.md): the system control, style and semantic colors first, text styles instead of fixed sizes, SF Symbols only in the app, system font only, a light and a dark value for every surface, and design tokens instead of raw colors on the web.
 
 ```bash
-scripts/verify-design.sh   # tokens.css = DesignTokens.swift = color sets, every contrast ratio in `design/principles.md`, and no raw colors in web code
+scripts/verify-design.sh   # web only: no raw colors in web code, theme-color literals equal --bg-base
 ```
 
-CI runs it on any change to `design/`, app Swift, color sets or web CSS. A failure means your change or `design/` is wrong: fix one of them, never the check. UI pull requests need **before and after screenshots in light and dark**, on both platforms if both are affected.
+CI runs it on every pull request. A failure means your change or `design/` is wrong: fix one of them, never the check. UI pull requests need **before and after screenshots in light and dark**, on both platforms if both are affected.
 
 ## Verification
 
@@ -97,7 +97,7 @@ A build that compiles proves nothing about a transfer. CI runs formatting, lint,
 | Swift under `app/` or `CrocKit/` | `scripts/format-swift.sh --lint`, the unit tests, a macOS and an iOS Simulator build |
 | Anything in `crocmobile/` | `go test -race ./...` and `golangci-lint run ./...` with `GOFLAGS=-tags=croc_no_tailcat`, then `scripts/build-xcframework.sh` |
 | `crocmobile/session.go`, `CrocKit/Sources/` or `TransferController` | the matching transfer harness, every time |
-| Anything visual | `scripts/verify-design.sh` |
+| Web code or `design/tokens.css` | `scripts/verify-design.sh` |
 | Markdown | `scripts/verify-docs.sh` |
 
 The commands, and what each harness covers and needs, are in [`docs/BUILDING.md`](docs/BUILDING.md) under "Format and lint" and "Verification harnesses".
