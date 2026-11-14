@@ -12,7 +12,7 @@ Operational knowledge for `web/landing/`, the plain HTML site at `https://crocap
 | `privacy/`, `support/` | Static pages |
 | `.well-known/apple-app-site-association` | Universal links for `/r/*`, for both app IDs (`com.bakirgdev.CrocApp` and `.direct`, each with the team prefix) |
 | `.well-known/security.txt` | The address `SECURITY.md` hands out |
-| `llms.txt`, `robots.txt`, `sitemap.xml` | Crawler and assistant files. `robots.txt` lists this sitemap and the docs one |
+| `llms.txt`, `robots.txt` | Crawler and assistant files. `robots.txt` lists the sitemap that `assemble-site.sh` writes and the docs one |
 | `CNAME`, `404.html` | Custom domain and not-found page |
 | `web/landing/assets/img/` | `mascot-web.webp`, the store badges (SVG), `og.jpg` (the social card, also used by the docs site; regenerate it with `scripts/social-cards.swift`, `design/brand.md`, "Assets"), `favicon/` (the app-icon based favicon set and `site.webmanifest`, also used by the docs site) and `screenshots/{mac,iphone}/` (the hero shots, WebP, a light and dark file each) |
 
