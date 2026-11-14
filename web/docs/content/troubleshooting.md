@@ -35,6 +35,12 @@ When both devices run croc 11.6 or newer, four or more small files can travel to
 
 CrocApp refuses a file whose name contains a line break, because the list of files to send cannot carry one. Rename the file so its name has no line break, then send it again.
 
+A file whose name ends in a space can't be sent to a device running croc 11 either: the receiving croc refuses it ("Windows-trimmed trailing character") and the send ends as cancelled. Rename the file to drop the trailing space.
+
+## A received file name is blocked
+
+When a file name contains a text-direction control character, the accept sheet disables **Accept** (with **Auto-Accept Transfers** on, the transfer is cancelled). This includes the invisible left-to-right, right-to-left and Arabic letter marks that some Hebrew and Arabic names contain. The block is deliberate: a leading right-to-left mark makes `pdf.exe` read as `exe.pdf`. CrocApp shows the character as its code point, such as `\u{200F}`. Ask the sender to rename the file.
+
 ## No internet
 
 With no connection, a send with a generated code fails before a code appears, with "No public relay answered". Reconnect and tap **Try Again**, or turn on **Local Network Only** in [Settings](guide/settings.md#transfer) when both devices share a network.

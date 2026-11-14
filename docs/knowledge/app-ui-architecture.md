@@ -2,7 +2,7 @@
 
 How the SwiftUI app is wired and which of its behaviours are load-bearing. Read the relevant section before editing a view that observes `TransferController`.
 
-Engine contract: `crocmobile-bridge.md`. Open defects: `docs/known-issues.md`.
+Engine contract: `crocmobile-bridge.md`. Open defects are GitHub issues labelled `known`.
 
 ## Structure
 
@@ -52,7 +52,7 @@ Every entry point sets `path` and so lands in either layout: `openSend(with:)`, 
 
 **The Mac window.** The sidebar's default width is 144, which truncates "Receive" beside its Review badge, so the sidebar column takes `min 200, ideal 240, max 320` on macOS ("Windows and keyboard focus", below). The iPad sidebar is the system's 320 pt, widened to 440 pt at accessibility text sizes so "Receive" and "Settings" do not break mid-word.
 
-**Limits.** A screen's `@State` (staged files, typed text) is not kept when the selection changes or when the layout flips, and a pushed screen is not kept when the layout flips (`known-issues.md`).
+**Limits.** A screen's `@State` (staged files, typed text) is not kept when the selection changes or when the layout flips, and a pushed screen is not kept when the layout flips (#228).
 
 ## TransferController
 
@@ -92,7 +92,7 @@ The controller is the one `@Observable` the views use. Its pure pieces live in t
 - Precedence when several conditions apply, highest first: code `engineStuck`, `blockedAutoAccept`, `backgroundExpired`, the auto-accept-versus-remote-`--ask` case, then the user's cancel and decline, then the code. `TransferFailure.Situation` carries the controller's flags, so `handle(.failed)` and the `catch` in `run()` share the one mapping, and a thrown expiry keeps the resume hint.
 - `engineStuck` outranks a Cancel tap too. Only a relaunch frees the engine, and every later start fails the same way. It offers no **Try Again**, and `endedByUser` is false.
 - `textTooLong` (croc refused a text offer over its 1 MiB limit) asks the sender to send it as a file, with no **Try Again**: the same text would fail again.
-- `joinedEarly` (a receiver that joined before the sender) says to start the send first. There is no automatic retry and no **Try Again**, because the sender has failed by then too (`../known-issues.md`, "Accepted"), and a generated code changes when it starts again.
+- `joinedEarly` (a receiver that joined before the sender) says to start the send first. There is no automatic retry and no **Try Again**, because the sender has failed by then too, and a generated code changes when it starts again.
 - A reset and a new start (**Try Again**) can come before the last event loop ends. The loop releases its security scopes only while `transferGeneration` still matches, so it cannot release the next transfer's.
 - `blockedAutoAccept` is checked in `.done` as well as `.failed` (`TransferFailure.blockedAutoAccept`). The block's cancel is fire-and-forget, so a small transfer can finish before the cancellation reaches the engine. Both paths record `.failed`, because the history schema has no blocked case and "Cancelled" reads as a user action.
 - `TransferStatusView` shows a "taking longer than usual" hint after 25 s (`slowPhaseThreshold`) in `.starting` or `.connecting`. A `.task(id: isInEarlyPhase)` resets the timer whenever that flips. The clock survives the `.starting` to `.connecting` handoff, because the user sees one stall.
@@ -285,11 +285,11 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - A shortcut does not answer the accept prompt. Auto-accept applies as usual, and Keep Both or Replace follows the setting.
 
 **History entities and Spotlight.**
-- `Intents/HistoryEntity.swift` is the `AppEntity` and `IndexedEntity` for a record: name, direction, status, date, file names, size. Never the code phrase or code hint. `HistoryEntityQuery` answers Shortcuts (by id, by name, and a Find Transfers action with date, direction, status and name filters). `OpenTransferIntent` opens History (the list, not the record: no route carries a record yet, `known-issues.md`, "App and UI", "Open Transfer opens the History list, not the record").
+- `Intents/HistoryEntity.swift` is the `AppEntity` and `IndexedEntity` for a record: name, direction, status, date, file names, size. Never the code phrase or code hint. `HistoryEntityQuery` answers Shortcuts (by id, by name, and a Find Transfers action with date, direction, status and name filters). `OpenTransferIntent` opens History (the list, not the record: no route carries a record yet, #126).
 - `Models/HistoryEntityStore.swift` is the one object both read. It is registered with `AppDependencyManager` and set as `HistoryStore.observer`, which tells it after each saved add, delete, prune and clear. A change that fails to save is never announced (`HistoryStore.saveOverride` lets a test force one).
 - The index is changed by one queued operation at a time. It is rebuilt in full (remove all, index all) at launch and whenever Save Transfer History or Show History in Spotlight changes. A failed index call sets `needsRebuild`, and the next change rebuilds in full instead of applying a delta.
 - `Models/HistorySpotlightIndex.swift` wraps a named `CSSearchableIndex` (`CrocAppHistory`) behind `HistoryIndexing`, which the tests replace. Under a unit-test host and in a harness run the store gets no index, so the developer's Spotlight is never written.
-- The entity id is the JSON of the record's SwiftData `PersistentIdentifier` (`HistoryEntityID`). It survives a relaunch, not a reinstall or a reset store (`known-issues.md`).
+- The entity id is the JSON of the record's SwiftData `PersistentIdentifier` (`HistoryEntityID`). It survives a relaunch, not a reinstall or a reset store (#224).
 
 **Send with CrocApp (Services menu, macOS).**
 - `Platform/SendServicesProvider.swift` is `NSApp.servicesProvider`, set in `AppDelegate`. `sendFiles` and `sendText` are the `NSMessage` values of the two `NSServices` entries in `Config/CrocApp-macOS-Info.plist` and `CrocApp-Direct-Info.plist`; `SendServicesRegistrationTests` ties both plists to the selectors. They stage through `AppRouter.openSend(with:)` and `openSend(text:)`, so a service never starts a transfer and never navigates during one.
@@ -455,7 +455,7 @@ The scan is asynchronous. `.incoming` is shown immediately with `conflicts: []`.
 
 The shape check alone is not enough: a scan can outlive a whole fast transfer and land on the next one's `.incoming`. A synchronous scan froze the accept UI on large file lists.
 
-With conflicts, the sheet offers Decline, Replace and Keep Both (Keep Both prominent) and a banner. Without conflicts, or while the scan runs, it offers a single Accept, which means Keep Both. A zipped folder arrives as one `.zip` name, so the scan sees none of its members (`docs/known-issues.md`, "Accepted").
+With conflicts, the sheet offers Decline, Replace and Keep Both (Keep Both prominent) and a banner. Without conflicts, or while the scan runs, it offers a single Accept, which means Keep Both. A zipped folder arrives as one `.zip` name, so the scan sees none of its members (#225).
 
 A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookmarkData` calls) runs off the main actor the same way and writes back into `pendingRecord`, under the same `transferGeneration` check, so a capture that outlives its send cannot land on the next transfer's record. If a transfer terminates first, `pendingRecord` is already nil and the record carries no bookmarks, so **Send Again** hides instead of breaking. `SecurityScopedBookmark.create` is `nonisolated` for this.
 
@@ -481,7 +481,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 - `checkIfNeeded()` probes once per process, triggered by `ContentView.onChange(controller.isActive)`.
 - `recheckIfDenied()` re-probes from `.denied` when `scenePhase` goes `.active` (for example after the user granted access in Settings). It never re-probes `.granted` or unresolved states and never stacks a second in-flight probe.
 - Denial shows a banner plus **Open Settings** in `TransferStatusView`. Denial only resolves at the 8 s timeout, because a first `.waiting` may just be the pending permission prompt.
-- Testing a macOS denial is awkward (`docs/known-issues.md`, "Accepted").
+- Testing a macOS denial is awkward: enforcement reportedly engages only for builds resident in `/Applications` (one developer-forum thread, not Apple documentation; inferred), so a Debug build launched from DerivedData can read as falsely granted. Copy the app to `/Applications` before trying to reproduce a denial.
 - `Models/ShareInbox.swift` and `Views/StagedFilesSheet.swift` pick up batches staged by the share extension from the App Group (`ShareInbox/batch-<UUID>/`, each with its own `manifest.json`, written after its files). The group ID, directory and file names, the `Manifest` type, the batch-name generator and validator, and the extension's staging rules (`stagedName`, `batchText`, `copyFits`, which tests cannot reach in the extension target) are `app/Shared/ShareHandoff.swift`, compiled with `app/Shared/ReceivedName.swift` into `CrocApp`, `CrocApp Direct` and `CrocShare` (a synchronized folder group listed on all three targets), so the writer and the reader cannot drift. The group ID (team-prefixed on macOS, and different for Direct) is also in the entitlements files, which cannot import Swift. `ShareInbox` treats the inbox as untrusted data: it lists only directories named `batch-` and a UUID (a symlink is not one), a manifest it cannot decode is logged (category `share`) and treated as absent, and a file name `ReceivedName.isUnsafe` rejects is dropped. Several batches can wait: `refresh` offers the oldest with a manifest (`batch`). `ContentView` offers the next on **Discard** and whenever `controller.isActive` turns false, and on each foreground as before. It also logs any file removal that fails, and stays best effort. `ShareInbox.refresh(in:)` takes the inbox directory so `ShareInboxTests` can use a temp directory instead of the App Group container. Shared text and web links travel in `Manifest.text` (set only when `files` is empty, so files win in a mixed share; capped at `ShareHandoff.maxTextBytes`, 1 MiB, the same cap as `SendServicesProvider`; never logged). `ShareStager.loadText` reads a non-file `public.url` as its absolute string or `public.plain-text` as is. `ShareInbox.text` exposes it, and `ContentView.offerStagedFiles` discards the batch and calls `AppRouter.openSend(text:)` with no sheet, so the Send screen is where the user presses Send.
 - The batch's life: **Send** in `StagedFilesSheet` is disabled while a transfer runs (a Shortcut, the menu bar or a drop can start one while the sheet is open), and the share stays staged. Send starts the transfer first and consumes the batch (`consume` deletes its manifest) only when the start succeeds. **Discard** deletes the batch at once. A sent batch is deleted when its transfer reaches `.done` or `.stored` (`sendFinished`, from `ContentView`'s phase observer), and kept after `.failed`, because Try Again reuses its file URLs; **Send Again** in History then has no files for that entry. The purge at idle deletes only a batch that never got its manifest (after `stagingGrace`, as the extension may still be copying) and any directory with another name.
 - The whole `scenePhase` refresh is gated on `!controller.isActive`. An ungated refresh once purged a live batch mid-send.
@@ -577,6 +577,6 @@ Launch gotchas, both macOS:
 
 - Once `CFBundleDocumentTypes` exists, bare adjacent argv tokens are document-open candidates and AppKit skips creating the default window. Use flag-style arguments only.
 - Scripted launches need `-ApplePersistenceIgnoreState YES` or they hang in window restoration.
-- A plain launch can come up with no window when the bundle ID carries leftover restoration state (`known-issues.md`, "App and UI"). Test window behavior on a fresh bundle ID or pass the flag.
+- A plain launch can come up with no window when the bundle ID carries leftover restoration state (#222). Test window behavior on a fresh bundle ID or pass the flag.
 
 On the CLI side of a verify run, a receiving `croc` needs `CROC_SECRET=` in the environment instead of a positional code. croc refuses custom positional codes in non-classic mode for receive as well as send.

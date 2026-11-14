@@ -35,7 +35,7 @@ The policy forbids inline script and style, `data:` images and any remote host, 
 
 ## Images
 
-Screenshots are WebP, one file per theme, and the hero uses `<picture>` with a `<source media="(prefers-color-scheme: dark)" data-theme-source>` so only the variant that matches the OS downloads. A manual theme pin cannot reach a `<source>` before parse, so `app.js` rewrites that `media` to `all` or `not all` on load and on toggle. Trade-off: a pin that disagrees with the OS fetches the OS variant first, then the pinned one (`known-issues.md`, "Landing page"). Every image has `width` and `height`; the Mac hero image has `fetchpriority="high"`. No image is `loading="lazy"`: the badges and the footer mascot are sized by CSS (`width: auto`, a token), and Chrome flags a lazy image whose CSS width differs from its attributes. `scripts/capture-screenshots.sh --copy-web` writes the WebP files and needs `cwebp` (`brew install webp`).
+Screenshots are WebP, one file per theme, and the hero uses `<picture>` with a `<source media="(prefers-color-scheme: dark)" data-theme-source>` so only the variant that matches the OS downloads. A manual theme pin cannot reach a `<source>` before parse, so `app.js` rewrites that `media` to `all` or `not all` on load and on toggle. Trade-off: a pin that disagrees with the OS fetches the OS variant first, then the pinned one. Every image has `width` and `height`; the Mac hero image has `fetchpriority="high"`. No image is `loading="lazy"`: the badges and the footer mascot are sized by CSS (`width: auto`, a token), and Chrome flags a lazy image whose CSS width differs from its attributes. `scripts/capture-screenshots.sh --copy-web` writes the WebP files and needs `cwebp` (`brew install webp`).
 
 ## Head
 
@@ -62,9 +62,9 @@ Lighthouse is `npx lighthouse` (13.6.0 when last run, the chrome-devtools MCP to
 
 ## Hand-maintained
 
-Nothing checks these. They are listed in `docs/known-issues.md`, "Landing page":
+Nothing checks these:
 
 - No page, JSON-LD or crawler file names a release version, so a release edits none of them. The Download section says "available now" (the Mac App Store build is set to manual release, so its card can read that before the build is live), the Mac card's **Download Disk Image** button links the latest GitHub release, and both store badges link the App Store listing (`https://apps.apple.com/app/crocapp/id6805675003`, one record for iOS and macOS). The JSON-LD carries `downloadUrl`, `installUrl` (the App Store listing) and `datePublished`, which stays the first public release. Keep it that way: a new version string on the site is a new hand edit.
 - `security.txt` has an `Expires` field to renew (keep it at least six months out).
 - The site-wide copy (`index.html` feature lists, `llms.txt`) describes what `main` ships. It can run ahead of the released version, so merge copy for an unreleased feature with the release.
-- The AASA `/r/*` component is wider than the one page that exists.
+- The AASA `/r/*` component is wider than the one page that exists (#216).

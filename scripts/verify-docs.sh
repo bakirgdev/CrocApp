@@ -16,6 +16,10 @@
 #      planning IDs (R12, F31, O9, B23, W4), which go stale (docs/AGENTS.md,
 #      "Writing rules"), and section-number citations, which rot on every
 #      re-order.
+#   5. Facts a link check cannot see: every croc version literal in markdown
+#      equals the pin in crocmobile/go.mod; no file cites a deleted doc
+#      (known-issues, ROADMAP, MAINTAINING, GOVERNANCE); every docs URL in
+#      web/landing/llms.txt is a page under web/docs/content/.
 #
 #   scripts/verify-docs.sh     # findings as path:line: message, exit 1 on any
 #
@@ -248,8 +252,33 @@ while IFS= read -r m; do
   findings=$((findings + 1))
 done < "$TMP/markers"
 
+# The croc version literals in markdown equal the pin in crocmobile/go.mod.
+# CHANGELOG.md keeps old versions as history.
+pin=$(grep -oE 'schollz/croc/v11 v11\.[0-9]+\.[0-9]+' crocmobile/go.mod | cut -d' ' -f2 || true)
+[ -n "$pin" ] || finding crocmobile/go.mod 1 "no schollz/croc/v11 requirement found"
+git grep -nEo --untracked --exclude-standard 'v11\.[0-9]+\.[0-9]+' -- '*.md' ':!CHANGELOG.md' > "$TMP/crocver" || true
+while IFS=: read -r f n v; do
+  [ "$v" = "$pin" ] || finding "$f" "$n" "croc $v, but crocmobile/go.mod pins $pin"
+done < "$TMP/crocver"
+
+# Nothing cites a doc that was deleted: the defect ledger is now the GitHub
+# label `known`, and the roadmap, maintenance and governance files are merged.
+git grep -nEI --untracked --exclude-standard 'known-issues\.md|ROADMAP\.md|MAINTAINING\.md|GOVERNANCE\.md' \
+  -- . ':!CHANGELOG.md' ':!scripts/verify-docs.sh' > "$TMP/deleted" || true
+while IFS=: read -r f n _; do
+  finding "$f" "$n" "cites a deleted doc (known-issues, ROADMAP, MAINTAINING or GOVERNANCE)"
+done < "$TMP/deleted"
+
+# Every docs URL in the landing llms.txt is a page that exists.
+grep -noE 'crocapp\.dev/docs/[^] )>"#]*' web/landing/llms.txt > "$TMP/llms" || true
+while IFS=: read -r n url; do
+  p=${url#crocapp.dev/docs/}
+  p=${p%/}
+  [ -f "web/docs/content/${p:-index}.md" ] || finding web/landing/llms.txt "$n" "no docs page for $url"
+done < "$TMP/llms"
+
 if [ "$findings" -gt 0 ]; then
   echo "FAIL: $findings finding(s). Fix the doc, or the path it names; never the check."
   exit 1
 fi
-echo "PASS: links, repo paths, heading citations and stale markers in $(wc -l < "$TMP/files" | tr -d ' ') markdown files"
+echo "PASS: links, repo paths, heading citations, stale markers, croc version, deleted-doc citations and llms.txt URLs in $(wc -l < "$TMP/files" | tr -d ' ') markdown files"

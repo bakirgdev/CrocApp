@@ -2,7 +2,7 @@
 
 What CrocApp does, what it deliberately skips, and which croc option each feature maps to. Plans are GitHub issues.
 
-Status is checked against the code, not against intent. **Shipped** means the feature exists and works in the app. It does not mean it was tested on physical hardware (`device-test-checklist.md`) or that it has no open defects (`docs/known-issues.md`).
+Status is checked against the code, not against intent. **Shipped** means the feature exists and works in the app. It does not mean it was tested on physical hardware (`device-test-checklist.md`) or that it has no open defects (issues labelled `known`).
 
 Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 
@@ -105,7 +105,7 @@ Details:
   - A `MenuBarExtra` window with a drop zone, **Choose Files…** and **Send Clipboard Text**, then the code, QR and progress of the one shared transfer. Codes are always generated.
   - **Receive**: a code field and a **Receive** button start a receive into the configured folder. A code or any link CrocApp opens is accepted. An incoming file list is answered in the main window: the window offers **Open CrocApp to Accept**.
   - The icon follows the phase (`MenuBarIcon`): idle, active with the percent beside it, waiting, needs your answer, done, failed. The accessibility label names the state.
-  - A drop on the icon itself is not possible (`known-issues.md`, "App and UI", "The menu-bar window cannot take a drop on the icon itself").
+  - A drop on the icon itself is not possible.
   - The **Show in Menu Bar** setting is on by default and **Open at Login** (`SMAppService`) is off by default.
   - Covered by unit tests and by `scripts/verify-app-mac.sh` (menu-bar send, clipboard send, Open at Login). The checks that need a real Mac are in `device-test-checklist.md`, "Menu bar on a Mac".
 - **Notifications and the Dock.**
@@ -115,8 +115,8 @@ Details:
   - The Mac Dock tile shows the percent while bytes move and "1" while a request waits. **Show Progress in the Dock** (`showDockBadge`, on by default) turns it off. It shows no names, and it is not a notification, so **Notifications** does not govern it.
   - Not verified on a device or by eye: delivery, the permission prompt and the tap.
 - **Shortcuts and Siri.** **Send Files with CrocApp**, **Send Text with CrocApp** and **Receive with CrocApp** (App Intents), also offered as App Shortcuts. They run in the foreground. The send actions return the code and Receive returns the files. Not verified on a device. That the Finder Quick Action works is inferred, not tested (`device-test-checklist.md`, "Shortcuts actions").
-- **History in Shortcuts and Spotlight.** A transfer is an entity with a name, direction, status, date, file names and size, never a code or its hint. Shortcuts gets Find Transfers (filters: date, direction, status, name) and **Open Transfer**, which opens History. Both answer with nothing while **Save Transfer History** is off. Spotlight indexing is a separate setting, **Show History in Spotlight**, off by default because it puts file names in a system index; turning it or Save Transfer History off removes what was indexed. Spotlight indexing and the entities were exercised by unit tests and a real-index test; the Spotlight search UI and a device were not (`known-issues.md`, "App and UI", "History entities, Spotlight indexing and the Mac Send service are only partly verified").
-- **Send with CrocApp (Mac Services menu).** Selected files in Finder, or selected text in any app, stage in Send and bring CrocApp forward. Never starts a transfer. Text over 1 MiB is refused. Listed in the system's Services after a registration refresh (`known-issues.md`).
+- **History in Shortcuts and Spotlight.** A transfer is an entity with a name, direction, status, date, file names and size, never a code or its hint. Shortcuts gets Find Transfers (filters: date, direction, status, name) and **Open Transfer**, which opens History. Both answer with nothing while **Save Transfer History** is off. Spotlight indexing is a separate setting, **Show History in Spotlight**, off by default because it puts file names in a system index; turning it or Save Transfer History off removes what was indexed. Spotlight indexing and the entities were exercised by unit tests and a real-index test; the Spotlight search UI and a device were not (#228).
+- **Send with CrocApp (Mac Services menu).** Selected files in Finder, or selected text in any app, stage in Send and bring CrocApp forward. Never starts a transfer. Text over 1 MiB is refused. Listed in the system's Services after a registration refresh.
 - **Sidebar layout.**
   - A sidebar of **Send**, **Receive** and **History**, and **Settings** on iPad (the Mac keeps its Settings window). **How It Works** is a toolbar button that opens inside the screen.
   - The layout follows the window width, live: a Mac window, an iPad at full width or in a wide Split View gets the sidebar, and iPhone, Slide Over and a narrow Split View get Home.

@@ -172,7 +172,7 @@ For any future screenshot work:
 - **Mac light shots have no window edge.** Window captures are made without the system shadow (`screencapture -o`), in both themes. A light window on a white page looks unframed; a page that needs an edge adds it in CSS.
 - **`iphone/onboarding` is a real sheet.** On iOS the onboarding is a `.sheet`, so the light shot shows the dimmed home screen above and around it. Dark shows the same over black.
 
-- **`ipad/` is the phone layout stretched.** See `../known-issues.md`, "Design system".
+- **`ipad/` is the phone layout stretched.**
 - **No `iphone-duo-inner`, and `iphone-duo-outer` cuts taller screens off at the bottom.** See "iPhone Duo" above. The outer set is uploaded (iOS 1.1.1), but a screen taller than the outer display ends mid-content: `02-send-code-dark` cuts its hint line and loses "Waiting for the receiver…". Recapture when a runtime or Simulator.app can drive the Duo's inner display.
 - **No menu-bar shot.** The menu-bar popover cannot be captured reliably: macOS hides the status item when the menu bar is full, so no script can click it.
 - **`mac/onboarding` is not captured** (see the table above).

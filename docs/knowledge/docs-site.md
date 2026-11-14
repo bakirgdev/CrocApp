@@ -57,6 +57,10 @@ The site has one version and `docusaurus.config.ts` configures none, so there is
 
 The script fails the build unless the landing files and the receive-link page are in place. The list is in `landing-page.md`, "How it ships". It also requires `index.html` under the `docs` folder.
 
+## No site search
+
+On purpose: a local search plugin is a new dependency, and Algolia DocSearch is an external account plus a third-party request from a page that makes a privacy claim. The sidebar and browser find-in-page are enough at this size. Revisit if the page count grows.
+
 ## Traps
 
 - **No `backdrop-filter` (or `transform`, `filter`) on an ancestor of the mobile menu while it is open.** `.navbar-sidebar` is `position: fixed` inside `.navbar`, so a `backdrop-filter` on `.navbar` makes the navbar its containing block and the open menu shrinks to the bar's height: no links, and nothing to tap (seen in Safari on an iOS 27.2 Simulator). `custom.css` drops the blur on `.navbar-sidebar--show`.

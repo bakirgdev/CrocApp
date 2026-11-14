@@ -100,6 +100,6 @@ jobs:
           2. A fuzz failure: download the `fuzz-failures` artifact into `crocmobile/testdata/fuzz/`, reproduce with the `go test -run` line from the log, fix, and commit the input as a regression seed.
           3. A govulncheck finding: bump the affected dependency in `crocmobile/go.mod`, re-run `go tool govulncheck ./...` locally to confirm clean, close this issue.
           4. A lint or build failure with no source change behind it usually means a new golangci-lint or Go toolchain release changed the defaults. Pin or adapt, then close this issue.
-          5. If not fixable yet: record it in `docs/known-issues.md` per project convention, close this issue.
+          5. If not fixable yet: label this issue `known` and leave it open.
           EOF
           } | gh issue create --title "$title" --label bug --label security --assignee bakirgdev --body-file -

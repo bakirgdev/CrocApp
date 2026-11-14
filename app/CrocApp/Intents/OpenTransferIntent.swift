@@ -2,8 +2,7 @@ import AppIntents
 
 /// Opens CrocApp at History. This is what a tap on a Spotlight result runs,
 /// and what Shortcuts offers for a found transfer. It opens the list, not the
-/// record: the record's own screen has no route to open it yet (see
-/// `docs/known-issues.md`, "History entities").
+/// record: the record's own screen has no route to open it yet (issue #126).
 struct OpenTransferIntent: OpenIntent {
     static let title: LocalizedStringResource = "Open Transfer"
     static let description = IntentDescription("Opens CrocApp at History.")

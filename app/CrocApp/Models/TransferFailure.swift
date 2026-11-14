@@ -247,7 +247,7 @@ extension TransferFailure {
         case .cancelled:
             // Every cancel this device makes has its own case in init, so
             // this one came from the other side, as when a croc receiver
-            // refuses a name (docs/known-issues.md).
+            // refuses a name.
             return TransferFailure(
                 title: String(localized: "Transfer cancelled"), detail: askAgain(direction),
                 remedy: nil)

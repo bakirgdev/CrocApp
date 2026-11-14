@@ -85,7 +85,7 @@ final class OutputFolderStore {
     func select(_ picked: URL) {
         let hadAccess = picked.startAccessingSecurityScopedResource()
         defer { if hadAccess { picked.stopAccessingSecurityScopedResource() } }
-        // Silently no-ops on failure (accepted papercut, docs/known-issues.md):
+        // Silently no-ops on failure (accepted papercut):
         // rare, and the alternative is an error path the user cannot act on.
         guard let data = SecurityScopedBookmark.create(for: picked) else { return }
         defaults.set(data, forKey: Self.bookmarkKey)

@@ -3,7 +3,8 @@ name: CodeQL
 # Advanced setup instead of GitHub's default one, so a docs-only change does
 # not start an analysis per language. JavaScript and TypeScript are left out
 # (Biome lints the site code). Swift is left out: CodeQL supports Swift up to 6.3
-# and the app builds with Swift 6.4 (docs/known-issues.md, "Build and CI").
+# and the app builds with Swift 6.4. Add it (needs a macOS runner and a manual
+# build) once CodeQL's supported-languages page lists Swift 6.4.
 on:
   push:
     branches: [main]

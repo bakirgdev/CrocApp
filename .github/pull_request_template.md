@@ -23,7 +23,7 @@ harness output: the summary lines and any failures, not the whole log
 ## Docs
 
 - [ ] User-visible change: a line under `## [Unreleased]` in `CHANGELOG.md`, written for someone deciding whether to update. That section becomes the release notes verbatim
-- [ ] Docs that describe the change updated (root `AGENTS.md`, "Docs"), a fixed or accepted defect's `docs/known-issues.md` line deleted or added, and `scripts/verify-docs.sh` passes
+- [ ] Docs that describe the change updated (root `AGENTS.md`, "Docs"), and `scripts/verify-docs.sh` passes
 
 ## UI changes
 

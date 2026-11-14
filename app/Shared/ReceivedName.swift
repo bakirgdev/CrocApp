@@ -35,8 +35,8 @@ nonisolated enum ReceivedName {
     // (subdivision flag emoji), all legitimate in file names. Only what lets a
     // sender make "invoice<U+202E>fdp.exe" read as "invoiceexe.pdf", or break
     // a name across lines, is blocked. Every bidi control goes, including the
-    // LRM, RLM and ALM marks some Hebrew and Arabic names use: that is the
-    // conservative side of the trade-off (`docs/known-issues.md`).
+    // LRM, RLM and ALM marks some Hebrew and Arabic names use: deliberate,
+    // because a leading RLM makes "pdf.exe" render as "exe.pdf".
     static func isSpoofingScalar(_ scalar: Unicode.Scalar) -> Bool {
         let properties = scalar.properties
         if properties.isBidiControl { return true }

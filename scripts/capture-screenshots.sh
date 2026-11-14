@@ -663,7 +663,7 @@ mac_settings() { # mac_settings TAB [LAUNCH_ARG...]
   [ "$tab" != General ] || "$TMP/bin/window" scroll CrocApp
   if [ "$SCREEN" = relay-health ]; then
     # The sheet runs its check on open; the relay is the local one, so it answers at once.
-    # Check Relay… exposes no name to System Events (docs/known-issues.md), so
+    # Check Relay… exposes no name to System Events, so
     # click the tab's one button that has neither a name nor a description.
     osascript -e "tell application \"System Events\" to tell (first process whose unix id is $APP_PID)" \
       -e 'repeat with e in (entire contents of window 1 as list)' \

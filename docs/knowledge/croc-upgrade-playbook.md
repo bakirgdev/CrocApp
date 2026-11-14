@@ -23,19 +23,19 @@ How to bump the pinned croc version in `crocmobile/go.mod`. The update rule (wha
    - `PUBLIC_POOL=1 ./scripts/verify-app-mac.sh`: the macOS app scenarios. This is the widest coverage of the option surface.
    - `PUBLIC_POOL=1 ./scripts/verify-app-sim.sh`: iOS simulator receive and the share-extension handoff.
 
-   `PUBLIC_POOL=1` sends through the public relays, which is where a croc upgrade can change relay selection or the code-to-relay mapping. A pool relay rate-limits, so wait a minute between harnesses, and a failure counts as a regression only after its log says so (`known-issues.md`, "Harnesses"). Run the same three without `PUBLIC_POOL` as well: that is what CI runs for interop and what finds a local-relay regression.
+   `PUBLIC_POOL=1` sends through the public relays, which is where a croc upgrade can change relay selection or the code-to-relay mapping. A pool relay rate-limits, so wait a minute between harnesses, and a failure counts as a regression only after its log says so. Run the same three without `PUBLIC_POOL` as well: that is what CI runs for interop and what finds a local-relay regression.
 
    Any failure: find the root cause against the upstream delta before touching wrapper semantics.
 6. **Update docs.**
    - Run `git grep -n "11.6.5"` (the old version string) and update every hit: `what-is-croc.md` (the version header and any changed facts), `web/docs/content/reference/croc-cli-interop.md`, and comments in `crocmobile/` and `scripts/`. Other docs say "croc 11" and need the version only when the major changes.
    - Update facts that changed even where the version string is absent.
-   - Check the names in `known-issues.md` and `docs/GLOSSARY.md` that the delta touched.
+   - Check the names in `docs/GLOSSARY.md` that the delta touched.
    - Run `scripts/verify-docs.sh`.
 
 ## Notes
 
 - A new major needs both sides upgraded. v10 and v11 peers cannot complete a transfer: v11 rejects a PAKE message that lacks protocol version 2 (`pakekey.ProtocolVersion`), and v10's message type (through v10.7.0) has no version field.
 - The peers often never meet, because the room derivation and the default relay differ. So `peerVersion` fires only on a shared room.
-- `~/go/bin/croc` (the v10 release pinned in `scripts/croc-v10.version`) is kept only as `CROC_V10`, for the v10-peer scenario. If it is first on `PATH`, plain `croc` runs v10, so call Homebrew's `croc` by full path (`known-issues.md`, "Harnesses").
+- `~/go/bin/croc` (the v10 release pinned in `scripts/croc-v10.version`) is kept only as `CROC_V10`, for the v10-peer scenario. If it is first on `PATH`, plain `croc` runs v10, so call Homebrew's `croc` by full path.
 - Coordinate app release timing with upstream adoption.
 - Watch croc's README and issues for a callback-based embedder API. That is the single change that would most simplify crocmobile.

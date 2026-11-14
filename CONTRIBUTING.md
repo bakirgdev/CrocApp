@@ -114,7 +114,7 @@ Documentation is part of the change.
 
 - A user-visible change gets a line under `## [Unreleased]` in [`CHANGELOG.md`](CHANGELOG.md), written for someone deciding whether to update.
 - A change to how something works inside updates the doc that describes it: [`docs/AGENTS.md`](docs/AGENTS.md) says which file owns which fact, and has the writing rules.
-- Fixing a listed defect deletes its item from [`docs/known-issues.md`](docs/known-issues.md); finding one and leaving it adds an item.
+- A defect found and left becomes an issue labelled [`known`](https://github.com/bakirgdev/CrocApp/issues?q=is%3Aissue+label%3Aknown); the fix closes it.
 - Run `scripts/verify-docs.sh` after editing any markdown.
 
 ## AI-assisted contributions
