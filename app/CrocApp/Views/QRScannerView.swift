@@ -10,7 +10,7 @@ import VisionKit
 /// unsupported hardware regardless of authorization, so both checks stay.
 struct QRScannerSheet: View {
     /// Called once, with the first QR code that is a code phrase or a link.
-    /// Anything else keeps the camera running (components.md → ScannerSheet).
+    /// Anything else keeps the camera running.
     let onScan: (TransferLink) -> Void
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -97,36 +97,27 @@ struct QRScannerSheet: View {
                         localized: "Scan the QR code on the sending device.",
                         comment: "Says what to do after a scanned QR code was not a CrocApp one.")
                 )
-                .transition(rejectionTransition)
+                .transition(.opacity)
             } else {
                 Text("Point the camera at the QR code on the other device.")
                     .font(.subheadline)
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, Spacing.space5)
-                    .padding(.vertical, Spacing.space4)
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
                     .glassEffect(
-                        .regular, in: .rect(cornerRadius: Radius.md, style: .continuous))
+                        .regular, in: .rect(cornerRadius: 14))
             }
         }
-        .padding(Spacing.space5)
+        .padding()
         .animation(
-            reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: showsRejection)
-    }
-
-    private var rejectionTransition: AnyTransition {
-        reduceMotion
-            ? .identity
-            : .asymmetric(
-                insertion: .opacity.combined(with: .offset(y: -Spacing.space3))
-                    .animation(Motion.easeOut(Motion.durationBase)),
-                removal: .opacity.animation(Motion.easeStandard(Motion.durationFast)))
+            reduceMotion ? nil : .default, value: showsRejection)
     }
 
     // Settings can fix a denial, so offer the shortcut there -- mirrors the
     // local-network denied banner in TransferStatusView.
     private var deniedView: some View {
-        VStack(spacing: Spacing.space4) {
+        VStack(spacing: 12) {
             ContentUnavailableView(
                 "Camera access denied",
                 systemImage: "video.slash",

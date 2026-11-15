@@ -51,7 +51,7 @@ struct SettingsView: View {
                         ))
                 }
                 LabeledContent("Save Received Files To") {
-                    HStack(spacing: Spacing.space3) {
+                    HStack {
                         Text(
                             outputFolder.isUserSelected
                                 ? outputFolder.url.path : outputFolder.defaultDisplayName

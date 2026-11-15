@@ -2,23 +2,17 @@ import Accessibility
 import SwiftUI
 
 /// The sender's code phrase: eyebrow, the code, and the Copy button.
-/// design/components.md → CodePhraseDisplay and QRFrame (steps 1 to 3; the QR
-/// frame and caption stay with the caller). `compact` is the 300-wide menu bar
-/// column, which shows the code at `--type-title3`.
+/// The QR frame and caption stay with the caller. `compact` is the 300-wide
+/// menu bar column.
 struct CodePhraseDisplay: View {
     let code: String
     var compact = false
 
-    // components.md → CodePhraseDisplay: the code sits on a glass pill; its
-    // padding is the pill's own, not a grid step.
-    private static let pillPaddingInline = Spacing.space6
-
     var body: some View {
-        VStack(spacing: compact ? Spacing.space3 : Spacing.space5) {
+        VStack(spacing: compact ? nil : 16) {
             Text("Ready to send")
                 .textCase(.uppercase)
                 .font(.footnote.weight(.semibold))
-                .tracking(Tracking.eyebrow)
                 .foregroundStyle(.secondary)
             codeText
             CopyButton("Copy Code") { Clipboard.copySecret(code) }
@@ -28,7 +22,7 @@ struct CodePhraseDisplay: View {
     @ViewBuilder private var codeText: some View {
         let text = Text(code)
             .textSelection(.enabled)
-            .tracking(Tracking.code)
+            .tracking(0.5)
             .multilineTextAlignment(.center)
             .accessibilityLabel("Code phrase")
             .accessibilityValue(code.replacingOccurrences(of: "-", with: ", "))
@@ -36,18 +30,17 @@ struct CodePhraseDisplay: View {
             text.font(.title3.monospaced().weight(.semibold))
         } else {
             text
-                .codeHeroTextStyle()
-                .padding(.horizontal, Self.pillPaddingInline)
-                .padding(.vertical, Spacing.space4)
+                .font(.title.monospaced().bold())
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
                 // A capsule clips the code once it wraps at large text sizes.
-                .glassEffect(.regular, in: .rect(cornerRadius: Radius.xl, style: .continuous))
+                .glassEffect(.regular, in: .rect(cornerRadius: 28))
         }
     }
 }
 
 /// A `secondary` Copy button that flips to `checkmark` and "Copied" for two
-/// seconds after each copy, then flips back the same way. design/components.md
-/// → CodePhraseDisplay and QRFrame, step 3: Copy Code, Copy Link and Copy Text
+/// seconds after each copy, then flips back the same way. Copy Code, Copy Link and Copy Text
 /// all use it. The copy fires `.selection` and is announced (principles.md →
 /// Haptics; principles.md → Accessibility).
 struct CopyButton: View {
@@ -96,16 +89,14 @@ struct CopyButton: View {
             Text(text)
         } icon: {
             Image(systemName: systemImage)
-                // principles.md → Motion: the system draws the
-                // effect; a content transition only runs inside an animated
-                // transaction, which the token curve supplies.
+                // A content transition only runs inside an animated transaction.
                 .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
                 .animation(
-                    reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: copied)
+                    reduceMotion ? nil : .default, value: copied)
         }
     }
 }
 
 #Preview("Code phrase") {
-    CodePhraseDisplay(code: "wiry-alpha-bravo").padding(Spacing.space5)
+    CodePhraseDisplay(code: "wiry-alpha-bravo").padding()
 }

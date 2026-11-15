@@ -3,7 +3,6 @@ import SwiftUI
 /// End-to-end encryption badge + active relay indicator, shown on the
 /// waiting and transferring screens. Relay kind is captured at transfer
 /// start (TransferController.activeRelay) so it can't drift mid-transfer.
-/// design/components.md → TrustBadge.
 struct TrustBadge: View {
     enum Variant {
         /// Inline capsule. Sits in the Home header and on transfer screens.
@@ -15,14 +14,6 @@ struct TrustBadge: View {
     let relay: AppSettings.RelayKind
     var variant: Variant = .pill
 
-    // components.md → TrustBadge: pill lock at 14, full glyph at 19, scaled
-    // with Dynamic Type.
-    @ScaledMetric(relativeTo: .footnote) private var pillGlyph: CGFloat = 14
-    @ScaledMetric(relativeTo: .subheadline) private var fullGlyph: CGFloat = 19
-    @ScaledMetric(relativeTo: .subheadline) private var fullCircle: CGFloat =
-        ComponentMetrics.trustBadgeFullCircle
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     var body: some View {
         switch variant {
         case .pill: pill
@@ -30,75 +21,36 @@ struct TrustBadge: View {
         }
     }
 
-    // MARK: - Pill
-
     private var pill: some View {
-        HStack(spacing: Spacing.space2) {
-            Image(systemName: "lock.fill")
-                .font(.system(size: pillGlyph, weight: .semibold))
-                .foregroundStyle(.green)
-                .accessibilityHidden(true)
-            // The pill's label is primary, not success: success on its own
-            // tint is 1.98:1 in light (components.md → TrustBadge). Only the
-            // glyph carries the success color.
+        // The label is primary, not success: success on its own tint is 1.98:1
+        // in light. Only the glyph carries the success color.
+        Label {
             Text("End-to-end encrypted")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.primary)
+        } icon: {
+            Image(systemName: "lock.fill").foregroundStyle(.green)
         }
-        .padding(.vertical, Spacing.space2)
-        .padding(.leading, Spacing.space3)
-        .padding(.trailing, Spacing.space4)
-        .background(Color.green.opacity(ComponentMetrics.tintOpacity), in: Capsule())
+        .font(.footnote.weight(.semibold))
+        .padding(.vertical, 4)
+        .padding(.horizontal, 12)
+        .background(.green.opacity(0.14), in: .capsule)
         .accessibilityElement(children: .combine)
     }
 
-    // MARK: - Full
-
-    // At accessibility text sizes the circle beside the words leaves them too
-    // narrow, and "End-to-end" breaks mid-word; the circle goes above them
-    // instead (principles.md → Accessibility).
-    private var fullLayout: AnyLayout {
-        dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space4))
-            : AnyLayout(HStackLayout(spacing: Spacing.space4))
-    }
-
     private var full: some View {
-        fullLayout {
-            ZStack {
-                Circle()
-                    .fill(Color.green)
-                    .frame(width: fullCircle, height: fullCircle)
-                // The full variant escapes the pill's contrast problem by
-                // inverting: a solid success fill with the glyph knocked out
-                // of it in white (components.md → TrustBadge).
-                Image(systemName: "checkmark.shield.fill")
-                    .font(.system(size: fullGlyph, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .accessibilityHidden(true)
-            }
-            VStack(alignment: .leading, spacing: Spacing.space1) {
+        Label {
+            VStack(alignment: .leading) {
                 Text("End-to-end encrypted")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
                 Text(relayLine)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        } icon: {
+            Image(systemName: "checkmark.shield.fill").foregroundStyle(.green)
         }
-        .padding(.horizontal, Spacing.space5)
-        .padding(.vertical, Spacing.space4)
-        .background(
-            Color.green.opacity(ComponentMetrics.tintOpacity),
-            in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                .strokeBorder(
-                    Color.green.opacity(ComponentMetrics.statusBorderOpacity),
-                    lineWidth: BorderWidth.hairline)
-        )
+        .padding()
+        .background(.green.opacity(0.14), in: .rect(cornerRadius: 14))
         .accessibilityElement(children: .combine)
     }
 

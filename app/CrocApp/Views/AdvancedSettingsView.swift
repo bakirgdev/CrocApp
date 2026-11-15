@@ -127,7 +127,7 @@ private struct AdvancedRow<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.space3) {
+        VStack(alignment: .leading) {
             content
                 .accessibilityHint(error.map { Text(verbatim: $0) } ?? Text(footnote))
             if let error {
@@ -146,7 +146,7 @@ private struct AdvancedRow<Content: View>: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, Spacing.space2)
+        .padding(.vertical, 4)
     }
 }
 
@@ -163,7 +163,7 @@ private struct LabeledField<Field: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.space2) {
+        VStack(alignment: .leading) {
             Text(title).accessibilityHidden(true)
             field
                 .labelsHidden()
@@ -171,7 +171,7 @@ private struct LabeledField<Field: View>: View {
                 .accessibilityLabel(title)
                 .autocorrectionDisabled()
                 .frame(
-                    maxWidth: .infinity, minHeight: ControlHeight.hitTargetMin, alignment: .leading)
+                    maxWidth: .infinity, minHeight: 44, alignment: .leading)
         }
     }
 }

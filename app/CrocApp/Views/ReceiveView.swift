@@ -48,12 +48,12 @@ struct ReceiveView: View {
     private var form: some View {
         Group {
             if dynamicTypeSize.isAccessibilitySize {
-                ScrollView { formContent.padding(Spacing.space5) }
+                ScrollView { formContent.padding() }
             } else {
-                formContent.padding(Spacing.space5)
+                formContent.padding()
             }
         }
-        .frame(maxWidth: LayoutCap.contentMaxWidth)
+        .frame(maxWidth: 480)
         .phoneHaptic(trigger: scanCount) { _, _ in .selection }
     }
 
@@ -73,11 +73,11 @@ struct ReceiveView: View {
     }
 
     private var formContent: some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             if let storedLink {
                 storedLinkRow(storedLink)
             } else {
-                VStack(alignment: .leading, spacing: Spacing.space3) {
+                VStack(alignment: .leading) {
                     CodeField(
                         placeholder: "Code phrase",
                         text: $code,
@@ -191,36 +191,29 @@ struct ReceiveView: View {
 
     private func storedLinkRow(_ url: URL) -> some View {
         let host = CodeHint.storedLink(url)
-        return HStack(spacing: Spacing.space3) {
-            Label {
-                VStack(alignment: .leading, spacing: Spacing.space1) {
-                    Text("Receive from Link")
-                    Text(host)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+        return GroupBox {
+            HStack {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Receive from Link")
+                        Text(host)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                } icon: {
+                    Image(systemName: "link")
                 }
-            } icon: {
-                Image(systemName: "link")
+                Spacer()
+                Button {
+                    storedLink = nil
+                } label: {
+                    Text("Clear")
+                }
+                .buttonStyle(.glass)
+                .accessibilityLabel("Clear link")
             }
-            Spacer()
-            Button {
-                storedLink = nil
-            } label: {
-                Text("Clear")
-            }
-            .buttonStyle(.glass)
-            .accessibilityLabel("Clear link")
         }
-        .padding(.horizontal, Spacing.space4)
-        .frame(minHeight: ControlHeight.large)
-        .background(
-            .background, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                .strokeBorder(.separator, lineWidth: BorderWidth.hairline)
-        )
     }
 }

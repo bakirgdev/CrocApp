@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 /// What one Home recent-transfer row says about its record, kept apart from
-/// the view so a test can pin the wording (design/components.md → Home).
+/// the view so a test can pin the wording.
 struct RecentTransferSummary: Equatable {
     /// A date inside this window reads relative ("yesterday"); an older one
     /// reads as a short absolute date (design/voice.md → Dates).
@@ -95,7 +95,7 @@ extension TransferRecord.Status {
     }
 }
 
-/// design/components.md → Home → Recent transfers: the latest three records
+/// The latest three records
 /// in a grouped section, an EmptyState when there are none, nothing at all
 /// while Save Transfer History is off (an empty state would promise rows
 /// that never come). Rows go in a `Form`.
@@ -127,10 +127,6 @@ struct RecentTransfersSection: View {
     @Environment(AppSettings.self) private var settings
     @Query(RecentTransfersSection.latest) private var records: [TransferRecord]
 
-    // components.md → Home: the EmptyState glyph is 34 (compact), scaled with
-    // Dynamic Type.
-    @ScaledMetric(relativeTo: .largeTitle) private var emptyGlyphSize: CGFloat = 34
-
     var body: some View {
         switch Self.content(saveHistory: settings.saveTransferHistory, recordCount: records.count)
         {
@@ -153,7 +149,6 @@ struct RecentTransfersSection: View {
                 Text("No transfers yet")
             } icon: {
                 Image(systemName: "clock.arrow.circlepath")
-                    .font(.system(size: emptyGlyphSize))
             }
         } description: {
             Text("Finished sends and receives appear here.")
@@ -170,8 +165,6 @@ struct RecentTransfersSection: View {
 private struct RecentTransferRow: View {
     let record: TransferRecord
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    // components.md → HistoryRow: direction glyph at --icon-size-md, scaled.
-    @ScaledMetric(relativeTo: .title3) private var glyphSize: CGFloat = IconSize.medium
 
     private var isLargeText: Bool { dynamicTypeSize.isAccessibilitySize }
 
@@ -189,33 +182,28 @@ private struct RecentTransferRow: View {
             // keeps the row's width (the same switch HistoryRow makes).
             let layout =
                 isLargeText
-                ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space3))
-                : AnyLayout(HStackLayout(spacing: Spacing.space3))
+                ? AnyLayout(VStackLayout(alignment: .leading))
+                : AnyLayout(HStackLayout())
             layout {
                 directionGlyph
                 textColumn(summary)
             }
-            .frame(minHeight: ControlHeight.hitTargetMin)
+            .frame(minHeight: 44)
         }
-        .listRowInsets(
-            EdgeInsets(
-                top: Spacing.space3, leading: Spacing.space4, bottom: Spacing.space3,
-                trailing: Spacing.space4)
-        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(summary.spokenLabel)
     }
 
     private var directionGlyph: some View {
         Image(systemName: record.isSend ? "arrow.up.circle" : "arrow.down.circle")
-            .font(.system(size: glyphSize))
+            .font(.title3)
             .foregroundStyle(record.status == .completed ? Color.accentColor : Color.secondary)
             // The row's spoken label carries the direction.
             .accessibilityHidden(true)
     }
 
     private func textColumn(_ summary: RecentTransferSummary) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.space1) {
+        VStack(alignment: .leading) {
             Text(summary.title)
                 .lineLimit(isLargeText ? 3 : 1)
                 .truncationMode(.middle)
@@ -230,8 +218,8 @@ private struct RecentTransferRow: View {
     private func metadata(_ summary: RecentTransferSummary) -> some View {
         let layout =
             isLargeText
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space1))
-            : AnyLayout(HStackLayout(spacing: Spacing.space3))
+            ? AnyLayout(VStackLayout(alignment: .leading))
+            : AnyLayout(HStackLayout())
         return layout {
             if let word = summary.statusWord { Text(word) }
             Text(summary.dateText)

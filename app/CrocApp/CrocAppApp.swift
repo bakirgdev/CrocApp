@@ -112,7 +112,7 @@ struct CrocAppApp: App {
                 .environment(controller)
         } label: {
             let icon = MenuBarIcon(phase: controller.phase, percent: controller.progressPercent)
-            HStack(spacing: Spacing.space1) {
+            HStack(spacing: 2) {
                 Image(systemName: icon.symbol)
                 if let percent = icon.percent { Text(verbatim: "\(percent)%").monospacedDigit() }
             }

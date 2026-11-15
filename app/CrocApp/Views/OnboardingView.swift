@@ -8,10 +8,8 @@ struct OnboardingView: View {
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    // components.md → OnboardingSheet: mark glyph 56, scaled with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var markSize: CGFloat = 56
-    // components.md → OnboardingSheet: bullet glyphs at --icon-size-lg.
-    @ScaledMetric(relativeTo: .title3) private var bulletGlyphSize: CGFloat = IconSize.large
+    @ScaledMetric(relativeTo: .title) private var bulletGlyphSize: CGFloat = 28
     private static let glyphColumnRatio: CGFloat = 1.25
 
     var body: some View {
@@ -19,25 +17,25 @@ struct OnboardingView: View {
         // the sheet. Content that fits is centered, as before.
         ScrollView {
             column
-                .padding(Spacing.space8)
+                .padding(32)
                 .frame(maxWidth: .infinity)
         }
         .scrollBounceBehavior(.basedOnSize)
         .defaultScrollAnchor(.center, for: .alignment)
         #if os(macOS)
-        .frame(width: LayoutCap.contentMaxWidth)
+        .frame(width: 480)
         #endif
     }
 
     private var column: some View {
-        VStack(spacing: Spacing.space7) {
+        VStack(spacing: 24) {
             Image(systemName: "arrow.left.arrow.right.circle.fill")
                 .font(.system(size: markSize))
                 .foregroundStyle(Color.accentColor)
                 .accessibilityHidden(true)
             Text("Welcome to CrocApp")
                 .font(.title2.bold())
-            VStack(alignment: .leading, spacing: Spacing.space5) {
+            VStack(alignment: .leading, spacing: 16) {
                 bullet(
                     "key.fill",
                     "One code phrase does everything",
@@ -54,7 +52,7 @@ struct OnboardingView: View {
                     "Same Wi-Fi or different continents, transfers find the fastest path automatically."
                 )
             }
-            .frame(maxWidth: LayoutCap.contentMaxWidth)
+            .frame(maxWidth: 480)
             #if os(iOS)
             // Primes the camera (QR scan) and local-network (faster nearby
             // transfers) system prompts iOS raises later, so neither is a
@@ -66,7 +64,7 @@ struct OnboardingView: View {
             .font(.footnote)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
-            .frame(maxWidth: LayoutCap.contentMaxWidth)
+            .frame(maxWidth: 480)
             #endif
             Button {
                 done()
@@ -76,7 +74,7 @@ struct OnboardingView: View {
             }
             .buttonStyle(.glassProminent)
             .controlSize(.large)
-            .frame(maxWidth: LayoutCap.contentMaxWidth)
+            .frame(maxWidth: 480)
         }
     }
 
@@ -88,8 +86,8 @@ struct OnboardingView: View {
         let stacked = dynamicTypeSize.isAccessibilitySize
         let layout =
             stacked
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space3))
-            : AnyLayout(HStackLayout(alignment: .top, spacing: Spacing.space4))
+            ? AnyLayout(VStackLayout(alignment: .leading))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
         return layout {
             Image(systemName: icon)
                 .font(.system(size: bulletGlyphSize))
@@ -99,7 +97,7 @@ struct OnboardingView: View {
                 // glyph so every bullet's text starts at the same x: the globe
                 // is about 1.1 times its size. Stacked, there is no column.
                 .frame(minWidth: stacked ? nil : bulletGlyphSize * Self.glyphColumnRatio)
-            VStack(alignment: .leading, spacing: Spacing.space1) {
+            VStack(alignment: .leading) {
                 Text(title).font(.headline)
                 Text(text).font(.callout).foregroundStyle(.secondary)
             }

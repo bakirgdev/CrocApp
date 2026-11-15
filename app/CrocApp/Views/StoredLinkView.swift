@@ -17,7 +17,7 @@ struct StoredLinkView: View {
     var body: some View {
         ZStack {
             if revoked {
-                VStack(spacing: Spacing.space5) {
+                VStack(spacing: 16) {
                     StatusBlock(
                         kind: .neutral, title: String(localized: "Link revoked"),
                         detail: String(localized: "It no longer works for anyone."))
@@ -28,7 +28,7 @@ struct StoredLinkView: View {
                 ready.transition(.opacity)
             }
         }
-        .animation(reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: revoked)
+        .animation(reduceMotion ? nil : .default, value: revoked)
         .confirmationDialog("Revoke this link?", isPresented: $confirmsRevoke) {
             Button("Revoke Link", role: .destructive) { revoke() }
         } message: {
@@ -44,7 +44,7 @@ struct StoredLinkView: View {
     }
 
     private var ready: some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             StatusBlock(receipt: receipt)
             QRCodeView(content: receipt.link, label: "QR code for the link")
             Text(receipt.link)
@@ -54,8 +54,8 @@ struct StoredLinkView: View {
                 .textSelection(.enabled)
                 .accessibilityLabel("Link")
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: Spacing.space5) { linkActions }
-                VStack(spacing: Spacing.space3) { linkActions }
+                HStack(spacing: 16) { linkActions }
+                VStack { linkActions }
             }
             if !controller.storedReceiptSaved {
                 StatusBanner(
@@ -70,12 +70,11 @@ struct StoredLinkView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            VStack(spacing: Spacing.space3) {
+            VStack {
                 resultAction(role: .destructive) {
                     confirmsRevoke = true
                 } label: {
-                    // components.md → States, loading: the label stays, the
-                    // spinner takes the glyph's place.
+                    // The label stays, the spinner takes the glyph's place.
                     Label {
                         Text("Revoke Link")
                     } icon: {

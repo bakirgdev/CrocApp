@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// The compact root (design/components.md → Home): the trust badge, a banner
+/// The compact root: the trust badge, a banner
 /// while a request waits, the giant Send and Receive, then the recent
 /// transfers. The page is a `Form`, so the recent transfers are a system
 /// grouped section and the page scrolls when the text is large.
@@ -11,25 +11,12 @@ struct HomeView: View {
     @Environment(TransferController.self) private var controller
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// components.md → Home: Send and Receive are 100 tall at least. A
-    /// component constant, not a control size.
+    /// Send and Receive are 100 tall at least.
     private static let actionMinHeight: CGFloat = 100
 
     private var hasPendingRequest: Bool {
         if case .incoming = controller.phase { return true }
         return false
-    }
-
-    /// principles.md → Motion: the banner fades in while travelling
-    /// down into place, and leaves with opacity alone. Instant under Reduce
-    /// Motion.
-    private var bannerTransition: AnyTransition {
-        reduceMotion
-            ? .identity
-            : .asymmetric(
-                insertion: .opacity.combined(with: .offset(y: -Spacing.space3))
-                    .animation(Motion.easeOut(Motion.durationBase)),
-                removal: .opacity.animation(Motion.easeStandard(Motion.durationFast)))
     }
 
     var body: some View {
@@ -46,7 +33,7 @@ struct HomeView: View {
                 RecentTransfersSection()
             }
             .formStyle(.grouped)
-            .frame(maxWidth: LayoutCap.contentMaxWidth)
+            .frame(maxWidth: 480)
             .navigationTitle("CrocApp")
             .toolbar {
                 #if os(iOS)
@@ -80,7 +67,7 @@ struct HomeView: View {
     /// sits on the container so the actions slide when the banner takes its
     /// slot instead of jumping.
     private var actions: some View {
-        VStack(spacing: Spacing.space6) {
+        VStack(spacing: 20) {
             TrustBadge(relay: settings.relayKind)
 
             if hasPendingRequest {
@@ -97,7 +84,7 @@ struct HomeView: View {
                 ) {
                     router.path = [.receive]
                 }
-                .transition(bannerTransition)
+                .transition(.opacity)
             }
 
             Button {
@@ -122,10 +109,10 @@ struct HomeView: View {
                         .font(.footnote.weight(.semibold))
                         .monospacedDigit()
                         .foregroundStyle(.white)
-                        .padding(.horizontal, Spacing.space3)
-                        .padding(.vertical, Spacing.space1)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
                         .background(Color.accentColor, in: Capsule())
-                        .offset(x: Spacing.space3, y: -Spacing.space3)
+                        .offset(x: 8, y: -8)
                         .accessibilityLabel(
                             "^[\(router.pendingSendURLs.count) file](inflect: true) waiting to send"
                         )
@@ -141,9 +128,9 @@ struct HomeView: View {
             }
             .buttonStyle(.glass)
         }
-        .padding(.vertical, Spacing.space3)
+        .padding(.vertical, 8)
         .animation(
-            reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: hasPendingRequest)
+            reduceMotion ? nil : .default, value: hasPendingRequest)
     }
 }
 

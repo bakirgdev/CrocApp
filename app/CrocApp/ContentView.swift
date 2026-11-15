@@ -17,8 +17,6 @@ struct ContentView: View {
     #if os(macOS)
     @State private var isDropTargeted = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // components.md → DropZone: overlay glyph at 44, scaled with Dynamic Type.
-    @ScaledMetric(relativeTo: .largeTitle) private var dropGlyphSize: CGFloat = 44
     #endif
 
     var body: some View {
@@ -43,7 +41,7 @@ struct ContentView: View {
         // The overlay is inserted and removed, so its `.transition` needs an
         // animation context on the container that stays.
         .animation(
-            reduceMotion ? nil : Motion.easeOut(Motion.durationFast), value: isDropTargeted)
+            reduceMotion ? nil : .default, value: isDropTargeted)
             #endif
             .phoneHaptic(trigger: TransferHaptic(controller.phase)) { _, new in new?.feedback }
             .onChange(of: horizontalSizeClass, initial: true) { _, sizeClass in
@@ -198,22 +196,23 @@ struct ContentView: View {
     }
 
     #if os(macOS)
-    // design/components.md → DropZone: macOS full-window overlay, a dimmed
+    // macOS full-window overlay, a dimmed
     // background and a glass card. Not itself a drop target: the window-level
     // dropDestination above owns hover tracking and the actual file filter.
     private var dropOverlay: some View {
         ZStack {
             Color.black.opacity(0.25)
-            VStack(spacing: Spacing.space4) {
+            VStack(spacing: 12) {
                 Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: dropGlyphSize))
+                    .font(.largeTitle)
+                    .imageScale(.large)
                     .foregroundStyle(Color.accentColor)
                     .accessibilityHidden(true)
                 Text("Drop to Send")
                     .font(.title2.weight(.semibold))
             }
-            .padding(Spacing.space9)
-            .glassEffect(.regular, in: .rect(cornerRadius: Radius.xxl, style: .continuous))
+            .padding(40)
+            .glassEffect(.regular, in: .rect(cornerRadius: 36))
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)

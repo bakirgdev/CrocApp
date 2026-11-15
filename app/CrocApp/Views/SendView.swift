@@ -48,8 +48,7 @@ struct SendView: View {
     @State private var photoFailures = 0
     @FocusState private var textFocused: Bool
 
-    // components.md → DropZone, "Staged list and text box": both keep the
-    // DropZone's floor (so the Files tab does not change height as files
+    // The staged list and the text box both keep the DropZone's floor (so the Files tab does not change height as files
     // arrive) and grow to this cap, then scroll.
     private static let queueMaxHeight: CGFloat = 280
 
@@ -58,9 +57,8 @@ struct SendView: View {
     private static let placeholderInsetX: CGFloat = 5
     private static let placeholderInsetY: CGFloat = 8
 
-    // principles.md → Motion: a choice that swaps a block.
     private var swapAnimation: Animation? {
-        reduceMotion ? nil : Motion.easeOut(Motion.durationBase)
+        reduceMotion ? nil : .default
     }
 
     /// How long a stored upload stays on the server.
@@ -112,16 +110,16 @@ struct SendView: View {
             // Padding inside the scroll view: outside it, the scroll view's
             // clip cuts off the Toggle switch, which draws past its frame.
             if dynamicTypeSize.isAccessibilitySize {
-                ScrollView { formContent.padding(Spacing.space5) }
+                ScrollView { formContent.padding() }
             } else {
-                formContent.padding(Spacing.space5)
+                formContent.padding()
             }
         }
-        .frame(maxWidth: LayoutCap.contentMaxWidth)
+        .frame(maxWidth: 480)
     }
 
     private var formContent: some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             Picker("What to Send", selection: $mode) {
                 ForEach(Mode.allCases, id: \.self) { Text($0.label) }
             }
@@ -137,7 +135,7 @@ struct SendView: View {
             linkOptions
 
             if !linkSelected {
-                VStack(alignment: .leading, spacing: Spacing.space3) {
+                VStack(alignment: .leading) {
                     CodeField(
                         placeholder: "Custom code (optional)",
                         text: $customCode,
@@ -221,7 +219,7 @@ struct SendView: View {
     }
 
     @ViewBuilder private var linkOptions: some View {
-        VStack(alignment: .leading, spacing: Spacing.space3) {
+        VStack(alignment: .leading) {
             Toggle("Send as Link", isOn: Binding(get: { linkSelected }, set: { sendAsLink = $0 }))
                 .disabled(linkUnavailableReason != nil)
                 .accessibilityHint(linkToggleHint)
@@ -229,7 +227,7 @@ struct SendView: View {
                 Text(reason).font(.caption).foregroundStyle(.secondary)
                     .transition(.opacity)
             } else if linkSelected {
-                VStack(alignment: .leading, spacing: Spacing.space3) {
+                VStack(alignment: .leading) {
                     Picker("Link Lasts", selection: $linkLifetime) {
                         ForEach(LinkLifetime.allCases, id: \.self) { Text($0.label) }
                     }
@@ -315,7 +313,7 @@ struct SendView: View {
     // MARK: - Files
 
     private var filesSection: some View {
-        VStack(spacing: Spacing.space4) {
+        VStack(spacing: 12) {
             Group {
                 if pickedURLs.isEmpty {
                     DropZone(
@@ -323,32 +321,27 @@ struct SendView: View {
                         hint: "or add them with the buttons below",
                         isTargeted: isDropTargeted)
                 } else {
-                    List {
-                        ForEach(Array(pickedURLs.enumerated()), id: \.element) { index, url in
-                            FileRow(
-                                url: url,
-                                size: pickedSizes[url],
-                                isFirst: index == 0,
-                                isLast: index == pickedURLs.count - 1
-                            ) {
-                                pickedURLs.removeAll { $0 == url }
-                                SendStaging.discard(url)
+                    ScrollView {
+                        GroupBox {
+                            VStack(spacing: 0) {
+                                ForEach(Array(pickedURLs.enumerated()), id: \.element) {
+                                    index, url in
+                                    FileRow(url: url, size: pickedSizes[url]) {
+                                        pickedURLs.removeAll { $0 == url }
+                                        SendStaging.discard(url)
+                                    }
+                                    if index < pickedURLs.count - 1 { Divider() }
+                                }
                             }
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
                         }
                     }
-                    // Matches IncomingRequestView's own fix for the same
-                    // problem: without this the List paints the system
-                    // grouped background behind FileRow's own card fill.
-                    .scrollContentBackground(.hidden)
+                    .scrollBounceBehavior(.basedOnSize)
                     .frame(minHeight: DropZone.minHeight, maxHeight: Self.queueMaxHeight)
                     .overlay {
                         // The empty DropZone draws its own drag-over state;
                         // a list in the way gets the same accent border.
                         if isDropTargeted {
-                            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                            RoundedRectangle(cornerRadius: 20)
                                 .strokeBorder(Color.accentColor, lineWidth: DropZone.strokeWidth)
                         }
                     }
@@ -462,7 +455,7 @@ struct SendView: View {
     // MARK: - Text
 
     private var textSection: some View {
-        VStack(spacing: Spacing.space4) {
+        VStack(spacing: 12) {
             TextEditor(text: $text)
                 .focused($textFocused)
                 .accessibilityLabel("Text to send")
@@ -482,10 +475,8 @@ struct SendView: View {
                     }
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                        .strokeBorder(
-                            textFocused ? Color.accentColor : Color.secondary,
-                            lineWidth: BorderWidth.hairline)
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(textFocused ? Color.accentColor : Color.secondary)
                 }
             PasteButton(payloadType: String.self) { strings in
                 if let pasted = strings.first {
