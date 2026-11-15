@@ -187,7 +187,9 @@ import Testing
 
         let s = makeSettings()
 
-        let expected = ["node_modules", "/config/credentials.json", "/node_modules", "/src/secret.txt"]
+        let expected = [
+            "node_modules", "/config/credentials.json", "/node_modules", "/src/secret.txt",
+        ]
         #expect(s.excludeList == expected)
         #expect(storage.values["settings.advanced.excludePaths"] == nil)
 
