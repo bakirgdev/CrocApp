@@ -7,28 +7,46 @@ import SwiftUI
 struct PowerSettingsSections: View {
     @Environment(AppSettings.self) private var settings
 
+    /// An iOS form shows a field's prompt in place of its label, which left the
+    /// three relay rows unnamed. macOS draws the label itself.
+    @ViewBuilder private func labeled(
+        _ title: LocalizedStringKey, @ViewBuilder field: () -> some View
+    ) -> some View {
+        #if os(iOS)
+        LabeledContent(title) { field().multilineTextAlignment(.trailing) }
+        #else
+        field()
+        #endif
+    }
+
     var body: some View {
         @Bindable var settings = settings
 
         Section("Relay") {
-            TextField(
-                "Address", text: $settings.relayAddress,
-                prompt: Text("Public relay pool")
-            )
-            .urlEntry()
-            TextField(
-                "IPv6 Address", text: $settings.relayAddress6,
-                prompt: Text("Public relay pool")
-            )
-            .urlEntry()
-            SecureField(
-                "Password", text: $settings.relayPassword,
-                prompt: Text("Default")
-            )
-            #if os(iOS)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            #endif
+            labeled("Address") {
+                TextField(
+                    "Address", text: $settings.relayAddress,
+                    prompt: Text("Public relay pool")
+                )
+                .urlEntry()
+            }
+            labeled("IPv6 Address") {
+                TextField(
+                    "IPv6 Address", text: $settings.relayAddress6,
+                    prompt: Text("Public relay pool")
+                )
+                .urlEntry()
+            }
+            labeled("Password") {
+                SecureField(
+                    "Password", text: $settings.relayPassword,
+                    prompt: Text("Default")
+                )
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                #endif
+            }
             if settings.unsavedSecrets.contains(.relayPassword) {
                 StatusBanner(
                     kind: .error, title: AppSettings.secretNotSavedTitle,

@@ -44,6 +44,7 @@ extra sections where a release needs them, and the project follows
 - History stops offering **Revoke** on a link that expires while History is open, and **Clear All** says when links that still work stay active.
 - A transfer that iOS stopped in the background is recorded as **Failed** in History, not **Cancelled**.
 - **Open Transfer** in Shortcuts opens that transfer's details in History instead of the list.
+- On iPhone and iPad, the relay **Address**, **IPv6 Address** and **Password** rows in Settings show their names. Before, an empty row showed only its placeholder.
 
 ### Security
 
