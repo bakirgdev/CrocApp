@@ -554,9 +554,9 @@ mac_titles() { # the window title(s) a screen shows
   case "$SCREEN" in
     onboarding) echo "CrocApp|Send" ;; # the Mac sidebar opens on Send, which titles the window
     send-files | send-code | sending | stored-link) echo "Send" ;;
+    how-it-works) echo "Send" ;; # a sheet over the Send tab, which keeps titling the window
     receive-code | receive-incoming | receive-conflict | receiving | receive-done) echo "Receive" ;;
     history) echo "History" ;;
-    how-it-works) echo "How It Works" ;;
     settings) echo "CrocApp Settings|General|Settings" ;;
     settings-advanced) echo "Advanced" ;;
     receive-saved-codes) echo "Receive" ;;
