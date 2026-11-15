@@ -31,6 +31,10 @@ extra sections where a release needs them, and the project follows
 
 - croc's relay code, which CrocApp runs on your local network while it sends, could be crashed by a malformed connection before any password check. The transfer engine is now croc 11.6.5, whose relay turns such a connection away.
 
+### Fixed
+
+- The patterns under **Exclude from sends** now apply to every folder send. Before, they only took effect when the folder was sent as a zip, so a matching file in a folder sent the usual way still went to the other device. A send where every picked file matches a pattern now stops instead of sending nothing.
+
 ## [1.2.1] - 2026-11-12
 
 ### Fixed
