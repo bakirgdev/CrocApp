@@ -39,8 +39,8 @@ import ServiceManagement
 ///   --hold                         park at the incoming prompt instead of auto-accepting
 ///   --when-exists keepBoth|replace answer the incoming prompt with this file policy
 ///                                  (the setting stays Keep Both, so the late answer must reach croc)
-///   --screen ROUTE                 navigate to home|send|receive|settings|advanced|howItWorks|history|
-///                                  onboarding on launch; combines with the --auto-* modes
+///   --screen ROUTE                 navigate to send|receive|history|howItWorks|onboarding on launch,
+///                                  plus settings|advanced on iOS; combines with the --auto-* modes
 ///   --stage PATH                   preload PATH into the Send screen's staged list (repeatable)
 ///   --seed-history                 fill the (in-memory) history store with showcase records
 ///   --seed-saved-codes             fill the (in-memory) saved codes with three showcase names
@@ -63,7 +63,7 @@ import ServiceManagement
 /// and --throttle
 /// exist for scripts/capture-screenshots.sh rather than the verify-*.sh runs:
 /// the harness drives the controller directly, so without them the UI sits on
-/// HomeView while the transfer runs behind it, and no screen holds still to
+/// the Send tab while a receive runs behind it, and no screen holds still to
 /// photograph.
 // The type itself must exist in Release too (LaunchMode.swift and ContentView.swift
 // call it unconditionally), but the harness it drives -- real transfers, settings
@@ -327,12 +327,15 @@ enum AutoVerify {
             .map { URL(fileURLWithPath: args[$0 + 1]) }
         switch route {
         case "send": AppRouter.shared.openSend(with: staged)
-        case "receive": AppRouter.shared.path = [.receive]
-        case "settings": AppRouter.shared.path = [.settings]
-        case "advanced": AppRouter.shared.path = [.settings, .advancedSettings]
-        case "howItWorks": AppRouter.shared.path = [.howItWorks]
-        case "history": AppRouter.shared.path = [.history]
-        default: break  // home and onboarding both start from an empty path
+        case "receive": AppRouter.shared.openReceive()
+        case "history": AppRouter.shared.showHistory()
+        case "howItWorks": AppRouter.shared.showHowItWorks()
+        // The Mac keeps Settings in its own window, which a script opens with Cmd-comma.
+        #if os(iOS)
+        case "settings": AppRouter.shared.showSettings()
+        case "advanced": AppRouter.shared.showSettings(advanced: true)
+        #endif
+        default: break  // onboarding starts on the first tab
         }
     }
 

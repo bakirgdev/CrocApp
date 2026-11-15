@@ -8,9 +8,10 @@ import UniformTypeIdentifiers
 /// name survives and two items with the same name never collide.
 ///
 /// Nothing here outlives a launch. A staged file is deleted when its row is
-/// removed or the Send screen goes away with no transfer running, and the whole
-/// folder is swept the first time a Send screen appears in a launch. A running
-/// transfer reads its files in place, so it is never swept from under croc.
+/// removed, and the whole folder is swept the first time a Send screen appears
+/// in a launch. The staged list belongs to `SendDraft`, which outlives the
+/// screen, so leaving the screen deletes nothing. A running transfer reads its
+/// files in place, so it is never swept from under croc.
 nonisolated enum SendStaging {
     private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "send")
 

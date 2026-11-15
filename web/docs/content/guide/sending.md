@@ -8,7 +8,7 @@ description: How to send files, folders and text in CrocApp, from the app, a dro
 
 ![The CrocApp Send screen on macOS with three files staged and the Send button ready](../../screenshots/mac/send-files-light.webp#gh-light-mode-only)![The CrocApp Send screen on macOS with three files staged and the Send button ready](../../screenshots/mac/send-files-dark.webp#gh-dark-mode-only)
 
-Tap or click **Send** on the home screen. The **What to Send** picker switches between **Files** and **Text**.
+Open the **Send** tab, or **Send** in the sidebar. The **What to Send** picker switches between **Files** and **Text**.
 
 ## Files
 

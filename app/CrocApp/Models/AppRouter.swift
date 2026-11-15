@@ -5,71 +5,39 @@ import Observation
 import AppKit
 #endif
 
-/// App-wide navigation plus externally-injected send payloads (window drop,
-/// dock-icon drop, menu commands). Singleton: NSApplicationDelegate and menu
-/// Commands live outside the SwiftUI environment graph and need a stable
-/// reference.
+/// App-wide navigation plus the drafts the screens edit. Singleton:
+/// NSApplicationDelegate, menu Commands, App Intents and notification taps live
+/// outside the SwiftUI environment graph and need a stable reference.
 ///
-/// One `path` serves both layouts (design/principles.md → Platform adaptation). In
-/// compact width it is the `NavigationStack` path under Home. In regular width
-/// its first element is the sidebar row and the rest are the screens pushed in
-/// that row's detail, so every entry point that sets `path` lands correctly in
-/// either layout.
+/// The tab view (design/principles.md → Platform adaptation) reads `selection`.
+/// The drafts live here, above the tab view, so what the user staged or typed
+/// survives a tab change and a flip between tab bar and sidebar, and every entry
+/// point can fill a screen that is not on display.
 @MainActor
 @Observable
 final class AppRouter {
     static let shared = AppRouter()
 
-    enum Route: Hashable {
-        case send, receive, settings, advancedSettings, howItWorks, history
-    }
-
-    /// A row of the regular-width sidebar, in the order it is drawn.
-    enum SidebarItem: Hashable, CaseIterable, Identifiable {
+    /// A tab of the tab bar, a row of the sidebar. The Mac has no Settings
+    /// tab: its Settings scene stands in.
+    enum Screen: Hashable, CaseIterable {
         case send, receive, history, settings
-
-        var id: Self { self }
-
-        /// The Mac keeps Settings in its Settings scene, never as a row.
-        static var rows: [SidebarItem] {
-            #if os(macOS)
-            [.send, .receive, .history]
-            #else
-            allCases
-            #endif
-        }
-
-        var route: Route {
-            switch self {
-            case .send: .send
-            case .receive: .receive
-            case .history: .history
-            case .settings: .settings
-            }
-        }
-
-        init?(route: Route) {
-            guard let item = Self.rows.first(where: { $0.route == route }) else { return nil }
-            self = item
-        }
 
         init(direction: TransferController.Direction) {
             self = direction == .send ? .send : .receive
         }
     }
 
-    var path: [Route] = []
-    /// Set by `ContentView` from the size class: whether the sidebar layout
-    /// is the one on screen.
-    var isRegularWidth = false
-    /// URLs waiting for SendView to pick up into its staged list.
-    var pendingSendURLs: [URL] = []
-    /// Text waiting for SendView to stage in its text mode. Like the URLs,
-    /// it only stages: it never sends.
-    var pendingSendText: String?
-    /// A receive link waiting for ReceiveView to prefill from it. Opening a
-    /// link never connects: the user taps Receive.
-    var pendingReceive: TransferLink?
+    /// A page pushed in the Settings tab.
+    enum SettingsPage: Hashable { case advanced }
+
+    var selection: Screen = .send
+    /// The pages pushed in the Settings tab, so a failure can open Advanced.
+    var settingsPath: [SettingsPage] = []
+    /// How It Works is a sheet over whichever tab is open.
+    var showsHowItWorks = false
+    let sendDraft = SendDraft()
+    let receiveDraft = ReceiveDraft()
 
     #if os(macOS)
     /// Opens the main window. The main window's content installs it at
@@ -112,56 +80,33 @@ final class AppRouter {
     /// tracks the access transitively through this computed property.
     var isBusy: Bool { controller?.isActive ?? false }
 
-    // MARK: - Regular width
-
-    /// The sidebar row the path starts at. A path that starts anywhere else (a
-    /// screen pushed from Home before the window grew, a route the Mac has no
-    /// row for) leaves Send selected.
-    var selection: SidebarItem {
-        get { path.first.flatMap { SidebarItem(route: $0) } ?? .send }
-        set { path = [newValue.route] }
-    }
-
-    /// The screens pushed inside the selected row's detail.
-    var detailPath: [Route] {
-        get { startsAtRow ? Array(path.dropFirst()) : path }
-        set { path = (startsAtRow ? Array(path.prefix(1)) : []) + newValue }
-    }
-
-    private var startsAtRow: Bool {
-        path.first.flatMap { SidebarItem(route: $0) } != nil
-    }
-
     // MARK: - Entry points
 
+    // A drop, a link or staged text that arrives mid-transfer fills its draft
+    // and moves nobody: the app never takes the user off a transfer by itself.
+
     func openSend(with urls: [URL]) {
-        for url in urls where !pendingSendURLs.contains(url) {
-            pendingSendURLs.append(url)
-        }
-        if !isBusy, path != [.send] { path = [.send] }
+        sendDraft.add(urls)
+        if !isBusy { selection = .send }
     }
 
-    /// Text staged while SendView is away accumulates, like the URLs; empty
-    /// text stages nothing.
+    /// Empty text stages nothing.
     func openSend(text: String) {
-        guard !text.isEmpty else { return }
-        pendingSendText = Self.appending(text, to: pendingSendText ?? "")
-        if !isBusy, path != [.send] { path = [.send] }
+        sendDraft.append(text: text)
+        if !isBusy { selection = .send }
     }
 
-    nonisolated static func appending(_ new: String, to existing: String) -> String {
-        existing.isEmpty ? new : existing + "\n" + new
-    }
-
-    /// Same busy rule as openSend: a link that arrives mid-transfer is kept
-    /// for the next time Receive is shown, without pulling the user away.
     func open(_ link: TransferLink) {
-        pendingReceive = link
+        receiveDraft.apply(link)
         if !isBusy { openReceive() }
     }
 
-    func openReceive() {
-        if path != [.receive] { path = [.receive] }
+    func openReceive() { selection = .receive }
+
+    /// Shows History. Same busy rule as `openSend(with:)`: a transfer in
+    /// progress keeps the screen.
+    func openHistory() {
+        if !isBusy { selection = .history }
     }
 
     // MARK: - Menu commands
@@ -169,24 +114,18 @@ final class AppRouter {
     // The user chose these, so they navigate even mid-transfer; going to
     // another screen answers nothing and cancels nothing.
 
-    func showHistory() { path = [.history] }
+    func showHistory() { selection = .history }
 
-    /// A row on iPad, a push from Home in compact width. The Mac has its
-    /// Settings scene instead.
-    func showSettings() { path = [.settings] }
-
-    /// Pushed on whatever is open, in the detail column or the stack, so Back
-    /// returns to it.
-    func showHowItWorks() {
-        if path.last != .howItWorks { push([.howItWorks]) }
+    /// A tab on iPhone and iPad. The Mac has its Settings scene instead.
+    func showSettings(advanced: Bool = false) {
+        settingsPath = advanced ? [.advanced] : []
+        selection = .settings
     }
 
-    /// Pushes `routes` on whatever is open, so Back returns to it. In regular
-    /// width a path that does not start at a row (an empty one at launch)
-    /// first takes the row the sidebar shows, or a pushed `.settings` would be
-    /// read as the Settings row and replace the screen it was pushed from.
-    func push(_ routes: [Route]) {
-        if isRegularWidth, !startsAtRow { path.insert(selection.route, at: 0) }
-        path.append(contentsOf: routes)
+    func showHowItWorks() {
+        showsHowItWorks = true
+        #if os(macOS)
+        showMainWindow()
+        #endif
     }
 }

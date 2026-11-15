@@ -181,11 +181,12 @@ import Testing
 
     @Test func sendAgainWithNoBookmarkReturnsFalseAndStagesNothing() {
         let router = AppRouter()
+        router.selection = .history
         let record = resendRecord(bookmarks: [])
 
         #expect(!HistoryActions().resend(record, router: router))
-        #expect(router.pendingSendURLs.isEmpty)
-        #expect(router.path.isEmpty)
+        #expect(router.sendDraft.pickedURLs.isEmpty)
+        #expect(router.selection == .history)
     }
 
     @Test func sendAgainWithAnUnresolvableBookmarkReturnsFalseAndStagesNothing() {
@@ -193,7 +194,7 @@ import Testing
         let record = resendRecord(bookmarks: [Data("not a bookmark".utf8)])
 
         #expect(!HistoryActions().resend(record, router: router))
-        #expect(router.pendingSendURLs.isEmpty)
+        #expect(router.sendDraft.pickedURLs.isEmpty)
     }
 
     @Test func sendAgainWithADeletedOriginalReturnsFalseAndStagesNothing() throws {
@@ -203,7 +204,7 @@ import Testing
         let router = AppRouter()
 
         #expect(!HistoryActions().resend(resendRecord(bookmarks: [bookmark]), router: router))
-        #expect(router.pendingSendURLs.isEmpty)
+        #expect(router.sendDraft.pickedURLs.isEmpty)
     }
 
     @Test func sendAgainWithAReachableOriginalOpensSend() throws {
@@ -211,9 +212,10 @@ import Testing
         defer { try? FileManager.default.removeItem(at: url) }
         let bookmark = try #require(SecurityScopedBookmark.create(for: url))
         let router = AppRouter()
+        router.selection = .history
 
         #expect(HistoryActions().resend(resendRecord(bookmarks: [bookmark]), router: router))
-        #expect(router.pendingSendURLs.map(\.lastPathComponent) == [url.lastPathComponent])
-        #expect(router.path == [.send])
+        #expect(router.sendDraft.pickedURLs.map(\.lastPathComponent) == [url.lastPathComponent])
+        #expect(router.selection == .send)
     }
 }

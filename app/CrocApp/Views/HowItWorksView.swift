@@ -4,6 +4,7 @@ import SwiftUI
 /// Facts: docs/knowledge/what-is-croc.md.
 struct HowItWorksView: View {
     @Environment(AppSettings.self) private var settings
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
@@ -38,6 +39,11 @@ struct HowItWorksView: View {
             .frame(maxWidth: 480)
         }
         .navigationTitle("How It Works")
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") { dismiss() }
+            }
+        }
     }
 
     private func item(

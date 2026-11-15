@@ -69,7 +69,7 @@ final class SystemNotificationCenter: NSObject, NotificationPosting,
     }
 
     private static func open(direction: String?) {
-        AppRouter.shared.path = [direction == "send" ? .send : .receive]
+        AppRouter.shared.selection = direction == "send" ? .send : .receive
         #if os(macOS)
         AppRouter.shared.showMainWindow()
         #endif

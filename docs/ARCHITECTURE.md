@@ -78,7 +78,7 @@ The xcframework module is `Croc`; Go symbols get a `Crocmobile` prefix in Object
 
 ### SwiftUI views
 
-`app/CrocApp/Views/`. `ContentView` picks the layout from the horizontal size class, with one `AppRouter.path` of value-based routes. `SendView` and `ReceiveView` show an input form while idle, otherwise `TransferStatusView`, which draws every non-idle `Phase`. `Models/TransferLink.swift` is the one parser for every way a link or code arrives, and `AppRouter.open(_:)` hands the result to Receive, which fills in the code and never connects by itself. Views may import `CrocKit` for its value types but never `Croc`, and never call `CrocEngine`.
+`app/CrocApp/Views/`. `ContentView` is one `TabView` (Send, Receive, History, and Settings on iOS) that the system draws as a tab bar or a sidebar, driven by `AppRouter.selection`. The Send and Receive screens edit drafts (`SendDraft`, `ReceiveDraft`) that `AppRouter` owns, so a tab change keeps what the user staged. `SendView` and `ReceiveView` show an input form while idle, otherwise `TransferStatusView`, which draws every non-idle `Phase`. `Models/TransferLink.swift` is the one parser for every way a link or code arrives, and `AppRouter.open(_:)` hands the result to Receive, which fills in the code and never connects by itself. Views may import `CrocKit` for its value types but never `Croc`, and never call `CrocEngine`.
 
 ## Event and control flow
 

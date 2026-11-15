@@ -17,12 +17,3 @@ struct OpenTransferIntent: OpenIntent {
         return .result()
     }
 }
-
-extension AppRouter {
-    /// Shows History. Same busy rule as `openSend(with:)`: a transfer in
-    /// progress keeps the screen, because the app never moves the user off a
-    /// transfer on its own.
-    func openHistory() {
-        if !isBusy, path != [.history] { path = [.history] }
-    }
-}

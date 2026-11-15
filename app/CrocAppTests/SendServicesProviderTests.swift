@@ -14,6 +14,8 @@ import Testing
     private let pasteboard = NSPasteboard(name: NSPasteboard.Name("CrocAppTests.\(UUID())"))
 
     init() {
+        // Not Send, the default, so "navigated to Send" is a visible change.
+        router.selection = .history
         provider = SendServicesProvider(router: router)
     }
 
@@ -23,24 +25,24 @@ import Testing
         pasteboard.clearContents()
         pasteboard.writeObjects([first as NSURL, second as NSURL])
         #expect(provider.stageFiles(from: pasteboard))
-        #expect(router.pendingSendURLs == [first, second])
-        #expect(router.path == [.send])
+        #expect(router.sendDraft.pickedURLs == [first, second])
+        #expect(router.selection == .send)
     }
 
     @Test func selectedTextIsStagedAndSendOpens() {
         pasteboard.clearContents()
         pasteboard.setString("some selected words", forType: .string)
         #expect(provider.stageText(from: pasteboard))
-        #expect(router.pendingSendText == "some selected words")
-        #expect(router.path == [.send])
+        #expect(router.sendDraft.text == "some selected words")
+        #expect(router.selection == .send)
     }
 
     @Test func aWebAddressIsNotAFileToSend() {
         pasteboard.clearContents()
         pasteboard.writeObjects([URL(string: "https://example.com/a.txt")! as NSURL])
         #expect(!provider.stageFiles(from: pasteboard))
-        #expect(router.pendingSendURLs.isEmpty)
-        #expect(router.path.isEmpty)
+        #expect(router.sendDraft.pickedURLs.isEmpty)
+        #expect(router.selection == .history)
     }
 
     @Test func nothingOrBlankTextStagesNothing() {
@@ -49,8 +51,8 @@ import Testing
         #expect(!provider.stageText(from: pasteboard))
         pasteboard.setString(" \n\t ", forType: .string)
         #expect(!provider.stageText(from: pasteboard))
-        #expect(router.pendingSendText == nil)
-        #expect(router.path.isEmpty)
+        #expect(router.sendDraft.text.isEmpty)
+        #expect(router.selection == .history)
     }
 
     @Test func textOverTheLimitIsRefusedAndTheLimitItselfIsAccepted() {
@@ -58,13 +60,13 @@ import Testing
         pasteboard.setString(
             String(repeating: "a", count: SendServicesProvider.maxTextBytes), forType: .string)
         #expect(provider.stageText(from: pasteboard))
-        let atLimit = router.pendingSendText
+        let atLimit = router.sendDraft.text
 
         pasteboard.clearContents()
         pasteboard.setString(
             String(repeating: "a", count: SendServicesProvider.maxTextBytes + 1), forType: .string)
         #expect(!provider.stageText(from: pasteboard))
-        #expect(router.pendingSendText == atLimit, "the refused text is not staged")
+        #expect(router.sendDraft.text == atLimit, "the refused text is not staged")
     }
 
     @Test func theLimitCountsBytesNotCharacters() {
@@ -94,9 +96,9 @@ import Testing
         pasteboard.writeObjects([URL(filePath: "/CrocAppTests.missing/b.txt") as NSURL])
         #expect(provider.stageFiles(from: pasteboard))
 
-        #expect(router.path.isEmpty, "the router does not navigate mid-transfer")
-        #expect(router.pendingSendText == "later")
-        #expect(router.pendingSendURLs.count == 1)
+        #expect(router.selection == .history, "the router does not navigate mid-transfer")
+        #expect(router.sendDraft.text == "later")
+        #expect(router.sendDraft.pickedURLs.count == 1)
         #expect(controller.phase == phase, "a service never starts or changes a transfer")
     }
 

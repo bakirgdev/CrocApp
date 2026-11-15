@@ -255,8 +255,7 @@ struct TransferStatusView: View {
             router.settingsTab = place == .advanced ? .advanced : .general
             openSettings()
             #else
-            // Pushed on top, so Back returns to this result.
-            router.push(place == .advanced ? [.settings, .advancedSettings] : [.settings])
+            router.showSettings(advanced: place == .advanced)
             #endif
         }
     }

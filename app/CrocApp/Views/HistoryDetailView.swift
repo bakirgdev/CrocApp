@@ -52,7 +52,6 @@ struct HistoryDetailView: View {
             actionsSection
         }
         .formStyle(.grouped)
-        .frame(maxWidth: 480)
         .navigationTitle(record.title)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)

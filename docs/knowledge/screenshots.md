@@ -40,7 +40,6 @@ One vocabulary across devices, kebab-case, named for the state shown.
 | Screen | State |
 |---|---|
 | `onboarding` | first-run welcome (iPhone and iPad only; on macOS it is a sheet whose window photographs with grey traffic lights) |
-| `home` | Send and Receive |
 | `send-files` | three staged files |
 | `send-code` | "Ready to send": code phrase and QR |
 | `sending` | mid-transfer, 40%, 6 MB/s |
@@ -91,7 +90,7 @@ The app is driven by DEBUG-only launch flags in `app/CrocApp/Support/AutoVerify.
 
 | Flag | Does |
 |---|---|
-| `--screen ROUTE` | navigates on launch: `home`, `send`, `receive`, `settings`, `advanced`, `howItWorks`, `history`, `onboarding` |
+| `--screen ROUTE` | navigates on launch: `send`, `receive`, `history`, `howItWorks`, `onboarding`, and on iOS `settings`, `advanced` (the Mac's Settings is its own window) |
 | `--stage PATH` | preloads the Send list, repeatable, with `--screen send` |
 | `--seed-history` | fills the in-memory history with showcase records |
 | `--seed-saved-codes` | fills the in-memory saved codes with three placeholder names |
@@ -168,7 +167,7 @@ For any future screenshot work:
 
 - **Mac Settings (General) is scrolled to its end.** The form is taller than the window and the window cannot be stretched, so `mac_settings` scrolls it (`window scroll`) and the shot shows Transfer through About, with the top sliding under the toolbar. The earlier sections (Receive, Menu bar, Relay, Send as link, Connection) are not in this shot.
 - **Mac light shots have no window edge.** Window captures are made without the system shadow (`screencapture -o`), in both themes. A light window on a white page looks unframed; a page that needs an edge adds it in CSS.
-- **`iphone/onboarding` is a real sheet.** On iOS the onboarding is a `.sheet`, so the light shot shows the dimmed home screen above and around it. Dark shows the same over black.
+- **`iphone/onboarding` is a real sheet.** On iOS the onboarding is a `.sheet`, so the light shot shows the dimmed Send tab above and around it. Dark shows the same over black.
 
 - **`ipad/` is the phone layout stretched.**
 - **No `iphone-duo-inner`, and `iphone-duo-outer` cuts taller screens off at the bottom.** See "iPhone Duo" above. The outer set is uploaded (iOS 1.1.1), but a screen taller than the outer display ends mid-content: `02-send-code-dark` cuts its hint line and loses "Waiting for the receiver…". Recapture when a runtime or Simulator.app can drive the Duo's inner display.

@@ -9,7 +9,6 @@ struct ContentView: View {
     @Environment(LocalNetworkChecker.self) private var localNetwork
     @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var shareInbox = ShareInbox()
     @State private var showStagedSheet = false
     @AppStorage("onboarding.seen") private var onboardingSeen = false
@@ -17,10 +16,16 @@ struct ContentView: View {
     #if os(macOS)
     @State private var isDropTargeted = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    #else
+    @State private var isLandscape = false
     #endif
 
+    private var tabState: TransferTabState? {
+        TransferTabState(phase: controller.phase, direction: controller.direction)
+    }
+
     var body: some View {
-        layout
+        tabs
             #if os(macOS)
         .dropDestination(for: URL.self) { urls, _ in
             // The SendView list's own dropDestination takes precedence when
@@ -44,8 +49,17 @@ struct ContentView: View {
             reduceMotion ? nil : .default, value: isDropTargeted)
             #endif
             .phoneHaptic(trigger: TransferHaptic(controller.phase)) { _, new in new?.feedback }
-            .onChange(of: horizontalSizeClass, initial: true) { _, sizeClass in
-                router.isRegularWidth = sizeClass != .compact
+            // Announced once per state kind, never per progress tick: the
+            // state carries no percent.
+            .onChange(of: tabState) { _, state in
+                guard let state else { return }
+                AccessibilityNotification.Announcement(state.spoken).post()
+            }
+            // A transfer that needs an answer brings its own tab forward.
+            .onChange(of: controller.phase.needsAnswer) { _, needsAnswer in
+                if needsAnswer {
+                    router.selection = AppRouter.Screen(direction: controller.direction)
+                }
             }
             .task {
                 if AutoVerify.forcesOnboarding || (!onboardingSeen && LaunchMode.current.isLive) {
@@ -121,15 +135,21 @@ struct ContentView: View {
                     showStagedSheet = false
                     // TransferStatusView only renders inside SendView and
                     // ReceiveView, so without this the transfer would run
-                    // invisibly under HomeView. Mirrors AppDelegate's
+                    // invisibly under another tab. Mirrors AppDelegate's
                     // dock-drop routing.
-                    router.path = [.send]
+                    router.selection = .send
                 },
                 discard: {
                     if let batch = shareInbox.batch { shareInbox.discard(batch) }
                     // Shows the next waiting share, or closes the sheet.
                     offerStagedFiles()
                 })
+        }
+        .sheet(isPresented: Bindable(router).showsHowItWorks) {
+            NavigationStack { HowItWorksView() }
+                #if os(macOS)
+            .frame(minWidth: 480, minHeight: 520)
+                #endif
         }
         .sheet(
             isPresented: $showOnboarding,
@@ -157,15 +177,57 @@ struct ContentView: View {
         )
     }
 
-    /// design/principles.md → Platform adaptation: compact is Home and one stack,
-    /// anything else the sidebar. SwiftUI reports `.regular` on macOS, where
-    /// every window gets the sidebar.
-    @ViewBuilder private var layout: some View {
-        if horizontalSizeClass == .compact {
-            HomeView()
-        } else {
-            RegularLayout()
+    /// design/principles.md → Platform adaptation: one tab view, a tab bar on
+    /// iPhone and a sidebar on iPad and Mac. Each tab has its own stack, and
+    /// the screens' state is in the drafts of `AppRouter`, so it outlives a tab
+    /// change. The Mac has no Settings tab: its Settings scene stands in.
+    private var tabs: some View {
+        @Bindable var router = router
+        return TabView(selection: $router.selection) {
+            Tab(
+                AppRouter.Screen.send.title, systemImage: AppRouter.Screen.send.symbol,
+                value: AppRouter.Screen.send
+            ) {
+                NavigationStack { SendView(draft: router.sendDraft) }
+            }
+            .badge(badge(.send))
+            Tab(
+                AppRouter.Screen.receive.title, systemImage: AppRouter.Screen.receive.symbol,
+                value: AppRouter.Screen.receive
+            ) {
+                NavigationStack { ReceiveView(draft: router.receiveDraft) }
+            }
+            .badge(badge(.receive))
+            Tab(
+                AppRouter.Screen.history.title, systemImage: AppRouter.Screen.history.symbol,
+                value: AppRouter.Screen.history
+            ) {
+                NavigationStack { HistoryView() }
+            }
+            #if os(iOS)
+            Tab(
+                AppRouter.Screen.settings.title, systemImage: AppRouter.Screen.settings.symbol,
+                value: AppRouter.Screen.settings
+            ) {
+                SettingsScreen()
+            }
+            #endif
         }
+        .tabViewStyle(.sidebarAdaptable)
+        #if os(iOS)
+        // A portrait iPad draws the sidebar as an overlay that covers the screen,
+        // so it is the default only where it sits beside the content.
+        .defaultAdaptableTabBarPlacement(isLandscape ? .sidebar : .automatic)
+        .onGeometryChange(for: Bool.self) {
+            $0.size.width > $0.size.height
+        } action: {
+            isLandscape = $0
+        }
+        #endif
+    }
+
+    private func badge(_ screen: AppRouter.Screen) -> Text? {
+        tabState?.screen == screen ? tabState?.badge : nil
     }
 
     private func offerStagedFiles() {

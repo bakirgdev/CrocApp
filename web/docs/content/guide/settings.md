@@ -8,7 +8,7 @@ description: Every CrocApp setting in the order the app lists them, with default
 
 ![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-light.webp#gh-light-mode-only)![CrocApp Settings on macOS, General tab, showing the Transfer, Exclude from sends, Confirmation and About sections](../../screenshots/mac/settings-dark.webp#gh-dark-mode-only)
 
-On a Mac, open Settings with ⌘, and use the **General** and **Advanced** tabs. On iPad, choose **Settings** in the sidebar. On iPhone, or in a narrow iPad window, tap the gear on the home screen. **Advanced** is a row at the bottom of that screen.
+On a Mac, open Settings with ⌘, and use the **General** and **Advanced** tabs. On iPhone and iPad, open the **Settings** tab or choose **Settings** in the sidebar. **Advanced** is a row at the bottom of that screen, and **How It Works** is the first row under About.
 
 Settings stay on the device. There is no sync and no account. Defaults suit most people.
 
@@ -93,7 +93,7 @@ Type patterns in **Patterns, one per line** to skip matching files when you send
 
 ## The trust badge
 
-Waiting, confirming and transferring screens, and the home screen, show **End-to-end encrypted** with one line naming the route you configured:
+Waiting, confirming and transferring screens show **End-to-end encrypted** with one line naming the route you configured:
 
 - "Local network only: nothing leaves your network"
 - "Via custom relay `<address>`, which sees only encrypted data"
