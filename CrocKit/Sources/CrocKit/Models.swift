@@ -220,6 +220,8 @@ public struct EngineFailure: Error, Equatable, Sendable {
         case joinedEarly
         /// Receiving: the sender offered text over croc's 1 MiB limit, and croc refused it.
         case textTooLong
+        /// Sending: the exclude patterns left nothing in the picked folders to send.
+        case nothingToSend
         /// A path to send has a line break in its name. Set by `CrocEngine`, never by the engine (the Go side would split the list on it).
         case invalidFileName
     }

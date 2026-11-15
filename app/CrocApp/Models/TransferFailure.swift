@@ -312,6 +312,14 @@ extension TransferFailure {
                         "CrocApp receives text up to 1 MB, so ask the other device to send it as a file."
                 ),
                 remedy: nil)
+        case .nothingToSend:
+            return TransferFailure(
+                title: String(localized: "Nothing left to send"),
+                detail: String(
+                    localized:
+                        "Every file in the folders you picked matches a pattern under Exclude from sends in Settings."
+                ),
+                remedy: .openSettings(.general))
         case .invalidFileName:
             return TransferFailure(
                 title: String(localized: "A file name can't be sent"),

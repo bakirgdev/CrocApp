@@ -49,7 +49,8 @@ create-dmg \
 # .DS_Store. A missing one means the layout was not applied.
 mkdir "$STAGE/mnt"
 hdiutil attach -readonly -nobrowse -quiet -mountpoint "$STAGE/mnt" "$DMG"
-trap 'hdiutil detach -quiet "$STAGE/mnt"; rm -rf "$STAGE"' EXIT
+# `|| true`: set -e holds inside a trap, and a busy detach must not fail a good build.
+trap 'hdiutil detach -quiet "$STAGE/mnt" || hdiutil detach -force -quiet "$STAGE/mnt" || true; rm -rf "$STAGE"' EXIT
 [ -s "$STAGE/mnt/.DS_Store" ] || fail "$DMG has no Finder layout (.DS_Store)"
 [ ! -e "$STAGE/mnt/.background" ] || fail "$DMG still has a .background folder"
 echo "dmg: $DMG"

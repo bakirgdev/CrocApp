@@ -36,6 +36,7 @@ const (
 	codeEngineStuck      = "engineStuck"      // a cancelled transfer never returned from croc; only a relaunch frees the engine
 	codeJoinedEarly      = "joinedEarly"      // this receiver joined the room before the sender (croc's local-probe race)
 	codeTextTooLong      = "textTooLong"      // receiver: croc refused a text over its 1 MiB limit
+	codeNothingToSend    = "nothingToSend"    // sender: exclude patterns left no file to send
 	codeOther            = "other"
 )
 

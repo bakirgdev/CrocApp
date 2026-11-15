@@ -182,12 +182,13 @@ import Testing
     @Test func launchMovesTheRemovedExactPathsIntoTheExcludePatternsOnce() {
         storage.set("node_modules\n", forKey: "settings.excludePatterns")
         storage.set(
-            " config/credentials.json \n\nnode_modules\nsrc/secret.txt",
+            " config/credentials.json \n\nnode_modules\n./src//secret.txt",
             forKey: "settings.advanced.excludePaths")
 
         let s = makeSettings()
 
-        #expect(s.excludeList == ["node_modules", "config/credentials.json", "src/secret.txt"])
+        let expected = ["node_modules", "/config/credentials.json", "/node_modules", "/src/secret.txt"]
+        #expect(s.excludeList == expected)
         #expect(storage.values["settings.advanced.excludePaths"] == nil)
 
         let again = makeSettings()
