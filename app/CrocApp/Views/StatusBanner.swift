@@ -49,6 +49,12 @@ struct StatusBanner: View {
                 if let actionTitle, let action {
                     Button(actionTitle, action: action)
                         .buttonStyle(.borderless)
+                        #if os(iOS)
+                    // A borderless button is as tall as its text, under the 44 pt
+                    // minimum (design/principles.md).
+                    .frame(minHeight: 44, alignment: .leading)
+                    .contentShape(.rect)
+                        #endif
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

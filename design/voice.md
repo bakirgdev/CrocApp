@@ -9,7 +9,7 @@ How CrocApp sounds and how the words are written, on the app, the landing page, 
 - Calm over exciting: no urgency, no confetti, no exclamation marks.
 - Plain language over jargon: "end-to-end encrypted", not "PAKE-derived symmetric channel". The detail lives on How It Works, one tap deeper.
 - Never overstate security. Claims come only from the approved list below.
-- Direction is explicit: "Sending" and "Receiving" as words, never color or position alone.
+- Direction is explicit: "Sending" and "Receiving" as words, never color or position alone. While files wait for the user's yes, the header says "Review" next to the direction arrow, because nothing is received yet.
 - Nothing is accepted without an explicit yes, unless the user turned on auto-accept.
 - Errors say what happened and what to do, without blame.
 - The mascot gives the product warmth in onboarding, empty states, About and the web, never in a transfer's critical path.

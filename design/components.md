@@ -34,7 +34,7 @@ The result (done, failed), top-aligned: a glyph in the kind color, a title that 
 
 ## AcceptGate
 
-The incoming request, shown as a phase of the transfer screen, never a sheet or an alert, so it cannot be dismissed by accident. It lists the files, banners any overwrite conflict or blocked item, and offers Decline (destructive) and Accept (primary) in the actions row at the bottom, so a long list scrolls above them. There is no Cancel and no "Not now": leaving the screen answers nothing and the request stays live, with a Review banner and badge so it is never lost. Behavior and the full rules: `docs/knowledge/app-ui-architecture.md`, "Accept gate".
+The incoming request, shown as a phase of the transfer screen, never a sheet or an alert, so it cannot be dismissed by accident. It lists the files, banners any overwrite conflict or blocked item, and offers Decline (destructive) and Accept (primary) in the actions row at the bottom, so a long list scrolls above them. There is no Cancel and no "Not now": leaving the screen answers nothing and the request stays live, with a Review badge so it is never lost. Its direction header says **Review**, not **Receiving**, because nothing is received before the yes. Behavior and the full rules: `docs/knowledge/app-ui-architecture.md`, "Accept gate".
 
 ## HistoryRow
 

@@ -69,16 +69,17 @@ struct SendView: View {
     }
 
     private func start() {
-        if linkSelected {
-            controller.start(
+        let request: TransferRequest =
+            if linkSelected {
                 .storedSend(
                     urls: draft.pickedURLs, downloads: draft.linkDownloads,
-                    lifetimeSeconds: draft.linkLifetime.rawValue))
-        } else if draft.mode == .files {
-            controller.start(.sendFiles(urls: draft.pickedURLs, code: customCodeTrimmed))
-        } else {
-            controller.start(.sendText(text: draft.text, code: customCodeTrimmed))
-        }
+                    lifetimeSeconds: draft.linkLifetime.rawValue)
+            } else if draft.mode == .files {
+                .sendFiles(urls: draft.pickedURLs, code: customCodeTrimmed)
+            } else {
+                .sendText(text: draft.text, code: customCodeTrimmed)
+            }
+        if controller.start(request) { draft.started = request }
     }
 
     private var formContent: some View {
@@ -215,7 +216,7 @@ struct SendView: View {
             storedServerIsValid: AppSettings.storedServerError(settings.storedServer) == nil,
             customCode: customCodeTrimmed,
             isLoadingPhotos: isLoadingPhotos
-        ).canStart
+        ).canStart && !controller.isActive
     }
 
     // MARK: - Files

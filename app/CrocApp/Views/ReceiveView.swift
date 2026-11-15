@@ -42,17 +42,17 @@ struct ReceiveView: View {
     private var trimmedCode: String { draft.code.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     private var canStart: Bool {
-        draft.storedLink != nil || EngineConstraints.isValidCode(trimmedCode)
+        !controller.isActive
+            && (draft.storedLink != nil || EngineConstraints.isValidCode(trimmedCode))
     }
 
     /// Starts the receive when there is something valid to receive. Return and
     /// the Receive button both come here, and `start(_:)` ignores a second call.
     private func start() {
         guard canStart else { return }
-        controller.start(
-            TransferRequest(
-                draft.storedLink.map(TransferLink.stored) ?? .code(trimmedCode), into: outputFolder)
-        )
+        let request = TransferRequest(
+            draft.storedLink.map(TransferLink.stored) ?? .code(trimmedCode), into: outputFolder)
+        if controller.start(request) { draft.started = request }
     }
 
     private var formContent: some View {
