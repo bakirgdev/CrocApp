@@ -229,8 +229,16 @@ struct ContentView: View {
         #endif
     }
 
+    /// A sidebar row has room for the state in words. A tab bar item does not (the
+    /// words cover its icon), so it only counts a request that waits for an answer.
     private func badge(_ screen: AppRouter.Screen) -> Text? {
-        tabState?.screen == screen ? tabState?.badge : nil
+        guard let tabState, tabState.screen == screen else { return nil }
+        #if os(iOS)
+        if !(isLandscape && UIDevice.current.userInterfaceIdiom == .pad) {
+            return tabState.kind == .review ? Text(verbatim: "1") : nil
+        }
+        #endif
+        return tabState.badge
     }
 
     private func offerStagedFiles() {
