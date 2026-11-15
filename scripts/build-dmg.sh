@@ -34,16 +34,23 @@ cp -R "$APP" "$STAGE/CrocApp.app"
 # a number here without changing it there leaves the spec lying.
 create-dmg \
   --volname "CrocApp $VERSION" \
-  --background assets/dmg-background.tiff \
   --window-pos 200 120 \
   --window-size 660 400 \
   --icon-size 128 \
-  --icon CrocApp.app 165 170 \
+  --icon CrocApp.app 165 160 \
   --hide-extension CrocApp.app \
-  --app-drop-link 495 170 \
+  --app-drop-link 495 160 \
   --no-internet-enable \
   "$DMG" "$STAGE"
 
 [ -s "$DMG" ] || fail "create-dmg wrote nothing to $DMG"
+
+# create-dmg lays the window out by driving Finder, which saves the result in
+# .DS_Store. A missing one means the layout was not applied.
+mkdir "$STAGE/mnt"
+hdiutil attach -readonly -nobrowse -quiet -mountpoint "$STAGE/mnt" "$DMG"
+trap 'hdiutil detach -quiet "$STAGE/mnt"; rm -rf "$STAGE"' EXIT
+[ -s "$STAGE/mnt/.DS_Store" ] || fail "$DMG has no Finder layout (.DS_Store)"
+[ ! -e "$STAGE/mnt/.background" ] || fail "$DMG still has a .background folder"
 echo "dmg: $DMG"
 echo DMG-OK
