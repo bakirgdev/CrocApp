@@ -106,27 +106,33 @@ croc,transfer,share,encrypted,secure,qr,p2p,link,folder,nearby,e2ee,clipboard,cl
 
 App Store Connect shows no What's New field on an app's first version. From the second App Store release on, write it from that release's `[x.y.z]` section of `CHANGELOG.md`, in the voice of the description: short, what a user sees first, and honest about what was removed. The text is per platform, because the Mac lost **Run a Relay** and iOS never had it. The first lines show before "more", so the navigation change leads.
 
-Version 1.3.0, iOS (807 characters):
+Version 1.3.0, iOS (1277 characters):
 
 ```text
 • iPhone now has tabs for Send, Receive, History and Settings, and iPad has a sidebar. Files you picked, text you typed and a code stay when you switch.
+• The buttons that answer a screen (Send, Receive, Accept, Decline, Cancel) sit at the bottom, in the same place every time. Add Files, Add Folder and Add Photos are one Add menu.
 • Buttons and colors use the system's own styles, with one olive accent.
+• Fixed: the patterns under Exclude from sends now apply to every folder send. Before, they only worked when the folder was sent as a zip.
+• Fixed: a finished transfer no longer leaves its files, text or custom code staged for the next one.
 • The transfer engine is croc 11.6.5. It fixes a crash that a malformed connection could cause in the local relay CrocApp runs while it sends.
 • Removed: the Home screen. Send, Receive and History each have their own tab or sidebar entry.
 • Removed: History in Spotlight. Entries CrocApp added to Spotlight are deleted the first time you open this version. Find Transfers and Open Transfer in Shortcuts still work.
-• Removed: Multicast Address, Built-in DNS Resolver, Single Connection and Exact Paths in Advanced settings. Their saved values are deleted, so croc's defaults apply.
+• Removed: Multicast Address, Built-in DNS Resolver, Single Connection and Exact Paths in Advanced settings. Your Exact Paths move to the patterns under Exclude from sends, and the others go back to croc's defaults.
 ```
 
-Version 1.3.0, macOS (960 characters):
+Version 1.3.0, macOS (1418 characters):
 
 ```text
 • The Mac has a sidebar for Send, Receive and History. Files you picked, text you typed and a code stay when you switch. Settings stays its own window.
+• The buttons that answer a screen (Send, Receive, Accept, Decline, Cancel) sit at the bottom, in the same place every time. Add Files and Add Folder are one Add menu.
 • Buttons and colors use the system's own styles, with one olive accent.
+• Fixed: the patterns under Exclude from sends now apply to every folder send. Before, they only worked when the folder was sent as a zip.
+• Fixed: a finished transfer no longer leaves its files, text or custom code staged for the next one.
 • The transfer engine is croc 11.6.5. It fixes a crash that a malformed connection could cause in the local relay CrocApp runs while it sends.
 • Removed: Run a Relay and Check Relay. To host a relay, run croc relay on a machine you control. The relay address and password you set in Settings still work.
 • Removed: the Home screen. Send, Receive and History each have their own sidebar entry.
 • Removed: History in Spotlight. Entries CrocApp added to Spotlight are deleted the first time you open this version. Find Transfers and Open Transfer in Shortcuts still work.
-• Removed: Multicast Address, Built-in DNS Resolver, Single Connection and Exact Paths in Advanced settings. Their saved values are deleted, so croc's defaults apply.
+• Removed: Multicast Address, Built-in DNS Resolver, Single Connection and Exact Paths in Advanced settings. Your Exact Paths move to the patterns under Exclude from sends, and the others go back to croc's defaults.
 ```
 
 ## URLs, category, price
@@ -215,7 +221,7 @@ Sending arbitrary files to another person is not content the app hosts or shows.
 
 ## Review notes
 
-Paste into App Review Information, Notes, per platform. Limit 4000 bytes: the iOS block is 3022 bytes, the macOS block 3876. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo. Step 1 names an Add menu conditionally: make it plain or drop it once the 1.3.0 build is final.
+Paste into App Review Information, Notes, per platform. Limit 4000 bytes: the iOS block is 2988 bytes, the macOS block 3842. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo. Step 1 names an Add menu conditionally: make it plain or drop it once the 1.3.0 build is final.
 
 iOS:
 
@@ -232,7 +238,7 @@ PERMISSIONS (first use, both optional): Local network, "CrocApp uses the local n
 
 TEST WITHOUT A SECOND DEVICE: use croc's browser client at https://getcroc.com as the other device, in a browser on your computer, with the default settings.
 
-1. App sends, browser receives. On the Send tab tap Add Files (under Add, if your build has that menu) or type text, then tap Send. A code phrase like cape-junky-widow and a QR code appear. In the browser open https://getcroc.com, choose Receive, enter the code, and accept.
+1. App sends, browser receives. On the Send tab tap Add, then Files, or type text, then tap Send. A code phrase like cape-junky-widow and a QR code appear. In the browser open https://getcroc.com, choose Receive, enter the code, and accept.
 2. Browser sends, app receives. At https://getcroc.com choose Send, choose a file, and note the code. On the Receive tab type the code (or paste the getcroc.com link; the app keeps only the code) and tap Receive. The file list appears. Tap Accept. The file is saved to the receive folder (On My iPhone, CrocApp, in the Files app).
 3. Send as Link (HTTPS only): on the Send tab choose files, turn on "Send as Link", tap Send as Link. A link and QR code appear. Open the link in a browser, or on the Receive tab paste it into the Code phrase field ("Receive from Link") and tap Receive. On the History tab, Revoke Link makes it stop working.
 
@@ -256,7 +262,7 @@ PERMISSIONS (first use, both optional): Local network, "CrocApp uses the local n
 
 TEST WITHOUT A SECOND DEVICE: use croc's browser client at https://getcroc.com as the other device, in a browser on your computer (on the same Mac for the macOS build), with the default settings.
 
-1. App sends, browser receives. On the Send tab (Send in the sidebar on iPad and Mac) tap Add Files (under Add, if your build has that menu) or type text, then tap Send. A code phrase like cape-junky-widow and a QR code appear. In the browser open https://getcroc.com, choose Receive, enter the code, and accept.
+1. App sends, browser receives. On the Send tab (Send in the sidebar on iPad and Mac) tap Add, then Files, or type text, then tap Send. A code phrase like cape-junky-widow and a QR code appear. In the browser open https://getcroc.com, choose Receive, enter the code, and accept.
 2. Browser sends, app receives. At https://getcroc.com choose Send, choose a file, and note the code. On the Receive tab type the code (or paste the getcroc.com link; the app keeps only the code) and tap Receive. The file list appears. Tap Accept. The file is saved to the receive folder (on iPhone and iPad, On My iPhone, CrocApp, in the Files app).
 3. Send as Link (HTTPS only): on the Send tab choose files, turn on "Send as Link", tap Send as Link. A link and QR code appear. Open the link in a browser, or on the Receive tab paste it into the Code phrase field ("Receive from Link") and tap Receive. On the History tab, Revoke Link makes it stop working.
 
