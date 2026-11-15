@@ -217,7 +217,7 @@ These steps are done by a person, not by a script. Follow them on a new machine,
 8. **Run the device checklist** in `docs/knowledge/device-test-checklist.md` on a physical iPhone whenever a change calls for it.
 9. **Submit for Review.** Fill the listing from `docs/knowledge/app-store-listing.md`, work through its "Open checks before submitting", then follow its "Submitting".
 
-The websites need no edit for a release: no page carries a version number, and `scripts/assemble-site.sh` writes the landing sitemap from git dates.
+The websites carry no version number, and `scripts/assemble-site.sh` writes the landing sitemap from git dates. The one edit a release needs is a status sentence while its App Store builds are in review ("Both App Stores ... have earlier versions until X.Y.Z passes App Review") in `README.md`, `web/docs/content/getting-started/install.md`, the landing page's download lead and `web/landing/llms.txt`; delete it once both platforms are approved.
 
 ## Calendar and cadence
 
