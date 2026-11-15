@@ -210,6 +210,7 @@
     "Enter the server's address only, such as %@. It must use https, or http for localhost." : {
       "comment" : "Error under the Link Server field. The placeholder is an example address and stays as it is."
     },
+    "Every file in the folders you picked matches a pattern under Exclude from sends in Settings." : {},
     "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner. Share it over a channel you trust; it expires with the transfer." : {},
     "Exclude from sends" : {},
     "Expired" : {},
@@ -285,6 +286,7 @@
     "No transfers yet" : {},
     "None, or host:port" : {},
     "Nothing is saved without your OK: a transfer you receive shows a file preview you accept or decline. Auto-Accept Transfers is off unless you turn it on." : {},
+    "Nothing left to send" : {},
     "Notifications" : {},
     "OK" : {},
     "On the other device, enter this code or scan the QR." : {},

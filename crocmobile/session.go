@@ -242,23 +242,29 @@ func sendFilesInfo(ctx context.Context, paths []string, o *Options) ([]croc.File
 	// caller has to repeat.
 	files, empty = withoutExcluded(files, exclude), withoutExcluded(empty, exclude)
 	if len(files) == 0 && len(empty) == 0 {
-		return nil, nil, 0, errors.New("nothing to send: every picked file matches an exclude pattern")
+		return nil, nil, 0, &codedError{codeNothingToSend, errors.New("every file in the picked folders matches an exclude pattern")}
 	}
+	// As croc's walk counts them: every folder but the root.
 	remote := map[string]bool{}
-	for _, f := range files {
-		remote[f.FolderRemote] = true
-	}
-	for _, f := range empty {
-		remote[f.FolderRemote] = true
+	for _, f := range append(files, empty...) {
+		if f.FolderRemote != rootFolder {
+			remote[f.FolderRemote] = true
+		}
 	}
 	return files, empty, len(remote), nil
 }
 
+// rootFolder is croc's FolderRemote for an item the user picked itself.
+const rootFolder = "./"
+
+// withoutExcluded drops what a pattern matches inside a picked folder. An item
+// the user picked itself stays (so does croc's zip of a picked folder, which
+// was filtered when it was written): the patterns are for folder contents.
 func withoutExcluded(infos []croc.FileInfo, exclude []string) []croc.FileInfo {
-	kept := infos[:0]
+	var kept []croc.FileInfo
 	for _, f := range infos {
 		name := path.Join(strings.ToLower(f.FolderRemote), strings.ToLower(f.Name))
-		if !slices.ContainsFunc(exclude, func(e string) bool { return strings.Contains(name, e) }) {
+		if f.FolderRemote == rootFolder || !slices.ContainsFunc(exclude, func(e string) bool { return strings.Contains(name, e) }) {
 			kept = append(kept, f)
 		}
 	}

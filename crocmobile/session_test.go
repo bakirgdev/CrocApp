@@ -1182,4 +1182,22 @@ func TestSendFilesInfoAppliesExcludePatterns(t *testing.T) {
 	if len(files) != 1 || files[0].Name != "keep.txt" {
 		t.Fatalf("got %+v, want only keep.txt", files)
 	}
+
+	// A file the user picked itself is sent whatever the patterns say.
+	picked, _, folders, err := sendFilesInfo(context.Background(), []string{filepath.Join(dir, "proj", ".env")}, &Options{Exclude: ".env"})
+	if err != nil || len(picked) != 1 || folders != 0 {
+		t.Fatalf("picked file: got %+v, %d folders, %v", picked, folders, err)
+	}
+
+	// A folder with nothing left says so with its own code.
+	only := filepath.Join(dir, "only")
+	if err := os.Mkdir(only, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(only, "a.env"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, _, err := sendFilesInfo(context.Background(), []string{only}, &Options{Exclude: ".env"}); err == nil || classify(err) != codeNothingToSend {
+		t.Fatalf("all excluded: got %v", err)
+	}
 }

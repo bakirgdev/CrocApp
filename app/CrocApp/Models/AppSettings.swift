@@ -193,8 +193,12 @@ final class AppSettings {
         // Exclude patterns instead of letting a file the user kept out be sent.
         if let paths = storage.object(forKey: "settings.advanced.excludePaths") as? String {
             var merged = Self.patternLines(Self.read(storage, .excludePatterns, default: ""))
-            for path in Self.patternLines(paths) where !merged.contains(path) {
-                merged.append(path)
+            for line in Self.patternLines(paths) {
+                // An exact path was relative to the picked folder ("./build/out.bin"). As a
+                // pattern it starts at a path component, so "build" does not also drop "rebuild.sh".
+                let parts = line.split(separator: "/").filter { $0 != "." }
+                let path = "/" + parts.joined(separator: "/")
+                if path != "/", !merged.contains(path) { merged.append(path) }
             }
             storage.set(merged.joined(separator: "\n"), forKey: Key.excludePatterns.rawValue)
         }

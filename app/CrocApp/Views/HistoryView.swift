@@ -448,6 +448,8 @@ extension View {
     /// Sets `now` to the current time once a minute while the view is on screen.
     func minuteClock(_ now: Binding<Date>) -> some View {
         task {
+            // First, because a tab that comes back kept the time it left with.
+            now.wrappedValue = .now
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(60))
                 now.wrappedValue = .now
