@@ -14,7 +14,7 @@ extra sections where a release needs them, and the project follows
 
 - CrocApp navigates with tabs on iPhone (**Send**, **Receive**, **History** and **Settings**) and a sidebar on iPad and Mac. iPad opens with the sidebar in landscape and a floating tab bar in portrait, and the sidebar button switches between them. On a Mac, Settings stays its own window and the menu bar window is unchanged.
 - Files you picked, text you typed, a code and the link options on Send and Receive stay where they are when you switch tabs, and when the window changes between the tab bar and the sidebar. They are not kept after you quit, and a transfer that succeeds empties them.
-- A transfer shows on its tab as **Connecting**, **Waiting**, **Sending** or **Receiving**. When someone's files wait for your answer, the **Receive** tab comes forward and keeps a **Review** badge if you go elsewhere. VoiceOver announces each state once.
+- In the sidebar on iPad and Mac, a transfer shows on its row as **Connecting**, **Waiting**, **Sending** or **Receiving**. When someone's files wait for your answer, the **Receive** tab comes forward and keeps a badge if you go elsewhere: **Review** in the sidebar, a number on the tab bar. VoiceOver announces each state once.
 - **How It Works** opens as a sheet from the first row of the About section in Settings, and from the Help menu on a Mac.
 - History fills the window width instead of a narrow column.
 - Advanced settings explain each option in one short line, and the note that proxy addresses are saved in the Keychain appears once, under the proxies.
@@ -44,6 +44,7 @@ extra sections where a release needs them, and the project follows
 - History stops offering **Revoke** on a link that expires while History is open, and **Clear All** says when links that still work stay active.
 - A transfer that iOS stopped in the background is recorded as **Failed** in History, not **Cancelled**.
 - **Open Transfer** in Shortcuts opens that transfer's details in History instead of the list.
+- On iPhone and iPad, the relay **Address**, **IPv6 Address** and **Password** rows in Settings show their names. Before, an empty row showed only its placeholder.
 
 ### Security
 

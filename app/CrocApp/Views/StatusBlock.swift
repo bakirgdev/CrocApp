@@ -48,6 +48,8 @@ struct StatusBlock: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
+                    // In a scroll view a long line would otherwise truncate instead of wrapping.
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding()
