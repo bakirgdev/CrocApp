@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/schollz/croc/v11/src/comm"
+	"github.com/schollz/croc/v11/src/models"
 	"github.com/schollz/croc/v11/src/store"
 )
 
@@ -270,10 +271,11 @@ func TestInvalidSettingFailsBeforeTheLock(t *testing.T) {
 
 type networkGlobals struct {
 	socks5, httpProxy string
+	internalDNS       bool
 }
 
 func readNetworkGlobals() networkGlobals {
-	return networkGlobals{comm.Socks5Proxy, comm.HttpProxy}
+	return networkGlobals{comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS}
 }
 
 var proxiedOptions = Options{Socks5Proxy: "203.0.113.1:1080", HTTPProxy: "203.0.113.2:3128"}
@@ -320,7 +322,10 @@ func TestNetworkGlobalsRestoredAfterPanic(t *testing.T) {
 
 // A transfer holds its proxy settings for its whole run, and puts the
 // previous ones back when it ends (here, cancelled while it waits for a peer).
+// croc's built-in DNS resolver is forced off for the run, even when croc's init turned it on.
 func TestNetworkGlobalsHeldForTheTransfer(t *testing.T) {
+	models.INTERNAL_DNS = true
+	defer func() { models.INTERNAL_DNS = false }()
 	before := readNetworkGlobals()
 	o := proxiedOptions
 	o.OnlyLocal = true
@@ -330,7 +335,7 @@ func TestNetworkGlobalsHeldForTheTransfer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StartSend: %v", err)
 	}
-	want := networkGlobals{proxiedOptions.Socks5Proxy, proxiedOptions.HTTPProxy}
+	want := networkGlobals{proxiedOptions.Socks5Proxy, proxiedOptions.HTTPProxy, false}
 	if got := readNetworkGlobals(); got != want {
 		t.Errorf("during the transfer: network globals = %+v, want %+v", got, want)
 	}
