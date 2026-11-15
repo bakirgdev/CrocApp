@@ -32,7 +32,7 @@ Turn the icon off with **Show in Menu Bar**, or start CrocApp at login with **Op
 
 ## Keyboard shortcuts
 
-These work on Mac and on iPad with a keyboard. The toolbar's History, How It Works and Settings buttons each have a menu item with a shortcut. **Send…**, **Send Clipboard Text…**, **Receive…** and **Paste Code…** are disabled while a transfer is running.
+These work on Mac and on iPad with a keyboard. History, How It Works and, on iPad, Settings each have a menu item with a shortcut. **Send…**, **Send Clipboard Text…**, **Receive…** and **Paste Code…** are disabled while a transfer is running.
 
 | Command | Shortcut |
 |---|---|

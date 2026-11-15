@@ -82,7 +82,7 @@ struct CrocAppApp: App {
         // Widget buttons and the Control Center control land here.
         OpenScreen.handler = { target in
             switch target {
-            case .send: AppRouter.shared.path = [.send]
+            case .send: AppRouter.shared.selection = .send
             case .receive: AppRouter.shared.openReceive()
             }
             #if os(macOS)

@@ -19,34 +19,12 @@
       "comment" : "Confirmation under Delete this saved code?. The placeholder is the name the user gave the code."
     },
     "%@, %@" : {
-      "comment" : "A sidebar row's name, then its state. Both placeholders are words.",
+      "comment" : "A tab's name, then its state. Both placeholders are words.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@, %2$@"
-          }
-        }
-      }
-    },
-    "%@, receiving %@, %@" : {
-      "comment" : "VoiceOver label of a receive that did not finish. The placeholders are Failed, Cancelled or Declined, what was received, and when.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@, receiving %2$@, %3$@"
-          }
-        }
-      }
-    },
-    "%@, sending %@, %@" : {
-      "comment" : "VoiceOver label of a send that did not finish. The placeholders are Failed, Cancelled or Declined, what was sent, and when.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@, sending %2$@, %3$@"
           }
         }
       }
@@ -64,9 +42,6 @@
           }
         }
       }
-    },
-    "%lld percent" : {
-      "comment" : "Said after a sidebar row's name. The placeholder is a number."
     },
     "+ %lld more" : {},
     "1 day" : {},
@@ -274,7 +249,6 @@
     "History" : {},
     "History is off" : {},
     "How It Works" : {},
-    "How croc keeps transfers private" : {},
     "IPv6 Address" : {},
     "It expired, was revoked or has no downloads left, so ask the sender for a new link." : {},
     "It no longer works for anyone." : {},
@@ -315,7 +289,6 @@
     "On the other device, enter this code or scan the QR." : {},
     "One code phrase does everything" : {},
     "One code, one transfer" : {},
-    "One path per line" : {},
     "Open CrocApp" : {},
     "Open CrocApp to Accept" : {},
     "Open Receive" : {},
@@ -333,7 +306,6 @@
     "Patterns, one per line" : {},
     "Performance" : {},
     "Point the camera at the QR code on the other device." : {},
-    "Privacy" : {},
     "Privacy Policy" : {},
     "Proxies also carry Send as Link. Their addresses, with any password in them, are saved in the Keychain." : {},
     "Proxies, sender IP, speed limit and more. The defaults suit most people." : {},
@@ -352,17 +324,6 @@
     "Receive from Link" : {},
     "Receive with CrocApp" : {},
     "Received" : {},
-    "Received %@, %@" : {
-      "comment" : "VoiceOver label of a finished receive. The placeholders are what was received and when, as in \"Received 3 files, yesterday\".",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Received %1$@, %2$@"
-          }
-        }
-      }
-    },
     "Received %lld items." : {
       "comment" : "Spoken or shown by Shortcuts after Receive. The placeholder is how many files or text items arrived.",
       "localizations" : {
@@ -399,7 +360,6 @@
     "Receiving with CrocApp" : {
       "comment" : "Title of the iOS Live Activity while receiving."
     },
-    "Recent transfers" : {},
     "Relay" : {},
     "Remove %@" : {
       "comment" : "VoiceOver label of the button that removes a staged file. The placeholder is the file name."
@@ -476,17 +436,6 @@
     "Sends text with a croc code and returns the code. Keep CrocApp open until the transfer ends." : {},
     "Send…" : {},
     "Sent" : {},
-    "Sent %@, %@" : {
-      "comment" : "VoiceOver label of a finished send. The placeholders are what was sent and when, as in \"Sent 3 files, yesterday\".",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Sent %1$@, %2$@"
-          }
-        }
-      }
-    },
     "Sent files" : {},
     "Settings" : {},
     "Settings…" : {},
@@ -541,7 +490,6 @@
     "The other device declined or cancelled" : {},
     "The other device is connected" : {},
     "The other device is connected. Send now?" : {},
-    "The other device is waiting for you to accept or decline." : {},
     "The other device is waiting for you to send" : {},
     "The other device wasn't ready" : {},
     "The other device's croc is outdated" : {},
@@ -573,7 +521,6 @@
     "Transfer failed" : {},
     "Transfer finished with errors" : {},
     "Transfer finished with problems" : {},
-    "Transfer history" : {},
     "Transfer update" : {
       "comment" : "Notification text when the user hides previews on the lock screen."
     },
@@ -637,9 +584,6 @@
     },
     "Zip Folders Before Sending" : {},
     "^[%lld file](inflect: true)" : {},
-    "^[%lld file](inflect: true) waiting to send" : {
-      "comment" : "VoiceOver label of the badge on the Send button. The placeholder is the number of queued files."
-    },
     "^[%lld file](inflect: true) • %@" : {
       "comment" : "Summary of a finished transfer: the number of files, then their total size such as 24 MB.",
       "localizations" : {
@@ -655,7 +599,7 @@
       "comment" : "Warning in the incoming-files prompt. The placeholder is how many items clash. Keep Both and Replace are the labels of its two buttons."
     },
     "connecting" : {
-      "comment" : "Said after a sidebar row's name."
+      "comment" : "Said after a tab's name."
     },
     "croc License" : {
       "comment" : "Link in the About section to the MIT license of croc, the open-source tool CrocApp is built on. Keep croc lowercase and untranslated."
@@ -665,18 +609,18 @@
     "iOS stopped it in the background, so keep CrocApp open and try again." : {},
     "link ready" : {},
     "needs your answer" : {
-      "comment" : "Said after a sidebar row's name."
+      "comment" : "Said after a tab's name."
     },
     "or add them with the buttons below" : {},
     "transfer complete" : {},
     "transfer failed" : {},
     "transfer finished with errors" : {},
     "transferring" : {
-      "comment" : "Said after a sidebar row's name."
+      "comment" : "Said after a tab's name."
     },
     "transferring, %lld percent" : {},
     "waiting for the other device" : {
-      "comment" : "Said after a sidebar row's name."
+      "comment" : "Said after a tab's name."
     },
     "waiting for your answer" : {}
   },

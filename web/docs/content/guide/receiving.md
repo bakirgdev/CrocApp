@@ -8,7 +8,7 @@ description: How to receive a transfer in CrocApp, review the file list, choose 
 
 ![CrocApp on iOS showing a receive of three files with Decline and Accept buttons](../../screenshots/iphone/receive-incoming-light.webp#gh-light-mode-only)![CrocApp on iOS showing a receive of three files with Decline and Accept buttons](../../screenshots/iphone/receive-incoming-dark.webp#gh-dark-mode-only)
 
-Tap or click **Receive** on the home screen.
+Open the **Receive** tab, or **Receive** in the sidebar.
 
 ## Enter the code
 
@@ -35,7 +35,7 @@ After you tap **Receive** and connect, CrocApp lists the files with sizes and a 
 
 If you know the sender's address, you can connect straight to it with **Sender IP** in [Settings](settings.md#advanced).
 
-When a transfer is waiting for your answer and you are on another screen, the home screen shows **Files are waiting for your answer** with **Review**.
+When a transfer is waiting for your answer, CrocApp opens the **Receive** tab. If you go to another tab meanwhile, the **Receive** tab shows a **Review** badge until you answer.
 
 ## Name conflicts
 

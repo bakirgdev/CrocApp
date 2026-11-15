@@ -61,7 +61,7 @@ MAC_DOCS="$HOME/Library/Containers/$BUNDLE/Data/Documents"
 # The first three get the main set; the last two exist for the store set only.
 DEVICES="mac iphone ipad iphone63 duo"
 MAIN_DEVICES="mac iphone ipad"
-SCREENS="onboarding home send-files send-code sending receive-code receive-incoming \
+SCREENS="onboarding send-files send-code sending receive-code receive-incoming \
 receive-conflict receiving receive-done stored-link history how-it-works settings \
 settings-advanced receive-saved-codes"
 # The App Store subset, in upload order. The number in a file name is the position.
@@ -552,7 +552,7 @@ activate_app() {
 
 mac_titles() { # the window title(s) a screen shows
   case "$SCREEN" in
-    home | onboarding) echo "CrocApp|Send" ;; # the Mac sidebar opens on Send, which titles the window
+    onboarding) echo "CrocApp|Send" ;; # the Mac sidebar opens on Send, which titles the window
     send-files | send-code | sending | stored-link) echo "Send" ;;
     receive-code | receive-incoming | receive-conflict | receiving | receive-done) echo "Receive" ;;
     history) echo "History" ;;
@@ -639,7 +639,7 @@ still() { # still ARGS...
 # to whatever is frontmost, so the app is raised first. TAB is General or Advanced.
 mac_settings() { # mac_settings TAB
   local i tab=$1
-  launch --screen home
+  launch --screen send
   for i in 1 2 3; do
     activate_app
     osascript -e 'tell application "System Events" to keystroke "," using command down'
@@ -662,7 +662,6 @@ capture_screen() {
   clean_docs
   case "$SCREEN" in
     onboarding) still --screen onboarding ;;
-    home) still --screen home ;;
     send-files)
       still --screen send --stage "$DOCS/shots/Quarterly-Report.pdf" \
         --stage "$DOCS/shots/Ridge-Sunrise.jpg" --stage "$DOCS/shots/Meeting-Notes.md"

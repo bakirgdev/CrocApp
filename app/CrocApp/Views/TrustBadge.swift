@@ -5,7 +5,7 @@ import SwiftUI
 /// start (TransferController.activeRelay) so it can't drift mid-transfer.
 struct TrustBadge: View {
     enum Variant {
-        /// Inline capsule. Sits in the Home header and on transfer screens.
+        /// Inline capsule on the transfer screens.
         case pill
         /// Row card for the How It Works screen.
         case full

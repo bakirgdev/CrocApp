@@ -1,11 +1,13 @@
 import SwiftUI
 
-/// Version, the privacy and support links, and the croc attribution its MIT
+/// How It Works, the version, the privacy and support links, and the croc attribution its MIT
 /// license requires (`design/brand.md`, "Attribution and legal"). Last
 /// section of Settings on both platforms.
 struct AboutSection: View {
     var body: some View {
         Section {
+            Button("How It Works") { AppRouter.shared.showHowItWorks() }
+                .linkRow()
             LabeledContent("Version", value: AppInfo.versionDescription)
                 .accessibilityElement(children: .combine)
             Link("Privacy Policy", destination: AppInfo.privacyURL)

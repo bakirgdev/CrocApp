@@ -14,10 +14,10 @@ Most of the product is text and one progress bar. A wrong byte count is more vis
 
 Navigation, chrome and input change between devices; the screens, wording and rules do not.
 
-- **iPhone** is a `TabView` with Send, Receive, History and Settings. **iPad and Mac** show the same tabs as a sidebar (`.sidebarAdaptable`), a sidebar by default on iPad. On the Mac, Settings stays the Settings scene (⌘,) and is not a tab.
+- **iPhone** is a `TabView` with Send, Receive, History and Settings. **iPad and Mac** show the same tabs as a sidebar (`.sidebarAdaptable`), a sidebar by default on iPad in landscape and a floating tab bar in portrait, where the sidebar would cover the screen. On the Mac, Settings stays the Settings scene (⌘,) and is not a tab.
 - **Primary actions are pinned to the bottom of the screen**, in the same place on every device.
-- Adapt by size class, never by device. The layout changes live as a window resizes. Behavior and wiring: `docs/knowledge/app-ui-architecture.md`, "Layout by width".
-- The system owns tab bars, sidebars, toolbars and sheets. We draw nothing on them, and the transfer state beside a sidebar row is words first.
+- Let the system adapt, never branch by device: one `TabView` becomes a tab bar or a sidebar as the window changes. Behavior and wiring: `docs/knowledge/app-ui-architecture.md`, "Layout and navigation".
+- The system owns tab bars, sidebars, toolbars and sheets. We draw nothing on them, and the transfer state on a tab is words first (a badge: **Connecting**, **Waiting**, **Review**, **Sending**, **Receiving**).
 - **Mac.** Menu bar commands give every toolbar action a shortcut, right-click menus are additive, drop is window-wide, and there is no camera or QR scan (absent, not disabled). iPad reaches the same commands through the hardware-keyboard menu.
 - **What must not diverge:** the accept gate (auto-accept is off by default everywhere), direction wording, the code phrase format and mono treatment, and the accessibility floor.
 
@@ -88,7 +88,7 @@ WCAG 2.2 AA is the floor on every surface.
 - **Labels.** A glyph that alone carries a status has an accessibility label. Web glyphs are `aria-hidden` and the adjacent label carries the meaning.
 - **Nothing is hover-only.** Hover (Mac, iPad pointer, web) may restate and may apply the pressed background, never reveal.
 - **Input is never drag-only.** Every drop target ships beside a real file-picker button.
-- **Announcements.** Errors and terminal failures are announced to VoiceOver, progress is not announced on every tick, a sidebar row's state is announced once per phase change, and a copy or scan announces "Copied", "Code scanned" or "Link scanned".
+- **Announcements.** Errors and terminal failures are announced to VoiceOver, progress is not announced on every tick, a tab's state is announced once per phase change, and a copy or scan announces "Copied", "Code scanned" or "Link scanned".
 
 ## Web
 

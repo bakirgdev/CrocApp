@@ -125,7 +125,7 @@ import Testing
     @Test func historyOpens() {
         let router = AppRouter()
         router.openHistory()
-        #expect(router.path == [.history])
+        #expect(router.selection == .history)
     }
 
     @Test func aBusyRouterStaysOnTheTransfer() {
@@ -139,6 +139,6 @@ import Testing
             controller.start(
                 .sendFiles(urls: [URL(filePath: "/CrocAppTests.missing/notes.txt")], code: "")))
         router.openHistory()
-        #expect(router.path.isEmpty)
+        #expect(router.selection == .send)
     }
 }

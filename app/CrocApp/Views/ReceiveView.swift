@@ -3,14 +3,11 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ReceiveView: View {
+    @Bindable var draft: ReceiveDraft
     @Environment(TransferController.self) private var controller
     @Environment(OutputFolderStore.self) private var outputFolder
-    @Environment(AppRouter.self) private var router
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    @State private var code = ""
-    /// A stored link replaces the code field until cleared.
-    @State private var storedLink: URL?
     @State private var showScanner = false
     @State private var showFolderPicker = false
     /// Bumped per scanned code; drives the `.selection` haptic.
@@ -25,18 +22,6 @@ struct ReceiveView: View {
                 TransferStatusView()
             } else {
                 form
-                    .onChange(of: router.pendingReceive, initial: true) { _, link in
-                        guard let link else { return }
-                        router.pendingReceive = nil
-                        switch link {
-                        case .code(let linked):
-                            code = linked
-                            storedLink = nil
-                        case .stored(let url):
-                            storedLink = url
-                            code = ""
-                        }
-                    }
             }
         }
         .navigationTitle("Receive")
@@ -57,10 +42,10 @@ struct ReceiveView: View {
         .phoneHaptic(trigger: scanCount) { _, _ in .selection }
     }
 
-    private var trimmedCode: String { code.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var trimmedCode: String { draft.code.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     private var canStart: Bool {
-        storedLink != nil || EngineConstraints.isValidCode(trimmedCode)
+        draft.storedLink != nil || EngineConstraints.isValidCode(trimmedCode)
     }
 
     /// Starts the receive when there is something valid to receive. Return and
@@ -69,33 +54,35 @@ struct ReceiveView: View {
         guard canStart else { return }
         controller.start(
             TransferRequest(
-                storedLink.map(TransferLink.stored) ?? .code(trimmedCode), into: outputFolder))
+                draft.storedLink.map(TransferLink.stored) ?? .code(trimmedCode), into: outputFolder)
+        )
     }
 
     private var formContent: some View {
         VStack(spacing: 16) {
-            if let storedLink {
+            if let storedLink = draft.storedLink {
                 storedLinkRow(storedLink)
             } else {
                 VStack(alignment: .leading) {
                     CodeField(
                         placeholder: "Code phrase",
-                        text: $code,
-                        isInvalid: !code.isEmpty && !EngineConstraints.isValidCode(code),
+                        text: $draft.code,
+                        isInvalid: !draft.code.isEmpty
+                            && !EngineConstraints.isValidCode(draft.code),
                         invalidMessage: CodeField.tooShortMessage,
                         onPaste: { pasted in
-                            if let link = TransferLink.parse(pasted) { router.open(link) }
+                            if let link = TransferLink.parse(pasted) { draft.apply(link) }
                         },
                         onSubmit: start,
                         submitLabel: .go,
                         focusesOnAppear: HardwareKeyboard.isExpected
                     )
-                    .onChange(of: code) { _, typed in
+                    .onChange(of: draft.code) { _, typed in
                         if typed.contains("://"), let link = TransferLink.parse(typed) {
-                            router.open(link)
+                            draft.apply(link)
                         }
                     }
-                    SavedCodePicker(selection: code) { code = $0 }
+                    SavedCodePicker(selection: draft.code) { draft.code = $0 }
                 }
             }
 
@@ -113,7 +100,7 @@ struct ReceiveView: View {
                 QRScannerSheet { link in
                     scanCount += 1
                     AccessibilityNotification.Announcement(Self.scannedAnnouncement(link)).post()
-                    router.open(link)
+                    draft.apply(link)
                     showScanner = false
                 }
             }
@@ -207,7 +194,7 @@ struct ReceiveView: View {
                 }
                 Spacer()
                 Button {
-                    storedLink = nil
+                    draft.storedLink = nil
                 } label: {
                     Text("Clear")
                 }

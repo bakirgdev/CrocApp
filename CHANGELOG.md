@@ -12,11 +12,17 @@ extra sections where a release needs them, and the project follows
 
 ### Changed
 
+- CrocApp navigates with tabs on iPhone (**Send**, **Receive**, **History** and **Settings**) and a sidebar on iPad and Mac. iPad opens with the sidebar in landscape and a floating tab bar in portrait, and the sidebar button switches between them. On a Mac, Settings stays its own window and the menu bar window is unchanged.
+- Files you picked, text you typed, a code and the link options on Send and Receive stay where they are when you switch tabs, and when the window changes between the tab bar and the sidebar. They are not kept after you quit.
+- A transfer shows on its tab as **Connecting**, **Waiting**, **Sending** or **Receiving**. When someone's files wait for your answer, the **Receive** tab comes forward and keeps a **Review** badge if you go elsewhere. VoiceOver announces each state once.
+- **How It Works** opens as a sheet from the first row of the About section in Settings, and from the Help menu on a Mac.
+- History fills the window width instead of a narrow column.
 - Advanced settings explain each option in one short line, and the note that proxy addresses are saved in the Keychain appears once, under the proxies.
 - Buttons, colors, spacing and motion now use the system's own styles, so they match macOS and iOS 26, with one olive accent for controls, links and progress. The accent is a little deeper in dark mode, so button labels stay readable.
 
 ### Removed
 
+- The Home screen is gone, with its large **Send** and **Receive** buttons, the encryption badge above them and the **Recent transfers** list. **History** is a tab, and the badge still shows on the waiting, confirm and transferring screens.
 - **Multicast Address**, **Built-in DNS Resolver**, **Single Connection** and **Exact Paths** are gone from Advanced settings, which keeps the SOCKS5 and HTTP proxies, **Sender IP**, **Send Speed Limit** and **Skip Local Network**. Their saved values are deleted the first time 1.3.0 opens. If you had **Exact Paths** set, a send now includes those files. If you had a custom multicast address, devices find each other on croc's default one again, and if you had the built-in DNS resolver on, relay names are looked up by your system again. If you had **Single Connection** on, a send now uses several connections, as croc does by default. The patterns under **Exclude from sends** in Settings still work.
 - **Run a Relay** and **Check Relay…** are gone, with the Relay tab in Mac Settings and the switch in the menu bar window. The relay address, IPv6 address and password you set in Settings still work as before. To host a relay, run `croc relay` on a machine you control. The port, password and launch setting the relay left behind are deleted the first time 1.3.0 opens.
 - **Show History in Spotlight** is gone, and Spotlight no longer finds past transfers by their file names. If you had it on, the entries CrocApp added to Spotlight are removed the first time 1.3.0 opens. The **Find Transfers** and **Open Transfer** actions in Shortcuts still work.

@@ -4,7 +4,7 @@ import SwiftUI
 
 /// Local transfer history: a flat list, newest first, that opens a record in
 /// `HistoryDetailView`. Send Again re-stages a past send's files via
-/// AppRouter (same path as dock drops); records whose files vanished get an
+/// AppRouter (same route as dock drops); records whose files vanished get an
 /// explanatory alert instead of a silent no-op. Stored uploads show when
 /// their link expires and can be revoked here. design/components.md →
 /// HistoryRow.
@@ -132,7 +132,6 @@ struct HistoryView: View {
                 Color.clear.onAppear { opened = nil }
             }
         }
-        .frame(maxWidth: 480)
     }
 
     /// A row that is on screen: a hidden row (filtered out by the search)
@@ -144,9 +143,6 @@ struct HistoryView: View {
     private var list: some View {
         List {
             ForEach(shown) { record in
-                // Not a value link: the stack that hosts this screen has a
-                // homogeneous `AppRouter.Route` path, which a value of any
-                // other type cannot join.
                 NavigationLink {
                     HistoryDetailView(record: record, actions: actions)
                 } label: {
@@ -169,7 +165,6 @@ struct HistoryView: View {
                 }
             }
         }
-        .frame(maxWidth: 480)
     }
     #endif
 
@@ -207,7 +202,7 @@ struct HistoryView: View {
         #if os(macOS)
         openSettings()
         #else
-        router.push([.settings])
+        router.showSettings()
         #endif
     }
 
