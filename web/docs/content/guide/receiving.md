@@ -8,7 +8,7 @@ description: How to receive a transfer in CrocApp, review the file list, choose 
 
 ![CrocApp on iOS showing a receive of three files with Decline and Accept buttons](../../screenshots/iphone/receive-incoming-light.webp#gh-light-mode-only)![CrocApp on iOS showing a receive of three files with Decline and Accept buttons](../../screenshots/iphone/receive-incoming-dark.webp#gh-dark-mode-only)
 
-Open the **Receive** tab, or **Receive** in the sidebar.
+Open the **Receive** tab, or **Receive** in the sidebar. **Receive** stays at the bottom of the screen, above the tab bar.
 
 ## Enter the code
 
@@ -33,7 +33,7 @@ On a Mac you can also change it in [Settings](settings.md) under **Save Received
 
 ## Accept or decline
 
-After you tap **Receive** and connect, CrocApp lists the files with sizes and a total. Tap **Accept** to start, or **Decline** to refuse. Decline is the only way out at this point. If the sender turned on **Confirm on Both Sides**, they confirm too.
+After you tap **Receive** and connect, CrocApp lists the files with sizes and a total. Tap **Accept** to start, or **Decline** to refuse. Both stay at the bottom of the screen while a long list scrolls above them. Decline is the only way out at this point. If the sender turned on **Confirm on Both Sides**, they confirm too.
 
 If you know the sender's address, you can connect straight to it with **Sender IP** in [Settings](settings.md#advanced).
 

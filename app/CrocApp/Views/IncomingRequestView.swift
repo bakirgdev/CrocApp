@@ -3,17 +3,17 @@ import CrocKit
 import SwiftUI
 
 /// The accept gate. design/components.md → AcceptGate: a phase of the transfer
-/// screen, not a sheet or an alert. Decline says no to the other device, Accept
-/// (or Keep Both and Replace when a name is taken) says yes. Leaving answers
-/// nothing, and there is no Cancel here. The direction header and the trust
-/// badge sit above it, in the screen's header.
+/// screen, not a sheet or an alert. Its answers (Decline says no to the other
+/// device, Accept, or Keep Both and Replace when a name is taken, says yes) are
+/// in the screen's actions row, so they stay in view above a long list. Leaving
+/// answers nothing, and there is no Cancel here. The direction header sits above
+/// it, in the screen's header.
 struct IncomingRequestView: View {
     @Environment(TransferController.self) private var controller
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let list: FileList
     let conflicts: [String]
     let blocked: [String]
-    @ScaledMetric private var listMaxHeight = TransferStatusView.fileListMaxHeight
 
     private var summary: String {
         inflected(
@@ -25,19 +25,15 @@ struct IncomingRequestView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            ScrollView {
-                GroupBox {
-                    VStack(spacing: 0) {
-                        ForEach(Array(list.files.enumerated()), id: \.element.name) {
-                            index, entry in
-                            FileRow(name: entry.name, size: entry.size)
-                            if index < list.files.count - 1 { Divider() }
-                        }
+            GroupBox {
+                VStack(spacing: 0) {
+                    ForEach(Array(list.files.enumerated()), id: \.element.name) {
+                        index, entry in
+                        FileRow(name: entry.name, size: entry.size)
+                        if index < list.files.count - 1 { Divider() }
                     }
                 }
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .frame(maxHeight: listMaxHeight)
             Text(summary)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -60,12 +56,6 @@ struct IncomingRequestView: View {
                 )
                 .transition(.opacity)
             }
-            // Three labels do not fit side by side at accessibility text sizes
-            // on a phone, so they stack there.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 16) { actions }
-                VStack { actions }
-            }
         }
         .animation(
             reduceMotion ? nil : .default, value: conflicts.isEmpty
@@ -78,31 +68,6 @@ struct IncomingRequestView: View {
                 String(localized: "Files are waiting for your answer") + ". " + summary)
             message.accessibilitySpeechAnnouncementPriority = .low
             AccessibilityNotification.Announcement(message).post()
-        }
-    }
-
-    @ViewBuilder private var actions: some View {
-        Button(role: .destructive) {
-            controller.respond(accept: false)
-        } label: {
-            Text("Decline").foregroundStyle(.red)
-        }
-        .buttonStyle(.glass)
-        .controlSize(.large)
-        if blocked.isEmpty, !conflicts.isEmpty {
-            Button("Replace") { controller.respond(accept: true, policy: .replace) }
-                .buttonStyle(.glass)
-                .controlSize(.large)
-            Button("Keep Both") { controller.respond(accept: true, policy: .keepBoth) }
-                .buttonStyle(.glassProminent)
-                .controlSize(.large)
-        } else {
-            // Until the conflict scan reports, Accept keeps both: it
-            // never overwrites a file the scan has not shown yet.
-            Button("Accept") { controller.respond(accept: true, policy: .keepBoth) }
-                .buttonStyle(.glassProminent)
-                .controlSize(.large)
-                .disabled(!blocked.isEmpty)
         }
     }
 }

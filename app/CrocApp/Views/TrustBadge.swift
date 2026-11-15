@@ -1,42 +1,11 @@
 import SwiftUI
 
-/// End-to-end encryption badge + active relay indicator, shown on the
-/// waiting and transferring screens. Relay kind is captured at transfer
-/// start (TransferController.activeRelay) so it can't drift mid-transfer.
+/// The end-to-end encryption statement with the relay in use, shown once, on
+/// How It Works.
 struct TrustBadge: View {
-    enum Variant {
-        /// Inline capsule on the transfer screens.
-        case pill
-        /// Row card for the How It Works screen.
-        case full
-    }
-
     let relay: AppSettings.RelayKind
-    var variant: Variant = .pill
 
     var body: some View {
-        switch variant {
-        case .pill: pill
-        case .full: full
-        }
-    }
-
-    private var pill: some View {
-        // The label is primary, not success: success on its own tint is 1.98:1
-        // in light. Only the glyph carries the success color.
-        Label {
-            Text("End-to-end encrypted")
-        } icon: {
-            Image(systemName: "lock.fill").foregroundStyle(.green)
-        }
-        .font(.footnote.weight(.semibold))
-        .padding(.vertical, 4)
-        .padding(.horizontal, 12)
-        .background(.green.opacity(0.14), in: .capsule)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var full: some View {
         Label {
             VStack(alignment: .leading) {
                 Text("End-to-end encrypted")

@@ -27,16 +27,13 @@ struct TransferStatusView: View {
     #endif
     @State private var showsSlowPhaseHint = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // A received text scrolls inside this height, scaled with Dynamic Type.
     @ScaledMetric private var receivedTextMaxHeight: CGFloat = 200
 
     // Long enough that ordinary relay/handshake latency doesn't false-positive,
     // short enough to reassure before the user assumes the app is hung.
     private static let slowPhaseThreshold: Duration = .seconds(25)
-
-    /// A list of rows (the accept gate, the received
-    /// files) scrolls inside this height, scaled with Dynamic Type.
-    static let fileListMaxHeight: CGFloat = 240
 
     private var isInEarlyPhase: Bool {
         switch controller.phase {
@@ -57,29 +54,20 @@ struct TransferStatusView: View {
     }
 
     var body: some View {
-        // The phase content scrolls when taller than the screen (accessibility
-        // text sizes) and fits the screen otherwise. Not ViewThatFits: it
-        // measures the unwrapped ideal height, so wrapping text (link, callout)
-        // made it pick the plain branch and clip the bottom of the screen.
-        GeometryReader { proxy in
-            ScrollView {
-                // fixedSize: minHeight proposes the screen height down to the
-                // content, which would squeeze wrapping text into ellipses.
-                // A running transfer reads down from its header, so nothing
-                // above the header, the badge or the code phrase ever changes
-                // and none of them moves (principles.md → Motion).
-                // A result sits in the middle.
-                content
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(
-                        maxWidth: .infinity, minHeight: proxy.size.height,
-                        alignment: showsHeader ? .top : .center)
+        Group {
+            // The link result is a screen of its own: its Revoke and Done act on
+            // state it keeps.
+            if case .stored(let receipt) = controller.phase {
+                StoredLinkView(receipt: receipt)
+            } else {
+                ActionScreen {
+                    content
+                } actions: {
+                    actions
+                }
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .scrollClipDisabled()
         }
-        .padding()
-        .frame(maxWidth: 480)
+        .animation(phaseAnimation, value: phaseKind == .stored)
         // Resets and restarts whenever isInEarlyPhase flips, so the hint
         // never keeps counting into transferring/done/failed, but survives
         // the starting → connecting handoff (still the same stall to the user).
@@ -92,6 +80,9 @@ struct TransferStatusView: View {
         }
     }
 
+    // A running transfer reads down from its header, so nothing above the header
+    // or the code phrase ever changes and none of them moves (principles.md →
+    // Motion).
     private var content: some View {
         VStack(spacing: 24) {
             if showsHeader {
@@ -105,29 +96,39 @@ struct TransferStatusView: View {
 
             // One cross-fade on the block that swaps; its contents do not
             // animate in separately. The ZStack lets old and new overlap
-            // instead of stacking while both are in the tree, aligned the
-            // way the screen is, so the new phase does not shift once the
-            // old one is gone.
-            ZStack(alignment: showsHeader ? .top : .center) {
+            // instead of stacking while both are in the tree, so the new phase
+            // does not shift once the old one is gone.
+            ZStack(alignment: .top) {
                 phaseContent
                     .id(phaseKind)
                     .transition(.opacity)
             }
             .animation(phaseAnimation, value: phaseKind)
-
-            if showsCancel {
-                Button(role: .destructive) {
-                    controller.cancel()
-                } label: {
-                    Text("Cancel").foregroundStyle(.red)
-                }
-                .buttonStyle(.glass)
-                .touchTargets()
-                .keyboardShortcut(.cancelAction)
-            }
         }
         .animation(phaseAnimation, value: showsHeader)
         .animation(phaseAnimation, value: localNetworkDenied)
+    }
+
+    /// The buttons of the phase, in the actions row: the prominent one last.
+    @ViewBuilder private var actions: some View {
+        switch controller.phase {
+        case .incoming(_, let conflicts, let blocked):
+            incomingActions(conflicts: conflicts, blocked: blocked)
+        case .done:
+            doneActions
+        case .failed(let failure):
+            failedActions(failure)
+        case .confirmSend:
+            cancelAction
+            resultAction("Send") { controller.respond(accept: true) }
+        default:
+            if controller.phase.canCancel { cancelAction }
+        }
+    }
+
+    private var cancelAction: some View {
+        destructiveAction("Cancel") { controller.cancel() }
+            .keyboardShortcut(.cancelAction)
     }
 
     private var localNetworkDenied: Bool { localNetwork.status == .denied }
@@ -136,32 +137,25 @@ struct TransferStatusView: View {
         reduceMotion ? nil : .default
     }
 
-    /// The direction header and the trust badge, which persist from the start
-    /// of a transfer to its result (principles.md → Motion).
+    /// The direction header, which persists from the start of a transfer to its
+    /// result (principles.md → Motion).
     private var header: some View {
         VStack(spacing: 16) {
             DirectionHeader(direction: controller.direction, pulses: phaseKind == .waiting)
-            if controller.isStoredTransfer {
-                // A stored transfer meets no relay, so the relay badge would
-                // describe a path it does not take. The caption speaks for a
-                // send; a stored receive gets neither.
-                if controller.direction == .send {
-                    Text(
-                        "Encrypted on this device. The link server only holds the encrypted files."
-                    )
+            // A stored transfer meets no relay, so only its send says where the
+            // files are held; a stored receive says nothing.
+            if controller.isStoredTransfer, controller.direction == .send {
+                Text("Encrypted on this device. The link server only holds the encrypted files.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                }
-            } else {
-                TrustBadge(relay: controller.activeRelay)
             }
         }
     }
 
     @ViewBuilder private var phaseContent: some View {
         switch controller.phase {
-        case .idle:
+        case .idle, .stored:
             EmptyView()
         case .starting:
             earlyPhase("Starting…")
@@ -179,10 +173,8 @@ struct TransferStatusView: View {
             }
         case .done(let summary, let receivedText):
             doneView(summary, receivedText: receivedText)
-        case .stored(let receipt):
-            StoredLinkView(receipt: receipt)
         case .failed(let failure):
-            failedView(failure)
+            StatusBlock(failure: failure)
         }
     }
 
@@ -209,9 +201,6 @@ struct TransferStatusView: View {
         .foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
     }
-
-    /// `confirmSendView` draws its own Cancel, so this one is left off it.
-    private var showsCancel: Bool { controller.phase.canCancel && phaseKind != .confirmSend }
 
     // MARK: - Local network denied
 
@@ -340,19 +329,23 @@ struct TransferStatusView: View {
             Text("Send the selected items to the connected device?")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            HStack(spacing: 16) {
-                Button(role: .destructive) {
-                    controller.cancel()
-                } label: {
-                    Text("Cancel").foregroundStyle(.red)
-                }
-                .buttonStyle(.glass)
-                .touchTargets()
-                .keyboardShortcut(.cancelAction)
-                Button("Send") { controller.respond(accept: true) }
-                    .buttonStyle(.glassProminent)
-                    .controlSize(.large)
+        }
+    }
+
+    // MARK: - Incoming (accept gate)
+
+    @ViewBuilder private func incomingActions(conflicts: [String], blocked: [String]) -> some View {
+        destructiveAction("Decline") { controller.respond(accept: false) }
+        if blocked.isEmpty, !conflicts.isEmpty {
+            resultAction("Replace", prominent: false) {
+                controller.respond(accept: true, policy: .replace)
             }
+            resultAction("Keep Both") { controller.respond(accept: true, policy: .keepBoth) }
+        } else {
+            // Until the conflict scan reports, Accept keeps both: it
+            // never overwrites a file the scan has not shown yet.
+            resultAction("Accept") { controller.respond(accept: true, policy: .keepBoth) }
+                .disabled(!blocked.isEmpty)
         }
     }
 
@@ -376,14 +369,14 @@ struct TransferStatusView: View {
                     resetKey: ProgressScope(file: p.currentFile, size: p.fileSize)
                 )
                 .accessibilityLabel("Current file progress")
-                HStack {
+                labelAndValue {
                     // Hidden until the engine reports a count: "File 0 of 0" is wrong.
                     if p.totalFiles > 0 {
                         Text("File \(fileNumber) of \(p.totalFiles)")
                             .contentTransition(numericTransition)
                             .animation(phaseAnimation, value: fileNumber)
                     }
-                    Spacer()
+                } value: {
                     Text(
                         // spellsOutZero: the default renders the first moments
                         // of every transfer as "Zero kB / 41 MB".
@@ -402,12 +395,12 @@ struct TransferStatusView: View {
                     fraction: totalFraction, resetKey: ProgressScope(file: -1, size: p.totalSize)
                 )
                 .accessibilityLabel("Overall progress")
-                HStack {
+                labelAndValue {
                     Text(
                         "Total \(totalDone.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
                     )
                     .foregroundStyle(.secondary)
-                    Spacer()
+                } value: {
                     SpeedText(reduceMotion: reduceMotion)
                 }
                 .font(.caption)
@@ -439,9 +432,9 @@ struct TransferStatusView: View {
             }
             .font(.callout)
             #endif
-            HStack {
+            labelAndValue {
                 Text("^[\(p.totalFiles) file](inflect: true)")
-                Spacer()
+            } value: {
                 Text(verbatim: p.totalSize.formatted(.byteCount(style: .file)))
             }
             .font(.caption)
@@ -449,6 +442,22 @@ struct TransferStatusView: View {
             .monospacedDigit()
         }
         .accessibilityElement(children: .combine)
+    }
+
+    /// A label and its value side by side, or the label above the value at
+    /// accessibility text sizes, where a byte count would otherwise truncate.
+    private func labelAndValue(
+        @ViewBuilder label: () -> some View, @ViewBuilder value: () -> some View
+    ) -> some View {
+        let stacked = dynamicTypeSize.isAccessibilitySize
+        let layout =
+            stacked
+            ? AnyLayout(VStackLayout(alignment: .leading))
+            : AnyLayout(HStackLayout())
+        return layout {
+            label()
+            value().frame(maxWidth: .infinity, alignment: stacked ? .leading : .trailing)
+        }
     }
 
     /// Digits swap instantly under Reduce Motion.
@@ -499,13 +508,14 @@ struct TransferStatusView: View {
                     since: controller.startedAt ?? .distantPast,
                     isScoped: outputFolder.isUserSelected, reveal: reveal(in: folder))
             }
-            VStack {
-                if controller.direction == .receive, let folder = controller.lastOutputFolder {
-                    folderButton(folder)
-                }
-                resultAction("Done") { controller.reset() }
-            }
         }
+    }
+
+    @ViewBuilder private var doneActions: some View {
+        if controller.direction == .receive, let folder = controller.lastOutputFolder {
+            folderButton(folder)
+        }
+        resultAction("Done") { controller.reset() }
     }
 
     /// The selectable text and its two actions (docs/knowledge/app-ui-architecture.md →
@@ -553,14 +563,14 @@ struct TransferStatusView: View {
         // provider folder isn't reachable through it, so only offer
         // the button when the folder is still our own default.
         if isDefaultOutputFolder(folder) {
-            resultAction {
+            resultAction(prominent: false) {
                 openInFiles(folder)
             } label: {
                 Label("Open in Files", systemImage: "folder")
             }
         }
         #else
-        resultAction {
+        resultAction(prominent: false) {
             NSWorkspace.shared.activateFileViewerSelecting([folder])
         } label: {
             Label("Show in Finder", systemImage: "folder")
@@ -577,23 +587,18 @@ struct TransferStatusView: View {
     }
     #endif
 
-    private func failedView(_ failure: TransferFailure) -> some View {
-        VStack(spacing: 16) {
-            StatusBlock(failure: failure)
-            // components.md → StatusBlock: Done always, plus the one action
-            // that could help, if any.
-            VStack {
-                switch failure.remedy {
-                case .tryAgain?:
-                    resultAction("Try Again") { controller.retry() }
-                    resultAction("Done", prominent: false) { controller.reset() }
-                case .openSettings(let place)?:
-                    resultAction("Open Settings") { open(place) }
-                    resultAction("Done", prominent: false) { controller.reset() }
-                case nil:
-                    resultAction("Done") { controller.reset() }
-                }
-            }
+    /// components.md → StatusBlock: Done always, plus the one action that could
+    /// help, if any.
+    @ViewBuilder private func failedActions(_ failure: TransferFailure) -> some View {
+        switch failure.remedy {
+        case .tryAgain?:
+            resultAction("Done", prominent: false) { controller.reset() }
+            resultAction("Try Again") { controller.retry() }
+        case .openSettings(let place)?:
+            resultAction("Done", prominent: false) { controller.reset() }
+            resultAction("Open Settings") { open(place) }
+        case nil:
+            resultAction("Done") { controller.reset() }
         }
     }
 }
@@ -607,27 +612,6 @@ extension View {
         #else
         self
         #endif
-    }
-}
-
-/// A StatusBlock action: large and full width (components.md → StatusBlock).
-func resultAction(
-    _ title: LocalizedStringKey, prominent: Bool = true, action: @escaping () -> Void
-) -> some View {
-    resultAction(prominent: prominent, action: action) { Text(title) }
-}
-
-@ViewBuilder func resultAction(
-    prominent: Bool = false, role: ButtonRole? = nil, action: @escaping () -> Void,
-    @ViewBuilder label: () -> some View
-) -> some View {
-    let button = Button(role: role, action: action) {
-        label().frame(maxWidth: .infinity)
-    }
-    if prominent {
-        button.buttonStyle(.glassProminent).controlSize(.large)
-    } else {
-        button.buttonStyle(.glass).controlSize(.large)
     }
 }
 

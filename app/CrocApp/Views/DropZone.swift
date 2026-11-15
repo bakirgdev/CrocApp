@@ -14,8 +14,8 @@ struct DropZone: View {
     var size: Size = .regular
     let isTargeted: Bool
 
-    // SendView reuses the height and the stroke for the staged list and its
-    // drag-over border.
+    // SendView reuses the height for the text box and the stroke for the staged
+    // list's drag-over border.
     static let minHeight: CGFloat = 168
     static let strokeWidth: CGFloat = 2
     private static let compactMinHeight: CGFloat = 96
@@ -69,7 +69,7 @@ struct DropZone: View {
 
 #Preview("Idle") {
     DropZone(
-        title: "Drop files or folders here", hint: "or add them with the buttons below",
+        title: "Drop files or folders here", hint: "or add them with the button below",
         isTargeted: false
     )
     .padding()
@@ -77,7 +77,7 @@ struct DropZone: View {
 
 #Preview("Drag over") {
     DropZone(
-        title: "Drop files or folders here", hint: "or add them with the buttons below",
+        title: "Drop files or folders here", hint: "or add them with the button below",
         isTargeted: true
     )
     .padding()

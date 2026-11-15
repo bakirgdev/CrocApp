@@ -22,7 +22,7 @@ A direction header (`arrow.up` or `arrow.down` plus the word **Sending** or **Re
 
 ## StatusBlock
 
-The large centered result (done, failed): a glyph in the kind color, a title that states the outcome in words, a one-sentence detail, then the actions stacked. A failure has at most two actions chosen by the kind of failure, and **Done** is always one of them.
+The result (done, failed), top-aligned: a glyph in the kind color, a title that states the outcome in words and a one-sentence detail. Its actions sit in the actions row at the bottom of the screen, with the prominent one last. A failure has at most two actions chosen by the kind of failure, and **Done** is always one of them.
 
 | Failure kind | Actions |
 |---|---|
@@ -34,7 +34,7 @@ The large centered result (done, failed): a glyph in the kind color, a title tha
 
 ## AcceptGate
 
-The incoming request, shown as a phase of the transfer screen, never a sheet or an alert, so it cannot be dismissed by accident. It lists the files, banners any overwrite conflict or blocked item, and offers Decline (destructive) and Accept (primary). There is no Cancel and no "Not now": leaving the screen answers nothing and the request stays live, with a Review banner and badge so it is never lost. Behavior and the full rules: `docs/knowledge/app-ui-architecture.md`, "Accept gate".
+The incoming request, shown as a phase of the transfer screen, never a sheet or an alert, so it cannot be dismissed by accident. It lists the files, banners any overwrite conflict or blocked item, and offers Decline (destructive) and Accept (primary) in the actions row at the bottom, so a long list scrolls above them. There is no Cancel and no "Not now": leaving the screen answers nothing and the request stays live, with a Review banner and badge so it is never lost. Behavior and the full rules: `docs/knowledge/app-ui-architecture.md`, "Accept gate".
 
 ## HistoryRow
 

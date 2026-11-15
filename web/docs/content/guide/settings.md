@@ -93,7 +93,7 @@ Type patterns in **Patterns, one per line** to skip matching files when you send
 
 ## The trust badge
 
-Waiting, confirming and transferring screens show **End-to-end encrypted** with one line naming the route you configured:
+**How It Works** shows **End-to-end encrypted** with one line naming the route you configured (open it from the first row of **About** in Settings, or from the Help menu on a Mac):
 
 - "Local network only: nothing leaves your network"
 - "Via custom relay `<address>`, which sees only encrypted data"

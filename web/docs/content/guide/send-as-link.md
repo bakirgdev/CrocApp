@@ -32,7 +32,7 @@ Use a code when both people are available now, or for folders and text. Use a li
 4. Set **Downloads allowed**, from 1 (the default) to 100.
 5. Tap **Send as Link**.
 
-A line under the options names the link server. While it runs, the screen reads **Sending** with progress. A link send uses no relay, so it shows no relay badge.
+A line under the options names the link server. While it runs, the screen reads **Sending** with progress. A link send uses no relay.
 
 The **Send as Link** switch is disabled, with a line saying why, when text is selected or a folder is staged. Switch to **Files**, remove the folders, or send them with a code. The custom code field is hidden while the switch is on, since there is no code.
 

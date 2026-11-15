@@ -9,7 +9,7 @@ struct HowItWorksView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                TrustBadge(relay: settings.relayKind, variant: .full)
+                TrustBadge(relay: settings.relayKind)
                 item(
                     "key.fill", "One code, one transfer",
                     "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner. Share it over a channel you trust; it expires with the transfer."
@@ -17,10 +17,6 @@ struct HowItWorksView: View {
                 item(
                     "lock.shield.fill", "Strong keys from short codes",
                     "Both devices run PAKE (password-authenticated key exchange) to turn the code phrase into a strong encryption key. The code itself never crosses the network, and a wrong code fails immediately."
-                )
-                item(
-                    "lock.fill", "End-to-end encrypted",
-                    "Everything is encrypted on your device and decrypted only on the other one. Nothing in between can read it."
                 )
                 item(
                     "antenna.radiowaves.left.and.right", "The relay is just a pipe",

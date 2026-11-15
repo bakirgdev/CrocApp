@@ -13,7 +13,7 @@ On iPhone, **Send**, **Receive**, **History** and **Settings** are the tabs at t
 ## Send
 
 1. Tap or click **Send**.
-2. Pick **Files** or **Text** under **What to Send**. For files, use **Add Files** or **Add Folder**. On a Mac you can also drop files anywhere on the window.
+2. Pick **Files** or **Text** under **What to Send**. For files, open the **Add** menu and choose **Files** or **Folder**. On a Mac you can also drop files anywhere on the window.
 3. Tap **Send**.
 4. Give the other person the code phrase on screen. They can type it, scan the QR code, or open the link from **Share Link**.
 5. When the other device accepts, the transfer runs. **Transfer complete** appears when it ends.

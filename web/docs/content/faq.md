@@ -53,5 +53,5 @@ No. CrocApp is for Apple platforms only. Use the [croc command line](https://git
 | Link | A `https://crocapp.dev/r/#<code>` address that carries a code phrase after the `#`. Opening one fills in **Receive** and never connects by itself. |
 | Send as link | Sending encrypted files to a link server so the other device can receive later. See [Send as link](guide/send-as-link.md). |
 | Link server | The server that holds the files of a Send as link transfer until the link ends. The default is `https://getcroc.com`. |
-| Trust badge | The label that says a transfer is end-to-end encrypted and names the route you configured. See [Settings](guide/settings.md#the-trust-badge). |
+| Trust badge | The label on **How It Works** that says transfers are end-to-end encrypted and names the route you configured. See [Settings](guide/settings.md#the-trust-badge). |
 | History | CrocApp's list of past transfers, kept only on your device. See [History](guide/history.md). |

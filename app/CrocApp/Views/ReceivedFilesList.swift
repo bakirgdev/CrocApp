@@ -16,26 +16,21 @@ struct ReceivedFilesList: View {
     @State private var preview: URL?
     /// The folder whose security scope this list holds, so a new `folder` swaps scopes.
     @State private var heldScope: URL?
-    @ScaledMetric private var listMaxHeight = TransferStatusView.fileListMaxHeight
 
     var body: some View {
         ZStack {
             if !items.isEmpty {
-                ScrollView {
-                    GroupBox {
-                        VStack(spacing: 0) {
-                            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                                FileRow(
-                                    received: item,
-                                    quickLook: { preview = item.url },
-                                    reveal: reveal.map { reveal in { reveal(item.url) } })
-                                if index < items.count - 1 { Divider() }
-                            }
+                GroupBox {
+                    VStack(spacing: 0) {
+                        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                            FileRow(
+                                received: item,
+                                quickLook: { preview = item.url },
+                                reveal: reveal.map { reveal in { reveal(item.url) } })
+                            if index < items.count - 1 { Divider() }
                         }
                     }
                 }
-                .scrollBounceBehavior(.basedOnSize)
-                .frame(maxHeight: listMaxHeight)
             }
         }
         .quickLookPreview($preview, in: items.filter { !$0.isFolder }.map(\.url))
