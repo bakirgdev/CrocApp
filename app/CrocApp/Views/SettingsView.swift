@@ -59,17 +59,14 @@ struct SettingsView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                         Button("Change…") { showFolderPicker = true }
-                            .buttonVariant(.plain)
                         if outputFolder.isUserSelected {
                             Button("Reset") { outputFolder.resetToDefault() }
-                                .buttonVariant(.plain)
                         }
                     }
                 }
                 Button("Show in Finder") {
                     NSWorkspace.shared.activateFileViewerSelecting([outputFolder.url])
                 }
-                .buttonVariant(.plain)
                 .focused($focusedControl, equals: .showInFinder)
             }
 
@@ -124,9 +121,8 @@ extension SettingsView {
             if loginItem.needsApproval {
                 HStack {
                     Text("Allow CrocApp in System Settings > General > Login Items.")
-                        .font(.caption).foregroundStyle(Color.textSecondary)
+                        .font(.caption).foregroundStyle(.secondary)
                     Button("Open Settings") { SMAppService.openSystemSettingsLoginItems() }
-                        .buttonVariant(.plain)
                 }
             }
             if let message = loginItem.errorMessage {

@@ -86,12 +86,11 @@ struct HistoryDetailView: View {
         }
     }
 
-    /// A label and its value. The value takes `Color.textSecondary`: the
-    /// system's own secondary style is 3.44:1 (principles.md → Contrast, rule 4).
+    /// A label and its value, the value in the secondary style.
     private func valueRow(
         _ label: LocalizedStringKey, @ViewBuilder value: () -> some View
     ) -> some View {
-        LabeledContent(label) { value().foregroundStyle(Color.textSecondary) }
+        LabeledContent(label) { value().foregroundStyle(.secondary) }
     }
 
     @ViewBuilder private var linkRow: some View {
@@ -118,7 +117,7 @@ struct HistoryDetailView: View {
             // A record keeps at most `TransferRecord.maxNames` names.
             let unlisted = record.fileCount - record.names.count
             if unlisted > 0 {
-                Text("+ \(unlisted) more").foregroundStyle(Color.textSecondary)
+                Text("+ \(unlisted) more").foregroundStyle(.secondary)
             }
         }
     }
@@ -131,21 +130,21 @@ struct HistoryDetailView: View {
                 } label: {
                     Text("Send Again").frame(maxWidth: .infinity)
                 }
-                .buttonVariant(.secondary)
+                .buttonStyle(.glass)
             }
             if controller.canRevoke(record) {
                 Button(role: .destructive) {
                     revokeCandidate = record
                 } label: {
-                    revokeLabel.frame(maxWidth: .infinity)
+                    revokeLabel.foregroundStyle(.red).frame(maxWidth: .infinity)
                 }
-                .buttonVariant(.destructiveTinted)
+                .buttonStyle(.glass)
                 .disabled(isRevoking)
             }
             Button(role: .destructive, action: requestDelete) {
-                Text("Delete").frame(maxWidth: .infinity)
+                Text("Delete").foregroundStyle(.red).frame(maxWidth: .infinity)
             }
-            .buttonVariant(.destructiveTinted)
+            .buttonStyle(.glass)
             .disabled(isRevoking)
         }
         .controlSize(.large)

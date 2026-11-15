@@ -102,10 +102,14 @@ struct FileRow: View {
                     Button(action: onRemove) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: glyphSize))
-                            .foregroundStyle(Color.textSecondary)
-                            .hitTarget()
+                            .foregroundStyle(.secondary)
+                            .frame(
+                                minWidth: ControlHeight.hitTargetMin,
+                                minHeight: ControlHeight.hitTargetMin
+                            )
+                            .contentShape(.rect)
                     }
-                    .buttonVariant(.plain)
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Remove \(name)")
                 }
             }
@@ -113,13 +117,13 @@ struct FileRow: View {
         .padding(.horizontal, Spacing.space4)
         .padding(.vertical, Spacing.space3)
         .frame(minHeight: ComponentMetrics.fileRowMinHeight)
-        .background(Color.surfaceCard, in: rowShape)
+        .background(.fill.tertiary, in: rowShape)
         .overlay(alignment: .bottom) {
             // principles.md → Spacing and layout: every row but the last draws the
             // inset hairline separator; the last omits it so corners stay clean.
             if !isLast {
                 Rectangle()
-                    .fill(Color.separatorToken)
+                    .fill(.separator)
                     .frame(height: BorderWidth.hairlineHalf)
             }
         }
@@ -131,7 +135,7 @@ struct FileRow: View {
         HStack(spacing: Spacing.space3) {
             Image(systemName: symbolName)
                 .font(.system(size: glyphSize))
-                .foregroundStyle(Color.accentFill)
+                .foregroundStyle(Color.accentColor)
                 .accessibilityHidden(true)
 
             if dynamicTypeSize.isAccessibilitySize {
@@ -141,7 +145,7 @@ struct FileRow: View {
                 VStack(alignment: .leading, spacing: Spacing.space2) {
                     Text(name)
                         .font(.callout)
-                        .foregroundStyle(Color.textPrimary)
+                        .foregroundStyle(.primary)
                         .lineLimit(3)
                         .truncationMode(.middle)
                     sizeLabel
@@ -150,7 +154,7 @@ struct FileRow: View {
             } else {
                 filenameLabel
                     .font(.callout)
-                    .foregroundStyle(Color.textPrimary)
+                    .foregroundStyle(.primary)
 
                 Spacer(minLength: Spacing.space3)
 
@@ -163,10 +167,11 @@ struct FileRow: View {
         ShareLink(item: url) {
             Image(systemName: "square.and.arrow.up")
                 .font(.system(size: glyphSize))
-                .foregroundStyle(Color.textSecondary)
-                .hitTarget()
+                .foregroundStyle(.secondary)
+                .frame(minWidth: ControlHeight.hitTargetMin, minHeight: ControlHeight.hitTargetMin)
+                .contentShape(.rect)
         }
-        .buttonVariant(.plain)
+        .buttonStyle(.plain)
         .accessibilityLabel(Text("Share \(name)"))
     }
 
@@ -174,7 +179,7 @@ struct FileRow: View {
         if let sizeText {
             Text(sizeText)
                 .font(.footnote)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .monospacedDigit()
                 .lineLimit(1)
         }
@@ -190,7 +195,6 @@ struct FileRow: View {
         )
     }
 
-    // design/implementation.md → Icons: folder, image, text, generic file.
     private static func symbolName(extension ext: String, isFolder: Bool) -> String {
         if isFolder { return "folder" }
         guard let type = UTType(filenameExtension: ext) else { return "doc" }

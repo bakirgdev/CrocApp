@@ -28,7 +28,6 @@ struct CodeField: View {
     /// Puts the caret here when the field appears (`HardwareKeyboard.isExpected`).
     var focusesOnAppear = false
 
-    @Environment(\.colorSchemeContrast) private var contrast
     @FocusState private var isFocused: Bool
     /// The user has said they are done with a value that is wrong: Return, or
     /// leaving the field. Until then a short code is just unfinished, so the
@@ -57,7 +56,7 @@ struct CodeField: View {
             if showsInvalid, let invalidMessage {
                 Text(invalidMessage)
                     .font(.footnote)
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
             }
         }
         // A fixed value is right again at once, so the next mistake starts calm.
@@ -98,7 +97,6 @@ struct CodeField: View {
                 }
                 .labelStyle(.iconOnly)
                 .buttonBorderShape(.roundedRectangle(radius: Radius.sm))
-                .tint(Color.accentFill)
                 // Send has a second PasteButton, and the system names both "Paste".
                 .accessibilityLabel("Paste code")
                 .accessibilityInputLabels(["Paste code"])
@@ -107,9 +105,7 @@ struct CodeField: View {
         .padding(.leading, Self.leadingPadding)
         .padding(.trailing, Self.trailingPadding)
         .frame(minHeight: ControlHeight.large)
-        .background(
-            Color.surfaceBase, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-        )
+        .background(.background, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                 .strokeBorder(borderColor, lineWidth: BorderWidth.hairline)
@@ -118,8 +114,8 @@ struct CodeField: View {
 
     // components.md → CodeField: control border idle, accent focused, error invalid.
     private var borderColor: Color {
-        if showsInvalid { return .statusError }
-        if isFocused { return .accentFill }
-        return .controlBorder(contrast)
+        if showsInvalid { return .red }
+        if isFocused { return .accentColor }
+        return .secondary
     }
 }

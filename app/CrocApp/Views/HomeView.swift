@@ -103,11 +103,15 @@ struct HomeView: View {
             Button {
                 router.path.append(.send)
             } label: {
-                Label("Send", systemImage: "arrow.up.circle.fill")
-                    .font(.title2.bold())
-                    .frame(maxWidth: .infinity, minHeight: Self.actionMinHeight)
+                // Not a `Label`: a Form row tints a Label's icon, and the tint is the button's fill.
+                HStack {
+                    Image(systemName: "arrow.up.circle.fill")
+                    Text("Send")
+                }
+                .font(.title2.bold())
+                .frame(maxWidth: .infinity, minHeight: Self.actionMinHeight)
             }
-            .buttonVariant(.prominent)
+            .buttonStyle(.glassProminent)
             .overlay(alignment: .topTrailing) {
                 // Dock/window/share drops queue into pendingSendURLs
                 // without navigating while a transfer is active (queue-
@@ -117,10 +121,10 @@ struct HomeView: View {
                     Text(router.pendingSendURLs.count, format: .number)
                         .font(.footnote.weight(.semibold))
                         .monospacedDigit()
-                        .foregroundStyle(Color.onAccent)
+                        .foregroundStyle(.white)
                         .padding(.horizontal, Spacing.space3)
                         .padding(.vertical, Spacing.space1)
-                        .background(Color.accentSolid, in: Capsule())
+                        .background(Color.accentColor, in: Capsule())
                         .offset(x: Spacing.space3, y: -Spacing.space3)
                         .accessibilityLabel(
                             "^[\(router.pendingSendURLs.count) file](inflect: true) waiting to send"
@@ -135,7 +139,7 @@ struct HomeView: View {
                     .font(.title2.bold())
                     .frame(maxWidth: .infinity, minHeight: Self.actionMinHeight)
             }
-            .buttonVariant(.secondary)
+            .buttonStyle(.glass)
         }
         .padding(.vertical, Spacing.space3)
         .animation(

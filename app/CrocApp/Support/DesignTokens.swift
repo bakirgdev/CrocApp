@@ -1,15 +1,6 @@
 import SwiftUI
 
-#if os(iOS)
-import UIKit
-#else
-import AppKit
-#endif
-
-// This is the one file in the app that splits on `#if os()` for
-// UIKit/AppKit-backed colors (design/implementation.md → Colors).
-
-/// 4pt spacing grid. design/principles.md → Spacing and layout.
+/// 4pt spacing grid.
 enum Spacing {
     static let space1: CGFloat = 2
     static let space2: CGFloat = 4
@@ -24,8 +15,7 @@ enum Spacing {
     static let space11: CGFloat = 64
 }
 
-/// Concentric radii. design/principles.md → Shape. Always pair with
-/// `style: .continuous` (design/implementation.md → Spacing, shape, layout).
+/// Concentric radii. Always pair with `style: .continuous`.
 enum Radius {
     static let xs: CGFloat = 6
     static let sm: CGFloat = 10
@@ -74,8 +64,7 @@ enum Tracking {
     static let eyebrow: CGFloat = 0.6
 }
 
-/// Constants shared by more than one component (design/implementation.md → Spacing, shape, layout,
-/// shape, layout). Anything used by only one component stays a private
+/// Constants shared by more than one component. Anything used by only one component stays a private
 /// constant inside that component's file instead.
 enum ComponentMetrics {
     static let fileRowMinHeight: CGFloat = 48
@@ -86,6 +75,9 @@ enum ComponentMetrics {
     /// Status border alpha for StatusBanner and TrustBadge `full`
     /// (components.md → StatusBanner: 22% of the kind color).
     static let statusBorderOpacity: Double = 0.22
+    /// Fill alpha of a system color used as a tint (banners, badges, status glyph
+    /// circles, the drag-over drop zone).
+    static let tintOpacity: Double = 0.14
 }
 
 /// design/principles.md → Motion. Durations in seconds for `Animation`.
@@ -147,139 +139,9 @@ extension View {
     }
 }
 
-extension Color {
-    // MARK: - Accent (design/tokens.css; design/implementation.md → Colors)
-
-    /// Accent as a fill/icon/border/progress color — routes to the
-    /// `AccentColor` asset set so `.tint()` / `Color.accentColor` pick it up
-    /// for free. A fill, not a label color (principles.md → Contrast, rule 1):
-    /// never use this for a word, see `accentText`.
-    static var accentFill: Color { .accentColor }
-
-    /// `--color-accent-solid`: the background of a filled prominent button.
-    /// Darker than `accentFill` in light so `onAccent` reads at 5.84:1
-    /// (principles.md, Contrast); the same olive in dark.
-    static let accentSolid = Color("ColorAccentSolid")
-
-    /// Pressed state for custom button styles built on the accent solid.
-    static let accentPressed = Color("ColorAccentPressed")
-
-    /// `--color-accent-tint`: the drag-over and secondary-button fill. Alpha
-    /// is baked into the set (12% light / 16% dark).
-    static let accentTint = Color("ColorAccentTint")
-
-    /// Accent as *text*. Accent-as-text is a different value from
-    /// accent-as-fill: the brand olive is 4.06:1 on white as a fill, which
-    /// clears the 3:1 UI floor but not the 4.5:1 body-text floor, so text
-    /// takes the darker `--olive-700` step in light, 5.84:1 on base and at
-    /// least 5.06:1 on every light surface (principles.md, Contrast). Both
-    /// collapse to the same value in dark.
-    static let accentText = Color("ColorAccentText")
-
-    /// Accent text with extra margin on a tinted or grouped surface: one step
-    /// darker again (`--olive-800`). Optional, because `accentText` already
-    /// clears AA on every light surface.
-    static let accentTextOnTint = Color("ColorAccentTextOnTint")
-
-    /// Label drawn on top of a solid accent fill (e.g. a prominent button).
-    static let onAccent = Color("ColorOnAccent")
-
-    /// `--color-on-status`: label on a solid status fill, white in both themes.
-    static let onStatus = Color.white
-
-    // MARK: - Text (design/implementation.md → Colors)
-
-    /// System semantic for primary text.
-    static var textPrimary: Color { .primary }
-
-    /// `--color-text-secondary`: the only secondary text color. A color set,
-    /// not `.secondary`: Apple's secondaryLabel is 3.44:1 on white and fails AA
-    /// for any text below large size, this clears 4.5:1 on every surface that
-    /// carries it (principles.md → Contrast, rule 4). `.secondary` stays legal
-    /// for glyphs and large text only.
-    static let textSecondary = Color("ColorTextSecondary")
-
-    // MARK: - Status (design/implementation.md → Colors)
-
-    /// System semantics match the token values for the four status colors.
-    /// A status color is a fill/glyph only, never a foreground for text
-    /// (principles.md → Contrast, rule 2); see the `*Tint` colors below
-    /// for banner/badge backgrounds, and `Color.textPrimary` for their labels.
-    static var statusSuccess: Color { .green }
-    static var statusWarning: Color { .orange }
-    static var statusError: Color { .red }
-    static var statusInfo: Color { .blue }
-
-    /// The four tints bake their alpha into the asset (14% light / 18%
-    /// dark) rather than `.opacity()`, because the alpha itself differs by
-    /// appearance — `.opacity()` can only apply one number to both.
-    static let statusSuccessTint = Color("ColorStatusSuccessTint")
-    static let statusWarningTint = Color("ColorStatusWarningTint")
-    static let statusErrorTint = Color("ColorStatusErrorTint")
-    static let statusInfoTint = Color("ColorStatusInfoTint")
-
-    // MARK: - Surfaces (design/implementation.md → Colors)
-
-    /// `--color-surface-base` (tokens.css): the plain,
-    /// unelevated page fill. iOS takes `.systemBackground`; macOS has no
-    /// "base" surface distinct from the window background, so it takes
-    /// `.textBackgroundColor`, the fill of a bordered control (CodeField).
-    static var surfaceBase: Color {
-        #if os(iOS)
-        Color(uiColor: .systemBackground)
-        #else
-        Color(nsColor: .textBackgroundColor)
-        #endif
-    }
-
-    /// `--color-surface-card`: iOS `.secondarySystemGroupedBackground`; macOS
-    /// takes the closest solid analog, `controlBackgroundColor`. A view that
-    /// wants a glass card uses `.glassEffect()` instead of this token.
-    static var surfaceCard: Color {
-        #if os(iOS)
-        Color(uiColor: .secondarySystemGroupedBackground)
-        #else
-        Color(nsColor: .controlBackgroundColor)
-        #endif
-    }
-
-    /// `--color-separator`: the system separator.
-    static var separatorToken: Color {
-        #if os(iOS)
-        Color(uiColor: .separator)
-        #else
-        Color(nsColor: .separatorColor)
-        #endif
-    }
-
-    /// `--color-border-control`: the idle border of a text field. The system
-    /// secondary label, 3.44:1 on base, where `separatorToken` is 1.2:1 and
-    /// fails the 3:1 floor for a UI boundary (principles.md → Contrast).
-    /// Increase Contrast moves it to the primary label.
-    static func controlBorder(_ contrast: ColorSchemeContrast) -> Color {
-        contrast == .increased ? textPrimary : secondaryLabel
-    }
-
-    private static var secondaryLabel: Color {
-        #if os(iOS)
-        Color(uiColor: .secondaryLabel)
-        #else
-        Color(nsColor: .secondaryLabelColor)
-        #endif
-    }
-
-    /// `--paper` (principles.md): the literal white/black ink color, not a
-    /// themed surface. Used directly where a component knocks a glyph out
-    /// of a solid fill (e.g. TrustBadge `full`), never as a page background.
-    static let paper = Color("ColorPaper")
-
-    /// design/tokens.css: `--color-scrim`.
-    static let scrim = Color("ColorScrim")
-}
-
 /// The sender's code-phrase display: the one documented literal font size
-/// in the type scale (design/implementation.md → Typography). Wrapped in
-/// `@ScaledMetric` so it keeps tracking Dynamic Type despite the literal.
+/// in the type scale. Wrapped in `@ScaledMetric` so it keeps tracking Dynamic Type
+/// despite the literal.
 private struct CodeHeroTextStyle: ViewModifier {
     @ScaledMetric(relativeTo: .title) private var size: CGFloat = 30
 

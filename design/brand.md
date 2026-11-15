@@ -32,7 +32,7 @@ The croc character in `assets/mascot.png` (1024px source, never edited, never se
 
 ## Palette
 
-**Olive** is the brand color, and the accent is sampled from the mascot's body. In the app it is the accent tint only (`AccentColor`: olive-700 `#5C6B2E` in light, olive-400 `#A3B86A` in dark, `principles.md`, "Color") and appears in artwork. The web picks olive steps per theme through `tokens.css`. Khaki belongs to the icon, the mascot and illustration. UI stays olive plus Apple's neutrals and status colors.
+**Olive** is the brand color, and the accent is sampled from the mascot's body. In the app it is the accent tint only (`AccentColor`: `#5C6B2E` in light and `#6C7C3C` in dark, `principles.md`, "Color") and appears in artwork. The web picks olive steps per theme through `tokens.css`. Khaki belongs to the icon, the mascot and illustration. UI stays olive plus Apple's neutrals and status colors.
 
 Type is the system font, SF Mono for code. Glyphs are SF Symbols in the app and Lucide on the web, with no illustration style beyond the mascot.
 

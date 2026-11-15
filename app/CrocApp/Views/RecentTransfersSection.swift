@@ -142,7 +142,7 @@ struct RecentTransfersSection: View {
             Section {
                 ForEach(records) { RecentTransferRow(record: $0) }
             } header: {
-                Text("Recent transfers").foregroundStyle(Color.textSecondary)
+                Text("Recent transfers").foregroundStyle(.secondary)
             }
         }
     }
@@ -157,7 +157,7 @@ struct RecentTransfersSection: View {
             }
         } description: {
             Text("Finished sends and receives appear here.")
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
         }
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
@@ -209,7 +209,7 @@ private struct RecentTransferRow: View {
     private var directionGlyph: some View {
         Image(systemName: record.isSend ? "arrow.up.circle" : "arrow.down.circle")
             .font(.system(size: glyphSize))
-            .foregroundStyle(record.status == .completed ? Color.accentFill : Color.textSecondary)
+            .foregroundStyle(record.status == .completed ? Color.accentColor : Color.secondary)
             // The row's spoken label carries the direction.
             .accessibilityHidden(true)
     }
@@ -221,7 +221,7 @@ private struct RecentTransferRow: View {
                 .truncationMode(.middle)
             metadata(summary)
                 .font(.caption)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
         }
     }
 

@@ -12,7 +12,6 @@ struct SendView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorSchemeContrast) private var contrast
 
     enum Mode: CaseIterable {
         case files
@@ -171,7 +170,7 @@ struct SendView: View {
                 )
                 .frame(maxWidth: .infinity)
             }
-            .buttonVariant(.prominent)
+            .buttonStyle(.glassProminent)
             .controlSize(.large)
             .disabled(!canStart)
         }
@@ -227,7 +226,7 @@ struct SendView: View {
                 .disabled(linkUnavailableReason != nil)
                 .accessibilityHint(linkToggleHint)
             if let reason = linkUnavailableReason {
-                Text(reason).font(.caption).foregroundStyle(Color.textSecondary)
+                Text(reason).font(.caption).foregroundStyle(.secondary)
                     .transition(.opacity)
             } else if linkSelected {
                 VStack(alignment: .leading, spacing: Spacing.space3) {
@@ -244,14 +243,14 @@ struct SendView: View {
                             "Files are encrypted on this device before they reach \(serverHost). Anyone with the link can receive them until it expires or runs out."
                         )
                         .font(.caption)
-                        .foregroundStyle(Color.textSecondary)
+                        .foregroundStyle(.secondary)
                     }
                 }
                 .transition(.opacity)
             } else {
                 Text("Send encrypted files as a link instead of with a code.")
                     .font(.caption)
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
                     .transition(.opacity)
             }
         }
@@ -350,7 +349,7 @@ struct SendView: View {
                         // a list in the way gets the same accent border.
                         if isDropTargeted {
                             RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                                .strokeBorder(Color.accentFill, lineWidth: DropZone.strokeWidth)
+                                .strokeBorder(Color.accentColor, lineWidth: DropZone.strokeWidth)
                         }
                     }
                 }
@@ -371,6 +370,9 @@ struct SendView: View {
                 HStack { importButtons }
                 VStack { importButtons }
             }
+            #if os(iOS)
+            .controlSize(.large)
+            #endif
             .fileImporter(
                 isPresented: $showFileImporter,
                 allowedContentTypes: [.item],
@@ -420,11 +422,9 @@ struct SendView: View {
 
     @ViewBuilder private var importButtons: some View {
         Button("Add Files") { showFileImporter = true }
-            .buttonVariant(.secondary)
-            .touchControlSize()
+            .buttonStyle(.glass)
         Button("Add Folder") { showFolderImporter = true }
-            .buttonVariant(.secondary)
-            .touchControlSize()
+            .buttonStyle(.glass)
         #if os(iOS)
         Button {
             showPhotoPicker = true
@@ -435,8 +435,7 @@ struct SendView: View {
                 if isLoadingPhotos { ProgressView() }
             }
         }
-        .buttonVariant(.secondary)
-        .touchControlSize()
+        .buttonStyle(.glass)
         .disabled(isLoadingPhotos)
         #endif
     }
@@ -475,7 +474,7 @@ struct SendView: View {
                         // own text inset, so this one copies it.
                         Text("Type or paste the text to send.")
                             .font(.body.monospaced())
-                            .foregroundStyle(Color.textSecondary)
+                            .foregroundStyle(.secondary)
                             .padding(.horizontal, Self.placeholderInsetX)
                             .padding(.vertical, Self.placeholderInsetY)
                             .allowsHitTesting(false)
@@ -485,7 +484,7 @@ struct SendView: View {
                 .overlay {
                     RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                         .strokeBorder(
-                            textFocused ? Color.accentFill : Color.controlBorder(contrast),
+                            textFocused ? Color.accentColor : Color.secondary,
                             lineWidth: BorderWidth.hairline)
                 }
             PasteButton(payloadType: String.self) { strings in

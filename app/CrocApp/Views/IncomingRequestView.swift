@@ -40,7 +40,7 @@ struct IncomingRequestView: View {
             .frame(maxHeight: listMaxHeight)
             Text(summary)
                 .font(.caption)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .monospacedDigit()
             if !blocked.isEmpty {
                 StatusBanner(
@@ -82,21 +82,25 @@ struct IncomingRequestView: View {
     }
 
     @ViewBuilder private var actions: some View {
-        Button("Decline", role: .destructive) { controller.respond(accept: false) }
-            .buttonVariant(.destructive)
-            .controlSize(.large)
+        Button(role: .destructive) {
+            controller.respond(accept: false)
+        } label: {
+            Text("Decline").foregroundStyle(.red)
+        }
+        .buttonStyle(.glass)
+        .controlSize(.large)
         if blocked.isEmpty, !conflicts.isEmpty {
             Button("Replace") { controller.respond(accept: true, policy: .replace) }
-                .buttonVariant(.secondary)
+                .buttonStyle(.glass)
                 .controlSize(.large)
             Button("Keep Both") { controller.respond(accept: true, policy: .keepBoth) }
-                .buttonVariant(.prominent)
+                .buttonStyle(.glassProminent)
                 .controlSize(.large)
         } else {
             // Until the conflict scan reports, Accept keeps both: it
             // never overwrites a file the scan has not shown yet.
             Button("Accept") { controller.respond(accept: true, policy: .keepBoth) }
-                .buttonVariant(.prominent)
+                .buttonStyle(.glassProminent)
                 .controlSize(.large)
                 .disabled(!blocked.isEmpty)
         }

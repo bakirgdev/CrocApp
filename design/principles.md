@@ -23,14 +23,14 @@ Navigation, chrome and input change between devices; the screens, wording and ru
 
 ## Controls
 
-- The one primary action of a screen is `.buttonStyle(.glassProminent)`. Every other button is `.glass`, and a plain tertiary action is `.borderless`. A destructive action takes `role: .destructive` and the system draws it. No custom button style, fill, label color or hit area.
+- The one primary action of a screen is `.buttonStyle(.glassProminent)`. Every other button is `.glass`, and a plain tertiary action is `.borderless`. A destructive action takes `role: .destructive` on a `.glass` button with `.foregroundStyle(.red)` on its label: the system draws that label in the primary color, and `.tint(.red)` fixes it on iOS but fills the whole button red on macOS, where a destructive action would then outweigh the primary one. No custom button style, fill or hit area.
 - Toggles, pickers, segmented controls, forms, lists, sheets, alerts, menus and share are the system's, unmodified. Segment labels are Title Case.
 - An alert or confirmation dialog is only for an irreversible destructive action or a failure the user must acknowledge; everything else is an inline banner. A confirmation title is a question, a failure title a statement, with at most two actions.
 - Context menus and swipe actions are additive: every action is reachable another way. A swipe's leading edge is constructive, its trailing edge destructive.
 
 ## Color
 
-- **The accent is brand olive, and only the accent is.** `AccentColor` is olive-700 (`#5C6B2E`) in light and olive-400 (`#A3B86A`) in dark, sampled from the mascot's body. It tints controls, links, selection and progress. On the Mac, system controls may follow the user's accent instead.
+- **The accent is brand olive, and only the accent is.** `AccentColor` is the one color set, `#5C6B2E` in light (olive-700) and `#6C7C3C` in dark, olive darkened from the mascot's body until a white label clears 4.5:1. It is the global accent of every app target, so nothing sets `.tint` at a scene root. It tints controls, links, selection and progress. On the Mac, system controls may follow the user's accent instead.
 - Every other color is the system's, drawn as the system draws it: `.primary`, `.secondary`, `.tertiary`, and system red, green and orange for status. The app declares no other color sets. Never repaint a status color to match the accent.
 - Olive appears in the app only as the accent tint and in artwork (the icon, the mascot). Khaki belongs to the icon, the mascot and illustration.
 - **Color is never the only signal.** Direction is an arrow and the word "Sending" or "Receiving", every status is stated in words, and a glyph that alone carries a status has an accessibility label.
@@ -39,7 +39,8 @@ Navigation, chrome and input change between devices; the screens, wording and ru
 
 WCAG 2.2 AA is the floor: 4.5:1 for body text, 3:1 for large text and for UI boundaries and glyphs. Large text is 24px or more, or 18.66px or more at weight 700.
 
-- **The accent clears it by choice.** Olive-700 on white is 5.84:1 and olive-400 on black is 9.62:1, which is why the light accent is the dark step: white label text on a `.glassProminent` fill needs 4.5:1. A new accent value must keep both.
+- **The accent clears it by choice.** The system draws a white label on a `.glassProminent` or `.borderedProminent` fill, so the fill must hold 4.5:1 against white. `#5C6B2E` is 5.84:1 (5.84:1 measured on an iPhone 17 simulator screenshot of a `.glassProminent` button) and `#6C7C3C` is 4.58:1 (4.63:1 measured, the fill drew as `#6C7B3C`). The dark accent on black is 4.59:1. Olive-400 `#A3B86A` fails: a white label on it measured 2.18:1. A new accent value must keep both ratios.
+- **Known limit: the accent as small text on a dark card.** `#6C7C3C` on the dark grouped card `#1C1C1E` is 3.72:1, below 4.5:1. The app therefore draws no accent-colored body or footnote text: text is `.primary` or `.secondary`, and the accent appears on controls, glyphs and `.borderless` button labels as the system draws them. The accessibility audit (`docs/knowledge/app-store-listing.md`, "Open checks before submitting") carries this.
 - **Text on a custom fill passes AA** on its own. Text the system draws on its own fills is the system's.
 - **Secondary text is the system's `.secondary`.** In light it is about 3.44:1 on white, below 4.5:1 for small text, so the claim that all small text clears 4.5:1 in light mode no longer holds. This is a known trade for system styling: the accessibility audit (`docs/knowledge/app-store-listing.md`, "Open checks before submitting") carries it, and the App Store "Sufficient Contrast" label is not claimed until Accessibility Inspector has run on the shipped screens.
 - **Status colors are fills and glyphs, not text.** A tint and a glyph carry the kind; the words stay primary text.

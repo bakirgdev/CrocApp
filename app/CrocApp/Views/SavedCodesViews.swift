@@ -29,7 +29,7 @@ struct SavedCodePicker: View {
             } label: {
                 Label(saved.name, systemImage: "key")
             }
-            .buttonVariant(.secondary)
+            .buttonStyle(.glass)
             .controlSize(.small)
             .accessibilityValue(
                 selection.trimmingCharacters(in: .whitespacesAndNewlines) == saved.code
@@ -55,7 +55,6 @@ struct SavedCodesSection: View {
                 } label: {
                     Label(saved.name, systemImage: "key")
                 }
-                .buttonVariant(.plain)
                 .swipeActions {
                     Button("Delete", role: .destructive) { savedCodes.remove(id: saved.id) }
                 }
@@ -69,7 +68,6 @@ struct SavedCodesSection: View {
             } label: {
                 Label("Add Saved Code", systemImage: "plus")
             }
-            .buttonVariant(.plain)
             .disabled(savedCodes.loadFailed)
             if savedCodes.loadFailed {
                 StatusBanner(
@@ -92,7 +90,7 @@ struct SavedCodesSection: View {
             Text("Saved codes")
         } footer: {
             Text(SavedCodeEditor.reuseWarning)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
         }
         .sheet(item: $editing) { SavedCodeEditor(target: $0) }
         .confirmationDialog(
@@ -161,7 +159,7 @@ struct SavedCodeEditor: View {
                         #endif
                 } footer: {
                     if !trimmedCode.isEmpty, !EngineConstraints.isValidCode(trimmedCode) {
-                        Text(CodeField.tooShortMessage).foregroundStyle(Color.textSecondary)
+                        Text(CodeField.tooShortMessage).foregroundStyle(.secondary)
                     }
                 }
                 Section {

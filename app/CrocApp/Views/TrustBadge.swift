@@ -36,19 +36,19 @@ struct TrustBadge: View {
         HStack(spacing: Spacing.space2) {
             Image(systemName: "lock.fill")
                 .font(.system(size: pillGlyph, weight: .semibold))
-                .foregroundStyle(Color.statusSuccess)
+                .foregroundStyle(.green)
                 .accessibilityHidden(true)
             // The pill's label is primary, not success: success on its own
             // tint is 1.98:1 in light (components.md → TrustBadge). Only the
             // glyph carries the success color.
             Text("End-to-end encrypted")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color.textPrimary)
+                .foregroundStyle(.primary)
         }
         .padding(.vertical, Spacing.space2)
         .padding(.leading, Spacing.space3)
         .padding(.trailing, Spacing.space4)
-        .background(Color.statusSuccessTint, in: Capsule())
+        .background(Color.green.opacity(ComponentMetrics.tintOpacity), in: Capsule())
         .accessibilityElement(children: .combine)
     }
 
@@ -67,36 +67,36 @@ struct TrustBadge: View {
         fullLayout {
             ZStack {
                 Circle()
-                    .fill(Color.statusSuccess)
+                    .fill(Color.green)
                     .frame(width: fullCircle, height: fullCircle)
                 // The full variant escapes the pill's contrast problem by
                 // inverting: a solid success fill with the glyph knocked out
-                // of it in --paper (components.md → TrustBadge).
+                // of it in white (components.md → TrustBadge).
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: fullGlyph, weight: .semibold))
-                    .foregroundStyle(Color.paper)
+                    .foregroundStyle(.white)
                     .accessibilityHidden(true)
             }
             VStack(alignment: .leading, spacing: Spacing.space1) {
                 Text("End-to-end encrypted")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.textPrimary)
+                    .foregroundStyle(.primary)
                 Text(relayLine)
                     .font(.footnote)
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, Spacing.space5)
         .padding(.vertical, Spacing.space4)
         .background(
-            Color.statusSuccessTint,
+            Color.green.opacity(ComponentMetrics.tintOpacity),
             in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
         )
         .overlay(
             RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                 .strokeBorder(
-                    Color.statusSuccess.opacity(ComponentMetrics.statusBorderOpacity),
+                    Color.green.opacity(ComponentMetrics.statusBorderOpacity),
                     lineWidth: BorderWidth.hairline)
         )
         .accessibilityElement(children: .combine)

@@ -11,23 +11,13 @@ struct StatusBanner: View {
 
         var color: Color {
             switch self {
-            case .info: .statusInfo
-            case .warning: .statusWarning
-            case .error: .statusError
-            case .success: .statusSuccess
+            case .info: .accentColor
+            case .warning: .orange
+            case .error: .red
+            case .success: .green
             }
         }
 
-        var tint: Color {
-            switch self {
-            case .info: .statusInfoTint
-            case .warning: .statusWarningTint
-            case .error: .statusErrorTint
-            case .success: .statusSuccessTint
-            }
-        }
-
-        // design/implementation.md → Icons: info/warning/error/success.
         var symbolName: String {
             switch self {
             case .info: "info.circle"
@@ -50,7 +40,7 @@ struct StatusBanner: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.space3) {
-            // Decorative: the title carries the meaning (principles.md → Contrast, rule 2).
+            // Decorative: the title carries the meaning.
             Image(systemName: kind.symbolName)
                 .font(.system(size: glyphSize, weight: .semibold))
                 .foregroundStyle(kind.color)
@@ -60,23 +50,25 @@ struct StatusBanner: View {
                 // 1.96-2.95:1 in light (components.md → StatusBanner).
                 Text(title)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.textPrimary)
+                    .foregroundStyle(.primary)
                 if let detail {
                     Text(detail)
                         .font(.footnote)
-                        .foregroundStyle(Color.textSecondary)
+                        .foregroundStyle(.secondary)
                 }
                 if let actionTitle, let action {
                     Button(actionTitle, action: action)
-                        .buttonVariant(.plain)
-                        .hitTarget()
+                        .buttonStyle(.borderless)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, Spacing.space5)
         .padding(.vertical, Spacing.space4)
-        .background(kind.tint, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
+        .background(
+            kind.color.opacity(ComponentMetrics.tintOpacity),
+            in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+        )
         .overlay(
             RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                 .strokeBorder(

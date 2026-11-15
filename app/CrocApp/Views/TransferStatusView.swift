@@ -119,9 +119,13 @@ struct TransferStatusView: View {
             .animation(phaseAnimation, value: phaseKind)
 
             if showsCancel {
-                Button("Cancel", role: .destructive) { controller.cancel() }
-                    .buttonVariant(.destructiveTinted)
-                    .keyboardShortcut(.cancelAction)
+                Button(role: .destructive) {
+                    controller.cancel()
+                } label: {
+                    Text("Cancel").foregroundStyle(.red)
+                }
+                .buttonStyle(.glass)
+                .keyboardShortcut(.cancelAction)
             }
         }
         .animation(phaseAnimation, value: showsHeader)
@@ -148,7 +152,7 @@ struct TransferStatusView: View {
                         "Encrypted on this device. The link server only holds the encrypted files."
                     )
                     .font(.caption)
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 }
             } else {
@@ -187,7 +191,7 @@ struct TransferStatusView: View {
     private func earlyPhase(_ title: LocalizedStringKey) -> some View {
         VStack(spacing: Spacing.space7) {
             ProgressView().accessibilityHidden(true)
-            Text(title).foregroundStyle(Color.textSecondary)
+            Text(title).foregroundStyle(.secondary)
             // Fades in at --dur-slow so it reads as information, not alarm.
             ZStack {
                 if showsSlowPhaseHint {
@@ -204,7 +208,7 @@ struct TransferStatusView: View {
             "This is taking longer than usual. Double-check the code, or the other device may not be ready."
         )
         .font(.footnote)
-        .foregroundStyle(Color.textSecondary)
+        .foregroundStyle(.secondary)
         .multilineTextAlignment(.center)
     }
 
@@ -295,23 +299,23 @@ struct TransferStatusView: View {
                 ShareLink(item: webURL) {
                     Label("Share Link", systemImage: "square.and.arrow.up")
                 }
-                .buttonVariant(.secondary)
+                .buttonStyle(.glass)
             }
             Text("On the other device, enter this code or scan the QR.")
                 .font(.callout)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             if let note = browserReceiveNote {
                 Text(note)
                     .font(.caption)
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             // The header's pulsing arrow says the app is alive (principles.md →
             // Motion); this says what it waits for.
             Text("Waiting for the other device…")
                 .font(.caption)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -330,22 +334,24 @@ struct TransferStatusView: View {
 
     private var confirmSendView: some View {
         VStack(spacing: Spacing.space5) {
-            // Decorative glyph in a status color: allowed as a fill, never as
-            // a label (principles.md → Contrast, rule 2).
             Image(systemName: "person.crop.circle.badge.checkmark")
                 .font(.system(size: confirmGlyphSize))
-                .foregroundStyle(Color.statusInfo)
+                .foregroundStyle(Color.accentColor)
                 .accessibilityHidden(true)
             Text("The other device is connected").font(.headline)
             Text("Send the selected items to the connected device?")
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             HStack(spacing: Spacing.space5) {
-                Button("Cancel", role: .destructive) { controller.cancel() }
-                    .buttonVariant(.destructiveTinted)
-                    .keyboardShortcut(.cancelAction)
+                Button(role: .destructive) {
+                    controller.cancel()
+                } label: {
+                    Text("Cancel").foregroundStyle(.red)
+                }
+                .buttonStyle(.glass)
+                .keyboardShortcut(.cancelAction)
                 Button("Send") { controller.respond(accept: true) }
-                    .buttonVariant(.prominent)
+                    .buttonStyle(.glassProminent)
                     .controlSize(.large)
             }
         }
@@ -387,7 +393,7 @@ struct TransferStatusView: View {
                     )
                 }
                 .font(.caption)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .monospacedDigit()
             }
             .accessibilityElement(children: .combine)
@@ -401,7 +407,7 @@ struct TransferStatusView: View {
                     Text(
                         "Total \(totalDone.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
                     )
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
                     Spacer()
                     SpeedText(reduceMotion: reduceMotion)
                 }
@@ -440,7 +446,7 @@ struct TransferStatusView: View {
                 Text(verbatim: p.totalSize.formatted(.byteCount(style: .file)))
             }
             .font(.caption)
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
             .monospacedDigit()
         }
         .accessibilityElement(children: .combine)
@@ -527,7 +533,7 @@ struct TransferStatusView: View {
         ShareLink(item: text) {
             Label("Share Text", systemImage: "square.and.arrow.up")
         }
-        .buttonVariant(.secondary)
+        .buttonStyle(.glass)
     }
 
     /// Shows a received item where it was saved. iOS can only show the app's
@@ -548,14 +554,14 @@ struct TransferStatusView: View {
         // provider folder isn't reachable through it, so only offer
         // the button when the folder is still our own default.
         if isDefaultOutputFolder(folder) {
-            resultAction(variant: .secondary) {
+            resultAction {
                 openInFiles(folder)
             } label: {
                 Label("Open in Files", systemImage: "folder")
             }
         }
         #else
-        resultAction(variant: .secondary) {
+        resultAction {
             NSWorkspace.shared.activateFileViewerSelecting([folder])
         } label: {
             Label("Show in Finder", systemImage: "folder")
@@ -581,10 +587,10 @@ struct TransferStatusView: View {
                 switch failure.remedy {
                 case .tryAgain?:
                     resultAction("Try Again") { controller.retry() }
-                    resultAction("Done", variant: .secondary) { controller.reset() }
+                    resultAction("Done", prominent: false) { controller.reset() }
                 case .openSettings(let place)?:
                     resultAction("Open Settings") { open(place) }
-                    resultAction("Done", variant: .secondary) { controller.reset() }
+                    resultAction("Done", prominent: false) { controller.reset() }
                 case nil:
                     resultAction("Done") { controller.reset() }
                 }
@@ -595,21 +601,23 @@ struct TransferStatusView: View {
 
 /// A StatusBlock action: large and full width (components.md → StatusBlock).
 func resultAction(
-    _ title: LocalizedStringKey, variant: ButtonVariant = .prominent,
-    action: @escaping () -> Void
+    _ title: LocalizedStringKey, prominent: Bool = true, action: @escaping () -> Void
 ) -> some View {
-    resultAction(variant: variant, action: action) { Text(title) }
+    resultAction(prominent: prominent, action: action) { Text(title) }
 }
 
-func resultAction(
-    variant: ButtonVariant, action: @escaping () -> Void,
+@ViewBuilder func resultAction(
+    prominent: Bool = false, role: ButtonRole? = nil, action: @escaping () -> Void,
     @ViewBuilder label: () -> some View
 ) -> some View {
-    Button(action: action) {
+    let button = Button(role: role, action: action) {
         label().frame(maxWidth: .infinity)
     }
-    .buttonVariant(variant)
-    .controlSize(.large)
+    if prominent {
+        button.buttonStyle(.glassProminent).controlSize(.large)
+    } else {
+        button.buttonStyle(.glass).controlSize(.large)
+    }
 }
 
 /// The live speed, refreshed at most once a second (principles.md → Motion: a roll
@@ -624,7 +632,7 @@ private struct SpeedText: View {
     var body: some View {
         Text(text)
             .fontWeight(.medium)
-            .foregroundStyle(Color.textPrimary)
+            .foregroundStyle(.primary)
             .contentTransition(reduceMotion ? .identity : .numericText())
             .animation(
                 reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: bytesPerSecond

@@ -14,23 +14,20 @@ struct StatusBlock: View {
 
         var fill: AnyShapeStyle {
             switch self {
-            case .success: AnyShapeStyle(Color.statusSuccessTint)
-            case .error: AnyShapeStyle(Color.statusErrorTint)
-            // --color-fill-tertiary is the system fill ladder (implementation.md → Not mirrored).
+            case .success: AnyShapeStyle(Color.green.opacity(ComponentMetrics.tintOpacity))
+            case .error: AnyShapeStyle(Color.red.opacity(ComponentMetrics.tintOpacity))
             case .neutral: AnyShapeStyle(.fill.tertiary)
             }
         }
 
         var glyphColor: Color {
             switch self {
-            case .success: .statusSuccess
-            case .error: .statusError
-            case .neutral: .textSecondary
+            case .success: .green
+            case .error: .red
+            case .neutral: .secondary
             }
         }
 
-        // design/implementation.md → Icons: success and error; App
-        // only: cancelled.
         var symbolName: String {
             switch self {
             case .success: "checkmark.circle"
@@ -66,12 +63,12 @@ struct StatusBlock: View {
             }
             Text(title)
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(Color.textPrimary)
+                .foregroundStyle(.primary)
                 .multilineTextAlignment(.center)
             if let detail {
                 Text(detail)
                     .font(.callout)
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
         }

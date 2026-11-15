@@ -46,7 +46,7 @@ struct HowItWorksView: View {
         Label {
             VStack(alignment: .leading, spacing: Spacing.space2) {
                 Text(title).font(.headline)
-                Text(text).font(.callout).foregroundStyle(Color.textSecondary)
+                Text(text).font(.callout).foregroundStyle(.secondary)
             }
         } icon: {
             Image(systemName: icon)

@@ -16,7 +16,7 @@ struct DirectionHeader: View {
         HStack(spacing: Spacing.space3) {
             Image(systemName: direction == .send ? "arrow.up" : "arrow.down")
                 .font(.system(size: glyphSize, weight: .semibold))
-                .foregroundStyle(Color.accentFill)
+                .foregroundStyle(Color.accentColor)
                 .symbolEffect(.pulse, isActive: pulses && !reduceMotion)
                 .accessibilityHidden(true)
             Text(direction == .send ? "Sending" : "Receiving")

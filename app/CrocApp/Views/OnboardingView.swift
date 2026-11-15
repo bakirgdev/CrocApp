@@ -33,7 +33,7 @@ struct OnboardingView: View {
         VStack(spacing: Spacing.space7) {
             Image(systemName: "arrow.left.arrow.right.circle.fill")
                 .font(.system(size: markSize))
-                .foregroundStyle(Color.accentFill)
+                .foregroundStyle(Color.accentColor)
                 .accessibilityHidden(true)
             Text("Welcome to CrocApp")
                 .font(.title2.bold())
@@ -64,7 +64,7 @@ struct OnboardingView: View {
                 "CrocApp will ask to use your camera (to scan QR codes) and your local network (for faster nearby transfers)."
             )
             .font(.footnote)
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .frame(maxWidth: LayoutCap.contentMaxWidth)
             #endif
@@ -74,7 +74,7 @@ struct OnboardingView: View {
                 Text("Get Started")
                     .frame(maxWidth: .infinity)
             }
-            .buttonVariant(.prominent)
+            .buttonStyle(.glassProminent)
             .controlSize(.large)
             .frame(maxWidth: LayoutCap.contentMaxWidth)
         }
@@ -93,7 +93,7 @@ struct OnboardingView: View {
         return layout {
             Image(systemName: icon)
                 .font(.system(size: bulletGlyphSize))
-                .foregroundStyle(Color.accentFill)
+                .foregroundStyle(Color.accentColor)
                 // minWidth, not a fixed width: a fixed frame clips the glyph
                 // at accessibility text sizes. The width has headroom over the
                 // glyph so every bullet's text starts at the same x: the globe
@@ -101,7 +101,7 @@ struct OnboardingView: View {
                 .frame(minWidth: stacked ? nil : bulletGlyphSize * Self.glyphColumnRatio)
             VStack(alignment: .leading, spacing: Spacing.space1) {
                 Text(title).font(.headline)
-                Text(text).font(.callout).foregroundStyle(Color.textSecondary)
+                Text(text).font(.callout).foregroundStyle(.secondary)
             }
         }
         .accessibilityElement(children: .combine)

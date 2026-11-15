@@ -45,7 +45,6 @@ struct LastTransferWidget: Widget {
 struct LastTransferView: View {
     let snapshot: TransferSnapshot?
     @Environment(\.widgetFamily) private var family
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         if family == .systemMedium {
@@ -83,26 +82,15 @@ struct LastTransferView: View {
                         .font(.subheadline)
                 }
                 Text(snapshot.date, style: .relative)
-                    .font(.caption).foregroundStyle(Self.secondaryText(colorScheme))
+                    .font(.caption).foregroundStyle(.secondary)
             } else {
                 Image(systemName: "arrow.up.arrow.down.circle").font(.title2)
-                    .foregroundStyle(Self.secondaryText(colorScheme))
+                    .foregroundStyle(.secondary)
                 Text("No recent transfer").font(.headline)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
-    }
-
-    /// `Color.textSecondary` (`ColorTextSecondary` in the app's asset catalog,
-    /// `--color-text-secondary` in `design/tokens.css`) for text that must reach
-    /// 4.5:1, which `.secondary` does not. The widget bundle has no asset
-    /// catalog, so the two themes' values are copied here, dark first.
-    /// `scripts/verify-design.sh` checks both against the color set.
-    static func secondaryText(_ scheme: ColorScheme) -> Color {
-        scheme == .dark
-            ? Color(.sRGB, red: 0.922, green: 0.922, blue: 0.961, opacity: 0.60)
-            : Color(.sRGB, red: 0.235, green: 0.235, blue: 0.263, opacity: 0.78)
     }
 
     static func symbol(_ outcome: TransferSnapshot.Outcome) -> String {

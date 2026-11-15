@@ -76,7 +76,7 @@ struct UpdateSettingsSection: View {
             Text(
                 "CrocApp asks github.com for a newer version about once a day. It sends no system profile and no transfer data. Choose Check for Updates in the CrocApp menu to check once."
             )
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
         }
         .onAppear { updater.refresh() }
     }

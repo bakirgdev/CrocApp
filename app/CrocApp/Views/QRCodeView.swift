@@ -11,8 +11,7 @@ struct QRCodeView: View {
     var label: LocalizedStringKey = "QR code for the code phrase"
     @State private var image: CGImage?
 
-    // White in both themes: scanners need the contrast whatever the appearance
-    // (design/implementation.md → Raw colors on web).
+    // White in both themes: scanners need the contrast whatever the appearance.
     private let frameFill = Color.white
 
     var body: some View {
@@ -33,7 +32,7 @@ struct QRCodeView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                            .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
+                            .strokeBorder(.separator, lineWidth: BorderWidth.hairline)
                     )
                     // components.md → CodePhraseDisplay and QRFrame: --shadow-md. SwiftUI's
                     // .shadow() is single-layer where the token is two CSS
@@ -66,7 +65,7 @@ struct QRCodeView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                    .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
+                    .strokeBorder(.separator, lineWidth: BorderWidth.hairline)
             )
             // Same footprint and chrome as the image branch (see doc comment
             // above) — .shadowMd() has to match too, or the frame would jump.
