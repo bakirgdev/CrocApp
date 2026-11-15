@@ -101,7 +101,7 @@ struct QRScannerSheet: View {
             } else {
                 Text("Point the camera at the QR code on the other device.")
                     .font(.subheadline)
-                    .foregroundStyle(Color.textPrimary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Spacing.space5)
                     .padding(.vertical, Spacing.space4)
@@ -114,7 +114,6 @@ struct QRScannerSheet: View {
             reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: showsRejection)
     }
 
-    /// implementation.md → Materials, motion and haptics, "Insert".
     private var rejectionTransition: AnyTransition {
         reduceMotion
             ? .identity
@@ -138,7 +137,7 @@ struct QRScannerSheet: View {
                     UIApplication.shared.open(url)
                 }
             }
-            .buttonVariant(.secondary)
+            .buttonStyle(.glass)
         }
     }
 

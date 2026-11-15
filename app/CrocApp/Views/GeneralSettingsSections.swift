@@ -6,8 +6,8 @@ import UIKit
 
 /// The Save Transfer History, Notifications and Haptics rows, shared by the macOS Settings
 /// scene and the iOS settings screen. Labels and footers are fixed by
-/// docs/knowledge/app-ui-architecture.md → Settings copy; a footer we write takes
-/// `Color.textSecondary` (design/principles.md, Contrast).
+/// docs/knowledge/app-ui-architecture.md → Settings copy; a footer we write is
+/// the system's secondary style.
 struct GeneralSettingsSections: View {
     @Environment(AppSettings.self) private var settings
 
@@ -18,7 +18,7 @@ struct GeneralSettingsSections: View {
             Toggle("Save Transfer History", isOn: $settings.saveTransferHistory)
         } footer: {
             Text("Finished transfers are listed in History, which stays on this device.")
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
         }
 
         Section {
@@ -29,7 +29,7 @@ struct GeneralSettingsSections: View {
             Text(
                 "When CrocApp is in the background, a transfer that finishes, fails or needs your answer sends a notification. It never shows a code phrase or link, and shows file names only if you turn that on. CrocApp asks the system for permission when you start your first transfer."
             )
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
         }
 
         Section {
@@ -40,7 +40,7 @@ struct GeneralSettingsSections: View {
             Text(
                 "Widgets, and the Live Activity on iPhone, show only whether a transfer is sending or receiving unless you turn this on. They never show a code phrase or link. Widgets show the last transfer only while Save Transfer History is on."
             )
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
         }
 
         #if os(iOS)
@@ -53,7 +53,7 @@ struct GeneralSettingsSections: View {
                 Text(
                     "A short tap when you copy or scan a code, and when a transfer finishes, fails or needs your answer."
                 )
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
             }
         }
         #endif

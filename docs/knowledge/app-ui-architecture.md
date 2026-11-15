@@ -17,7 +17,7 @@ ContentView → by horizontal size class (see "Layout by width"):
   → SendView | ReceiveView | SettingsScreen | HistoryView | HowItWorksView
   each transfer screen: controller.isActive and a matching direction ? TransferStatusView() : input form
 TransferStatusView renders every non-idle phase; IncomingRequestView = accept gate
-Shared pieces (Views/): ButtonVariants, DropZone, CodePhraseDisplay, DirectionHeader, ForwardProgressBar, PhoneHaptics; Support/Inflected.swift
+Shared pieces (Views/): DropZone, CodePhraseDisplay, DirectionHeader, ForwardProgressBar, PhoneHaptics; Support/Inflected.swift
 QRCodeView (cross-platform gen) / QRScannerView.swift (whole file #if os(iOS), VisionKit)
 ```
 
@@ -187,7 +187,7 @@ Relay strings use `""` for "croc default" (the `TextField` prompt reads "Public 
 
 On macOS, `AppCommands` replaces the `.appInfo` group with an **About CrocApp** button. It calls `NSApplication.orderFrontStandardAboutPanel(options:)` with a linked "Privacy Policy" `.credits` string. The Direct build's `UpdateCommands` still attaches after that group.
 
-`Phase.confirmSend` is the sender side of croc `--ask`. It is entered at `.connected` when **Confirm on Both Sides** is on, and it is progress-guarded like `.incoming`. Accept is `respond(true)`, decline is `cancel()`, and its Cancel button is `.destructiveTinted`.
+`Phase.confirmSend` is the sender side of croc `--ask`. It is entered at `.connected` when **Confirm on Both Sides** is on, and it is progress-guarded like `.incoming`. Accept is `respond(true)`, decline is `cancel()`, and its Cancel button is a destructive `.glass` button.
 
 ### Stored transfers
 
@@ -372,8 +372,8 @@ On arrival, a Mac and an iPad with a hardware keyboard put the caret in the firs
 
 The shared views route onto `design/`. A screen picks one of these instead of styling ad hoc.
 
-- `Views/ButtonVariants.swift`: `.buttonVariant(_:)` with `prominent`, `secondary`, `destructive`, `destructiveTinted`, `plain` (`design/principles.md`, "Controls"). It is a `PrimitiveButtonStyle`, so the label color sits on the label itself. `prominent` fills with `Color.accentSolid`, not `Color.accent`, so the white label clears 4.5:1 in light mode (`design/principles.md`, Contrast). The pending-count badge on Home uses it too. Disabled buttons get only the system dimming, never an extra opacity on the label. The same file holds `.hitTarget()`, the 44 pt iOS hit area for bare text buttons (`design/principles.md`, "Accessibility"); use it instead of a private copy.
-- Filled `.destructive` is for Decline on the accept gate and the Clear History confirmation only. Cancel (waiting, transferring, confirm-send, menu bar) and Discard (`StagedFilesSheet`) are `.destructiveTinted`.
+- Buttons are the system's (`design/principles.md`, "Controls"): the one primary action of a screen is `.buttonStyle(.glassProminent)`, every other button `.buttonStyle(.glass)`, and a bare text action `.borderless`. Cancel, Decline and Revoke are `role: .destructive` on a `.glass` button whose label has `.foregroundStyle(.red)`: a `.glass` destructive label is drawn in the primary color, and `.tint(.red)` would fill the button red on macOS. `resultAction` (`TransferStatusView.swift`) is the full-width large form of the same buttons for the result screens. iOS gets 44 pt targets from `.controlSize(.large)`, and the two icon-only buttons in `FileRow` set a 44 pt frame themselves.
+- Colors are the system's too: `.primary`, `.secondary`, system red, green and orange for status, `.separator`, and `Color.accentColor` for the accent. `AccentColor` in `Assets.xcassets` is the only color set and the global accent of every app target, so no scene sets `.tint`. The widgets and the share extension have no asset catalog, so they draw the system accent.
 - `DropZone`, `CodePhraseDisplay` (eyebrow, code, **Copy Code**; `compact` for the 300-wide menu bar column), `DirectionHeader` (arrow plus Sending or Receiving).
 - `ForwardProgressBar` never moves backwards, and `resetKey` snaps it when the measured thing changes (`design/principles.md`, "Motion").
 - `Support/Inflected.swift` resolves `^[3 file](inflect: true)` markup into a plain `String`.
@@ -426,7 +426,7 @@ Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookma
   - macOS has no expiry. The copy carries `org.nspasteboard.ConcealedType` (clipboard managers that follow nspasteboard.org skip it) and uses `.currentHostOnly` for the link.
   - The macOS clear runs in the app, after the lifetime, only while the app is running, and only if `changeCount` has not moved, so a later copy is never wiped.
   - Not verified on hardware: the expiry on a device, the link staying off Universal Clipboard, a clipboard manager honoring the marker, and whether the code also expires on the other device. `device-test-checklist.md`, "Clipboard", lists the checks. `ClipboardTests` cover the options and the macOS clear against a private `NSPasteboard`.
-- `Support/DesignTokens.swift`: the app's routing layer onto `design/`. It holds `Spacing`, `Radius`, `BorderWidth`, `ControlHeight`, `IconSize`, `LayoutCap`, `Opacity`, `Tracking`, `ComponentMetrics`, `Motion` and `Shadow`, plus `Color` aliases. Where a system semantic already matches a token exactly, the alias routes there instead of duplicating an asset-catalog entry.
+- `Support/DesignTokens.swift`: the app's routing layer onto `design/`. It holds `Spacing`, `Radius`, `BorderWidth`, `ControlHeight`, `IconSize`, `LayoutCap`, `Opacity`, `Tracking`, `ComponentMetrics`, `Motion` and `Shadow`. It has no colors: those are system colors (`design/principles.md`, "Color").
 
 ## Conflict scan
 

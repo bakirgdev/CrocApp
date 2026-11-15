@@ -169,7 +169,7 @@ What a string is used for decides how it is written. Never wrap a literal that S
 Never localize:
 
 - Code phrases, file names, URLs, relay addresses and croc or Go output. The engine's `EngineFailure.message` is never shown (`TransferFailure`).
-- `Logger` messages, test strings and preview-only labels (use `Text(verbatim:)` there, as `ButtonVariants.swift` does).
+- `Logger` messages, test strings and preview-only labels (use `Text(verbatim:)` there).
 - The `AutoVerify` markers and the failure copy the harness scripts match, such as "This link no longer works" in `scripts/verify-app-mac.sh`. The harnesses expect English, so run them on an English system.
 - The names `CrocApp` and `croc`.
 

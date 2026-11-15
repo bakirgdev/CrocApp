@@ -11,7 +11,8 @@
   color-scheme: light dark;
 
   /* Brand olive, sampled from the mascot's body (assets/mascot.png). Theme-independent
-     literals; the aliases pick a step. 700 and 400 are the app's AccentColor. */
+     literals; the aliases pick a step. 700 is the app's light AccentColor; the
+     app's dark one (#6C7C3C) is not a web step. */
   --olive-300: #B5C77F;
   --olive-400: #A3B86A;
   --olive-600: #748543;

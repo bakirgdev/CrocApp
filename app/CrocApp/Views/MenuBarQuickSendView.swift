@@ -19,7 +19,7 @@ struct MenuBarQuickSendView: View {
             content
             Divider()
             Button("Open CrocApp") { openMainWindow() }
-                .buttonVariant(.plain)
+                .buttonStyle(.borderless)
         }
         .padding(Spacing.space5)
         .frame(width: Self.windowWidth)
@@ -32,7 +32,7 @@ struct MenuBarQuickSendView: View {
         case .starting, .connecting:
             VStack(spacing: Spacing.space3) {
                 ProgressView().accessibilityHidden(true)
-                Text("Connecting…").foregroundStyle(Color.textSecondary)
+                Text("Connecting…").foregroundStyle(.secondary)
                 cancelButton
             }
         case .waiting(let code):
@@ -43,14 +43,14 @@ struct MenuBarQuickSendView: View {
                 HStack {
                     cancelButton
                     Button("Send") { controller.respond(accept: true) }
-                        .buttonVariant(.prominent)
+                        .buttonStyle(.glassProminent)
                 }
             }
         case .incoming:
             VStack(spacing: Spacing.space3) {
                 Label("Files are waiting for your answer", systemImage: "arrow.down.circle")
                 Button("Open CrocApp to Accept") { openMainWindow() }
-                    .buttonVariant(.prominent)
+                    .buttonStyle(.glassProminent)
             }
         case .transferring:
             ProgressTick { transferring($0) }
@@ -62,7 +62,7 @@ struct MenuBarQuickSendView: View {
                         ? "checkmark.circle" : "exclamationmark.circle.fill")
                 if let receivedText {
                     Button("Copy Received Text") { Clipboard.copy(receivedText) }
-                        .buttonVariant(.secondary)
+                        .buttonStyle(.glass)
                 }
                 doneButton
             }
@@ -70,7 +70,7 @@ struct MenuBarQuickSendView: View {
             VStack(spacing: Spacing.space3) {
                 Label("Link ready", systemImage: "checkmark.circle")
                 Button("Copy Link") { Clipboard.copySecret(receipt.link, thisDeviceOnly: true) }
-                    .buttonVariant(.secondary)
+                    .buttonStyle(.glass)
                 doneButton
             }
         case .failed(let failure):
@@ -93,7 +93,7 @@ struct MenuBarQuickSendView: View {
 
             HStack {
                 Button("Choose Files…") { quickSend.chooseFiles() }
-                    .buttonVariant(.secondary)
+                    .buttonStyle(.glass)
                 Button("Send Clipboard Text") {
                     // A repeat tap leaves the notice unchanged, so an
                     // onChange would stay silent; announce per tap instead.
@@ -101,7 +101,7 @@ struct MenuBarQuickSendView: View {
                         AccessibilityNotification.Announcement(notice).post()
                     }
                 }
-                .buttonVariant(.secondary)
+                .buttonStyle(.glass)
             }
             Divider()
             CodeField(
@@ -109,10 +109,10 @@ struct MenuBarQuickSendView: View {
                 onPaste: { code = $0 },
                 onSubmit: receive, submitLabel: .go)
             Button("Receive") { receive() }
-                .buttonVariant(.prominent)
+                .buttonStyle(.glassProminent)
                 .disabled(code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             if let notice = quickSend.notice {
-                Text(notice).font(.caption).foregroundStyle(Color.textSecondary)
+                Text(notice).font(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -161,7 +161,7 @@ struct MenuBarQuickSendView: View {
                     : "\(done.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
             )
             .font(.caption)
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
             .monospacedDigit()
             cancelButton
         }
@@ -174,13 +174,17 @@ struct MenuBarQuickSendView: View {
     }
 
     private var cancelButton: some View {
-        Button("Cancel", role: .destructive) { controller.cancel() }
-            .buttonVariant(.destructiveTinted)
+        Button(role: .destructive) {
+            controller.cancel()
+        } label: {
+            Text("Cancel").foregroundStyle(.red)
+        }
+        .buttonStyle(.glass)
     }
 
     private var doneButton: some View {
         Button("Done") { controller.reset() }
-            .buttonVariant(.prominent)
+            .buttonStyle(.glassProminent)
     }
 
     /// The main scene is a single-instance `Window`, so `openWindow` opens it

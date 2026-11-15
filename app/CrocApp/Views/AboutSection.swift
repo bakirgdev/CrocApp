@@ -30,7 +30,7 @@ struct AboutSection: View {
             Text(
                 "Built on croc by Zack Scholl (MIT). CrocApp is unofficial and not affiliated with croc."
             )
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
         }
     }
 }

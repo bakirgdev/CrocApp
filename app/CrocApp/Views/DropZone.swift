@@ -16,7 +16,7 @@ struct DropZone: View {
     let isTargeted: Bool
 
     // components.md → DropZone: min height 168 (menu bar 96), 2pt stroke dashed
-    // 6 on 4 off, glyph 44 (34 compact, implementation.md → Icons), scaled
+    // 6 on 4 off, glyph 44 (34 compact), scaled
     // with Dynamic Type. SendView reuses the height and the stroke for the staged
     // list and its drag-over border.
     static let minHeight: CGFloat = 168
@@ -37,15 +37,14 @@ struct DropZone: View {
         VStack(spacing: Spacing.space4) {
             Image(systemName: "square.and.arrow.up")
                 .font(.system(size: size == .regular ? regularGlyph : compactGlyph))
-                .foregroundStyle(isTargeted ? Color.accentTextOnTint : Color.textSecondary)
+                .foregroundStyle(isTargeted ? Color.accentColor : Color.secondary)
                 .accessibilityHidden(true)
             Text(title)
                 .font(.headline)
-                .foregroundStyle(isTargeted ? Color.accentTextOnTint : Color.textPrimary)
             if let hint {
                 Text(hint)
                     .font(.subheadline)
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .multilineTextAlignment(.center)
@@ -54,17 +53,18 @@ struct DropZone: View {
             maxWidth: .infinity,
             minHeight: size == .regular ? Self.minHeight : Self.compactMinHeight
         )
-        // --color-fill-tertiary is the system fill ladder (implementation.md → Not mirrored).
         .background(
-            isTargeted ? AnyShapeStyle(Color.accentTint) : AnyShapeStyle(.fill.tertiary),
+            isTargeted
+                ? AnyShapeStyle(Color.accentColor.opacity(ComponentMetrics.tintOpacity))
+                : AnyShapeStyle(.fill.tertiary),
             in: shape
         )
         .overlay {
             if isTargeted {
-                shape.strokeBorder(Color.accentFill, lineWidth: Self.strokeWidth)
+                shape.strokeBorder(Color.accentColor, lineWidth: Self.strokeWidth)
             } else {
                 shape.strokeBorder(
-                    Color.separatorToken,
+                    .separator,
                     style: StrokeStyle(
                         lineWidth: Self.strokeWidth, dash: [Self.dashLength, Self.dashGap]))
             }

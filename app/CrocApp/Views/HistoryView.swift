@@ -77,7 +77,7 @@ struct HistoryView: View {
                 Label("No transfers yet", systemImage: "clock.arrow.circlepath")
             } description: {
                 Text("Finished sends and receives appear here.")
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
             } actions: {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: Spacing.space4) { emptyStateActions }
@@ -89,19 +89,19 @@ struct HistoryView: View {
                 Label("History is off", systemImage: "clock.arrow.circlepath")
             } description: {
                 Text("Turn on Save Transfer History in Settings to list finished transfers here.")
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
             } actions: {
                 Button("Open Settings") { showSettings() }
-                    .buttonVariant(.prominent)
+                    .buttonStyle(.glassProminent)
             }
         }
     }
 
     @ViewBuilder private var emptyStateActions: some View {
         Button("Send") { router.openSend(with: []) }
-            .buttonVariant(.prominent)
+            .buttonStyle(.glassProminent)
         Button("Receive") { router.openReceive() }
-            .buttonVariant(.secondary)
+            .buttonStyle(.glass)
     }
 
     #if os(macOS)
@@ -158,13 +158,13 @@ struct HistoryView: View {
                         .disabled(actions.isRevoking(record))
                     if controller.canRevoke(record) {
                         Button("Revoke") { revokeCandidate = record }
-                            .tint(Color.statusError)
+                            .tint(.red)
                             .disabled(actions.isRevoking(record))
                     }
                 }
                 .swipeActions(edge: .leading) {
                     if record.canResend {
-                        Button("Send Again") { resend(record) }.tint(Color.accentSolid)
+                        Button("Send Again") { resend(record) }.tint(.accentColor)
                     }
                 }
             }
@@ -257,7 +257,7 @@ private struct HistoryRow: View {
         Image(systemName: record.isSend ? "arrow.up.circle" : "arrow.down.circle")
             .font(.system(size: glyphSize))
             .accessibilityLabel(record.directionTitle)
-            .foregroundStyle(record.status == .completed ? Color.accentFill : Color.textSecondary)
+            .foregroundStyle(record.status == .completed ? Color.accentColor : Color.secondary)
     }
 
     private var textColumn: some View {
@@ -279,21 +279,21 @@ private struct HistoryRow: View {
                 }
             }
             .font(.caption)
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
             if isRevoking {
                 HStack(spacing: Spacing.space3) {
                     ProgressView().controlSize(.small)
                     Text("Revoking link")
                 }
                 .font(.caption)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
             } else if record.storedID != nil {
                 // The link's expiry passes while the row is on screen.
                 TimelineView(.everyMinute) { context in
                     if let linkState = record.linkState(now: context.date) {
                         Text(linkState)
                             .font(.caption)
-                            .foregroundStyle(Color.textSecondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -349,7 +349,6 @@ extension TransferRecord.Status {
         }
     }
 
-    /// design/implementation.md → Icons: the history status glyphs.
     var symbolName: String {
         switch self {
         case .completed: "checkmark.circle.fill"
@@ -359,12 +358,12 @@ extension TransferRecord.Status {
         }
     }
 
-    /// A fill color for the glyph, never for text (principles.md → Contrast, rule 2).
+    /// A fill color for the glyph, never for text.
     var glyphColor: Color {
         switch self {
-        case .completed: Color.statusSuccess
-        case .failed, .declined: Color.statusError
-        case .cancelled: Color.textSecondary
+        case .completed: Color.green
+        case .failed, .declined: Color.red
+        case .cancelled: Color.secondary
         }
     }
 }

@@ -35,7 +35,6 @@ struct StagedFilesSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Discard", role: .destructive) { discard() }
-                        .buttonVariant(.destructiveTinted)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Send") { send() }

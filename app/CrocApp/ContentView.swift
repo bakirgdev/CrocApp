@@ -198,21 +198,19 @@ struct ContentView: View {
     }
 
     #if os(macOS)
-    // design/components.md → DropZone: macOS full-window overlay, scrim
-    // background and a glass card at --radius-2xl. Not itself a drop target:
-    // the window-level dropDestination above owns hover tracking and the
-    // actual file filter.
+    // design/components.md → DropZone: macOS full-window overlay, a dimmed
+    // background and a glass card. Not itself a drop target: the window-level
+    // dropDestination above owns hover tracking and the actual file filter.
     private var dropOverlay: some View {
         ZStack {
-            Color.scrim
+            Color.black.opacity(0.25)
             VStack(spacing: Spacing.space4) {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: dropGlyphSize))
-                    .foregroundStyle(Color.accentTextOnTint)
+                    .foregroundStyle(Color.accentColor)
                     .accessibilityHidden(true)
                 Text("Drop to Send")
                     .font(.title2.weight(.semibold))
-                    .foregroundStyle(Color.accentTextOnTint)
             }
             .padding(Spacing.space9)
             .glassEffect(.regular, in: .rect(cornerRadius: Radius.xxl, style: .continuous))

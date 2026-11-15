@@ -19,7 +19,7 @@ struct CodePhraseDisplay: View {
                 .textCase(.uppercase)
                 .font(.footnote.weight(.semibold))
                 .tracking(Tracking.eyebrow)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
             codeText
             CopyButton("Copy Code") { Clipboard.copySecret(code) }
         }
@@ -79,7 +79,7 @@ struct CopyButton: View {
                 label(copied ? "Copied" : title, systemImage: copied ? "checkmark" : "doc.on.doc")
             }
         }
-        .buttonVariant(.secondary)
+        .buttonStyle(.glass)
         // Restarts with every copy, so a second tap keeps "Copied" up for
         // another two seconds.
         .task(id: copies) {

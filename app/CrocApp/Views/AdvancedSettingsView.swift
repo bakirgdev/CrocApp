@@ -60,7 +60,7 @@ struct AdvancedSettingsView: View {
                 Text(
                     "Proxies also carry Send as Link. Their addresses, with any password in them, are saved in the Keychain."
                 )
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
             }
 
             Section("Connection") {
@@ -93,13 +93,12 @@ struct AdvancedSettingsView: View {
                 Button {
                     confirmReset = true
                 } label: {
-                    Text("Reset to Defaults").hitTarget()
+                    Text("Reset to Defaults")
                 }
-                .buttonVariant(.plain)
                 .disabled(settings.advancedIsDefault)
             } footer: {
                 Text("Back to croc's defaults. Also removes the saved proxies.")
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -144,7 +143,7 @@ private struct AdvancedRow<Content: View>: View {
             }
             Text(footnote)
                 .font(.footnote)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, Spacing.space2)

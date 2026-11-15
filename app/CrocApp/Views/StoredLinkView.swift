@@ -68,10 +68,10 @@ struct StoredLinkView: View {
             }
             Text(revokeNote)
                 .font(.callout)
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             VStack(spacing: Spacing.space3) {
-                resultAction(variant: .destructiveTinted) {
+                resultAction(role: .destructive) {
                     confirmsRevoke = true
                 } label: {
                     // components.md → States, loading: the label stays, the
@@ -81,6 +81,7 @@ struct StoredLinkView: View {
                     } icon: {
                         if isRevoking { ProgressView().controlSize(.small) }
                     }
+                    .foregroundStyle(.red)
                 }
                 .disabled(isRevoking)
                 resultAction("Done") { controller.reset() }
@@ -95,7 +96,7 @@ struct StoredLinkView: View {
             ShareLink(item: url) {
                 Label("Share Link", systemImage: "square.and.arrow.up")
             }
-            .buttonVariant(.secondary)
+            .buttonStyle(.glass)
         }
     }
 

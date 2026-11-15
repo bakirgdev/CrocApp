@@ -50,9 +50,8 @@ struct PowerSettingsSections: View {
                 Button {
                     settings.storedServer = AppSettings.defaultStoredServer
                 } label: {
-                    Text("Reset to \(AppSettings.defaultStoredServer)").hitTarget()
+                    Text("Reset to \(AppSettings.defaultStoredServer)")
                 }
-                .buttonVariant(.plain)
             }
         } header: {
             Text("Send as link")
@@ -60,7 +59,7 @@ struct PowerSettingsSections: View {
             Text(
                 "Send as Link uploads files, encrypted on your device, to this server. It cannot read them, because the key is in the link."
             )
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
         }
 
         Section {
@@ -76,7 +75,7 @@ struct PowerSettingsSections: View {
                     ? "Turn off Skip Local Network in Advanced to use Local Network Only."
                     : "Local-only transfers never touch a relay on the internet."
             )
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
         }
 
         Section {
@@ -104,17 +103,17 @@ struct PowerSettingsSections: View {
             Text("Confirmation")
         } footer: {
             // A Section footer is not a StatusBanner surface, so a status
-            // color here would tint body text (principles.md → Contrast, rule 2).
+            // color here would tint body text.
             if settings.autoAccept {
                 Text(
                     "Files from anyone who has your code are saved without a preview, unless Confirm on Both Sides is on. Replace overwrites existing files, and unsafe file names still cancel the transfer."
                 )
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
             } else {
                 Text(
                     "Auto-Accept Transfers saves files without a preview, so leave it off unless you fully trust the sender."
                 )
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
             }
         }
     }

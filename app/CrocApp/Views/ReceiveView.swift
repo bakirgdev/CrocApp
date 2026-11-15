@@ -105,8 +105,10 @@ struct ReceiveView: View {
             } label: {
                 Label("Scan QR Code", systemImage: "qrcode.viewfinder")
             }
-            .buttonVariant(.secondary)
-            .touchControlSize()
+            .buttonStyle(.glass)
+            #if os(iOS)
+            .controlSize(.large)
+            #endif
             .sheet(isPresented: $showScanner) {
                 QRScannerSheet { link in
                     scanCount += 1
@@ -142,7 +144,7 @@ struct ReceiveView: View {
                 Label("Receive", systemImage: "arrow.down.circle.fill")
                     .frame(maxWidth: .infinity)
             }
-            .buttonVariant(.prominent)
+            .buttonStyle(.glassProminent)
             .controlSize(.large)
             .keyboardShortcut(.defaultAction)
             .disabled(!canStart)
@@ -166,16 +168,16 @@ struct ReceiveView: View {
         Button {
             showFolderPicker = true
         } label: {
-            Text("Change…").hitTarget()
+            Text("Change…")
         }
-        .buttonVariant(.plain)
+        .buttonStyle(.glass)
         if outputFolder.isUserSelected {
             Button {
                 outputFolder.resetToDefault()
             } label: {
-                Text("Reset").hitTarget()
+                Text("Reset")
             }
-            .buttonVariant(.plain)
+            .buttonStyle(.glass)
         }
     }
 
@@ -195,7 +197,7 @@ struct ReceiveView: View {
                     Text("Receive from Link")
                     Text(host)
                         .font(.footnote)
-                        .foregroundStyle(Color.textSecondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
@@ -206,19 +208,19 @@ struct ReceiveView: View {
             Button {
                 storedLink = nil
             } label: {
-                Text("Clear").hitTarget()
+                Text("Clear")
             }
-            .buttonVariant(.plain)
+            .buttonStyle(.glass)
             .accessibilityLabel("Clear link")
         }
         .padding(.horizontal, Spacing.space4)
         .frame(minHeight: ControlHeight.large)
         .background(
-            Color.surfaceBase, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+            .background, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
         )
         .overlay(
             RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                .strokeBorder(Color.separatorToken, lineWidth: BorderWidth.hairline)
+                .strokeBorder(.separator, lineWidth: BorderWidth.hairline)
         )
     }
 }

@@ -37,18 +37,18 @@ struct SidebarRow: View {
             word("Waiting")
         case .review:
             // Our one filled mark on the sidebar: a question waits for a yes
-            // or no, and the label sits on `--color-accent-solid`.
+            // or no, and the label is white on the accent.
             Text("Review")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color.onAccent)
+                .foregroundStyle(.white)
                 .padding(.horizontal, Spacing.space3)
                 .padding(.vertical, Spacing.space1)
-                .background(Color.accentSolid, in: Capsule())
+                .background(Color.accentColor, in: Capsule())
         case .transferring:
             if let percent = state.percent {
                 Text(Double(percent) / 100, format: .percent.precision(.fractionLength(0)))
                     .font(.caption)
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
                     .monospacedDigit()
                     .contentTransition(reduceMotion ? .identity : .numericText())
             } else {
@@ -60,7 +60,7 @@ struct SidebarRow: View {
     private func word(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.caption)
-            .foregroundStyle(Color.textSecondary)
+            .foregroundStyle(.secondary)
     }
 
     /// The row's spoken label, and what is announced when its phase changes
@@ -105,7 +105,6 @@ extension AppRouter.SidebarItem {
         }
     }
 
-    /// design/implementation.md: the outline direction glyphs, History and Settings.
     var symbol: String {
         switch self {
         case .send: "arrow.up.circle"
