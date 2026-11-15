@@ -77,7 +77,7 @@ struct CrocAppApp: App {
             notifier.start()
             snapshotWriter.start()
             history.observers.append(snapshotWriter)
-            Task { await SpotlightPurge.runOnce() }
+            Task { await SpotlightPurge.run() }
         }
         // Widget buttons and the Control Center control land here.
         OpenScreen.handler = { target in

@@ -1164,3 +1164,22 @@ func TestCancelWatchdogQuietWhenCrocReturns(t *testing.T) {
 	}
 	activeMu.Unlock()
 }
+
+func TestSendFilesInfoAppliesExcludePatterns(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "proj", "config"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"proj/keep.txt", "proj/config/Credentials.json", "proj/.env"} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	files, _, _, err := sendFilesInfo(context.Background(), []string{filepath.Join(dir, "proj")}, &Options{Exclude: "config/credentials.json\n.ENV"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 1 || files[0].Name != "keep.txt" {
+		t.Fatalf("got %+v, want only keep.txt", files)
+	}
+}

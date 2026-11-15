@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -230,7 +232,37 @@ func sendFilesInfo(ctx context.Context, paths []string, o *Options) ([]croc.File
 		}
 		literal[i] = p
 	}
-	return croc.GetFilesInfoContext(ctx, literal, o.ZipFolder, o.GitIgnore, splitNonEmpty(o.Exclude, "\n"))
+	exclude := splitNonEmpty(strings.ToLower(o.Exclude), "\n")
+	files, empty, folders, err := croc.GetFilesInfoContext(ctx, literal, o.ZipFolder, o.GitIgnore, exclude)
+	if err != nil || len(exclude) == 0 {
+		return files, empty, folders, err
+	}
+	// croc applies substring exclusions only inside a zip; for every other
+	// send its CLI filters the list afterwards (cli.go), which a library
+	// caller has to repeat.
+	files, empty = withoutExcluded(files, exclude), withoutExcluded(empty, exclude)
+	if len(files) == 0 && len(empty) == 0 {
+		return nil, nil, 0, errors.New("nothing to send: every picked file matches an exclude pattern")
+	}
+	remote := map[string]bool{}
+	for _, f := range files {
+		remote[f.FolderRemote] = true
+	}
+	for _, f := range empty {
+		remote[f.FolderRemote] = true
+	}
+	return files, empty, len(remote), nil
+}
+
+func withoutExcluded(infos []croc.FileInfo, exclude []string) []croc.FileInfo {
+	kept := infos[:0]
+	for _, f := range infos {
+		name := path.Join(strings.ToLower(f.FolderRemote), strings.ToLower(f.Name))
+		if !slices.ContainsFunc(exclude, func(e string) bool { return strings.Contains(name, e) }) {
+			kept = append(kept, f)
+		}
+	}
+	return kept
 }
 
 var globEscaper = strings.NewReplacer(`\`, `\\`, `*`, `\*`, `?`, `\?`, `[`, `\[`)
@@ -336,7 +368,14 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 			}
 			paths = []string{f.Name()}
 		}
-		filesInfo, emptyFolders, totalFolders, err := sendFilesInfo(ctx, paths, o)
+		listing := o
+		if text != "" {
+			// Exclude patterns are for picked files; one must never drop the text's temp file.
+			noExclude := *o
+			noExclude.Exclude = ""
+			listing = &noExclude
+		}
+		filesInfo, emptyFolders, totalFolders, err := sendFilesInfo(ctx, paths, listing)
 		if err != nil {
 			return nil, err
 		}

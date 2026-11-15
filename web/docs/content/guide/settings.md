@@ -57,7 +57,7 @@ The address is checked as you type. It must use `https` (plain `http` is allowed
 
 ## Exclude from sends
 
-Type patterns in **Patterns, one per line** to skip matching files when you send a folder. **Respect .gitignore** also skips whatever your `.gitignore` would.
+Type patterns in **Patterns, one per line** to skip matching files when you send a folder. **Respect .gitignore** also skips whatever your `.gitignore` would. Paths you had under **Exact Paths** in an earlier version were added to the patterns when you updated.
 
 ## Confirmation
 

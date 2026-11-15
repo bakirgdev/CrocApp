@@ -160,10 +160,12 @@ import Testing
 
     @Test func launchRemovesWhatTheRemovedSpotlightSettingLeftBehind() {
         storage.set(true, forKey: "settings.indexHistoryInSpotlight")
+        storage.set(true, forKey: "spotlightIndexPurged")
 
         _ = makeSettings()
 
         #expect(storage.values["settings.indexHistoryInSpotlight"] == nil)
+        #expect(storage.values["spotlightIndexPurged"] == nil)
     }
 
     @Test func launchRemovesWhatTheRemovedAdvancedOptionsLeftBehind() {
@@ -175,6 +177,31 @@ import Testing
 
         for key in removed { #expect(storage.values["settings.advanced.\(key)"] == nil, "\(key)") }
         #expect(storage.values["settings.advanced.throttleUpload"] as? String == "500k")
+    }
+
+    @Test func launchMovesTheRemovedExactPathsIntoTheExcludePatternsOnce() {
+        storage.set("node_modules\n", forKey: "settings.excludePatterns")
+        storage.set(
+            " config/credentials.json \n\nnode_modules\nsrc/secret.txt",
+            forKey: "settings.advanced.excludePaths")
+
+        let s = makeSettings()
+
+        #expect(s.excludeList == ["node_modules", "config/credentials.json", "src/secret.txt"])
+        #expect(storage.values["settings.advanced.excludePaths"] == nil)
+
+        let again = makeSettings()
+
+        #expect(again.excludeList == s.excludeList)
+        #expect(again.excludePatterns == s.excludePatterns)
+    }
+
+    @Test func launchWithoutTheRemovedExactPathsLeavesTheExcludePatternsAlone() {
+        storage.set("node_modules\n\n", forKey: "settings.excludePatterns")
+
+        _ = makeSettings()
+
+        #expect(storage.values["settings.excludePatterns"] as? String == "node_modules\n\n")
     }
 
     @Test func launchRemovesWhatTheRemovedRelayHostLeftBehind() {

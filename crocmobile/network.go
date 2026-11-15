@@ -11,6 +11,7 @@ import (
 	"unicode"
 
 	"github.com/schollz/croc/v11/src/comm"
+	"github.com/schollz/croc/v11/src/models"
 	"github.com/schollz/croc/v11/src/storeclient"
 )
 
@@ -199,11 +200,13 @@ func validateThrottle(value string) error {
 // time, so they are only written while activeMu is held, and the restore runs
 // before the lock is released.
 func setNetworkGlobals(o *Options) (restore func()) {
-	socks5, httpProxy := comm.Socks5Proxy, comm.HttpProxy
+	socks5, httpProxy, internalDNS := comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS
 	comm.Socks5Proxy = strings.TrimSpace(o.Socks5Proxy)
 	comm.HttpProxy = strings.TrimSpace(o.HTTPProxy)
+	// croc's init turns its resolver on from an `internal-dns` config file or flag; the app never uses it.
+	models.INTERNAL_DNS = false
 	return func() {
-		comm.Socks5Proxy, comm.HttpProxy = socks5, httpProxy
+		comm.Socks5Proxy, comm.HttpProxy, models.INTERNAL_DNS = socks5, httpProxy, internalDNS
 	}
 }
 

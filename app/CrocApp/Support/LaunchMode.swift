@@ -3,7 +3,7 @@ import SwiftData
 
 /// What this launch is for, decided once. Only `.app` reads the user's
 /// preferences and Keychain, opens the on-disk history, and starts notifications,
-/// widget data and the relay. A harness run (`AutoVerify`) and a
+/// widget data. A harness run (`AutoVerify`) and a
 /// hosted unit-test run get memory-only stores and none of those services, so
 /// neither can touch or depend on the developer's real state.
 enum LaunchMode {

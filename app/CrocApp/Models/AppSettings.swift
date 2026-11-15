@@ -188,6 +188,16 @@ final class AppSettings {
         storage.set(nil, forKey: "settings.relayHostAtLaunch")
         // 1.3.0 removed Spotlight indexing (`SpotlightPurge` empties the index).
         storage.set(nil, forKey: "settings.indexHistoryInSpotlight")
+        storage.set(nil, forKey: "spotlightIndexPurged")
+        // 1.3.0 removed Exact Paths and the send no longer takes them, so its lines join the
+        // Exclude patterns instead of letting a file the user kept out be sent.
+        if let paths = storage.object(forKey: "settings.advanced.excludePaths") as? String {
+            var merged = Self.patternLines(Self.read(storage, .excludePatterns, default: ""))
+            for path in Self.patternLines(paths) where !merged.contains(path) {
+                merged.append(path)
+            }
+            storage.set(merged.joined(separator: "\n"), forKey: Key.excludePatterns.rawValue)
+        }
         // 1.3.0 removed four Advanced options: multicast address, built-in DNS, single connection, exact exclude paths.
         for key in ["multicastAddress", "internalDNS", "noMultiplexing", "excludePaths"] {
             storage.set(nil, forKey: "settings.advanced.\(key)")
@@ -251,8 +261,10 @@ final class AppSettings {
         peerIP.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? relayKind : .directToSender
     }
 
-    var excludeList: [String] {
-        excludePatterns.split(separator: "\n")
+    var excludeList: [String] { Self.patternLines(excludePatterns) }
+
+    private static func patternLines(_ text: String) -> [String] {
+        text.split(separator: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
     }
