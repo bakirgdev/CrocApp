@@ -297,7 +297,6 @@
     "Open Transfer" : {},
     "Open at Login" : {},
     "Open in Files" : {},
-    "Opens CrocApp at History." : {},
     "Overall progress" : {},
     "Password" : {},
     "Paste Code…" : {},
@@ -622,7 +621,12 @@
     "waiting for the other device" : {
       "comment" : "Said after a tab's name."
     },
-    "waiting for your answer" : {}
+    "waiting for your answer" : {},
+    "Couldn't use that folder" : {},
+    "Opens CrocApp at a transfer in History." : {},
+    "Remove" : {},
+    "The receive folder is unchanged. Choose a different folder." : {},
+    "This removes the list, not the files you received. Links that still work stay active until they expire." : {}
   },
   "version" : "1.0"
 }

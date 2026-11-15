@@ -27,13 +27,19 @@ extra sections where a release needs them, and the project follows
 - **Run a Relay** and **Check Relay…** are gone, with the Relay tab in Mac Settings and the switch in the menu bar window. The relay address, IPv6 address and password you set in Settings still work as before. To host a relay, run `croc relay` on a machine you control. The port, password and launch setting the relay left behind are deleted the first time 1.3.0 opens.
 - **Show History in Spotlight** is gone, and Spotlight no longer finds past transfers by their file names. If you had it on, the entries CrocApp added to Spotlight are removed each time CrocApp opens. The **Find Transfers** and **Open Transfer** actions in Shortcuts still work.
 
-### Security
-
-- croc's relay code, which CrocApp runs on your local network while it sends, could be crashed by a malformed connection before any password check. The transfer engine is now croc 11.6.5, whose relay turns such a connection away.
-
 ### Fixed
 
 - The patterns under **Exclude from sends** now apply to every folder send. Before, they only took effect when the folder was sent as a zip, so a matching file in a folder sent the usual way still went to the other device. A send where every picked file matches a pattern now stops instead of sending nothing.
+- On iPhone and iPad, buttons that were shorter than Apple's 44 point minimum, such as **Change…**, **Cancel**, **Copy Code** and the saved-code chips, are now at least that tall.
+- The code field has a visible border that gets stronger with Increase Contrast, and the file remove and share buttons answer to a short name in Voice Control.
+- Choosing a receive folder that CrocApp can't use now says so and keeps the current folder, instead of closing the picker with no message.
+- History stops offering **Revoke** on a link that expires while History is open, and **Clear All** says when links that still work stay active.
+- A transfer that iOS stopped in the background is recorded as **Failed** in History, not **Cancelled**.
+- **Open Transfer** in Shortcuts opens that transfer's details in History instead of the list.
+
+### Security
+
+- croc's relay code, which CrocApp runs on your local network while it sends, could be crashed by a malformed connection before any password check. The transfer engine is now croc 11.6.5, whose relay turns such a connection away.
 
 ## [1.2.1] - 2026-11-12
 

@@ -24,11 +24,11 @@ struct HistoryView: View {
     @State private var resendUnavailable = false
     @State private var revokeCandidate: TransferRecord?
     @State private var deleteCandidate: TransferRecord?
+    /// Passed to `canRevoke`: a link that expires while History is open stops offering Revoke.
+    @State private var now = Date.now
     #if os(macOS)
     /// The selected row, which the Delete key removes.
     @State private var selection: PersistentIdentifier?
-    /// The record whose detail is pushed.
-    @State private var opened: PersistentIdentifier?
     #endif
 
     private var shown: [TransferRecord] { records.filter { $0.matches(search: query) } }
@@ -50,7 +50,24 @@ struct HistoryView: View {
                 Button("Clear All", role: .destructive) { history.clear() }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This removes the list, not the files you received.")
+                if records.contains(where: { controller.canRevoke($0, now: now) }) {
+                    Text(
+                        "This removes the list, not the files you received. Links that still work stay active until they expire."
+                    )
+                } else {
+                    Text("This removes the list, not the files you received.")
+                }
+            }
+            .minuteClock($now)
+            // The detail pushed by a double-click or by Open Transfer in Shortcuts.
+            .navigationDestination(item: Bindable(router).openedRecord) { id in
+                if let record = records.first(where: { $0.persistentModelID == id }) {
+                    HistoryDetailView(record: record, actions: actions)
+                } else {
+                    // Deleted while open: leave the destination instead of
+                    // showing an empty screen.
+                    Color.clear.onAppear { router.openedRecord = nil }
+                }
             }
             .recordDialogs(
                 revokeCandidate: $revokeCandidate, deleteCandidate: $deleteCandidate,
@@ -93,6 +110,7 @@ struct HistoryView: View {
             } actions: {
                 Button("Open Settings") { showSettings() }
                     .buttonStyle(.glassProminent)
+                    .touchTargets()
             }
         }
     }
@@ -100,8 +118,10 @@ struct HistoryView: View {
     @ViewBuilder private var emptyStateActions: some View {
         Button("Send") { router.openSend(with: []) }
             .buttonStyle(.glassProminent)
+            .touchTargets()
         Button("Receive") { router.openReceive() }
             .buttonStyle(.glass)
+            .touchTargets()
     }
 
     #if os(macOS)
@@ -114,7 +134,7 @@ struct HistoryView: View {
             // several rows would have to say what it acts on.
             if ids.count == 1, let record = record(in: ids) { menu(for: record) }
         } primaryAction: { ids in
-            opened = ids.first
+            router.openedRecord = ids.first
         }
         .onDeleteCommand {
             guard let record = record(in: selection.map { [$0] } ?? []),
@@ -123,15 +143,6 @@ struct HistoryView: View {
             requestDelete(record)
         }
         .onChange(of: query) { selection = nil }
-        .navigationDestination(item: $opened) { id in
-            if let record = record(in: [id]) {
-                HistoryDetailView(record: record, actions: actions)
-            } else {
-                // Deleted while open: leave the destination instead of
-                // showing an empty screen.
-                Color.clear.onAppear { opened = nil }
-            }
-        }
     }
 
     /// A row that is on screen: a hidden row (filtered out by the search)
@@ -152,7 +163,7 @@ struct HistoryView: View {
                 .swipeActions(edge: .trailing) {
                     Button("Delete", role: .destructive) { requestDelete(record) }
                         .disabled(actions.isRevoking(record))
-                    if controller.canRevoke(record) {
+                    if controller.canRevoke(record, now: now) {
                         Button("Revoke") { revokeCandidate = record }
                             .tint(.red)
                             .disabled(actions.isRevoking(record))
@@ -173,7 +184,7 @@ struct HistoryView: View {
         if record.canResend {
             Button("Send Again") { resend(record) }
         }
-        if controller.canRevoke(record) {
+        if controller.canRevoke(record, now: now) {
             Button("Revoke Link", role: .destructive) { revokeCandidate = record }
                 .disabled(actions.isRevoking(record))
         }
@@ -184,7 +195,7 @@ struct HistoryView: View {
     /// A record with a link that still works asks first, so the files do not
     /// outlive the only row that can revoke them. Any other record goes at once.
     private func requestDelete(_ record: TransferRecord) {
-        if controller.canRevoke(record) {
+        if controller.canRevoke(record, now: now) {
             deleteCandidate = record
         } else {
             delete(record)
@@ -434,6 +445,16 @@ private struct RecordDialogs: ViewModifier {
 }
 
 extension View {
+    /// Sets `now` to the current time once a minute while the view is on screen.
+    func minuteClock(_ now: Binding<Date>) -> some View {
+        task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(60))
+                now.wrappedValue = .now
+            }
+        }
+    }
+
     func recordDialogs(
         revokeCandidate: Binding<TransferRecord?>, deleteCandidate: Binding<TransferRecord?>,
         resendUnavailable: Binding<Bool>, actions: HistoryActions,

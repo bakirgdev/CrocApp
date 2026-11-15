@@ -118,6 +118,7 @@ struct ReceiveView: View {
                 }
             }
             .font(.callout)
+            .touchTargets()
             .fileImporter(
                 isPresented: $showFolderPicker,
                 allowedContentTypes: [.folder]
@@ -125,6 +126,11 @@ struct ReceiveView: View {
                 if case .success(let url) = result {
                     outputFolder.select(url)
                 }
+            }
+            if outputFolder.selectionFailed {
+                StatusBanner(
+                    kind: .error, title: OutputFolderStore.selectionFailedTitle,
+                    detail: OutputFolderStore.selectionFailedDetail)
             }
 
             Button(action: start) {
@@ -199,6 +205,7 @@ struct ReceiveView: View {
                     Text("Clear")
                 }
                 .buttonStyle(.glass)
+                .touchTargets()
                 .accessibilityLabel("Clear link")
             }
         }

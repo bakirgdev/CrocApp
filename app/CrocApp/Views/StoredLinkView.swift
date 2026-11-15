@@ -96,6 +96,7 @@ struct StoredLinkView: View {
                 Label("Share Link", systemImage: "square.and.arrow.up")
             }
             .buttonStyle(.glass)
+            .touchTargets()
         }
     }
 

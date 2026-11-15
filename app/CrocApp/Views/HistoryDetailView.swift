@@ -19,6 +19,8 @@ struct HistoryDetailView: View {
     /// The record is deleted once this screen is gone, not while it is up: a
     /// deleted model read by a screen still on display is a crash.
     @State private var deleteWhenClosed = false
+    /// Passed to `canRevoke`: a link that expires while this is open stops offering Revoke.
+    @State private var now = Date.now
 
     private var isRevoking: Bool { actions.isRevoking(record) }
     /// A pruned or deleted record has no context. Reading any of its
@@ -43,6 +45,7 @@ struct HistoryDetailView: View {
         .onDisappear {
             if deleteWhenClosed { history.delete(record) }
         }
+        .minuteClock($now)
     }
 
     private var form: some View {
@@ -131,7 +134,7 @@ struct HistoryDetailView: View {
                 }
                 .buttonStyle(.glass)
             }
-            if controller.canRevoke(record) {
+            if controller.canRevoke(record, now: now) {
                 Button(role: .destructive) {
                     revokeCandidate = record
                 } label: {
@@ -161,7 +164,7 @@ struct HistoryDetailView: View {
     /// A record with a link that still works asks first (HistoryView does
     /// the same for the list's paths).
     private func requestDelete() {
-        if controller.canRevoke(record) {
+        if controller.canRevoke(record, now: now) {
             deleteCandidate = record
         } else {
             delete()

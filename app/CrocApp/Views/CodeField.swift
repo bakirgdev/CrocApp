@@ -68,7 +68,11 @@ struct CodeField: View {
                 .textFieldStyle(.plain)
                 .padding(.horizontal, 12)
                 .frame(minHeight: 44)
-                .background(.fill.tertiary, in: .rect(cornerRadius: 12))
+                // The system's secondary color adapts to Increase Contrast.
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(isFocused ? Color.accentColor : Color.secondary)
+                }
                 .contentShape(.rect)
                 .onTapGesture { isFocused = true }
                 .font(.subheadline.monospaced())

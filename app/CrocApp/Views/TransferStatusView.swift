@@ -122,6 +122,7 @@ struct TransferStatusView: View {
                     Text("Cancel").foregroundStyle(.red)
                 }
                 .buttonStyle(.glass)
+                .touchTargets()
                 .keyboardShortcut(.cancelAction)
             }
         }
@@ -295,6 +296,7 @@ struct TransferStatusView: View {
                     Label("Share Link", systemImage: "square.and.arrow.up")
                 }
                 .buttonStyle(.glass)
+                .touchTargets()
             }
             Text("On the other device, enter this code or scan the QR.")
                 .font(.callout)
@@ -345,6 +347,7 @@ struct TransferStatusView: View {
                     Text("Cancel").foregroundStyle(.red)
                 }
                 .buttonStyle(.glass)
+                .touchTargets()
                 .keyboardShortcut(.cancelAction)
                 Button("Send") { controller.respond(accept: true) }
                     .buttonStyle(.glassProminent)
@@ -529,6 +532,7 @@ struct TransferStatusView: View {
             Label("Share Text", systemImage: "square.and.arrow.up")
         }
         .buttonStyle(.glass)
+        .touchTargets()
     }
 
     /// Shows a received item where it was saved. iOS can only show the app's
@@ -591,6 +595,18 @@ struct TransferStatusView: View {
                 }
             }
         }
+    }
+}
+
+extension View {
+    /// 44 pt targets on iOS, where `.controlSize(.large)` is what gives them
+    /// (design/principles.md); macOS keeps its natural sizes.
+    func touchTargets() -> some View {
+        #if os(iOS)
+        controlSize(.large)
+        #else
+        self
+        #endif
     }
 }
 

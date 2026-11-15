@@ -30,7 +30,11 @@ struct SavedCodePicker: View {
                 Label(saved.name, systemImage: "key")
             }
             .buttonStyle(.glass)
+            #if os(iOS)
+            .controlSize(.large)
+            #else
             .controlSize(.small)
+            #endif
             .accessibilityValue(
                 selection.trimmingCharacters(in: .whitespacesAndNewlines) == saved.code
                     ? "Selected" : ""

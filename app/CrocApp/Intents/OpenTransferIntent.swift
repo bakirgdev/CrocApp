@@ -1,11 +1,9 @@
 import AppIntents
 
-/// Opens CrocApp at History. Shortcuts offers it for a found transfer. It opens
-/// the list, not the record: the record's own screen has no route to open it
-/// yet (issue #126).
+/// Opens CrocApp at a found transfer's detail in History.
 struct OpenTransferIntent: OpenIntent {
     static let title: LocalizedStringResource = "Open Transfer"
-    static let description = IntentDescription("Opens CrocApp at History.")
+    static let description = IntentDescription("Opens CrocApp at a transfer in History.")
     static let supportedModes: IntentModes = .foreground
 
     @Parameter(title: "Transfer")
@@ -13,7 +11,11 @@ struct OpenTransferIntent: OpenIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        AppRouter.shared.openHistory()
+        if let record = HistoryEntityID.identifier(from: target.id) {
+            AppRouter.shared.openHistory(record: record)
+        } else {
+            AppRouter.shared.openHistory()
+        }
         return .result()
     }
 }
