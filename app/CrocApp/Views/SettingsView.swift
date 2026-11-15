@@ -50,6 +50,11 @@ struct SettingsView: View {
                                 "CrocApp lost access to the folder you chose, so files now save to Downloads/CrocApp. Choose a folder to change it."
                         ))
                 }
+                if outputFolder.selectionFailed {
+                    StatusBanner(
+                        kind: .error, title: OutputFolderStore.selectionFailedTitle,
+                        detail: OutputFolderStore.selectionFailedDetail)
+                }
                 LabeledContent("Save Received Files To") {
                     HStack {
                         Text(

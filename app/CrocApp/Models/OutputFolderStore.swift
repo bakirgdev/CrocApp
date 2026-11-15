@@ -18,6 +18,16 @@ final class OutputFolderStore {
     /// `defaultFolder`. Settings shows it for this launch only: the key is
     /// cleared, so the next launch starts quietly on the default.
     private(set) var bookmarkWasReset = false
+    /// The last folder the user picked could not be kept, so the old one stays.
+    private(set) var selectionFailed = false
+
+    static var selectionFailedTitle: String {
+        String(localized: "Couldn't use that folder")
+    }
+
+    static var selectionFailedDetail: String {
+        String(localized: "The receive folder is unchanged. Choose a different folder.")
+    }
 
     static var defaultFolder: URL {
         #if os(macOS)
@@ -85,13 +95,15 @@ final class OutputFolderStore {
     func select(_ picked: URL) {
         let hadAccess = picked.startAccessingSecurityScopedResource()
         defer { if hadAccess { picked.stopAccessingSecurityScopedResource() } }
-        // Silently no-ops on failure (accepted papercut):
-        // rare, and the alternative is an error path the user cannot act on.
-        guard let data = SecurityScopedBookmark.create(for: picked) else { return }
+        guard let data = SecurityScopedBookmark.create(for: picked) else {
+            selectionFailed = true
+            return
+        }
         defaults.set(data, forKey: Self.bookmarkKey)
         url = picked
         isUserSelected = true
         bookmarkWasReset = false
+        selectionFailed = false
     }
 
     func resetToDefault() {
@@ -99,5 +111,6 @@ final class OutputFolderStore {
         url = Self.defaultFolder
         isUserSelected = false
         bookmarkWasReset = false
+        selectionFailed = false
     }
 }

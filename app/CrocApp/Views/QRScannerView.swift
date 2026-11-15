@@ -129,6 +129,7 @@ struct QRScannerSheet: View {
                 }
             }
             .buttonStyle(.glass)
+            .controlSize(.large)
         }
     }
 

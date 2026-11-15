@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftData
 
 #if os(macOS)
 import AppKit
@@ -36,6 +37,8 @@ final class AppRouter {
     var settingsPath: [SettingsPage] = []
     /// How It Works is a sheet over whichever tab is open.
     var showsHowItWorks = false
+    /// The History record whose detail is pushed, if any.
+    var openedRecord: PersistentIdentifier?
     let sendDraft = SendDraft()
     let receiveDraft = ReceiveDraft()
 
@@ -107,6 +110,13 @@ final class AppRouter {
     /// progress keeps the screen.
     func openHistory() {
         if !isBusy { selection = .history }
+    }
+
+    /// Shows one record's detail in History, under the same busy rule.
+    func openHistory(record: PersistentIdentifier) {
+        guard !isBusy else { return }
+        selection = .history
+        openedRecord = record
     }
 
     // MARK: - Menu commands

@@ -119,13 +119,25 @@ import Testing
     }
 }
 
-/// Opening a transfer from Shortcuts: History opens, and a
-/// running transfer keeps the screen.
+/// Opening a transfer from Shortcuts: History opens at the record's detail,
+/// and a running transfer keeps the screen.
 @MainActor @Suite struct OpenHistoryTests {
     @Test func historyOpens() {
         let router = AppRouter()
         router.openHistory()
         #expect(router.selection == .history)
+    }
+
+    @Test func aRecordOpensItsDetail() {
+        let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
+        let record = TransferRecord(
+            isSend: true, status: .completed, isText: false, fileCount: 1, totalBytes: 1,
+            names: ["x"], codeHint: "", bookmarks: [])
+        history.add(record)
+        let router = AppRouter()
+        router.openHistory(record: record.persistentModelID)
+        #expect(router.selection == .history)
+        #expect(router.openedRecord == record.persistentModelID)
     }
 
     @Test func aBusyRouterStaysOnTheTransfer() {

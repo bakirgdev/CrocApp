@@ -40,6 +40,18 @@ import Testing
         #expect(!relaunched.bookmarkWasReset)
     }
 
+    @Test func aFolderThatCannotBeKeptIsReportedAndTheOldOneStays() throws {
+        let store = OutputFolderStore(defaults: defaults)
+        store.select(try folder("kept"))
+
+        store.select(base.appending(path: "missing", directoryHint: .isDirectory))
+        #expect(store.selectionFailed)
+        #expect(store.url.lastPathComponent == "kept")
+
+        store.select(try folder("next"))
+        #expect(!store.selectionFailed)
+    }
+
     @Test func aStaleBookmarkIsRefreshedNotReset() throws {
         let url = try folder("before")
         OutputFolderStore(defaults: defaults).select(url)

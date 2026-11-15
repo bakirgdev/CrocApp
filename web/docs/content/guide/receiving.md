@@ -27,6 +27,8 @@ The current destination folder shows below the code field. **Change…** picks a
 - **Mac:** `Downloads/CrocApp`
 - **iOS:** the app's Documents folder, which shows in the Files app
 
+If CrocApp can't use the folder you pick, it says so and keeps the current one.
+
 On a Mac you can also change it in [Settings](settings.md) under **Save Received Files To**.
 
 ## Accept or decline

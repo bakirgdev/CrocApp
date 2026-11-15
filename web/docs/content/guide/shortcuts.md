@@ -32,7 +32,7 @@ The action does not accept or decline for you. The prompt appears in CrocApp unl
 
 ## Find past transfers
 
-The Find Transfers action lists your [History](history.md) in a shortcut: filter by date, direction (sent or received), status or file name, and sort by date. Each result has a name, direction, status, date, file names and size, and opening one opens CrocApp at History. It returns nothing while **Save Transfer History** is off. It never returns a code phrase.
+The Find Transfers action lists your [History](history.md) in a shortcut: filter by date, direction (sent or received), status or file name, and sort by date. Each result has a name, direction, status, date, file names and size, and **Open Transfer** opens that transfer's details in History. It returns nothing while **Save Transfer History** is off. It never returns a code phrase.
 
 ## Send from the Mac Services menu
 

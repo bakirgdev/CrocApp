@@ -84,15 +84,14 @@ final class TransferController {
 
         static func < (a: Self, b: Self) -> Bool { a.rawValue < b.rawValue }
 
-        /// A background expiry is recorded as cancelled although the screen says
-        /// iOS paused the transfer (known issue); an unsafe name is `.failed`
-        /// because the history schema has no blocked case and "Cancelled" reads
-        /// as a user action.
+        /// A background expiry and an unsafe name are `.failed`: the history
+        /// schema has no blocked or paused case, and "Cancelled" reads as a
+        /// user action.
         var recordStatus: TransferRecord.Status {
             switch self {
             case .declined: .declined
-            case .cancelled, .backgroundExpired: .cancelled
-            case .unsafeName: .failed
+            case .cancelled: .cancelled
+            case .backgroundExpired, .unsafeName: .failed
             }
         }
     }

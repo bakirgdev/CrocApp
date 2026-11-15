@@ -96,6 +96,7 @@ struct FileRow: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Remove \(name)")
+                    .accessibilityInputLabels(["Remove \(name)", "Remove"])
                 }
             }
         }
@@ -146,6 +147,7 @@ struct FileRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text("Share \(name)"))
+        .accessibilityInputLabels(["Share \(name)", "Share"])
     }
 
     @ViewBuilder private var sizeLabel: some View {

@@ -73,6 +73,7 @@ struct CopyButton: View {
             }
         }
         .buttonStyle(.glass)
+        .touchTargets()
         // Restarts with every copy, so a second tap keeps "Copied" up for
         // another two seconds.
         .task(id: copies) {

@@ -399,9 +399,9 @@ import Testing
         #expect(await engine.cancels == [id], "cancelled once")
     }
 
-    /// The screen says iOS paused it and the user tapped nothing; History
-    /// records Cancelled (known issue).
-    @Test func aBackgroundExpiryShowsItsCopyAndIsRecordedCancelled() async throws {
+    /// The screen says iOS paused it and the user tapped nothing, so History
+    /// records Failed, not Cancelled.
+    @Test func aBackgroundExpiryShowsItsCopyAndIsRecordedFailed() async throws {
         controller.start(.sendFiles(urls: [file], code: ""))
         try await waitForTransfer()
         try await deliver(.codeReady(Self.code))
@@ -412,7 +412,7 @@ import Testing
         try await deliver(.failed(EngineFailure(code: .cancelled, message: "context canceled")))
         #expect(controller.phase.failure == .backgroundExpired(stored: false, direction: .send))
         #expect(controller.phase.failure?.endedByUser == false)
-        #expect(try onlyRecord().status == .cancelled)
+        #expect(try onlyRecord().status == .failed)
     }
 
     /// A Cancel tap after the block, or a Decline before a Cancel, must not
