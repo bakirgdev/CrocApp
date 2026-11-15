@@ -6,7 +6,6 @@ struct ReceiveView: View {
     @Bindable var draft: ReceiveDraft
     @Environment(TransferController.self) private var controller
     @Environment(OutputFolderStore.self) private var outputFolder
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @State private var showScanner = false
     @State private var showFolderPicker = false
@@ -27,18 +26,16 @@ struct ReceiveView: View {
         .navigationTitle("Receive")
     }
 
-    // At accessibility text sizes the form is taller than a phone screen, so it
-    // scrolls there (as SendView does, and for the same reason: not
-    // ViewThatFits, which would swap branches when the keyboard opens).
     private var form: some View {
-        Group {
-            if dynamicTypeSize.isAccessibilitySize {
-                ScrollView { formContent.padding() }
-            } else {
-                formContent.padding()
+        ActionScreen {
+            formContent
+        } actions: {
+            resultAction(prominent: true, action: start) {
+                Label("Receive", systemImage: "arrow.down.circle.fill")
             }
+            .keyboardShortcut(.defaultAction)
+            .disabled(!canStart)
         }
-        .frame(maxWidth: 480)
         .phoneHaptic(trigger: scanCount) { _, _ in .selection }
     }
 
@@ -132,15 +129,6 @@ struct ReceiveView: View {
                     kind: .error, title: OutputFolderStore.selectionFailedTitle,
                     detail: OutputFolderStore.selectionFailedDetail)
             }
-
-            Button(action: start) {
-                Label("Receive", systemImage: "arrow.down.circle.fill")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.glassProminent)
-            .controlSize(.large)
-            .keyboardShortcut(.defaultAction)
-            .disabled(!canStart)
         }
     }
 

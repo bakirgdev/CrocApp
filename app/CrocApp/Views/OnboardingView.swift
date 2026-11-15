@@ -14,14 +14,13 @@ struct OnboardingView: View {
 
     var body: some View {
         // Scrolls when the text is large enough that the column is taller than
-        // the sheet. Content that fits is centered, as before.
+        // the sheet, and starts at the top, where the welcome is.
         ScrollView {
             column
                 .padding(32)
                 .frame(maxWidth: .infinity)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .defaultScrollAnchor(.center, for: .alignment)
         #if os(macOS)
         .frame(width: 480)
         #endif

@@ -1,9 +1,10 @@
 import CrocKit
 import SwiftUI
 
-/// The result of a Send as Link: the link, its QR, Copy and Share, and Revoke
-/// (components.md → StatusBlock). Revoke is here for every link, so one sent
-/// with Save Transfer History off, which History never lists, can be revoked.
+/// The result of a Send as Link: the link, its QR and Copy and Share, with Revoke
+/// and Done in the actions row (components.md → StatusBlock). Revoke is here for
+/// every link, so one sent with Save Transfer History off, which History never
+/// lists, can be revoked.
 struct StoredLinkView: View {
     @Environment(TransferController.self) private var controller
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -15,20 +16,37 @@ struct StoredLinkView: View {
     @State private var revokeFailure: String?
 
     var body: some View {
-        ZStack {
-            if revoked {
-                VStack(spacing: 16) {
+        ActionScreen {
+            ZStack {
+                if revoked {
                     StatusBlock(
                         kind: .neutral, title: String(localized: "Link revoked"),
-                        detail: String(localized: "It no longer works for anyone."))
-                    resultAction("Done") { controller.reset() }
+                        detail: String(localized: "It no longer works for anyone.")
+                    )
+                    .transition(.opacity)
+                } else {
+                    ready.transition(.opacity)
                 }
-                .transition(.opacity)
-            } else {
-                ready.transition(.opacity)
             }
+            .animation(reduceMotion ? nil : .default, value: revoked)
+        } actions: {
+            if !revoked {
+                resultAction(role: .destructive) {
+                    confirmsRevoke = true
+                } label: {
+                    // The label stays, the spinner takes the glyph's place.
+                    Label {
+                        Text("Revoke Link")
+                    } icon: {
+                        if isRevoking { ProgressView().controlSize(.small) }
+                    }
+                    .foregroundStyle(.red)
+                }
+                .disabled(isRevoking)
+            }
+            resultAction("Done") { controller.reset() }
+                .disabled(isRevoking)
         }
-        .animation(reduceMotion ? nil : .default, value: revoked)
         .confirmationDialog("Revoke this link?", isPresented: $confirmsRevoke) {
             Button("Revoke Link", role: .destructive) { revoke() }
         } message: {
@@ -70,22 +88,6 @@ struct StoredLinkView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            VStack {
-                resultAction(role: .destructive) {
-                    confirmsRevoke = true
-                } label: {
-                    // The label stays, the spinner takes the glyph's place.
-                    Label {
-                        Text("Revoke Link")
-                    } icon: {
-                        if isRevoking { ProgressView().controlSize(.small) }
-                    }
-                    .foregroundStyle(.red)
-                }
-                .disabled(isRevoking)
-                resultAction("Done") { controller.reset() }
-                    .disabled(isRevoking)
-            }
         }
     }
 

@@ -10,7 +10,6 @@ struct SendView: View {
     @Bindable var draft: SendDraft
     @Environment(TransferController.self) private var controller
     @Environment(AppSettings.self) private var settings
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Sizes of `draft.pickedURLs`, read off the main actor; a row has none until then.
@@ -29,9 +28,8 @@ struct SendView: View {
     @State private var photoFailures = 0
     @FocusState private var textFocused: Bool
 
-    // The staged list and the text box both keep the DropZone's floor (so the Files tab does not change height as files
-    // arrive) and grow to this cap, then scroll.
-    private static let queueMaxHeight: CGFloat = 280
+    // The text box keeps the DropZone's floor and grows to this cap, then scrolls.
+    private static let textMaxHeight: CGFloat = 280
 
     // The system's own text inset inside a TextEditor, which the placeholder
     // copies. Not a token: it is whatever the platform draws.
@@ -56,21 +54,31 @@ struct SendView: View {
         .onAppear { SendStaging.purgeOnce() }
     }
 
-    // At accessibility text sizes the form is taller than a phone screen, so it
-    // scrolls there. Not ViewThatFits (as TransferStatusView uses): the keyboard
-    // shrinks the space, which would swap the branch and drop the text field's
-    // focus mid-typing.
     private var form: some View {
-        Group {
-            // Padding inside the scroll view: outside it, the scroll view's
-            // clip cuts off the Toggle switch, which draws past its frame.
-            if dynamicTypeSize.isAccessibilitySize {
-                ScrollView { formContent.padding() }
-            } else {
-                formContent.padding()
+        ActionScreen {
+            formContent
+        } actions: {
+            resultAction(prominent: true, action: start) {
+                Label(
+                    linkSelected ? "Send as Link" : "Send",
+                    systemImage: linkSelected ? "link.circle.fill" : "arrow.up.circle.fill"
+                )
             }
+            .disabled(!canStart)
         }
-        .frame(maxWidth: 480)
+    }
+
+    private func start() {
+        if linkSelected {
+            controller.start(
+                .storedSend(
+                    urls: draft.pickedURLs, downloads: draft.linkDownloads,
+                    lifetimeSeconds: draft.linkLifetime.rawValue))
+        } else if draft.mode == .files {
+            controller.start(.sendFiles(urls: draft.pickedURLs, code: customCodeTrimmed))
+        } else {
+            controller.start(.sendText(text: draft.text, code: customCodeTrimmed))
+        }
     }
 
     private var formContent: some View {
@@ -104,28 +112,6 @@ struct SendView: View {
                 }
                 .transition(.opacity)
             }
-
-            Button {
-                if linkSelected {
-                    controller.start(
-                        .storedSend(
-                            urls: draft.pickedURLs, downloads: draft.linkDownloads,
-                            lifetimeSeconds: draft.linkLifetime.rawValue))
-                } else if draft.mode == .files {
-                    controller.start(.sendFiles(urls: draft.pickedURLs, code: customCodeTrimmed))
-                } else {
-                    controller.start(.sendText(text: draft.text, code: customCodeTrimmed))
-                }
-            } label: {
-                Label(
-                    linkSelected ? "Send as Link" : "Send",
-                    systemImage: linkSelected ? "link.circle.fill" : "arrow.up.circle.fill"
-                )
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.glassProminent)
-            .controlSize(.large)
-            .disabled(!canStart)
         }
         .animation(swapAnimation, value: draft.mode)
         .animation(swapAnimation, value: linkSelected)
@@ -240,25 +226,23 @@ struct SendView: View {
                 if draft.pickedURLs.isEmpty {
                     DropZone(
                         title: "Drop files or folders here",
-                        hint: "or add them with the buttons below",
+                        hint: "or add them with the button below",
                         isTargeted: isDropTargeted)
                 } else {
-                    ScrollView {
-                        GroupBox {
-                            VStack(spacing: 0) {
-                                ForEach(Array(draft.pickedURLs.enumerated()), id: \.element) {
-                                    index, url in
-                                    FileRow(url: url, size: pickedSizes[url]) {
-                                        draft.pickedURLs.removeAll { $0 == url }
-                                        SendStaging.discard(url)
-                                    }
-                                    if index < draft.pickedURLs.count - 1 { Divider() }
+                    // Plain rows: the page scrolls, so every file is reachable
+                    // at any text size and no button covers a row.
+                    GroupBox {
+                        VStack(spacing: 0) {
+                            ForEach(Array(draft.pickedURLs.enumerated()), id: \.element) {
+                                index, url in
+                                FileRow(url: url, size: pickedSizes[url]) {
+                                    draft.pickedURLs.removeAll { $0 == url }
+                                    SendStaging.discard(url)
                                 }
+                                if index < draft.pickedURLs.count - 1 { Divider() }
                             }
                         }
                     }
-                    .scrollBounceBehavior(.basedOnSize)
-                    .frame(minHeight: DropZone.minHeight, maxHeight: Self.queueMaxHeight)
                     .overlay {
                         // The empty DropZone draws its own drag-over state;
                         // a list in the way gets the same accent border.
@@ -281,29 +265,23 @@ struct SendView: View {
                 isDropTargeted = $0
             }
 
-            ViewThatFits(in: .horizontal) {
-                HStack { importButtons }
-                VStack { importButtons }
-            }
-            #if os(iOS)
-            .controlSize(.large)
-            #endif
-            .fileImporter(
-                isPresented: $showFileImporter,
-                allowedContentTypes: [.item],
-                allowsMultipleSelection: true
-            ) { result in
-                if case .success(let urls) = result {
-                    draft.add(urls)
+            addMenu
+                .fileImporter(
+                    isPresented: $showFileImporter,
+                    allowedContentTypes: [.item],
+                    allowsMultipleSelection: true
+                ) { result in
+                    if case .success(let urls) = result {
+                        draft.add(urls)
+                    }
                 }
-            }
-            .fileImporter(
-                isPresented: $showFolderImporter,
-                allowedContentTypes: [.folder]
-            ) { result in
-                if case .success(let url) = result { draft.add([url]) }
-            }
-            #if os(iOS)
+                .fileImporter(
+                    isPresented: $showFolderImporter,
+                    allowedContentTypes: [.folder]
+                ) { result in
+                    if case .success(let url) = result { draft.add([url]) }
+                }
+                #if os(iOS)
             .photosPicker(
                 isPresented: $showPhotoPicker,
                 selection: $photoItems,
@@ -315,7 +293,7 @@ struct SendView: View {
             // A task tied to the pick: it is cancelled with the screen or when
             // the pick changes, and cancelling discards what it staged.
             .task(id: photoItems) { await addPhotos(photoItems) }
-            #endif
+                #endif
 
             if photoFailures > 0 {
                 StatusBanner(
@@ -333,24 +311,44 @@ struct SendView: View {
         }
     }
 
-    @ViewBuilder private var importButtons: some View {
-        Button("Add Files") { showFileImporter = true }
-            .buttonStyle(.glass)
-        Button("Add Folder") { showFolderImporter = true }
-            .buttonStyle(.glass)
-        #if os(iOS)
-        Button {
-            showPhotoPicker = true
+    // One menu instead of three buttons that stack at three widths on a small
+    // phone. The items keep the old buttons' accessibility labels.
+    private var addMenu: some View {
+        Menu {
+            Button {
+                showFileImporter = true
+            } label: {
+                Label("Files", systemImage: "doc")
+            }
+            .accessibilityLabel("Add Files")
+            Button {
+                showFolderImporter = true
+            } label: {
+                Label("Folder", systemImage: "folder")
+            }
+            .accessibilityLabel("Add Folder")
+            #if os(iOS)
+            Button {
+                showPhotoPicker = true
+            } label: {
+                Label("Photos", systemImage: "photo.on.rectangle")
+            }
+            .accessibilityLabel("Add Photos")
+            .disabled(isLoadingPhotos)
+            #endif
         } label: {
             Label {
-                Text("Add Photos")
+                Text("Add")
             } icon: {
-                if isLoadingPhotos { ProgressView() }
+                #if os(iOS)
+                if isLoadingPhotos { ProgressView() } else { Image(systemName: "plus") }
+                #else
+                Image(systemName: "plus")
+                #endif
             }
         }
         .buttonStyle(.glass)
-        .disabled(isLoadingPhotos)
-        #endif
+        .controlSize(.large)
     }
 
     #if os(iOS)
@@ -380,7 +378,7 @@ struct SendView: View {
                 .focused($textFocused)
                 .accessibilityLabel("Text to send")
                 .font(.body.monospaced())
-                .frame(minHeight: DropZone.minHeight, maxHeight: Self.queueMaxHeight)
+                .frame(minHeight: DropZone.minHeight, maxHeight: Self.textMaxHeight)
                 .overlay(alignment: .topLeading) {
                     if draft.text.isEmpty {
                         // TextEditor has no placeholder. The system draws its

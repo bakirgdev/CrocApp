@@ -49,9 +49,9 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Share extension (send from any app) | iOS and iPadOS | shipped |
 | Share extension accepts shared text and web links (sent as a text transfer from the Send screen; files win in a mixed share; capped at 1 MiB) | iOS, iPadOS and macOS | shipped; not verified through a real share sheet |
 | Share extension (send from Finder's Share menu) | macOS | shipped; the system's Share menu on a real Finder selection is not verified |
-| Add Photos, paste and drop of images and text on Send. Photos keep their names, ask no library permission, and stage in a folder that is deleted with the row or the screen | iOS and iPadOS (Photos), all (paste, drop). Paste from a hardware keyboard on iPad needs iOS 27 | shipped |
+| The Photos item of the Add menu, paste and drop of images and text on Send. Photos keep their names, ask no library permission, and stage in a folder that is deleted with the row or the screen | iOS and iPadOS (Photos), all (paste, drop). Paste from a hardware keyboard on iPad needs iOS 27 | shipped |
 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` (universal link), and `https://getcroc.com/?code=`. One parser, `TransferLink`. Opening a link prefills Receive and never connects. | all | shipped |
-| Trust UI: encryption badge, "How It Works", active-relay indicator | all | shipped |
+| Trust UI: "How It Works" with the encryption badge and the relay in use | all | shipped |
 | Failure screen: what happened, what to do, and **Try Again** or **Open Settings** when one can help | all | shipped |
 | Waiting-screen QR and **Share Link** encode `https://crocapp.dev/r/#<code>` (see below) | all | shipped |
 | Send as Link (stored transfers; see below) | all | shipped |

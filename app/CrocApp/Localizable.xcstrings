@@ -63,6 +63,7 @@
     "About" : {},
     "About CrocApp" : {},
     "Accept" : {},
+    "Add" : {},
     "Add Files" : {},
     "Add Folder" : {},
     "Add Photos" : {},
@@ -210,7 +211,6 @@
       "comment" : "Error under the Link Server field. The placeholder is an example address and stays as it is."
     },
     "Every transfer uses a short one-time code phrase. Whoever has the code is the transfer partner. Share it over a channel you trust; it expires with the transfer." : {},
-    "Everything is encrypted on your device and decrypted only on the other one. Nothing in between can read it." : {},
     "Exclude from sends" : {},
     "Expired" : {},
     "Expires" : {},
@@ -241,6 +241,7 @@
     "Find the sender automatically" : {},
     "Finished sends and receives appear here." : {},
     "Finished transfers are listed in History, which stays on this device." : {},
+    "Folder" : {},
     "Folders can't be sent as a link. Remove the folders, or send them with a code." : {},
     "General" : {},
     "Get Started" : {},
@@ -304,6 +305,7 @@
     "Paste text" : {},
     "Patterns, one per line" : {},
     "Performance" : {},
+    "Photos" : {},
     "Point the camera at the QR code on the other device." : {},
     "Privacy Policy" : {},
     "Proxies also carry Send as Link. Their addresses, with any password in them, are saved in the Keychain." : {},
@@ -610,7 +612,7 @@
     "needs your answer" : {
       "comment" : "Said after a tab's name."
     },
-    "or add them with the buttons below" : {},
+    "or add them with the button below" : {},
     "transfer complete" : {},
     "transfer failed" : {},
     "transfer finished with errors" : {},
