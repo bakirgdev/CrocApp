@@ -29,7 +29,7 @@ scripts/capture-screenshots.sh --copy-web      # refresh the web copies, no disp
 After a run, refresh the web copies with `--copy-web`. The pages use WebP, not PNG, so it rebuilds with `cwebp` (`brew install webp`; the script fails if it is missing) every `.webp` already present under `web/docs/screenshots/` and `web/landing/assets/img/screenshots/`:
 
 - Each file's source is `assets/screenshots/` plus the same relative path with `.png`. A `.webp` with no matching source fails the run.
-- Each file keeps its current pixel size (read with `sips`), so the landing hero stays 840x817 (Mac) and 660x1434 (iPhone), matching the `width` and `height` attributes in `index.html`. A source whose aspect ratio no longer matches the file fails the run: resize the file once by hand with the same `cwebp` flags and the new size, update the page's attributes, then re-run.
+- Each file keeps its current pixel size (read with `sips`), so the landing hero stays 840x668 (Mac) and 660x1434 (iPhone), matching the `width` and `height` attributes in `index.html`. A source whose aspect ratio no longer matches the file fails the run: resize the file once by hand with the same `cwebp` flags and the new size, update the page's attributes, then re-run.
 - Flags are `-q 85 -m 6`, with `-resize W H` only when the size differs from the source.
 - To publish a new shot, run `cwebp` on its source into the web folder once, at the size the page needs; later runs keep it fresh.
 
@@ -80,7 +80,7 @@ All are native simulator pixels: nothing is scaled or cropped to reach a size.
   - The outer display lays the app out sideways (status bar and back button in a strip along one edge); that is how the simulator renders it, and the shot is kept as is.
   - The Duo runs on the newest runtime (iOS 27.1), the others on whichever newest runtime supports their device type.
 
-**Mac.** A window capture is typically 1440x1400 (a 720x700 pt window at 2x), not 16:10, and a stretched window would be dishonest. `imgtool compose` (`scripts/screenshots/imgtool.swift`) draws the untouched window at 1x, centred, with a soft shadow, on a gradient canvas of exactly 2880x1800: pale blue-grey for light shots, deep blue-grey for dark ones. Needs a Retina main display so the capture comes out at 2x.
+**Mac.** A window capture is typically 1760x1400 (an 880x700 pt window at 2x), not 16:10, and a stretched window would be dishonest. `imgtool compose` (`scripts/screenshots/imgtool.swift`) draws the untouched window at 1x, centred, with a soft shadow, on a gradient canvas of exactly 2880x1800: pale blue-grey for light shots, deep blue-grey for dark ones. Needs a Retina main display so the capture comes out at 2x.
 
 **No alpha.** Window captures and simulator screenshots carry an alpha channel. `imgtool` draws into a `noneSkipLast` bitmap context, which writes a PNG with no alpha channel at all (flattening over a colour alone would keep the channel). The last step of every run runs `sips -g pixelWidth -g pixelHeight -g hasAlpha` on every store file and fails on a wrong size, an alpha channel, a missing file, or more than ten files per device.
 
@@ -169,7 +169,7 @@ For any future screenshot work:
 - **Mac light shots have no window edge.** Window captures are made without the system shadow (`screencapture -o`), in both themes. A light window on a white page looks unframed; a page that needs an edge adds it in CSS.
 - **`iphone/onboarding` is a real sheet.** On iOS the onboarding is a `.sheet`, so the light shot shows the dimmed Send tab above and around it. Dark shows the same over black.
 
-- **`ipad/` is the phone layout stretched.**
+- **`ipad/` is the phone layout in a centred column**, under a floating top tab bar, with a lot of empty space on the sides and below.
 - **No `iphone-duo-inner`, and `iphone-duo-outer` cuts taller screens off at the bottom.** See "iPhone Duo" above. The outer set is uploaded (iOS 1.1.1), but a screen taller than the outer display ends mid-content: `02-send-code-dark` cuts its hint line and loses "Waiting for the receiver…". Recapture when a runtime or Simulator.app can drive the Duo's inner display.
 - **No menu-bar shot.** The menu-bar popover cannot be captured reliably: macOS hides the status item when the menu bar is full, so no script can click it.
 - **`mac/onboarding` is not captured** (see the table above).

@@ -66,7 +66,7 @@ Both devices run PAKE over the code phrase to derive a session key, so the phras
     <td align="center" valign="top">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="web/docs/screenshots/mac/send-code-dark.webp">
-        <img src="web/docs/screenshots/mac/send-code-light.webp" width="380" alt="CrocApp on macOS, ready to send: the code phrase, a QR code, and an end-to-end encrypted badge.">
+        <img src="web/docs/screenshots/mac/send-code-light.webp" width="380" alt="CrocApp on macOS, ready to send: the code phrase, a Copy Code button, a QR code and a Share Link button.">
       </picture>
       <br><sub><strong>macOS</strong>: send, with code phrase and QR</sub>
     </td>
@@ -82,9 +82,9 @@ Both devices run PAKE over the code phrase to derive a session key, so the phras
     <td align="center" colspan="2">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="web/docs/screenshots/mac/settings-dark.webp">
-        <img src="web/docs/screenshots/mac/settings-light.webp" width="420" alt="CrocApp Settings on macOS showing the receive folder and the relay address fields.">
+        <img src="web/docs/screenshots/mac/settings-light.webp" width="420" alt="CrocApp Settings on macOS General tab, showing the Exclude from sends, Confirmation and About sections.">
       </picture>
-      <br><sub><strong>macOS</strong>: settings, with your own relay, local-only, compression</sub>
+      <br><sub><strong>macOS</strong>: settings, with exclude patterns and confirmation</sub>
     </td>
   </tr>
 </table>
