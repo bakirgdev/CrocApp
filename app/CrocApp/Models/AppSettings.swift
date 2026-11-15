@@ -196,7 +196,8 @@ final class AppSettings {
             for line in Self.patternLines(paths) {
                 // An exact path was relative to the picked folder ("./build/out.bin"). As a
                 // pattern it starts at a path component, so "build" does not also drop "rebuild.sh".
-                let path = "/" + line.split(separator: "/").filter { $0 != "." }.joined(separator: "/")
+                let parts = line.split(separator: "/").filter { $0 != "." }
+                let path = "/" + parts.joined(separator: "/")
                 if path != "/", !merged.contains(path) { merged.append(path) }
             }
             storage.set(merged.joined(separator: "\n"), forKey: Key.excludePatterns.rawValue)
