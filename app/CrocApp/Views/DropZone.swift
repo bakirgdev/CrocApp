@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// The empty send target. design/components.md → DropZone. Drawn, because no
-/// system control does the job; it is never the only way in, so every use sits
+/// The empty send target. Drawn, because no system control does the job; it is never the only way in, so every use sits
 /// beside a real file-picker button. The drop destination itself stays with the
 /// caller, which passes the `isTargeted` state in.
 struct DropZone: View {
@@ -15,28 +14,21 @@ struct DropZone: View {
     var size: Size = .regular
     let isTargeted: Bool
 
-    // components.md → DropZone: min height 168 (menu bar 96), 2pt stroke dashed
-    // 6 on 4 off, glyph 44 (34 compact), scaled
-    // with Dynamic Type. SendView reuses the height and the stroke for the staged
-    // list and its drag-over border.
+    // SendView reuses the height and the stroke for the staged list and its
+    // drag-over border.
     static let minHeight: CGFloat = 168
     static let strokeWidth: CGFloat = 2
     private static let compactMinHeight: CGFloat = 96
-    private static let dashLength: CGFloat = 6
-    private static let dashGap: CGFloat = 4
-    @ScaledMetric(relativeTo: .largeTitle) private var regularGlyph: CGFloat = 44
-    @ScaledMetric(relativeTo: .title) private var compactGlyph: CGFloat = 34
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-    }
+    private let shape = RoundedRectangle(cornerRadius: 20)
 
     var body: some View {
-        VStack(spacing: Spacing.space4) {
+        VStack(spacing: 12) {
             Image(systemName: "square.and.arrow.up")
-                .font(.system(size: size == .regular ? regularGlyph : compactGlyph))
+                .font(size == .regular ? .largeTitle : .title)
+                .imageScale(.large)
                 .foregroundStyle(isTargeted ? Color.accentColor : Color.secondary)
                 .accessibilityHidden(true)
             Text(title)
@@ -48,14 +40,14 @@ struct DropZone: View {
             }
         }
         .multilineTextAlignment(.center)
-        .padding(Spacing.space5)
+        .padding()
         .frame(
             maxWidth: .infinity,
             minHeight: size == .regular ? Self.minHeight : Self.compactMinHeight
         )
         .background(
             isTargeted
-                ? AnyShapeStyle(Color.accentColor.opacity(ComponentMetrics.tintOpacity))
+                ? AnyShapeStyle(Color.accentColor.opacity(0.14))
                 : AnyShapeStyle(.fill.tertiary),
             in: shape
         )
@@ -65,12 +57,11 @@ struct DropZone: View {
             } else {
                 shape.strokeBorder(
                     .separator,
-                    style: StrokeStyle(
-                        lineWidth: Self.strokeWidth, dash: [Self.dashLength, Self.dashGap]))
+                    style: StrokeStyle(lineWidth: Self.strokeWidth, dash: [6, 4]))
             }
         }
         .animation(
-            reduceMotion ? nil : Motion.easeOut(Motion.durationFast), value: isTargeted
+            reduceMotion ? nil : .default, value: isTargeted
         )
         .accessibilityElement(children: .combine)
     }
@@ -81,7 +72,7 @@ struct DropZone: View {
         title: "Drop files or folders here", hint: "or add them with the buttons below",
         isTargeted: false
     )
-    .padding(Spacing.space5)
+    .padding()
 }
 
 #Preview("Drag over") {
@@ -89,5 +80,5 @@ struct DropZone: View {
         title: "Drop files or folders here", hint: "or add them with the buttons below",
         isTargeted: true
     )
-    .padding(Spacing.space5)
+    .padding()
 }

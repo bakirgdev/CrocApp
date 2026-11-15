@@ -40,7 +40,7 @@ extension View {
     /// natural height.
     fileprivate func linkRow() -> some View {
         #if os(iOS)
-        frame(maxWidth: .infinity, minHeight: ControlHeight.hitTargetMin, alignment: .leading)
+        frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
             .contentShape(Rectangle())
         #else
         self

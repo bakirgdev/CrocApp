@@ -92,8 +92,8 @@ extension AppRouter.Route {
     }
 
     /// The screen is a list or a form, which fills its container and does not
-    /// cap itself. Send, Receive and How It Works cap their own column
-    /// (`LayoutCap`), so the detail leaves them alone.
+    /// cap itself. Send, Receive and How It Works cap their own column, so
+    /// the detail leaves them alone.
     fileprivate var isFullWidthList: Bool {
         switch self {
         case .history, .settings, .advancedSettings: true
@@ -131,7 +131,7 @@ private struct DetailStack: View {
 
 extension View {
     /// What every screen in the detail column gets: its content capped and
-    /// centered (design/principles.md → Spacing and layout), and the live-request
+    /// centered, and the live-request
     /// banner at its top (components.md → AcceptGate).
     fileprivate func detailScreen(_ route: AppRouter.Route) -> some View {
         modifier(DetailScreen(route: route))
@@ -155,12 +155,12 @@ private struct DetailScreen: ViewModifier {
                 && router.detailPath.isEmpty)
     }
 
-    /// Margin that leaves a list's or form's content `LayoutCap.contentMaxWidth`
+    /// Margin that leaves a list's or form's content `480`
     /// wide. On iPad the list keeps its full-width background and the margin is
     /// the page. The Mac's list is a column of its own, and the toolbar's
     /// scroll edge above it is as wide as the column.
     private var listMargin: CGFloat {
-        route.isFullWidthList ? max(0, (width - LayoutCap.contentMaxWidth) / 2) : 0
+        route.isFullWidthList ? max(0, (width - 480) / 2) : 0
     }
 
     func body(content: Content) -> some View {
@@ -172,21 +172,13 @@ private struct DetailScreen: ViewModifier {
             .safeAreaInset(edge: .top, spacing: 0) {
                 if showsBanner {
                     RequestBanner()
-                        .transition(Self.insert(reduceMotion: reduceMotion))
+                        .transition(.opacity)
                 }
             }
-            .animation(reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: showsBanner)
+            .animation(reduceMotion ? nil : .default, value: showsBanner)
             .onGeometryChange(for: CGFloat.self, of: { $0.size.width }, action: { width = $0 })
     }
 
-    /// principles.md → Motion.
-    private static func insert(reduceMotion: Bool) -> AnyTransition {
-        guard !reduceMotion else { return .identity }
-        return .asymmetric(
-            insertion: .opacity.combined(with: .offset(y: -Spacing.space3))
-                .animation(Motion.easeOut(Motion.durationBase)),
-            removal: .opacity.animation(Motion.easeStandard(Motion.durationFast)))
-    }
 }
 
 /// The pending-request banner of Home, for the detail column.
@@ -200,9 +192,9 @@ private struct RequestBanner: View {
         ) {
             router.selection = AppRouter.SidebarItem(direction: controller.direction)
         }
-        .padding(.horizontal, Spacing.space5)
-        .padding(.vertical, Spacing.space3)
-        .frame(maxWidth: LayoutCap.contentMaxWidth)
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .frame(maxWidth: 480)
     }
 
     private var isConfirm: Bool {

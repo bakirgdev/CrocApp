@@ -1,8 +1,7 @@
 import CrocKit
 import Foundation
 
-/// What the sidebar row of the transfer's direction shows (design/components.md
-/// → SidebarRow): while the transfer is starting, waiting, asking for an answer
+/// What the sidebar row of the transfer's direction shows: while the transfer is starting, waiting, asking for an answer
 /// or moving bytes. A finished or failed transfer leaves every row at rest,
 /// because the result is in the detail and in a notification.
 struct SidebarRowState: Equatable {

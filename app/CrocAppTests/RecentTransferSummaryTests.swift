@@ -3,8 +3,7 @@ import Testing
 
 @testable import CrocApp
 
-/// What a Home recent-transfers row says about its record (design/components.md
-/// → Home, "Recent transfers"; design/voice.md → Dates).
+/// What a Home recent-transfers row says about its record (design/voice.md → Dates).
 @MainActor @Suite struct RecentTransferSummaryTests {
     private let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)

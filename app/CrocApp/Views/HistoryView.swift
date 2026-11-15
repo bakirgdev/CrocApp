@@ -80,8 +80,8 @@ struct HistoryView: View {
                     .foregroundStyle(.secondary)
             } actions: {
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: Spacing.space4) { emptyStateActions }
-                    VStack(spacing: Spacing.space4) { emptyStateActions }
+                    HStack(spacing: 12) { emptyStateActions }
+                    VStack(spacing: 12) { emptyStateActions }
                 }
             }
         } else {
@@ -132,7 +132,7 @@ struct HistoryView: View {
                 Color.clear.onAppear { opened = nil }
             }
         }
-        .frame(maxWidth: LayoutCap.contentMaxWidth)
+        .frame(maxWidth: 480)
     }
 
     /// A row that is on screen: a hidden row (filtered out by the search)
@@ -169,7 +169,7 @@ struct HistoryView: View {
                 }
             }
         }
-        .frame(maxWidth: LayoutCap.contentMaxWidth)
+        .frame(maxWidth: 480)
     }
     #endif
 
@@ -221,8 +221,6 @@ private struct HistoryRow: View {
     let record: TransferRecord
     let isRevoking: Bool
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    // components.md → HistoryRow: direction glyph at --icon-size-md, scaled.
-    @ScaledMetric(relativeTo: .title3) private var glyphSize: CGFloat = IconSize.medium
 
     private static let titleLines = 1
     private static let largeTextTitleLines = 3
@@ -234,41 +232,41 @@ private struct HistoryRow: View {
             if isLargeText {
                 // The glyph and badge sit above the text so it keeps the
                 // full row width instead of a few characters per line.
-                VStack(alignment: .leading, spacing: Spacing.space3) {
-                    HStack(spacing: Spacing.space4) {
+                VStack(alignment: .leading) {
+                    HStack(spacing: 12) {
                         directionGlyph
                         statusBadge
                     }
                     textColumn
                 }
             } else {
-                HStack(spacing: Spacing.space4) {
+                HStack(spacing: 12) {
                     directionGlyph
                     textColumn
                     statusBadge
                 }
             }
         }
-        .padding(.vertical, Spacing.space1)
+        .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
     }
 
     private var directionGlyph: some View {
         Image(systemName: record.isSend ? "arrow.up.circle" : "arrow.down.circle")
-            .font(.system(size: glyphSize))
+            .font(.title3)
             .accessibilityLabel(record.directionTitle)
             .foregroundStyle(record.status == .completed ? Color.accentColor : Color.secondary)
     }
 
     private var textColumn: some View {
-        VStack(alignment: .leading, spacing: Spacing.space1) {
+        VStack(alignment: .leading) {
             Text(record.title)
                 .lineLimit(isLargeText ? Self.largeTextTitleLines : Self.titleLines)
                 .truncationMode(.middle)
             let layout =
                 isLargeText
-                ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space1))
-                : AnyLayout(HStackLayout(spacing: Spacing.space3))
+                ? AnyLayout(VStackLayout(alignment: .leading))
+                : AnyLayout(HStackLayout())
             layout {
                 DateText(record.date)
                 if record.totalBytes > 0 {
@@ -281,7 +279,7 @@ private struct HistoryRow: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             if isRevoking {
-                HStack(spacing: Spacing.space3) {
+                HStack {
                     ProgressView().controlSize(.small)
                     Text("Revoking link")
                 }

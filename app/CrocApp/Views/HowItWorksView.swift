@@ -7,7 +7,7 @@ struct HowItWorksView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.space6) {
+            VStack(alignment: .leading, spacing: 20) {
                 TrustBadge(relay: settings.relayKind, variant: .full)
                 item(
                     "key.fill", "One code, one transfer",
@@ -34,8 +34,8 @@ struct HowItWorksView: View {
                     "Nothing is saved without your OK: a transfer you receive shows a file preview you accept or decline. Auto-Accept Transfers is off unless you turn it on."
                 )
             }
-            .padding(Spacing.space5)
-            .frame(maxWidth: LayoutCap.contentMaxWidth)
+            .padding()
+            .frame(maxWidth: 480)
         }
         .navigationTitle("How It Works")
     }
@@ -44,7 +44,7 @@ struct HowItWorksView: View {
         _ icon: String, _ title: LocalizedStringKey, _ text: LocalizedStringKey
     ) -> some View {
         Label {
-            VStack(alignment: .leading, spacing: Spacing.space2) {
+            VStack(alignment: .leading) {
                 Text(title).font(.headline)
                 Text(text).font(.callout).foregroundStyle(.secondary)
             }
@@ -55,21 +55,20 @@ struct HowItWorksView: View {
     }
 }
 
-/// A paragraph's glyph (design/components.md → HowItWorksList: `--icon-size-lg`,
-/// scaled with Dynamic Type) beside its text, or above it at accessibility text
+/// A paragraph's glyph (scaled with Dynamic Type) beside its text, or above it at accessibility text
 /// sizes, where a glyph column would leave the text a few characters per line
 /// (the switch HistoryRow makes).
 private struct ParagraphLabelStyle: LabelStyle {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .title3) private var glyphSize: CGFloat = IconSize.large
+    @ScaledMetric(relativeTo: .title) private var glyphSize: CGFloat = 28
     private static let glyphColumnRatio: CGFloat = 1.25
 
     func makeBody(configuration: Configuration) -> some View {
         let stacked = dynamicTypeSize.isAccessibilitySize
         let layout =
             stacked
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.space3))
-            : AnyLayout(HStackLayout(alignment: .top, spacing: Spacing.space3))
+            ? AnyLayout(VStackLayout(alignment: .leading))
+            : AnyLayout(HStackLayout(alignment: .top))
         layout {
             configuration.icon
                 .font(.system(size: glyphSize))

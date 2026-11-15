@@ -1,22 +1,14 @@
 import SwiftUI
 
-/// Monospaced entry for the `word-word-word` code phrase.
-/// design/components.md → CodeField.
-///
-/// The paste affordance is part of this component's own spec (the wrapper's
-/// asymmetric padding — 14 leading for text, 6 trailing — exists to seat a
-/// system-sized `PasteButton` flush inside the 50pt pill), so it lives here rather
-/// than beside the field at call sites. The system owns `PasteButton`'s
-/// chrome for paste-permission-UI reasons and only exposes
-/// `.buttonBorderShape` / `.tint` / `.labelStyle` — the exact spec colors
-/// (`--color-accent-text-on-tint` on `--color-accent-tint`) are not
-/// reachable through that surface, so this gets as close as the API allows.
+/// Monospaced entry for the `word-word-word` code phrase, with the system
+/// `PasteButton` trailing. The paste affordance lives here rather than beside
+/// the field at call sites.
 struct CodeField: View {
     let placeholder: LocalizedStringKey
     @Binding var text: String
     var isInvalid: Bool = false
     /// Says in words what is wrong, shown under the field and read by
-    /// VoiceOver with it; the red border alone is not enough.
+    /// VoiceOver with it.
     var invalidMessage: String?
     /// Receives the pasted string on the main actor; the call site decides
     /// what counts as a valid paste (e.g. ReceiveView's deeplink parsing).
@@ -31,7 +23,7 @@ struct CodeField: View {
     @FocusState private var isFocused: Bool
     /// The user has said they are done with a value that is wrong: Return, or
     /// leaving the field. Until then a short code is just unfinished, so the
-    /// field stays calm while it is typed (components.md → CodeField).
+    /// field stays calm while it is typed.
     @State private var hasSettled = false
 
     /// What `invalidMessage` says for a code shorter than the engine accepts.
@@ -43,20 +35,18 @@ struct CodeField: View {
                 comment: "The placeholder is the minimum number of characters a code needs."))
     }
 
-    // components.md → CodeField: wrapper padding is `0 6px 0 14px`, not a
-    // Spacing step, so it is a private constant of this component.
-    private static let leadingPadding: CGFloat = 14
-    private static let trailingPadding: CGFloat = 6
-
     private var showsInvalid: Bool { isInvalid && hasSettled }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.space2) {
+        VStack(alignment: .leading) {
             field
             if showsInvalid, let invalidMessage {
-                Text(invalidMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                Label {
+                    Text(invalidMessage).foregroundStyle(.secondary)
+                } icon: {
+                    Image(systemName: "exclamationmark.circle").foregroundStyle(.red)
+                }
+                .font(.footnote)
             }
         }
         // A fixed value is right again at once, so the next mistake starts calm.
@@ -73,11 +63,16 @@ struct CodeField: View {
     }
 
     private var field: some View {
-        HStack(spacing: Spacing.space2) {
+        HStack {
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 44)
+                .background(.fill.tertiary, in: .rect(cornerRadius: 12))
+                .contentShape(.rect)
+                .onTapGesture { isFocused = true }
                 .font(.subheadline.monospaced())
-                .tracking(Tracking.code)
+                .tracking(0.5)
                 .focused($isFocused)
                 .submitLabel(submitLabel)
                 .onSubmit {
@@ -96,26 +91,11 @@ struct CodeField: View {
                     Task { @MainActor in onPaste(pasted) }
                 }
                 .labelStyle(.iconOnly)
-                .buttonBorderShape(.roundedRectangle(radius: Radius.sm))
                 // Send has a second PasteButton, and the system names both "Paste".
                 .accessibilityLabel("Paste code")
                 .accessibilityInputLabels(["Paste code"])
             }
         }
-        .padding(.leading, Self.leadingPadding)
-        .padding(.trailing, Self.trailingPadding)
-        .frame(minHeight: ControlHeight.large)
-        .background(.background, in: RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                .strokeBorder(borderColor, lineWidth: BorderWidth.hairline)
-        )
-    }
-
-    // components.md → CodeField: control border idle, accent focused, error invalid.
-    private var borderColor: Color {
-        if showsInvalid { return .red }
-        if isFocused { return .accentColor }
-        return .secondary
+        .controlSize(.large)
     }
 }

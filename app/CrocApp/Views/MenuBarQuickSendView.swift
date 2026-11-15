@@ -11,17 +11,16 @@ struct MenuBarQuickSendView: View {
     @State private var isDropTargeted = false
     @State private var code = ""
 
-    // components.md → MenuBarQuickSend: the window is 300 wide.
     private static let windowWidth: CGFloat = 300
 
     var body: some View {
-        VStack(spacing: Spacing.space4) {
+        VStack(spacing: 12) {
             content
             Divider()
             Button("Open CrocApp") { openMainWindow() }
                 .buttonStyle(.borderless)
         }
-        .padding(Spacing.space5)
+        .padding()
         .frame(width: Self.windowWidth)
     }
 
@@ -30,7 +29,7 @@ struct MenuBarQuickSendView: View {
         case .idle:
             idle
         case .starting, .connecting:
-            VStack(spacing: Spacing.space3) {
+            VStack {
                 ProgressView().accessibilityHidden(true)
                 Text("Connecting…").foregroundStyle(.secondary)
                 cancelButton
@@ -38,7 +37,7 @@ struct MenuBarQuickSendView: View {
         case .waiting(let code):
             waiting(code: code)
         case .confirmSend:
-            VStack(spacing: Spacing.space3) {
+            VStack {
                 Text("The other device is connected. Send now?").multilineTextAlignment(.center)
                 HStack {
                     cancelButton
@@ -47,7 +46,7 @@ struct MenuBarQuickSendView: View {
                 }
             }
         case .incoming:
-            VStack(spacing: Spacing.space3) {
+            VStack {
                 Label("Files are waiting for your answer", systemImage: "arrow.down.circle")
                 Button("Open CrocApp to Accept") { openMainWindow() }
                     .buttonStyle(.glassProminent)
@@ -55,7 +54,7 @@ struct MenuBarQuickSendView: View {
         case .transferring:
             ProgressTick { transferring($0) }
         case .done(let summary, let receivedText):
-            VStack(spacing: Spacing.space3) {
+            VStack {
                 Label(
                     summary.success ? "Transfer complete" : "Transfer finished with errors",
                     systemImage: summary.success
@@ -67,14 +66,14 @@ struct MenuBarQuickSendView: View {
                 doneButton
             }
         case .stored(let receipt):
-            VStack(spacing: Spacing.space3) {
+            VStack {
                 Label("Link ready", systemImage: "checkmark.circle")
                 Button("Copy Link") { Clipboard.copySecret(receipt.link, thisDeviceOnly: true) }
                     .buttonStyle(.glass)
                 doneButton
             }
         case .failed(let failure):
-            VStack(spacing: Spacing.space3) {
+            VStack {
                 StatusBanner(kind: .error, title: failure.title, detail: failure.detail)
                 doneButton
             }
@@ -82,7 +81,7 @@ struct MenuBarQuickSendView: View {
     }
 
     private var idle: some View {
-        VStack(spacing: Spacing.space3) {
+        VStack {
             DropZone(title: "Drop files to send", size: .compact, isTargeted: isDropTargeted)
                 .accessibilityLabel("Drop files here to send")
                 .dropDestination(for: URL.self) { urls, _ in
@@ -126,7 +125,7 @@ struct MenuBarQuickSendView: View {
     }
 
     private func waiting(code: String) -> some View {
-        VStack(spacing: Spacing.space3) {
+        VStack {
             if direction == .send {
                 CodePhraseDisplay(code: code, compact: true)
                 QRCodeView(content: TransferLink.webURL(forCode: code)?.absoluteString ?? code)
@@ -141,7 +140,7 @@ struct MenuBarQuickSendView: View {
         let done = p.bytesDone
         let total = max(p.totalSize, 1)
         let fraction = min(1, Double(done) / Double(total))
-        return VStack(spacing: Spacing.space3) {
+        return VStack {
             DirectionHeader(direction: direction)
             // A batch of small files has no byte count: TransferStatusView.bundleView.
             if p.isBundling {

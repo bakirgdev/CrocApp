@@ -5,21 +5,18 @@ import UniformTypeIdentifiers
 import UIKit
 #endif
 
-/// Send queue, accept-gate and received-file row. design/components.md →
-/// FileRow. `isFirst` / `isLast` drive the first/last corner rounding and the
-/// inter-row separator for a card of rows in a `List`. A row with no
+/// Send queue, accept-gate and received-file row, for a `List` or a
+/// `GroupBox` that supplies the card and the separators. A row with no
 /// `onRemove` (the accept gate) draws no remove control.
 struct FileRow: View {
     let name: String
     /// Nil when the size is unknown or the row is a folder.
     let size: Int64?
     let symbolName: String
-    var isFirst: Bool = false
-    var isLast: Bool = false
     var onRemove: (() -> Void)?
     private var received: Received?
 
-    /// What a received row does (components.md → FileRow, Received).
+    /// What a received row does.
     struct Received {
         let url: URL
         /// Opens Quick Look. nil for a folder, which has none.
@@ -31,60 +28,51 @@ struct FileRow: View {
     /// A staged local file: name and glyph come from the URL. The size is the
     /// caller's, read off the main actor (`FileSize`); nil draws none.
     init(
-        url: URL, size: Int64?, isFirst: Bool = false, isLast: Bool = false,
-        onRemove: @escaping () -> Void
+        url: URL, size: Int64?, onRemove: @escaping () -> Void
     ) {
         self.name = url.lastPathComponent
         self.size = size
         let isFolder = url.hasDirectoryPath
         self.symbolName = Self.symbolName(extension: url.pathExtension, isFolder: isFolder)
-        self.isFirst = isFirst
-        self.isLast = isLast
         self.onRemove = onRemove
     }
 
     /// A remote entry, as listed by the accept gate: name and size only. The
     /// name is the sender's, so it is drawn in its shown form: a name
     /// `ReceivedName` blocks never renders raw.
-    init(name: String, size: Int64?, isFirst: Bool = false, isLast: Bool = false) {
+    init(name: String, size: Int64?) {
         self.name = ReceivedName.shown(name)
         self.size = size
         self.symbolName = Self.symbolName(
             extension: URL(filePath: name).pathExtension, isFolder: false)
-        self.isFirst = isFirst
-        self.isLast = isLast
         self.onRemove = nil
     }
 
     /// An item a completed receive wrote. Its name passed `ReceivedName`
     /// before anything was saved, and is still drawn in its shown form.
     init(
-        received item: ReceivedItem, isFirst: Bool = false, isLast: Bool = false,
-        quickLook: @escaping () -> Void, reveal: (() -> Void)?
+        received item: ReceivedItem, quickLook: @escaping () -> Void, reveal: (() -> Void)?
     ) {
         self.name = ReceivedName.shown(item.url.lastPathComponent)
         self.size = item.size
         self.symbolName = Self.symbolName(
             extension: item.url.pathExtension, isFolder: item.isFolder)
-        self.isFirst = isFirst
-        self.isLast = isLast
         self.onRemove = nil
         self.received = Received(
             url: item.url, quickLook: item.isFolder ? nil : quickLook, reveal: reveal)
     }
 
-    // components.md → FileRow: type glyph, remove control and share glyph are
-    // all 20, not one of IconSize's three steps, so this stays a private
-    // constant scaled with Dynamic Type.
-    @ScaledMetric(relativeTo: .callout) private var glyphSize: CGFloat = 20
-    /// Pinned tail length for the middle-truncation rule (components.md →
-    /// FileRow: the last 8 characters stay visible).
+    /// Pinned tail length for the middle-truncation rule: the last 8 characters
+    /// stay visible.
     private static let pinnedTailLength = 8
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    // The glyphs differ in width (photo is wider than doc): one scaled width
+    // keeps the names in a column.
+    @ScaledMetric(relativeTo: .title3) private var glyphWidth = 28
 
     var body: some View {
-        HStack(spacing: Spacing.space3) {
+        HStack {
             if let received, let quickLook = received.quickLook {
                 // The whole row but the share control is the Quick Look
                 // button. System plain style: a row keeps its own colors,
@@ -101,12 +89,9 @@ struct FileRow: View {
                 if let onRemove {
                     Button(action: onRemove) {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: glyphSize))
+                            .font(.title3)
                             .foregroundStyle(.secondary)
-                            .frame(
-                                minWidth: ControlHeight.hitTargetMin,
-                                minHeight: ControlHeight.hitTargetMin
-                            )
+                            .frame(minWidth: 44, minHeight: 44)
                             .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
@@ -114,35 +99,23 @@ struct FileRow: View {
                 }
             }
         }
-        .padding(.horizontal, Spacing.space4)
-        .padding(.vertical, Spacing.space3)
-        .frame(minHeight: ComponentMetrics.fileRowMinHeight)
-        .background(.fill.tertiary, in: rowShape)
-        .overlay(alignment: .bottom) {
-            // principles.md → Spacing and layout: every row but the last draws the
-            // inset hairline separator; the last omits it so corners stay clean.
-            if !isLast {
-                Rectangle()
-                    .fill(.separator)
-                    .frame(height: BorderWidth.hairlineHalf)
-            }
-        }
-        .clipShape(rowShape)
+        .frame(minHeight: 44)
         .modifier(ReceivedRowActions(received: received))
     }
 
     private var info: some View {
-        HStack(spacing: Spacing.space3) {
+        HStack {
             Image(systemName: symbolName)
-                .font(.system(size: glyphSize))
+                .font(.title3)
                 .foregroundStyle(Color.accentColor)
+                .frame(width: glyphWidth)
                 .accessibilityHidden(true)
 
             if dynamicTypeSize.isAccessibilitySize {
                 // The pinned-tail label keeps 8 characters unshrinkable, which
                 // is wider than the row at these sizes: wrap the name and put
                 // the size under it.
-                VStack(alignment: .leading, spacing: Spacing.space2) {
+                VStack(alignment: .leading) {
                     Text(name)
                         .font(.callout)
                         .foregroundStyle(.primary)
@@ -156,7 +129,7 @@ struct FileRow: View {
                     .font(.callout)
                     .foregroundStyle(.primary)
 
-                Spacer(minLength: Spacing.space3)
+                Spacer()
 
                 sizeLabel
             }
@@ -166,9 +139,9 @@ struct FileRow: View {
     private func shareLink(_ url: URL) -> some View {
         ShareLink(item: url) {
             Image(systemName: "square.and.arrow.up")
-                .font(.system(size: glyphSize))
+                .font(.title3)
                 .foregroundStyle(.secondary)
-                .frame(minWidth: ControlHeight.hitTargetMin, minHeight: ControlHeight.hitTargetMin)
+                .frame(minWidth: 44, minHeight: 44)
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -183,16 +156,6 @@ struct FileRow: View {
                 .monospacedDigit()
                 .lineLimit(1)
         }
-    }
-
-    private var rowShape: some Shape {
-        UnevenRoundedRectangle(
-            topLeadingRadius: isFirst ? Radius.md : 0,
-            bottomLeadingRadius: isLast ? Radius.md : 0,
-            bottomTrailingRadius: isLast ? Radius.md : 0,
-            topTrailingRadius: isFirst ? Radius.md : 0,
-            style: .continuous
-        )
     }
 
     private static func symbolName(extension ext: String, isFolder: Bool) -> String {
@@ -212,11 +175,10 @@ struct FileRow: View {
         size.formatted(.byteCount(style: .file, spellsOutZero: false))
     }
 
-    // components.md → FileRow: last `pinnedTailLength` characters (extension
-    // + tail) stay in a non-shrinking span so the extension is always
-    // legible; only the head ellipsises. No native SwiftUI truncation mode
-    // does this, so it's built from two `Text` views instead of relying on
-    // `.truncationMode(.middle)`.
+    // The last `pinnedTailLength` characters (extension + tail) stay in a
+    // non-shrinking span so the extension is always legible; only the head
+    // ellipsises. No native SwiftUI truncation mode does this, so it's built
+    // from two `Text` views instead of relying on `.truncationMode(.middle)`.
     @ViewBuilder
     private var filenameLabel: some View {
         if name.count <= Self.pinnedTailLength {

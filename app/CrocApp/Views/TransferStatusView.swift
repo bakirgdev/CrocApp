@@ -27,17 +27,14 @@ struct TransferStatusView: View {
     #endif
     @State private var showsSlowPhaseHint = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // components.md → StatusBlock/EmptyState: decorative glyph at 44, scaled.
-    @ScaledMetric(relativeTo: .largeTitle) private var confirmGlyphSize: CGFloat = 44
-    // components.md → FileRow, Received: a received text scrolls inside
-    // this height, scaled with Dynamic Type.
+    // A received text scrolls inside this height, scaled with Dynamic Type.
     @ScaledMetric private var receivedTextMaxHeight: CGFloat = 200
 
     // Long enough that ordinary relay/handshake latency doesn't false-positive,
     // short enough to reassure before the user assumes the app is hung.
     private static let slowPhaseThreshold: Duration = .seconds(25)
 
-    /// components.md → FileRow: a list of rows (the accept gate, the received
+    /// A list of rows (the accept gate, the received
     /// files) scrolls inside this height, scaled with Dynamic Type.
     static let fileListMaxHeight: CGFloat = 240
 
@@ -81,8 +78,8 @@ struct TransferStatusView: View {
             .scrollBounceBehavior(.basedOnSize)
             .scrollClipDisabled()
         }
-        .padding(Spacing.space5)
-        .frame(maxWidth: LayoutCap.contentMaxWidth)
+        .padding()
+        .frame(maxWidth: 480)
         // Resets and restarts whenever isInEarlyPhase flips, so the hint
         // never keeps counting into transferring/done/failed, but survives
         // the starting → connecting handoff (still the same stall to the user).
@@ -96,7 +93,7 @@ struct TransferStatusView: View {
     }
 
     private var content: some View {
-        VStack(spacing: Spacing.space7) {
+        VStack(spacing: 24) {
             if showsHeader {
                 header.transition(.opacity)
             }
@@ -135,13 +132,13 @@ struct TransferStatusView: View {
     private var localNetworkDenied: Bool { localNetwork.status == .denied }
 
     private var phaseAnimation: Animation? {
-        reduceMotion ? nil : Motion.easeOut(Motion.durationBase)
+        reduceMotion ? nil : .default
     }
 
     /// The direction header and the trust badge, which persist from the start
     /// of a transfer to its result (principles.md → Motion).
     private var header: some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             DirectionHeader(direction: controller.direction, pulses: phaseKind == .waiting)
             if controller.isStoredTransfer {
                 // A stored transfer meets no relay, so the relay badge would
@@ -189,17 +186,17 @@ struct TransferStatusView: View {
     }
 
     private func earlyPhase(_ title: LocalizedStringKey) -> some View {
-        VStack(spacing: Spacing.space7) {
+        VStack(spacing: 24) {
             ProgressView().accessibilityHidden(true)
             Text(title).foregroundStyle(.secondary)
-            // Fades in at --dur-slow so it reads as information, not alarm.
+            // Fades in late so it reads as information, not alarm.
             ZStack {
                 if showsSlowPhaseHint {
                     slowPhaseHintText.transition(.opacity)
                 }
             }
             .animation(
-                reduceMotion ? nil : Motion.easeOut(Motion.durationSlow), value: showsSlowPhaseHint)
+                reduceMotion ? nil : .default, value: showsSlowPhaseHint)
         }
     }
 
@@ -232,8 +229,7 @@ struct TransferStatusView: View {
     )
     #endif
 
-    // components.md → StatusBanner: local-network-denied is `info` (blue), not
-    // a warning. The relay path still works, this is a "could be faster"
+    // Local-network-denied is `info`, not a warning. The relay path still works, this is a "could be faster"
     // notice, not a problem.
     @ViewBuilder private var localNetworkDeniedBanner: some View {
         if localNetworkDenied {
@@ -244,11 +240,11 @@ struct TransferStatusView: View {
                 actionTitle: "Open Settings",
                 action: { open(.localNetworkAccess) }
             )
-            .transition(.statusBannerInsert(reduceMotion: reduceMotion))
+            .transition(.opacity)
         }
     }
 
-    /// Opens where the fix lives (components.md → StatusBlock): CrocApp's own
+    /// Opens where the fix lives: CrocApp's own
     /// Settings for one of our settings, the system's for a permission.
     private func open(_ place: SettingsPlace) {
         switch place {
@@ -290,7 +286,7 @@ struct TransferStatusView: View {
     // MARK: - Waiting (sender: code ready)
 
     private func waitingView(code: String) -> some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             CodePhraseDisplay(code: code)
             localNetworkDeniedBanner
             let webURL = TransferLink.webURL(forCode: code)
@@ -333,16 +329,17 @@ struct TransferStatusView: View {
     // MARK: - Confirm send (both-sides confirm)
 
     private var confirmSendView: some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             Image(systemName: "person.crop.circle.badge.checkmark")
-                .font(.system(size: confirmGlyphSize))
+                .font(.largeTitle)
+                .imageScale(.large)
                 .foregroundStyle(Color.accentColor)
                 .accessibilityHidden(true)
             Text("The other device is connected").font(.headline)
             Text("Send the selected items to the connected device?")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            HStack(spacing: Spacing.space5) {
+            HStack(spacing: 16) {
                 Button(role: .destructive) {
                     controller.cancel()
                 } label: {
@@ -364,8 +361,8 @@ struct TransferStatusView: View {
         let totalDone = p.bytesDone
         let totalFraction = fraction(totalDone, of: p.totalSize)
         let fileNumber = min(p.currentFile + 1, p.totalFiles)
-        return VStack(spacing: Spacing.space5) {
-            VStack(alignment: .leading, spacing: Spacing.space3) {
+        return VStack(spacing: 16) {
+            VStack(alignment: .leading) {
                 // The sender's name until the transfer is cancelled, which an
                 // auto-accepted blocked name can reach first.
                 Text(ReceivedName.shown(p.fileName))
@@ -398,7 +395,7 @@ struct TransferStatusView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityValue(percent(fileFraction))
-            VStack(alignment: .leading, spacing: Spacing.space3) {
+            VStack(alignment: .leading) {
                 ForwardProgressBar(
                     fraction: totalFraction, resetKey: ProgressScope(file: -1, size: p.totalSize)
                 )
@@ -421,9 +418,9 @@ struct TransferStatusView: View {
 
     /// croc moves a run of small files as one batch and counts none of its
     /// bytes where the engine can read them, so the extent is unknown and the
-    /// bar indeterminate (components.md, "Loading").
+    /// bar indeterminate.
     private func bundleView(_ p: TransferProgress) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.space3) {
+        VStack(alignment: .leading) {
             #if os(macOS)
             Text("A batch of small files")
                 .font(.callout)
@@ -433,7 +430,7 @@ struct TransferStatusView: View {
             #else
             // iOS draws an indeterminate linear ProgressView as a still, empty
             // track, which reads as stuck at 0%; a spinner shows it is moving.
-            HStack(spacing: Spacing.space3) {
+            HStack {
                 ProgressView()
                     .accessibilityLabel("Overall progress")
                 Text("A batch of small files")
@@ -452,8 +449,7 @@ struct TransferStatusView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// principles.md → Motion; digits swap instantly under
-    /// Reduce Motion.
+    /// Digits swap instantly under Reduce Motion.
     private var numericTransition: ContentTransition {
         reduceMotion ? .identity : .numericText()
     }
@@ -490,7 +486,7 @@ struct TransferStatusView: View {
     // MARK: - Done / Failed
 
     private func doneView(_ summary: Summary, receivedText: String?) -> some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             StatusBlock(
                 summary: summary, receivedText: receivedText, direction: controller.direction)
             if let receivedText {
@@ -501,7 +497,7 @@ struct TransferStatusView: View {
                     since: controller.startedAt ?? .distantPast,
                     isScoped: outputFolder.isUserSelected, reveal: reveal(in: folder))
             }
-            VStack(spacing: Spacing.space3) {
+            VStack {
                 if controller.direction == .receive, let folder = controller.lastOutputFolder {
                     folderButton(folder)
                 }
@@ -513,7 +509,7 @@ struct TransferStatusView: View {
     /// The selectable text and its two actions (docs/knowledge/app-ui-architecture.md →
     /// System surfaces: a text payload is not a row).
     private func receivedTextBlock(_ text: String) -> some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             ScrollView {
                 Text(text)
                     .font(.body.monospaced())
@@ -522,8 +518,8 @@ struct TransferStatusView: View {
             }
             .frame(maxHeight: receivedTextMaxHeight)
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: Spacing.space5) { receivedTextActions(text) }
-                VStack(spacing: Spacing.space3) { receivedTextActions(text) }
+                HStack(spacing: 16) { receivedTextActions(text) }
+                VStack { receivedTextActions(text) }
             }
         }
     }
@@ -579,11 +575,11 @@ struct TransferStatusView: View {
     #endif
 
     private func failedView(_ failure: TransferFailure) -> some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             StatusBlock(failure: failure)
             // components.md → StatusBlock: Done always, plus the one action
             // that could help, if any.
-            VStack(spacing: Spacing.space3) {
+            VStack {
                 switch failure.remedy {
                 case .tryAgain?:
                     resultAction("Try Again") { controller.retry() }
@@ -635,7 +631,7 @@ private struct SpeedText: View {
             .foregroundStyle(.primary)
             .contentTransition(reduceMotion ? .identity : .numericText())
             .animation(
-                reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: bytesPerSecond
+                reduceMotion ? nil : .default, value: bytesPerSecond
             )
             .task {
                 while !Task.isCancelled {

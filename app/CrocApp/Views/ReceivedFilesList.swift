@@ -22,15 +22,15 @@ struct ReceivedFilesList: View {
         ZStack {
             if !items.isEmpty {
                 ScrollView {
-                    // A card of rows: FileRow draws the first/last corner
-                    // rounding and the separators.
-                    VStack(spacing: 0) {
-                        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                            FileRow(
-                                received: item, isFirst: index == 0,
-                                isLast: index == items.count - 1,
-                                quickLook: { preview = item.url },
-                                reveal: reveal.map { reveal in { reveal(item.url) } })
+                    GroupBox {
+                        VStack(spacing: 0) {
+                            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                                FileRow(
+                                    received: item,
+                                    quickLook: { preview = item.url },
+                                    reveal: reveal.map { reveal in { reveal(item.url) } })
+                                if index < items.count - 1 { Divider() }
+                            }
                         }
                     }
                 }

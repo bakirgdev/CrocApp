@@ -98,7 +98,7 @@ extension ReceivedName {
     /// A name from another device as the app draws and records it: every
     /// character that would change how it reads, or hide in it, is written
     /// as its code point, so "invoice\u{202E}fdp.exe" shows as typed here
-    /// rather than as "invoiceexe.pdf" (design/components.md → FileRow).
+    /// rather than as "invoiceexe.pdf".
     /// Any other name comes back unchanged.
     nonisolated static func shown(_ name: String) -> String {
         var shown = ""

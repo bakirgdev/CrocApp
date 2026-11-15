@@ -13,10 +13,10 @@ struct SavedCodePicker: View {
             // A sideways scroll hides chips off-screen at accessibility sizes,
             // so they stack there.
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: Spacing.space2) { chips }
+                VStack(alignment: .leading) { chips }
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: Spacing.space2) { chips }
+                    HStack { chips }
                 }
             }
         }

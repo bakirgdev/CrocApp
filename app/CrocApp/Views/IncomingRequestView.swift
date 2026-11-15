@@ -24,15 +24,15 @@ struct IncomingRequestView: View {
     }
 
     var body: some View {
-        VStack(spacing: Spacing.space5) {
+        VStack(spacing: 16) {
             ScrollView {
-                // A card of rows: FileRow draws the first/last corner rounding
-                // and the separators.
-                VStack(spacing: 0) {
-                    ForEach(Array(list.files.enumerated()), id: \.element.name) { index, entry in
-                        FileRow(
-                            name: entry.name, size: entry.size,
-                            isFirst: index == 0, isLast: index == list.files.count - 1)
+                GroupBox {
+                    VStack(spacing: 0) {
+                        ForEach(Array(list.files.enumerated()), id: \.element.name) {
+                            index, entry in
+                            FileRow(name: entry.name, size: entry.size)
+                            if index < list.files.count - 1 { Divider() }
+                        }
                     }
                 }
             }
@@ -58,17 +58,17 @@ struct IncomingRequestView: View {
                                 "^[\(conflicts.count) item](inflect: true) in this transfer share a name with a file here. Keep Both saves the new ones under a new name; Replace overwrites them and resumes partly received files."
                         ))
                 )
-                .transition(.statusBannerInsert(reduceMotion: reduceMotion))
+                .transition(.opacity)
             }
             // Three labels do not fit side by side at accessibility text sizes
             // on a phone, so they stack there.
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: Spacing.space5) { actions }
-                VStack(spacing: Spacing.space3) { actions }
+                HStack(spacing: 16) { actions }
+                VStack { actions }
             }
         }
         .animation(
-            reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: conflicts.isEmpty
+            reduceMotion ? nil : .default, value: conflicts.isEmpty
         )
         // A phase change moves no VoiceOver focus, so say what arrived
         // (principles.md → Accessibility). Low priority queues it behind

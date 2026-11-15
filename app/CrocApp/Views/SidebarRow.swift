@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// A regular-width sidebar row whose trailing state is ours (design/components.md
-/// → SidebarRow). The row is the system's: `Label`, selection and material. The
+/// A regular-width sidebar row whose trailing state is ours. The row is the system's: `Label`, selection and material. The
 /// state is words first, and the row speaks it as one label.
 struct SidebarRow: View {
     let item: AppRouter.SidebarItem
@@ -10,19 +9,19 @@ struct SidebarRow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        HStack(spacing: Spacing.space3) {
+        HStack {
             // The label speaks the state and the trailing view is hidden from
             // VoiceOver, so the row stays the system's one selectable element.
             Label(item.title, systemImage: item.symbol)
                 .accessibilityLabel(spoken)
-            Spacer(minLength: Spacing.space3)
+            Spacer(minLength: 8)
             if let state {
                 trailing(state)
                     .transition(.opacity)
                     .accessibilityHidden(true)
             }
         }
-        .animation(reduceMotion ? nil : Motion.easeOut(Motion.durationBase), value: state)
+        .animation(reduceMotion ? nil : .default, value: state)
     }
 
     private var spoken: String {
@@ -41,8 +40,8 @@ struct SidebarRow: View {
             Text("Review")
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.white)
-                .padding(.horizontal, Spacing.space3)
-                .padding(.vertical, Spacing.space1)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
                 .background(Color.accentColor, in: Capsule())
         case .transferring:
             if let percent = state.percent {

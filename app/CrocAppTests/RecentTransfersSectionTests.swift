@@ -4,8 +4,7 @@ import Testing
 
 @testable import CrocApp
 
-/// When the Home recent-transfers section shows, and which records it takes
-/// (design/components.md → Home, "Recent transfers").
+/// When the Home recent-transfers section shows, and which records it takes.
 @MainActor @Suite struct RecentTransfersSectionTests {
     // MARK: Gate
 

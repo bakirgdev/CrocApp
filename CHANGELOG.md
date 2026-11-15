@@ -13,7 +13,7 @@ extra sections where a release needs them, and the project follows
 ### Changed
 
 - Advanced settings explain each option in one short line, and the note that proxy addresses are saved in the Keychain appears once, under the proxies.
-- Buttons and colors now use the system's own styles, so they match macOS and iOS 26, with one olive accent for controls, links and progress. The accent is a little deeper in dark mode, so button labels stay readable.
+- Buttons, colors, spacing and motion now use the system's own styles, so they match macOS and iOS 26, with one olive accent for controls, links and progress. The accent is a little deeper in dark mode, so button labels stay readable.
 
 ### Removed
 

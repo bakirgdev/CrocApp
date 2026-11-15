@@ -4,7 +4,7 @@ import SwiftUI
 /// One record, opened from History. A grouped `Form` titled by the row's
 /// title: the status, the rows the record holds, the file names, then the
 /// actions the context menu offers. A row appears only when the record holds
-/// what it shows. design/components.md → HistoryRow, "Detail".
+/// what it shows.
 struct HistoryDetailView: View {
     let record: TransferRecord
     let actions: HistoryActions
@@ -52,7 +52,7 @@ struct HistoryDetailView: View {
             actionsSection
         }
         .formStyle(.grouped)
-        .frame(maxWidth: LayoutCap.contentMaxWidth)
+        .frame(maxWidth: 480)
         .navigationTitle(record.title)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -150,10 +150,10 @@ struct HistoryDetailView: View {
         .controlSize(.large)
     }
 
-    /// components.md → States, loading: a working button keeps its label and
+    /// A working button keeps its label and
     /// swaps its leading glyph for a spinner.
     private var revokeLabel: some View {
-        HStack(spacing: Spacing.space3) {
+        HStack {
             if isRevoking { ProgressView().controlSize(.small) }
             Text("Revoke Link")
         }

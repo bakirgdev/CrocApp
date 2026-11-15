@@ -2,8 +2,7 @@ import Accessibility
 import CrocKit
 import SwiftUI
 
-/// Large centered result (transfer done / failed). design/components.md →
-/// StatusBlock.
+/// Large centered result (transfer done / failed).
 struct StatusBlock: View {
     enum Kind {
         case success
@@ -11,14 +10,6 @@ struct StatusBlock: View {
         /// The user's own Cancel or Decline, or a link they revoked: not a
         /// failure (voice.md → Errors), so neither red nor green.
         case neutral
-
-        var fill: AnyShapeStyle {
-            switch self {
-            case .success: AnyShapeStyle(Color.green.opacity(ComponentMetrics.tintOpacity))
-            case .error: AnyShapeStyle(Color.red.opacity(ComponentMetrics.tintOpacity))
-            case .neutral: AnyShapeStyle(.fill.tertiary)
-            }
-        }
 
         var glyphColor: Color {
             switch self {
@@ -41,29 +32,16 @@ struct StatusBlock: View {
     let title: String
     var detail: String?
 
-    // components.md → StatusBlock: a 64 circle holding a 34 glyph, scaled with
-    // Dynamic Type so the glyph never outgrows its circle.
-    @ScaledMetric(relativeTo: .title) private var circleSize: CGFloat =
-        ComponentMetrics.statusBlockCircle
-    @ScaledMetric(relativeTo: .title) private var glyphSize: CGFloat =
-        ComponentMetrics.statusBlockGlyph
-
     var body: some View {
-        VStack(spacing: Spacing.space3) {
-            ZStack {
-                Circle()
-                    .fill(kind.fill)
-                    .frame(width: circleSize, height: circleSize)
-                // Decorative: the title states the outcome in words, never
-                // color alone (components.md → StatusBlock).
-                Image(systemName: kind.symbolName)
-                    .font(.system(size: glyphSize, weight: .semibold))
-                    .foregroundStyle(kind.glyphColor)
-                    .accessibilityHidden(true)
-            }
+        VStack {
+            // Decorative: the title states the outcome in words, never color alone.
+            Image(systemName: kind.symbolName)
+                .font(.largeTitle)
+                .imageScale(.large)
+                .foregroundStyle(kind.glyphColor)
+                .accessibilityHidden(true)
             Text(title)
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(.primary)
                 .multilineTextAlignment(.center)
             if let detail {
                 Text(detail)
@@ -72,7 +50,7 @@ struct StatusBlock: View {
                     .multilineTextAlignment(.center)
             }
         }
-        .padding(Spacing.space6)
+        .padding()
         // Appears in place of the progress screen, so VoiceOver focus has
         // nothing to land on; announce the outcome as StatusBanner does.
         .onAppear {

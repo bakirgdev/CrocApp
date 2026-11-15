@@ -14,22 +14,13 @@ struct StagedFilesSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(Array(files.enumerated()), id: \.element) { index, url in
+                ForEach(files, id: \.self) { url in
                     FileRow(
                         name: url.lastPathComponent,
-                        size: sizes[url],
-                        isFirst: index == 0,
-                        isLast: index == files.count - 1
+                        size: sizes[url]
                     )
-                    .listRowInsets(
-                        EdgeInsets(
-                            top: 0, leading: Spacing.space5, bottom: 0, trailing: Spacing.space5)
-                    )
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
                 }
             }
-            .scrollContentBackground(.hidden)
             .task(id: files) { sizes = await FileSize.bytes(ofEach: files) }
             .navigationTitle("Shared Files")
             .toolbar {
