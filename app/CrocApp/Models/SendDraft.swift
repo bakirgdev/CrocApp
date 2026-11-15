@@ -29,6 +29,30 @@ final class SendDraft {
     var sendAsLink = false
     var linkLifetime = LinkLifetime.day
     var linkDownloads = 1
+    /// The request Send started, so a finished transfer empties only the draft it came from.
+    @ObservationIgnored var started: TransferRequest?
+
+    /// Empties what `request` sent and puts the options back, once it ended in
+    /// done or stored. A failure or a cancel keeps the draft: Try Again reuses it.
+    func finish(_ request: TransferRequest?) {
+        guard let request, request == started else { return }
+        started = nil
+        switch request {
+        case .sendFiles(let urls, _), .storedSend(let urls, _, _):
+            // A file dropped while the transfer ran stays staged for the next one.
+            pickedURLs.removeAll { urls.contains($0) }
+            for url in urls { SendStaging.discard(url) }
+        case .sendText(let sent, _):
+            if text == sent { text = "" }
+        case .receive, .storedReceive:
+            break
+        }
+        customCode = ""
+        sendAsLink = false
+        linkLifetime = .day
+        linkDownloads = 1
+        if text.isEmpty { mode = .files }
+    }
 
     /// Adds the files the draft does not hold yet and shows the Files mode.
     func add(_ urls: [URL]) {

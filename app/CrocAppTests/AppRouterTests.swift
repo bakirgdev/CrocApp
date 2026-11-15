@@ -1,3 +1,4 @@
+import CrocKit
 import Foundation
 import Testing
 
@@ -108,6 +109,132 @@ import Testing
         #expect(router.sendDraft.text == "hello")
         #expect(router.receiveDraft.code == "wiry-alpha-bravo", "kept for the next Receive")
         controller.cancel()
+    }
+
+    // MARK: - A finished transfer empties the draft it came from
+
+    private static func done() throws -> TransferController.Phase {
+        let summary: Summary = try JSONDecoder().decode(
+            Summary.self,
+            from: JSONSerialization.data(withJSONObject: [
+                "success": true, "files": 1, "totalSize": 10,
+            ]))
+        return .done(summary, receivedText: nil)
+    }
+
+    private static var failed: TransferController.Phase {
+        .failed(
+            TransferFailure(EngineFailure(code: .other, message: "boom"), situation: .init()))
+    }
+
+    /// A staged copy, which `SendStaging.discard` deletes, unlike a file the user picked.
+    private func stagedCopy() throws -> URL {
+        let original = URL.temporaryDirectory.appending(
+            path: "AppRouterTests-\(UUID().uuidString).txt", directoryHint: .notDirectory)
+        try Data("x".utf8).write(to: original)
+        defer { try? FileManager.default.removeItem(at: original) }
+        return try SendStaging.stage(copying: original)
+    }
+
+    private func stageAndStart(_ draft: SendDraft, file: URL) -> TransferRequest {
+        draft.add([file])
+        draft.customCode = "wiry-alpha-bravo"
+        draft.sendAsLink = true
+        draft.linkLifetime = .week
+        draft.linkDownloads = 3
+        let request = TransferRequest.sendFiles(urls: [file], code: "wiry-alpha-bravo")
+        draft.started = request
+        return request
+    }
+
+    @Test func aSuccessEmptiesTheSendDraftAndItsStagedCopies() throws {
+        let draft = router.sendDraft
+        let staged = try stagedCopy()
+        let request = stageAndStart(draft, file: staged)
+
+        router.transferEnded(try Self.done(), request: request)
+
+        #expect(draft.pickedURLs.isEmpty)
+        #expect(!FileManager.default.fileExists(atPath: staged.path), "the staged copy is deleted")
+        #expect(draft.customCode.isEmpty)
+        #expect(!draft.sendAsLink)
+        #expect(draft.linkLifetime == .day)
+        #expect(draft.linkDownloads == 1)
+    }
+
+    @Test func aFailureKeepsTheDraftForTryAgain() throws {
+        let draft = router.sendDraft
+        let staged = try stagedCopy()
+        defer { SendStaging.discard(staged) }
+        let request = stageAndStart(draft, file: staged)
+
+        router.transferEnded(Self.failed, request: request)
+
+        #expect(draft.pickedURLs == [staged])
+        #expect(draft.customCode == "wiry-alpha-bravo")
+        #expect(FileManager.default.fileExists(atPath: staged.path))
+    }
+
+    @Test func aTransferTheDraftDidNotStartLeavesItAlone() throws {
+        let draft = router.sendDraft
+        let file = URL(filePath: "/CrocAppTests.missing/a.txt")
+        _ = stageAndStart(draft, file: file)
+
+        router.transferEnded(
+            try Self.done(),
+            request: .sendFiles(urls: [URL(filePath: "/CrocAppTests.missing/other.txt")], code: ""))
+
+        #expect(draft.pickedURLs == [file])
+        #expect(draft.customCode == "wiry-alpha-bravo")
+    }
+
+    @Test func aFileDroppedDuringTheTransferStaysStaged() throws {
+        let draft = router.sendDraft
+        let sent = URL(filePath: "/CrocAppTests.missing/a.txt")
+        let dropped = URL(filePath: "/CrocAppTests.missing/b.txt")
+        let request = stageAndStart(draft, file: sent)
+        draft.add([dropped])
+
+        router.transferEnded(try Self.done(), request: request)
+
+        #expect(draft.pickedURLs == [dropped])
+    }
+
+    @Test func aSentTextIsEmptiedAndAnEditedOneIsKept() throws {
+        let draft = router.sendDraft
+        draft.append(text: "hello")
+        draft.started = .sendText(text: "hello", code: "")
+        router.transferEnded(try Self.done(), request: .sendText(text: "hello", code: ""))
+        #expect(draft.text.isEmpty)
+        #expect(draft.mode == .files)
+
+        draft.append(text: "hello again")
+        draft.started = .sendText(text: "hello", code: "")
+        router.transferEnded(try Self.done(), request: .sendText(text: "hello", code: ""))
+        #expect(draft.text == "hello again")
+    }
+
+    @Test func aSuccessEmptiesTheReceiveDraftAndAFailureKeepsIt() throws {
+        let folder = URL(filePath: "/CrocAppTests.missing")
+        let draft = router.receiveDraft
+        let request = TransferRequest.receive(
+            code: "wiry-alpha-bravo", folder: folder, folderIsScoped: false)
+        draft.code = "wiry-alpha-bravo"
+        draft.started = request
+
+        router.transferEnded(Self.failed, request: request)
+        #expect(draft.code == "wiry-alpha-bravo")
+
+        router.transferEnded(try Self.done(), request: request)
+        #expect(draft.code.isEmpty)
+
+        let link = try #require(URL(string: "https://example.com/x"))
+        let stored = TransferRequest.storedReceive(
+            link: link, folder: folder, folderIsScoped: false)
+        draft.apply(.stored(link))
+        draft.started = stored
+        router.transferEnded(try Self.done(), request: stored)
+        #expect(draft.storedLink == nil)
     }
 }
 

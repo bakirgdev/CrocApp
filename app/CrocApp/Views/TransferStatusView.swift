@@ -141,7 +141,9 @@ struct TransferStatusView: View {
     /// result (principles.md → Motion).
     private var header: some View {
         VStack(spacing: 16) {
-            DirectionHeader(direction: controller.direction, pulses: phaseKind == .waiting)
+            DirectionHeader(
+                direction: controller.direction, pulses: phaseKind == .waiting,
+                awaitsAnswer: phaseKind == .incoming)
             // A stored transfer meets no relay, so only its send says where the
             // files are held; a stored receive says nothing.
             if controller.isStoredTransfer, controller.direction == .send {

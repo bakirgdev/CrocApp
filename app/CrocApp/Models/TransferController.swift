@@ -215,7 +215,7 @@ final class TransferController {
     private let background = BackgroundCoordinator()
     /// What the transfer in flight, or the last one, started from. `retry()`
     /// runs it again.
-    private var lastRequest: TransferRequest?
+    private(set) var lastRequest: TransferRequest?
 
     /// History sink; set once at app startup. nil in previews.
     @ObservationIgnored var history: HistoryStore?

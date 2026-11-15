@@ -55,8 +55,10 @@ struct ContentView: View {
                 guard let state else { return }
                 AccessibilityNotification.Announcement(state.spoken).post()
             }
-            // A transfer that needs an answer brings its own tab forward.
-            .onChange(of: controller.phase.needsAnswer) { _, needsAnswer in
+            // A transfer that needs an answer brings its own tab forward, also
+            // in a window opened while the answer waits (the Mac's main window
+            // can be closed, and then has no change to observe).
+            .onChange(of: controller.phase.needsAnswer, initial: true) { _, needsAnswer in
                 if needsAnswer {
                     router.selection = AppRouter.Screen(direction: controller.direction)
                 }
@@ -81,6 +83,7 @@ struct ContentView: View {
                 case .done, .stored: shareInbox.sendFinished()
                 default: break
                 }
+                router.transferEnded(phase, request: controller.lastRequest)
             }
             // A share that arrived during a transfer, or waits behind the one
             // just sent, is offered once the app is idle again.

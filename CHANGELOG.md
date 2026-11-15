@@ -13,7 +13,7 @@ extra sections where a release needs them, and the project follows
 ### Changed
 
 - CrocApp navigates with tabs on iPhone (**Send**, **Receive**, **History** and **Settings**) and a sidebar on iPad and Mac. iPad opens with the sidebar in landscape and a floating tab bar in portrait, and the sidebar button switches between them. On a Mac, Settings stays its own window and the menu bar window is unchanged.
-- Files you picked, text you typed, a code and the link options on Send and Receive stay where they are when you switch tabs, and when the window changes between the tab bar and the sidebar. They are not kept after you quit.
+- Files you picked, text you typed, a code and the link options on Send and Receive stay where they are when you switch tabs, and when the window changes between the tab bar and the sidebar. They are not kept after you quit, and a transfer that succeeds empties them.
 - A transfer shows on its tab as **Connecting**, **Waiting**, **Sending** or **Receiving**. When someone's files wait for your answer, the **Receive** tab comes forward and keeps a **Review** badge if you go elsewhere. VoiceOver announces each state once.
 - **How It Works** opens as a sheet from the first row of the About section in Settings, and from the Help menu on a Mac.
 - History fills the window width instead of a narrow column.
@@ -33,8 +33,12 @@ extra sections where a release needs them, and the project follows
 
 ### Fixed
 
+- After a send or receive succeeds, its files, text, code and link options are cleared, so the next transfer no longer carries the last one's code or sends its text again, and photos you added are deleted from CrocApp's temporary folder. A failed or cancelled transfer keeps them for Try Again.
+- On a Mac, opening the window while files wait for your answer opens on the **Receive** (or **Send**) tab instead of the last one you used.
+- **Send** and **Receive** are dimmed while a transfer in the other direction runs, instead of doing nothing when tapped.
+- While files wait for your answer, the Receive screen says **Review** instead of **Receiving**.
 - The patterns under **Exclude from sends** now apply to every folder send. Before, they only took effect when the folder was sent as a zip, so a matching file in a folder sent the usual way still went to the other device. A send where every picked file matches a pattern now stops instead of sending nothing.
-- On iPhone and iPad, buttons that were shorter than Apple's 44 point minimum, such as **Change…**, **Cancel**, **Copy Code** and the saved-code chips, are now at least that tall.
+- On iPhone and iPad, buttons that were shorter than Apple's 44 point minimum, such as **Change…**, **Cancel**, **Copy Code**, the saved-code chips and the action in a banner, are now at least that tall.
 - The code field has a visible border that gets stronger with Increase Contrast, and the file remove and share buttons answer to a short name in Voice Control.
 - Choosing a receive folder that CrocApp can't use now says so and keeps the current folder, instead of closing the picker with no message.
 - History stops offering **Revoke** on a link that expires while History is open, and **Clear All** says when links that still work stay active.

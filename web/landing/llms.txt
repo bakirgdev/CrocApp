@@ -13,7 +13,7 @@ Facts:
 - Updates: only the disk image build contains an updater (Sparkle). App Store builds update through the App Store.
 - The other device needs croc 11 or newer, whether it runs CrocApp or the croc command line. croc 10 cannot complete a transfer with CrocApp.
 - Language: English only.
-- Navigation:Send, Receive, History and Settings are tabs on iPhone and a sidebar on iPad and Mac, where Settings is its own window. Files, text and codes stay in place when you switch tabs.
+- Navigation:Send, Receive, History and Settings are tabs on iPhone and a sidebar on iPad and Mac, where Settings is its own window. Files, text and codes stay in place when you switch tabs, and are cleared after a transfer succeeds.
 - Privacy: no accounts, analytics, ads or tracking, and history stays on the device. The developer collects no data.
 - Author: Bakir Gracic (github.com/bakirgdev).
 

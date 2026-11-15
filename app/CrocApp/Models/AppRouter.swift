@@ -106,6 +106,18 @@ final class AppRouter {
 
     func openReceive() { selection = .receive }
 
+    /// Empties the draft a transfer came from once it succeeded. Anything else
+    /// keeps it, and so does a request another entry point started.
+    func transferEnded(_ phase: TransferController.Phase, request: TransferRequest?) {
+        switch phase {
+        case .done, .stored:
+            sendDraft.finish(request)
+            receiveDraft.finish(request)
+        default:
+            break
+        }
+    }
+
     /// Shows History. Same busy rule as `openSend(with:)`: a transfer in
     /// progress keeps the screen.
     func openHistory() {
