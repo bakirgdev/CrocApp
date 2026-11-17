@@ -1,5 +1,0 @@
-# Read by OpenSSF Scorecard's Vulnerabilities check. Remove an entry when its package publishes a fix (#217).
-
-[[IgnoredVulns]]
-id = "GHSA-gcqx-w48m-w2h4"
-reason = "deepmerge <= 4.3.1 has no patched release. Reached only at docs build time through @svgr/plugin-svgo merging its own SVGO config, never from user input."
