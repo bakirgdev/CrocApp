@@ -213,7 +213,7 @@ Photos, dropped and pasted images are copied into `SendStaging` under the tempor
 | One maintainer approves releases, so there is no second reviewer on the `release` environment | Accepted. Disclosed in `SECURITY.md`, and `RELEASING.md` describes the approval gate. |
 | Compromise of the Sparkle EdDSA private key or the `release` secrets | Would allow signed malicious updates or releases. Mitigation is limited to approval gating and attestation, which a compromised pipeline could also satisfy. |
 | A sender can offer a very large total size; CrocApp adds no disk quota | The accept sheet shows the file list; the user decides. |
-| `poll()` reads croc client fields without synchronization | Worst case is a wrong progress number; bounds-checked (#184). |
+| `poll()` reads croc client fields without synchronization | Worst case is a wrong progress number; bounds-checked. Fixed only by croc's `OnProgress` option (#258). |
 | `golang.org/x/crypto` GO-2026-5932 (`openpgp`) with no fixed version | Not imported or called (`govulncheck`); `crocmobile/osv-scanner.toml` holds the reason. |
 | Metadata (IP, timing, volume) visible to relay and network | Accepted (Non-goals). |
 | The trust badge names the configured route, not the path used | Accepted; the claim that the relay sees ciphertext holds on every path. |

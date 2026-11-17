@@ -291,7 +291,7 @@ Keep the "MAC ENTITLEMENTS" paragraph while the macOS app carries `network.serve
 
 Before every submission:
 
-- From 1.2.1, App Accessibility claims VoiceOver and Voice Control on iPhone, iPad and Mac, on the owner's runs with the App Store builds. The rest of the accessibility audit is still open (#124). Until it passes, keep VoiceOver and "largest text sizes" claims out of the description and What's New. The app draws secondary text with the system `.secondary`, about 3.44:1 on white in light (`design/principles.md`, "Contrast"), so do not claim Sufficient Contrast in the Accessibility label until Accessibility Inspector has run on the shipped screens.
+- App Accessibility claims VoiceOver and Voice Control on iPhone, iPad and Mac from 1.2.1. The rest of the accessibility audit, Larger Text and Sufficient Contrast included, passed on the owner's runs with the 1.3.0 App Store builds (#124, #173). Rerun the Accessibility Inspector and VoiceOver passes on the shipped screens after any change to layout, text styles or colors, before keeping those claims for a new version.
 - Run the review-note steps on the uploaded iOS and macOS builds, with the tab and sidebar names as the build shows them, and fix the notes where a label differs. Recount the blocks in this file after any wording change.
 - Read getcroc.com's current labels (Send, Receive, Choose files, "Croc code or stored link", Copy code) and compare them with the review notes. The page belongs to the croc project and can change.
 - Check the contact name, phone and email in App Review Information. They are not in the repo, and the developer-account address is not necessarily the public support contact.
