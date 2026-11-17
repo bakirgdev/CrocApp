@@ -23,7 +23,7 @@ scripts/capture-screenshots.sh --copy-web      # refresh the web copies, no disp
 
 - A run takes over the display and flips the system appearance twice, restoring it on exit including on failure.
 - The terminal that runs it needs Screen Recording, Accessibility and Automation of System Events; the preflight names whichever is missing before anything is built. A run of only `duo` or `duoinner` needs Accessibility alone, which lets it press Device Hub's buttons. It is a one-time grant in System Settings > Privacy & Security > Accessibility, and the terminal must be restarted after it.
-- It creates simulators named "CrocApp Shots <device>" (iPhone and iPad for the main set, then iPhone 17 Pro and two iPhone Duos one at a time for the store-only classes, each deleted as soon as its pass ends), starts a croc relay and, for `stored-link`, a store server, and removes all of them on exit.
+- It creates simulators named "CrocApp Shots <device>" (iPhone and iPad for the main set, then iPhone 17 Pro and one iPhone Duo for the store-only classes, each deleted as soon as its pass ends), starts a croc relay and, for `stored-link`, a store server, and removes all of them on exit.
 - `duo` and `duoinner` open Device Hub (`/Applications/Xcode.app/Contents/Applications/DeviceHub.app`) in the background and quit it on exit, unless it was already running. Leave it alone during those passes: it acts on the simulator selected in its sidebar.
 - Needs Go (the store server comes from `crocmobile/cmd/croctest`) and a v11 `croc` (default `/opt/homebrew/bin/croc`, override with `CROC`; crocmobile embeds croc 11).
 
@@ -77,6 +77,7 @@ All are native simulator pixels: nothing is scaled or cropped to reach a size.
 
 - **iPhone Duo.** `simctl io <udid> enumerate` lists two panels, screen 1 (`LCD`, 1398x2034, the outer display) and screen 3 (`LCD-1`, 2007x2853, the inner display). `screenshot --display=1` and `--display=3` capture them at exactly Apple's sizes (set `DUO_OUTER_DISPLAY` or `DUO_INNER_DISPLAY` if a runtime numbers them differently).
   - `simctl` has no pose command, and an iPhone Duo simulator draws nothing (a white screen with a status bar) until Device Hub shows it. `duo_pose` selects the run's simulator in Device Hub's sidebar, waits until the window title names it, then presses **Closed** (`duo`) or **Open** (`duoinner`), and **Rotate Right** until the display has the store width. It finds the buttons by accessibility description with `scripts/screenshots/window.swift` (`press`, `select`).
+  - The Duo simulator also stops drawing when the app relaunches, so `launch` selects it in Device Hub again after each launch. Device Hub lists a new simulator only after about 40 s, so `duoinner` reuses the `duo` simulator, opened, instead of creating a second one.
   - A pose keeps the orientation the device had, and Device Hub opens the device with the inner display in landscape, the orientation the inner set uses.
   - The outer display draws the status bar and the tab bar as vertical strips along the trailing edge. That is the system's layout for that display (HIG, "Designing for iPhone Duo"), not a simulator quirk, and the app keeps it (`app-ui-architecture.md`, "Layout and navigation").
   - The Duo needs its own runtime, `com.apple.CoreSimulator.SimRuntime.iOS-27-2-iPhone19-4`; the plain iOS 27.2 runtime refuses the device type ("Incompatible device"). The script tries runtimes newest first and takes the first that creates the device.
@@ -171,7 +172,7 @@ For any future screenshot work:
 - **`iphone/onboarding` is a real sheet.** On iOS the onboarding is a `.sheet`, so the light shot shows the dimmed Send tab above and around it. Dark shows the same over black.
 
 - **`ipad/` is the phone layout in a centred column**, under a floating top tab bar, with a lot of empty space on the sides and below.
-- **No `iphone-duo-inner`, and `iphone-duo-outer` cuts taller screens off at the bottom.** See "iPhone Duo" above. The outer set is uploaded (iOS 1.1.1), but a screen taller than the outer display ends mid-content: `02-send-code-dark` cuts its hint line and loses "Waiting for the receiver…". Recapture when a runtime or Simulator.app can drive the Duo's inner display.
+- **`iphone-duo-outer` cuts taller screens off at the bottom.** A screen taller than the outer display ends mid-content: `02-send-code-dark` stops under the QR code, with **Share Link** behind the Cancel bar. The page scrolls on the device; a still shot shows only the top.
 - **No menu-bar shot.** The menu-bar popover cannot be captured reliably: macOS hides the status item when the menu bar is full, so no script can click it.
 - **`mac/onboarding` is not captured** (see the table above).
 

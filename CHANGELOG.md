@@ -12,7 +12,7 @@ extra sections where a release needs them, and the project follows
 
 ### Added
 
-- On iPhone Duo, the inner display shows the sidebar in landscape, as iPad does, with each transfer's state in words, and the tabs in portrait. The outer display keeps the tab bar, on the side as the system places it.
+- On iPhone Duo, the inner display shows the sidebar in landscape, as iPad does, with each transfer's state in words, and the tabs in portrait. The outer display keeps the tab bar, on the side as the system places it. Partially open like a book, a code phrase, a QR code and **Accept** and **Decline** sit beside the fold, never across it, and what you picked or typed stays when you fold or open the device.
 
 ### Fixed
 
