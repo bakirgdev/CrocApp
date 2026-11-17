@@ -122,7 +122,9 @@ swift test --package-path CrocKit
 (cd app && xcodebuild test -scheme CrocApp -destination 'platform=macOS')
 ```
 
-`scripts/verify-swift.sh` runs both, rebuilding the xcframework first when it is missing or older than `crocmobile/`.
+`scripts/verify-swift.sh` runs both, rebuilding the xcframework first when it is missing or older than `crocmobile/`. It fails an app test case that is still running after 2 minutes, so a stuck case ends the run instead of hanging it; CI passes the same limit.
+
+An app test never reads the source tree. The test host is the app, and when the checkout sits in a folder macOS protects (such as `~/Desktop`), that read waits on a permission prompt and blocks the main actor until someone answers it. A file a test needs goes into the test bundle as a resource, as `SendServicesRegistrationTests` does with the Info.plist files.
 
 Design and docs, no toolchain needed:
 

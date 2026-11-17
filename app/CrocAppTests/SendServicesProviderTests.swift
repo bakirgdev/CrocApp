@@ -124,9 +124,12 @@ import Testing
     ]
 
     private func services(in name: String) throws -> [[String: Any]] {
-        // app/CrocAppTests/<this file> -> app/Config/<plist>
-        let url = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-            .appending(path: "Config/\(name)")
+        // The build copies app/Config/<plist> into the test bundle. Reading the
+        // source tree instead blocks the main actor on a TCC prompt, for as long
+        // as it stays unanswered, when the checkout is in a protected folder
+        // such as ~/Desktop (#214).
+        let url = try #require(
+            Bundle(for: BundleToken.self).url(forResource: name, withExtension: nil))
         let data = try Data(contentsOf: url)
         let plist = try PropertyListSerialization.propertyList(from: data, format: nil)
         let info = try #require(plist as? [String: Any])
@@ -154,4 +157,6 @@ import Testing
         }
     }
 }
+
+private final class BundleToken {}
 #endif

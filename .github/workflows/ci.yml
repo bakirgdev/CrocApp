@@ -314,7 +314,9 @@ jobs:
           XCFRAMEWORK_TARGETS: ${{ matrix.slices }}
         run: scripts/build-xcframework.sh
 
-      # The index store only serves an IDE, so CI skips writing it.
+      # The index store only serves an IDE, so CI skips writing it. A test case
+      # still running after 2 minutes fails instead of hanging the job (#214);
+      # the `build` action accepts those flags and runs no tests.
       - name: ${{ matrix.action == 'test' && 'Build and test' || 'Build' }} CrocApp
         shell: bash
         working-directory: app
@@ -326,6 +328,7 @@ jobs:
           xcodebuild -scheme CrocApp \
             -destination "$DESTINATION" \
             -derivedDataPath "$RUNNER_TEMP/dd" \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
             SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES \
             "$ACTION" \
