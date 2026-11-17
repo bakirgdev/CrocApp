@@ -34,6 +34,10 @@ final class TransferRecord {
     var totalBytes: Int64
     var names: [String]
     var codeHint: String
+    /// Where 1.3.0 and earlier kept the bookmarks, in the record's own row, so
+    /// every History row loaded them. `HistoryStore` moves them to
+    /// `savedBookmarks` and empties this; it stays so a store an older build
+    /// wrote still opens with its bookmarks.
     var bookmarks: [Data]
     /// Stored uploads only: the server's id for the upload, which keys
     /// its receipt in `StoredTransferVault`. These three are optional so
@@ -41,12 +45,19 @@ final class TransferRecord {
     var storedID: String?
     var expiresAt: Date?
     var revokedAt: Date?
+    /// The id Shortcuts keeps (`HistoryEntity`). Optional like `storedID`;
+    /// `HistoryStore` gives one to every record an older build wrote.
+    var uuid: UUID?
+    /// The bookmarks for Send Again, in a model of their own: a History row reads
+    /// only whether there are any, which leaves them unloaded.
+    @Relationship(deleteRule: .cascade, inverse: \TransferBookmarks.record)
+    var savedBookmarks: TransferBookmarks?
 
     var status: Status { Status(rawValue: statusRaw) ?? .failed }
 
     /// "Send Again" needs the original files back, which only resolvable
     /// bookmarks give. Text sends have no files to resolve.
-    var canResend: Bool { isSend && !isText && !bookmarks.isEmpty }
+    var canResend: Bool { isSend && !isText && savedBookmarks != nil }
 
     init(
         isSend: Bool, status: Status, isText: Bool, fileCount: Int,
@@ -61,9 +72,23 @@ final class TransferRecord {
         self.totalBytes = totalBytes
         self.names = names
         self.codeHint = codeHint
-        self.bookmarks = bookmarks
+        self.bookmarks = []
         self.storedID = storedID
         self.expiresAt = expiresAt
+        self.uuid = UUID()
+        self.savedBookmarks = bookmarks.isEmpty ? nil : TransferBookmarks(bookmarks)
+    }
+}
+
+/// A send record's bookmarks, apart from the record so a History list loads
+/// none of them until Send Again reads them. Deleted with their record.
+@Model
+final class TransferBookmarks {
+    var data: [Data]
+    var record: TransferRecord?
+
+    init(_ data: [Data]) {
+        self.data = data
     }
 }
 
@@ -119,12 +144,15 @@ final class HistoryStore {
 
     init(container: ModelContainer) {
         self.container = container
+        Self.backfill(container)
     }
+
+    static let schema = Schema([TransferRecord.self, TransferBookmarks.self])
 
     static func makeContainer(inMemory: Bool) -> ModelContainer {
         do {
             let config = ModelConfiguration(isStoredInMemoryOnly: inMemory)
-            return try ModelContainer(for: TransferRecord.self, configurations: config)
+            return try ModelContainer(for: schema, configurations: config)
         } catch {
             Self.log.error(
                 "history store failed to open, using memory only: \(String(describing: error), privacy: .public)"
@@ -138,9 +166,43 @@ final class HistoryStore {
             // left that would leave the app in a working state anyway. The
             // message puts the error in the crash log.
             do {
-                return try ModelContainer(for: TransferRecord.self, configurations: config)
+                return try ModelContainer(for: schema, configurations: config)
             } catch {
                 fatalError("history store failed to open in memory: \(error)")
+            }
+        }
+    }
+
+    /// Brings records an older build wrote up to this one: a `uuid`, and the
+    /// bookmarks moved to `savedBookmarks`. Runs at every open and finds nothing
+    /// once done. Ten records per save, each batch in a fresh context, keep
+    /// memory low (300 records of 200 bookmarks peaked near 1.1 GB in one save,
+    /// under 100 MB this way), and a launch cut short keeps what it saved. A
+    /// failure leaves the rest as it was, for the next open.
+    private static func backfill(_ container: ModelContainer) {
+        while true {
+            do {
+                let done = try autoreleasepool {
+                    let context = ModelContext(container)
+                    var descriptor = FetchDescriptor<TransferRecord>(
+                        predicate: #Predicate { $0.uuid == nil })
+                    descriptor.fetchLimit = 10
+                    let legacy = try context.fetch(descriptor)
+                    for record in legacy {
+                        record.uuid = UUID()
+                        if !record.bookmarks.isEmpty {
+                            record.savedBookmarks = TransferBookmarks(record.bookmarks)
+                            record.bookmarks = []
+                        }
+                    }
+                    try context.save()
+                    return legacy.isEmpty
+                }
+                if done { return }
+            } catch {
+                log.error(
+                    "history backfill failed: \(String(describing: error), privacy: .public)")
+                return
             }
         }
     }

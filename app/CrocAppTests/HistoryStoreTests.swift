@@ -41,6 +41,53 @@ import Testing
         #expect(history.record(storedID: "up1") == nil)
     }
 
+    private func bookmarkSets() throws -> Int {
+        try history.container.mainContext.fetchCount(FetchDescriptor<TransferBookmarks>())
+    }
+
+    private func send(bookmarks: [Data]) -> TransferRecord {
+        TransferRecord(
+            isSend: true, status: .completed, isText: false, fileCount: bookmarks.count,
+            totalBytes: 10, names: ["a.txt"], codeHint: "", bookmarks: bookmarks)
+    }
+
+    @Test func aNewRecordHasAUUIDAndKeepsItsBookmarksApart() {
+        let record = send(bookmarks: [Data("b".utf8)])
+        history.add(record)
+
+        #expect(record.uuid != nil)
+        #expect(record.bookmarks.isEmpty)
+        #expect(record.savedBookmarks?.data == [Data("b".utf8)])
+        #expect(record.canResend)
+        #expect(!send(bookmarks: []).canResend)
+        #expect(send(bookmarks: []).savedBookmarks == nil)
+    }
+
+    @Test func bookmarksGoWithTheirRecord() throws {
+        let deleted = send(bookmarks: [Data("a".utf8)])
+        history.add(deleted)
+        history.add(send(bookmarks: [Data("b".utf8)]))
+        history.add(send(bookmarks: [Data("c".utf8)]))
+        #expect(try bookmarkSets() == 3)
+
+        history.delete(deleted)
+        #expect(try bookmarkSets() == 2)
+
+        history.clear()
+        #expect(history.recordCount() == 0)
+        #expect(try bookmarkSets() == 0)
+    }
+
+    @Test func prunedRecordsTakeTheirBookmarks() throws {
+        for number in 0...TransferRecord.maxRecords {
+            let old = send(bookmarks: [Data("\(number)".utf8)])
+            old.date = Date(timeIntervalSinceNow: Double(number - TransferRecord.maxRecords))
+            history.add(old)
+        }
+
+        #expect(try bookmarkSets() == TransferRecord.maxRecords)
+    }
+
     @Test func theOldestRecordsGoBeyondTheCap() {
         for number in 0...TransferRecord.maxRecords {
             let old = record(storedID: "up\(number)")

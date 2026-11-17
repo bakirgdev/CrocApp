@@ -36,7 +36,7 @@ final class HistoryActions {
         // See SecurityScopedBookmark.resolveIfReachable for why the scope
         // must be started before the existence probe -- the send opens its
         // own scope at send time.
-        let urls = record.bookmarks.compactMap { data in
+        let urls = (record.savedBookmarks?.data ?? []).compactMap { data in
             SecurityScopedBookmark.resolveIfReachable(data)
         }
         guard !urls.isEmpty else { return false }

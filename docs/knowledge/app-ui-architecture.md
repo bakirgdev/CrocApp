@@ -257,10 +257,10 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - A shortcut does not answer the accept prompt. Auto-accept applies as usual, and Keep Both or Replace follows the setting.
 
 **History entities.**
-- `Intents/HistoryEntity.swift` is the `AppEntity` for a record: name, direction, status, date, file names, size. Never the code phrase or code hint. `HistoryEntityQuery` answers Shortcuts (by id, by name, and a Find Transfers action with date, direction, status and name filters). `OpenTransferIntent` opens History (the list, not the record: no route carries a record yet, #126).
+- `Intents/HistoryEntity.swift` is the `AppEntity` for a record: name, direction, status, date, file names, size. Never the code phrase or code hint. `HistoryEntityQuery` answers Shortcuts (by id, by name, and a Find Transfers action with date, direction, status and name filters). `OpenTransferIntent` opens the record's detail in History (`AppRouter.openHistory(record:)`), or the list when the record is gone.
 - `Models/HistoryEntityStore.swift` is the one object the query reads. It is registered with `AppDependencyManager` and reads the history store on demand, so it keeps no state in step.
 - CrocApp adds nothing to the system search index. `Support/SpotlightPurge.swift` empties the named index `CrocAppHistory` that 1.2 filled, at every live launch (a downgrade can refill it), so file names an earlier build indexed do not stay there.
-- The entity id is the JSON of the record's SwiftData `PersistentIdentifier` (`HistoryEntityID`). It survives a relaunch, not a reinstall or a reset store (#224).
+- The entity id is the record's `uuid` as text, so it does not depend on how SwiftData identifies the record. 1.3.0 and earlier used the JSON of the record's `PersistentIdentifier`, and a saved shortcut can still hold one: `HistoryEntityStore.records(for:)` matches it too (`HistoryEntityID`), by `==` and not through a `Set`, because a decoded identifier does not always hash like the record's.
 
 **Send with CrocApp (Services menu, macOS).**
 - `Platform/SendServicesProvider.swift` is `NSApp.servicesProvider`, set in `AppDelegate`. `sendFiles` and `sendText` are the `NSMessage` values of the two `NSServices` entries in `Config/CrocApp-macOS-Info.plist` and `CrocApp-Direct-Info.plist`; `SendServicesRegistrationTests` ties both plists to the selectors. They stage through `AppRouter.openSend(with:)` and `openSend(text:)`, so a service never starts a transfer and never navigates during one.
@@ -380,7 +380,11 @@ The shared views route onto `design/`. A screen picks one of these instead of st
 
 ## History
 
-`Models/TransferHistory.swift`: `TransferRecord` is a SwiftData `@Model` (including `statusRaw`, a string storage for the enum). Stored sends add optional `storedID`, `expiresAt` and `revokedAt`. They are optional so a store written by an older build opens without a migration step.
+`Models/TransferHistory.swift`: `TransferRecord` is a SwiftData `@Model` (including `statusRaw`, a string storage for the enum). Stored sends add optional `storedID`, `expiresAt` and `revokedAt`. Every record has an optional `uuid`, the Shortcuts id. These are optional so a store written by an older build opens without a migration step (a lightweight migration, which `HistoryUpgradeTests` proves on a store written with the 1.3.0 model).
+
+A send's bookmarks live in a separate `@Model`, `TransferBookmarks`, behind the optional to-one `savedBookmarks` relationship (cascade delete, so delete, prune and Clear History remove them). A History row reads only whether the relationship is set, which is a column of the record's own row, so the list loads no bookmark data until **Send Again** reads `savedBookmarks.data`. In the record's own row, as 1.3.0 kept them, 300 records of 200 bookmarks of 4 KB cost about 496 MB to list (with or without `propertiesToFetch`); as a relationship, about 2 MB (Xcode 27.2 SDK, a standalone SwiftData check, with a SQL trace showing no read of the bookmarks table until one record's data is read).
+
+`HistoryStore.init` runs a backfill for records an older build wrote (`uuid` nil): it gives each a `uuid` and moves its legacy `bookmarks` array to `savedBookmarks`, then empties the array. It runs at every open and finds nothing once done. It works ten records per save, each batch in a fresh `ModelContext`, which kept the worst case above under 100 MB (one save peaked near 1.1 GB), and a launch cut short keeps the batches it saved. The legacy `bookmarks` attribute stays in the model: dropping it would lose the data of a store the backfill has not reached.
 
 Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookmarks`), and the store keeps at most 300 records (`maxRecords`). `HistoryStore.add()` deletes the oldest records beyond that.
 
@@ -399,7 +403,7 @@ Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookma
 - **Clear History** behind a confirmation, whose button is **Clear All**. While any record's link can still be revoked, the message adds that such links stay active until they expire. There is no revoke-all.
 - `HistoryView` and `HistoryDetailView` hold a `now` that `minuteClock` refreshes once a minute and pass it to `canRevoke(_:now:)`, so Revoke leaves a link that expires while the screen is open.
 - `AppRouter.openedRecord` is the record whose detail History pushes, on both platforms. A double-click on the Mac and **Open Transfer** in Shortcuts (`openHistory(record:)`, under the busy rule) set it.
-- **Send Again** for send records that carry bookmarks: resolve the bookmarks, then `router.openSend`.
+- **Send Again** for send records that carry bookmarks (`savedBookmarks`): resolve the bookmarks, then `router.openSend`.
 
 **Both platform probe branches must call `startAccessingSecurityScopedResource()` before `fileExists`.** The sandbox denies `stat` on an unopened scope.
 

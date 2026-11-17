@@ -1,4 +1,5 @@
 import AppIntents
+import SwiftData
 
 /// Opens CrocApp at a found transfer's detail in History.
 struct OpenTransferIntent: OpenIntent {
@@ -9,10 +10,12 @@ struct OpenTransferIntent: OpenIntent {
     @Parameter(title: "Transfer")
     var target: HistoryEntity
 
+    @Dependency var store: HistoryEntityStore
+
     @MainActor
     func perform() async throws -> some IntentResult {
-        if let record = HistoryEntityID.identifier(from: target.id) {
-            AppRouter.shared.openHistory(record: record)
+        if let record = store.records(for: [target.id]).first {
+            AppRouter.shared.openHistory(record: record.persistentModelID)
         } else {
             AppRouter.shared.openHistory()
         }

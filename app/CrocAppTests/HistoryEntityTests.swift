@@ -89,33 +89,20 @@ import Testing
 
     // MARK: - The id
 
-    @Test func theIdOfASavedRecordFindsItAgain() throws {
+    @Test func theIdIsTheRecordsUUID() throws {
         let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
         let record = TransferRecord(
             isSend: false, status: .completed, isText: false, fileCount: 1, totalBytes: 1,
             names: ["x"], codeHint: "", bookmarks: [])
         history.add(record)
         let found = try #require(HistoryEntity(record: record))
-        let identifier = try #require(HistoryEntityID.identifier(from: found.id))
-        #expect(identifier == record.persistentModelID)
+        #expect(found.id == record.uuid?.uuidString)
     }
 
-    /// An index entry is updated and removed by this text, so the same record
-    /// must always give the same text, however the identifier was rebuilt.
-    @Test func theIdTextSurvivesBeingDecodedAndEncodedAgain() throws {
-        let history = HistoryStore(container: HistoryStore.makeContainer(inMemory: true))
-        let record = TransferRecord(
-            isSend: true, status: .completed, isText: false, fileCount: 1, totalBytes: 1,
-            names: ["x"], codeHint: "", bookmarks: [])
-        history.add(record)
-        let text = try #require(HistoryEntityID.string(for: record.persistentModelID))
-        let decoded = try #require(HistoryEntityID.identifier(from: text))
-        #expect(HistoryEntityID.string(for: decoded) == text)
-    }
-
-    @Test func textThatIsNotAnIdFindsNothing() {
+    @Test func textThatIsNotAnOldIdFindsNothing() {
         #expect(HistoryEntityID.identifier(from: "not an id") == nil)
         #expect(HistoryEntityID.identifier(from: "") == nil)
+        #expect(HistoryEntityID.identifier(from: UUID().uuidString) == nil)
     }
 }
 
