@@ -14,6 +14,8 @@
 		CB000000000000000000000B /* CrocShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB0000000000000000000001 /* CrocShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CC000000000000000000000C /* CrocWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* CrocWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CD000000000000000000000B /* CrocWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CD0000000000000000000001 /* CrocWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		EA0000000000000000000003 /* CrocApp-macOS-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA0000000000000000000001 /* CrocApp-macOS-Info.plist */; };
+		EA0000000000000000000004 /* CrocApp-Direct-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA0000000000000000000002 /* CrocApp-Direct-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +85,8 @@
 
 /* Begin PBXFileReference section */
 		DA0000000000000000000001 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
+		EA0000000000000000000001 /* CrocApp-macOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "CrocApp-macOS-Info.plist"; sourceTree = "<group>"; };
+		EA0000000000000000000002 /* CrocApp-Direct-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "CrocApp-Direct-Info.plist"; sourceTree = "<group>"; };
 		844EAD41307C8833006F34A7 /* CrocAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CrocAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		84DEC94730101868006ECBE6 /* CrocApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CrocApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0000000000000000000001 /* CrocShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CrocShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -199,6 +203,8 @@
 			isa = PBXGroup;
 			children = (
 				DA0000000000000000000001 /* Version.xcconfig */,
+				EA0000000000000000000001 /* CrocApp-macOS-Info.plist */,
+				EA0000000000000000000002 /* CrocApp-Direct-Info.plist */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -459,6 +465,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EA0000000000000000000003 /* CrocApp-macOS-Info.plist in Resources */,
+				EA0000000000000000000004 /* CrocApp-Direct-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

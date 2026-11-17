@@ -27,9 +27,13 @@ ensure_xcframework "$LOGS/xcframework.log"
 logged "$LOGS/crockit.log" swift test --package-path CrocKit -Xswiftc -warnings-as-errors
 pass "CrocKit tests ($(grep -Eo 'Test run with [0-9]+ tests' "$LOGS/crockit.log" | tail -n 1))"
 
-# Own DerivedData, so the flags here never invalidate Xcode's own build.
+# Own DerivedData, so the flags here never invalidate Xcode's own build. A case
+# still running after 2 minutes fails ("exceeded execution time allowance") and
+# Xcode ends the test host, so a blocked main thread or an await that never
+# resumes fails the run instead of hanging it (#214).
 logged "$LOGS/app.log" xcodebuild test -project app/CrocApp.xcodeproj -scheme CrocApp \
   -destination platform=macOS -derivedDataPath "$(derived_data verify-swift)" \
+  -test-timeouts-enabled YES -default-test-execution-time-allowance 120 \
   CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
   SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES
 pass "CrocApp tests"
