@@ -95,7 +95,7 @@ croc forces the receiver prompt whenever the remote sender ran `--ask` (upstream
 
 `autoAcceptActive && endReason != .cancelled && failure.code == .refused` identifies this case. The check runs after the `unsafeName` and `backgroundExpired` branches. `respond()` is never called on the auto-accept path, so the end reason cannot be `declined`.
 
-Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answers for croc's other prompts (empty folder, unzip member) and then closes it (`crocmobile-bridge.md`, "Engine behavior invariants"). The forced remote-`--ask` prompt reads the first `n` answers and ends as `refused` under either file policy. The batch is `n` even for Replace for that reason. A manual accept behaves the same, because a croc v11 reconnect re-runs the accept prompt (`scripts/verify-interop.sh` checks it).
+Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answers for croc's other prompts (empty folder, unzip member) and then closes it (`crocmobile-bridge.md`, "Engine behavior invariants"). The forced remote-`--ask` prompt reads the first `n` answers and ends as `refused` under either file policy. The batch is `n` even for Replace for that reason. `scripts/verify-interop.sh` scenario 12 checks it. A croc v11 reconnect after a manual accept also re-runs the prompt and reads `n`, but the engine reports that one as `connectionLost` (`crocmobile-bridge.md`, "File policy").
 
 ### Options, security scope, progress
 

@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 extra sections where a release needs them, and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- A receive you accepted that loses its connection partway now ends with **Lost connection to the other device** and **Try Again**, instead of saying you declined it. It still cannot pick up where it left off: the other device sees it as declined and has to send again.
+
 ## [1.3.0] - 2026-11-15
 
 ### Changed

@@ -110,6 +110,10 @@ type session struct {
 	// value included) as 1, since the receiver's accept/decline prompt only
 	// fires once per transfer.
 	promptAnswers int
+	// accepted: the user accepted this receive. croc asks once per connection
+	// attempt, so a later "refused files" comes from the accept prompt it
+	// re-runs after a reconnect, which reads a queued "n" (#226).
+	accepted atomic.Bool
 
 	restoreIO func() // restore os.Stdin (sender Ask) or os.Stdin/os.Stdout+capture (receive)
 
@@ -549,6 +553,10 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 		defer recoverInto(&err)
 		err = xfer()
 	}()
+	if err != nil && s.accepted.Load() && classify(err) == codeRefused {
+		// The drop ended the receive, not the user: report what they can retry.
+		err = &codedError{code: codeConnectionLost, err: fmt.Errorf("reconnect after accept re-ran croc's accept prompt: %w", err)}
+	}
 	close(s.done)
 	s.closePrompt()
 	if s.restoreIO != nil {
@@ -740,6 +748,7 @@ func (s *session) respond(accept bool, policy filePolicy) {
 			// accept prompt has its answer (croc.go updateIfRecipientHasFileInfo).
 			policy.apply(&s.client.Options)
 			answers += keptPromptAnswers
+			s.accepted.Store(true)
 		}
 	}
 	s.promptM.Unlock()

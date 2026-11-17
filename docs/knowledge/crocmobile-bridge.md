@@ -71,13 +71,13 @@ How `classify` picks a code:
 |---|---|
 | `peerVersion` | text `unsupported PAKE protocol version` |
 | `declined` | the peer's `peer error: refusing files`. A peer's cancel looks the same on the wire. |
-| `refused` | this side's `refused files` (prompt answered no, or EOF) |
+| `refused` | this side's `refused files` (prompt answered no, or EOF) before the user accepted |
 | `cancelled` | `errors.Is(err, context.Canceled)`. croc returns the context error unwrapped. |
 | `roomFull` | `room full`, and the control connection's `relay admission rejected` |
 | `badPassword` | the relay rejected the relay password (`bad password`), not the code phrase |
 | `wrongCode` | peers met with different codes: `password mismatch` (sender), `could not secure channel` (receiver), `pake not successful`, `message authentication failed` |
 | `relayUnreachable` | `croc.ErrRelayConnection`, `croc.ErrDERPConnection`, `tcp.ErrAdmissionLimited`, rate limiting, dial and DNS failures |
-| `connectionLost` | unexpected EOF, reset, broken pipe, `transfer disconnected` |
+| `connectionLost` | unexpected EOF, reset, broken pipe, `transfer disconnected`, and this side's `refused files` after the user accepted (see "File policy") |
 | `joinedEarly` | text `local discovery failed` with `i/o timeout`: a receiver that waited 5 s for the sender (see "Start order: sender first"). It is matched before the plain `i/o timeout` of `relayUnreachable` |
 | `textTooLong` | receiver only: croc's `text transfer size must be between 1 byte and 1 MiB` (`validateSendingTextOffer`, limit `maxTextTransferBytes`). The sender's croc reports `refusing files`, so it shows `declined` |
 | `noPublicRelay` | this package's own `codedError`, raised by `generatePublicCode`. A start cancelled during the probe reports `cancelled` instead |
@@ -166,7 +166,10 @@ Answers queued for croc's stdin prompts:
 - On accept, `respond` sets the policy on the live `croc.Client` before writing `y`, because croc reads `Rename` and `Overwrite` only once the accept prompt is answered.
 - It then queues 4096 more answers (`promptPolicyAnswers`) for the prompts that ignore both flags: the empty-folder prompt and the per-member unzip prompt `Overwrite '<path>'? (y/N)`.
 - Every queued answer is `n`, under either policy (`keptPromptAnswers`). The unzip then skips an existing member and keeps the local copy. So Replace overwrites files through `Overwrite` but never a zip member.
-- Never `y`: croc v11 re-runs the accept prompt on the sender's new file list after each reconnect, and a queued `y` would accept a list the user never saw. As a result, a reconnect after a manual accept is refused (#226).
+- Never `y`: croc v11 re-runs the accept prompt on the sender's new file list after each reconnect, and a queued `y` would accept a list the user never saw.
+- As a result, a reconnect after a manual accept cannot resume: the re-run prompt reads `n`, croc refuses the files, and the peer gets `refusing files` (`declined` on a CrocApp sender) (#226).
+- `run` reports that refusal as `connectionLost`, not `refused`, because `respond` recorded the accept (`session.accepted`). croc asks once per connection attempt, so a `refused files` after an accept can only come from a reconnect.
+- `TestReconnectAfterAccept` (`reconnect_test.go`) forces the reconnect by dropping the receiver's relay control connection mid-transfer. The same drop under `AutoAccept` resumes and completes.
 - 4096 two-byte lines fit a fresh pipe buffer on Darwin and Linux, so the write never blocks.
 - With `AutoAccept` there is no accept prompt. The same `n` batch is written at session start and the pipe is closed (`answerUngatedPrompts`). It must be `n` because croc still forces the accept prompt when the remote sender ran `--ask`. That prompt reads the first queued line, and `y` would accept a transfer the sender wanted confirmed by hand.
 - Past 4096 colliding zip members an unzip hits EOF and fails, leaving the received zip (#225).
@@ -233,6 +236,8 @@ How Tailcat works, its 128 MiB threshold and the servers it contacts: `what-is-c
 ### Reconnects
 
 croc retries a dropped transfer up to 10 times (backoff from 100 ms, doubling, capped at 5 s). Only then it fails with `transfer disconnected after 10 reconnect attempts`. Peer death therefore surfaces slowly, and scripts must bound their waits with timeouts.
+
+A dropped relay connection after the transfer started counts as a disconnect (`transfer` in `croc.go`). Each attempt resets the session (`resetForReconnectAttempt`), and the sender offers its file list again, which runs the receiver's accept prompt again (see "File policy").
 
 ### Start order: sender first
 
