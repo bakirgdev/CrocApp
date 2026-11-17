@@ -34,8 +34,11 @@ import Testing
         let recent = addRecord("recent.txt", daysAgo: 1)
         #expect(store.all().map(\.name) == ["recent.txt", "old.txt"])
         #expect(store.suggested().map(\.name) == ["recent.txt", "old.txt"])
-        let id = try #require(HistoryEntityID.string(for: recent.persistentModelID))
+        let id = try #require(recent.uuid?.uuidString)
         #expect(store.entities(for: [id, "unknown"]).map(\.name) == ["recent.txt"])
+        // The id a shortcut saved by 1.3.0 holds.
+        let oldID = try legacyEntityID(recent.persistentModelID)
+        #expect(store.entities(for: [oldID]).map(\.id) == [id])
     }
 
     @Test func aTextSearchMatchesFileNames() {
@@ -49,7 +52,7 @@ import Testing
     @Test func queriesAnswerNothingWhileTheSettingIsOff() throws {
         let store = makeStore()
         let record = addRecord("a.txt")
-        let id = try #require(HistoryEntityID.string(for: record.persistentModelID))
+        let id = try #require(record.uuid?.uuidString)
         settings.saveTransferHistory = false
         #expect(store.all().isEmpty)
         #expect(store.suggested().isEmpty)

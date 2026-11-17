@@ -36,11 +36,20 @@ final class HistoryEntityStore {
     var isEnabled: Bool { settings.saveTransferHistory }
 
     func entities(for ids: [String]) -> [HistoryEntity] {
-        // Compared as identifiers, not as text: an id kept by a saved shortcut
-        // may have been written by another OS version.
-        let wanted = Set(ids.compactMap(HistoryEntityID.identifier))
-        return all().filter {
-            HistoryEntityID.identifier(from: $0.id).map(wanted.contains) ?? false
+        records(for: ids).compactMap(HistoryEntity.init)
+    }
+
+    /// The records `ids` name, newest first: by `uuid`, or by the identifier a
+    /// shortcut saved by 1.3.0 and earlier holds (`HistoryEntityID`). Compared
+    /// as values, not as text: an old id may have been written by another OS
+    /// version.
+    func records(for ids: [String]) -> [TransferRecord] {
+        let uuids = Set(ids.compactMap(UUID.init(uuidString:)))
+        // An array, not a set: a decoded identifier equals the record's but
+        // does not always hash the same.
+        let legacy = ids.compactMap(HistoryEntityID.identifier)
+        return records().filter {
+            ($0.uuid.map(uuids.contains) ?? false) || legacy.contains($0.persistentModelID)
         }
     }
 
@@ -54,15 +63,16 @@ final class HistoryEntityStore {
 
     /// Every record as an entity, newest first; nothing while the setting is off.
     func all() -> [HistoryEntity] {
+        records().compactMap(HistoryEntity.init)
+    }
+
+    /// Every record, newest first; nothing while the setting is off.
+    private func records() -> [TransferRecord] {
         guard isEnabled else { return [] }
-        var descriptor = FetchDescriptor<TransferRecord>(
+        let descriptor = FetchDescriptor<TransferRecord>(
             sortBy: [SortDescriptor(\.date, order: .reverse)])
-        // The bookmarks are the heavy part of a record and no entity reads them.
-        descriptor.propertiesToFetch = [
-            \.date, \.isSend, \.statusRaw, \.isText, \.fileCount, \.totalBytes, \.names,
-        ]
         do {
-            return try container.mainContext.fetch(descriptor).compactMap(HistoryEntity.init)
+            return try container.mainContext.fetch(descriptor)
         } catch {
             Self.log.error(
                 "entity fetch failed: \(String(describing: error), privacy: .public)")

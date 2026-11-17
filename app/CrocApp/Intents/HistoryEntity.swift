@@ -1,6 +1,5 @@
 import AppIntents
 import Foundation
-import OSLog
 import SwiftData
 
 /// A past transfer as Shortcuts sees it: file names, direction,
@@ -8,8 +7,8 @@ import SwiftData
 /// (`docs/knowledge/app-ui-architecture.md`, "System surfaces"), so nothing a bystander could
 /// reuse leaves the History screen.
 ///
-/// The id is the record's SwiftData identifier (`HistoryEntityID`), which
-/// outlives a relaunch.
+/// The id is the record's `uuid`. Shortcuts saved by 1.3.0 and earlier hold
+/// its SwiftData identifier instead (`HistoryEntityID`), which still finds it.
 struct HistoryEntity: AppEntity {
     static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Transfer")
     static let defaultQuery = HistoryEntityQuery()
@@ -60,13 +59,14 @@ struct HistoryEntity: AppEntity {
         self.size = Measurement(value: Double(totalBytes), unit: .bytes)
     }
 
-    /// nil when the record has no id Shortcuts could hand back (never expected:
-    /// a saved record always has one).
+    /// nil for a record the backfill has not reached yet (`HistoryStore`),
+    /// which only a failed backfill leaves.
     @MainActor
     init?(record: TransferRecord) {
-        guard let id = HistoryEntityID.string(for: record.persistentModelID) else { return nil }
+        guard let uuid = record.uuid else { return nil }
         self.init(
-            id: id, isSend: record.isSend, status: record.status, isText: record.isText,
+            id: uuid.uuidString, isSend: record.isSend, status: record.status,
+            isText: record.isText,
             fileCount: record.fileCount, totalBytes: record.totalBytes, names: record.names,
             date: record.date)
     }
@@ -138,27 +138,12 @@ nonisolated enum HistoryStatus: String, AppEnum {
 
 }
 
-/// The entity id of a record: its SwiftData identifier, JSON-encoded. Stable
-/// for the life of the store, so a saved shortcut still finds its record after
-/// a relaunch. Not a format to rely on across an OS update: an id that no
-/// longer decodes finds nothing.
+/// The entity id 1.3.0 and earlier gave a record: its SwiftData identifier,
+/// JSON-encoded. A saved shortcut can still hold one, and it finds its record
+/// while the store that wrote it lasts.
 nonisolated enum HistoryEntityID {
-    private static let log = Logger(subsystem: "com.bakirgdev.CrocApp", category: "shortcuts")
-
-    static func string(for id: PersistentIdentifier) -> String? {
-        // Sorted keys: the same record must give the same text every time.
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
-        do {
-            return String(data: try encoder.encode(id), encoding: .utf8)
-        } catch {
-            log.error("entity id encode failed: \(String(describing: error), privacy: .public)")
-            return nil
-        }
-    }
-
-    /// nil for text that is not an id this store wrote: Shortcuts hands back
-    /// whatever it kept, so an unknown id is expected.
+    /// nil for text that is not such an id: a `uuid`, or whatever else
+    /// Shortcuts kept.
     static func identifier(from string: String) -> PersistentIdentifier? {
         try? JSONDecoder().decode(PersistentIdentifier.self, from: Data(string.utf8))
     }

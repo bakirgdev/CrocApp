@@ -13,6 +13,7 @@ extra sections where a release needs them, and the project follows
 ### Fixed
 
 - A receive you accepted that loses its connection partway now ends with **Lost connection to the other device** and **Try Again**, instead of saying you declined it. It still cannot pick up where it left off: the other device sees it as declined and has to send again.
+- History opens with far less memory when it holds many past sends of many files: the list no longer loads the bookmarks behind **Send Again** for every row, only for the send you send again. The first time this version opens, it moves the bookmarks your History already holds, and every past transfer stays.
 
 ## [1.3.0] - 2026-11-15
 
