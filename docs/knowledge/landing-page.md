@@ -10,7 +10,7 @@ Operational knowledge for `web/landing/`, the plain HTML site at `https://crocap
 | `theme-init.js` | Loaded synchronously in the `<head>` of every page: sets `data-theme` from `localStorage` before first paint. External so the CSP needs no hash |
 | `r/index.html`, `r/receive.js` | The receive-link page behind `https://crocapp.dev/r/#<code>`. It offers to open the app, get the app or receive in a browser. `receive.js` parses the fragment and fills the links |
 | `privacy/`, `support/` | Static pages |
-| `.well-known/apple-app-site-association` | Universal links for `/r/*`, for both app IDs (`com.bakirgdev.CrocApp` and `.direct`, each with the team prefix) |
+| `.well-known/apple-app-site-association` | Universal links for `/r/` and `/r` (exactly the paths `TransferLink` parses), for both app IDs (`com.bakirgdev.CrocApp` and `.direct`, each with the team prefix) |
 | `.well-known/security.txt` | The address `SECURITY.md` hands out |
 | `llms.txt`, `robots.txt` | Crawler and assistant files. `robots.txt` lists the sitemap that `assemble-site.sh` writes and the docs one |
 | `CNAME`, `404.html` | Custom domain and not-found page |
@@ -67,4 +67,4 @@ Nothing checks these:
 - No page, JSON-LD or crawler file names a release version, so a release edits none of them. The Download section says "available now" (the Mac App Store build is set to manual release, so its card can read that before the build is live), the Mac card's **Download Disk Image** button links the latest GitHub release, and both store badges link the App Store listing (`https://apps.apple.com/app/crocapp/id6805675003`, one record for iOS and macOS). The JSON-LD carries `downloadUrl`, `installUrl` (the App Store listing) and `datePublished`, which stays the first public release. Keep it that way: a new version string on the site is a new hand edit.
 - `security.txt` has an `Expires` field to renew (keep it at least six months out).
 - The site-wide copy (`index.html` feature lists, `llms.txt`) describes what `main` ships. It can run ahead of the released version, so merge copy for an unreleased feature with the release.
-- The AASA `/r/*` component is wider than the one page that exists (#216).
+- GitHub Pages serves the AASA as `application/octet-stream`, because the file has no extension and Pages cannot set a header. Apple accepts it today; re-test universal links on a device if Apple tightens the content-type check (#216).
