@@ -124,7 +124,7 @@ Sparkle's tools come with the package, at `<DerivedData>/SourcePackages/artifact
 5. Copy build 1 somewhere writable (`ditto dd1/Build/Products/Release/CrocApp.app apps/CrocApp.app`) and launch it. Choose **Check for Updates…**, then **Install Update**, then **Install and Relaunch** in Sparkle's standard UI. From the second launch on, Sparkle first asks about automatic checks.
 6. Expect the old process to exit, a new process to start, and `apps/CrocApp.app` to report `CFBundleVersion` 2.
 
-A known hang after **Install and Relaunch** on the first launch of the Direct bundle ID on a Mac is tracked in #213.
+A hang after **Install and Relaunch** on the first launch of the Direct bundle ID on a Mac was seen once and never reproduced (#213, closed). If it recurs, capture `log stream --predicate 'subsystem == "org.sparkle-project.Sparkle"'` and reopen that issue.
 
 ## App Store builds
 
