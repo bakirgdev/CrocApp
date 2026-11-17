@@ -8,7 +8,7 @@ description: Your first send and receive in CrocApp, step by step, using the app
 
 ![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](../../screenshots/mac/send-code-light.webp#gh-light-mode-only)![CrocApp on macOS showing Ready to send with the code phrase, a Copy Code button, and a QR code](../../screenshots/mac/send-code-dark.webp#gh-dark-mode-only)
 
-On iPhone, **Send**, **Receive**, **History** and **Settings** are the tabs at the bottom. On iPad and Mac they are rows in a sidebar (the Mac has its own Settings window), and the steps below are the same. What you picked or typed on one tab stays there when you switch to another. On the first launch, CrocApp shows a short welcome screen first. Tap **Get Started** to continue. CrocApp may then ask for camera access (to scan QR codes) and local network access (for faster nearby transfers).
+On iPhone, **Send**, **Receive**, **History** and **Settings** are the tabs at the bottom. On iPad and Mac they are rows in a sidebar (the Mac has its own Settings window), and so they are on the inner display of iPhone Duo in landscape. The steps below are the same. What you picked or typed on one tab stays there when you switch to another. On the first launch, CrocApp shows a short welcome screen first. Tap **Get Started** to continue. CrocApp may then ask for camera access (to scan QR codes) and local network access (for faster nearby transfers).
 
 ## Send
 

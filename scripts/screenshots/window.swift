@@ -3,12 +3,25 @@
 //                       id, layer, title, width, height (tab separated)
 //   window scroll OWNER scrolls the content of OWNER's front window to its end
 //                       (moves the pointer over it, then posts wheel events)
-//   window preflight    exit 1 and name what is missing unless Screen Recording
-//                       and Accessibility are granted to the calling terminal
+//   window preflight [accessibility]
+//                       exit 1 and name what is missing unless Screen Recording
+//                       and Accessibility (only Accessibility with the argument)
+//                       are granted to the calling terminal
+//   window press APP DESCRIPTION
+//                       presses the first button whose accessibility description
+//                       is DESCRIPTION in the running app whose executable is APP
+//   window select APP IDENTIFIER
+//                       selects the list row holding the element whose
+//                       accessibility identifier is IDENTIFIER, and exits 1
+//                       until a window's title starts with that row's name
+//
+// press and select drive Device Hub, whose pose buttons (Closed, Partially Open,
+// Open, Rotate Right) have no menu items or shortcuts to send instead.
 //
 // screencapture wants a CGWindowID and nothing in the shell hands one out.
 // AppleScript's window ids are AX ids, not CGWindowIDs, so System Events
 // cannot supply this even though it sees the same windows.
+import AppKit
 import ApplicationServices
 import CoreGraphics
 import Foundation
@@ -16,6 +29,34 @@ import Foundation
 func fail(_ message: String) -> Never {
     FileHandle.standardError.write(Data("\(message)\n".utf8))
     exit(1)
+}
+
+func axApp(_ executable: String) -> AXUIElement {
+    guard
+        let app = NSWorkspace.shared.runningApplications.first(where: {
+            $0.executableURL?.lastPathComponent == executable
+        })
+    else { fail("\(executable) is not running") }
+    return AXUIElementCreateApplication(app.processIdentifier)
+}
+
+func axAttribute(_ element: AXUIElement, _ name: String) -> AnyObject? {
+    var value: AnyObject?
+    return AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success
+        ? value : nil
+}
+
+/// Depth first, in the order the app lists its children, skipping the menu bar.
+func axFind(_ element: AXUIElement, depth: Int = 0, _ match: (AXUIElement) -> Bool)
+    -> AXUIElement?
+{
+    if match(element) { return element }
+    guard depth < 40, let children = axAttribute(element, kAXChildrenAttribute) as? [AXUIElement]
+    else { return nil }
+    for child in children where axAttribute(child, kAXRoleAttribute) as? String != "AXMenuBar" {
+        if let found = axFind(child, depth: depth + 1, match) { return found }
+    }
+    return nil
 }
 
 let args = CommandLine.arguments
@@ -55,13 +96,49 @@ case "scroll" where args.count > 2:
             wheel3: 0)?.post(tap: .cghidEventTap)
         usleep(50_000)
     }
+case "press" where args.count > 3:
+    guard
+        let button = axFind(
+            axApp(args[2]),
+            {
+                axAttribute($0, kAXRoleAttribute) as? String == "AXButton"
+                    && axAttribute($0, kAXDescriptionAttribute) as? String == args[3]
+            })
+    else { fail("no button '\(args[3])' in \(args[2])") }
+    guard AXUIElementPerformAction(button, kAXPressAction as CFString) == .success else {
+        fail("pressing '\(args[3])' in \(args[2]) failed")
+    }
+case "select" where args.count > 3:
+    var row = axFind(axApp(args[2])) {
+        axAttribute($0, kAXIdentifierAttribute) as? String == args[3]
+    }
+    while let element = row, axAttribute(element, kAXRoleAttribute) as? String != "AXRow" {
+        row = axAttribute(element, kAXParentAttribute).map { $0 as! AXUIElement }
+    }
+    guard let row else { fail("no row holding '\(args[3])' in \(args[2])") }
+    guard
+        AXUIElementSetAttributeValue(row, kAXSelectedAttribute as CFString, kCFBooleanTrue)
+            == .success
+    else { fail("selecting '\(args[3])' in \(args[2]) failed") }
+    // Device Hub can mark a just-booted simulator's row selected without showing
+    // it; only the window title, "<name> – <OS>", says what the pose buttons act on.
+    let name = axFind(row) { axAttribute($0, kAXRoleAttribute) as? String == "AXStaticText" }
+        .flatMap { axAttribute($0, kAXValueAttribute) as? String }
+    let windows = axAttribute(axApp(args[2]), kAXWindowsAttribute) as? [AXUIElement] ?? []
+    guard let name,
+        windows.contains(where: {
+            (axAttribute($0, kAXTitleAttribute) as? String)?.hasPrefix("\(name) ") == true
+        })
+    else { fail("\(args[2]) does not show '\(args[3])' yet") }
 case "preflight":
     var missing: [String] = []
-    if !CGPreflightScreenCaptureAccess() { missing.append("Screen Recording") }
+    if args.count < 3, !CGPreflightScreenCaptureAccess() { missing.append("Screen Recording") }
     if !AXIsProcessTrusted() { missing.append("Accessibility") }
     if !missing.isEmpty {
         fail("missing: \(missing.joined(separator: ", "))")
     }
 default:
-    fail("usage: window list OWNER | window scroll OWNER | window preflight")
+    fail(
+        "usage: window list OWNER | window scroll OWNER | window press APP DESCRIPTION | window select APP IDENTIFIER | window preflight [accessibility]"
+    )
 }
