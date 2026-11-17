@@ -41,7 +41,7 @@ node_latest=$(curl -fsS https://nodejs.org/dist/index.json \
   | jq -r --arg m "v${node_pin%%.*}." '[.[] | select(.version | startswith($m))][0].version | ltrimstr("v")')
 row "Node ${node_pin%%.*}" web/docs/.nvmrc "$node_pin" "$node_latest"
 
-pnpm_pin=$(jq -r '.packageManager | ltrimstr("pnpm@")' web/docs/package.json)
+pnpm_pin=$(jq -r '.packageManager | ltrimstr("pnpm@") | split("+")[0]' web/docs/package.json)
 row pnpm web/docs/package.json "$pnpm_pin" "$(curl -fsS https://registry.npmjs.org/pnpm/latest | jq -r .version)"
 
 row Biome web/docs/package.json "$(jq -r '.devDependencies["@biomejs/biome"]' web/docs/package.json)" \

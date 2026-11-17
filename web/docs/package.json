@@ -1,7 +1,7 @@
 {
   "name": "crocapp-docs",
   "private": true,
-  "packageManager": "pnpm@12.18.0",
+  "packageManager": "pnpm@12.21.0+sha512.66fd8278ee28935ce951792d34367ff3af5c432a2756445823029533835b8da529bbe0be5130afd56ed0713fb8789e47bad82d93bd5ae2fe54b15562d6276ef0",
   "scripts": {
     "docusaurus": "docusaurus",
     "tokens": "cp ../../design/tokens.css src/css/tokens.css && mkdir -p static/img && cp ../landing/assets/img/mascot-web.webp static/img/mascot.webp",
@@ -21,7 +21,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.6",
+    "@biomejs/biome": "2.6.8",
     "@docusaurus/module-type-aliases": "^3.10.2",
     "@docusaurus/tsconfig": "^3.10.2",
     "@docusaurus/types": "^3.10.2",
