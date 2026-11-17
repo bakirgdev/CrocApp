@@ -10,20 +10,21 @@ assets/screenshots/
   app-store/CLASS/NN-SCREEN-{light,dark}.png  PNG, no alpha, Apple's exact sizes, odd NN light, even NN dark
 ```
 
-`CLASS` is one of `iphone-6.9`, `iphone-6.3`, `iphone-duo-outer`, `ipad-13`, `mac`.
+`CLASS` is one of `iphone-6.9`, `iphone-6.3`, `iphone-duo-outer`, `iphone-duo-inner`, `ipad-13`, `mac`.
 
 ## Running it
 
 ```
 scripts/capture-screenshots.sh                 # everything; empties assets/screenshots/ first
-scripts/capture-screenshots.sh ipad            # one device (mac, iphone, ipad, iphone63, duo)
+scripts/capture-screenshots.sh ipad            # one device (mac, iphone, ipad, iphone63, duo, duoinner)
 scripts/capture-screenshots.sh mac history     # devices and screens combine; both appearances
 scripts/capture-screenshots.sh --copy-web      # refresh the web copies, no display needed
 ```
 
 - A run takes over the display and flips the system appearance twice, restoring it on exit including on failure.
-- The terminal that runs it needs Screen Recording, Accessibility and Automation of System Events; the preflight names whichever is missing before anything is built.
-- It creates simulators named "CrocApp Shots <device>" (iPhone and iPad for the main set, then iPhone 17 Pro and iPhone Duo one at a time for the store-only classes, each deleted as soon as its pass ends), starts a croc relay and, for `stored-link`, a store server, and removes all of them on exit.
+- The terminal that runs it needs Screen Recording, Accessibility and Automation of System Events; the preflight names whichever is missing before anything is built. A run of only `duo` or `duoinner` needs Accessibility alone, which lets it press Device Hub's buttons. It is a one-time grant in System Settings > Privacy & Security > Accessibility, and the terminal must be restarted after it.
+- It creates simulators named "CrocApp Shots <device>" (iPhone and iPad for the main set, then iPhone 17 Pro and two iPhone Duos one at a time for the store-only classes, each deleted as soon as its pass ends), starts a croc relay and, for `stored-link`, a store server, and removes all of them on exit.
+- `duo` and `duoinner` open Device Hub (`/Applications/Xcode.app/Contents/Applications/DeviceHub.app`) in the background and quit it on exit, unless it was already running. Leave it alone during those passes: it acts on the simulator selected in its sidebar.
 - Needs Go (the store server comes from `crocmobile/cmd/croctest`) and a v11 `croc` (default `/opt/homebrew/bin/croc`, override with `CROC`; crocmobile embeds croc 11).
 
 After a run, refresh the web copies with `--copy-web`. The pages use WebP, not PNG, so it rebuilds with `cwebp` (`brew install webp`; the script fails if it is missing) every `.webp` already present under `web/docs/screenshots/` and `web/landing/assets/img/screenshots/`:
@@ -57,7 +58,7 @@ One vocabulary across devices, kebab-case, named for the state shown.
 
 The App Store subset is `send-files`, `send-code`, `sending`, `receive-incoming`, `receiving`, `receive-done`, `stored-link`, `history`, `settings`, `how-it-works`, in that upload order, identical in every class. Change `STORE_SCREENS` in the script to reorder (at most ten).
 
-**Half light, half dark.** Odd positions are light, even positions dark, and the theme is in the file name (`03-sending-light.png`, `04-receive-incoming-dark.png`), so every class shows both. Apple's product page guidance on dark-mode screenshots: https://developer.apple.com/app-store/product-page/. `iphone-6.9`, `ipad-13` and `mac` reuse the matching main capture; `iphone-6.3` and `iphone-duo-outer` are captured on their own simulator, only in the one appearance their slot needs.
+**Half light, half dark.** Odd positions are light, even positions dark, and the theme is in the file name (`03-sending-light.png`, `04-receive-incoming-dark.png`), so every class shows both. Apple's product page guidance on dark-mode screenshots: https://developer.apple.com/app-store/product-page/. `iphone-6.9`, `ipad-13` and `mac` reuse the matching main capture; `iphone-6.3`, `iphone-duo-outer` and `iphone-duo-inner` are captured on their own simulator, only in the one appearance their slot needs.
 
 ## App Store sizes
 
@@ -67,18 +68,18 @@ From Apple's screenshot specifications, https://developer.apple.com/help/app-sto
 |---|---|---|---|
 | `iphone-6.3` | 1206x2622 | Dynamic Island (medium), required | iPhone 17 Pro simulator |
 | `iphone-6.9` | 1320x2868 | Dynamic Island (large), optional | iPhone 17 Pro Max simulator, same captures as `iphone/` |
-| `iphone-duo-outer` | 1398x2034 | iPhone Duo (outer). Apple's page lists it for apps using the iOS 27.1 SDK or later, but App Store Connect accepted the 1.1.0 iOS build (that SDK) for review without it | iPhone Duo simulator, display 1 |
+| `iphone-duo-outer` | 1398x2034 | iPhone Duo, outer display. Optional; Apple's page requires it from April 2027 for apps using the iOS 27.1 SDK or later | iPhone Duo simulator, Closed, display 1 |
+| `iphone-duo-inner` | 2853x2007 | iPhone Duo, inner display, landscape (the page also accepts 2007x2853). Same condition as the outer display | iPhone Duo simulator, Open, display 3 |
 | `ipad-13` | 2064x2752 | 13" display, required because the app runs on iPad | iPad Pro 13-inch (M5) simulator |
 | `mac` | 2880x1800 | 16:10, one of four accepted sizes | the window composed on a canvas |
 
 All are native simulator pixels: nothing is scaled or cropped to reach a size.
 
-- **iPhone Duo.** `simctl io <udid> enumerate` lists two panels, screen 1 (`LCD`, 1398x2034, the outer display) and screen 3 (`LCD-1`, 2007x2853, the inner display).
-  - `screenshot --display=1` captures the outer one at exactly Apple's size (set `DUO_OUTER_DISPLAY` if a runtime numbers them differently).
-  - The inner display stays black: SpringBoard only drives it after an unfold event, nothing in `simctl` sends one (`screenConfig power` switches a panel on but not the content), and this Xcode ships no Simulator.app whose Device menu could.
-  - So there is no `iphone-duo-inner` class yet; Apple's page lists the 2007x2853 inner size under the same iOS 27.1 SDK condition.
-  - The outer display lays the app out sideways (status bar and back button in a strip along one edge); that is how the simulator renders it, and the shot is kept as is.
-  - The Duo runs on the newest runtime (iOS 27.1), the others on whichever newest runtime supports their device type.
+- **iPhone Duo.** `simctl io <udid> enumerate` lists two panels, screen 1 (`LCD`, 1398x2034, the outer display) and screen 3 (`LCD-1`, 2007x2853, the inner display). `screenshot --display=1` and `--display=3` capture them at exactly Apple's sizes (set `DUO_OUTER_DISPLAY` or `DUO_INNER_DISPLAY` if a runtime numbers them differently).
+  - `simctl` has no pose command, and an iPhone Duo simulator draws nothing (a white screen with a status bar) until Device Hub shows it. `duo_pose` selects the run's simulator in Device Hub's sidebar, waits until the window title names it, then presses **Closed** (`duo`) or **Open** (`duoinner`), and **Rotate Right** until the display has the store width. It finds the buttons by accessibility description with `scripts/screenshots/window.swift` (`press`, `select`).
+  - A pose keeps the orientation the device had, and Device Hub opens the device with the inner display in landscape, the orientation the inner set uses.
+  - The outer display draws the status bar and the tab bar as vertical strips along the trailing edge. That is the system's layout for that display (HIG, "Designing for iPhone Duo"), not a simulator quirk, and the app keeps it (`app-ui-architecture.md`, "Layout and navigation").
+  - The Duo needs its own runtime, `com.apple.CoreSimulator.SimRuntime.iOS-27-2-iPhone19-4`; the plain iOS 27.2 runtime refuses the device type ("Incompatible device"). The script tries runtimes newest first and takes the first that creates the device.
 
 **Mac.** A window capture is typically 1760x1400 (an 880x700 pt window at 2x), not 16:10, and a stretched window would be dishonest. `imgtool compose` (`scripts/screenshots/imgtool.swift`) draws the untouched window at 1x, centred, with a soft shadow, on a gradient canvas of exactly 2880x1800: pale blue-grey for light shots, deep blue-grey for dark ones. Needs a Retina main display so the capture comes out at 2x.
 

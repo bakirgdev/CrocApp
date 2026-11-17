@@ -10,6 +10,10 @@ extra sections where a release needs them, and the project follows
 
 ## [Unreleased]
 
+### Added
+
+- On iPhone Duo, the inner display shows the sidebar in landscape, as iPad does, with each transfer's state in words, and the tabs in portrait. The outer display keeps the tab bar, on the side as the system places it.
+
 ### Fixed
 
 - A receive you accepted that loses its connection partway now ends with **Lost connection to the other device** and **Try Again**, instead of saying you declined it. It still cannot pick up where it left off: the other device sees it as declined and has to send again.

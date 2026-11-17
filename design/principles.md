@@ -14,7 +14,7 @@ Most of the product is text and one progress bar. A wrong byte count is more vis
 
 Navigation, chrome and input change between devices; the screens, wording and rules do not.
 
-- **iPhone** is a `TabView` with Send, Receive, History and Settings. **iPad and Mac** show the same tabs as a sidebar (`.sidebarAdaptable`), a sidebar by default on iPad in landscape and a floating tab bar in portrait, where the sidebar would cover the screen. On the Mac, Settings stays the Settings scene (⌘,) and is not a tab.
+- **iPhone** is a `TabView` with Send, Receive, History and Settings. **iPad and Mac** show the same tabs as a sidebar (`.sidebarAdaptable`), a sidebar by default on iPad in landscape and a floating tab bar in portrait, where the sidebar would cover the screen. The inner display of iPhone Duo follows the iPad: a sidebar in landscape, the tab bar in portrait. Its outer display keeps the tab bar, which the system moves to the side; we never override that placement. On the Mac, Settings stays the Settings scene (⌘,) and is not a tab.
 - **Primary actions are pinned to the bottom of the screen**, in the same place on every device.
 - Let the system adapt, never branch by device: one `TabView` becomes a tab bar or a sidebar as the window changes. Behavior and wiring: `docs/knowledge/app-ui-architecture.md`, "Layout and navigation".
 - The system owns tab bars, sidebars, toolbars and sheets. We draw nothing on them, and the transfer state on a tab is words first (a badge: **Connecting**, **Waiting**, **Review**, **Sending**, **Receiving**).

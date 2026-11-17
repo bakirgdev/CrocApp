@@ -18,6 +18,7 @@ struct ContentView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     #else
     @State private var isLandscape = false
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     #endif
 
     private var tabState: TransferTabState? {
@@ -181,7 +182,8 @@ struct ContentView: View {
     }
 
     /// design/principles.md → Platform adaptation: one tab view, a tab bar on
-    /// iPhone and a sidebar on iPad and Mac. Each tab has its own stack, and
+    /// iPhone and a sidebar on iPad, Mac and the landscape inner display of
+    /// iPhone Duo. Each tab has its own stack, and
     /// the screens' state is in the drafts of `AppRouter`, so it outlives a tab
     /// change. The Mac has no Settings tab: its Settings scene stands in.
     private var tabs: some View {
@@ -220,7 +222,8 @@ struct ContentView: View {
         #if os(iOS)
         // A portrait iPad draws the sidebar as an overlay that covers the screen,
         // so it is the default only where it sits beside the content.
-        .defaultAdaptableTabBarPlacement(isLandscape ? .sidebar : .automatic)
+        .defaultAdaptableTabBarPlacement(sidebarFits ? .sidebar : .automatic)
+        .phoneTabBarPlacement(sidebarFits ? .sidebar : .automatic)
         .onGeometryChange(for: Bool.self) {
             $0.size.width > $0.size.height
         } action: {
@@ -229,12 +232,18 @@ struct ContentView: View {
         #endif
     }
 
+    #if os(iOS)
+    /// Landscape with a regular height: an iPad, or the inner display of iPhone
+    /// Duo. Not an iPhone on its side, whose compact height keeps the tab bar.
+    private var sidebarFits: Bool { isLandscape && verticalSizeClass == .regular }
+    #endif
+
     /// A sidebar row has room for the state in words. A tab bar item does not (the
     /// words cover its icon), so it only counts a request that waits for an answer.
     private func badge(_ screen: AppRouter.Screen) -> Text? {
         guard let tabState, tabState.screen == screen else { return nil }
         #if os(iOS)
-        if !(isLandscape && UIDevice.current.userInterfaceIdiom == .pad) {
+        if !sidebarFits {
             return tabState.kind == .review ? Text(verbatim: "1") : nil
         }
         #endif
@@ -305,3 +314,19 @@ struct ContentView: View {
         .environment(LocalNetworkChecker())
         .environment(AppRouter.shared)
 }
+
+#if os(iOS)
+extension View {
+    /// The tab bar or sidebar choice on iPhone, where the system shows one of
+    /// them and never morphs between them (iOS 27 and later).
+    @ViewBuilder fileprivate func phoneTabBarPlacement(_ placement: AdaptableTabBarPlacement)
+        -> some View
+    {
+        if #available(iOS 27.0, *) {
+            defaultTabBarPlacement(placement)
+        } else {
+            self
+        }
+    }
+}
+#endif

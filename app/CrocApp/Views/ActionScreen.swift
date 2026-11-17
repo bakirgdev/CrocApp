@@ -13,6 +13,27 @@ struct ActionScreen<Content: View, Actions: View>: View {
     @ViewBuilder let actions: Actions
 
     var body: some View {
+        #if os(iOS)
+        // iPhone Duo partially open like a book: the overlay arrangement moves
+        // the column and its actions beside the fold instead of across it, and
+        // puts them back when the fold flattens. A fold across a portrait
+        // display is left alone, because the content scrolls past it.
+        if #available(iOS 27.1, *) {
+            ArrangementView {
+                screen
+            } secondary: {
+                Color.clear
+            }
+            .arrangementViewStyle(.overlay.axes(.horizontal))
+        } else {
+            screen
+        }
+        #else
+        screen
+        #endif
+    }
+
+    private var screen: some View {
         // Padding inside the scroll view: outside it, the scroll view's clip
         // cuts off the Toggle switch, which draws past its frame.
         ScrollView {

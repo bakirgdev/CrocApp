@@ -113,3 +113,12 @@ Use an iPhone and the Mac CLI at `/opt/homebrew/bin/croc` (v11). Use a file of a
 - [ ] 1. Send the file from the iPhone to `croc --debug --yes` on the Mac, once with the app in the foreground and once switching to another app mid-transfer and back. Pass: both complete, the SHA-256 matches the source, the CLI log has the plain `selected croc relay data transport` line and no `tailcat-offer`.
 - [ ] 2. On the Mac run `croc --debug --ignore-stdin send <file>` and receive on the iPhone, once in the foreground and once backgrounded mid-transfer. Pass: both complete, the SHA-256 matches, and the CLI log has no `tailcat-offer`.
 - [ ] 3. On the Mac run `croc --debug --ignore-stdin send --transport derp <file>` and receive on the iPhone. Pass: the app shows a failure within seconds (`peer requires Tailcat, but Tailcat is disabled or unavailable locally`), not a spinner that never ends.
+
+## iPhone Duo
+
+The simulator sets the Closed, Partially Open and Open poses from Device Hub (`app-ui-architecture.md`, "Layout and navigation"). A real hinge, its in-between angles and the cameras need the device.
+
+- [ ] 1. With files picked on **Send**, a code typed on **Receive**, and then a send waiting with its code, close, open and partially open the device several times, slowly and quickly. Pass: every state is still there, the send completes, and nothing flashes an empty screen.
+- [ ] 2. Hold the device partially open like a book on **Send** with a code, and on an incoming request. Pass: the code phrase, the QR code, **Accept** and **Decline** sit beside the fold, never across it, at every angle between closed and flat.
+- [ ] 3. **Scan QR Code** on the outer display and on the inner display. Pass: the camera preview opens upright and reads a code on both.
+- [ ] 4. Start a receive, close the device and lock it. Pass: the Live Activity shows on the outer display, as on any iPhone.

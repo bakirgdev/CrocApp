@@ -10,8 +10,9 @@
 #   assets/screenshots/app-store/CLASS/NN-SCREEN-{light,dark}.png
 #       Apple's exact sizes, no alpha, numbered in upload order (STORE_SCREENS),
 #       odd numbers light and even numbers dark. iphone-6.9, ipad-13 and mac
-#       come from the main captures; iphone-6.3 (iPhone 17 Pro) and
-#       iphone-duo-outer (iPhone Duo outer display) get their own simulator.
+#       come from the main captures; iphone-6.3 (iPhone 17 Pro),
+#       iphone-duo-outer (iPhone Duo closed, outer display) and iphone-duo-inner
+#       (iPhone Duo open in landscape, inner display) get their own simulator.
 #
 # Staging rides on the DEBUG-only harness in app/CrocApp/Support/AutoVerify.swift.
 # Launch flags navigate (--screen), preload (--stage), seed history, hold at
@@ -26,17 +27,22 @@
 # Takes over the display for a while and flips the system appearance twice; the
 # original appearance is restored on exit, also on failure. Needs, for the
 # terminal that runs it: Screen Recording, Accessibility, and Automation of
-# System Events (the preflight names what is missing).
+# System Events (the preflight names what is missing). duo and duoinner pose the
+# iPhone Duo in Xcode's Device Hub, pressing its Closed, Open and Rotate Right
+# buttons through Accessibility, because simctl has no pose command and an
+# iPhone Duo simulator draws nothing until Device Hub shows it; Device Hub is
+# quit afterwards unless it was already running.
 #
 # Usage: capture-screenshots.sh [DEVICE...] [SCREEN...]
 #   no arguments    everything, after emptying assets/screenshots/
-#   DEVICE          mac, iphone, ipad, iphone63 or duo: only those devices
+#   DEVICE          mac, iphone, ipad, iphone63, duo or duoinner: only those devices
 #   SCREEN          only those screens, both appearances, plus the store file
 #   --list          print the manifest and exit
 #   --copy-web      rebuild the web WebP copies from assets/screenshots/ and exit (needs cwebp)
 # Environment: CROC (default: the Homebrew croc, v11 like crocmobile),
 # PHONE_TYPE, PHONE63_TYPE, PAD_TYPE and DUO_TYPE (simulator device type ids),
-# DUO_OUTER_DISPLAY (simctl display id of the Duo's outer screen), RUNTIME (simulator
+# DUO_OUTER_DISPLAY and DUO_INNER_DISPLAY (simctl display ids of the Duo's outer
+# and inner screens), RUNTIME (simulator
 # runtime id, default the newest installed one that supports the device type).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -55,11 +61,13 @@ DUO_TYPE="${DUO_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-Duo}"
 # `simctl io DEVICE enumerate` lists the Duo's two panels as screens 1 (outer,
 # 1398x2034) and 3 (inner, 2007x2853).
 DUO_OUTER_DISPLAY="${DUO_OUTER_DISPLAY:-1}"
+DUO_INNER_DISPLAY="${DUO_INNER_DISPLAY:-3}"
+DEVICE_HUB=/Applications/Xcode.app/Contents/Applications/DeviceHub.app
 SIM_NAME="CrocApp Shots"
 MAC_DOCS="$HOME/Library/Containers/$BUNDLE/Data/Documents"
 
-# The first three get the main set; the last two exist for the store set only.
-DEVICES="mac iphone ipad iphone63 duo"
+# The first three get the main set; the others exist for the store set only.
+DEVICES="mac iphone ipad iphone63 duo duoinner"
 MAIN_DEVICES="mac iphone ipad"
 SCREENS="onboarding send-files send-code sending receive-code receive-incoming \
 receive-conflict receiving receive-done stored-link history how-it-works settings \
@@ -98,6 +106,7 @@ store_class() { # store_class DEVICE -> App Store class dir
     ipad) echo ipad-13 ;;
     iphone63) echo iphone-6.3 ;;
     duo) echo iphone-duo-outer ;;
+    duoinner) echo iphone-duo-inner ;;
   esac
 }
 
@@ -106,6 +115,7 @@ store_dims() { # store_dims DEVICE -> "WIDTH HEIGHT"
     iphone) echo "1320 2868" ;;
     iphone63) echo "1206 2622" ;;
     duo) echo "1398 2034" ;;
+    duoinner) echo "2853 2007" ;;
     ipad) echo "2064 2752" ;;
     mac) echo "2880 1800" ;;
   esac
@@ -192,6 +202,7 @@ STORE_URL=""
 SIM_IDS="" # UDIDs of the simulators this run created
 SIM_APP=""
 ORIG_DARK=""
+HUB_STARTED="" # 1 when this run launched Device Hub
 DEV=""
 DOCS=""
 SIM=""
@@ -219,6 +230,7 @@ cleanup() {
     xcrun simctl shutdown "$udid" 2> /dev/null || true
     xcrun simctl delete "$udid" 2> /dev/null || true
   done
+  [ -z "$HUB_STARTED" ] || osascript -e 'tell application id "com.apple.dt.Devices" to quit' > /dev/null 2>&1 || true
   if [ -n "$ORIG_DARK" ]; then
     osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $ORIG_DARK" > /dev/null 2>&1 || true
   fi
@@ -256,6 +268,11 @@ done
 
 if [ "$uses_mac" = 1 ]; then
   missing=$("$TMP/bin/window" preflight 2>&1) || fail "$missing. Grant it to the terminal running this script in System Settings > Privacy & Security, then restart the terminal."
+elif in_list "$RUN_DEVICES" duo || in_list "$RUN_DEVICES" duoinner; then
+  missing=$("$TMP/bin/window" preflight accessibility 2>&1) || fail "$missing (to press Device Hub's pose buttons). Grant it to the terminal running this script in System Settings > Privacy & Security, then restart the terminal."
+fi
+if in_list "$RUN_DEVICES" duo || in_list "$RUN_DEVICES" duoinner; then
+  [ -d "$DEVICE_HUB" ] || fail "no Device Hub at $DEVICE_HUB (needs Xcode 27.1 or later)"
   ORIG_DARK=$(osascript -e 'tell application "System Events" to tell appearance preferences to get dark mode' 2>&1) \
     || fail "Automation: allow the terminal running this script to control System Events (System Settings > Privacy & Security > Automation). osascript said: $ORIG_DARK"
 fi
@@ -479,8 +496,38 @@ sim_type() { # sim_type DEVICE
     iphone) echo "$PHONE_TYPE" ;;
     iphone63) echo "$PHONE63_TYPE" ;;
     ipad) echo "$PAD_TYPE" ;;
-    duo) echo "$DUO_TYPE" ;;
+    duo | duoinner) echo "$DUO_TYPE" ;;
   esac
+}
+
+# Poses the iPhone Duo UDID through Device Hub: duo closed with the outer
+# display in portrait, duoinner open with the inner display in landscape.
+# simctl has no pose command, and the simulator draws nothing until Device Hub
+# shows it. Device Hub acts on the selected simulator, so the run's simulator is
+# selected first. A pose keeps the orientation the device had, so Rotate Right
+# is pressed until the display has the store width.
+duo_pose() { # duo_pose DEVICE UDID
+  local udid=$2 pose display width i
+  case $1 in
+    duo) pose=Closed display=$DUO_OUTER_DISPLAY width=1398 ;;
+    duoinner) pose=Open display=$DUO_INNER_DISPLAY width=2853 ;;
+  esac
+  pgrep -xq DeviceHub || {
+    open -g "$DEVICE_HUB"
+    HUB_STARTED=1
+  }
+  hub() { "$TMP/bin/window" "$@" 2> /dev/null; }
+  poll 60 hub select DeviceHub "TableRow.Device.$2" || fail "Device Hub never showed the simulator $2"
+  poll 30 hub press DeviceHub "$pose" || fail "Device Hub has no $pose button for the simulator $2"
+  has_width() {
+    xcrun simctl io "$udid" screenshot --type=png --display="$display" "$TMP/pose.png" 2> /dev/null \
+      && [ "$(sips -g pixelWidth "$TMP/pose.png" | awk '/pixelWidth/ { print $2 }')" = "$width" ]
+  }
+  for i in 1 2 3 4; do
+    poll 5 has_width && return 0
+    hub press DeviceHub "Rotate Right" || fail "Device Hub has no Rotate Right button"
+  done
+  fail "the iPhone Duo display $display never reached $width pixels wide"
 }
 
 # A prepared simulator with the app and the payloads on it. Its UDID and
@@ -488,6 +535,7 @@ sim_type() { # sim_type DEVICE
 bring_up() { # bring_up DEVICE
   local id
   create_sim id "$SIM_NAME $1" "$(sim_type "$1")"
+  case $1 in duo | duoinner) duo_pose "$1" "$id" ;; esac
   xcrun simctl install "$id" "$SIM_APP"
   printf -v "ID_$1" '%s' "$id"
   printf -v "DOCS_$1" '%s' "$(xcrun simctl get_app_container "$id" "$BUNDLE" data)/Documents"
@@ -573,6 +621,13 @@ launch() { # launch ARGS...
   else
     xcrun simctl terminate "$SIM" "$BUNDLE" 2> /dev/null || true
     xcrun simctl launch "$SIM" "$BUNDLE" "${LOCALE_ARGS[@]}" "$@" ${DISABLE_LOCAL:+--disable-local} > /dev/null
+    # The Duo simulator draws the app only while Device Hub shows it, and a
+    # selection made before the launch does not hold, so select it again.
+    case $DEV in duo | duoinner)
+      poll 30 "$TMP/bin/window" select DeviceHub "TableRow.Device.$SIM" 2> /dev/null \
+        || fail "Device Hub never showed the simulator $SIM"
+      ;;
+    esac
   fi
 }
 
@@ -619,6 +674,8 @@ snap() {
     screencapture -x -o -l "$wid" "$out"
   elif [ "$DEV" = duo ]; then
     xcrun simctl io "$SIM" screenshot --type=png --display="$DUO_OUTER_DISPLAY" "$out" 2> /dev/null
+  elif [ "$DEV" = duoinner ]; then
+    xcrun simctl io "$SIM" screenshot --type=png --display="$DUO_INNER_DISPLAY" "$out" 2> /dev/null
   else
     xcrun simctl io "$SIM" screenshot --type=png "$out" 2> /dev/null
   fi
@@ -907,14 +964,25 @@ for d in $main_run; do [ "$d" = mac ] || drop_sim "$d"; done
 
 # The store-only simulators come up one at a time, after the main ones are gone.
 for d in $store_run; do
-  bring_up "$d"
+  duo_id=ID_duo
+  if [ "$d" = duoinner ] && [ -n "${!duo_id:-}" ]; then
+    # Device Hub lists a new simulator only after about 40 s, longer than the
+    # launch waits, so the inner set reuses the outer set's simulator, opened.
+    duo_pose duoinner "${!duo_id}"
+    for v in ID DOCS; do
+      src=${v}_duo
+      printf -v "${v}_duoinner" '%s' "${!src}"
+    done
+  else
+    bring_up "$d"
+  fi
   for MODE in light dark; do
     id="ID_$d"
     xcrun simctl ui "${!id}" appearance "$MODE" > /dev/null
     echo "$d $MODE..."
     shoot_devices "$d"
   done
-  drop_sim "$d"
+  if [ "$d" != duo ] || ! in_list "$store_run" duoinner; then drop_sim "$d"; fi
 done
 
 verify_outputs

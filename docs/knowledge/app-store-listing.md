@@ -299,6 +299,23 @@ Before every submission:
 - Re-check that getcroc.com still runs its own analytics (Umami) and ads (Google AdSense), as the privacy page says, and update the page's date for that check. The reviewer opens getcroc.com, and the `/r/` page links to it. The app does not load it (no web view).
 - Keep France out of availability until the ANSSI declaration exists (see "Export compliance").
 
+## Screenshots
+
+`scripts/capture-screenshots.sh` writes every set (`screenshots.md`). Each class directory under `assets/screenshots/app-store/` fills one slot on the iOS or macOS version page, in file order. Documented on Apple's screenshot specifications page (URL in "Sources").
+
+| Slot in App Store Connect | Class directory | Pixels | Status |
+| :--- | :--- | :--- | :--- |
+| iPhone with Dynamic Island (medium display) | `iphone-6.3` | 1206x2622 | Required |
+| iPhone with Dynamic Island (large display) | `iphone-6.9` | 1320x2868 | Optional |
+| iPhone Duo, outer display | `iphone-duo-outer` | 1398x2034 | Optional now; required from April 2027 for an app built with the iOS 27.1 SDK or later |
+| iPhone Duo, inner display | `iphone-duo-inner` | 2853x2007 (landscape) | Same as the outer display |
+| iPad 13-inch | `ipad-13` | 2064x2752 | Required |
+| Mac | `mac` | 2880x1800 | One of four accepted 16:10 sizes |
+
+- Apple's page accepts either orientation for both iPhone Duo displays (1398x2034 or 2034x1398, 2007x2853 or 2853x2007). The inner set is landscape, the device's open pose, which shows the sidebar layout. The outer set is portrait.
+- Uploading iPhone Duo screenshots adds a badge to the product page saying the app is made for iPhone Duo (documented on the same page). The app builds with Xcode 27.2 (`.xcode-version`), whose iOS SDK is 27.2, so the April 2027 requirement applies to it.
+- Inference: the iPhone Duo slots appear on the iOS version page only, beside the other iPhone slots. Not checked in App Store Connect.
+
 ## Submitting
 
 - Press **Add for Review** on each platform's version page. It only builds a draft; nothing reaches Apple until **Submit for Review**.
@@ -315,6 +332,7 @@ Apple's pages change. Re-read them before you rely on a limit or a rule.
 
 - App information (name 30, subtitle 30, privacy URL): https://developer.apple.com/help/app-store-connect/reference/app-information/app-information
 - Platform version information (promo 170, description 4000, keywords 100 bytes, What's New 4000, notes 4000 bytes, copyright, URLs): https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information
+- Screenshot specifications (sizes per slot, the iPhone Duo requirement and badge): https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications
 - Age ratings values and definitions: https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions
 - Set an app age rating: https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating
 - Manage app privacy: https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy
