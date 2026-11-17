@@ -193,7 +193,7 @@ On macOS, `AppCommands` replaces the `.appInfo` group with an **About CrocApp** 
 - `revoke(_ record:)` (throws `EngineFailure`) calls `CrocEngine.revokeStored`, which needs no free engine slot. It then drops the receipt and sets `revokedAt`. `canRevoke(_:)` is true for an unexpired, unrevoked record whose receipt this device still holds.
 - `revoke(_ receipt:)` is the same call for the link screen. It needs no record, so a link sent with Save Transfer History off can be revoked. It marks the record `HistoryStore.record(storedID:)` finds, if any, and leaves the vault and the record alone when the engine throws.
 - `storedReceiptSaved` is the result of `vault.add` for the receipt on screen, and `start` sets it back to true. When it is false the screen warns that revoke works only until the app quits.
-- The Camera app does not open CrocApp for a stored link. The Associated Domains entitlement and the apple-app-site-association file cover only `crocapp.dev/r/*`. Receiving in the app means **Paste** or **Scan QR Code**.
+- The Camera app does not open CrocApp for a stored link. The Associated Domains entitlement and the apple-app-site-association file cover only `crocapp.dev/r/` (and `/r`). Receiving in the app means **Paste** or **Scan QR Code**.
 
 Views for stored transfers:
 
@@ -437,7 +437,7 @@ A file send's bookmark capture (`HistoryDraft.bookmarks(for:)`, up to 200 `bookm
 - `ReceiveDraft.apply` fills `code`, or `storedLink` for a stored-transfer link. Opening a link never starts a receive: the user taps **Receive**.
 - Entry points all go through `TransferLink.parse` and then `router.open`: the QR scan sheet (iOS), the **Paste** button, typed or pasted text containing `://` in the code field, `.onOpenURL` in `CrocAppApp` (iOS universal links and `crocapp://`), and `AppDelegate.application(_:open:)` on macOS (file URLs still go to Send). On macOS a link reaches both the delegate and `.onOpenURL` (measured), which is harmless because `router.open` is idempotent.
 - The `crocapp` scheme is in the iOS, macOS and Direct Info plists in `app/Config/`.
-- Universal links for `crocapp.dev/r/*` need the Associated Domains entitlement (all three app entitlements files carry it) and `web/landing/.well-known/apple-app-site-association`, which lists both app IDs.
+- Universal links for `crocapp.dev/r/` (and `/r`, the two paths `TransferLink` accepts) need the Associated Domains entitlement (all three app entitlements files carry it) and `web/landing/.well-known/apple-app-site-association`, which lists both app IDs.
 - `TransferStatusView.waitingView` encodes the QR as `TransferLink.webURL(forCode:)` and adds a **Share Link** button.
 - `browserReceiveNote` adds a caption when the active relay is custom or local-only, because croc's browser client knows only the default relays.
 
