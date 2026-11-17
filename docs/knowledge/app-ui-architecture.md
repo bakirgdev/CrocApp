@@ -273,7 +273,7 @@ Neither surface owns transfer state. Both drive the one `TransferController`, so
 - **Send Clipboard Text…** reads the pasteboard text and calls `openSend(text:)`; **Paste Code…** parses the pasteboard with `TransferLink.parse` and calls `open(_:)`. Neither starts a transfer. Reading the pasteboard from a menu command is a programmatic read, so iOS shows its Allow Paste prompt (not verified on a device).
 - On macOS the Show Receive Folder item is **Show Receive Folder in Finder**.
 - On iPadOS it is **Show Receive Folder in Files**. It opens `shareddocuments://` plus the percent-encoded receive-folder path with `UIApplication.open`, which is the Files app's scheme for a local folder.
-- The iPad hand-off is not verified on a device. A user-picked provider folder (such as iCloud Drive) is expected to do nothing, because that scheme resolves local paths only.
+- The iPad hand-off was verified on a device for 1.3.0 (#124), and a user-picked provider folder (such as iCloud Drive) does nothing, because that scheme resolves local paths only.
 
 ## Accept gate
 
@@ -420,7 +420,7 @@ Caps: a record keeps at most 20 names (`maxNames`) and 200 bookmarks (`maxBookma
   - iOS: `UIPasteboard.setItems(_:options:)` with `.expirationDate`, plus `.localOnly` for the link. `Clipboard.secretOptions(thisDeviceOnly:now:)` builds the options, so a unit test can read them.
   - macOS has no expiry. The copy carries `org.nspasteboard.ConcealedType` (clipboard managers that follow nspasteboard.org skip it) and uses `.currentHostOnly` for the link.
   - The macOS clear runs in the app, after the lifetime, only while the app is running, and only if `changeCount` has not moved, so a later copy is never wiped.
-  - Not verified on hardware: the expiry on a device, the link staying off Universal Clipboard, a clipboard manager honoring the marker, and whether the code also expires on the other device. `device-test-checklist.md`, "Clipboard", lists the checks. `ClipboardTests` cover the options and the macOS clear against a private `NSPasteboard`.
+  - Verified on hardware for 1.3.0 (#124): the expiry on a device and the link staying off Universal Clipboard. Not verified: a clipboard manager honoring the marker, and whether the code also expires on the other device. `device-test-checklist.md`, "Clipboard", lists the checks. `ClipboardTests` cover the options and the macOS clear against a private `NSPasteboard`.
 
 ## Conflict scan
 

@@ -20,7 +20,7 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Choose the output folder (iOS default is the Files-visible app folder) | `--out` | all | shipped |
 | Keep Both or Replace on receive, answered on the incoming sheet; Replace resumes a partial file | `--rename`, `--overwrite`, resume | all | shipped |
 | Incoming file list preview with Accept and Decline | croc's interactive prompt | all | shipped |
-| Progress, speed and Cancel (an indeterminate bar while croc moves a batch of small files); system Live Activity while backgrounded (direction and progress; file name only with **Show File Names on the Lock Screen and in Widgets**) | engine progress events | Live Activity on iOS and iPadOS | shipped; the Live Activity is not verified on a device |
+| Progress, speed and Cancel (an indeterminate bar while croc moves a batch of small files); system Live Activity while backgrounded (direction and progress; file name only with **Show File Names on the Lock Screen and in Widgets**) | engine progress events | Live Activity on iOS and iPadOS | shipped; the Live Activity verified on a device for 1.3.0 (#124) |
 | **Last Transfer** widget (state and date, Send and Receive buttons) and Send and Receive Control Center controls | app-native | all | shipped |
 | LAN and relay race | croc default | all | shipped |
 | Transfer history (local only), with a **Save Transfer History** setting (on by default; off records nothing new and keeps what is there) | app-native | all | shipped |
@@ -47,8 +47,8 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | Feature | Platform | Status |
 |---|---|---|
 | Share extension (send from any app) | iOS and iPadOS | shipped |
-| Share extension accepts shared text and web links (sent as a text transfer from the Send screen; files win in a mixed share; capped at 1 MiB) | iOS, iPadOS and macOS | shipped; not verified through a real share sheet |
-| Share extension (send from Finder's Share menu) | macOS | shipped; the system's Share menu on a real Finder selection is not verified |
+| Share extension accepts shared text and web links (sent as a text transfer from the Send screen; files win in a mixed share; capped at 1 MiB) | iOS, iPadOS and macOS | shipped; through a real share sheet verified on a device for 1.3.0 (#124) |
+| Share extension (send from Finder's Share menu) | macOS | shipped; the system's Share menu on a real Finder selection verified for 1.3.0 (#124) |
 | The Photos item of the Add menu, paste and drop of images and text on Send. Photos keep their names, ask no library permission, and stage in a folder that is deleted with the row or the screen | iOS and iPadOS (Photos), all (paste, drop). Paste from a hardware keyboard on iPad needs iOS 27 | shipped |
 | Receive links: `crocapp://receive?code=`, `https://crocapp.dev/r/#<code>` (universal link), and `https://getcroc.com/?code=`. One parser, `TransferLink`. Opening a link prefills Receive and never connects. | all | shipped |
 | Trust UI: "How It Works" with the encryption badge and the relay in use | all | shipped |
@@ -59,10 +59,10 @@ Statuses: **shipped** (in the code) and **skipped** (deliberately not offered).
 | **Support CrocApp** link in About, to the landing page's sponsor section | macOS, disk image build only | shipped |
 | **Haptics** setting (on by default): a short tap for a copied or scanned code and for a transfer that finishes, fails or needs your answer | iPhone only | shipped |
 | Menu bar quick send and receive, with an icon that shows the transfer state (see below) | macOS only | shipped |
-| **Notifications** and **Show File Names in Notifications** settings: a local notification when a transfer finishes, fails or needs your answer while the app is in the background (see below) | all | shipped, not verified on a device |
+| **Notifications** and **Show File Names in Notifications** settings: a local notification when a transfer finishes, fails or needs your answer while the app is in the background (see below) | all | shipped, verified on a device for 1.3.0 (#124) |
 | Dock tile: the percent while bytes move, a badge while a request waits for an answer; **Show Progress in the Dock** turns it off | macOS only | shipped, not verified by eye |
 | Shortcuts and Siri actions (see below) | all | shipped |
-| Past transfers as Shortcuts entities (Find Transfers, **Open Transfer**) | all | shipped, not verified in the system UI |
+| Past transfers as Shortcuts entities (Find Transfers, **Open Transfer**) | all | shipped, verified in the system UI for 1.3.0 (#124) |
 | **Send with CrocApp** in the Services menu (selected files and text) | macOS | shipped |
 | **Show Receive Folder in Finder** (macOS) or **Show Receive Folder in Files** (iPadOS) in the File menu | iPadOS (Files) and macOS (Finder) | shipped |
 | Tab navigation: **Send**, **Receive**, **History** and **Settings** as a tab bar on iPhone and a sidebar on iPad and Mac (the Mac keeps its Settings window). What you staged or typed is kept when you switch tabs | all | shipped |
@@ -103,9 +103,9 @@ Details:
   - **Notifications** is on by default. The system permission prompt comes when the first transfer starts or when the switch is turned on, not at launch. **Show File Names in Notifications** is off by default, so the text is "Transfer complete"; with it on, a receive names its file, or counts several.
   - A notification never carries a code phrase or link. The category supplies a generic body for when the user hides previews on the lock screen. A tap opens the Send or Receive screen of that transfer (on a Mac it also reopens a closed window).
   - The Mac Dock tile shows the percent while bytes move and "1" while a request waits. **Show Progress in the Dock** (`showDockBadge`, on by default) turns it off. It shows no names, and it is not a notification, so **Notifications** does not govern it.
-  - Not verified on a device or by eye: delivery, the permission prompt and the tap.
-- **Shortcuts and Siri.** **Send Files with CrocApp**, **Send Text with CrocApp** and **Receive with CrocApp** (App Intents), also offered as App Shortcuts. They run in the foreground. The send actions return the code and Receive returns the files. Not verified on a device. That the Finder Quick Action works is inferred, not tested (`device-test-checklist.md`, "Shortcuts actions").
-- **History in Shortcuts.** A transfer is an entity with a name, direction, status, date, file names and size, never a code or its hint. Shortcuts gets Find Transfers (filters: date, direction, status, name) and **Open Transfer**, which opens that transfer's detail in History. Both answer with nothing while **Save Transfer History** is off. CrocApp adds nothing to the system search index. The entities were exercised by unit tests; a device was not (#228).
+  - Delivery, the permission prompt and the tap were verified on a device for 1.3.0 (#124). The Dock tile is not verified by eye.
+- **Shortcuts and Siri.** **Send Files with CrocApp**, **Send Text with CrocApp** and **Receive with CrocApp** (App Intents), also offered as App Shortcuts. They run in the foreground. The send actions return the code and Receive returns the files. Verified on a device for 1.3.0, Siri phrases included (#124). That the Finder Quick Action works is inferred, not tested (`device-test-checklist.md`, "Shortcuts actions").
+- **History in Shortcuts.** A transfer is an entity with a name, direction, status, date, file names and size, never a code or its hint. Shortcuts gets Find Transfers (filters: date, direction, status, name) and **Open Transfer**, which opens that transfer's detail in History. Both answer with nothing while **Save Transfer History** is off. CrocApp adds nothing to the system search index. The entities are covered by unit tests and were verified on a device for 1.3.0 (#124).
 - **Send with CrocApp (Mac Services menu).** Selected files in Finder, or selected text in any app, stage in Send and bring CrocApp forward. Never starts a transfer. Text over 1 MiB is refused. Listed in the system's Services after a registration refresh.
 - **Tab navigation.**
   - One tab view: a tab bar on iPhone, a sidebar on iPad (the default in landscape, a floating tab bar in portrait, and the sidebar button switches between them) and Mac. The Mac keeps its Settings window instead of a Settings tab. **How It Works** is the first row of the About section in Settings, and the Help menu on the Mac.
