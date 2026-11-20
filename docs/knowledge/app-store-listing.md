@@ -169,6 +169,8 @@ Basis (details and uncertainty in issue #115):
 - The owner decided to leave France out if App Store Connect requires the French declaration. Apple's table says it does, so France is out of the first release.
 - Adding France later needs an ANSSI declaration. Track it as a `future` item; it is not filed from this file.
 
+China mainland stays available. Its declarations are in "App Compliance (China mainland)".
+
 Unknown: whether availability set here applies to the iOS and macOS platforms together. Apple's availability page does not say. After saving, check that both platform pages show France as unavailable.
 
 ## App Privacy
@@ -202,7 +204,9 @@ Why "not collected" holds:
 | Capabilities | User-Generated Content | Selected (owner's choice). Apple's definition is "broad distribution of content created by users", and CrocApp moves a file from one person to one other person, so not selecting it is also defensible. Inference: a reviewer may ask about reporting and blocking (guideline 1.2); the answer is that only devices sharing a code phrase exchange anything, and nothing is published. |
 | Capabilities | Messaging and Chat | Not selected. See the note below. |
 | Capabilities | Social Media, Social Media Disabled for Users Under 13 | Not selected |
+| Capabilities | Shared Location | Not selected (the app reads no location) |
 | Capabilities | Advertising | Not selected (no ads) |
+| Mature themes | Dating and Relationships | No |
 | Mature themes | Profanity or Crude Humor, Horror/Fear Themes, Alcohol/Tobacco/Drug Use or References | None |
 | Medical or wellness | Medical or Treatment Information, Health or Wellness Topics | None |
 | Sexuality or nudity | all three | None |
@@ -216,6 +220,8 @@ Why "not collected" holds:
 Result: **4+**, as App Store Connect showed with these answers. In Apple's table, 4+ is the tier whose allowed content includes messaging and chat, user-generated content, advertising and parental controls, so the Messaging and Chat decision below does not change the rating.
 
 Note on Messaging and Chat (judgement): Apple defines it as users who "directly communicate with one another through features within the app" (text, voice, video, messaging, posting). CrocApp can send a text snippet, but it is a one-shot transfer with no conversation, contacts or accounts. "Not selected" is the honest reading, and ticking it would also leave the rating at 4+. The residual risk is a reviewer who disagrees; the review notes say what the text feature is.
+
+Shared Location and Dating and Relationships are newer questions, required from 15 January 2027 or with any earlier change to the questionnaire. The declaration is editable only while a version is being prepared: on the live app info the API refuses with "This age rating declaration is not editable" (verified). So they are answered with the next version, through the questionnaire or a PATCH of `sharedLocation` and `datingAndRelationships`, both booleans (the API rejected a string for the second). `asc age-rating edit` has no flags for them yet.
 
 Sending arbitrary files to another person is not content the app hosts or shows. The recipient sees a file list and accepts or declines each transfer.
 
@@ -287,6 +293,24 @@ Keep the "MAC ENTITLEMENTS" paragraph while the macOS app carries `network.serve
 | "Missing Compliance" on an uploaded build | Not expected with the key set. If it appears: uses encryption, yes; Category 5, Part 2 exemption, no; available in France, no; standard algorithms, not proprietary |
 | It then demands a French declaration with France excluded | Stop and ask Apple Developer Support: that contradicts Apple's table |
 
+## App Compliance (China mainland)
+
+App Information has an **App Compliance** page with two declarations for China mainland. Apple keeps an app without them out of China mainland, and checks changed answers with the next version sent to App Review. Both can be edited later.
+
+| Declaration | Answer | Basis |
+| :--- | :--- | :--- |
+| AI Generated or Synthetic Content: "Does your app offer AIGC services in China mainland?" | **No** | CrocApp has no AI features. |
+| Security Assessment: "Does your app include features that require a security assessment in China mainland?" | **No** | See below. |
+
+Why No holds for the Security Assessment (owner's decision; research, not legal advice):
+
+- Apple's help page names the features as distributing AI-generated content or "enabling end-to-end encrypted instant messaging (EIM)", and says to select No if the app does not offer them (verified, "View China mainland compliance information" in "Sources").
+- The Chinese rule behind it (CAC provisions on internet information services with public opinion attributes or social mobilization capability) lists forums, blogs, microblogs, chat rooms, communication groups, public accounts, short video, live streaming, information sharing and mini programs. Each reaches many people. A code-phrase transfer between two devices, with no accounts, contacts, threads or discovery, is none of these (inferred).
+- Weakest points: sending text, which is closest to messaging, and **Send as Link**, a URL anyone holding it can open, which is closest to "information sharing". Apple also accepts No when a feature is disabled in China mainland, which is the fallback for Send as Link.
+- Answering Yes needs a completed assessment report that an individual outside China cannot obtain in practice (inferred from third-party guidance), so Yes would mean leaving China mainland.
+
+Unknown: how Apple verifies a No, and whether the CAC reads a one-off encrypted transfer as messaging. The CAC had Apple remove Bitchat, an account-less encrypted chat app, under the same rules.
+
 ## Open checks before submitting
 
 Before every submission:
@@ -298,6 +322,8 @@ Before every submission:
 - Confirm `https://crocapp.dev/support/` and `https://crocapp.dev/privacy/` return HTTP 200.
 - Re-check that getcroc.com still runs its own analytics (Umami) and ads (Google AdSense), as the privacy page says, and update the page's date for that check. The reviewer opens getcroc.com, and the `/r/` page links to it. The app does not load it (no web view).
 - Keep France out of availability until the ANSSI declaration exists (see "Export compliance").
+- Answer any age rating question still unanswered, such as Shared Location and Dating and Relationships (see "Age rating"), once the new version exists.
+- After the upload, rename the new Asset Library images and archive or delete the replaced ones (see "Screenshots").
 
 ## Screenshots
 
@@ -315,6 +341,8 @@ Before every submission:
 - Apple's page accepts either orientation for both iPhone Duo displays (1398x2034 or 2034x1398, 2007x2853 or 2853x2007). The inner set is landscape, the device's open pose, which shows the sidebar layout. The outer set is portrait.
 - Uploading iPhone Duo screenshots adds a badge to the product page saying the app is made for iPhone Duo (documented on the same page). The app builds with Xcode 27.2 (`.xcode-version`), whose iOS SDK is 27.2, so the April 2027 requirement applies to it.
 - Inference: the iPhone Duo slots appear on the iOS version page only, beside the other iPhone slots. Not checked in App Store Connect.
+- Uploads also land in the Asset Library (`asc asset-library images list`). Name each image there `<slot>: <NN> <Screen>, <Light|Dark>`, for example `iPhone 6.9: 01 Send Files, Light`, with slots `iPhone 6.3`, `iPhone 6.9`, `iPhone Duo`, `iPad 13` and `Mac`. The header asset is `Product Page Header`. Rename with `asc asset-library images rename`.
+- An image no version uses can be deleted. Once an image went to App Review with a version, Apple refuses to delete it ("can no longer be deleted"), so archive it instead with `asc asset-library images archive`.
 
 ## Submitting
 
@@ -338,5 +366,7 @@ Apple's pages change. Re-read them before you rely on a limit or a rule.
 - Manage app privacy: https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy
 - App privacy details (definition of collect, third-party partners): https://developer.apple.com/app-store/app-privacy-details/
 - Manage availability: https://developer.apple.com/help/app-store-connect/manage-your-apps-availability/manage-availability-for-your-app-on-the-app-store
+- View China mainland compliance information (Security Assessment, AIGC, when to select No): https://developer.apple.com/help/app-store-connect/manage-compliance-information/view-china-mainland-compliance-information/
+- CAC provisions on the security assessment of internet information services with public opinion attributes or social mobilization capability: https://www.cac.gov.cn/2018-11/15/c_1123716072.htm
 - getcroc.com page and its bundled script (labels, Umami, AdSense): https://getcroc.com
 - Local: `app/Config/*.plist`, `app/CrocApp/PrivacyInfo.xcprivacy`, `app/CrocApp.xcodeproj/project.pbxproj` (purpose strings, category), `LICENSE`, `../RELEASING.md`.
