@@ -14,10 +14,17 @@ extra sections where a release needs them, and the project follows
 
 - On iPhone Duo, the inner display shows the sidebar in landscape, as iPad does, with each transfer's state in words, and the tabs in portrait. The outer display keeps the tab bar, on the side as the system places it. Partially open like a book, a code phrase, a QR code and **Accept** and **Decline** sit beside the fold, never across it, and what you picked or typed stays when you fold or open the device.
 
+### Changed
+
+- The transfer engine is now croc 11.6.6. A batch of small files now shows how far it has got, as a percent, a byte count and the file it has reached, on both the sending and the receiving device, instead of "A batch of small files" with no percent.
+
 ### Fixed
 
 - A receive you accepted that loses its connection partway now ends with **Lost connection to the other device** and **Try Again**, instead of saying you declined it. It still cannot pick up where it left off: the other device sees it as declined and has to send again.
 - History opens with far less memory when it holds many past sends of many files: the list no longer loads the bookmarks behind **Send Again** for every row, only for the send you send again. The first time this version opens, it moves the bookmarks your History already holds, and every past transfer stays.
+- **Send Speed Limit** holds sends to the limit you set. Before, a limit of hundreds of megabytes per second let sends run faster than set, and a limit of about 1 GB per second or more set no limit at all.
+- **Respect .gitignore** skips a folder the `.gitignore` names with a trailing slash, such as `node_modules/`, which it used to send, and matches patterns against the path from the `.gitignore` as git does.
+- An empty file you receive keeps the permissions it had on the sending device.
 
 ## [1.3.0] - 2026-11-15
 

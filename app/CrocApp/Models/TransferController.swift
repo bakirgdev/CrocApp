@@ -477,10 +477,7 @@ final class TransferController {
             speedBytesPerSec = run.speed.bytesPerSecond
             if doneBytes > 0 { run.sawTransferBytes = true }
             background.progressChanged(
-                // A negative completed count makes the system progress indeterminate.
-                bytesDone: p.isBundling ? -1 : doneBytes,
-                totalBytes: p.totalSize,
-                fileName: p.isBundling ? "" : p.fileName)
+                bytesDone: doneBytes, totalBytes: p.totalSize, fileName: p.fileName)
             progress = p
             // Only the first tick sets the phase, so whatever observes just
             // the phase does not redraw at the tick rate. Observation may skip

@@ -170,9 +170,7 @@ struct TransferStatusView: View {
         case .incoming(let list, let conflicts, let blocked):
             IncomingRequestView(list: list, conflicts: conflicts, blocked: blocked)
         case .transferring:
-            ProgressTick { progress in
-                if progress.isBundling { bundleView(progress) } else { transferringView(progress) }
-            }
+            ProgressTick { progress in transferringView(progress) }
         case .done(let summary, let receivedText):
             doneView(summary, receivedText: receivedText)
         case .failed(let failure):
@@ -411,39 +409,6 @@ struct TransferStatusView: View {
             .accessibilityElement(children: .combine)
             .accessibilityValue(percent(totalFraction))
         }
-    }
-
-    /// croc moves a run of small files as one batch and counts none of its
-    /// bytes where the engine can read them, so the extent is unknown and the
-    /// bar indeterminate.
-    private func bundleView(_ p: TransferProgress) -> some View {
-        VStack(alignment: .leading) {
-            #if os(macOS)
-            Text("A batch of small files")
-                .font(.callout)
-            ProgressView()
-                .progressViewStyle(.linear)
-                .accessibilityLabel("Overall progress")
-            #else
-            // iOS draws an indeterminate linear ProgressView as a still, empty
-            // track, which reads as stuck at 0%; a spinner shows it is moving.
-            HStack {
-                ProgressView()
-                    .accessibilityLabel("Overall progress")
-                Text("A batch of small files")
-            }
-            .font(.callout)
-            #endif
-            labelAndValue {
-                Text("^[\(p.totalFiles) file](inflect: true)")
-            } value: {
-                Text(verbatim: p.totalSize.formatted(.byteCount(style: .file)))
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .monospacedDigit()
-        }
-        .accessibilityElement(children: .combine)
     }
 
     /// A label and its value side by side, or the label above the value at

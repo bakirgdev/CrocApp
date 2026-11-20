@@ -142,22 +142,13 @@ struct MenuBarQuickSendView: View {
         let fraction = min(1, Double(done) / Double(total))
         return VStack {
             DirectionHeader(direction: direction)
-            // A batch of small files has no byte count: TransferStatusView.bundleView.
-            if p.isBundling {
-                Text("A batch of small files")
-                ProgressView()
-                    .progressViewStyle(.linear)
-                    .accessibilityLabel(progressLabel)
-            } else {
-                Text(p.fileName).lineLimit(1).truncationMode(.middle)
-                ForwardProgressBar(fraction: fraction, resetKey: p.totalSize)
-                    .accessibilityLabel(progressLabel)
-                    .accessibilityValue(fraction.formatted(.percent.precision(.fractionLength(0))))
-            }
+            Text(p.fileName).lineLimit(1).truncationMode(.middle)
+            ForwardProgressBar(fraction: fraction, resetKey: p.totalSize)
+                .accessibilityLabel(progressLabel)
+                .accessibilityValue(fraction.formatted(.percent.precision(.fractionLength(0))))
             Text(
-                verbatim: p.isBundling
-                    ? p.totalSize.formatted(.byteCount(style: .file))
-                    : "\(done.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
+                verbatim:
+                    "\(done.formatted(.byteCount(style: .file, spellsOutZero: false))) / \(p.totalSize.formatted(.byteCount(style: .file)))"
             )
             .font(.caption)
             .foregroundStyle(.secondary)

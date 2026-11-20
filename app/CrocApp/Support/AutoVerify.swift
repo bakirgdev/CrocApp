@@ -489,9 +489,7 @@ enum AutoVerify {
         case .confirmSend: "confirmSend"
         case .incoming(_, let conflicts, _): "incoming conflicts=\(conflicts.count)"
         case .transferring:
-            if let p = controller.progress, p.isBundling {
-                "transferring bundling"
-            } else if let p = controller.progress, p.totalSize > 0 {
+            if let p = controller.progress, p.totalSize > 0 {
                 "transferring percent=\(Int(100 * p.bytesDone / p.totalSize))"
             } else {
                 "transferring percent=0"

@@ -1,6 +1,6 @@
 # What is croc
 
-Facts checked against croc **v11.6.5**, the pinned version: the source read in the Go module cache, and CLI behaviour read in `src/cli`. Before trusting any of this against a newer croc, follow `croc-upgrade-playbook.md`. Terms: `../GLOSSARY.md`.
+Facts checked against croc **v11.6.6**, the pinned version: the source read in the Go module cache, and CLI behaviour read in `src/cli`. Before trusting any of this against a newer croc, follow `croc-upgrade-playbook.md`. Terms: `../GLOSSARY.md`.
 
 Source: https://github.com/schollz/croc
 
@@ -53,7 +53,7 @@ Everything is end to end.
 - Each side proves it holds the key (HMAC-SHA256 tags) before data flows.
 - After that, everything on the wire is **AES-256-GCM** (`crypt.NewAESGCM`, a random 12-byte nonce prepended to each message).
 - `crypt.New` (PBKDF2-HMAC-SHA256, 100 iterations) protects only the client-to-relay password handshake (`src/tcp`), not transfer data.
-- `crypt.NewArgon2` (Argon2id with XChaCha20-Poly1305) and `EncryptChaCha` / `DecryptChaCha` exist in the same file but have no non-test call site in v11.6.5. Do not describe croc as Argon2- or ChaCha-based.
+- `crypt.NewArgon2` (Argon2id with XChaCha20-Poly1305) and `EncryptChaCha` / `DecryptChaCha` exist in the same file but have no non-test call site in v11.6.6. Do not describe croc as Argon2- or ChaCha-based.
 - The relay sees ciphertext only. It is untrusted by design.
 
 ### 5. Transport
@@ -97,7 +97,7 @@ A dropped transfer is retried up to 10 times, with a backoff of 100 ms doubling 
 
 - **Send**: files, folders, multiple files, raw text (`--text`), piped stdin, zip before send (`--zip`), exclusions (`--exclude`, `--exclude-file`, `--git`).
 - **Receive**: `--yes` auto-accept, `--overwrite`, `--rename` (receive an existing name as `name (1).ext` instead of prompting), output dir (`--out`), `--stdout`.
-- **Code**: random, custom (`--code`), env (`CROC_SECRET`), a QR code of the web receive URL `https://getcroc.com/?code=...` (`--qrcode`), and the code copied to the clipboard by default (`--disable-clipboard`).
+- **Code**: random, custom (`--code`), env (`CROC_SECRET`), a QR code of the web receive URL `https://getcroc.com/?code=...` (`--qrcode`; `--web-url` or `CROC_WEB_URL` changes the origin), and the code copied to the clipboard by default (`--disable-clipboard`).
 - **Transport**:
   - custom relay (`--relay`, `--relay6`, `--pass`);
   - self-hosted relay (`croc relay`, at least 2 TCP ports, `--ports`, `--transfers`, admission limits);

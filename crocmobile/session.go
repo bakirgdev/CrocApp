@@ -17,7 +17,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/schollz/croc/v11/src/bundle"
 	"github.com/schollz/croc/v11/src/codephrase"
 	"github.com/schollz/croc/v11/src/croc"
 	"github.com/schollz/croc/v11/src/models"
@@ -875,8 +874,6 @@ func (s *session) poll() {
 	t := time.NewTicker(100 * time.Millisecond)
 	defer t.Stop()
 	connected, listSent := false, false
-	gap := 0       // ticks counted by bundleGap
-	var sent int64 // TotalSent at the previous tick
 	// Last payload actually emitted. Its zero value has an empty Step, which no
 	// real snapshot ever carries, so the first tick always emits.
 	var last progressState
@@ -913,11 +910,6 @@ func (s *session) poll() {
 			// scalars, not the JSON, or the marshal being avoided still runs.
 			// No consumer treats a tick as a heartbeat.
 			p := s.progressSnapshot(connected)
-			gap = s.bundleGap(gap, sent)
-			sent = c.TotalSent
-			if gap >= bundleTicks {
-				p.Step = "bundling"
-			}
 			if p == last {
 				return
 			}
@@ -926,31 +918,6 @@ func (s *session) poll() {
 			s.delegate.OnProgress(string(b))
 		}()
 	}
-}
-
-// bundleTicks is how many counted ticks poll needs before it reports
-// "bundling": a receiver counts about one round trip between two single files.
-const bundleTicks = 3
-
-// bundleGap returns the count of ticks spent in a transfer past the accept
-// whose data no exported croc counter tracks, given the previous count and
-// TotalSent at the previous tick. Since croc v11.6 the receiver asks for runs
-// of four or more small files as one bundle. For a bundle croc never sets
-// Step3RecipientRequestFile or moves FilesToTransferCurrentNum, and the
-// receiver never adds to TotalSent (receiveData in croc.go); its progress lives
-// in an unexported display. A sender's TotalSent grows through a bundle (in
-// bursts under a throttle) and stays put while it waits for the accept or
-// between two single files, so a sender counts only ticks on which it grew.
-func (s *session) bundleGap(gap int, prevSent int64) int {
-	c := s.client
-	switch {
-	case len(c.FilesToTransfer) < bundle.MinFiles || !c.Step2FileInfoTransferred ||
-		c.Step3RecipientRequestFile || c.SuccessfulTransfer:
-		return 0
-	case !s.sender || c.TotalSent > prevSent:
-		return gap + 1
-	}
-	return gap
 }
 
 type fileEntry struct {
@@ -1016,6 +983,19 @@ func (s *session) progressSnapshot(connected bool) progressState {
 		step = "connected"
 	}
 	cur := c.FilesToTransferCurrentNum // racy int read is benign on arm64
+	sent := addReported(0, c.TotalSent)
+	// croc moves a run of small files as one bundle without moving
+	// FilesToTransferCurrentNum, and adds the bundle's bytes to the TotalSent
+	// left by the file before it (crocmobile-bridge.md, "Small-file bundles").
+	// The bundle holds the files after that one, in order, so walk sent onto them.
+	for cur >= 0 && cur+1 < len(c.FilesToTransfer) {
+		size := addReported(0, c.FilesToTransfer[cur].Size)
+		if sent <= size {
+			break
+		}
+		sent -= size
+		cur++
+	}
 	var fileName string
 	var fileSize, totalSize, bytesFinished int64
 	// Sum sizes of files strictly before the current one instead of indexing
@@ -1033,10 +1013,12 @@ func (s *session) progressSnapshot(connected bool) progressState {
 		fileName = f.Name
 		fileSize = addReported(0, f.Size)
 	}
-	sent := addReported(0, c.TotalSent) // per-current-file
-	if c.Step3RecipientRequestFile || sent > 0 {
+	if c.Step3RecipientRequestFile || c.TotalSent > 0 {
 		step = "transferring"
 	}
+	// sent past the last file is a TotalSent croc has not yet reset for the
+	// next single file; the cap keeps bytesFinished+fileSent within totalSize.
+	sent = min(sent, fileSize)
 	return progressState{
 		CurrentFile: cur, TotalFiles: len(c.FilesToTransfer), FileName: fileName,
 		FileSent: sent, FileSize: fileSize, BytesFinished: bytesFinished,
