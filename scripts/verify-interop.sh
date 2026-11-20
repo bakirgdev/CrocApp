@@ -633,9 +633,10 @@ proxy_receive http -connect
 SCENARIO=16
 # bundle_progress LOG prints how many progress events report a new byte count
 # between 0 and the total, and fails if bytesFinished + fileSent ever falls or
-# passes totalSize. It relies on the payload's fixed key order.
+# passes totalSize. An event can start mid-line, after croc's own progress bar
+# on the same stderr.
 bundle_progress() {
-  awk '/^EVENT progress / {
+  awk '/EVENT progress \{/ {
     s = $0; sub(/.*"fileSent":/, "", s)
     f = $0; sub(/.*"bytesFinished":/, "", f)
     t = $0; sub(/.*"totalSize":/, "", t)
