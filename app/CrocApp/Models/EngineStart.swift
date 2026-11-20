@@ -27,9 +27,9 @@ enum EngineStart {
             // Auto-accept uses the setting; otherwise the incoming sheet's answer
             // replaces it.
             options.whenFileExists = settings.whenFileExists
-            // Ask forces croc's receiver prompt even under NoPrompt, and the
-            // engine's AutoAccept path closes the prompt pipe (EOF = decline),
-            // so Ask wins when both are on.
+            // Ask forces croc's receiver question even under NoPrompt, and the
+            // engine's AutoAccept path answers it "no", so Ask wins when both
+            // are on.
             options.autoAccept = settings.autoAccept && !settings.bothSidesConfirm
             self = .receive(code: code, options: options)
         case .storedSend(let urls, let downloads, let lifetimeSeconds):

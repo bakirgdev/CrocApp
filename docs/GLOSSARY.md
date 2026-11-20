@@ -11,7 +11,7 @@ Terms a new contributor hits in this repo and cannot infer from the name: croc v
 | code phrase | The `word-word-word` string (three random words from the EFF short wordlist) that both devices use to find each other and derive the session key. A custom one comes from `CROC_SECRET`, at least 6 characters (`docs/knowledge/what-is-croc.md`). croc calls it the "secret"; the UI says only "code phrase" (`design/voice.md`, "Terminology"). |
 | compression | croc compresses file data with DEFLATE (HuffmanOnly) by default. `--no-compress` turns it off. |
 | `CROC_SECRET` | Environment variable that sets a custom code phrase. Outside classic mode it is the only way to do that, for both send and receive. |
-| `--ignore-stdin` | croc flag for non-interactive runs. The library option `IgnoreStdin` is always true in `crocmobile/session.go`, because the app supplies its own prompt pipe. |
+| `--ignore-stdin` | croc flag for non-interactive runs. The library option `IgnoreStdin` is always true in `crocmobile/session.go`; croc's questions go through `Options.Prompt` instead (see prompt). |
 | LAN peer discovery | Finding a same-network peer by UDP multicast (`schollz/peerdiscovery`, 500 ms cap) so the transfer skips the relay. It does not work on every network (`docs/knowledge/what-is-croc.md`, "Local path"). |
 | `--local` / local only | Keeps a transfer on the local network and refuses the public relay. The app setting is **Local Network Only** (`AppSettings.onlyLocal`, `crocmobile.Options.OnlyLocal`). |
 | sender IP | Receive-side Advanced setting (`AppSettings.peerIP`, `EngineOptions.peerIP`, croc `--ip`). It is the sender's `ip:port` (IPv4 or bracketed IPv6). The receiver connects straight to the sender's local relay, skipping relays, discovery and the public pool. The trust badge then shows `RelayKind.directToSender`. |
@@ -37,8 +37,8 @@ Terms a new contributor hits in this repo and cannot infer from the name: croc v
 | gobind | The gomobile tool that generates the Objective-C and Swift binding layer from the `crocmobile` package. It is the source of the `Crocmobile`-prefixed symbols. |
 | gomobile | The Go toolchain that binds `crocmobile` into `Croc.xcframework` (`scripts/build-xcframework.sh`). |
 | `Crocmobile` prefix | gobind adds it to the Go package name `crocmobile`: `CrocmobileOptions`, `CrocmobileTransfer`, `CrocmobileStartSend`. The Go interface `Delegate` is the Objective-C protocol `CrocmobileDelegate`, imported in Swift as `CrocmobileDelegateProtocol`. |
-| prompt pipe / fd0 dup2 | How the app answers croc's accept prompt, which reads stdin. A pipe's read end is `syscall.Dup2`'d onto fd 0, because croc's cached `bufio.Reader` is tied to fd 0 and swapping `os.Stdin` would not reach it (`crocmobile/session.go`). |
-| session | The Go `session` struct (`crocmobile/session.go`). It owns one transfer's `croc.Client`, prompt pipe and cleanup. A package-level mutex allows one at a time. |
+| prompt | croc's yes/no questions: accept an offer, send to the receiver under `--ask`, overwrite a zip member or non-empty folder. croc 11.6.6 asks them through the `Options.Prompt` callback, which `session.prompt` answers from the user's `Respond` and the file policy (`crocmobile/session.go`). |
+| session | The Go `session` struct (`crocmobile/session.go`). It owns one transfer's `croc.Client`, the user's answer and cleanup. A package-level mutex allows one at a time. |
 | `TransferEvent` | The Swift enum in `CrocKit/Sources/CrocKit/Models.swift` for everything the engine reports: `.codeReady`, `.connected`, `.fileList`, `.progress`, `.text`, `.stored`, `.done`, `.failed`. |
 | xcframework | `CrocKit/Croc.xcframework`, the gomobile output that binds `crocmobile` for iOS, iOS Simulator and macOS. Gitignored. Built by `scripts/build-xcframework.sh`, the required first build step on a fresh clone. |
 

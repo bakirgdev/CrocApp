@@ -20,7 +20,9 @@ extra sections where a release needs them, and the project follows
 
 ### Fixed
 
-- A receive you accepted that loses its connection partway now ends with **Lost connection to the other device** and **Try Again**, instead of saying you declined it. It still cannot pick up where it left off: the other device sees it as declined and has to send again.
+- A receive you accepted that loses its connection partway now picks up where it left off when the connection comes back, instead of saying you declined it. If the sending device offers different files after reconnecting, the receive ends with **Lost connection to the other device** and **Try Again**.
+- **Replace** now replaces the files already in a zipped folder you receive again. Before, it kept them and skipped the matching files in the archive.
+- Receiving a zipped folder again no longer fails when more than 4096 of its files already exist.
 - History opens with far less memory when it holds many past sends of many files: the list no longer loads the bookmarks behind **Send Again** for every row, only for the send you send again. The first time this version opens, it moves the bookmarks your History already holds, and every past transfer stays.
 - **Send Speed Limit** holds sends to the limit you set. Before, a limit of hundreds of megabytes per second let sends run faster than set, and a limit of about 1 GB per second or more set no limit at all.
 - **Respect .gitignore** skips a folder the `.gitignore` names with a trailing slash, such as `node_modules/`, which it used to send, and matches patterns against the path from the `.gitignore` as git does.

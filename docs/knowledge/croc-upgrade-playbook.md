@@ -7,10 +7,10 @@ How to bump the pinned croc version in `crocmobile/go.mod`. The update rule (wha
 ## Steps
 
 1. **Read the upstream delta.** Read the changelog and release notes, then `git diff vOLD..vNEW` of these paths: `src/croc/croc.go`, `src/croc/ctx.go`, `src/cli/cli.go`, `src/models/constants.go`, `src/utils/utils.go`, `src/codephrase`, `src/publicrelay`, `src/pakekey`. Look for:
-   - New callback or hook APIs for confirm prompts or output. They may make the fd 0 prompt pipe obsolete (the shim would shrink to nothing).
+   - New callback or hook APIs for output. One could replace the `os.Stdout` capture of a text receive.
    - `Options` struct changes. New flags need new `crocmobile.Options` fields. Renamed or removed fields fail to compile, which is good.
    - Changes to the `Client` progress fields the poller reads: `TotalSent`, the step booleans, `FilesToTransfer`, `FilesToTransferCurrentNum`, where `TotalSent` is reset or added to (`croc.go`, `bundle.go`), and how `bundle.Next` orders a bundle's files (`src/bundle`).
-   - Prompt sites (`utils.GetInputContext` callers) added or removed. Each one maps to a workaround in `crocmobile-bridge.md`.
+   - Questions added, removed or changed: `Question` kinds and fields, and `c.answer` call sites (`src/croc/prompt.go`, `croc.go`). A `utils.GetInputContext` read that bypasses `Options.Prompt` would block a transfer. `session.prompt` answers each kind (`crocmobile-bridge.md`, "File policy").
    - Wire or protocol changes. A major version bump means incompatible peers.
 2. **Cross-check every documented workaround.** Take each one in `crocmobile-bridge.md`, "croc 11 gotchas (verified against source)", and decide keep, delete or adapt against the delta. Delete obsolete shims; do not leave dead workarounds. Rename that heading in step 6 if the major changed.
 3. **Bump.**
@@ -18,7 +18,7 @@ How to bump the pinned croc version in `crocmobile/go.mod`. The update rule (wha
    - Then run `brew upgrade croc` so the test CLI matches the pin (`brew install croc` on a fresh machine). The harnesses default `CROC` to `${HOMEBREW_PREFIX:-/opt/homebrew}/bin/croc`.
 4. **Build.** Run `go build ./... && go vet ./...` in `crocmobile/` with `GOFLAGS=-tags=croc_no_tailcat` (`BUILDING.md`, "Format and lint"), then `./scripts/build-xcframework.sh`, then `cd CrocKit && swift build`, then build the app for both platforms.
 5. **Verify**, in this order. Each one covers ground the previous one does not (`BUILDING.md`, "Verification harnesses" has the commands):
-   - `crockit-verify twice`: the Swift layer. The two-transfer case proves the fd 0, stdout, cwd and mutex restoration still composes.
+   - `crockit-verify twice`: the Swift layer. The two-transfer case proves the stdout, cwd and mutex restoration still composes.
    - `PUBLIC_POOL=1 ./scripts/verify-interop.sh`: every crocmobile to CLI scenario, including the public relay pool (scenario 11), which only runs with `PUBLIC_POOL=1`.
    - `PUBLIC_POOL=1 ./scripts/verify-app-mac.sh`: the macOS app scenarios. This is the widest coverage of the option surface.
    - `PUBLIC_POOL=1 ./scripts/verify-app-sim.sh`: iOS simulator receive and the share-extension handoff.

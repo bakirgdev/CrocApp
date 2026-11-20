@@ -432,8 +432,8 @@ final class TransferController {
             }
             phase = .waiting(code: code)
         case .connected:
-            // Both-sides confirm: gate the send behind an explicit confirm. The pipe write
-            // buffers, so confirming before croc reaches its prompt is safe.
+            // Both-sides confirm: gate the send behind an explicit confirm. The engine
+            // keeps the answer, so confirming before croc asks is safe.
             if direction == .send, run.sendConfirmArmed {
                 run.sendConfirmArmed = false
                 phase = .confirmSend

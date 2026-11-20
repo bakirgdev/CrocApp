@@ -71,7 +71,7 @@ The controller is the one `@Observable` the views use. Its pure pieces live in t
 
 ### Event handling
 
-- **`.progress` ticks (about 10 Hz) keep arriving while the accept prompt is unanswered, and must not clobber `.incoming`.** If they do, croc blocks in `GetInput` forever. The same guard protects `.confirmSend`. Ticks with `step == "waiting"` are ignored.
+- **`.progress` ticks (about 10 Hz) keep arriving while the accept prompt is unanswered, and must not clobber `.incoming`.** If they do, croc waits for an answer forever. The same guard protects `.confirmSend`. Ticks with `step == "waiting"` are ignored.
 - **A failure is picked by `EngineFailure.code`, never by text.** `TransferFailure(_:situation:)` checks the user's own cancel ("Transfer cancelled") and decline ("You declined the transfer") first, then maps the code. Those two set `endedByUser` and have no detail, because a cancel or decline the user made is not a failure (`design/voice.md`, "Errors").
 - It never shows `failure.message`: croc's wording changes per release, and a recovered panic carries a stack trace.
 - Each failure has a `remedy`: `.tryAgain`, `.openSettings(SettingsPlace)`, or nil when retrying would not help (`design/components.md`, "StatusBlock"). `TransferFailureTests` pins the remedy of every code.
@@ -93,16 +93,14 @@ The controller is the one `@Observable` the views use. Its pure pieces live in t
 
 ### Code `refused` under auto-accept is not a peer decline
 
-croc forces the receiver prompt whenever the remote sender ran `--ask` (upstream `croc.go`, not re-read here). Engine auto-accept has already closed the prompt pipe, so `GetInput` hits EOF and croc reports its local `refused files`.
+croc requires an answer to the receiver's accept question whenever the remote sender ran `--ask` (`processSenderInfo` in `croc.go`). Under engine auto-accept nobody is shown the offer, so the engine answers no and croc reports its local `refused files` under either file policy (`crocmobile-bridge.md`, "File policy"). `scripts/verify-interop.sh` scenario 12 checks it.
 
 `autoAcceptActive && endReason != .cancelled && failure.code == .refused` identifies this case. The check runs after the `unsafeName` and `backgroundExpired` branches. `respond()` is never called on the auto-accept path, so the end reason cannot be `declined`.
-
-Under auto-accept the pipe is not empty. `crocmobile` queues a batch of `n` answers for croc's other prompts (empty folder, unzip member) and then closes it (`crocmobile-bridge.md`, "Engine behavior invariants"). The forced remote-`--ask` prompt reads the first `n` answers and ends as `refused` under either file policy. The batch is `n` even for Replace for that reason. `scripts/verify-interop.sh` scenario 12 checks it. A croc v11 reconnect after a manual accept also re-runs the prompt and reads `n`, but the engine reports that one as `connectionLost` (`crocmobile-bridge.md`, "File policy").
 
 ### Options, security scope, progress
 
 - `EngineStart(_:settings:)` builds the engine call and its `EngineOptions` or `StoredSendOptions` from the request and `AppSettings`. A sender gets `workDir` (the Go side reads it only on a send), a receiver does not. The throttle, the sender IP and the proxies pass as typed, because the engine trims them; the stored-transfer server is the one value Swift still trims. Receive also passes `whenFileExists` (`AppSettings.whenFileExists`, key `settings.whenFileExists`, default Keep Both; an unknown stored value reads as Keep Both).
-- Receive passes `autoAccept && !bothSidesConfirm`, so confirmation wins. Engine auto-accept closes the prompt pipe, which croc reads as a decline.
+- Receive passes `autoAccept && !bothSidesConfirm`, so confirmation wins. Engine auto-accept answers a sender's `--ask` with no.
 - `start(_:)` opens security scope on send URLs and on the user-picked output folder (`SecurityScopes`), and releases it at stream end or on reset. `startAccessingSecurityScopedResource() == false` is fine for non-scoped drops. Keep the call anyway.
 - Speed (`TransferSpeed`) is an exponential moving average (0.25 new, 0.75 old) over `bytesFinished + fileSent` deltas, sampled at most every 0.2 s. Overall progress is `(bytesFinished + fileSent) / totalSize`. `fileSent` is per current file. During a batch of small files the engine infers the current file from the bytes (`crocmobile-bridge.md`, "Small-file bundles").
 - `activeRelay` is captured at start, for the waiting screen's browser-receive note.

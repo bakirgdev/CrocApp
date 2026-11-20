@@ -1,6 +1,7 @@
 package crocmobile
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,10 +12,10 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
 
 	"github.com/schollz/croc/v11/src/codephrase"
@@ -23,7 +24,7 @@ import (
 	"github.com/schollz/croc/v11/src/utils"
 )
 
-// One transfer at a time: croc needs process-global os.Chdir/os.Stdin/os.Stdout.
+// One transfer at a time: croc needs process-global os.Chdir/os.Stdout.
 var activeMu sync.Mutex
 
 // stuckAfter is how long a cancelled session's croc call may take to return
@@ -35,7 +36,7 @@ var stuckAfter = 15 * time.Second
 
 // stuck is the session whose croc call outlived a cancel by stuckAfter. It
 // still holds activeMu, and it keeps it: forcing the lock open would let a new
-// session change cwd, stdin and stdout under a croc that is still running. So
+// session change cwd and stdout under a croc that is still running. So
 // every start fails with codeEngineStuck until that session returns, if ever.
 var stuck struct {
 	sync.Mutex
@@ -95,26 +96,21 @@ type session struct {
 	delegate  Delegate
 
 	sender   bool
-	tempPath string   // absolute path of the text-send temp file, if any; removed in run()
-	promptW  *os.File // write end of the stdin pipe; nil once closed
-	promptM  sync.Mutex
-	// answering: a respond write is in flight outside promptM, so a second
-	// answer (a double tap) is dropped instead of interleaving with it.
-	answering bool
-	// promptAnswers: how many "y\n" lines an accept writes to promptW. croc's
-	// sender-side Ask prompt (TypeRecipientReady handler, croc.go) fires once
-	// PER FILE, so a single answer starves every prompt after the first and
-	// croc aborts with "refusing files". Set to len(filesInfo) in the sender
-	// Ask branch of startSession; respond treats anything below 1 (the zero
-	// value included) as 1, since the receiver's accept/decline prompt only
-	// fires once per transfer.
-	promptAnswers int
-	// accepted: the user accepted this receive. croc asks once per connection
-	// attempt, so a later "refused files" comes from the accept prompt it
-	// re-runs after a reconnect, which reads a queued "n" (#226).
-	accepted atomic.Bool
+	tempPath string // absolute path of the text-send temp file, if any; removed in run()
 
-	restoreIO func() // restore os.Stdin (sender Ask) or os.Stdin/os.Stdout+capture (receive)
+	// answered is closed by respond once answer holds the user's decision. It
+	// can come before croc asks: the app shows the send confirm on connect.
+	answered   chan struct{}
+	answerOnce sync.Once
+	answer     struct {
+		accept bool
+		policy filePolicy
+	}
+	// offer is the question the user said yes to. croc asks again after each
+	// reconnect, and only the same offer gets the same answer (#226).
+	offer atomic.Pointer[croc.Question]
+
+	restoreIO func() // receive: restore os.Stdout and end its capture
 
 	stdoutBuf []byte // captured os.Stdout (text receive)
 	stdoutM   sync.Mutex
@@ -170,30 +166,14 @@ func buildCrocOptions(sender bool, secret string, o *Options) (croc.Options, err
 
 // filePolicy decides what a receive does with a file whose name already
 // exists. croc itself has a third state, Rename and Overwrite both false, in
-// which it prompts on stdin; on our closed pipe that prompt skips the file,
-// and on an unzip it aborts the transfer, so it is never passed to croc.
+// which it asks per file; it is never passed to croc. The same policy answers
+// croc's overwrite questions for zip members and non-empty folders (prompt).
 type filePolicy int
 
 const (
 	keepBoth filePolicy = iota
 	replace
 )
-
-// promptPolicyAnswers is how many answers to croc's per-file stdin prompts a
-// receive queues: the empty-folder prompt and the unzip "Overwrite '<path>'?
-// (y/N)" prompt, which ignore Rename and Overwrite. Past that many collisions
-// an unzip hits EOF and fails, leaving the received zip. 4096 two-byte lines
-// fit a fresh pipe's buffer on Darwin and Linux, so the write never blocks,
-// which startReceiveSession relies on for AutoAccept.
-const promptPolicyAnswers = 4096
-
-// keptPromptAnswers is the only batch ever queued behind the accept answer,
-// whatever the policy: "n" keeps what exists (the unzip skips that member), so
-// Replace overwrites files through croc's Overwrite but never a zip member.
-// Never "y": croc v11 re-runs the accept prompt on the sender's new file list
-// after each reconnect, and that prompt would read a queued "y" as consent to
-// a list the user never saw.
-var keptPromptAnswers = strings.Repeat("n\n", promptPolicyAnswers)
 
 func parsePolicy(s string) filePolicy {
 	if s == PolicyReplace {
@@ -397,7 +377,8 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		if err != nil {
 			return nil, err
 		}
-		s := &session{client: c, ctxCancel: cancel, delegate: d, sender: true, tempPath: tempPath, done: make(chan struct{}), pollDone: make(chan struct{})}
+		s := newSession(c, cancel, d, true)
+		s.tempPath = tempPath
 		// A CancelStart during setup ends the start here, before the code shows.
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -407,14 +388,6 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 		// and temp file, rather than leaking them because we'd already
 		// (wrongly) considered the async run started.
 		d.OnCodeReady(secret)
-		if o.Ask {
-			restore, rerr := s.installPromptPipe()
-			if rerr != nil {
-				return nil, rerr
-			}
-			s.restoreIO = restore
-			s.promptAnswers = len(filesInfo)
-		}
 		committed = true
 		go s.run(func() error {
 			err := c.Send(filesInfo, emptyFolders, totalFolders)
@@ -432,8 +405,8 @@ func startSession(sender bool, code string, paths []string, text string, o *Opti
 // startReceiveSession is startSession's receive-side counterpart, called as a
 // tail call from within startSession's own frame: the `committed` guard defer
 // declared there is still armed for every error path below, so on failure we
-// only need to unwind whatever this function itself set up (pipes, os.Stdin/
-// os.Stdout swaps) — the croc ctx cancel, cwd restore and release (network
+// only need to unwind whatever this function itself set up (the os.Stdout
+// capture); the croc ctx cancel, cwd restore and release (network
 // globals, then the activeMu unlock) are handled by that defer once we return. Only
 // right before the async run actually starts do we flip *committed to true,
 // handing ownership of cwd and the lock to s.run/release.
@@ -457,48 +430,11 @@ func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code st
 	if err != nil {
 		return nil, err
 	}
-	s := &session{client: c, ctxCancel: cancel, delegate: d, sender: false, done: make(chan struct{}), pollDone: make(chan struct{})}
-
-	// Accept/decline prompt bridge: croc reads the answer via
-	// utils.GetInputContext, which reads a bufio.Reader created once, at package
-	// init, wrapping the real fd 0 -- reassigning the os.Stdin *variable*
-	// later has no effect on that already-built reader. So beyond swapping
-	// the variable (for anything that does read it fresh), dup2 the pipe's
-	// read end onto fd 0 itself so the cached reader also pulls from our
-	// pipe. With AutoAccept the accept prompt is skipped, so only answers for
-	// the un-gated prompts are queued before the pipe closes; any prompt past
-	// them hits EOF instead of hanging.
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		return nil, err
-	}
-	savedStdinFd, err := syscall.Dup(syscall.Stdin)
-	if err != nil {
-		pr.Close()
-		pw.Close()
-		return nil, err
-	}
-	if err := syscall.Dup2(int(pr.Fd()), syscall.Stdin); err != nil {
-		syscall.Close(savedStdinFd)
-		pr.Close()
-		pw.Close()
-		return nil, err
-	}
-	origStdin := os.Stdin
-	os.Stdin = pr
-	s.promptW = pw
-	if o.AutoAccept {
-		s.answerUngatedPrompts()
-	}
+	s := newSession(c, cancel, d, false)
 
 	// Text transfers stream to os.Stdout; capture it.
 	cr, cw, err := os.Pipe()
 	if err != nil {
-		os.Stdin = origStdin
-		_ = syscall.Dup2(savedStdinFd, syscall.Stdin)
-		syscall.Close(savedStdinFd)
-		s.closePrompt() // closes pw unless AutoAccept already did
-		pr.Close()
 		return nil, err
 	}
 	origStdout := os.Stdout
@@ -525,14 +461,10 @@ func startReceiveSession(ctx context.Context, cancel context.CancelFunc, code st
 		}
 	}()
 	s.restoreIO = func() {
-		os.Stdin = origStdin
 		os.Stdout = origStdout
 		cw.Close()
 		<-captureDone
 		cr.Close()
-		_ = syscall.Dup2(savedStdinFd, syscall.Stdin)
-		syscall.Close(savedStdinFd)
-		pr.Close()
 	}
 
 	*committed = true
@@ -552,15 +484,12 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 		defer recoverInto(&err)
 		err = xfer()
 	}()
-	if err != nil && s.accepted.Load() && classify(err) == codeRefused {
-		// The drop ended the receive, not the user: report what they can retry.
-		err = &codedError{code: codeConnectionLost, err: fmt.Errorf("reconnect after accept re-ran croc's accept prompt: %w", err)}
+	if err != nil && s.offer.Load() != nil && classify(err) == codeRefused {
+		// The drop ended the transfer, not the user: croc re-asked with an
+		// offer other than the one they accepted. Report what they can retry.
+		err = &codedError{code: codeConnectionLost, err: fmt.Errorf("reconnect after accept changed the offer: %w", err)}
 	}
 	close(s.done)
-	s.closePrompt()
-	if s.restoreIO != nil {
-		drainPromptInput()
-	}
 	text := s.finishStdoutCapture()
 	if s.tempPath != "" {
 		os.Remove(s.tempPath)
@@ -665,17 +594,11 @@ func restoreWD(dir string) {
 	}
 }
 
-// cancel also closes the prompt pipe. croc's GetInputContext returns as soon
-// as the context is cancelled, so a pending accept prompt unwinds Receive()
-// with context.Canceled, but the goroutine it started to read fd 0 stays
-// blocked until the pipe closes. Closing it here ends that read before run()
-// restores fd 0, so it cannot linger into the next transfer. closePrompt is
-// idempotent and nil-guarded (a no-op for senders, or once respond() has run),
-// so it's always safe to call.
+// cancel also ends a question prompt is waiting on: it waits on the same
+// context.
 func (s *session) cancel() {
 	s.ctxCancel()
 	s.watchOnce.Do(func() { go s.watchCancel(stuckAfter) })
-	s.closePrompt()
 }
 
 // watchCancel reports the session stuck when croc has not returned within
@@ -720,132 +643,93 @@ func unmarkStuck(s *session) {
 	stuck.Unlock()
 }
 
+func newSession(c *croc.Client, cancel context.CancelFunc, d Delegate, sender bool) *session {
+	s := &session{client: c, ctxCancel: cancel, delegate: d, sender: sender, answered: make(chan struct{}), done: make(chan struct{}), pollDone: make(chan struct{})}
+	c.Options.Prompt = s.prompt
+	return s
+}
+
+// respond records the user's first answer; croc may not have asked yet. A
+// second answer (a double tap) is dropped.
 func (s *session) respond(accept bool, policy filePolicy) {
 	if s.storeAnswer != nil {
 		s.answerStore(accept, policy)
 		return
 	}
-	s.promptM.Lock()
-	w := s.promptW
-	if w == nil || s.answering {
-		s.promptM.Unlock()
-		return
-	}
-	s.answering = true
-	answers := "n\n"
-	if accept {
-		// One "y\n" per file for the sender's Ask path (croc prompts once per
-		// file, see promptAnswers doc); receiver accept/decline only ever
-		// needs the one.
-		n := s.promptAnswers
-		if n < 1 {
-			n = 1
+	s.answerOnce.Do(func() {
+		s.answer.accept, s.answer.policy = accept, policy
+		close(s.answered)
+	})
+}
+
+// prompt answers croc's yes/no questions (Options.Prompt) on croc's goroutine.
+// With it set, croc reads no stdin.
+func (s *session) prompt(ctx context.Context, q croc.Question) (bool, error) {
+	switch q.Kind {
+	case croc.QuestionAccept, croc.QuestionSend:
+		if !q.Required {
+			return true, nil // an accept under AutoAccept
 		}
-		answers = strings.Repeat("y\n", n)
-		if !s.sender {
-			// Before the write: croc reads Rename and Overwrite only once the
-			// accept prompt has its answer (croc.go updateIfRecipientHasFileInfo).
-			policy.apply(&s.client.Options)
-			answers += keptPromptAnswers
-			s.accepted.Store(true)
+		if s.client.Options.NoPrompt && !s.sender {
+			// AutoAccept, but the sender ran --ask, which needs a person, and
+			// the app shows nobody the offer under AutoAccept.
+			return false, nil
 		}
-	}
-	s.promptM.Unlock()
-
-	// The write blocks once the answers outgrow the pipe buffer and croc
-	// stops reading, so it runs outside promptM: cancel's closePrompt must
-	// still get the lock, and its Close evicts this write with ErrClosed
-	// (os.Pipe files are pollable on darwin). Transfer.Respond runs this off
-	// the caller's goroutine for the same reason.
-	_, _ = w.WriteString(answers)
-
-	s.promptM.Lock()
-	defer s.promptM.Unlock()
-	s.answering = false
-	// Close so any later un-gated prompt hits EOF instead of hanging (see the
-	// AutoAccept note in startReceiveSession).
-	if s.promptW == w {
-		w.Close()
-		s.promptW = nil
-	}
-}
-
-// answerUngatedPrompts queues answers for an AutoAccept receive, which has no
-// accept prompt, and closes the pipe. croc still forces the accept prompt when
-// the remote sender ran --ask, and that prompt reads the first queued line, so
-// it must be "n" here too.
-func (s *session) answerUngatedPrompts() {
-	s.promptM.Lock()
-	defer s.promptM.Unlock()
-	if s.promptW == nil {
-		return
-	}
-	_, _ = s.promptW.WriteString(keptPromptAnswers)
-	s.promptW.Close()
-	s.promptW = nil
-}
-
-// drainPromptInput reads croc's stdin reader to EOF once the prompt pipe is
-// closed and before fd 0 is restored. utils.GetInputContext reads through one
-// process-wide bufio.Reader, which buffers answers croc never asked for (the
-// policy batch, extra sender-Ask lines); left there, the next transfer's
-// accept prompt would read them instead of the user's answer. A croc read
-// left blocked by a cancel sees EOF from the same close, so it cannot hold
-// data back. Bounded by a timeout in case the pipe is somehow still open.
-func drainPromptInput() {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	for {
-		if _, err := utils.GetInputContext(ctx, ""); err != nil {
-			if errors.Is(err, context.DeadlineExceeded) {
-				log.Printf("crocmobile: drain prompt input: %v", err)
-			}
-			return
+		if accepted := s.offer.Load(); accepted != nil {
+			return sameOffer(*accepted, q, s.client.Options.Rename), nil
 		}
+		select {
+		case <-s.answered:
+		case <-ctx.Done():
+			return false, ctx.Err()
+		}
+		if !s.answer.accept {
+			return false, nil
+		}
+		if q.Kind == croc.QuestionAccept {
+			// croc reads Rename and Overwrite only once this question has its
+			// answer (croc.go updateIfRecipientHasFileInfo).
+			s.answer.policy.apply(&s.client.Options)
+		}
+		s.offer.Store(&q)
+		return true, nil
+	case croc.QuestionOverwrite:
+		// A zip member, a non-empty folder an empty one replaces, or a file
+		// (never asked: Rename or Overwrite is always set).
+		return s.client.Options.Overwrite, nil
 	}
+	return false, nil
 }
 
-func (s *session) closePrompt() {
-	s.promptM.Lock()
-	defer s.promptM.Unlock()
-	if s.promptW != nil {
-		s.promptW.Close()
-		s.promptW = nil
-	}
+// sameOffer reports whether croc re-asked after a reconnect with the offer the
+// user accepted in a. A hash counts only when both carry one: the sender may
+// still have been hashing at the first ask. Only Keep Both (renamed) renames,
+// so under Replace a "(n)" name is a different file, which it would overwrite.
+func sameOffer(a, b croc.Question, renamed bool) bool {
+	return a.Kind == b.Kind && a.Name == b.Name && a.EmptyFolders == b.EmptyFolders &&
+		slices.EqualFunc(a.Files, b.Files, func(x, y croc.FileInfo) bool {
+			return x.FolderRemote == y.FolderRemote &&
+				(x.Name == y.Name || renamed && keptName(x.Name, y.Name)) &&
+				x.Size == y.Size && x.Symlink == y.Symlink && x.TempFile == y.TempFile &&
+				(len(x.Hash) == 0 || len(y.Hash) == 0 || bytes.Equal(x.Hash, y.Hash))
+		})
 }
 
-// installPromptPipe dup2s a pipe's read end onto fd 0 so croc's cached
-// stdin reader (built once at package init) pulls from us instead of the
-// real stdin. Same trick as the receive path (see the long comment in
-// startReceiveSession); used on the send path only when Ask is set, since
-// croc's sender-side "Send to machine X? (Y/n)" prompt (croc.go, gated
-// only on Options.Ask, not NoPrompt) otherwise blocks forever.
-func (s *session) installPromptPipe() (func(), error) {
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		return nil, err
+// keptName reports whether name is offered, or the "offered (n).ext" Keep Both
+// gave it: croc re-offers a file it finished under that name
+// (receive_preflight.go unusedReceiveName, bundle.go restoreBundleDestinations).
+func keptName(offered, name string) bool {
+	if name == offered {
+		return true
 	}
-	savedStdinFd, err := syscall.Dup(syscall.Stdin)
-	if err != nil {
-		pr.Close()
-		pw.Close()
-		return nil, err
+	ext := path.Ext(offered)
+	n, ok := strings.CutPrefix(name, strings.TrimSuffix(offered, ext)+" (")
+	if !ok {
+		return false
 	}
-	if err := syscall.Dup2(int(pr.Fd()), syscall.Stdin); err != nil {
-		syscall.Close(savedStdinFd)
-		pr.Close()
-		pw.Close()
-		return nil, err
-	}
-	origStdin := os.Stdin
-	os.Stdin = pr
-	s.promptW = pw
-	return func() {
-		os.Stdin = origStdin
-		_ = syscall.Dup2(savedStdinFd, syscall.Stdin)
-		syscall.Close(savedStdinFd)
-		pr.Close()
-	}, nil
+	n, ok = strings.CutSuffix(n, ")"+ext)
+	i, err := strconv.Atoi(n)
+	return ok && err == nil && i > 0 && strconv.Itoa(i) == n // croc writes no "+1" or "01"
 }
 
 // finishStdoutCapture restores IO globals and returns captured text if this

@@ -67,19 +67,16 @@ func (p *dropProxy) drop() {
 }
 
 // A receive loses its control connection to the relay mid-transfer and croc
-// v11 reconnects. The reconnect re-runs the accept prompt
-// (resetForReconnectAttempt, then processSenderInfo in croc.go), so after a
-// manual accept it reads the queued "n" and croc refuses the files (#226).
-// That must reach the app as connectionLost, never as this side's refusal.
-// With AutoAccept there is no prompt and the receive resumes.
+// v11 reconnects. The reconnect asks the accept question again
+// (resetForReconnectAttempt, then processSenderInfo in croc.go); the same offer
+// gets the user's accept, so the receive resumes and completes (#226).
 func TestReconnectAfterAccept(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		autoAccept bool
-		wantCode   string // "" means the receive resumes and completes
 	}{
-		{"manual accept", false, codeConnectionLost},
-		{"auto-accept", true, ""},
+		{"manual accept", false},
+		{"auto-accept", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			relay := startTestRelay(t)
@@ -160,15 +157,6 @@ func TestReconnectAfterAccept(t *testing.T) {
 				t.Fatal("sender did not return")
 			}
 			t.Logf("receiver: done %q, error %q; sender error: %v", rec.done, rec.errMsg, sErr)
-			if tc.wantCode != "" {
-				if rec.errMsg == "" {
-					t.Fatal("receive succeeded: the reconnect no longer refuses, so revisit #226")
-				}
-				if got := rec.failureCode(t); got != tc.wantCode {
-					t.Fatalf("receive failed with code %s, want %s", got, tc.wantCode)
-				}
-				return
-			}
 			if rec.errMsg != "" {
 				t.Fatalf("receive failed with code %s, want it to resume", rec.failureCode(t))
 			}

@@ -123,7 +123,7 @@ The Swift language mode (6) and the deployment targets (26.0) are not version pi
 
 ## golangci-lint traps
 
-- `errcheck` flags the deliberate ignores in `session.go`: `os.Chdir(origWD)` on cleanup paths and `syscall.Dup2(savedStdinFd, syscall.Stdin)` restoring fd0. These are written as `_ = f()` so intent is visible at the call site rather than hidden in a config blocklist.
+- `errcheck` flags the deliberate ignores in `session.go`: `os.Chdir(origWD)` on cleanup paths. These are written as `_ = f()` so intent is visible at the call site rather than hidden in a config blocklist.
 - The `defer func() { recover() }()` guards in `session.go` carry `//nolint:errcheck`. Do not rewrite them as `_ = recover()`: `recover` only works when called directly by the deferred function, and this codepath exists because a goroutine panic kills the gomobile host app.
 - `Close`/`Remove` are already in errcheck's default exclusions, which is why the many `pr.Close()` calls are silent.
 
