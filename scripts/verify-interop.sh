@@ -445,7 +445,7 @@ kill "$STORE_PID"
 wait "$STORE_PID" 2> /dev/null || true
 
 # 15. Advanced options that change the wire, against the croc v11 CLI with
-# the matching flag. What each case pins down was observed with croc v11.6.5:
+# the matching flag. What each case pins down was observed with croc v11.6.6:
 #  - sender IP: the sender's local relay listens on croc's default ports, 9009
 #    and the four after it, so a receiver given the sender IP reaches it
 #    there, and the banner it reads lists the data ports. A CLI sender on
@@ -505,7 +505,7 @@ pass "sender IP: a sender IP with nothing listening fails with relayUnreachable"
 # croc_no_tailcat tag, so a transfer of 128 MiB or more, which the stock CLI
 # would race over Tailcat against a Tailcat-capable peer, goes over the relay
 # here. The CLI runs with its default --transport auto. Its --debug log tells
-# the two cases apart (observed with croc v11.6.5):
+# the two cases apart (observed with croc v11.6.6):
 #  - a Tailcat-capable peer: "tailcat-offer", "starting Tailcat server", and a
 #    "selected staged croc relay data transport" or "... after Tailcat
 #    fallback" line;
@@ -626,11 +626,30 @@ proxy_send http -connect
 proxy_receive http -connect
 
 # 16. small-file bundle, both directions. croc 11.6 moves a run of 4 or more
-# small files as one bundle, for which it reports no bytes the wrapper can read
+# small files as one bundle, which never moves croc's current file index
 # (docs/knowledge/crocmobile-bridge.md, "Small-file bundles"). 20 x 64 KiB at
 # 200 KB/s makes the bundle last about 6 s, long enough for the wrapper to
-# report step "bundling" instead of sitting at 0%.
+# report its bytes moving instead of sitting at 0%.
 SCENARIO=16
+# bundle_progress LOG prints how many progress events report a new byte count
+# between 0 and the total, and fails if bytesFinished + fileSent ever falls or
+# passes totalSize. An event can start mid-line, after croc's own progress bar
+# on the same stderr.
+bundle_progress() {
+  awk '/EVENT progress \{/ {
+    s = $0; sub(/.*"fileSent":/, "", s)
+    f = $0; sub(/.*"bytesFinished":/, "", f)
+    t = $0; sub(/.*"totalSize":/, "", t)
+    done = s + f; total = t + 0
+    if (done < last || done > total) { bad = "bytes done " done " after " last ", total " total; exit }
+    if (done > last && done < total) moved++
+    last = done
+  }
+  END {
+    if (bad != "") { print bad; exit 1 }
+    print moved + 0
+  }' "$1"
+}
 mkdir -p "$TMP/many/many"
 for i in $(seq 1 20); do head -c 65536 /dev/urandom > "$TMP/many/many/f$i.bin"; done
 C=$(code b1)
@@ -640,8 +659,9 @@ await_sender
 timeout 90 "$CT" receive ${CT_R:+"$CT_R"} -out "$TMP/16r" -yes "$C" > "$TMP/16r.log" 2>&1 || true
 wait
 diff -r "$TMP/many/many" "$TMP/16r/many" > /dev/null || fail "bundle receive: files differ"
-grep -q '"step":"bundling"' "$TMP/16r.log" || fail "bundle receive: no bundling progress"
-pass "bundle receive: $(grep -c '"step":"bundling"' "$TMP/16r.log") progress events with step bundling"
+moved=$(bundle_progress "$TMP/16r.log") || fail "bundle receive: $moved"
+[ "$moved" -ge 5 ] || fail "bundle receive: bytes moved in only $moved progress events"
+pass "bundle receive: bytes moved in $moved progress events, never falling or passing the total"
 
 C=$(code b2)
 mark_relay
@@ -651,8 +671,9 @@ mkdir -p "$TMP/16s"
 (cd "$TMP/16s" && CROC_SECRET="$C" timeout 90 "$CROC" ${CLI_R:+"$CLI_R"} --yes --overwrite) > "$TMP/16s.cli" 2>&1 || true
 wait
 diff -r "$TMP/many/many" "$TMP/16s/many" > /dev/null || fail "bundle send: files differ"
-grep -q '"step":"bundling"' "$TMP/16s.log" || fail "bundle send: no bundling progress"
-pass "bundle send: $(grep -c '"step":"bundling"' "$TMP/16s.log") progress events with step bundling"
+moved=$(bundle_progress "$TMP/16s.log") || fail "bundle send: $moved"
+[ "$moved" -ge 5 ] || fail "bundle send: bytes moved in only $moved progress events"
+pass "bundle send: bytes moved in $moved progress events, never falling or passing the total"
 
 if [ -z "${PUBLIC_POOL:-}" ]; then # use_relay accepted only empty or 1
   echo "SKIP: public relay pool (11): set PUBLIC_POOL=1"

@@ -33,9 +33,9 @@ Go side: `crocmobile/session.go`. Swift side: `CrocKit/Sources/CrocKit/Models.sw
 
 Rules that follow from the payloads:
 
-- `step` is `waiting`, `connected`, `transferring` or `bundling`. A stored upload also reports `preparing` while it hashes files.
-- `fileSent` counts bytes of the current file only, because croc resets `TotalSent` for each file.
-- `bundling` means croc is moving a batch of small files, whose bytes no field the bridge reads counts (see "Small-file bundles"). No byte count, file index or name in that payload is current, so the app shows an indeterminate bar and no percent (CrocKit `TransferProgress.isBundling`).
+- `step` is `waiting`, `connected` or `transferring`. A stored upload also reports `preparing` while it hashes files.
+- `fileSent` counts bytes of the current file only, because croc resets `TotalSent` for each single file. During a bundle the current file is inferred from the byte count (see "Small-file bundles").
+- `bytesFinished + fileSent` never passes `totalSize`.
 - An undecodable `done` summary becomes a `.failed` event (code `other`, message `malformed done payload`) and finishes the stream.
 - An undecodable `progress` payload is dropped silently. Progress is advisory and the next tick retries.
 - A transfer under about 100 ms can deliver `done` with no `connected`, `progress` or `fileList` event. The UI keys off `done` and `failed` only.
@@ -253,9 +253,10 @@ A dropped relay connection after the transfer started counts as a disconnect (`t
 
 Since croc v11.6, a receiver asks for a run of four or more small files as one bundle when both peers advertise `small-file-bundles-v1` (`pakeFeatures` in `tailcat_negotiation.go`, `requestNextBundleUnit` in `bundle.go`). Two native croc 11.6 peers allow up to 1024 files of up to 32 MiB each, within a 32 MiB payload per bundle (`src/bundle/bundle.go`).
 
-- During a bundle croc never sets `Step3RecipientRequestFile` or moves `FilesToTransferCurrentNum`. The receiver writes bundle data without adding to `TotalSent` (`receiveData` in `croc.go`); the sender does add to it. The bundle's progress lives only in an unexported display (`transfer_progress.go`), and the `Client` has no progress callback.
+- During a bundle croc never sets `Step3RecipientRequestFile` or moves `FilesToTransferCurrentNum`. Both sides add every bundle chunk to `TotalSent` (the receiver in `processBundleMessage` in `bundle.go`, the sender in its chunk loop in `croc.go`), and only the next single file resets it. So `TotalSent` holds the bytes of the file at `FilesToTransferCurrentNum` (when one was sent) plus every bundle since.
+- A bundle is a run of the files after that one, in list order, its payload their contents end to end (`bundle.Next`). `progressSnapshot` (`session.go`) therefore walks `TotalSent` past each file it covers and reports the file it lands in as the current one. The bytes are exact. The file name and index are inferred: chunks may arrive out of order, and a file skipped inside a bundle (already present) takes bytes of the files after it.
+- croc sets `FilesToTransferCurrentNum` for the next single file a moment before it resets `TotalSent`, so a tick in between counts the old bytes twice. The cap at `totalSize` bounds it; the app's bars never move back (`ForwardProgressBar`), but a byte count can step back once.
 - croc offers no option to turn bundles off. Every client advertises them, and a receiver takes the hash algorithm, one of the eligibility checks (`bundleTransferEligible`), from the sender.
-- `poll` therefore reports `step` `bundling` once `bundleGap` (`session.go`) has counted 3 ticks within one unbroken stretch of this state: at least four files (`bundle.MinFiles`), file info sent, no single file requested, and not finished. Any tick outside it resets the count. A receiver counts every such tick, and the 3 absorb its round trip between two single files. A sender counts only ticks on which `TotalSent` grew, because it stays put while the sender waits for the accept and between two single files, and grows in bursts through a bundle under a throttle. A receiver of four or more files that hashes an existing file before resuming it also shows `bundling` while it hashes.
 - Each side spools a bundle with `os.CreateTemp("", ...)` (`bundle.go`), so in `$TMPDIR`. The sandboxed Mac app inherits the user's `/var/folders/.../T/` there, which its sandbox denies (`deny file-write-create`), and the transfer fails. `CrocAppApp.init` therefore calls `CrocEngine.setTemporaryDirectory` with `FileManager.default.temporaryDirectory`, the app's own temporary directory, once at launch, before any transfer. It reaches Go's `SetTempDir`, because Go reads `$TMPDIR` from its own copy of the environment, which Swift's `setenv` does not update (a launch-time `setenv` in Swift failed the Mac harness's bundle receive). Nothing sets `$TMPDIR` per transfer: `os.Setenv` also calls libc `setenv`, which is not proven safe against a `getenv` on another thread of the host process, and the directory is the same for every transfer.
 
 ### Prompts beyond the accept prompt

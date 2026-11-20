@@ -49,29 +49,13 @@ private func events(_ drive: (DelegateBridge) -> Void) async -> [TransferEvent] 
         #expect(p.bytesFinished == 3)
         #expect(p.totalSize == 8)
         #expect(p.step == "transferring")
-        #expect(!p.isBundling)
-    }
-
-    @Test func decodesBundlingProgress() async throws {
-        let got = await events {
-            $0.onProgress(
-                #"{"currentFile":0,"totalFiles":20,"fileName":"a","fileSent":0,"fileSize":5,"bytesFinished":0,"totalSize":100,"step":"bundling"}"#
-            )
-        }
-        guard case .progress(let p) = try #require(got.first) else {
-            Issue.record("expected .progress, got \(got)")
-            return
-        }
-        #expect(p.isBundling)
     }
 
     @Test func percentIsTheWholeTransfersClampedInteger() throws {
-        func progress(finished: Int, sent: Int, total: Int, step: String = "transferring") throws
-            -> TransferProgress
-        {
+        func progress(finished: Int, sent: Int, total: Int) throws -> TransferProgress {
             let json = """
                 {"currentFile":0,"totalFiles":1,"fileName":"a","fileSent":\(sent),"fileSize":\(total),\
-                "bytesFinished":\(finished),"totalSize":\(total),"step":"\(step)"}
+                "bytesFinished":\(finished),"totalSize":\(total),"step":"transferring"}
                 """
             return try JSONDecoder().decode(TransferProgress.self, from: Data(json.utf8))
         }
@@ -81,7 +65,6 @@ private func events(_ drive: (DelegateBridge) -> Void) async -> [TransferEvent] 
         #expect(try progress(finished: 0, sent: 1, total: 3).percent == 33)
         #expect(try progress(finished: 90, sent: 40, total: 100).percent == 100, "never past 100")
         #expect(try progress(finished: 0, sent: 5, total: 0).percent == nil)
-        #expect(try progress(finished: 0, sent: 5, total: 100, step: "bundling").percent == nil)
     }
 
     @Test func decodesDoneAndFinishesStream() async throws {

@@ -2,14 +2,14 @@
 
 How to bump the pinned croc version in `crocmobile/go.mod`. The update rule (what to read, how fast to take and ship) is in `RELEASING.md`, "croc updates". Dependabot opens the croc PR on day 3 for a minor and day 1 for a patch (`.github/dependabot.yml`). Run the playbook as one session per bump.
 
-**The pin is in `crocmobile/go.mod`.** croc still reports no bundle progress an embedder can read, so a batch of small files shows indeterminate progress (`crocmobile-bridge.md`, "Small-file bundles"). Check each release for an exported bundle progress path, and for any change to the fields `bundleGap` reads.
+**The pin is in `crocmobile/go.mod`.** The progress of a batch of small files rests on how croc counts bundle bytes in `TotalSent` (`crocmobile-bridge.md`, "Small-file bundles"). Check each release for a change to that counting or to bundle file order, both of which `progressSnapshot` relies on.
 
 ## Steps
 
 1. **Read the upstream delta.** Read the changelog and release notes, then `git diff vOLD..vNEW` of these paths: `src/croc/croc.go`, `src/croc/ctx.go`, `src/cli/cli.go`, `src/models/constants.go`, `src/utils/utils.go`, `src/codephrase`, `src/publicrelay`, `src/pakekey`. Look for:
    - New callback or hook APIs for confirm prompts or output. They may make the fd 0 prompt pipe obsolete (the shim would shrink to nothing).
    - `Options` struct changes. New flags need new `crocmobile.Options` fields. Renamed or removed fields fail to compile, which is good.
-   - Changes to the `Client` progress fields the poller reads: `TotalSent`, the step booleans, `FilesToTransfer`, `FilesToTransferCurrentNum`, and anything that exports bundle progress (`bundle.go`, `transfer_progress.go`).
+   - Changes to the `Client` progress fields the poller reads: `TotalSent`, the step booleans, `FilesToTransfer`, `FilesToTransferCurrentNum`, where `TotalSent` is reset or added to (`croc.go`, `bundle.go`), and how `bundle.Next` orders a bundle's files (`src/bundle`).
    - Prompt sites (`utils.GetInputContext` callers) added or removed. Each one maps to a workaround in `crocmobile-bridge.md`.
    - Wire or protocol changes. A major version bump means incompatible peers.
 2. **Cross-check every documented workaround.** Take each one in `crocmobile-bridge.md`, "croc 11 gotchas (verified against source)", and decide keep, delete or adapt against the delta. Delete obsolete shims; do not leave dead workarounds. Rename that heading in step 6 if the major changed.
@@ -27,7 +27,7 @@ How to bump the pinned croc version in `crocmobile/go.mod`. The update rule (wha
 
    Any failure: find the root cause against the upstream delta before touching wrapper semantics.
 6. **Update docs.**
-   - Run `git grep -n "11.6.5"` (the old version string) and update every hit: `what-is-croc.md` (the version header and any changed facts), `web/docs/content/reference/croc-cli-interop.md`, and comments in `crocmobile/` and `scripts/`. Other docs say "croc 11" and need the version only when the major changes.
+   - Run `git grep -n "11.6.6"` (the old version string) and update every hit: `what-is-croc.md` (the version header and any changed facts), `web/docs/content/reference/croc-cli-interop.md`, and comments in `crocmobile/` and `scripts/`. Other docs say "croc 11" and need the version only when the major changes.
    - Update facts that changed even where the version string is absent.
    - Check the names in `docs/GLOSSARY.md` that the delta touched.
    - Run `scripts/verify-docs.sh`.

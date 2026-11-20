@@ -274,11 +274,6 @@ public struct TransferProgress: Codable, Sendable, Equatable {
     public let totalSize: Int64
     public let step: String
 
-    /// croc is moving a batch of small files whose bytes no counter tracks, so
-    /// no byte count or percent here is current (`crocmobile-bridge.md`, "Event
-    /// and JSON contract").
-    public var isBundling: Bool { step == "bundling" }
-
     /// The sender is still waiting for the receiver; the code screen stays up.
     public var isWaiting: Bool { step == "waiting" }
 
@@ -286,9 +281,9 @@ public struct TransferProgress: Codable, Sendable, Equatable {
     public var bytesDone: Int64 { bytesFinished + fileSent }
 
     /// The whole transfer as an integer percent, clamped to 0...100; nil when
-    /// its total size is unknown or the bytes are not tracked (bundling).
+    /// its total size is unknown.
     public var percent: Int? {
-        guard totalSize > 0, !isBundling else { return nil }
+        guard totalSize > 0 else { return nil }
         return min(100, max(0, Int((Double(bytesDone) / Double(totalSize) * 100).rounded())))
     }
 }
