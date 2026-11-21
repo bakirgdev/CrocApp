@@ -104,35 +104,31 @@ croc,transfer,share,encrypted,secure,qr,p2p,link,folder,nearby,e2ee,clipboard,cl
 
 ## What's New
 
-App Store Connect shows no What's New field on an app's first version. From the second App Store release on, write it from that release's `[x.y.z]` section of `CHANGELOG.md`, in the voice of the description: short, what a user sees first, and honest about what was removed. The text is per platform, because the Mac lost **Run a Relay** and iOS never had it. The first lines show before "more", so the navigation change leads.
+App Store Connect shows no What's New field on an app's first version. From the second App Store release on, write it from that release's `[x.y.z]` section of `CHANGELOG.md`, in the voice of the description: short, what a user sees first, and honest about what was removed. The text is per platform: a change only one platform has, such as iPhone Duo support, stays out of the other's. The first lines show before "more", so the most visible change leads.
 
-Version 1.3.0, iOS (1277 characters):
+Version 1.3.1, iOS (924 characters):
 
 ```text
-• iPhone now has tabs for Send, Receive, History and Settings, and iPad has a sidebar. Files you picked, text you typed and a code stay when you switch.
-• The buttons that answer a screen (Send, Receive, Accept, Decline, Cancel) sit at the bottom, in the same place every time. Add Files, Add Folder and Add Photos are one Add menu.
-• Buttons and colors use the system's own styles, with one olive accent.
-• Fixed: the patterns under Exclude from sends now apply to every folder send. Before, they only worked when the folder was sent as a zip.
-• Fixed: a finished transfer no longer leaves its files, text or custom code staged for the next one.
-• The transfer engine is croc 11.6.5. It fixes a crash that a malformed connection could cause in the local relay CrocApp runs while it sends.
-• Removed: the Home screen. Send, Receive and History each have their own tab or sidebar entry.
-• Removed: History in Spotlight. Entries CrocApp added to Spotlight are deleted the first time you open this version. Find Transfers and Open Transfer in Shortcuts still work.
-• Removed: Multicast Address, Built-in DNS Resolver, Single Connection and Exact Paths in Advanced settings. Your Exact Paths move to the patterns under Exclude from sends, and the others go back to croc's defaults.
+• iPhone Duo: the inner display shows the sidebar, as iPad does, and the tabs in portrait. A code, a QR code and Accept and Decline sit beside the fold, never across it, and what you entered stays when you fold or open the device.
+• A batch of small files now shows how far it has got, with a percent and a byte count, on both the sending and the receiving device.
+• Files you accepted now pick up where they left off when a dropped connection comes back, instead of saying you declined them.
+• Replace now replaces the files already in a zipped folder you receive again, and a zipped folder with more than 4096 existing files no longer fails.
+• History opens with far less memory when it holds many past sends.
+• Fixed: Send Speed Limit now holds sends to the limit you set, and Respect .gitignore skips folders such as node_modules/.
+• An empty file you receive keeps its permissions.
+• The transfer engine is croc 11.6.6.
 ```
 
-Version 1.3.0, macOS (1418 characters):
+Version 1.3.1, macOS (693 characters):
 
 ```text
-• The Mac has a sidebar for Send, Receive and History. Files you picked, text you typed and a code stay when you switch. Settings stays its own window.
-• The buttons that answer a screen (Send, Receive, Accept, Decline, Cancel) sit at the bottom, in the same place every time. Add Files and Add Folder are one Add menu.
-• Buttons and colors use the system's own styles, with one olive accent.
-• Fixed: the patterns under Exclude from sends now apply to every folder send. Before, they only worked when the folder was sent as a zip.
-• Fixed: a finished transfer no longer leaves its files, text or custom code staged for the next one.
-• The transfer engine is croc 11.6.5. It fixes a crash that a malformed connection could cause in the local relay CrocApp runs while it sends.
-• Removed: Run a Relay and Check Relay. To host a relay, run croc relay on a machine you control. The relay address and password you set in Settings still work.
-• Removed: the Home screen. Send, Receive and History each have their own sidebar entry.
-• Removed: History in Spotlight. Entries CrocApp added to Spotlight are deleted the first time you open this version. Find Transfers and Open Transfer in Shortcuts still work.
-• Removed: Multicast Address, Built-in DNS Resolver, Single Connection and Exact Paths in Advanced settings. Your Exact Paths move to the patterns under Exclude from sends, and the others go back to croc's defaults.
+• A batch of small files now shows how far it has got, with a percent and a byte count, on both the sending and the receiving device.
+• Files you accepted now pick up where they left off when a dropped connection comes back, instead of saying you declined them.
+• Replace now replaces the files already in a zipped folder you receive again, and a zipped folder with more than 4096 existing files no longer fails.
+• History opens with far less memory when it holds many past sends.
+• Fixed: Send Speed Limit now holds sends to the limit you set, and Respect .gitignore skips folders such as node_modules/.
+• An empty file you receive keeps its permissions.
+• The transfer engine is croc 11.6.6.
 ```
 
 ## URLs, category, price
@@ -221,20 +217,20 @@ Result: **4+**, as App Store Connect showed with these answers. In Apple's table
 
 Note on Messaging and Chat (judgement): Apple defines it as users who "directly communicate with one another through features within the app" (text, voice, video, messaging, posting). CrocApp can send a text snippet, but it is a one-shot transfer with no conversation, contacts or accounts. "Not selected" is the honest reading, and ticking it would also leave the rating at 4+. The residual risk is a reviewer who disagrees; the review notes say what the text feature is.
 
-Shared Location and Dating and Relationships are newer questions, required from 15 January 2027 or with any earlier change to the questionnaire. The declaration is editable only while a version is being prepared: on the live app info the API refuses with "This age rating declaration is not editable" (verified). So they are answered with the next version, through the questionnaire or a PATCH of `sharedLocation` and `datingAndRelationships`, both booleans (the API rejected a string for the second). `asc age-rating edit` has no flags for them yet.
+Shared Location and Dating and Relationships are newer questions, required from 15 January 2027 or with any earlier change to the questionnaire. The declaration is editable only while a version is being prepared: on the live app info the API refuses with "This age rating declaration is not editable" (verified). Both are answered **No** from 1.3.1 on, set by a PATCH of `sharedLocation` and `datingAndRelationships` on the app info in preparation; both are booleans (the API rejected a string for the second). `asc age-rating edit` has no flags for them yet.
 
 Sending arbitrary files to another person is not content the app hosts or shows. The recipient sees a file list and accepts or declines each transfer.
 
 ## Review notes
 
-Paste into App Review Information, Notes, per platform. Limit 4000 bytes: the iOS block is 2988 bytes, the macOS block 3842. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo. Step 1 names an Add menu conditionally: make it plain or drop it once the 1.3.0 build is final.
+Paste into App Review Information, Notes, per platform. Limit 4000 bytes: the iOS block is 2940 bytes, the macOS block 3691. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
 
 iOS:
 
 ```text
 CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end-to-end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email. Source: https://github.com/bakirgdev/CrocApp
 
-WHAT CHANGED IN 1.3.0: navigation is tabs on iPhone (Send, Receive, History, Settings) and a sidebar on iPad. Buttons and colors use the system styles. Removed: the Home screen, History in Spotlight (the first launch deletes the entries older versions added), and four Advanced options (Multicast Address, Built-in DNS Resolver, Single Connection, Exact Paths). The engine is croc 11.6.5. Permissions and App Privacy answers are unchanged from 1.2.1.
+WHAT CHANGED IN 1.3.1: support for iPhone Duo (the inner display shows the sidebar as on iPad, and controls stay off the fold). The engine is croc 11.6.6: a batch of small files shows its progress, files the user accepted resume after a dropped connection, and Replace also applies inside a received zipped folder. History uses less memory. Permissions and App Privacy answers are unchanged from 1.3.0.
 
 ACCOUNT: none. No login, sign-up, purchase or subscription, so there is no demo account. Sign-in required is off.
 
@@ -258,7 +254,7 @@ macOS (the iOS text with the Mac differences and the entitlement paragraph):
 ```text
 CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end-to-end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email. Source: https://github.com/bakirgdev/CrocApp
 
-WHAT CHANGED IN 1.3.0: navigation is tabs on iPhone (Send, Receive, History, Settings) and a sidebar on iPad and Mac. Buttons and colors use the system styles. Removed: on the Mac, Run a Relay and Check Relay; the Home screen, History in Spotlight (the first launch deletes the entries older versions added), and four Advanced options (Multicast Address, Built-in DNS Resolver, Single Connection, Exact Paths). The engine is croc 11.6.5. Permissions, entitlements and App Privacy answers are unchanged from 1.2.1.
+WHAT CHANGED IN 1.3.1: the engine is croc 11.6.6: a batch of small files shows its progress, files the user accepted resume after a dropped connection, and Replace also applies inside a received zipped folder. History uses less memory. On iPhone Duo the inner display shows the sidebar. Permissions, entitlements and App Privacy answers are unchanged from 1.3.0.
 
 ACCOUNT: none. No login, sign-up, purchase or subscription, so there is no demo account. Sign-in required is off.
 
@@ -351,6 +347,7 @@ Before every submission:
 - A screenshot that is still processing blocks **Add for Review** with "1 or more screenshots must finish processing". Reload after a minute and press it again.
 - Version release is Automatically release this version after approval on both platforms, so approval publishes the app and there is no separate **Release This Version** step.
 - **A later version.** The **+** next to "iOS App" or "macOS App" in the sidebar adds it; enter `MARKETING_VERSION`, paste "What's New" from the version's `CHANGELOG.md` section, and pick the build once it has processed. Description, keywords, screenshots and "What's New" change only with a new version; promotional text changes any time without review.
+- **With the `asc` CLI.** `asc versions create --platform IOS|MAC_OS --copy-metadata-from <previous> --exclude-fields whatsNew --build-id <id>` creates a version with the previous listing and screenshots, then `asc apps info edit --version X.Y.Z --platform ... --whats-new` sets What's New, and `asc validate --version-id` checks readiness. `asc review submit` sends the first platform. For the second it stops in its age rating preflight, because two app infos then exist (live and in review), so submit that one with `asc review submissions-create`, `items-add` and `submissions-submit`.
 - While either platform has a version in review, App Information and App Privacy are locked for both.
 - **Creative assets** (the header and search results asset) are uploaded in the Asset Library and go through **Add for Review** there, as an iOS submission of their own with no build. Once approved, select the asset on the iOS version page > Header and Search Results.
 
