@@ -8,7 +8,7 @@ import CrocKit
 // given delay, to prove the Swift-side cancel path actually tears down a
 // transfer mid-wire (as opposed to only being exercised pre/post-transfer).
 // twice: receives code1 to completion, then code2 to completion, in the same
-// process -- proves fd0/stdout/cwd/mutex restoration in crocmobile composes
+// process -- proves stdout/cwd/mutex restoration in crocmobile composes
 // across repeated transfers, not just a single one, and that the second start
 // succeeds at once, with no retry.
 import Foundation

@@ -105,8 +105,8 @@ public struct EngineOptions: Sendable {
     public var gitIgnore = false
     /// Substring patterns excluded from sends (croc --exclude semantics).
     public var exclude: [String] = []
-    /// Both-sides confirm (croc --ask). Sender prompt is bridged via the
-    /// stdin pipe; respond(_:accept:policy:) answers it.
+    /// Both-sides confirm (croc --ask). respond(_:accept:policy:) answers the
+    /// sender's question.
     public var ask = false
 
     // Advanced options. The defaults are croc's own (`EngineOptionsDefaultsTests`

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -18,7 +17,6 @@ import (
 
 	"github.com/schollz/croc/v11/src/croc"
 	"github.com/schollz/croc/v11/src/tailcattransport"
-	"github.com/schollz/croc/v11/src/utils"
 )
 
 func TestSplitNonEmpty(t *testing.T) {
@@ -485,103 +483,179 @@ func TestSummaryJSON(t *testing.T) {
 	}
 }
 
-func TestRespond(t *testing.T) {
-	keep := strings.Repeat("n\n", promptPolicyAnswers)
-	tests := []struct {
-		name    string
-		sender  bool
-		accept  bool
-		policy  filePolicy
-		answers int
-		want    string
+func promptSession(sender bool, o croc.Options) *session {
+	return newSession(&croc.Client{Options: o}, func() {}, nil, sender)
+}
+
+func acceptQuestion(files ...croc.FileInfo) croc.Question {
+	return croc.Question{Kind: croc.QuestionAccept, Name: "sender-machine", Files: files, Required: true}
+}
+
+// The first question waits for respond, which may come before croc asks. An
+// accept applies its policy to the live client before croc reads it; a decline
+// leaves the Options' policy. A second respond is dropped.
+func TestPromptAnswersFromRespond(t *testing.T) {
+	for _, tt := range []struct {
+		name                  string
+		sender, early, accept bool
+		policy                filePolicy
+		wantRename, wantOverw bool
 	}{
-		{"receive accept keeps both", false, true, keepBoth, 0, "y\n" + keep},
-		{"receive accept replace queues no y", false, true, replace, 0, "y\n" + keep},
-		{"receive decline", false, false, replace, 0, "n\n"},
-		{"send accept zero value counts as one", true, true, keepBoth, 0, "y\n"},
-		{"send accept negative counts as one", true, true, keepBoth, -2, "y\n"},
-		{"send accept three ignores policy", true, true, replace, 3, "y\ny\ny\n"},
-		{"send decline ignores answer count", true, false, keepBoth, 3, "n\n"},
-	}
-	for _, tt := range tests {
+		{"receive accept keeps both", false, false, true, keepBoth, true, false},
+		{"receive accept replace", false, false, true, replace, false, true},
+		{"receive answer before the question", false, true, true, replace, false, true},
+		{"receive decline", false, false, false, replace, true, false},
+		{"send confirm before the question", true, true, true, replace, true, false},
+		{"send decline", true, false, false, keepBoth, true, false},
+	} {
 		t.Run(tt.name, func(t *testing.T) {
-			pr, pw, err := os.Pipe()
-			if err != nil {
-				t.Fatal(err)
+			var o croc.Options
+			keepBoth.apply(&o)
+			s := promptSession(tt.sender, o)
+			q := acceptQuestion(croc.FileInfo{Name: "a.txt", Size: 3})
+			if tt.sender {
+				q = croc.Question{Kind: croc.QuestionSend, Name: "receiver-machine", Required: true}
 			}
-			defer pr.Close()
-			s := &session{client: &croc.Client{}, promptW: pw, promptAnswers: tt.answers, sender: tt.sender}
-
-			s.respond(tt.accept, tt.policy)
-
-			if s.promptW != nil {
-				t.Error("promptW not nil after respond")
+			if tt.early {
+				s.respond(tt.accept, tt.policy)
+			} else {
+				go s.respond(tt.accept, tt.policy)
 			}
-			got, err := io.ReadAll(pr)
-			if err != nil {
-				t.Fatal(err)
+			got, err := s.prompt(context.Background(), q)
+			if err != nil || got != tt.accept {
+				t.Fatalf("prompt = %v, %v; want %v", got, err, tt.accept)
 			}
-			if string(got) != tt.want {
-				t.Fatalf("pipe received %d bytes starting %q, want %d bytes starting %q", len(got), head(got), len(tt.want), head([]byte(tt.want)))
+			s.respond(!tt.accept, keepBoth)
+			if s.answer.accept != tt.accept {
+				t.Error("a second respond replaced the first")
 			}
-
-			s.respond(true, replace) // no-op: promptW already closed and nil
-			s.respond(false, keepBoth)
-			if s.promptW != nil {
-				t.Error("promptW not nil after repeated respond")
+			if c := s.client.Options; c.Rename != tt.wantRename || c.Overwrite != tt.wantOverw {
+				t.Errorf("Rename=%v Overwrite=%v, want %v %v", c.Rename, c.Overwrite, tt.wantRename, tt.wantOverw)
+			}
+			if accepted := s.offer.Load() != nil; accepted != tt.accept {
+				t.Errorf("offer recorded = %v, want %v", accepted, tt.accept)
 			}
 		})
 	}
 }
 
-func head(b []byte) string {
-	if len(b) > 8 {
-		b = b[:8]
+func TestPromptCancelUnblocks(t *testing.T) {
+	s := promptSession(false, croc.Options{})
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if got, err := s.prompt(ctx, acceptQuestion()); got || !errors.Is(err, context.Canceled) {
+		t.Fatalf("prompt = %v, %v; want false, context.Canceled", got, err)
 	}
-	return string(b)
 }
 
-// The accept answer sets the policy on the live client before croc reads it,
-// replacing whatever the Options gave.
-func TestRespondAppliesPolicyToClient(t *testing.T) {
-	for _, tt := range []struct {
-		policy                filePolicy
-		wantRename, wantOverw bool
+// Under AutoAccept croc asks without requiring an answer, except when the
+// sender ran --ask, which needs a person the app does not ask.
+func TestPromptAutoAccept(t *testing.T) {
+	s := promptSession(false, croc.Options{NoPrompt: true})
+	q := acceptQuestion()
+	q.Required = false
+	if got, _ := s.prompt(context.Background(), q); !got {
+		t.Error("AutoAccept refused an offer croc did not require an answer for")
+	}
+	if got, _ := s.prompt(context.Background(), acceptQuestion()); got {
+		t.Error("AutoAccept accepted a sender's --ask offer")
+	}
+}
+
+// Overwrite questions (zip members, non-empty folders) follow the policy.
+func TestPromptOverwriteFollowsPolicy(t *testing.T) {
+	for _, p := range []filePolicy{keepBoth, replace} {
+		var o croc.Options
+		p.apply(&o)
+		s := promptSession(false, o)
+		got, err := s.prompt(context.Background(), croc.Question{Kind: croc.QuestionOverwrite, Name: "dir/a.txt", Required: true})
+		if err != nil || got != (p == replace) {
+			t.Errorf("policy %v: prompt = %v, %v", p, got, err)
+		}
+	}
+}
+
+// After an accept, croc's re-ask on a reconnect gets yes only for the same
+// offer (#226).
+func TestPromptReaskAfterReconnect(t *testing.T) {
+	file := croc.FileInfo{FolderRemote: "dir", Name: "a.txt", Size: 3}
+	hashed := file
+	hashed.Hash = []byte{1, 2}
+	with := func(f func(*croc.FileInfo)) croc.FileInfo {
+		c := hashed
+		f(&c)
+		return c
+	}
+	tests := []struct {
+		name   string
+		policy filePolicy
+		q      croc.Question
+		want   bool
 	}{
-		{keepBoth, true, false},
-		{replace, false, true},
-	} {
-		pr, pw, err := os.Pipe()
-		if err != nil {
-			t.Fatal(err)
+		{"same offer", keepBoth, acceptQuestion(hashed), true},
+		{"hash missing on one side", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Hash = nil })), true},
+		{"name Keep Both gave a finished file", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Name = "a (2).txt" })), true},
+		{"Keep Both name under Replace", replace, acceptQuestion(with(func(f *croc.FileInfo) { f.Name = "a (2).txt" })), false},
+		{"same offer under Replace", replace, acceptQuestion(hashed), true},
+		{"now an archive to extract", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.TempFile = true })), false},
+		{"other name", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Name = "b.txt" })), false},
+		{"other folder", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.FolderRemote = "other" })), false},
+		{"other size", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Size = 4 })), false},
+		{"other hash", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Hash = []byte{9} })), false},
+		{"executable bit flipped", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Mode = 0o755 })), false},
+		{"now a symlink", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Symlink = "x" })), false},
+		{"extra file", keepBoth, acceptQuestion(hashed, file), false},
+		{"other sender", keepBoth, croc.Question{Kind: croc.QuestionAccept, Name: "other-machine", Files: []croc.FileInfo{hashed}, Required: true}, false},
+		{"extra empty folder", keepBoth, croc.Question{Kind: croc.QuestionAccept, Name: "sender-machine", Files: []croc.FileInfo{hashed}, EmptyFolders: 1, Required: true}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := promptSession(false, croc.Options{})
+			s.respond(true, tt.policy)
+			if got, _ := s.prompt(context.Background(), acceptQuestion(hashed)); !got {
+				t.Fatal("first ask refused")
+			}
+			if got, _ := s.prompt(context.Background(), tt.q); got != tt.want {
+				t.Errorf("re-ask = %v, want %v", got, tt.want)
+			}
+		})
+	}
+	// A sender's Ask asks once per file request; the same receiver gets the
+	// same answer without a second respond.
+	s := promptSession(true, croc.Options{NoPrompt: true, Ask: true})
+	s.respond(true, keepBoth)
+	send := croc.Question{Kind: croc.QuestionSend, Name: "receiver-machine", Required: true}
+	for i := range 3 {
+		if got, _ := s.prompt(context.Background(), send); !got {
+			t.Fatalf("send question %d refused", i)
 		}
-		c := &croc.Client{}
-		other := replace
-		if tt.policy == replace {
-			other = keepBoth
-		}
-		other.apply(&c.Options)
-		s := &session{client: c, promptW: pw}
-		s.respond(true, tt.policy)
-		pr.Close()
-		if c.Options.Rename != tt.wantRename || c.Options.Overwrite != tt.wantOverw {
-			t.Errorf("policy %v: Rename=%v Overwrite=%v, want %v %v", tt.policy, c.Options.Rename, c.Options.Overwrite, tt.wantRename, tt.wantOverw)
-		}
+	}
+	send.Name = "other-machine"
+	if got, _ := s.prompt(context.Background(), send); got {
+		t.Error("another receiver got the confirmed answer")
 	}
 }
 
-func TestRespondDeclineLeavesPolicy(t *testing.T) {
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pr.Close()
-	c := &croc.Client{}
-	keepBoth.apply(&c.Options)
-	s := &session{client: c, promptW: pw}
-	s.respond(false, replace)
-	if !c.Options.Rename || c.Options.Overwrite {
-		t.Errorf("decline changed the policy: Rename=%v Overwrite=%v", c.Options.Rename, c.Options.Overwrite)
+func TestKeptName(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		want bool
+	}{
+		{"a.tar.gz", true},
+		{"a.tar (1).gz", true},
+		{"a.tar (12).gz", true},
+		{"a.tar (0).gz", false},
+		{"a.tar (x).gz", false},
+		{"a.tar ().gz", false},
+		{"a.tar (1)", false},
+		{"b.tar (1).gz", false},
+		{"a.tar.gz (1)", false},
+		{"a.tar (01).gz", false},
+		{"a.tar (+1).gz", false},
+	} {
+		if got := keptName("a.tar.gz", tt.name); got != tt.want {
+			t.Errorf("keptName(a.tar.gz, %q) = %v, want %v", tt.name, got, tt.want)
+		}
 	}
 }
 
@@ -614,8 +688,8 @@ func TestBuildIsRelayOnly(t *testing.T) {
 	}
 }
 
-// croc never gets Rename and Overwrite both false: it would prompt on the
-// closed pipe. Rename wins when both are set.
+// croc never gets Rename and Overwrite both false: it would ask per file.
+// Rename wins when both are set.
 func TestBuildCrocOptionsFilePolicy(t *testing.T) {
 	tests := []struct {
 		overwrite, rename     bool
@@ -634,158 +708,6 @@ func TestBuildCrocOptionsFilePolicy(t *testing.T) {
 					tt.overwrite, tt.rename, sender, c.Rename, c.Overwrite, tt.wantRename, tt.wantOverw)
 			}
 		}
-	}
-}
-
-// Under AutoAccept the first queued line answers a remote --ask sender's
-// forced accept prompt, so it must never be "y", whatever the policy.
-func TestAnswerUngatedPromptsNeverAccepts(t *testing.T) {
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pr.Close()
-	s := &session{promptW: pw}
-	s.answerUngatedPrompts()
-	if s.promptW != nil {
-		t.Fatal("promptW not nil after answerUngatedPrompts")
-	}
-	got, err := io.ReadAll(pr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if want := strings.Repeat("n\n", promptPolicyAnswers); string(got) != want {
-		t.Fatalf("pipe received %d bytes starting %q, want %d bytes of n lines", len(got), head(got), len(want))
-	}
-	s.answerUngatedPrompts() // no-op once closed
-}
-
-// startReceiveSession writes an AutoAccept batch before croc runs, with no
-// reader yet: it must fit the pipe buffer, or the write blocks forever.
-func TestPolicyAnswersFitPipeBuffer(t *testing.T) {
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pr.Close()
-	defer pw.Close()
-	batch := "y\n" + keptPromptAnswers
-	if err := pw.SetWriteDeadline(time.Now().Add(time.Second)); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := pw.WriteString(batch); err != nil {
-		t.Fatalf("writing %d bytes with no reader: %v", len(batch), err)
-	}
-}
-
-// Answers croc buffered but never asked for must not reach the next
-// transfer's accept prompt.
-func TestDrainPromptInputClearsLeftoverAnswers(t *testing.T) {
-	first := &session{}
-	restore, err := first.installPromptPipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, _ = first.promptW.WriteString("y\n" + keptPromptAnswers)
-	ctx := context.Background()
-	if got, err := utils.GetInputContext(ctx, ""); err != nil || got != "y" {
-		t.Fatalf("first prompt read %q, %v; want y", got, err)
-	}
-	first.closePrompt()
-	drainPromptInput()
-	restore()
-
-	next := &session{}
-	restore, err = next.installPromptPipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer restore()
-	_, _ = next.promptW.WriteString("next\n")
-	next.closePrompt()
-	if got, err := utils.GetInputContext(ctx, ""); err != nil || got != "next" {
-		t.Fatalf("next transfer read %q, %v; want next", got, err)
-	}
-	drainPromptInput()
-}
-
-func TestRespondWithoutPrompt(t *testing.T) {
-	s := &session{}
-	s.respond(true, replace)
-	s.respond(false, keepBoth)
-	s.answerUngatedPrompts()
-}
-
-func TestClosePromptIdempotent(t *testing.T) {
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pr.Close()
-	s := &session{promptW: pw}
-
-	s.closePrompt()
-	if s.promptW != nil {
-		t.Fatal("promptW not nil after closePrompt")
-	}
-	if got, err := io.ReadAll(pr); err != nil || len(got) != 0 {
-		t.Fatalf("read after close = %q, %v; want EOF with no data", got, err)
-	}
-	s.closePrompt()
-
-	var empty session
-	empty.closePrompt()
-}
-
-// An accept with more answers than the pipe buffer holds blocks in the write
-// until croc reads them. If croc never does, cancel must still return and
-// unblock that write, and a second answer must not interleave with the first.
-func TestCancelUnblocksAStuckRespond(t *testing.T) {
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pr.Close()
-	s := &session{promptW: pw, promptAnswers: 40000, sender: true, ctxCancel: func() {}, done: make(chan struct{})}
-	defer close(s.done) // stops the cancel watchdog
-
-	responded := make(chan struct{})
-	go func() { s.respond(true, keepBoth); close(responded) }()
-	for deadline := time.Now().Add(3 * time.Second); ; time.Sleep(10 * time.Millisecond) {
-		s.promptM.Lock()
-		writing := s.answering
-		s.promptM.Unlock()
-		if writing {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("first respond never started writing")
-		}
-	}
-
-	second := make(chan struct{})
-	go func() { s.respond(false, keepBoth); close(second) }()
-	select {
-	case <-second:
-	case <-time.After(3 * time.Second):
-		t.Fatal("second respond still blocked after 3s")
-	}
-
-	cancelled := make(chan struct{})
-	go func() { s.cancel(); close(cancelled) }()
-	for name, ch := range map[string]chan struct{}{"cancel": cancelled, "respond": responded} {
-		select {
-		case <-ch:
-		case <-time.After(3 * time.Second):
-			t.Fatalf("%s still blocked 3s after cancel", name)
-		}
-	}
-	got, err := io.ReadAll(pr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(got), "n") {
-		t.Fatalf("pipe received a decline inside the accept answers: %q", head(got))
 	}
 }
 

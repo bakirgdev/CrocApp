@@ -57,7 +57,7 @@ public protocol TransferEngine: Sendable {
 extension CrocEngine: TransferEngine {}
 
 /// Wraps the gomobile croc bridge. One transfer at a time (crocmobile
-/// serializes on process-global cwd/stdin/stdout).
+/// serializes on process-global cwd/stdout).
 public actor CrocEngine {
     public init() {}
 

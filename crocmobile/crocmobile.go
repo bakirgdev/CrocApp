@@ -99,19 +99,9 @@ func (t *Transfer) Cancel() {
 // On accept, policy (PolicyKeepBoth or PolicyReplace) replaces the one the
 // Options gave. No-op for AutoAccept receivers; senders ignore policy. See
 // Cancel for why this recovers.
-//
-// Asynchronous on purpose: an accept writes one "y\n" per file (promptAnswers),
-// and a large enough sender-Ask batch overruns the pipe buffer, blocking the
-// write until croc drains it over the network. The caller is CrocKit's
-// CrocEngine actor, which runs queued work to completion, so a blocking Respond
-// would strand a following Cancel behind it. session.respond writes outside
-// promptM, so a Cancel is never held up behind it, and drops an answer that
-// arrives while another is being written.
 func (t *Transfer) Respond(accept bool, policy string) {
-	go func() {
-		defer logRecovered("Respond")
-		t.s.respond(accept, parsePolicy(policy))
-	}()
+	defer logRecovered("Respond")
+	t.s.respond(accept, parsePolicy(policy))
 }
 
 // SetTempDir points $TMPDIR, where croc v11.6 spools small-file bundles

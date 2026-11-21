@@ -82,8 +82,8 @@ extension TransferFailure {
         } else if s.autoAcceptActive, s.endReason != .cancelled, failure.code == .refused {
             // This side's prompt refused without anyone answering it. croc
             // forces the receiver prompt whenever the remote sender ran
-            // --ask, regardless of NoPrompt; engine auto-accept has already
-            // closed the prompt pipe, so GetInput hits EOF. While
+            // --ask, regardless of NoPrompt, and engine auto-accept answers
+            // it "no" because nobody is shown the offer. While
             // autoAcceptActive is true respond() is never called, so the
             // transfer was not declined, and the condition excludes a cancel --
             // what is left can only be this.

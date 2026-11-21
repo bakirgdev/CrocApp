@@ -42,18 +42,17 @@ Rules that follow from the payloads:
 
 ### Progress cadence
 
-- `poll()` samples at 10 Hz but emits only when a field changed. Idle stretches stay quiet, notably an unanswered accept prompt where nothing moves.
+- `poll()` samples at 10 Hz but emits only when a field changed. Idle stretches stay quiet, notably an unanswered accept question where nothing moves.
 - The schema is unchanged, and no consumer may treat a tick as a heartbeat.
-- A tick must never overwrite a consumer's prompt state: croc blocks in `GetInput` until `Respond`.
+- A tick must never overwrite a consumer's prompt state: croc waits in `Options.Prompt` until `Respond`.
 
 ### Respond
 
-`Respond(accept bool, policy string)` returns at once and answers on its own goroutine.
+`Respond(accept bool, policy string)` records the user's answer and returns at once.
 
 - `policy` is `PolicyKeepBoth` (`"keepBoth"`) or `PolicyReplace` (`"replace"`). It is read only on a receive accept. Swift mirrors the strings as `FilePolicy` (a CrocKit test pins them to the generated `CrocmobilePolicyKeepBoth` and `CrocmobilePolicyReplace`) and `CrocEngine.respond(_:accept:policy:)`, which takes the transfer's ID and ignores a stale one, as `cancel(_:)` does.
-- A sender-side Ask accept writes one `y\n` per file. A large batch can fill the pipe buffer and block until croc drains it over the network.
-- The caller is the `CrocEngine` actor, which runs queued work to completion. A synchronous write would hold up a following `Cancel`.
-- Do not make it synchronous for "ordering". `session.respond` builds the answer under `promptM`, then writes outside it, so a `Cancel` during a blocked write still gets the lock: `closePrompt` closes the pipe, which ends the write with `ErrClosed` (`os.Pipe` files are pollable on darwin). A second answer while one is in flight (`answering`) is dropped, so a double tap cannot interleave `y` and `n`. `closePrompt` is idempotent.
+- Only the first answer counts (`session.answered`); a second, such as a double tap, is dropped. It may come before croc asks: the app shows the send confirm on `connected`, ahead of croc's question.
+- croc asks through `Options.Prompt` (`session.prompt`), which waits for that answer or the end of the transfer's context. With it set, croc reads no stdin. "Ask (both sides confirm)" and "File policy" say how each question is answered.
 
 ## Failure codes
 
@@ -71,7 +70,7 @@ How `classify` picks a code:
 |---|---|
 | `peerVersion` | text `unsupported PAKE protocol version` |
 | `declined` | the peer's `peer error: refusing files`. A peer's cancel looks the same on the wire. |
-| `refused` | this side's `refused files` (prompt answered no, or EOF) before the user accepted |
+| `refused` | this side's `refused files` (the accept question answered no) before the user accepted |
 | `cancelled` | `errors.Is(err, context.Canceled)`. croc returns the context error unwrapped. |
 | `roomFull` | `room full`, and the control connection's `relay admission rejected` |
 | `badPassword` | the relay rejected the relay password (`bad password`), not the code phrase |
@@ -90,14 +89,14 @@ Notes:
 
 - Order matters in `classify`: a peer's refusal also cancels croc's context, and a bad relay password is reported as `could not connect to`.
 - croc exports sentinels for relay failures only, so the rest is matched on croc 11 text. `errors_test.go` pins the live ones against real croc clients and an in-process relay.
-- A local `Cancel()` during the accept prompt cancels the context before it closes the prompt pipe, and `GetInputContext` returns the context error whenever the context is done. By reading the source that failure is `cancelled`, not `refused`. Not verified live.
+- A local `Cancel()` during the accept question cancels the context `session.prompt` waits on, and croc returns that context error (`processSenderInfo` in `croc.go`). By reading the source that failure is `cancelled`, not `refused`. Not verified live.
 
 ## Stored transfers
 
 Code: `crocmobile/store.go`. They wrap croc v11's `storeclient`.
 
 - API: `StartStoreSend(paths, *StoreOptions, Delegate)`, `StartStoreReceive(link, outDir, *StoreOptions, Delegate)` and the blocking `RevokeStored(origin, id, token, *StoreOptions)`. For receive and revoke, `StoreOptions` carries only the proxies.
-- A stored transfer uses the same `Transfer` handle and `activeMu` as a live one, but no cwd, stdin or stdout.
+- A stored transfer uses the same `Transfer` handle and `activeMu` as a live one, but no cwd or stdout.
 - A send ends with `OnStored(receiptJSON)` then `OnDone`. The receipt is the only copy of the revoke token and of the key inside `link`, so the app keeps it in the Keychain. `expiresAt` is RFC 3339 UTC.
 - A receive reads the manifest without claiming it, raises `OnFileList` (same payload as a live receive) and waits for `Respond`. A decline ends with `refused` and leaves the transfer unclaimed.
 - `RevokeStored` takes no lock and treats HTTP 404 and 410 as success. It passes a zero key: `storeclient` validates a whole share, and revoke authenticates by token only (the croc CLI does the same).
@@ -131,7 +130,7 @@ Limits and error mapping:
 ### Cancel and teardown
 
 - Abandoning the event stream cancels the Go session (`onTermination`).
-- `Cancel()` cancels the context and also closes the prompt pipe. After a context cancel, `GetInputContext` returns, but its read goroutine stays blocked until the pipe closes.
+- `Cancel()` cancels the context, which also ends a question `session.prompt` is waiting on.
 
 A start is cancellable before it returns:
 
@@ -141,38 +140,39 @@ A start is cancellable before it returns:
 
 The cancel watchdog (`watchCancel`, `session.go`):
 
-- A cancel arms it before closing the prompt pipe. If croc's call has not returned 15 s later (`stuckAfter`), the delegate gets `engineStuck` as its terminal event and the session is marked stuck. Every later start then fails at once with `engineStuck`.
-- The lock stays held. Forcing it open would let a new session change the cwd, stdin and stdout under a croc that still runs. Only a relaunch frees it.
+- A cancel arms it. If croc's call has not returned 15 s later (`stuckAfter`), the delegate gets `engineStuck` as its terminal event and the session is marked stuck. Every later start then fails at once with `engineStuck`.
+- The lock stays held. Forcing it open would let a new session change the cwd and stdout under a croc that still runs. Only a relaunch frees it.
 - A session sends one terminal event (`session.terminal`). If croc returns after all, `run` clears the mark and frees the lock without a second event.
-- Why 15 s: croc 11's dials and reads follow its context, its reconnect backoff is capped at 5 s, and `run`'s own teardown waits (the stdin drain and the poller join) are bounded at 2 s each.
+- Why 15 s: croc 11's dials and reads follow its context, its reconnect backoff is capped at 5 s, and `run`'s own teardown wait (the poller join) is bounded at 2 s.
 
 ### Ask (both sides confirm)
 
-- `Options.Ask` is exposed. A sender session with Ask installs the same `dup2` fd 0 pipe as a receive.
-- `Respond(true)` writes one `y\n` per file (`promptAnswers = len(filesInfo)`), because croc's sender prompt fires once per file. A single answer starves a multi-file send at file 2: EOF reads as "refusing files".
-- Decline and cancel close the pipe. EOF at the Ask prompt refuses safely, because croc checks the input error before its default of yes.
+- `Options.Ask` is exposed. croc asks a sender with Ask (`QuestionSend`) on every file request; it turns small-file bundles off under Ask, so that is once per file.
+- The first question waits for `Respond`. Later ones from the same receiver (`Question.Name`, its machine ID), after a reconnect too, get the same answer; another machine gets no.
+- A decline answers no, and croc sends the receiver `refusing files`.
 
 ### File policy
 
 What a receive does with a file whose name is taken: `keepBoth` or `replace` (`filePolicy`, `session.go`).
 
 - `buildCrocOptions` always hands croc exactly one of `Rename` and `Overwrite`. Neither set, both set, or an unknown policy string all mean keep both (Rename wins).
-- croc's third state (both false) is never passed. It prompts `Overwrite ...? (y/N)` on stdin, which on a closed pipe skips the file and, during a zipped-folder unzip, aborts the transfer.
+- croc's third state (both false) is never passed: croc would ask about each existing file.
 - A file that already exists with identical content is left as is under either policy (croc counts it unchanged).
 - Keep Both names come from `utils.UnusedFilename`: `name (1).ext`, `name (2).ext`.
 
-Answers queued for croc's stdin prompts:
+How `session.prompt` answers a receive:
 
-- On accept, `respond` sets the policy on the live `croc.Client` before writing `y`, because croc reads `Rename` and `Overwrite` only once the accept prompt is answered.
-- It then queues 4096 more answers (`promptPolicyAnswers`) for the prompts that ignore both flags: the empty-folder prompt and the per-member unzip prompt `Overwrite '<path>'? (y/N)`.
-- Every queued answer is `n`, under either policy (`keptPromptAnswers`). The unzip then skips an existing member and keeps the local copy. So Replace overwrites files through `Overwrite` but never a zip member.
-- Never `y`: croc v11 re-runs the accept prompt on the sender's new file list after each reconnect, and a queued `y` would accept a list the user never saw.
-- As a result, a reconnect after a manual accept cannot resume: the re-run prompt reads `n`, croc refuses the files, and the peer gets `refusing files` (`declined` on a CrocApp sender) (#226).
-- `run` reports that refusal as `connectionLost`, not `refused`, because `respond` recorded the accept (`session.accepted`). croc asks once per connection attempt, so a `refused files` after an accept can only come from a reconnect.
-- `TestReconnectAfterAccept` (`reconnect_test.go`) forces the reconnect by dropping the receiver's relay control connection mid-transfer. The same drop under `AutoAccept` resumes and completes.
-- 4096 two-byte lines fit a fresh pipe buffer on Darwin and Linux, so the write never blocks.
-- With `AutoAccept` there is no accept prompt. The same `n` batch is written at session start and the pipe is closed (`answerUngatedPrompts`). It must be `n` because croc still forces the accept prompt when the remote sender ran `--ask`. That prompt reads the first queued line, and `y` would accept a transfer the sender wanted confirmed by hand.
-- Past 4096 colliding zip members an unzip hits EOF and fails, leaving the received zip (#225).
+- On accept it sets the policy on the live `croc.Client` before it answers yes, because croc reads `Rename` and `Overwrite` only once the accept question has its answer.
+- croc asks `QuestionOverwrite` where it ignores both flags: once per existing member when it unzips a zipped-folder receive, and before an empty folder replaces a non-empty one. The policy answers each (Replace yes, Keep Both no), however many there are. So Replace also replaces existing files inside a received zipped folder, members the receive sheet never listed (it shows only the `.zip`), and Keep Both keeps them (croc skips the member). `verify-interop.sh` scenario 12 covers both.
+- Under `AutoAccept` croc asks the accept question without requiring an answer (`Question.Required` false), and the answer is yes. When the remote sender ran `--ask`, croc requires an answer. Nobody is shown the offer under `AutoAccept`, so it is no, and the app explains why (`app-ui-architecture.md`, "Code `refused` under auto-accept is not a peer decline"). `verify-interop.sh` scenario 12 checks the refusal.
+
+Reconnects after an accept (#226):
+
+- croc v11 asks the accept question again after each reconnect, on the file list the sender offers again. After a manual accept the answer is yes only for the accepted offer (`sameOffer`): the same sender machine and empty-folder count, and per file the same folder, name, size, mode, symlink target and archive flag (`TempFile`, which makes croc extract it), and the same hash when both carry one (the sender may still have been hashing at the first ask).
+- Under Keep Both, a file croc finished under a Keep Both name comes back under that name (`restoreBundleDestinations` in `bundle.go`), so `name (2).ext` matches `name.ext` (`keptName`). Under Replace croc renames nothing, so the names must be equal: a `(n)` name there is another file, which Replace would overwrite.
+- A changed offer gets no: croc refuses the files and the peer gets `refusing files`. On a receive, `run` reports that as `connectionLost`, not `refused`, because the user accepted (`session.offer`), so the refusal came from a reconnect. A sender keeps its refusal codes (`TestRunRefusalAfterAccept`).
+- A text receive never resumes: croc gives the text file a new random name on every offer (`processSenderInfo` in `croc.go`) before it asks, so the re-ask never matches and the receive ends as `connectionLost`.
+- `TestReconnectAfterAccept` (`reconnect_test.go`) drops the receiver's relay control connection mid-transfer, after a manual accept and under `AutoAccept`. Both resume and complete with identical bytes.
 
 ### Options that Swift wires
 
@@ -237,7 +237,7 @@ How Tailcat works, its 128 MiB threshold and the servers it contacts: `what-is-c
 
 croc retries a dropped transfer up to 10 times (backoff from 100 ms, doubling, capped at 5 s). Only then it fails with `transfer disconnected after 10 reconnect attempts`. Peer death therefore surfaces slowly, and scripts must bound their waits with timeouts.
 
-A dropped relay connection after the transfer started counts as a disconnect (`transfer` in `croc.go`). Each attempt resets the session (`resetForReconnectAttempt`), and the sender offers its file list again, which runs the receiver's accept prompt again (see "File policy").
+A dropped relay connection after the transfer started counts as a disconnect (`transfer` in `croc.go`). Each attempt resets the session (`resetForReconnectAttempt`), and the sender offers its file list again, which asks the receiver's accept question again (see "File policy").
 
 ### Start order: sender first
 
@@ -258,24 +258,6 @@ Since croc v11.6, a receiver asks for a run of four or more small files as one b
 - croc sets `FilesToTransferCurrentNum` for the next single file a moment before it resets `TotalSent`, so a tick in between counts the old bytes twice. The cap at `totalSize` bounds it; the app's bars never move back (`ForwardProgressBar`), but a byte count can step back once.
 - croc offers no option to turn bundles off. Every client advertises them, and a receiver takes the hash algorithm, one of the eligibility checks (`bundleTransferEligible`), from the sender.
 - Each side spools a bundle with `os.CreateTemp("", ...)` (`bundle.go`), so in `$TMPDIR`. The sandboxed Mac app inherits the user's `/var/folders/.../T/` there, which its sandbox denies (`deny file-write-create`), and the transfer fails. `CrocAppApp.init` therefore calls `CrocEngine.setTemporaryDirectory` with `FileManager.default.temporaryDirectory`, the app's own temporary directory, once at launch, before any transfer. It reaches Go's `SetTempDir`, because Go reads `$TMPDIR` from its own copy of the environment, which Swift's `setenv` does not update (a launch-time `setenv` in Swift failed the Mac harness's bundle receive). Nothing sets `$TMPDIR` per transfer: `os.Setenv` also calls libc `setenv`, which is not proven safe against a `getenv` on another thread of the host process, and the directory is the same for every transfer.
-
-### Prompts beyond the accept prompt
-
-The empty-folder overwrite prompt and the unzip overwrite prompt ignore `Rename` and `Overwrite` and read stdin. The unzip prompt appears once per archive member that already exists, in a zipped-folder receive. crocmobile answers both from the policy batch (see "File policy").
-
-Without an answer:
-
-- The empty-folder prompt takes EOF as "no".
-- The existing-file prompt skips that file.
-- The unzip prompt returns the read error, and croc v11 treats that as an extraction error. The transfer ends `received archive failed validation or extraction`, with the received `.zip` left in the out dir. croc v10 skipped the member instead.
-
-The batch fixes this. `verify-interop.sh` scenario 12 covers it.
-
-### Stdin plumbing
-
-- `utils.GetInputContext` reads from a package-level `bufio.Reader` built over fd 0 at init (`stdinReader`). Replacing `os.Stdin` later changes nothing, so the fd 0 `dup2` stays required.
-- That reader is process-wide and buffers ahead. Answers croc never asked for (the policy batch, extra sender-Ask `y` lines) would sit in it and answer the next transfer's accept prompt. A Go unit test showed the next transfer reading `n`, a decline.
-- `drainPromptInput` (`session.go`) therefore reads `stdinReader` to EOF through `utils.GetInputContext`, with a 2 s timeout. It runs at session end, after the prompt pipe closes and before fd 0 is restored.
 
 ### Zipped-folder sends
 

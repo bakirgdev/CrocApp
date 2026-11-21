@@ -56,7 +56,7 @@ SwiftUI views          app/CrocApp/Views/
 
 ### `crocmobile/`: Go wrapper
 
-It adapts croc's command-line-shaped library (process-global `os.Chdir`, stdin prompts, text receive through `os.Stdout`) so a GUI can call it repeatedly and safely. `crocmobile.go` is the public API (`Options`, the `Delegate` interface, the `Transfer` handle), `session.go` the engine (the prompt pipe on fd 0, the 10 Hz poller), `store.go` stored transfers, `errors.go` the croc-error-to-failure-code mapping, `network.go` the Advanced-option validation and the croc CLI defaults the library does not apply. The exact contract is in `docs/knowledge/crocmobile-bridge.md`. What it deliberately does:
+It adapts croc's command-line-shaped library (process-global `os.Chdir`, yes/no questions, text receive through `os.Stdout`) so a GUI can call it repeatedly and safely. `crocmobile.go` is the public API (`Options`, the `Delegate` interface, the `Transfer` handle), `session.go` the engine (the answers to croc's questions, the 10 Hz poller), `store.go` stored transfers, `errors.go` the croc-error-to-failure-code mapping, `network.go` the Advanced-option validation and the croc CLI defaults the library does not apply. The exact contract is in `docs/knowledge/crocmobile-bridge.md`. What it deliberately does:
 
 - Runs one transfer at a time. A package-global mutex makes a second start fail with code `transferActive`; it is freed before the terminal event, so a start made on that event succeeds.
 - Never lets a Go panic cross into Swift: every exported entry point and the run and poll loops recover and report code `other`.
@@ -89,20 +89,20 @@ Event names are the `TransferEvent` cases. `Phase` is `TransferController.Phase`
 1. `SendView` calls `controller.start(.sendFiles(urls:code:))`. Phase becomes `.starting`. On iOS, `BackgroundCoordinator.transferStarted` wraps the transfer. `engine.startSend` starts the Go session.
 2. Go calls `OnCodeReady`, Swift yields `.codeReady(code)`, and phase becomes `.waiting(code:)`. The screen shows the code, a QR code of the `https://crocapp.dev/r/#<code>` link, and a **Share Link** button.
 3. The peer connects: `OnConnected` gives `.connected`. With **Confirm on Both Sides** on (croc's `--ask`), phase becomes `.confirmSend` and **Accept** calls `respond(accept: true)`.
-4. `OnProgress` ticks arrive about 10 times a second as `.progress`. The controller ignores `waiting` ticks and all progress while phase is `.confirmSend` or `.incoming`: croc is blocked in `GetInput` waiting for `respond()`, and a phase overwritten there leaves the UI with nothing to call.
+4. `OnProgress` ticks arrive about 10 times a second as `.progress`. The controller ignores `waiting` ticks and all progress while phase is `.confirmSend` or `.incoming`: croc is waiting for `respond()`, and a phase overwritten there leaves the UI with nothing to call.
 5. `OnDone` gives `.done(Summary)`, and `finishRecord` writes a `TransferRecord` to `HistoryStore`.
 
 ### Receive, happy path (with accept prompt)
 
-1. `ReceiveView` calls `controller.start(.receive(code:folder:folderIsScoped:))`. `EngineStart` builds the options. `autoAccept` is `settings.autoAccept && !settings.bothSidesConfirm`: Confirm on Both Sides wins, because engine-level auto-accept closes the prompt pipe, which croc reads as "no".
-2. `OnFileList` gives `.fileList`. With auto-accept off, phase becomes `.incoming(list, conflicts: [], blocked: [...])` at once. Unsafe names (`ReceivedName.isUnsafe`) are checked synchronously, and a detached task then checks the output folder for name clashes. Progress keeps ticking underneath (and is ignored) because croc is blocked reading the pipe that replaced fd 0.
-3. The user accepts: `respond(accept: true, policy:)` reaches `CrocmobileTransfer.respond`. Go sets the file policy on the croc client and writes `y\n` to the pipe, then the policy's answers to croc's other stdin prompts, and closes the pipe. If files already exist the sheet offers **Decline**, **Replace** and **Keep Both**; otherwise one **Accept** button, which means Keep Both. Phase becomes `.connecting`.
+1. `ReceiveView` calls `controller.start(.receive(code:folder:folderIsScoped:))`. `EngineStart` builds the options. `autoAccept` is `settings.autoAccept && !settings.bothSidesConfirm`: Confirm on Both Sides wins, because engine-level auto-accept answers a sender's `--ask` with "no".
+2. `OnFileList` gives `.fileList`. With auto-accept off, phase becomes `.incoming(list, conflicts: [], blocked: [...])` at once. Unsafe names (`ReceivedName.isUnsafe`) are checked synchronously, and a detached task then checks the output folder for name clashes. Progress keeps ticking underneath (and is ignored) because croc is waiting for the answer.
+3. The user accepts: `respond(accept: true, policy:)` reaches `CrocmobileTransfer.respond`. Go answers croc's accept question yes and sets the file policy on the croc client; the policy also answers croc's overwrite questions for zipped-folder members. If files already exist the sheet offers **Decline**, **Replace** and **Keep Both**; otherwise one **Accept** button, which means Keep Both. Phase becomes `.connecting`.
 4. `OnProgress` resumes, phase becomes `.transferring`, and `OnDone` gives `.done`. For a text transfer, `OnText` arrives just before `OnDone`.
 
 ### Decline and cancel
 
-- Declining `.incoming` writes `n\n`. Locally croc reports `refused files` (code `refused`); the peer gets `refusing files` (code `declined`). A peer's cancel and a peer's decline look the same on the wire.
-- Cancelling mid-transfer calls `engine.cancel(transferID)` (a cancel tapped before the ID exists is applied once it does), which reaches Go `session.cancel()`. That cancels the context and also closes the prompt pipe, because a context cancel alone does not unblock a pending `GetInput` read.
+- Declining `.incoming` answers no. Locally croc reports `refused files` (code `refused`); the peer gets `refusing files` (code `declined`). A peer's cancel and a peer's decline look the same on the wire.
+- Cancelling mid-transfer calls `engine.cancel(transferID)` (a cancel tapped before the ID exists is applied once it does), which reaches Go `session.cancel()`. That cancels the context, which also ends a pending question.
 - Any final event finishes the stream, and `onTermination` cancels and clears that transfer by ID, which frees the engine.
 
 JSON field lists, the per-file `fileSent` detail and transfers under 100 ms that jump straight to `done`: `docs/knowledge/crocmobile-bridge.md`.

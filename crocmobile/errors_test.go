@@ -229,7 +229,7 @@ func TestClassifyLiveCrocErrors(t *testing.T) {
 }
 
 // Errors croc only produces with a peer we cannot run in-process (a v10 peer,
-// a prompt answered on fd 0) or at an exact network moment. The text is copied
+// a question answered no) or at an exact network moment. The text is copied
 // from croc v11.6.6; verify-interop.sh covers the first three end to end.
 func TestClassifyCrocErrorText(t *testing.T) {
 	cases := []struct {
@@ -298,6 +298,43 @@ func TestRunReportsFailurePayload(t *testing.T) {
 	}
 	if f := decodeFailure(t, d.errors[0]); f.Code != codeDeclined || f.Message != "peer error: refusing files" {
 		t.Errorf("payload = %+v", f)
+	}
+}
+
+// Only a receive the user accepted reports this side's refusal as
+// connectionLost: it can only come from a reconnect's re-ask. A sender keeps
+// its refusal codes after confirming its Ask.
+func TestRunRefusalAfterAccept(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name           string
+		sender, offer  bool
+		xferErr, wantC string
+	}{
+		{"receive after accept", false, true, "refused files", codeConnectionLost},
+		{"receive before accept", false, false, "refused files", codeRefused},
+		{"send after Ask confirm, own refusal", true, true, "refused files", codeRefused},
+		{"send after Ask confirm, peer refusal", true, true, "peer error: refusing files", codeDeclined},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			d := &errorDelegate{}
+			pollDone := make(chan struct{})
+			close(pollDone)
+			s := &session{delegate: d, sender: tc.sender, done: make(chan struct{}), pollDone: pollDone}
+			if tc.offer {
+				s.offer.Store(&croc.Question{})
+			}
+			s.run(func() error { return errors.New(tc.xferErr) }, wd, func() {})
+			if len(d.errors) != 1 {
+				t.Fatalf("OnError calls = %v, want one", d.errors)
+			}
+			if f := decodeFailure(t, d.errors[0]); f.Code != tc.wantC {
+				t.Errorf("code = %s, want %s", f.Code, tc.wantC)
+			}
+		})
 	}
 }
 

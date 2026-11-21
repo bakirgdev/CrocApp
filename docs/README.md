@@ -8,7 +8,7 @@ How CrocApp is built, how it works inside, and how it ships. For using the app, 
 | --- | --- |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | First. The layers from croc to the SwiftUI views, who owns which state, how a transfer flows |
 | [`BUILDING.md`](BUILDING.md) | Before your first build, and before running any check or harness |
-| [`GLOSSARY.md`](GLOSSARY.md) | A term you cannot infer: PAKE, relay, gobind, prompt pipe, stored transfer |
+| [`GLOSSARY.md`](GLOSSARY.md) | A term you cannot infer: PAKE, relay, gobind, prompt, stored transfer |
 
 ## Project
 
