@@ -168,9 +168,10 @@ How `session.prompt` answers a receive:
 
 Reconnects after an accept (#226):
 
-- croc v11 asks the accept question again after each reconnect, on the file list the sender offers again. After a manual accept the answer is yes only for the accepted offer (`sameOffer`): the same sender machine and empty-folder count, and per file the same folder, name, size, symlink target and archive flag (`TempFile`, which makes croc extract it), and the same hash when both carry one (the sender may still have been hashing at the first ask).
+- croc v11 asks the accept question again after each reconnect, on the file list the sender offers again. After a manual accept the answer is yes only for the accepted offer (`sameOffer`): the same sender machine and empty-folder count, and per file the same folder, name, size, mode, symlink target and archive flag (`TempFile`, which makes croc extract it), and the same hash when both carry one (the sender may still have been hashing at the first ask).
 - Under Keep Both, a file croc finished under a Keep Both name comes back under that name (`restoreBundleDestinations` in `bundle.go`), so `name (2).ext` matches `name.ext` (`keptName`). Under Replace croc renames nothing, so the names must be equal: a `(n)` name there is another file, which Replace would overwrite.
-- A changed offer gets no: croc refuses the files and the peer gets `refusing files`. `run` reports that as `connectionLost`, not `refused`, because the user accepted (`session.offer`), so the refusal came from a reconnect.
+- A changed offer gets no: croc refuses the files and the peer gets `refusing files`. On a receive, `run` reports that as `connectionLost`, not `refused`, because the user accepted (`session.offer`), so the refusal came from a reconnect. A sender keeps its refusal codes (`TestRunRefusalAfterAccept`).
+- A text receive never resumes: croc gives the text file a new random name on every offer (`processSenderInfo` in `croc.go`) before it asks, so the re-ask never matches and the receive ends as `connectionLost`.
 - `TestReconnectAfterAccept` (`reconnect_test.go`) drops the receiver's relay control connection mid-transfer, after a manual accept and under `AutoAccept`. Both resume and complete with identical bytes.
 
 ### Options that Swift wires

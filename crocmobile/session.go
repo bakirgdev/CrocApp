@@ -484,7 +484,7 @@ func (s *session) run(xfer func() error, origWD string, release func()) {
 		defer recoverInto(&err)
 		err = xfer()
 	}()
-	if err != nil && s.offer.Load() != nil && classify(err) == codeRefused {
+	if err != nil && !s.sender && s.offer.Load() != nil && classify(err) == codeRefused {
 		// The drop ended the transfer, not the user: croc re-asked with an
 		// offer other than the one they accepted. Report what they can retry.
 		err = &codedError{code: codeConnectionLost, err: fmt.Errorf("reconnect after accept changed the offer: %w", err)}
@@ -710,7 +710,7 @@ func sameOffer(a, b croc.Question, renamed bool) bool {
 		slices.EqualFunc(a.Files, b.Files, func(x, y croc.FileInfo) bool {
 			return x.FolderRemote == y.FolderRemote &&
 				(x.Name == y.Name || renamed && keptName(x.Name, y.Name)) &&
-				x.Size == y.Size && x.Symlink == y.Symlink && x.TempFile == y.TempFile &&
+				x.Size == y.Size && x.Mode == y.Mode && x.Symlink == y.Symlink && x.TempFile == y.TempFile &&
 				(len(x.Hash) == 0 || len(y.Hash) == 0 || bytes.Equal(x.Hash, y.Hash))
 		})
 }

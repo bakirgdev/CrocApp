@@ -602,6 +602,7 @@ func TestPromptReaskAfterReconnect(t *testing.T) {
 		{"other folder", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.FolderRemote = "other" })), false},
 		{"other size", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Size = 4 })), false},
 		{"other hash", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Hash = []byte{9} })), false},
+		{"executable bit flipped", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Mode = 0o755 })), false},
 		{"now a symlink", keepBoth, acceptQuestion(with(func(f *croc.FileInfo) { f.Symlink = "x" })), false},
 		{"extra file", keepBoth, acceptQuestion(hashed, file), false},
 		{"other sender", keepBoth, croc.Question{Kind: croc.QuestionAccept, Name: "other-machine", Files: []croc.FileInfo{hashed}, Required: true}, false},
