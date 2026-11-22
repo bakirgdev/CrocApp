@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 extra sections where a release needs them, and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- The privacy policy now says that CrocApp's developer runs one of croc's public relays (relay.crocapp.dev), what that relay can see, and that it keeps no logs. Relay status: https://status.crocapp.dev
+
 ## [1.3.1] - 2026-11-21
 
 ### Added

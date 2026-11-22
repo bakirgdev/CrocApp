@@ -181,7 +181,8 @@ Does `PrivacyInfo.xcprivacy` agree? Verified locally (`app/CrocApp/PrivacyInfo.x
 Why "not collected" holds:
 
 - Documented definition: "Collect" means "transmitting data off the device in a way that allows you and/or your third-party partners to access it for a period longer than what is necessary to service the transmitted request in real time." "Third-party partners" are "analytics tools, advertising networks, third-party SDKs, or other external vendors whose code you've added to your app."
-- Inference: the developer receives nothing. The relays and getcroc.com are servers the user's transfer talks to, not code in the app, and they hold ciphertext only. This is a reading of the definition, not an Apple statement. Apple's page says nothing about end-to-end encryption or ciphertext.
+- Inference: the developer receives nothing. The relays and getcroc.com are servers the user's transfer talks to, not code in the app, and they hold ciphertext only.
+- The developer runs one pool relay (`relay.crocapp.dev`). It holds IP addresses only while a connection lasts and logs none, which Apple's page exempts: an IP address "sent on a server call and not retained" need not be disclosed. Logging client IPs (croc's `--debug`) would end that exemption. This is a reading of the definition, not an Apple statement. Apple's page says nothing about end-to-end encryption or ciphertext.
 - Residual risk: with Send as Link, getcroc.com keeps ciphertext for the lifetime the user chooses (up to 7 days). Apple could read that as collection. The fallback if App Review disagrees is to declare "Other User Content", not linked to the user, not used for tracking, purpose "App Functionality". Signal's label omits queued encrypted messages, which is a precedent, not a rule.
 
 ## Age rating

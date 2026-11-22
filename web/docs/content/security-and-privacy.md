@@ -35,11 +35,15 @@ You stay in control: a receive shows the file list and waits for you to accept o
 
 | Server | When | What it can see |
 |---|---|---|
-| croc public relays (`1.getcroc.com` to `4.getcroc.com`) | Every transfer with a code, unless you use your own relay or **Local Network Only** | Both devices' IP addresses, timing, amount of data, and a room name hashed from the code's first word. The data is ciphertext |
+| croc public relays (`1.getcroc.com` to `4.getcroc.com`) | Every transfer with a code, unless you use your own relay or **Local Network Only** | Both devices' IP addresses, timing, amount of data, and a room name hashed from the code's first word. The data is ciphertext. One of them runs on `relay.crocapp.dev` (below) |
 | Link server (`getcroc.com` by default) | **Send as Link**, and opening or revoking a link | The encrypted files and their size, the lifetime and download count you chose, and your IP address |
 | `github.com` | Update checks in the Mac disk image build only | The usual details of a web request. The request carries no system profile |
 
 An operator decides what its own server logs, so this is what each can see by design. The [privacy policy](https://crocapp.dev/privacy/) has the full list, including servers you choose yourself.
+
+### The relay CrocApp's developer runs
+
+One of croc's public relays, `relay.crocapp.dev`, runs on a server CrocApp's developer operates, hosted by Hetzner in Germany. It sees what any public relay sees, listed above, and is trusted no more than the others: it forwards ciphertext and cannot read files. It runs without debug logging, so it writes no client IP addresses or transfer details to disk. Its live state, and that of the other public relays, is at [status.crocapp.dev](https://status.crocapp.dev/). Questions about it go to privacy@crocapp.dev.
 
 ## Send as link
 

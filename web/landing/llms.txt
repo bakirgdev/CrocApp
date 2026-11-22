@@ -14,7 +14,7 @@ Facts:
 - The other device needs croc 11 or newer, whether it runs CrocApp or the croc command line. croc 10 cannot complete a transfer with CrocApp.
 - Language: English only.
 - Navigation:Send, Receive, History and Settings are tabs on iPhone and a sidebar on iPad and Mac, where Settings is its own window. iPhone Duo shows the sidebar on its inner display in landscape and the tabs otherwise. Files, text and codes stay in place when you switch tabs, and are cleared after a transfer succeeds.
-- Privacy: no accounts, analytics, ads or tracking, and history stays on the device. The developer collects no data.
+- Privacy: no accounts, analytics, ads or tracking, and history stays on the device. The developer collects no data. The developer runs one of croc's public relays, relay.crocapp.dev, which keeps no logs. Privacy contact: privacy@crocapp.dev.
 - Author: Bakir Gracic (github.com/bakirgdev).
 
 How a transfer works: the sender picks files, a folder or text. CrocApp generates a code phrase such as `cape-junky-widow`, which can be read out, messaged or shown as a QR code. The other device enters the code phrase, sees the file list and accepts. Send as Link stores encrypted files on a link server for the other device to receive later. The Mac menu bar sends and receives, Finder's Share menu and the iOS share sheet send files, text and links, and Shortcuts and Siri actions send and receive files. The iPhone Live Activity, a Last Transfer widget and Send and Receive controls in Control Center show no file name unless a Settings switch is on. Settings holds croc's options, a custom relay with a password, per-person saved code phrases, and a switch for every notification and history feature.
@@ -37,6 +37,7 @@ Compared with the alternatives: AirDrop needs Apple devices in the same room. LA
 - [Home](https://crocapp.dev/): what CrocApp is, how it works, features and downloads
 - [Privacy](https://crocapp.dev/privacy/): every server the app can contact and what each one can see
 - [Support](https://crocapp.dev/support/): where to ask a question, report a bug or report a security problem
+- [Status](https://status.crocapp.dev/): whether relay.crocapp.dev, crocapp.dev and croc's public relays are up
 
 ## Get started
 

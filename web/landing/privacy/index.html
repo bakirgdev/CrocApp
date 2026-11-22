@@ -69,19 +69,21 @@
               developer receives no data from the app. This page lists every server the app can talk to and what each one can
               see.
             </p>
-            <p class="t-footnote">Last updated 15 November 2026.</p>
+            <p class="t-footnote">Last updated 22 November 2026.</p>
           </div>
 
           <div class="prose t-body">
             <h2 class="t-web-sub">The short version</h2>
             <p>
               There is nothing to sign up for. CrocApp has no analytics, no telemetry, no
-              advertising and no crash-reporting service. The developer runs no server that the app
-              talks to. The App Store privacy answer is
+              advertising and no crash-reporting service. The developer runs one server a transfer
+              can pass through, one of croc's public relays, and it keeps no logs. The App Store
+              privacy answer is
               <strong>Data Not Collected</strong>.
             </p>
             <p>
-              A transfer still needs the internet, and the servers it uses belong to other people.
+              A transfer still needs the internet, and apart from that relay, the servers it uses
+              belong to other people.
               They are listed below, with what each one can see. Transfers are
               end-to-end encrypted, and the relay only ever sees ciphertext. The optional browser
               link works differently and is described under getcroc.com, the browser client below.
@@ -89,9 +91,9 @@
 
             <h2 class="t-web-sub">Servers CrocApp can contact</h2>
             <p>
-              All of these are run by someone other than CrocApp. CrocApp
-              cannot see or control what their operators log, so the lists below are what each
-              server can observe by design, not a promise about what it keeps.
+              All of these but <code class="t-code">relay.crocapp.dev</code> are run by someone other
+              than CrocApp. CrocApp cannot see or control what their operators log, so the lists
+              below are what each server can observe by design, not a promise about what it keeps.
             </p>
 
             <article class="card">
@@ -100,14 +102,53 @@
                 <strong>When:</strong> every transfer with a code phrase, unless you set your own
                 relay or turn on <strong>Local Network Only</strong>. There are four relays,
                 <code class="t-code">1.getcroc.com</code> to <code class="t-code">4.getcroc.com</code>
-                (port 9009), run by the croc project. The code phrase decides which of the four both
-                devices use.
+                (port 9009), run by the croc project, except one that runs on
+                <code class="t-code">relay.crocapp.dev</code>, described next. The code phrase
+                decides which of the four both devices use.
               </p>
               <p class="t-callout card__body">
                 <strong>What it can see:</strong> the IP addresses of both devices, when they
                 connect, how long the transfer takes, and how much data moves. It also sees a room
                 name, which is a hash made from the first word of the code phrase. Beyond that, the
                 relay only ever sees ciphertext.
+              </p>
+            </article>
+
+            <article class="card" id="relay">
+              <h3 class="t-headline card__title">relay.crocapp.dev, run by CrocApp's developer</h3>
+              <p class="t-callout card__body">
+                One of croc's public relays runs on a server operated by Bakir Gracic, CrocApp's
+                developer, hosted by Hetzner Online GmbH in Falkenstein, Germany. Any croc user, not
+                only CrocApp users, may be connected through it.
+              </p>
+              <p class="t-callout card__body">
+                <strong>What it can see while a transfer runs:</strong> the IP addresses and ports
+                of both devices, when they connect, and how much encrypted data passes. It cannot
+                see file names or contents: transfers are end-to-end encrypted before data reaches
+                the relay.
+              </p>
+              <p class="t-callout card__body">
+                <strong>What it keeps:</strong> nothing. It runs without debug logging, so it never
+                writes client IP addresses or transfer details to disk. IP addresses exist only in
+                memory for the duration of the connection.
+              </p>
+              <p class="t-callout card__body">
+                <strong>Why:</strong> a relay needs your IP address to carry the connection. The
+                legal basis is legitimate interest (Art. 6(1)(f) GDPR) in providing the transfer you
+                started.
+              </p>
+              <p class="t-callout card__body">
+                <strong>Who else:</strong> Hetzner Online GmbH hosts the server as a processor,
+                under a data processing agreement. There are no other recipients.
+              </p>
+              <p class="t-callout card__body">
+                <strong>Your rights:</strong> because nothing is stored, there is usually nothing
+                to access or delete. You can still ask about it at
+                <a href="mailto:privacy@crocapp.dev">privacy@crocapp.dev</a>, and you can complain
+                to a data protection supervisory authority. Live status:
+                <a href="https://status.crocapp.dev/" target="_blank" rel="noopener"
+                  >status.crocapp.dev<span class="u-visually-hidden"> (opens in a new tab)</span></a
+                >.
               </p>
             </article>
 
@@ -268,7 +309,8 @@
 
             <h2 class="t-web-sub">Questions and changes</h2>
             <p>
-              Ask on the <a href="/support/">support page</a>. CrocApp is open source, so you can
+              Ask on the <a href="/support/">support page</a>, or about personal data at
+              <a href="mailto:privacy@crocapp.dev">privacy@crocapp.dev</a>. CrocApp is open source, so you can
               check any claim above in the
               <a href="https://github.com/bakirgdev/CrocApp" target="_blank" rel="noopener"
                 >repository<span class="u-visually-hidden"> (opens in a new tab)</span></a
@@ -304,6 +346,10 @@
           <a href="/docs/">Documentation</a>
           <a href="/support/">Support</a>
           <a href="/privacy/" aria-current="page">Privacy</a>
+          <a href="https://status.crocapp.dev/" target="_blank" rel="noopener">
+            Status
+            <span class="u-visually-hidden">(opens in a new tab)</span>
+          </a>
           <a href="https://github.com/bakirgdev/CrocApp/blob/main/SECURITY.md" target="_blank" rel="noopener">
             Security Policy
             <span class="u-visually-hidden">(opens in a new tab)</span>
