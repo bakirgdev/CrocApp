@@ -1,0 +1,36 @@
+name: Relay auto-merge
+
+# Turns on auto-merge for Dependabot's croc image bumps in relay/compose.yml, so
+# they land once `ci pass` is green and Dokploy redeploys the relay. Every
+# other Dependabot PR stays a manual merge.
+on: pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  automerge:
+    name: relay auto-merge
+
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'bakirgdev/CrocApp'
+
+    runs-on: ubuntu-26.04
+
+    timeout-minutes: 5
+
+    permissions:
+      contents: write # merges the PR
+      pull-requests: write # enables auto-merge
+
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - if: >-
+          steps.meta.outputs.directory == '/relay'
+          && steps.meta.outputs.dependency-names == 'schollz/croc'
+          && steps.meta.outputs.update-type != 'version-update:semver-major'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"

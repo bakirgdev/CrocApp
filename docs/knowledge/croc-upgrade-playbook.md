@@ -35,6 +35,7 @@ How to bump the pinned croc version in `crocmobile/go.mod`. The update rule (wha
 ## Notes
 
 - A new major needs both sides upgraded. v10 and v11 peers cannot complete a transfer: v11 rejects a PAKE message that lacks protocol version 2 (`pakekey.ProtocolVersion`), and v10's message type (through v10.7.0) has no version field.
+- A major also needs the relay image in `relay/compose.yml` bumped by hand: Dependabot ignores majors there, because a major can change the protocol or the relay pool.
 - The peers often never meet, because the room derivation and the default relay differ. So `peerVersion` fires only on a shared room.
 - `~/go/bin/croc` (the v10 release pinned in `scripts/croc-v10.version`) is kept only as `CROC_V10`, for the v10-peer scenario. If it is first on `PATH`, plain `croc` runs v10, so call Homebrew's `croc` by full path.
 - Coordinate app release timing with upstream adoption.

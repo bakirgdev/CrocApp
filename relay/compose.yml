@@ -1,0 +1,26 @@
+# The public croc relay at relay.crocapp.dev, deployed by Dokploy as a Compose
+# service (compose path ./relay/compose.yml, watch path relay/**), so a merge
+# here redeploys it and drops transfers in flight. Dependabot bumps the tag;
+# relay-automerge.yml merges the bump once `ci pass` is green.
+services:
+  croc:
+    image: schollz/croc:11.6.6
+    # The relay binds IPv4 and IPv6 itself and sees real client addresses for
+    # its per-source limits; Swarm ingress would NAT them and has no IPv6.
+    network_mode: host
+    restart: unless-stopped
+    mem_limit: 1g
+    environment:
+      # The image's default command is `relay`. The ports match the getcroc.com
+      # pool; clients use the default relay password, so CROC_PASS stays unset.
+      CROC_PORTS: "9009,9010,9011,9012,9013,9014,9015,9016,9017"
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    # No --debug: at the default level the relay never logs client addresses.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
