@@ -39,7 +39,7 @@ Keep a custom code phrase for a person under their name, and pick it in one tap 
 
 ## Relay
 
-By default CrocApp uses croc's public relay pool, the same one the croc command line uses. **Address** and **IPv6 Address** show "Public relay pool" when empty, and **Password** shows "Default".
+By default CrocApp uses croc's public relay pool, the same one the croc command line uses. One of its relays, `relay.crocapp.dev`, is run by CrocApp's developer ([what it sees](../security-and-privacy.md#the-relay-crocapps-developer-runs)), and [status.crocapp.dev](https://status.crocapp.dev/) shows whether the pool's relays are up. **Address** and **IPv6 Address** show "Public relay pool" when empty, and **Password** shows "Default".
 
 To use your own relay, run `croc relay` on a machine you control and enter its address, and its password if you set one. The other device must use the same relay. Reasons to run your own: your transfers route through infrastructure you control, or you would rather not depend on an external service.
 

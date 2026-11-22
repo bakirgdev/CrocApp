@@ -41,7 +41,7 @@ When a file name contains a text-direction control character, the accept sheet d
 
 With no connection, a send with a generated code fails before a code appears, with "No public relay answered". Reconnect and tap **Try Again**, or turn on **Local Network Only** in [Settings](guide/settings.md#transfer) when both devices share a network.
 
-If only croc's public relay is unreachable from your network, set a [custom relay](guide/settings.md#relay) you control, or use **Local Network Only**.
+[status.crocapp.dev](https://status.crocapp.dev/) shows whether croc's public relays are up. If they are and only your network cannot reach them, set a [custom relay](guide/settings.md#relay) you control, or use **Local Network Only**.
 
 ## The code is rejected, or Receive stays disabled
 

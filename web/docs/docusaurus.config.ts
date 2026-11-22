@@ -219,6 +219,7 @@ const config: Config = {
           items: [
             {label: 'Privacy', href: 'https://crocapp.dev/privacy/'},
             {label: 'Support', href: 'https://crocapp.dev/support/'},
+            {label: 'Status', href: 'https://status.crocapp.dev/'},
             {
               label: 'Contributing',
               href: 'https://github.com/bakirgdev/CrocApp/blob/main/CONTRIBUTING.md',
