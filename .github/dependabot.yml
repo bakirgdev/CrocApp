@@ -43,3 +43,23 @@ updates:
     commit-message:
       prefix: "build"
       include: "scope"
+
+  # The relay's croc image (relay/compose.yml), merged by relay-automerge.yml.
+  # The cooldown waits out a broken release; a major can change the protocol or
+  # the relay pool, so it waits for a person.
+  - package-ecosystem: "docker-compose"
+    directory: "/relay"
+    schedule:
+      interval: "daily"
+      time: "04:00"
+      timezone: "Europe/Berlin"
+    cooldown:
+      default-days: 3
+    ignore:
+      - dependency-name: "schollz/croc"
+        update-types: ["version-update:semver-major"]
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "build"
+      include: "scope"

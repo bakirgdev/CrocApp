@@ -47,12 +47,13 @@ The build settings that must not change casually (Swift 6 mode, deployment targe
 
 ## Keeping versions current
 
-Every pin, and what updates it. Dependabot covers only `github-actions` and `gomod`, opening its PRs on Mondays, grouped per ecosystem (gomod checks daily so croc PRs arrive on time); security updates for every ecosystem need no config. The weekly pin-watch workflow (`.github/workflows/pin-watch.yml`, running `scripts/pin-watch.sh`) checks the rest and keeps one issue, "Pinned versions to update", open while any of them differs from the newest stable release. A failed run is visible in the Actions tab and emails the maintainer; it files no issue.
+Every pin, and what updates it. Dependabot covers only `github-actions`, `gomod` and the relay's `docker-compose`, opening its PRs on Mondays (gomod and docker-compose check daily so croc PRs arrive on time); github-actions and gomod group them per ecosystem; security updates for every ecosystem need no config. The weekly pin-watch workflow (`.github/workflows/pin-watch.yml`, running `scripts/pin-watch.sh`) checks the rest and keeps one issue, "Pinned versions to update", open while any of them differs from the newest stable release. A failed run is visible in the Actions tab and emails the maintainer; it files no issue.
 
 | Pin | Where | Updated by |
 |---|---|---|
 | GitHub Actions (full SHAs) | `.github/workflows/*.yml` | Dependabot `github-actions` |
 | croc, Go modules | `crocmobile/go.mod` (`require` block) | Dependabot `gomod`; a croc bump follows `croc-upgrade-playbook.md` |
+| croc relay image | `relay/compose.yml` | Dependabot `docker-compose`, auto-merged by `.github/workflows/relay-automerge.yml`; a major is ignored, bump it by hand |
 | gomobile (`golang.org/x/mobile`), govulncheck (`golang.org/x/vuln`) | `crocmobile/go.mod` (`tool` block, `// indirect`) | pin-watch reports a newer release; bump by hand (`../BUILDING.md`, "When the toolchain changes") |
 | Sparkle | `Package.resolved` in the Xcode project | pin-watch |
 | Docusaurus (`^`), TypeScript (`~`) | `web/docs/package.json`, `pnpm-lock.yaml` | pin-watch compares the range's lowest version with the newest release; move both with `pnpm update` and the range. `~` holds TypeScript to patch updates, because a minor can add checks that fail `tsc`: take a minor by hand |
