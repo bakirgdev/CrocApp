@@ -447,7 +447,7 @@ kill "$STORE_PID"
 wait "$STORE_PID" 2> /dev/null || true
 
 # 15. Advanced options that change the wire, against the croc v11 CLI with
-# the matching flag. What each case pins down was observed with croc v11.6.6:
+# the matching flag. What each case pins down was observed with croc v11.6.7:
 #  - sender IP: the sender's local relay listens on croc's default ports, 9009
 #    and the four after it, so a receiver given the sender IP reaches it
 #    there, and the banner it reads lists the data ports. A CLI sender on
@@ -507,7 +507,7 @@ pass "sender IP: a sender IP with nothing listening fails with relayUnreachable"
 # croc_no_tailcat tag, so a transfer of 128 MiB or more, which the stock CLI
 # would race over Tailcat against a Tailcat-capable peer, goes over the relay
 # here. The CLI runs with its default --transport auto. Its --debug log tells
-# the two cases apart (observed with croc v11.6.6):
+# the two cases apart (observed with croc v11.6.7):
 #  - a Tailcat-capable peer: "tailcat-offer", "starting Tailcat server", and a
 #    "selected staged croc relay data transport" or "... after Tailcat
 #    fallback" line;

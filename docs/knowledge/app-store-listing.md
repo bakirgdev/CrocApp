@@ -116,7 +116,7 @@ Version 1.3.1, iOS (924 characters):
 • History opens with far less memory when it holds many past sends.
 • Fixed: Send Speed Limit now holds sends to the limit you set, and Respect .gitignore skips folders such as node_modules/.
 • An empty file you receive keeps its permissions.
-• The transfer engine is croc 11.6.6.
+• The transfer engine is croc 11.6.7.
 ```
 
 Version 1.3.1, macOS (693 characters):
@@ -128,7 +128,7 @@ Version 1.3.1, macOS (693 characters):
 • History opens with far less memory when it holds many past sends.
 • Fixed: Send Speed Limit now holds sends to the limit you set, and Respect .gitignore skips folders such as node_modules/.
 • An empty file you receive keeps its permissions.
-• The transfer engine is croc 11.6.6.
+• The transfer engine is croc 11.6.7.
 ```
 
 ## URLs, category, price
