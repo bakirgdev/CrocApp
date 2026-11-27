@@ -106,29 +106,16 @@ croc,transfer,share,encrypted,secure,qr,p2p,link,folder,nearby,e2ee,clipboard,cl
 
 App Store Connect shows no What's New field on an app's first version. From the second App Store release on, write it from that release's `[x.y.z]` section of `CHANGELOG.md`, in the voice of the description: short, what a user sees first, and honest about what was removed. The text is per platform: a change only one platform has, such as iPhone Duo support, stays out of the other's. The first lines show before "more", so the most visible change leads.
 
-Version 1.3.1, iOS (924 characters):
+Version 1.3.2, iOS (41 characters):
 
 ```text
-• iPhone Duo: the inner display shows the sidebar, as iPad does, and the tabs in portrait. A code, a QR code and Accept and Decline sit beside the fold, never across it, and what you entered stays when you fold or open the device.
-• A batch of small files now shows how far it has got, with a percent and a byte count, on both the sending and the receiving device.
-• Files you accepted now pick up where they left off when a dropped connection comes back, instead of saying you declined them.
-• Replace now replaces the files already in a zipped folder you receive again, and a zipped folder with more than 4096 existing files no longer fails.
-• History opens with far less memory when it holds many past sends.
-• Fixed: Send Speed Limit now holds sends to the limit you set, and Respect .gitignore skips folders such as node_modules/.
-• An empty file you receive keeps its permissions.
-• The transfer engine is croc 11.6.7.
+• The transfer engine is now croc 11.6.7.
 ```
 
-Version 1.3.1, macOS (693 characters):
+Version 1.3.2, macOS (41 characters):
 
 ```text
-• A batch of small files now shows how far it has got, with a percent and a byte count, on both the sending and the receiving device.
-• Files you accepted now pick up where they left off when a dropped connection comes back, instead of saying you declined them.
-• Replace now replaces the files already in a zipped folder you receive again, and a zipped folder with more than 4096 existing files no longer fails.
-• History opens with far less memory when it holds many past sends.
-• Fixed: Send Speed Limit now holds sends to the limit you set, and Respect .gitignore skips folders such as node_modules/.
-• An empty file you receive keeps its permissions.
-• The transfer engine is croc 11.6.7.
+• The transfer engine is now croc 11.6.7.
 ```
 
 ## URLs, category, price
@@ -223,14 +210,14 @@ Sending arbitrary files to another person is not content the app hosts or shows.
 
 ## Review notes
 
-Paste into App Review Information, Notes, per platform. Limit 4000 bytes: the iOS block is 2940 bytes, the macOS block 3691. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
+Paste into App Review Information, Notes, per platform. Limit 4000 bytes: the iOS block is 2671 bytes, the macOS block 3476. Contact name, phone (international format with a plus sign) and email are yours to fill in; they are not in this repo.
 
 iOS:
 
 ```text
 CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end-to-end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email. Source: https://github.com/bakirgdev/CrocApp
 
-WHAT CHANGED IN 1.3.1: support for iPhone Duo (the inner display shows the sidebar as on iPad, and controls stay off the fold). The engine is croc 11.6.6: a batch of small files shows its progress, files the user accepted resume after a dropped connection, and Replace also applies inside a received zipped folder. History uses less memory. Permissions and App Privacy answers are unchanged from 1.3.0.
+WHAT CHANGED IN 1.3.2: the engine is croc 11.6.7. No interface changes. Permissions and App Privacy answers are unchanged from 1.3.1.
 
 ACCOUNT: none. No login, sign-up, purchase or subscription, so there is no demo account. Sign-in required is off.
 
@@ -254,7 +241,7 @@ macOS (the iOS text with the Mac differences and the entitlement paragraph):
 ```text
 CrocApp is a free, open-source file-transfer app: it sends files, folders and text to another device with a short code phrase, end-to-end encrypted. It is a native front end for the open-source croc tool (https://github.com/schollz/croc, MIT, by Zack Scholl). CrocApp is unofficial and unaffiliated with croc or its author; the croc maintainer was informed by email. Source: https://github.com/bakirgdev/CrocApp
 
-WHAT CHANGED IN 1.3.1: the engine is croc 11.6.6: a batch of small files shows its progress, files the user accepted resume after a dropped connection, and Replace also applies inside a received zipped folder. History uses less memory. On iPhone Duo the inner display shows the sidebar. Permissions, entitlements and App Privacy answers are unchanged from 1.3.0.
+WHAT CHANGED IN 1.3.2: the engine is croc 11.6.7. No interface changes. Permissions, entitlements and App Privacy answers are unchanged from 1.3.1.
 
 ACCOUNT: none. No login, sign-up, purchase or subscription, so there is no demo account. Sign-in required is off.
 
@@ -347,7 +334,7 @@ Before every submission:
 - A screenshot that is still processing blocks **Add for Review** with "1 or more screenshots must finish processing". Reload after a minute and press it again.
 - Version release is Automatically release this version after approval on both platforms, so approval publishes the app and there is no separate **Release This Version** step.
 - **A later version.** The **+** next to "iOS App" or "macOS App" in the sidebar adds it; enter `MARKETING_VERSION`, paste "What's New" from the version's `CHANGELOG.md` section, and pick the build once it has processed. Description, keywords, screenshots and "What's New" change only with a new version; promotional text changes any time without review.
-- **With the `asc` CLI.** `asc versions create --platform IOS|MAC_OS --copy-metadata-from <previous> --exclude-fields whatsNew --build-id <id>` creates a version with the previous listing and screenshots, then `asc apps info edit --version X.Y.Z --platform ... --whats-new` sets What's New, and `asc validate --version-id` checks readiness. `asc review submit` sends the first platform. For the second it stops in its age rating preflight, because two app infos then exist (live and in review), so submit that one with `asc review submissions-create`, `items-add` and `submissions-submit`.
+- **With the `asc` CLI.** `asc versions create --platform IOS|MAC_OS --copy-metadata-from <previous> --exclude-fields whatsNew --build-id <id>` creates a version with the previous listing and screenshots, then `asc apps info edit --version X.Y.Z --platform ... --whats-new` sets What's New, and `asc validate --version-id` checks readiness. `asc review submit --version-id <id> --build-id <id> --confirm` sends each platform; with asc 7.6.1 it submitted both 1.3.2 versions one after the other. Older asc versions stopped the second one in their age rating preflight, because two app infos then exist (live and in review); if that happens, submit it with `asc review submissions-create`, `items-add` and `submissions-submit`. Review details (contact and notes) carry over to a new version: update the notes with `asc review details-update --id <detail id> --notes`.
 - While either platform has a version in review, App Information and App Privacy are locked for both.
 - **Creative assets** (the header and search results asset) are uploaded in the Asset Library and go through **Add for Review** there, as an iOS submission of their own with no build. Once approved, select the asset on the iOS version page > Header and Search Results.
 
