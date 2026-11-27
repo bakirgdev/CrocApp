@@ -27,7 +27,7 @@ How to bump the pinned croc version in `crocmobile/go.mod`. The update rule (wha
 
    Any failure: find the root cause against the upstream delta before touching wrapper semantics.
 6. **Update docs.**
-   - Run `git grep -n "11.6.6"` (the old version string) and update every hit: `what-is-croc.md` (the version header and any changed facts), `web/docs/content/reference/croc-cli-interop.md`, and comments in `crocmobile/` and `scripts/`. Other docs say "croc 11" and need the version only when the major changes.
+   - Run `git grep -n "11.6.7"` (the old version string) and update every hit: `what-is-croc.md` (the version header and any changed facts), `web/docs/content/reference/croc-cli-interop.md`, and comments in `crocmobile/` and `scripts/`. Other docs say "croc 11" and need the version only when the major changes.
    - Update facts that changed even where the version string is absent.
    - Check the names in `docs/GLOSSARY.md` that the delta touched.
    - Run `scripts/verify-docs.sh`.

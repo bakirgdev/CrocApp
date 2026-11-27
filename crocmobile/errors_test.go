@@ -230,7 +230,7 @@ func TestClassifyLiveCrocErrors(t *testing.T) {
 
 // Errors croc only produces with a peer we cannot run in-process (a v10 peer,
 // a question answered no) or at an exact network moment. The text is copied
-// from croc v11.6.6; verify-interop.sh covers the first three end to end.
+// from croc v11.6.7; verify-interop.sh covers the first three end to end.
 func TestClassifyCrocErrorText(t *testing.T) {
 	cases := []struct {
 		err  error
