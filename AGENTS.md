@@ -6,6 +6,8 @@ Native SwiftUI GUI for the croc file-transfer CLI.
 
 Do every change on a new branch and land it through a pull request (merge rules: `.github/AGENTS.md`). GitHub deletes the remote branch when the PR merges. Then delete the local branch: `git switch main && git pull --ff-only && git branch -D BRANCH`. Use `-D`, because a squash merge leaves the branch's commits out of `main`, so `-d` refuses.
 
+Keep upstream croc out of CrocApp's GitHub text: issues, PRs, comments, PR titles and bodies (they become the squash commit), commit messages. Never write `schollz/croc#N` or a link to a croc issue or PR there: GitHub adds every such mention to the upstream thread's timeline, so CrocApp's own work shows up across croc's tracker. Name the croc release and the change instead ("croc 11.6.7's `Options.OutDir`"). Link upstream only when the text is unusable without that thread, such as a reply the maintainer asked for. Files in the repo are not affected.
+
 ## Verification
 
 A green build is not evidence a transfer works. A change to `crocmobile/session.go`, `CrocKit/Sources/` or `TransferController` needs its matching transfer harness run, with the output quoted (`docs/BUILDING.md`, "Verification harnesses"). Anything not run is reported as "not verified".
