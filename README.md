@@ -27,6 +27,8 @@ It is a graphical front end for [croc](https://github.com/schollz/croc), the com
 
 ## Download
 
+Version 1.3.2 is the disk image on GitHub Releases. Both App Stores, for iPhone and iPad and for Mac, have earlier versions until 1.3.2 passes App Review.
+
 | Platform | Where |
 |---|---|
 | iPhone, iPad, Mac (App Store) | [CrocApp on the App Store](https://apps.apple.com/app/crocapp/id6805675003) |
