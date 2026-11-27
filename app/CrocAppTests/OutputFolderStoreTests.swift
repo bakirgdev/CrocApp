@@ -4,12 +4,10 @@ import Testing
 @testable import CrocApp
 
 @MainActor @Suite struct OutputFolderStoreTests {
-    private let defaults: UserDefaults
+    private let storage = MemorySettingsStorage()
     private let base: URL
 
     init() throws {
-        defaults = try #require(
-            UserDefaults(suiteName: "OutputFolderStoreTests-\(UUID().uuidString)"))
         base = FileManager.default.temporaryDirectory.appending(
             path: "CrocAppFolder-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
@@ -32,16 +30,16 @@ import Testing
 
     @Test func aPickedFolderIsKeptAcrossLaunches() throws {
         let url = try folder("picked")
-        OutputFolderStore(defaults: defaults).select(url)
+        OutputFolderStore(defaults: storage).select(url)
 
-        let relaunched = OutputFolderStore(defaults: defaults)
+        let relaunched = OutputFolderStore(defaults: storage)
         #expect(relaunched.isUserSelected)
         #expect(relaunched.url.lastPathComponent == "picked")
         #expect(!relaunched.bookmarkWasReset)
     }
 
     @Test func aFolderThatCannotBeKeptIsReportedAndTheOldOneStays() throws {
-        let store = OutputFolderStore(defaults: defaults)
+        let store = OutputFolderStore(defaults: storage)
         store.select(try folder("kept"))
 
         store.select(base.appending(path: "missing", directoryHint: .isDirectory))
@@ -54,25 +52,25 @@ import Testing
 
     @Test func aStaleBookmarkIsRefreshedNotReset() throws {
         let url = try folder("before")
-        OutputFolderStore(defaults: defaults).select(url)
+        OutputFolderStore(defaults: storage).select(url)
         let moved = base.appending(path: "after", directoryHint: .isDirectory)
         try FileManager.default.moveItem(at: url, to: moved)
 
-        let relaunched = OutputFolderStore(defaults: defaults)
+        let relaunched = OutputFolderStore(defaults: storage)
         #expect(relaunched.isUserSelected)
         #expect(relaunched.url.lastPathComponent == "after")
         #expect(!relaunched.bookmarkWasReset)
-        let stored = try #require(defaults.data(forKey: "outputFolderBookmark"))
+        let stored = try #require(storage.object(forKey: "outputFolderBookmark") as? Data)
         #expect(SecurityScopedBookmark.resolve(stored)?.isStale == false)
     }
 
     @Test func anUnresolvableBookmarkResetsToTheDefaultFolder() {
-        defaults.set(Data("not a bookmark".utf8), forKey: "outputFolderBookmark")
+        storage.set(Data("not a bookmark".utf8), forKey: "outputFolderBookmark")
 
-        let store = OutputFolderStore(defaults: defaults)
+        let store = OutputFolderStore(defaults: storage)
         #expect(!store.isUserSelected)
         #expect(store.bookmarkWasReset)
         #expect(store.url == OutputFolderStore.defaultFolder)
-        #expect(defaults.data(forKey: "outputFolderBookmark") == nil)
+        #expect(storage.object(forKey: "outputFolderBookmark") == nil)
     }
 }
